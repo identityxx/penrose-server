@@ -69,7 +69,7 @@ public class ModifyHandler {
             // refreshing entry cache
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            //handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
             PenroseSession adminSession = handler.getPenrose().newSession();
             adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
@@ -165,9 +165,7 @@ public class ModifyHandler {
 
             EntryMapping entryMapping = entry.getEntryMapping();
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+            String engineName = entryMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {

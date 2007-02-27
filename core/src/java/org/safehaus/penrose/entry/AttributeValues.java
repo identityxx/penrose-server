@@ -32,7 +32,6 @@ public class AttributeValues implements Cloneable, Comparable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public RDN rdn = new RDN();
     public Map values = new TreeMap();
 
     public AttributeValues() {
@@ -40,18 +39,6 @@ public class AttributeValues implements Cloneable, Comparable {
 
     public AttributeValues(AttributeValues attributeValues) {
         add(attributeValues);
-    }
-
-    public RDN getRdn() {
-        return rdn;
-    }
-
-    public void setRdn(RDN rdn) {
-        this.rdn.set(rdn);
-    }
-
-    public void setRdn(String prefix, RDN rdn) {
-        this.rdn.set(prefix, rdn);
     }
 
     public boolean isEmpty() {
@@ -88,13 +75,14 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void add(String prefix, RDN rdn) {
+        if (rdn == null) return;
         for (Iterator i = rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = rdn.get(name);
 
             String targetName = prefix == null ? name : prefix+"."+name;
             Collection c = get(targetName);
-            if (c == null) c = new LinkedHashSet();
+            if (c == null) c = new LinkedList();
             c.add(value);
             set(targetName, c);
         }
@@ -110,7 +98,7 @@ public class AttributeValues implements Cloneable, Comparable {
             Object value = rdn.get(name);
 
             String targetName = prefix == null ? name : prefix+"."+name;
-            Collection c = new LinkedHashSet();
+            Collection c = new LinkedList();
             c.add(value);
             set(targetName, c);
         }
@@ -134,7 +122,7 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void set(String name, Collection values) {
-        Collection c = new LinkedHashSet();
+        Collection c = new LinkedList();
         c.addAll(values);
         this.values.put(name, c);
     }
@@ -148,7 +136,7 @@ public class AttributeValues implements Cloneable, Comparable {
             return;
         }
 
-        Collection c = new LinkedHashSet();
+        Collection c = new LinkedList();
         c.add(value);
         this.values.put(name, c);
     }
@@ -165,7 +153,7 @@ public class AttributeValues implements Cloneable, Comparable {
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
             //c = new TreeSet();
-            c = new LinkedHashSet();
+            c = new LinkedList();
             this.values.put(name, c);
         }
         c.add(value);
@@ -180,7 +168,7 @@ public class AttributeValues implements Cloneable, Comparable {
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
             //c = new TreeSet();
-            c = new LinkedHashSet();
+            c = new LinkedList();
             this.values.put(name, c);
         }
         c.addAll(values);
@@ -329,7 +317,7 @@ public class AttributeValues implements Cloneable, Comparable {
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = (Collection)values.get(name);
-            Collection s = new LinkedHashSet();
+            Collection s = new LinkedList();
             s.addAll(c);
             attributeValues.values.put(name, s);
         }
@@ -387,5 +375,22 @@ public class AttributeValues implements Cloneable, Comparable {
         }
 
         return c;
+    }
+
+    public void print() {
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection list = (Collection)values.get(name);
+            
+            for (Iterator j=list.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                String className = value.getClass().getName();
+                className = className.substring(className.lastIndexOf(".")+1);
+                
+                log.debug(" - "+name+": "+value+" ("+className+")");
+            }
+        }
     }
 }

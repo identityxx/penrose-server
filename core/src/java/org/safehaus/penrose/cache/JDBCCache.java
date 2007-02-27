@@ -24,6 +24,7 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -719,17 +720,17 @@ public class JDBCCache {
     }
 
     public RDN getPrimaryKey(ResultSet rs) throws Exception {
-        RDN pk = new RDN();
 
+        RDNBuilder rb = new RDNBuilder();
         Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=pkFields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             Object value = rs.getObject(fieldConfig.getName());
 
-            pk.set(fieldConfig.getName(), value);
+            rb.set(fieldConfig.getName(), value);
         }
 
-        return pk;
+        return rb.toRdn();
     }
 
     public Collection getUniqueKeys(ResultSet rs) throws Exception {
@@ -740,8 +741,10 @@ public class JDBCCache {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             Object value = rs.getObject(fieldConfig.getName());
 
-            RDN key = new RDN();
-            key.set(fieldConfig.getName(), value);
+            RDNBuilder rb = new RDNBuilder();
+            rb.set(fieldConfig.getName(), value);
+            RDN key = rb.toRdn();
+
             uniqueKeys.add(key);
         }
 
@@ -867,8 +870,10 @@ public class JDBCCache {
                     first = false;
                 }
 
-                RDN rdn = new RDN(pk);
-                rdn.set(fieldConfig.getName(), value);
+                RDNBuilder rb = new RDNBuilder();
+                rb.set(pk);
+                rb.set(fieldConfig.getName(), value);
+                RDN rdn = rb.toRdn();
 
                 printValues(fieldNames, rdn);
             }

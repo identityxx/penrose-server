@@ -31,6 +31,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -159,10 +160,10 @@ public class LoadEngine {
 
             for (Iterator i=entries.iterator(); i.hasNext(); ) {
                 EntryData map = (EntryData)i.next();
-                String dn = map.getDn();
+                DN dn = map.getDn();
                 //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
-                RDN rdn = EntryUtil.getRdn(dn);
+                RDN rdn = dn.getRdn();
 /*
                 if (partition.getParent(entryMapping) != null) {
                     String parentDn = Entry.getParentDn(dn);
@@ -219,7 +220,6 @@ public class LoadEngine {
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     EntryData data = (EntryData)i.next();
-                    String dn = data.getDn();
                     AttributeValues sv = data.getMergedValues();
 
                     if (sv == null) continue;
@@ -311,7 +311,7 @@ public class LoadEngine {
             Collection attributeMappings = entryMapping.getAttributeMappings(attributeName);
             for (Iterator j=attributeMappings.iterator(); !pkDefined && j.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (!attributeMapping.isPK()) continue;
+                if (!attributeMapping.isRdn()) continue;
 
                 log.debug("PK is defined");
                 pkDefined = true;
@@ -323,7 +323,7 @@ public class LoadEngine {
         if (pkDefined) {
             for (Iterator i=list.iterator(); i.hasNext(); ) {
                 EntryData data = (EntryData)i.next();
-                RDN pk = EntryUtil.getRdn(data.getDn());
+                RDN pk = data.getDn().getRdn();
                 pks.add(pk);
             }
         }

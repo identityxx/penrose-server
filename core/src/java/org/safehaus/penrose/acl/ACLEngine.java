@@ -23,6 +23,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -59,16 +60,16 @@ public class ACLEngine {
     }
 
     public boolean getObjectPermission(
-            String bindDn,
+            DN bindDn,
             Partition partition,
             EntryMapping entryMapping,
-            String targetDn,
+            DN targetDn,
             String scope,
             String permission) throws Exception {
 
         if (entryMapping == null) return true;
 
-        String mappingDn = entryMapping.getDn();
+        DN mappingDn = entryMapping.getDn();
         //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
         //log.debug("Bind DN: "+bindDn);
         //log.debug("Target DN: "+targetDn);
@@ -156,7 +157,7 @@ public class ACLEngine {
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             String permission
     ) throws Exception {
     	
@@ -169,16 +170,15 @@ public class ACLEngine {
         }
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-        String bindDn = schemaManager.normalize(session.getBindDn());
+        DN rootDn = penroseConfig.getRootDn();
+        DN bindDn = session.getBindDn();
 
         if (rootDn != null && rootDn.equals(bindDn)) {
             log.debug("Root user => SUCCESS");
             return rc;
         }
 
-        String targetDn = schemaManager.normalize(dn);
-        boolean result = getObjectPermission(bindDn, partition, entryMapping, targetDn, ACI.SCOPE_OBJECT, permission);
+        boolean result = getObjectPermission(bindDn, partition, entryMapping, dn, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             log.debug("ACL evaluation => SUCCESS");
@@ -190,23 +190,23 @@ public class ACLEngine {
         return rc;
     }
 
-    public int checkRead(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public int checkRead(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public int checkSearch(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public int checkAdd(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public int checkDelete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseSession session, Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public int checkModify(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_WRITE);
     }
 
@@ -239,7 +239,7 @@ public class ACLEngine {
         }
     }
 
-    public boolean checkSubject(String bindDn, String targetDn, ACI aci) throws Exception {
+    public boolean checkSubject(DN bindDn, DN targetDn, ACI aci) throws Exception {
 
         String subject = aci.getSubject();
         log.debug("   Checking bind DN ["+bindDn+"] with "+subject);
@@ -298,10 +298,10 @@ public class ACLEngine {
     }
 
     public void getReadableAttributes(
-            String bindDn,
+            DN bindDn,
             Partition partition,
             EntryMapping entryMapping,
-            String targetDn,
+            DN targetDn,
             String scope,
             Collection attributeNames,
             Collection grants,
@@ -378,7 +378,7 @@ public class ACLEngine {
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            String targetDn,
+            DN targetDn,
             Collection attributeNames,
             Collection grants,
             Collection denies
@@ -389,8 +389,8 @@ public class ACLEngine {
         log.debug("Checking readable attributes");
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-        String bindDn = schemaManager.normalize(session.getBindDn());
+        DN rootDn = penroseConfig.getRootDn();
+        DN bindDn = session.getBindDn();
 
     	if (rootDn != null && rootDn.equals(bindDn)) {
             log.debug("Root user => SUCCESS");

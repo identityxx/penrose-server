@@ -34,6 +34,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;
@@ -329,7 +330,6 @@ public class JDBCAdapter extends Adapter {
 
     public RDN getPkValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
-        RDN rdn = new RDN();
         int c = 1;
 
         ResultSetMetaData rsmd = rs.getMetaData();
@@ -337,28 +337,30 @@ public class JDBCAdapter extends Adapter {
 
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
 
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            rdn.set(fieldConfig.getName(), value);
+            rb.set(fieldConfig.getName(), value);
         }
 
         //log.debug("=> values: "+rdn);
 
+        RDN rdn = rb.toRdn();
         return rdn;
     }
 
     public RDN getChanges(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
-        RDN rdn = new RDN();
+        RDNBuilder rb = new RDNBuilder();
 
-        rdn.set("changeNumber", rs.getObject("changeNumber"));
-        rdn.set("changeTime", rs.getObject("changeTime"));
-        rdn.set("changeAction", rs.getObject("changeAction"));
-        rdn.set("changeUser", rs.getObject("changeUser"));
+        rb.set("changeNumber", rs.getObject("changeNumber"));
+        rb.set("changeTime", rs.getObject("changeTime"));
+        rb.set("changeAction", rs.getObject("changeAction"));
+        rb.set("changeUser", rs.getObject("changeUser"));
 
         int counter = 5;
         for (Iterator i=sourceConfig.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
@@ -367,16 +369,16 @@ public class JDBCAdapter extends Adapter {
             Object value = rs.getObject(counter++);
             if (value == null) continue;
 
-            rdn.set(name, value);
+            rb.set(name, value);
         }
 
+        RDN rdn = rb.toRdn();
         return rdn;
     }
 
     public AttributeValues getValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
         AttributeValues av = new AttributeValues();
-        RDN primaryKey = new RDN();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
@@ -385,6 +387,7 @@ public class JDBCAdapter extends Adapter {
 
         Collection fields = sourceConfig.getFieldConfigs();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             
@@ -394,8 +397,9 @@ public class JDBCAdapter extends Adapter {
             av.add(fieldConfig.getName(), value);
 
             if (!fieldConfig.isPK()) continue;
-            primaryKey.set(fieldConfig.getName(), value);
+            rb.set(fieldConfig.getName(), value);
         }
+        RDN primaryKey = rb.toRdn();
 
         av.set("primaryKey", primaryKey);
         //log.debug("=> values: "+av);
@@ -1003,8 +1007,8 @@ public class JDBCAdapter extends Adapter {
 
     public String format(SourceConfig sourceConfig, AttributeValues av) throws Exception {
 
-        RDN rdn = new RDN();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = av.get(name);
@@ -1018,9 +1022,10 @@ public class JDBCAdapter extends Adapter {
                 value = c.toString();
             }
 
-            rdn.set(name, value);
+            rb.set(name, value);
         }
 
+        RDN rdn = rb.toRdn();
         return format(sourceConfig, rdn);
     }
 

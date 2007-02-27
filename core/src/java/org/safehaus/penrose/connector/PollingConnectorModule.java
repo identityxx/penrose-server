@@ -32,6 +32,8 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.DN;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -144,12 +146,16 @@ public class PollingConnectorModule extends Module {
         while (sr.hasNext()) {
             RDN pk = (RDN)sr.next();
 
-            Number changeNumber = (Number)pk.remove("changeNumber");
-            Object changeTime = pk.remove("changeTime");
-            String changeAction = (String)pk.remove("changeAction");
-            String changeUser = (String)pk.remove("changeUser");
+            RDNBuilder rb = new RDNBuilder();
+            rb.set(pk);
 
-            log.debug(" - "+pk+": "+changeAction+" ("+changeTime+")");
+            Number changeNumber = (Number)rb.remove("changeNumber");
+            Object changeTime = rb.remove("changeTime");
+            String changeAction = (String)rb.remove("changeAction");
+            String changeUser = (String)rb.remove("changeUser");
+            RDN newPk = rb.toRdn();
+
+            log.debug(" - "+newPk+": "+changeAction+" ("+changeTime+")");
 
             lastChangeNumber = changeNumber.intValue();
 
@@ -158,15 +164,15 @@ public class PollingConnectorModule extends Module {
                 continue;
             }
 
-            pks.add(pk);
+            pks.add(newPk);
 
-            log.debug("Removing source cache "+pk);
-            sourceCacheManager.remove(partition, sourceConfig, pk);
+            log.debug("Removing source cache "+newPk);
+            sourceCacheManager.remove(partition, sourceConfig, newPk);
 
             for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
-                log.debug("Removing entries in "+entryMapping.getDn()+" with "+pk);
-                remove(entryMapping, sourceConfig, pk);
+                log.debug("Removing entries in "+entryMapping.getDn()+" with "+newPk);
+                remove(entryMapping, sourceConfig, newPk);
             }
         }
 
@@ -228,7 +234,7 @@ public class PollingConnectorModule extends Module {
         PenroseSearchControls sc = new PenroseSearchControls();
 
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
+            DN dn = (DN)i.next();
 
             PenroseSearchResults sr = new PenroseSearchResults();
             session.search(dn, "(objectClass=*)", sc, sr);
@@ -266,7 +272,7 @@ public class PollingConnectorModule extends Module {
         EntryCache entryCache = handler.getEntryCache();
 
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
+            DN dn = (DN)i.next();
             entryCache.remove(partition, entryMapping, dn);
         }
     }

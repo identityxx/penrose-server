@@ -46,16 +46,20 @@ public class Pipeline implements Iterator {
     public void fireEvent(final PipelineEvent event) {
         for (Iterator i=listeners.iterator(); i.hasNext(); ) {
             PipelineListener listener = (PipelineListener)i.next();
-            switch (event.getType()) {
-                case PipelineEvent.OBJECT_ADDED:
-                    listener.objectAdded(event);
-                    break;
-                case PipelineEvent.OBJECT_REMOVED:
-                    listener.objectRemoved(event);
-                    break;
-                case PipelineEvent.PIPELINE_CLOSED:
-                    listener.pipelineClosed(event);
-                    break;
+            try {
+                switch (event.getType()) {
+                    case PipelineEvent.OBJECT_ADDED:
+                        listener.objectAdded(event);
+                        break;
+                    case PipelineEvent.OBJECT_REMOVED:
+                        listener.objectRemoved(event);
+                        break;
+                    case PipelineEvent.PIPELINE_CLOSED:
+                        listener.pipelineClosed(event);
+                        break;
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
     }

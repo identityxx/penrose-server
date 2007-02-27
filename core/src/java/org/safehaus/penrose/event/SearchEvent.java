@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
@@ -30,7 +31,7 @@ public class SearchEvent extends Event {
     public final static int AFTER_SEARCH  = 1;
 
     private PenroseSession session;
-    private String baseDn;
+    private DN baseDn;
     private String filter;
     private PenroseSearchControls searchControls;
     private PenroseSearchResults searchResults;
@@ -41,7 +42,7 @@ public class SearchEvent extends Event {
             Object source,
             int type,
             PenroseSession session,
-            String baseDn,
+            DN baseDn,
             String filter,
             PenroseSearchControls searchControls,
             PenroseSearchResults searchResults
@@ -62,25 +63,11 @@ public class SearchEvent extends Event {
         this.session = session;
     }
 
-    /**
-     * @deprecated
-     */
-    public String getBase() {
+    public DN getBaseDn() {
         return baseDn;
     }
 
-    public String getBaseDn() {
-        return baseDn;
-    }
-
-    /**
-     * @deprecated
-     */
-    public void setBase(String base) {
-        this.baseDn = base;
-    }
-
-    public void setBaseDn(String baseDn) {
+    public void setBaseDn(DN baseDn) {
         this.baseDn = baseDn;
     }
 

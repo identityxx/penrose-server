@@ -18,13 +18,8 @@
 package org.safehaus.penrose.entry;
 
 
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.*;
 
@@ -33,61 +28,47 @@ import java.util.*;
  */
 public class Entry {
 
-    Logger log = LoggerFactory.getLogger(getClass());
-
-    private String dn;
-    private String parentDn;
+    private DN dn;
     private EntryMapping entryMapping;
 
     private AttributeValues sourceValues;
     private AttributeValues attributeValues;
 
     public Entry(String dn, EntryMapping entryMapping) {
+        this(new DN(dn), entryMapping);
+    }
+
+    public Entry(DN dn, EntryMapping entryMapping) {
         this.dn = dn;
-        this.parentDn = EntryUtil.getParentDn(dn);
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = new AttributeValues();
     }
 
     public Entry(String dn, EntryMapping entryMapping, AttributeValues attributes) {
+        this(new DN(dn), entryMapping, attributes);
+    }
+
+    public Entry(DN dn, EntryMapping entryMapping, AttributeValues attributes) {
         this.dn = dn;
-        this.parentDn = EntryUtil.getParentDn(dn);
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
         this.attributeValues = attributes;
     }
 
     public Entry(String dn, EntryMapping entryMapping, AttributeValues attributeValues, AttributeValues sourceValues) {
+        this(new DN(dn), entryMapping, attributeValues, sourceValues);
+    }
+
+    public Entry(DN dn, EntryMapping entryMapping, AttributeValues attributeValues, AttributeValues sourceValues) {
         this.dn = dn;
-        this.parentDn = EntryUtil.getParentDn(dn);
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
         this.attributeValues = attributeValues;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
-    }
-
-    public RDN getRdn() throws Exception {
-
-        RDN rdn = new RDN();
-
-        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
-
-        for (Iterator i = rdnAttributes.iterator(); i.hasNext();) {
-            AttributeMapping attributeMapping = (AttributeMapping) i.next();
-
-            String name = attributeMapping.getName();
-            Collection values = attributeValues.get(name);
-            if (values == null) return null;
-
-            Object value = values.iterator().next();
-            rdn.set(name, value);
-        }
-
-        return rdn;
     }
 
     public AttributeValues getAttributeValues() {
@@ -125,13 +106,4 @@ public class Entry {
     public void setSourceValues(AttributeValues sourceValues) {
         this.sourceValues = sourceValues;
     }
-
-    public String getParentDn() {
-        return parentDn;
-    }
-
-    public void setParentDn(String parentDn) {
-        this.parentDn = parentDn;
-    }
-
 }

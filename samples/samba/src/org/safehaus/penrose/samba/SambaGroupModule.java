@@ -40,7 +40,7 @@ public class SambaGroupModule extends Module {
     public boolean beforeAdd(AddEvent event) throws Exception {
         Attributes attributes = event.getAttributes();
 
-        String dn = event.getDn();
+        String dn = event.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String groupname = dn.substring(i+1, j);
@@ -101,7 +101,7 @@ public class SambaGroupModule extends Module {
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
 
-        String dn = event.getDn();
+        String dn = event.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String groupname = dn.substring(i+1, j);

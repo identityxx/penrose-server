@@ -27,10 +27,18 @@ import java.util.Map;
 public class HandlerConfig implements HandlerConfigMBean, Cloneable {
 
     private String name = "DEFAULT";
-    private String handlerClass = "org.safehaus.penrose.handler.Handler";
+    private String handlerClass = Handler.class.getName();
     private String description;
 
     private Properties parameters = new Properties();
+
+    public HandlerConfig() {
+    }
+
+    public HandlerConfig(String name, String handlerClass) {
+        this.name = name;
+        this.handlerClass = handlerClass;
+    }
 
     public String getName() {
         return name;

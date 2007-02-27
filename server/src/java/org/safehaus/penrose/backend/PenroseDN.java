@@ -7,32 +7,28 @@ import java.util.Iterator;
 
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseDN implements com.identyx.javabackend.DN {
 
-    String dn;
+    DN dn;
 
-    public PenroseDN(String dn) {
+    public PenroseDN(DN dn) {
         this.dn = dn;
     }
 
     public com.identyx.javabackend.RDN getRdn() throws Exception {
-        return new PenroseRDN(EntryUtil.getRdn(dn));
+        return new PenroseRDN(dn.getRdn());
     }
 
     public Collection getRdns() throws Exception {
-        List rdns = new ArrayList();
-        for (Iterator i=EntryUtil.parseDn(dn).iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
-            rdns.add(new PenroseRDN(rdn));
-        }
-        return rdns;
+        return dn.getRdns();
     }
 
     public String toString() {
-        return dn;
+        return dn.toString();
     }
 }

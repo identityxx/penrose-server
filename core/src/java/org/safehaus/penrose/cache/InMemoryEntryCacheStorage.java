@@ -24,6 +24,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 
 import java.util.*;
 
@@ -42,7 +43,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         super(penrose);
     }
 
-    public Entry get(String dn) throws Exception {
+    public Entry get(DN dn) throws Exception {
 
         log.debug("get("+dn+")");
 
@@ -66,7 +67,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
-    public void put(String dn, Entry entry) throws Exception {
+    public void put(DN dn, Entry entry) throws Exception {
 
         log.debug("put("+dn+")");
 
@@ -84,7 +85,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         dataExpirationMap.put(dn, new Date(System.currentTimeMillis() + getExpiration() * 60 * 1000));
     }
 
-    public void remove(String dn) throws Exception {
+    public void remove(DN dn) throws Exception {
 
         log.debug("remove("+dn+")");
 
@@ -94,7 +95,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         invalidate();
     }
 
-    public boolean contains(String baseDn, Filter filter) throws Exception {
+    public boolean contains(DN baseDn, Filter filter) throws Exception {
 
         log.debug("contains("+baseDn+", "+filter+")");
 
@@ -107,7 +108,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     }
 
     public boolean search(
-            String baseDn,
+            DN baseDn,
             Filter filter,
             PenroseSearchResults results
     ) throws Exception {
@@ -122,7 +123,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
 
             Collection entries = new ArrayList();
             for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                String dn = (String)i.next();
+                DN dn = (DN)i.next();
                 if (baseDn != null && !dn.endsWith(baseDn)) continue;
 
                 Entry entry = get(dn);
@@ -173,7 +174,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
         results.close();
     }
 
-    public void add(String baseDn, Filter filter, String dn) throws Exception {
+    public void add(DN baseDn, Filter filter, DN dn) throws Exception {
 
         log.debug("add("+filter+", "+dn+")");
 

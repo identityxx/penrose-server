@@ -136,7 +136,7 @@ public class ApacheDSLDAPService extends LDAPService {
         final Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn());
+        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn().toString());
         env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         env.setProperty(Context.REFERRAL, "throw");

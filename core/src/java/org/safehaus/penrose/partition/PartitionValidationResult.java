@@ -27,10 +27,10 @@ public class PartitionValidationResult {
 
     private String type;
     private String message;
-    private String source;
+    private Object source;
     private Object object;
 
-    public PartitionValidationResult(String type, String message, String source, Object object) {
+    public PartitionValidationResult(String type, String message, Object source, Object object) {
         this.type = type;
         this.message = message;
         this.source = source;
@@ -61,7 +61,7 @@ public class PartitionValidationResult {
         this.object = object;
     }
 
-    public String getSource() {
+    public Object getSource() {
         return source;
     }
 

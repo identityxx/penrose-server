@@ -20,6 +20,7 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -355,8 +356,8 @@ public class Schema implements Cloneable {
 
     public RDN normalize(RDN rdn) throws Exception {
 
-        RDN newRdn = new RDN();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = rdn.get(name);
@@ -368,9 +369,10 @@ public class Schema implements Cloneable {
             }
 
             //value = value.toString().toLowerCase();
-            newRdn.set(name.toLowerCase(), value);
+            rb.set(name.toLowerCase(), value);
         }
 
+        RDN newRdn = rb.toRdn();
         return newRdn;
     }
 

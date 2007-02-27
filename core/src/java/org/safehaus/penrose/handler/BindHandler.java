@@ -27,6 +27,7 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public void bind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
+    public void bind(PenroseSession session, Partition partition, DN dn, String password) throws Exception {
 
         int rc = LDAPException.SUCCESS;
         String message = null;
@@ -82,17 +83,15 @@ public class BindHandler {
         }
     }
 
-    public void performBind(PenroseSession session, Partition partition, String dn, String password) throws Exception {
+    public void performBind(PenroseSession session, Partition partition, DN dn, String password) throws Exception {
 
         PartitionManager partitionManager = handler.getPartitionManager();
-        Collection entryMappings = partitionManager.findEntryMappings(partition, dn);
+        Collection entryMappings = partition.findEntryMappings(dn);
 
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+            String engineName = entryMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {

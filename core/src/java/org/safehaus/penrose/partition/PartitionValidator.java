@@ -23,7 +23,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.ietf.ldap.LDAPDN;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -131,17 +131,9 @@ public class PartitionValidator {
             EntryMapping entryMapping = (EntryMapping)i.next();
             //log.debug("Validating entry "+entryMapping;
 
-            String rdn = entryMapping.getRdn();
+            RDN rdn = entryMapping.getRdn();
             if (rdn == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing RDN.", entryMapping.getDn(), entryMapping));
-
-            } else if (!LDAPDN.isValid(rdn)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid RDN: "+rdn, entryMapping.getDn(), entryMapping));
-            }
-
-            String parentDn = entryMapping.getParentDn();
-            if (parentDn != null && !LDAPDN.isValid(parentDn)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid parent DN: "+parentDn, entryMapping.getDn(), entryMapping));
             }
 
             results.addAll(validateObjectClasses(partition, entryMapping));
@@ -243,7 +235,7 @@ public class PartitionValidator {
             }
         }
 
-        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributeNames().isEmpty()) {
+        if (!entryMapping.getAttributeMappings().isEmpty() && entryMapping.getRdnAttributeMappings().isEmpty()) {
             results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryMapping.getDn(), entryMapping));
         }
 

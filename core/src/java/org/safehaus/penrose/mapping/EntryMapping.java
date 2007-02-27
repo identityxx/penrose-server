@@ -18,9 +18,7 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -53,12 +51,13 @@ public class EntryMapping implements Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
+    private String id;
+    private String parentId;
+
     /**
      * Distinguished name.
      */
-    private String rdn = "";
-
-    private String parentDn;
+    private DN dn;
 
     private boolean enabled = true;
 
@@ -77,7 +76,10 @@ public class EntryMapping implements Cloneable {
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
      */
-    private Map attributeMappings = new TreeMap();
+    public Collection attributeMappings = new ArrayList();
+    private Map attributeMappingsByName = new TreeMap();
+    private boolean staticRdn = true;
+    private Collection rdnAttributeMappings = new ArrayList();
 
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
@@ -88,6 +90,8 @@ public class EntryMapping implements Cloneable {
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
      */
     private Collection relationships = new ArrayList();
+
+    private EngineMapping engineMapping;
 
     /**
      * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
@@ -100,140 +104,96 @@ public class EntryMapping implements Cloneable {
 	}
 
 	public EntryMapping(String dn) {
-        RDN rdn = EntryUtil.getRdn(dn);
-        this.rdn = rdn.toString();
-        parentDn = EntryUtil.getParentDn(dn);
+        this.dn = new DN(dn);
+    }
+
+    public EntryMapping(DN dn) {
+        this.dn = dn;
     }
 
     public EntryMapping(String rdn, EntryMapping parent) {
-        this.rdn = rdn;
-        this.parentDn = parent.getDn();
+        DNBuilder db = new DNBuilder();
+        db.set(rdn);
+        db.append(parent.getDn());
+
+        dn = db.toDn();
     }
 
-    public String getRdn() {
-        return rdn;
+    public EntryMapping(RDN rdn, EntryMapping parent) {
+        DNBuilder db = new DNBuilder();
+        db.set(rdn);
+        db.append(parent.getDn());
+
+        dn = db.toDn();
+    }
+
+    public RDN getRdn() {
+        return dn.getRdn();
     }
     
     public RDN getRdn(AttributeValues attributeValues) {
-        Collection rdnAttributes = getRdnAttributeNames();
-        RDN rdn = new RDN();
+        Collection rdnAttributes = getRdnAttributeMappings();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping rdnAttribute = (AttributeMapping)i.next();
             String name = rdnAttribute.getName();
             Object value = attributeValues.getOne(name);
-            rdn.set(name, value);
+            rb.set(name, value);
         }
 
-        return rdn;
+        return rb.toRdn();
     }
 
-    public String getParentDn() {
-        return parentDn;
+    public DN getParentDn() {
+        return dn.getParentDn();
     }
 
-    public boolean isRdnDynamic() {
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (!attributeMapping.isPK()) continue;
-                if (attributeMapping.getConstant() == null) return true;
-            }
-        }
-
-        return false;
+    public boolean isStaticRdn() {
+        return staticRdn;
     }
 
     public boolean isDynamic() {
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (attributeMapping.getConstant() == null) return true;
-            }
+        for (Iterator i= attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (attributeMapping.getConstant() == null) return true;
         }
 
         return false;
     }
     
-    public Collection getRdnAttributeNames() {
-        //log.debug("RDN Attributes:");
+    public Collection getRdnAttributeMappings() {
+        return rdnAttributeMappings;
+    }
+
+    public Collection getNonRdnAttributeMappings() {
         Collection results = new ArrayList();
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
-
-                if (!attributeMapping.isPK()) continue;
-                results.add(attributeMapping);
-            }
+        for (Iterator i= attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            if (attributeMapping.isRdn()) continue;
+            results.add(attributeMapping);
         }
         return results;
     }
 
-    public Collection getNonRdnAttributeNames() {
-        Collection results = new ArrayList();
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                if (attributeMapping.isPK()) continue;
-                results.add(attributeMapping);
-            }
-        }
-        return results;
+    public DN getDn() {
+        return dn;
     }
 
-    public Collection getOperationalAttributeMappings() {
-        //log.debug("Operational Attributes:");
-        Collection results = new ArrayList();
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
-
-                if (!attributeMapping.isOperational()) continue;
-                results.add(attributeMapping);
-            }
-        }
-        return results;
-    }
-
-    public Collection getOperationalAttributeNames() {
-        //log.debug("Operational Attributes:");
-        Collection results = new ArrayList();
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)j.next();
-                //log.debug(" - "+attributeMapping.getName()+" ("+attributeMapping.isRdn()+")");
-
-                if (!attributeMapping.isOperational()) continue;
-                results.add(attributeMapping.getName());
-            }
-        }
-        return results;
-    }
-
-    public String getDn() {
-        if (rdn == null) return null;
-        if (parentDn == null) return rdn;
-        return rdn+","+parentDn;
+    public void setDn(DN dn) {
+        this.dn = dn;
     }
 
     public void setDn(String dn) {
-        RDN rdn = EntryUtil.getRdn(dn);
-        this.rdn = rdn.toString();
-        parentDn = EntryUtil.getParentDn(dn);
+        this.dn = new DN(dn);
+    }
+
+    public String getStringDn() {
+        return dn.toString();
+    }
+
+    public void setStringDn(String dn) {
+        this.dn = new DN(dn);
     }
 
     public boolean isEnabled() {
@@ -245,18 +205,12 @@ public class EntryMapping implements Cloneable {
     }
 
     public Collection getAttributeMappings() {
-        Collection results = new ArrayList();
-
-        for (Iterator i=attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-            results.addAll(list);
-        }
-
-        return results;
+        return attributeMappings;
     }
 
     public void removeAttributeMappings() {
         attributeMappings.clear();
+        attributeMappingsByName.clear();
     }
 
     public Collection getRelationships() {
@@ -344,25 +298,35 @@ public class EntryMapping implements Cloneable {
     }
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
-        String name = attributeMapping.getName().toLowerCase();
-        log.debug("Adding attribute "+name+(attributeMapping.isPK() ? " ("+attributeMapping.getRdn()+")" : ""));
+        String name = attributeMapping.getName();
+        log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
 
-        Collection list = (Collection)attributeMappings.get(name);
+        attributeMappings.add(attributeMapping);
+
+        Collection list = (Collection) attributeMappingsByName.get(name);
         if (list == null) {
             list = new ArrayList();
-            attributeMappings.put(name, list);
+            attributeMappingsByName.put(name, list);
         }
         list.add(attributeMapping);
-	}
+
+        if (attributeMapping.isRdn()) {
+            rdnAttributeMappings.add(attributeMapping);
+        }
+
+        staticRdn &= attributeMapping.getConstant() != null;
+    }
 
     public AttributeMapping getAttributeMapping(String name) {
         Collection list = getAttributeMappings(name);
-        if (list == null || list.isEmpty()) return null;
-        return (AttributeMapping)list.iterator().next();
+        if (list == null) return null;
+        Iterator i = list.iterator();
+        if (!i.hasNext()) return null;
+        return (AttributeMapping)i.next();
     }
 
     public Collection getAttributeMappings(String name) {
-        return (Collection)attributeMappings.get(name.toLowerCase());
+        return (Collection)attributeMappingsByName.get(name);
     }
 
     public Collection getAttributeMappings(Collection names) {
@@ -380,7 +344,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public void removeAttributeMappings(String name) {
-        attributeMappings.remove(name.toLowerCase());
+        attributeMappingsByName.remove(name);
     }
 
     public void removeAttributeMapping(AttributeMapping attributeMapping) {
@@ -411,20 +375,16 @@ public class EntryMapping implements Cloneable {
         this.description = description;
     }
 
-    public void setRdn(String rdn) {
-        this.rdn = rdn;
-    }
-
-    public void setParentDn(String parentDn) {
-        this.parentDn = parentDn;
-    }
-
     public Collection getChildMappings() {
         return childMappings;
     }
 
     public void setChildMappings(List childMappings) {
         this.childMappings = childMappings;
+    }
+
+    public String getEngineName() {
+        return engineMapping == null ? "DEFAULT" : engineMapping.getEngineName();
     }
 
     public void addACI(ACI aci) {
@@ -460,16 +420,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public int hashCode() {
-        return (rdn == null ? 0 : rdn.hashCode()) +
-                (parentDn == null ? 0 : parentDn.hashCode()) +
-                (enabled ? 0 : 1) +
-                (objectClasses == null ? 0 : objectClasses.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (attributeMappings == null ? 0 : attributeMappings.hashCode()) +
-                (sourceMappings == null ? 0 : sourceMappings.hashCode()) +
-                (relationships == null ? 0 : relationships.hashCode()) +
-                (acl == null ? 0 : acl.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return id == null ? 0 : id.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -483,14 +434,16 @@ public class EntryMapping implements Cloneable {
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
         EntryMapping entryMapping = (EntryMapping)object;
-        if (!equals(rdn, entryMapping.rdn)) return false;
-        if (!equals(parentDn, entryMapping.parentDn)) return false;
+        if (!equals(id, entryMapping.id)) return false;
+        if (!equals(parentId, entryMapping.parentId)) return false;
+        if (!equals(dn, entryMapping.dn)) return false;
         if (enabled != entryMapping.enabled) return false;
         if (!equals(objectClasses, entryMapping.objectClasses)) return false;
         if (!equals(description, entryMapping.description)) return false;
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(engineMapping, entryMapping.engineMapping)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
         if (!equals(parameters, entryMapping.parameters)) return false;
 
@@ -498,8 +451,9 @@ public class EntryMapping implements Cloneable {
     }
 
     public void copy(EntryMapping entryMapping) {
-        rdn = entryMapping.rdn;
-        parentDn = entryMapping.parentDn;
+        id = entryMapping.id;
+        parentId = entryMapping.parentId;
+        dn = entryMapping.dn;
         enabled = entryMapping.enabled;
         description = entryMapping.description;
 
@@ -510,12 +464,9 @@ public class EntryMapping implements Cloneable {
         }
 
         removeAttributeMappings();
-        for (Iterator i=entryMapping.attributeMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                AttributeMapping attribute = (AttributeMapping)j.next();
-                addAttributeMapping((AttributeMapping)attribute.clone());
-            }
+        for (Iterator i=entryMapping.attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attribute = (AttributeMapping)i.next();
+            addAttributeMapping((AttributeMapping)attribute.clone());
         }
 
         removeSourceMappings();
@@ -529,6 +480,8 @@ public class EntryMapping implements Cloneable {
             Relationship relationship = (Relationship)i.next();
             addRelationship((Relationship)relationship.clone());
         }
+
+        engineMapping = (EngineMapping)entryMapping.engineMapping.clone();
 
         removeACL();
         for (Iterator i=entryMapping.acl.iterator(); i.hasNext(); ) {
@@ -544,5 +497,29 @@ public class EntryMapping implements Cloneable {
         EntryMapping entryMapping = new EntryMapping();
         entryMapping.copy(this);
         return entryMapping;
+    }
+
+    public EngineMapping getEngineMapping() {
+        return engineMapping;
+    }
+
+    public void setEngineMapping(EngineMapping engineMapping) {
+        this.engineMapping = engineMapping;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 }

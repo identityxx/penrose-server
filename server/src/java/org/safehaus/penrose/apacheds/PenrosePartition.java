@@ -88,7 +88,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             Partition partition = partitionManager.getPartition("DEFAULT");
             Collection rootEntryMappings = partition.getRootEntryMappings();
             EntryMapping entryMapping = (EntryMapping)rootEntryMappings.iterator().next();
-            return new LdapDN(entryMapping.getDn());
+            return new LdapDN(entryMapping.getDn().toString());
 
         } catch (Exception e) {
             throw new NamingException(e.getMessage());

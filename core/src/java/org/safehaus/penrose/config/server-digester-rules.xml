@@ -34,6 +34,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <call-param-rule pattern="property-value" paramnumber="1"/>
         </pattern>
 
+        <!-- property -->
+        <pattern value="property">
+            <call-method-rule methodname="setProperty" paramcount="2" />
+            <call-param-rule pattern="property-name" paramnumber="0"/>
+            <call-param-rule pattern="property-value" paramnumber="1"/>
+        </pattern>
+
         <!-- service -->
         <pattern value="service">
             <object-create-rule classname="org.safehaus.penrose.service.ServiceConfig" />
@@ -122,6 +129,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <set-next-rule methodname="setSessionConfig" />
         </pattern>
 
+        <!-- handler -->
+        <pattern value="handler">
+            <object-create-rule classname="org.safehaus.penrose.handler.HandlerConfig" />
+            <set-properties-rule/>
+            <call-method-rule pattern="handler-name" methodname="setName" paramcount="0" />
+            <call-method-rule pattern="handler-class" methodname="setHandlerClass" paramcount="0" />
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <pattern value="parameter">
+                <call-method-rule methodname="setParameter" paramcount="2" />
+                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-value" paramnumber="1"/>
+            </pattern>
+            <set-next-rule methodname="addHandlerConfig" />
+        </pattern>
+
 		<!-- engine -->
 		<pattern value="engine">
 			<object-create-rule classname="org.safehaus.penrose.engine.EngineConfig" />
@@ -172,6 +194,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="partition">
             <object-create-rule classname="org.safehaus.penrose.partition.PartitionConfig" />
             <set-properties-rule/>
+            <call-method-rule pattern="handler-name" methodname="setHandlerName" paramcount="0" />
             <set-next-rule methodname="addPartitionConfig" />
         </pattern>
 

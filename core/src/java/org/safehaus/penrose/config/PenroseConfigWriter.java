@@ -171,7 +171,7 @@ public class PenroseConfigWriter {
 
             if (rootUserConfig.getDn() != null) {
                 Element rootDn = new DefaultElement("root-dn");
-                rootDn.add(new DefaultText(rootUserConfig.getDn()));
+                rootDn.add(new DefaultText(rootUserConfig.getDn().toString()));
                 rootElement.add(rootDn);
             }
 

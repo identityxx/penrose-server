@@ -18,6 +18,7 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
@@ -200,14 +201,14 @@ public class ModuleManager implements ModuleManagerMBean {
         this.penrose = penrose;
     }
 
-    public Collection getModules(String dn) throws Exception {
+    public Collection getModules(DN dn) throws Exception {
 
         //log.debug("Finding matching modules for \""+dn+"\".");
 
         Collection list = new ArrayList();
 
         PartitionManager partitionManager = penrose.getPartitionManager();
-        Partition partition = partitionManager.getPartitionByDn(dn);
+        Partition partition = partitionManager.getPartition(dn);
         
         if (partition == null) return list;
 

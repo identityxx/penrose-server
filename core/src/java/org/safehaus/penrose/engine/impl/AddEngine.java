@@ -27,6 +27,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -51,12 +52,12 @@ public class AddEngine {
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             AttributeValues attributeValues
     ) throws Exception {
 
         try {
-            RDN rdn = EntryUtil.getRdn(dn);
+            RDN rdn = dn.getRdn();
             attributeValues.set("rdn", rdn);
 
             AttributeValues parentSourceValues = parent.getSourceValues();

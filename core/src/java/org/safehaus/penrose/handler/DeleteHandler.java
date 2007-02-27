@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
@@ -49,7 +50,7 @@ public class DeleteHandler {
         String message = null;
 
         try {
-            String dn = entry.getDn();
+            DN dn = entry.getDn();
             log.warn("Deleting entry \""+dn+"\".");
 
             log.debug(Formatter.displaySeparator(80));
@@ -60,7 +61,7 @@ public class DeleteHandler {
             performDelete(session, partition, entry);
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            //handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -82,13 +83,11 @@ public class DeleteHandler {
         }
     }
 
-    public void performDelete(PenroseSession session, Partition partition, Entry entry) throws LDAPException {
+    public void performDelete(PenroseSession session, Partition partition, Entry entry) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
 
-        String engineName = "DEFAULT";
-        if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+        String engineName = entryMapping.getEngineName();
         Engine engine = handler.getEngine(engineName);
 
         if (engine == null) {

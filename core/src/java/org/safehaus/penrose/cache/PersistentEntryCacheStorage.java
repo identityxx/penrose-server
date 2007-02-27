@@ -29,6 +29,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.NamingException;
@@ -69,7 +70,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         addMapping();
         mappingId = getMappingId();
 
-        String dn = getEntryMapping().getDn();
+        DN dn = getEntryMapping().getDn();
         log.debug("Creating cache tables for mapping "+dn+" ("+mappingId+")");
 
         createEntriesTable();
@@ -95,7 +96,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public int getMappingId() throws Exception {
-        String dn = getEntryMapping().getDn();
+        DN dn = getEntryMapping().getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -141,7 +142,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public void addMapping() throws Exception {
-        String dn = getEntryMapping().getDn();
+        DN dn = getEntryMapping().getDn();
 
         Connection con = null;
         PreparedStatement ps = null;
@@ -174,7 +175,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public int getQueryId(String baseDn, String filter) throws Exception {
+    public int getQueryId(DN baseDn, String filter) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_queries";
 
@@ -378,7 +379,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public void addQuery(String baseDn, String filter) throws Exception {
+    public void addQuery(DN baseDn, String filter) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_queries";
 
@@ -439,7 +440,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public int getEntryId(String dn) throws Exception {
+    public int getEntryId(DN dn) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
@@ -450,11 +451,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(tableName);
         sb.append(" where rdn=? and parentDn=?");
 
-        String parentDn = EntryUtil.getParentDn(dn);
-        RDN rdn = EntryUtil.getRdn(dn);
+        RDN rdn = dn.getRdn();
+        DN parentDn = dn.getParentDn();
 
         parameters.add(rdn.toString());
-        parameters.add(parentDn);
+        parameters.add(parentDn.toString());
 
         String sql = sb.toString();
 
@@ -513,7 +514,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return id;
     }
 
-    public void addEntry(String dn) throws Exception {
+    public void addEntry(DN dn) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
@@ -524,8 +525,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         sb.append(tableName);
         sb.append(" values (null, ?, ?, ?)");
 
-        String parentDn = EntryUtil.getParentDn(dn);
-        RDN rdn = EntryUtil.getRdn(dn);
+        RDN rdn = dn.getRdn();
+        DN parentDn = dn.getParentDn();
 
         parameters.add(rdn.toString());
         parameters.add(parentDn);
@@ -852,8 +853,6 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void drop() throws Exception {
         if (!getPartition().isDynamic(getEntryMapping())) {
-            String dn = getEntryMapping().getDn();
-            RDN rdn = EntryUtil.getRdn(dn);
             remove(getEntryMapping().getDn());
         }
 
@@ -1042,7 +1041,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public Entry get(String dn) throws Exception {
+    public Entry get(DN dn) throws Exception {
         log.debug("Getting "+dn);
 
         int entryId = getEntryId(dn);
@@ -1056,7 +1055,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Entry entry = null;
 
         try {
-            String dn = getDn(entryId);
+            DN dn = getDn(entryId);
             if (dn == null) return null;
 
             AttributeValues attributeValues = new AttributeValues();
@@ -1248,7 +1247,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return true;
     }
 
-    public boolean contains(String baseDn, Filter filter) throws Exception {
+    public boolean contains(DN baseDn, Filter filter) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
@@ -1343,7 +1342,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public boolean search(
-            final String baseDn,
+            final DN baseDn,
             final Filter filter,
             final PenroseSearchResults results
     ) throws Exception {
@@ -1591,7 +1590,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return results;
     }
 
-    public void add(String baseDn, Filter filter, String dn) throws Exception {
+    public void add(DN baseDn, Filter filter, DN dn) throws Exception {
 
         log.debug("put("+filter+", "+dn+")");
 
@@ -1669,7 +1668,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public void put(String dn, Entry entry) throws Exception {
+    public void put(DN dn, Entry entry) throws Exception {
 
         AttributeValues attributeValues = entry.getAttributeValues();
 
@@ -1784,7 +1783,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         }
     }
 
-    public String getDn(int entryId) throws Exception {
+    public DN getDn(int entryId) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
@@ -1831,7 +1830,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             String rdn = rs.getString(1);
             String parentDn = rs.getString(2);
-            String dn = EntryUtil.append(rdn, parentDn);
+            DN dn = new DN(EntryUtil.append(rdn, parentDn));
 
             log.debug("DN: "+dn);
 
@@ -2068,7 +2067,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         invalidate();
     }
 
-    public void remove(String dn) throws Exception {
+    public void remove(DN dn) throws Exception {
 
         int entryId = getEntryId(dn);
 

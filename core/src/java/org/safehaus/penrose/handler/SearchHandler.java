@@ -28,9 +28,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -51,28 +49,7 @@ public class SearchHandler {
     }
 
     public String normalize(String dn) {
-        String newDn = "";
-
-        SchemaManager schemaManager = handler.getSchemaManager();
-        while (dn != null) {
-            RDN rdn = EntryUtil.getRdn(dn);
-            String parentDn = EntryUtil.getParentDn(dn);
-
-            RDN newRdn = new RDN();
-            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Object value = rdn.get(name);
-
-                newRdn.set(schemaManager.getNormalizedAttributeName(name), value);
-            }
-
-            //log.debug("Normalized rdn "+rdn+" => "+newRdn);
-
-            newDn = EntryUtil.append(newDn, newRdn.toString());
-            dn = parentDn;
-        }
-
-        return newDn;
+        return new DN(dn).getNormalizedDn();
     }
 
     public int search(
@@ -80,7 +57,7 @@ public class SearchHandler {
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final String baseDn,
+            final DN baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
@@ -159,7 +136,7 @@ public class SearchHandler {
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final String baseDn,
+            final DN baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
@@ -168,7 +145,7 @@ public class SearchHandler {
         log.info("Search base mapping \""+entryMapping.getDn()+"\":");
 
         final PenroseSearchResults sr = new PenroseSearchResults();
-        final EntryCache cache = handler.getEntryCache();
+        //final EntryCache cache = handler.getEntryCache();
 
         sr.addListener(new PipelineAdapter() {
             public void objectAdded(PipelineEvent event) {
@@ -185,7 +162,7 @@ public class SearchHandler {
             }
         });
 
-        boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
+        boolean cacheFilter = false; //cache.search(partition, entryMapping, baseDn, filter, sr);
         log.debug("Cache filter: "+cacheFilter);
 
         if (!cacheFilter) {
@@ -196,8 +173,8 @@ public class SearchHandler {
 
                     try {
                         log.debug("Storing "+entry.getDn()+" in cache");
-                        cache.put(partition, entryMapping, entry);
-                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+                        //cache.put(partition, entryMapping, entry);
+                        //cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
 
                     } catch (Exception e) {
                         log.debug(e.getMessage(), e);
@@ -205,9 +182,7 @@ public class SearchHandler {
                 }
             });
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+            String engineName = entryMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {
@@ -235,7 +210,7 @@ public class SearchHandler {
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final String baseDn,
+            final DN baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
@@ -261,7 +236,7 @@ public class SearchHandler {
             }
         });
 
-        boolean cacheFilter = cache.search(partition, entryMapping, baseDn, filter, sr);
+        boolean cacheFilter = false; //cache.search(partition, entryMapping, baseDn, filter, sr);
         log.debug("Cache filter: "+cacheFilter);
 
         if (!cacheFilter) {
@@ -272,8 +247,8 @@ public class SearchHandler {
 
                     try {
                         log.debug("Storing "+entry.getDn()+" in cache");
-                        cache.put(partition, entryMapping, entry);
-                        cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
+                        //cache.put(partition, entryMapping, entry);
+                        //cache.add(partition, entryMapping, baseDn, filter, entry.getDn());
 
                     } catch (Exception e) {
                         log.debug(e.getMessage(), e);
@@ -281,9 +256,7 @@ public class SearchHandler {
                 }
             });
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+            String engineName = entryMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {

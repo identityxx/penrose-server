@@ -20,6 +20,7 @@ package org.safehaus.penrose.operationalAttribute;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
 
 import javax.naming.directory.*;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class OperationalAttributeModule extends Module {
         System.out.println("#### Adding "+event.getDn()+" at "+timestamp);
 
         PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        DN bindDn = session.getBindDn();
 
         Attributes attributes = event.getAttributes();
 
@@ -70,7 +71,7 @@ public class OperationalAttributeModule extends Module {
         System.out.println("#### Modifying "+event.getDn()+" at "+timestamp);
 
         PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        DN bindDn = session.getBindDn();
 
         Collection modifications = event.getModifications();
 
@@ -93,7 +94,7 @@ public class OperationalAttributeModule extends Module {
         System.out.println("#### Renaming "+event.getDn()+" at "+timestamp);
 
         PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        DN bindDn = session.getBindDn();
 
         Collection modifications = new ArrayList();
 
@@ -105,7 +106,7 @@ public class OperationalAttributeModule extends Module {
         mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
         modifications.add(mi);
 
-        String dn = event.getDn();
+        DN dn = event.getDn();
         session.modify(dn, modifications);
     }
 }

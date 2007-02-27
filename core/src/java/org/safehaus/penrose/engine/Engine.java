@@ -39,15 +39,12 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.impl.LoadEngine;
 import org.safehaus.penrose.engine.impl.MergeEngine;
 import org.safehaus.penrose.engine.impl.JoinEngine;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.Attributes;
 import java.util.*;
@@ -206,7 +203,7 @@ public abstract class Engine {
             String name = attributeMapping.getName();
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) {
-                if (attributeMapping.isPK()) {
+                if (attributeMapping.isRdn()) {
                     log.debug(" - "+name+" (PK): null");
                     return null;
                 }
@@ -453,9 +450,9 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             String password
-    ) throws LDAPException;
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
@@ -466,9 +463,9 @@ public abstract class Engine {
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             Attributes attributes
-    ) throws LDAPException;
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
@@ -478,7 +475,7 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             Entry entry
-    ) throws LDAPException;
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
@@ -489,7 +486,7 @@ public abstract class Engine {
             Partition partition,
             Entry entry,
             Collection modifications
-    ) throws LDAPException;
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
@@ -499,9 +496,9 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn
-    ) throws LDAPException;
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
@@ -517,23 +514,23 @@ public abstract class Engine {
         return new ArrayList();
     }
 
-    public abstract int search(
+    public abstract void search(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String baseDn,
+            DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
             PenroseSearchResults results
     ) throws Exception;
 
-    public abstract int expand(
+    public abstract void expand(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String baseDn,
+            DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
             PenroseSearchResults results
@@ -596,18 +593,18 @@ public abstract class Engine {
             for (Iterator i=pks.iterator(); i.hasNext(); ) {
                 RDN filter = (RDN)i.next();
 
-                RDN f = new RDN();
+                RDNBuilder rb = new RDNBuilder();
                 for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
                     String newName = name.substring(sourceMapping.getName().length()+1);
-                    f.set(newName, filter.get(name));
+                    rb.set(newName, filter.get(name));
                 }
 
-                if (f.isEmpty()) continue;
+                if (rb.isEmpty()) continue;
 
-                RDN normalizedFilter = schemaManager.normalize(f);
+                RDN normalizedFilter = rb.toRdn();
                 normalizedFilters.add(normalizedFilter);
             }
         }
@@ -635,7 +632,7 @@ public abstract class Engine {
 
         interpreter.set(rdn);
 
-        RDN filter = new RDN();
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)j.next();
             String name = fieldMapping.getName();
@@ -645,14 +642,14 @@ public abstract class Engine {
 
             //log.debug("   ==> "+field.getName()+"="+value);
             //filter.set(source.getName()+"."+name, value);
-            filter.set(name, value);
+            rb.set(name, value);
         }
 
         //if (filter.isEmpty()) return null;
 
         interpreter.clear();
 
-        return filter;
+        return rb.toRdn();
     }
 
     public Collection computeDns(
@@ -691,26 +688,27 @@ public abstract class Engine {
         log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
         Collection dns = new ArrayList();
         if (parentDns.isEmpty()) {
-            String dn = entryMapping.getDn();
+            DN dn = entryMapping.getDn();
             log.debug(" - "+dn);
             dns.add(dn);
             return dns;
 
         }
 
+        DNBuilder db = new DNBuilder();
+
         for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-            String parentDn = (String)i.next();
+            DN parentDn = (DN)i.next();
             //log.info(" - parent dn: "+parentDn);
             for (Iterator j=rdns.iterator(); j.hasNext(); ) {
                 RDN rdn = (RDN)j.next();
                 //log.info("   - rdn: "+rdn);
 
-                String s = rdn.toString(); //.trim();
-                //s = LDAPDN.escapeRDN(s);
-                //log.info("     => rdn: "+rdn);
+                db.clear();
+                db.append(rdn);
+                db.append(parentDn);
 
-                String dn = EntryUtil.append(s, parentDn);
-
+                DN dn = db.toDn();
                 log.debug(" - "+dn);
                 dns.add(dn);
             }
@@ -727,7 +725,7 @@ public abstract class Engine {
         //log.debug("Computing RDNs:");
         AttributeValues rdns = new AttributeValues();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
+        Collection rdnAttributes = entryMapping.getRdnAttributeMappings();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
@@ -737,7 +735,7 @@ public abstract class Engine {
 
             if (value == null) continue;
 
-            if (value instanceof Collection && AttributeMapping.RDN_FIRST.equals(attributeMapping.getRdn())) {
+            if (value instanceof Collection) {
                 Collection c = (Collection)value;
                 if (c.size() > 0) rdns.add(name, c.iterator().next());
             } else {

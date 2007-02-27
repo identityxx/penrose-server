@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.management;
 
+import org.safehaus.penrose.entry.DN;
+
 import java.util.*;
 
 public interface PenroseServiceMBean {
@@ -33,7 +35,7 @@ public interface PenroseServiceMBean {
     public void restart() throws Exception;
     public void store() throws Exception;
 
-    public void renameEntryMapping(String oldDn, String newDn) throws Exception;
+    public void renameEntryMapping(DN oldDn, DN newDn) throws Exception;
 
     public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;

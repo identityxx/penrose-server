@@ -32,6 +32,8 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
@@ -80,14 +82,17 @@ public class Handler {
     private SessionManager sessionManager;
     private PartitionManager partitionManager;
 
-    private InterpreterManager interpreterManager;
-    private ACLEngine aclEngine;
-    private FilterTool filterTool;
-    private EntryCache entryCache;
+    InterpreterManager interpreterManager;
+    ACLEngine aclEngine;
+    FilterTool filterTool;
+    EntryCache entryCache;
 
     ThreadManager threadManager;
 
     private String status = STOPPED;
+
+    public Handler() throws Exception {
+    }
 
     public Handler(Penrose penrose) throws Exception {
         this.penrose = penrose;
@@ -188,14 +193,13 @@ public class Handler {
 
     public void bind(
             PenroseSession session,
-            String dn,
+            DN dn,
             String password
     ) throws LDAPException {
 
         try {
             PenroseConfig penroseConfig = penrose.getPenroseConfig();
-            String rootDn = schemaManager.normalize(penroseConfig.getRootDn());
-            dn = schemaManager.normalize(dn);
+            DN rootDn = penroseConfig.getRootDn();
 
             int rc;
 
@@ -208,7 +212,7 @@ public class Handler {
 
             } else {
 
-                Partition partition = partitionManager.findPartition(dn);
+                Partition partition = partitionManager.getPartition(dn);
 
                 if (partition == null) {
                     log.debug("Entry "+dn+" not found");
@@ -234,7 +238,7 @@ public class Handler {
 
     public void add(
             PenroseSession session,
-            String dn,
+            DN dn,
             Attributes attributes
     ) throws LDAPException {
 
@@ -248,9 +252,9 @@ public class Handler {
             log.debug(" - Entry: "+dn);
             log.debug("");
 
-            String parentDn = EntryUtil.getParentDn(dn);
+            DN parentDn = dn.getParentDn();
 
-            Partition partition = partitionManager.findPartition(parentDn);
+            Partition partition = partitionManager.getPartition(parentDn);
 
             if (partition == null) {
                 log.debug("Parent entry "+parentDn+" not found");
@@ -290,13 +294,13 @@ public class Handler {
 
         if (session == null) return;
 
-        session.setBindDn(null);
+        session.setBindDn((DN)null);
         session.setBindPassword(null);
     }
 
     public boolean compare(
             PenroseSession session,
-            String dn,
+            DN dn,
             String attributeName,
             Object attributeValue
     ) throws LDAPException {
@@ -316,7 +320,7 @@ public class Handler {
             }
             log.debug("-------------------------------------------------------------------------------");
 
-            Partition partition = partitionManager.findPartition(dn);
+            Partition partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
                 log.debug("Entry "+dn+" not found");
@@ -354,7 +358,7 @@ public class Handler {
 
     public void delete(
             PenroseSession session,
-            String dn
+            DN dn
     ) throws LDAPException {
 
         try {
@@ -366,7 +370,7 @@ public class Handler {
             log.debug(" - DN: "+dn);
             log.debug("");
 
-            Partition partition = partitionManager.findPartition(dn);
+            Partition partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
                 int rc = LDAPException.NO_SUCH_OBJECT;
@@ -418,7 +422,7 @@ public class Handler {
 
     public void modify(
             PenroseSession session,
-            String dn,
+            DN dn,
             Collection modifications
     ) throws LDAPException {
 
@@ -454,7 +458,7 @@ public class Handler {
 
             log.debug(Formatter.displaySeparator(80));
 
-            Partition partition = partitionManager.findPartition(dn);
+            Partition partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
                 int rc = LDAPException.NO_SUCH_OBJECT;
@@ -506,8 +510,8 @@ public class Handler {
 
     public void modrdn(
             PenroseSession session,
-            String dn,
-            String newRdn,
+            DN dn,
+            RDN newRdn,
             boolean deleteOldRdn
     ) throws LDAPException {
 
@@ -520,7 +524,7 @@ public class Handler {
             log.debug(" - DN: " + dn);
             log.debug(" - New RDN: " + newRdn);
 
-            Partition partition = partitionManager.findPartition(dn);
+            Partition partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
                 int rc = LDAPException.NO_SUCH_OBJECT;
@@ -581,7 +585,7 @@ public class Handler {
      */
     public int search(
             final PenroseSession session,
-            final String baseDn,
+            final DN baseDn,
             final String filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
@@ -596,7 +600,7 @@ public class Handler {
             return LDAPException.SUCCESS;
         }
 
-        final Partition partition = partitionManager.findPartition(baseDn);
+        final Partition partition = partitionManager.getPartition(baseDn);
 
         if (partition == null) {
             log.debug("Entry "+baseDn+" not found");
@@ -647,7 +651,7 @@ public class Handler {
     public int searchInBackground(
             final PenroseSession session,
             final Partition partition,
-            final String baseDn,
+            final DN baseDn,
             final String filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
@@ -677,7 +681,7 @@ public class Handler {
             public void objectAdded(PipelineEvent event) {
                 try {
                     Entry entry = (Entry)event.getObject();
-                    String dn = entry.getDn();
+                    DN dn = entry.getDn();
                     EntryMapping entryMapping = entry.getEntryMapping();
 
                     // check read permission
@@ -730,7 +734,7 @@ public class Handler {
             return LDAPException.NO_SUCH_OBJECT;
         }
 */
-        Collection entryMappings = partitionManager.findEntryMappings(partition, baseDn);
+        Collection entryMappings = partition.findEntryMappings(baseDn);
 
         int rc = LDAPException.SUCCESS;
 
@@ -823,18 +827,19 @@ public class Handler {
         Set denies = new HashSet();
         denies.addAll(attributeNames);
 
-        String targetDn = schemaManager.normalize(searchResult.getName());
+        DN targetDn = new DN(searchResult.getName());
         aclEngine.getReadableAttributes(session, partition, entryMapping, targetDn, attributeNames, grants, denies);
 
         log.debug("Granted: "+grants);
         log.debug("Denied: "+denies);
 
         Collection opAtNames = new HashSet();
+/*
         for (Iterator i=entryMapping.getOperationalAttributeNames().iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             opAtNames.add(attributeName.toLowerCase());
         }
-        
+*/        
         Collection list = new HashSet();
 
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
@@ -847,12 +852,12 @@ public class Handler {
                 list.add(attributeName);
                 continue;
             }
-
+/*
             if (partition.isProxy(entryMapping)) {
                 log.debug("Keep proxied attribute "+normalizedName);
                 continue;
             }
-
+*/
             if (requestedAttributeNames.isEmpty()) {
                 if (opAtNames.contains(normalizedName)) {
                     log.debug("Remove operational attribute "+normalizedName);

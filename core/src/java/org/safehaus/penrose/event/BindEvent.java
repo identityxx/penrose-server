@@ -18,6 +18,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
@@ -31,19 +32,19 @@ public class BindEvent extends Event {
     public final static int AFTER_UNBIND  = 4;
 
     private PenroseSession session;
-    private String dn;
+    private DN dn;
     private int returnCode;
 
     private String password;
 
-    public BindEvent(Object source, int type, PenroseSession session, String dn, String password) {
+    public BindEvent(Object source, int type, PenroseSession session, DN dn, String password) {
         super(source, type);
         this.session = session;
         this.dn = dn;
         this.password = password;
     }
 
-    public BindEvent(Object source, int type, PenroseSession session, String dn) {
+    public BindEvent(Object source, int type, PenroseSession session, DN dn) {
         super(source, type);
         this.session = session;
         this.dn = dn;
@@ -57,11 +58,11 @@ public class BindEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

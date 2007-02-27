@@ -21,6 +21,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 
 import java.util.*;
 
@@ -40,7 +41,7 @@ public class InMemorySourceCache extends SourceCache {
 
     public RDN normalize(RDN rdn) throws Exception {
 
-        RDN newRdn = new RDN();
+        RDNBuilder rb = new RDNBuilder();
 
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -52,10 +53,10 @@ public class InMemorySourceCache extends SourceCache {
                 value = ((String)value).toLowerCase();
             }
 
-            newRdn.set(name, value);
+            rb.set(name, value);
         }
 
-        return newRdn;
+        return rb.toRdn();
     }
 
     public Object get(Object key) throws Exception {
@@ -193,13 +194,13 @@ public class InMemorySourceCache extends SourceCache {
             String fieldName = fieldConfig.getName();
             Object value = values.getOne(fieldName);
 
-            RDN uniqueKey = new RDN();
-            uniqueKey.set(fieldName, value);
+            RDNBuilder rb = new RDNBuilder();
+            rb.set(fieldName, value);
+            RDN uniqueKey = rb.toRdn();
 
-            RDN normalizedUniqueKey = normalize(uniqueKey);
-            dataMap.put(normalizedUniqueKey, values);
+            dataMap.put(uniqueKey, values);
 
-            uniqueKeys.add(normalizedUniqueKey);
+            uniqueKeys.add(uniqueKey);
         }
 
         uniqueKeyMap.put(pk, uniqueKeys);

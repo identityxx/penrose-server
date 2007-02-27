@@ -21,6 +21,11 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -40,12 +45,13 @@ public class PenroseSession {
 
     private SessionManager sessionManager;
     private EventManager eventManager;
+    private PartitionManager partitionManager;
 
     private Handler handler;
 
     private String sessionId;
 
-    private String bindDn;
+    private DN bindDn;
     private String bindPassword;
 
     private Date createDate;
@@ -60,11 +66,15 @@ public class PenroseSession {
         lastActivityDate = (Date)createDate.clone();
     }
 
-    public String getBindDn() {
+    public DN getBindDn() {
         return bindDn;
     }
 
     public void setBindDn(String bindDn) {
+        setBindDn(new DN(bindDn));
+    }
+    
+    public void setBindDn(DN bindDn) {
         this.bindDn = bindDn;
     }
 
@@ -85,6 +95,30 @@ public class PenroseSession {
     }
 
     public void add(String dn, Attributes attributes) throws LDAPException {
+        add(new DN(dn), attributes);
+    }
+
+    public void add(DN dn, Attributes attributes) throws LDAPException {
+
+        Partition partition = null;
+
+        try {
+            partition = partitionManager.getPartition(dn);
+
+            if (partition == null) {
+                log.debug("Partition for entry "+dn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        add(partition, dn, attributes);
+    }
+
+    public void add(Partition partition, DN dn, Attributes attributes) throws LDAPException {
         int rc = LDAPException.SUCCESS;
 
         try {
@@ -123,6 +157,10 @@ public class PenroseSession {
     }
 
     public void bind(String dn, String password) throws LDAPException {
+    	bind(new DN(dn), password);
+    }
+
+    public void bind(DN dn, String password) throws LDAPException {
         int rc = LDAPException.SUCCESS;
 
         try {
@@ -160,7 +198,11 @@ public class PenroseSession {
         }
     }
 
-    public boolean compare(String dn, String attributeName, Object attributeValue) throws Exception {
+    public boolean compare(String dn, String attributeName, Object attributeValue) throws LDAPException {
+        return compare(new DN(dn), attributeName, attributeValue);
+    }
+
+    public boolean compare(DN dn, String attributeName, Object attributeValue) throws LDAPException {
         int rc = LDAPException.SUCCESS;
 
         try {
@@ -199,6 +241,10 @@ public class PenroseSession {
      }
 
     public void delete(String dn) throws LDAPException {
+        delete(new DN(dn));
+    }
+
+    public void delete(DN dn) throws LDAPException {
 
         int rc = LDAPException.SUCCESS;
 
@@ -238,6 +284,10 @@ public class PenroseSession {
     }
 
     public void modify(String dn, Collection modifications) throws LDAPException {
+        modify(new DN(dn), modifications);
+    }
+
+    public void modify(DN dn, Collection modifications) throws LDAPException {
 
         int rc = LDAPException.SUCCESS;
 
@@ -277,6 +327,10 @@ public class PenroseSession {
     }
 
     public void modrdn(String dn, String newRdn, boolean deleteOldRdn) throws LDAPException {
+        modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+    }
+
+    public void modrdn(DN dn, RDN newRdn, boolean deleteOldRdn) throws LDAPException {
 
         int rc = LDAPException.SUCCESS;
 
@@ -324,47 +378,62 @@ public class PenroseSession {
      * @return return code
      * @throws Exception
      */
-    public int search(
+    public void search(
             String baseDn,
             String filter,
             PenroseSearchControls sc,
+            PenroseSearchResults results
+    ) throws LDAPException {
+        search(new DN(baseDn), filter, sc, results);
+    }
+
+    public int search(
+            DN baseDn,
+            String filter,
+            PenroseSearchControls sc,
             final PenroseSearchResults results)
-            throws Exception {
+            throws LDAPException {
 
-        if (!isValid()) throw new Exception("Invalid session.");
+        try {
+            if (!isValid()) throw new Exception("Invalid session.");
 
-        lastActivityDate.setTime(System.currentTimeMillis());
+            lastActivityDate.setTime(System.currentTimeMillis());
 
-        SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
-        boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
+            SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
+            boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
 
-        if (!b) {
-            results.close();
-            return LDAPException.SUCCESS;
-        }
-
-        final String newBaseDn = beforeSearchEvent.getBaseDn();
-        final String newFilter = beforeSearchEvent.getFilter();
-        final PenroseSearchControls newSc = beforeSearchEvent.getSearchControls();
-
-        final PenroseSession session = this;
-
-        results.addListener(new PipelineAdapter() {
-            public void pipelineClosed(PipelineEvent event) {
-                try {
-                    lastActivityDate.setTime(System.currentTimeMillis());
-
-                    SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, newBaseDn, newFilter, newSc, results);
-                    afterSearchEvent.setReturnCode(results.getReturnCode());
-                    eventManager.postEvent(newBaseDn, afterSearchEvent);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+            if (!b) {
+                results.close();
+                return LDAPException.SUCCESS;
             }
-        });
 
-        return handler.search(this, newBaseDn, newFilter, newSc, results);
+            final DN newBaseDn = beforeSearchEvent.getBaseDn();
+            final String newFilter = beforeSearchEvent.getFilter();
+            final PenroseSearchControls newSc = beforeSearchEvent.getSearchControls();
+
+            final PenroseSession session = this;
+
+            results.addListener(new PipelineAdapter() {
+                public void pipelineClosed(PipelineEvent event) {
+                    try {
+                        lastActivityDate.setTime(System.currentTimeMillis());
+
+                        SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, newBaseDn, newFilter, newSc, results);
+                        afterSearchEvent.setReturnCode(results.getReturnCode());
+                        eventManager.postEvent(newBaseDn, afterSearchEvent);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            });
+
+            return handler.search(this, newBaseDn, newFilter, newSc, results);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
     }
 
     public void unbind() throws LDAPException {

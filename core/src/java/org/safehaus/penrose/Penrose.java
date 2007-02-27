@@ -269,7 +269,7 @@ public class Penrose {
         loadConnections();
 
         loadConnector();
-        loadEngine();
+        loadEngines();
         loadHandler();
 
         loadModules();
@@ -346,13 +346,9 @@ public class Penrose {
         connectorManager.init(connectorConfig);
     }
 
-    public void loadEngine() throws Exception {
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+    public void loadEngines() throws Exception {
 
         Collection engineConfigs = penroseConfig.getEngineConfigs();
-
         for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
             if (engineManager.getEngine(engineConfig.getName()) != null) continue;
@@ -363,10 +359,13 @@ public class Penrose {
 
     public void loadHandler() throws Exception {
 
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        if (handlerManager.getHandler(handlerConfig.getName()) != null) return;
+        Collection handlerConfigs = penroseConfig.getHandlerConfigs();
+        for (Iterator i=handlerConfigs.iterator(); i.hasNext(); ) {
+            HandlerConfig handlerConfig = (HandlerConfig)i.next();
+            if (handlerManager.getHandler(handlerConfig.getName()) != null) return;
 
-        handlerManager.init(handlerConfig, engineManager);
+            handlerManager.init(handlerConfig, engineManager);
+        }
     }
 
 
@@ -466,7 +465,7 @@ public class Penrose {
         PenroseSession session = sessionManager.newSession();
         if (session == null) return null;
 
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
+        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
         Handler handler = handlerManager.getHandler(handlerConfig.getName());
         session.setHandler(handler);
 
@@ -480,7 +479,7 @@ public class Penrose {
         PenroseSession session = sessionManager.createSession(sessionId);
         if (session == null) return null;
 
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
+        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
         Handler handler = handlerManager.getHandler(handlerConfig.getName());
         session.setHandler(handler);
 
@@ -539,7 +538,7 @@ public class Penrose {
     }
 
     public Handler getHandler() {
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
+        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
         return handlerManager.getHandler(handlerConfig.getName());
     }
 

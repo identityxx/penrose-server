@@ -24,6 +24,7 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.session.SessionManager;
@@ -107,7 +108,7 @@ public class SessionManagerTest extends TestCase {
 
         SessionManager sessionManager = penrose.getSessionManager();
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
-        String bindDn = rootUserConfig.getDn();
+        DN bindDn = rootUserConfig.getDn();
         String password = rootUserConfig.getPassword();
 
         assertEquals(0, sessionManager.getSessions().size());

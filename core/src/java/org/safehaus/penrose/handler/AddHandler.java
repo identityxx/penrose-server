@@ -29,6 +29,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class AddHandler {
             PenroseSession session,
             Partition partition,
             Entry parent,
-            String dn,
+            DN dn,
             Attributes attributes)
     throws Exception {
 
@@ -114,7 +115,7 @@ public class AddHandler {
             PenroseSession session,
             Partition partition,
             Entry parent,
-            String dn,
+            DN dn,
             Attributes attributes)
     throws Exception {
 
@@ -129,9 +130,7 @@ public class AddHandler {
                 EntryMapping entryMapping = (EntryMapping)iterator.next();
                 if (!partition.isDynamic(entryMapping)) continue;
 
-                String engineName = "DEFAULT";
-                if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+                String engineName = entryMapping.getEngineName();
                 Engine engine = handler.getEngine(engineName);
 
                 if (engine == null) {
@@ -145,9 +144,7 @@ public class AddHandler {
                 return;
             }
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(parentMapping)) engineName = "PROXY";
-
+            String engineName = parentMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {
@@ -178,7 +175,7 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int addStaticEntry(EntryMapping parent, String dn, Attributes attributes) throws Exception {
+    public int addStaticEntry(EntryMapping parent, DN dn, Attributes attributes) throws Exception {
         log.debug("Adding static entry "+dn);
 
         AttributeValues values = new AttributeValues();
@@ -195,7 +192,7 @@ public class AddHandler {
 
         EntryMapping newEntry;
 
-        RDN rdn = EntryUtil.getRdn(dn);
+        RDN rdn = dn.getRdn();
 
         if (parent == null) {
             newEntry = new EntryMapping(dn);
@@ -204,7 +201,7 @@ public class AddHandler {
             newEntry = new EntryMapping(rdn.toString(), parent);
         }
 
-        Partition partition = handler.getPartitionManager().getPartitionByDn(dn);
+        Partition partition = handler.getPartitionManager().getPartition(dn);
         if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         partition.addEntryMapping(newEntry);
@@ -234,7 +231,7 @@ public class AddHandler {
                 AttributeMapping newAttribute = new AttributeMapping();
                 newAttribute.setName(name);
                 newAttribute.setConstant(value);
-                newAttribute.setRdn(rdn.contains(name) ? AttributeMapping.RDN_TRUE : AttributeMapping.RDN_FALSE);
+                newAttribute.setRdn(rdn.contains(name));
 
                 log.debug("Add attribute "+name+": "+value);
                 newEntry.addAttributeMapping(newAttribute);

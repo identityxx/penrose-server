@@ -22,7 +22,6 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
@@ -33,7 +32,7 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -122,11 +121,11 @@ public class SearchEngine {
 
         Collection list = engine.computeDns(partition, interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
-            String dn = (String)j.next();
+            DN dn = (DN)j.next();
             log.debug("Static entry "+dn);
 
             EntryData map = new EntryData();
-            map.setDn(entryMapping.getDn());
+            map.setDn(dn);
             map.setMergedValues(parentSourceValues);
             results.add(map);
         }
@@ -151,10 +150,10 @@ public class SearchEngine {
         searchSources(partition, parentSourceValues, entryMapping, filter, values);
         values.close();
 
-        Map sourceValues = new TreeMap();
-        Map rows = new TreeMap();
+        Map sourceValues = new HashMap();
+        Map rows = new HashMap();
 
-        Collection dns = new TreeSet();
+        Collection dns = new ArrayList();
         Map childDns = new HashMap();
 
         //log.debug("Search results for "+entryMapping.getDn()+":");
@@ -164,13 +163,12 @@ public class SearchEngine {
 
             Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
-                String dn = (String)j.next();
+                DN dn = (DN)j.next();
                 //log.debug("     - "+dn);
 
                 dns.add(dn);
 
-                RDN rdn = EntryUtil.getRdn(dn);
-                String parentDn = EntryUtil.getParentDn(dn);
+                DN parentDn = dn.getParentDn();
 
                 AttributeValues av = (AttributeValues)sourceValues.get(dn);
                 if (av == null) {
@@ -188,7 +186,7 @@ public class SearchEngine {
 
                 Collection c = (Collection)childDns.get(parentDn);
                 if (c == null) {
-                    c = new TreeSet();
+                    c = new HashSet();
                     childDns.put(parentDn, c);
                 }
                 c.add(dn);
@@ -198,12 +196,12 @@ public class SearchEngine {
         if (parentMapping != null) {
             log.debug("Storing "+filter+" in entry filter cache:");
             for (Iterator i=childDns.keySet().iterator(); i.hasNext(); ) {
-                String parentDn = (String)i.next();
+                DN parentDn = (DN)i.next();
                 Collection c = (Collection)childDns.get(parentDn);
 
                 log.debug(" - "+parentDn+":");
                 for (Iterator j=c.iterator(); j.hasNext(); ) {
-                    String dn = (String)j.next();
+                    DN dn = (DN)j.next();
                     log.debug("   - DN: "+dn);
                 }
 
@@ -212,7 +210,7 @@ public class SearchEngine {
 
         log.debug("Results:");
         for (Iterator i=sourceValues.keySet().iterator(); i.hasNext(); ) {
-            String dn = (String)i.next();
+            DN dn = (DN)i.next();
             AttributeValues sv = (AttributeValues)sourceValues.get(dn);
             Collection r = (Collection)rows.get(dn);
 
@@ -291,7 +289,7 @@ public class SearchEngine {
 
                     Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
                     for (Iterator j=list.iterator(); j.hasNext(); ) {
-                        String dn = (String)j.next();
+                        DN dn = (DN)j.next();
                         log.debug("Generated DN: "+dn);
 
                         EntryData data = new EntryData();

@@ -18,6 +18,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
@@ -30,9 +31,9 @@ public class DeleteEvent extends Event {
     private PenroseSession session;
     private int returnCode;
 
-    private String dn;
+    private DN dn;
 
-    public DeleteEvent(Object source, int type, PenroseSession session, String dn) {
+    public DeleteEvent(Object source, int type, PenroseSession session, DN dn) {
         super(source, type);
         this.session = session;
         this.dn = dn;
@@ -54,11 +55,11 @@ public class DeleteEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

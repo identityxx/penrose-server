@@ -20,6 +20,7 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -241,8 +242,8 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public RDN getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
 
-        RDN pk = new RDN();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             if (!fieldConfig.isPK()) continue;
@@ -257,9 +258,10 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
             Object value = iterator.next();
 
-            pk.set(fieldName, value);
+            rb.set(fieldName, value);
         }
 
+        RDN pk = rb.toRdn();
         return pk;
     }
 

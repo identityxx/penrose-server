@@ -27,9 +27,7 @@ import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EntryData;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -78,7 +76,7 @@ public class MergeEngine {
             while (entries.hasNext()) {
                 EntryData map = (EntryData)entries.next();
 
-                String dn = map.getDn();
+                DN dn = map.getDn();
                 AttributeValues primarySourceValues = map.getMergedValues();
                 Collection rows = map.getRows();
                 RDN filter = map.getFilter();
@@ -109,7 +107,7 @@ public class MergeEngine {
 
     public Entry mergeEntries(
             Partition partition,
-            String dn,
+            DN dn,
             EntryMapping entryMapping,
             AttributeValues primarySourceValues,
             AttributeValues loadedSourceValues,
@@ -167,8 +165,9 @@ public class MergeEngine {
 
         if (primarySourceMapping != null && loadedSourceValues != null) {
 
-            RDN key = new RDN();
-            key.add(primarySourceMapping.getName(), pk);
+            RDNBuilder rb = new RDNBuilder();
+            rb.add(primarySourceMapping.getName(), pk);
+            RDN key = rb.toRdn();
 
             Filter filter  = FilterTool.createFilter(key, true);
 

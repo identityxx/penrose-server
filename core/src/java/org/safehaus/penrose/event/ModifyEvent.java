@@ -21,6 +21,7 @@ package org.safehaus.penrose.event;
 import java.util.Collection;
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
@@ -31,23 +32,23 @@ public class ModifyEvent extends Event {
     public final static int AFTER_MODIFY  = 1;
 
     private PenroseSession session;
-    private String dn;
+    private DN dn;
     private int returnCode;
 
     private Collection modifications;
 
-    public ModifyEvent(Object source, int type, PenroseSession session, String dn, Collection modifications) {
+    public ModifyEvent(Object source, int type, PenroseSession session, DN dn, Collection modifications) {
         super(source, type);
         this.session = session;
         this.dn = dn;
         this.modifications = modifications;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

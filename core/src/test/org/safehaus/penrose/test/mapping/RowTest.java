@@ -2,6 +2,7 @@ package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 
 /**
  * @author Endi S. Dewata
@@ -9,13 +10,15 @@ import org.safehaus.penrose.entry.RDN;
 public class RowTest extends TestCase {
 
     public void testEquals() {
-        RDN r1 = new RDN();
-        r1.set("name1", "value1");
-        r1.set("name2", "value2");
+        RDNBuilder rb = new RDNBuilder();
+        rb.set("name1", "value1");
+        rb.set("name2", "value2");
+        RDN r1 = rb.toRdn();
 
-        RDN r2 = new RDN();
-        r2.set("name1", "value1");
-        r2.set("name2", "value2");
+        rb.clear();
+        rb.set("name1", "value1");
+        rb.set("name2", "value2");
+        RDN r2 = rb.toRdn();
 
         assertEquals(r1, r2);
     }

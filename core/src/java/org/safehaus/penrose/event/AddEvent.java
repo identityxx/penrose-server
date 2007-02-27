@@ -18,6 +18,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
 
 import javax.naming.directory.Attributes;
 
@@ -32,10 +33,10 @@ public class AddEvent extends Event {
     private PenroseSession session;
     private int returnCode;
 
-    private String dn;
+    private DN dn;
     private Attributes attributes;
 
-    public AddEvent(Object source, int type, PenroseSession session, String dn, Attributes attributes) {
+    public AddEvent(Object source, int type, PenroseSession session, DN dn, Attributes attributes) {
         super(source, type);
         this.session = session;
         this.dn = dn;
@@ -58,11 +59,11 @@ public class AddEvent extends Event {
         this.session = session;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

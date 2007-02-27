@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.config;
 
+import org.safehaus.penrose.entry.DN;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -39,8 +41,8 @@ public interface PenroseConfigMBean {
     public Collection getSchemaNames() throws Exception;
     public Collection getPartitionNames() throws Exception;
 
-    public String getRootDn() throws Exception;
-    public void setRootDn(String rootDn) throws Exception;
+    public DN getRootDn() throws Exception;
+    public void setRootDn(DN rootDn) throws Exception;
 
     public String getRootPassword() throws Exception;
     public void setRootPassword(String rootPassword) throws Exception;

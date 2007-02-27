@@ -19,6 +19,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
@@ -67,14 +68,14 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         Entry entry = (Entry)event.getSource();
         EntryMapping entryMapping = entry.getEntryMapping();
 
-        if (!partition.containsEntryMapping(entryMapping)) return;
+        if (!partition.contains(entryMapping)) return;
 
         DirContext ctx = null;
 
         try {
             ctx = getConnection();
 
-            String baseDn = entry.getDn();
+            DN baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
             SearchResult searchResult = EntryUtil.toSearchResult(entry);
@@ -91,9 +92,9 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
-        String baseDn = (String)event.getSource();
-        Partition partition = partitionManager.findPartition(baseDn);
-        Collection entryMappings = partitionManager.findEntryMappings(partition, baseDn);
+        DN baseDn = (DN)event.getSource();
+        Partition partition = partitionManager.getPartition(baseDn);
+        Collection entryMappings = partition.findEntryMappings(baseDn);
 
         if (entryMappings == null || entryMappings.isEmpty()) return;
 
@@ -103,7 +104,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             ctx = getConnection();
 
             log.debug("Removing "+baseDn);
-            ctx.destroySubcontext(baseDn);
+            ctx.destroySubcontext(baseDn.toString());
 
         } catch (Exception e) {
             log.error(e.getMessage());

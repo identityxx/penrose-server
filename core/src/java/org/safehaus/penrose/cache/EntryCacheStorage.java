@@ -20,6 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -114,18 +115,18 @@ public class EntryCacheStorage {
         this.partition = partition;
     }
 
-    public boolean contains(String baseDn, Filter filter) throws Exception {
+    public boolean contains(DN baseDn, Filter filter) throws Exception {
         return false;
     }
 
-    public boolean search(String baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(DN baseDn, Filter filter, PenroseSearchResults results) throws Exception {
         return false;
     }
 
     public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
     }
 
-    public void add(String baseDn, Filter filter, String dn) throws Exception { }
+    public void add(DN baseDn, Filter filter, DN dn) throws Exception { }
 
     public void put(Filter filter, Collection rdns) throws Exception { }
 
@@ -135,7 +136,7 @@ public class EntryCacheStorage {
 
     public void drop() throws Exception { }
 
-    public Entry get(String dn) throws Exception {
+    public Entry get(DN dn) throws Exception {
         return null;
     }
 
@@ -143,11 +144,11 @@ public class EntryCacheStorage {
         return null;
     }
 
-    public void put(String dn, Entry entry) throws Exception { }
+    public void put(DN dn, Entry entry) throws Exception { }
 
     public void clean() throws Exception { }
 
-    public void remove(String dn) throws Exception { }
+    public void remove(DN dn) throws Exception { }
 
     public Penrose getPenrose() {
         return penrose;

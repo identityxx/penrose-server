@@ -64,14 +64,12 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsSource.addFieldConfig(new FieldConfig("username", "true"));
         partition.addSourceConfig(usergroupsSource);
 
-        EntryMapping ou = new EntryMapping();
-        ou.setDn("ou=Groups,dc=Example,dc=com");
+        EntryMapping ou = new EntryMapping("ou=Groups,dc=Example,dc=com");
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
         partition.addEntryMapping(ou);
 
-        EntryMapping groups = new EntryMapping();
-        groups.setDn("cn=...,ou=Groups,dc=Example,dc=com");
+        EntryMapping groups = new EntryMapping("cn=...,ou=Groups,dc=Example,dc=com");
         groups.addObjectClass("groupOfUniqueNames");
         groups.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "g.groupname", true));
         groups.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "g.description"));

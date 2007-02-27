@@ -19,6 +19,7 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -139,17 +140,17 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void renameEntryMapping(String oldDn, String newDn) throws Exception {
+    public void renameEntryMapping(DN oldDn, DN newDn) throws Exception {
         try {
             log.debug("Renaming "+oldDn+" to "+newDn);
 
             Penrose penrose = penroseServer.getPenrose();
             PartitionManager partitionManager = penrose.getPartitionManager();
 
-            Partition partition = partitionManager.findPartition(oldDn);
+            Partition partition = partitionManager.getPartition(oldDn);
             if (partition == null) return;
 
-            Collection c = partitionManager.findEntryMappings(partition, oldDn);
+            Collection c = partition.findEntryMappings(oldDn);
             Collection entryMappings = new ArrayList();
             if (c != null) entryMappings.addAll(c);
 

@@ -30,7 +30,9 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.entry.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -51,7 +53,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private Map partitionConfigs = new LinkedHashMap();
     private Map engineConfigs    = new LinkedHashMap();
     private Map handlerConfigs   = new LinkedHashMap();
-
     private InterpreterConfig interpreterConfig;
 
     private CacheConfig entryCacheConfig;
@@ -77,8 +78,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         connectorConfig = new ConnectorConfig();
         sessionConfig = new SessionConfig();
 
-        HandlerConfig handlerConfig = new HandlerConfig();
-        addHandlerConfig(handlerConfig);
+        addHandlerConfig(new HandlerConfig("DEFAULT", Handler.class.getName()));
 
         rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
     }
@@ -239,10 +239,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return (PartitionConfig)partitionConfigs.remove(name);
     }
 
-    public HandlerConfig getHandlerConfig() {
-        return getHandlerConfig("DEFAULT");
-    }
-
     public HandlerConfig getHandlerConfig(String name) {
         return (HandlerConfig)handlerConfigs.get(name);
     }
@@ -256,6 +252,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void addHandlerConfig(HandlerConfig handlerConfig) {
+        log.debug("Adding handler "+handlerConfig.getName()+": "+handlerConfig.getHandlerClass());
         handlerConfigs.put(handlerConfig.getName(), handlerConfig);
     }
 
@@ -271,11 +268,15 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         this.rootUserConfig = rootUserConfig;
     }
 
-    public String getRootDn() {
+    public DN getRootDn() {
         return rootUserConfig.getDn();
     }
 
     public void setRootDn(String rootDn) {
+        rootUserConfig.setDn(rootDn);
+    }
+
+    public void setRootDn(DN rootDn) {
         rootUserConfig.setDn(rootDn);
     }
 
@@ -403,12 +404,12 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         adapterConfigs.clear();
         partitionConfigs.clear();
         engineConfigs.clear();
+        handlerConfigs.clear();
     }
 
     public Object clone() {
         PenroseConfig penroseConfig = new PenroseConfig();
         penroseConfig.copy(this);
-
         return penroseConfig;
     }
 }

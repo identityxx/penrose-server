@@ -33,6 +33,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -115,8 +116,8 @@ public class Connector {
 
     public RDN normalize(RDN rdn) throws Exception {
 
-        RDN newRdn = new RDN();
-        if (rdn == null) return newRdn;
+        RDNBuilder rb = new RDNBuilder();
+        if (rdn == null) return rb.toRdn();
 
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -128,10 +129,10 @@ public class Connector {
                 value = ((String)value).toLowerCase();
             }
 
-            newRdn.set(name, value);
+            rb.set(name, value);
         }
 
-        return newRdn;
+        return rb.toRdn();
     }
 
     public synchronized MRSWLock getLock(SourceConfig sourceConfig) {
@@ -282,7 +283,6 @@ public class Connector {
             // Remove rows
             for (Iterator i = removeRows.iterator(); i.hasNext();) {
                 RDN pk = (RDN) i.next();
-                RDN key = normalize((RDN)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
                 oldEntry.set("primaryKey", pk);
                 //log.debug("DELETE ROW: " + oldEntry);
@@ -317,7 +317,6 @@ public class Connector {
             // Replace rows
             for (Iterator i = replaceRows.iterator(); i.hasNext();) {
                 RDN pk = (RDN) i.next();
-                RDN key = normalize((RDN)pk);
                 AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
                 oldEntry.set("primaryKey", pk);
                 AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
@@ -556,16 +555,9 @@ public class Connector {
         }
 
         try {
-            Collection normalizedPks = new ArrayList();
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                RDN pk = (RDN)i.next();
-                RDN npk = normalize(pk);
-                normalizedPks.add(npk);
-            }
-
-            log.debug("Checking data cache for "+normalizedPks);
+            log.debug("Checking data cache for "+pks);
             Collection missingPks = new ArrayList();
-            Map loadedRows = getSourceCacheManager().load(partition, sourceConfig, normalizedPks, missingPks);
+            Map loadedRows = getSourceCacheManager().load(partition, sourceConfig, pks, missingPks);
 
             log.debug("Cached values: "+loadedRows.keySet());
             results.addAll(loadedRows.values());
@@ -615,19 +607,18 @@ public class Connector {
     public RDN store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         //RDN pk = sourceValues.getRdn();
-        RDN npk = normalize(pk);
 
         log.debug("Storing source cache: "+pk);
         getSourceCacheManager().put(partition, sourceConfig, pk, sourceValues);
 
-        Filter f = FilterTool.createFilter(npk);
+        Filter f = FilterTool.createFilter(pk);
         Collection c = new TreeSet();
-        c.add(npk);
+        c.add(pk);
 
         log.debug("Storing filter cache "+f+": "+c);
         getSourceCacheManager().put(partition, sourceConfig, f, c);
 
-        return npk;
+        return pk;
     }
 
     public void store(Partition partition, SourceConfig sourceConfig, Collection values) throws Exception {
@@ -648,8 +639,9 @@ public class Connector {
 
                 Object value = sourceValues.getOne(fieldName);
 
-                RDN uniqueKey = new RDN();
-                uniqueKey.set(fieldName, value);
+                RDNBuilder rb = new RDNBuilder();
+                rb.set(fieldName, value);
+                RDN uniqueKey = rb.toRdn();
 
                 uniqueKeys.add(uniqueKey);
             }
@@ -698,9 +690,8 @@ public class Connector {
             log.debug("Search results:");
             for (Iterator i=sr.iterator(); i.hasNext();) {
                 RDN pk = (RDN)i.next();
-                RDN npk = normalize(pk);
-                log.debug(" - "+npk);
-                results.add(npk);
+                log.debug(" - "+pk);
+                results.add(pk);
             }
 
             results.setReturnCode(sr.getReturnCode());

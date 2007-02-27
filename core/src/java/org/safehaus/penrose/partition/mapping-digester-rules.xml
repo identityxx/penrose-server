@@ -29,7 +29,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="*/entry">
 
             <object-create-rule classname="org.safehaus.penrose.mapping.EntryMapping" />
-            <set-properties-rule />
+
+            <set-properties-rule>
+                <alias attr-name="dn" prop-name="stringDn" />
+            </set-properties-rule>
 
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
 
@@ -99,6 +102,21 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
                 <set-next-rule methodname="addRelationship" />
 
+            </pattern>
+
+            <pattern value="engine">
+
+                <object-create-rule classname="org.safehaus.penrose.mapping.EngineMapping" />
+                <call-method-rule pattern="engine-name" methodname="setEngineName" paramcount="0" />
+
+                <pattern value="parameter">
+                    <call-method-rule methodname="setParameter" paramcount="2" />
+                    <call-param-rule pattern="param-name" paramnumber="0"/>
+                    <call-param-rule pattern="param-value" paramnumber="1"/>
+                </pattern>
+
+                <set-next-rule methodname="setEngineMapping" />
+                
             </pattern>
 
             <pattern value="aci">

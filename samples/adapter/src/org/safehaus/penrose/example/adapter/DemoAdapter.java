@@ -4,6 +4,7 @@ import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -32,9 +33,10 @@ public class DemoAdapter extends Adapter {
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
 
-        RDN pk = new RDN();
-        pk.set("cn", "Test User");
-        pk.set("sn", "User");
+        RDNBuilder rb = new RDNBuilder();
+        rb.set("cn", "Test User");
+        rb.set("sn", "User");
+        RDN pk = rb.toRdn();
 
         AttributeValues sourceValues = new AttributeValues();
         sourceValues.add("uid", "test");

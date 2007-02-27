@@ -22,9 +22,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -49,7 +47,7 @@ public class FindHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public Entry find(Partition partition, String dn) throws Exception {
+    public Entry find(Partition partition, DN dn) throws Exception {
 
         List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
@@ -62,7 +60,7 @@ public class FindHandler {
 
     public void find(
             Partition partition,
-            String dn,
+            DN dn,
             List path,
             AttributeValues sourceValues
     ) throws Exception {
@@ -70,7 +68,8 @@ public class FindHandler {
         if (partition == null) return;
         if (dn == null) return;
 
-        List rdns = EntryUtil.parseDn(dn);
+        List rdns = new ArrayList();
+        rdns.addAll(dn.getRdns());
         log.debug("Length ["+rdns.size()+"]");
 
         int p = 0;
@@ -90,20 +89,22 @@ public class FindHandler {
                 sourceValues.add(newSourceValues);
             }
 
-            String prefix = null;
+            DNBuilder db = new DNBuilder();
             for (int i = 0; i < rdns.size()-1-position; i++) {
-                prefix = EntryUtil.append(prefix, (RDN)rdns.get(i));
+                db.append((RDN)rdns.get(i));
             }
+            DN prefix = db.toDn();
 
-            String suffix = null;
+            db.clear();
             for (int i = rdns.size()-1-position; i < rdns.size(); i++) {
-                suffix = EntryUtil.append(suffix, (RDN)rdns.get(i));
+                db.append((RDN)rdns.get(i));
             }
+            DN suffix = db.toDn();
 
             log.debug("Position ["+position +"]: ["+(prefix == null ? "" : prefix)+"] ["+suffix+"]");
 
             PartitionManager partitionManager = handler.getPartitionManager();
-            Collection entryMappings = partitionManager.findEntryMappings(partition, suffix);
+            Collection entryMappings = partition.findEntryMappings(suffix);
 
             if (entryMappings == null) {
                 path.add(0, null);
@@ -121,9 +122,7 @@ public class FindHandler {
 
                 log.debug("Check mapping ["+entryMapping.getDn()+"]");
 
-                String engineName = "DEFAULT";
-                if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+                String engineName = entryMapping.getEngineName();
                 Engine engine = handler.getEngine(engineName);
 
                 if (engine == null) {

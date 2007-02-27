@@ -22,6 +22,9 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DNBuilder;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -48,7 +51,7 @@ public class ModRdnHandler {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn
     ) throws LDAPException {
 
@@ -60,8 +63,12 @@ public class ModRdnHandler {
 
             // refreshing entry cache
 
-            String parentDn = EntryUtil.getParentDn(entry.getDn());
-            String newDn = newRdn+","+parentDn;
+            DN parentDn = entry.getDn().getParentDn();
+
+            DNBuilder db = new DNBuilder();
+            db.append(newRdn);
+            db.append(parentDn);
+            DN newDn = db.toDn();
 
             PenroseSession adminSession = handler.getPenrose().newSession();
             adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
@@ -81,7 +88,7 @@ public class ModRdnHandler {
             while (results.hasNext()) results.next();
 
             EntryMapping entryMapping = entry.getEntryMapping();
-            handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            //handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
 
         } catch (LDAPException e) {
             rc = e.getResultCode();
@@ -107,16 +114,14 @@ public class ModRdnHandler {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn)
             throws LDAPException {
 
         try {
             EntryMapping entryMapping = entry.getEntryMapping();
 
-            String engineName = "DEFAULT";
-            if (partition.isProxy(entryMapping)) engineName = "PROXY";
-
+            String engineName = entryMapping.getEngineName();
             Engine engine = handler.getEngine(engineName);
 
             if (engine == null) {
@@ -142,12 +147,18 @@ public class ModRdnHandler {
     public int modRdnStaticEntry(
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn
     ) throws Exception {
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        partition.renameEntryMapping(entryMapping, newRdn);
+
+        DNBuilder db = new DNBuilder();
+        db.append(newRdn);
+        db.append(entry.getDn().getParentDn());
+        DN newDn = db.toDn();
+
+        partition.renameEntryMapping(entryMapping, newDn);
 
         return LDAPException.SUCCESS;
     }

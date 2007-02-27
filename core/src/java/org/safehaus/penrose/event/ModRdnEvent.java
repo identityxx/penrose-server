@@ -19,6 +19,8 @@ package org.safehaus.penrose.event;
 
 
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
 
 /**
  * @author Endi S. Dewata
@@ -29,12 +31,12 @@ public class ModRdnEvent extends Event {
     public final static int AFTER_MODRDN  = 1;
 
     private PenroseSession session;
-    private String dn;
-    private String newRdn;
+    private DN dn;
+    private RDN newRdn;
     private boolean deleteOldRdn;
     private int returnCode;
 
-    public ModRdnEvent(Object source, int type, PenroseSession session, String dn, String newRdn, boolean deleteOldRdn) {
+    public ModRdnEvent(Object source, int type, PenroseSession session, DN dn, RDN newRdn, boolean deleteOldRdn) {
         super(source, type);
         this.session = session;
         this.dn = dn;
@@ -58,19 +60,19 @@ public class ModRdnEvent extends Event {
         this.session = session;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 
-    public String getNewRdn() {
+    public RDN getNewRdn() {
         return newRdn;
     }
 
-    public void setNewRdn(String newRdn) {
+    public void setNewRdn(RDN newRdn) {
         this.newRdn = newRdn;
     }
 

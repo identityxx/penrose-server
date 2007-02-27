@@ -38,9 +38,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EntryData;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.*;
@@ -79,7 +77,7 @@ public class EngineImpl extends Engine {
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             String password
     ) throws LDAPException {
 
@@ -88,7 +86,7 @@ public class EngineImpl extends Engine {
         try {
             log.debug("Bind as user "+dn);
 
-            RDN rdn = EntryUtil.getRdn(dn);
+            RDN rdn = dn.getRdn();
 
             AttributeValues attributeValues = new AttributeValues();
             attributeValues.add(rdn);
@@ -145,7 +143,7 @@ public class EngineImpl extends Engine {
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            String dn,
+            DN dn,
             Attributes attributes
     ) throws LDAPException {
 
@@ -241,7 +239,7 @@ public class EngineImpl extends Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn
     ) throws LDAPException {
 
@@ -446,10 +444,11 @@ public class EngineImpl extends Engine {
             int position
     ) throws Exception {
 
-        String dn = null;
+        DNBuilder db = new DNBuilder();
         for (int i = rdns.size()-position-1; i < rdns.size(); i++) {
-            dn = EntryUtil.append(dn, (RDN)rdns.get(i));
+            db.append((RDN)rdns.get(i));
         }
+        DN dn = db.toDn();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -471,7 +470,7 @@ public class EngineImpl extends Engine {
 
         List path = new ArrayList();
 
-        RDN rdn = EntryUtil.getRdn(dn);
+        RDN rdn = dn.getRdn();
 
         EntryData data = new EntryData();
         data.setDn(dn);
@@ -547,54 +546,43 @@ public class EngineImpl extends Engine {
         return path;
     }
 
-    public int search(
+    public void search(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            String baseDn,
+            DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
             PenroseSearchResults results
     ) throws Exception {
 
-        Handler handler = penrose.getHandler();
-        FindHandler findHandler = handler.getFindHandler();
-
-        List path = new ArrayList();
-        findHandler.find(partition, baseDn, path, sourceValues);
-
-        Entry entry = (Entry)path.iterator().next();
-
-        if (entry == null) {
-            log.debug("Entry "+baseDn+" not found");
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        if (sc.getScope() == PenroseSearchControls.SCOPE_BASE || sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
-            log.debug("Checking filter "+filter+" on "+entry.getDn());
-            if (handler.getFilterTool().isValid(entry, filter)) {
-                results.add(entry);
-            } else {
-                log.debug("Base entry \""+entry.getDn()+"\" doesn't match search filter.");
-            }
-        }
-
-        return LDAPException.SUCCESS;
+        expand(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                results
+        );
     }
 
-    public int expand(
-            PenroseSession session,
+    public void expand(
+            final PenroseSession session,
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final String baseDn,
+            final DN baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
             final PenroseSearchResults results
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        final boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("EXPAND MAPPING", 80));
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
@@ -618,36 +606,33 @@ public class EngineImpl extends Engine {
 
         try {
 
-            if (!getFilterTool().isValid(entryMapping, filter)) {
-                return rc;
-
-            } if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
-                if (!(EntryUtil.match(entryMapping.getDn(), baseDn))) {
-                    return rc;
+            if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
+                if (!(entryMapping.getDn().matches(baseDn))) {
+                    return;
                 }
 
             } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
-                if (!EntryUtil.match(entryMapping.getParentDn(), baseDn)) {
-                    return rc;
+                if (!entryMapping.getParentDn().matches(baseDn)) {
+                    return;
                 }
 
             } else { // if (sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
 
                 log.debug("Checking whether "+baseDn+" is an ancestor of "+entryMapping.getDn());
-                String dn = entryMapping.getDn();
+                DN dn = entryMapping.getDn();
                 boolean found = false;
                 while (dn != null) {
-                    if (EntryUtil.match(dn, baseDn)) {
+                    if (baseDn.matches(dn)) {
                         found = true;
                         break;
                     }
-                    dn = EntryUtil.getParentDn(dn);
+                    dn = dn.getParentDn();
                 }
 
                 log.debug("Result: "+found);
 
                 if (!found) {
-                    return rc;
+                    return;
                 }
             }
 
@@ -676,7 +661,7 @@ public class EngineImpl extends Engine {
                 public void objectAdded(PipelineEvent event) {
                     try {
                         EntryData data = (EntryData)event.getObject();
-                        String dn = data.getDn();
+                        DN dn = data.getDn();
 
                         if (dnOnly) {
                             log.debug("Returning DN only.");
@@ -733,7 +718,7 @@ public class EngineImpl extends Engine {
                 public void objectAdded(PipelineEvent event) {
                     try {
                         EntryData data = (EntryData)event.getObject();
-                        String dn = data.getDn();
+                        DN dn = data.getDn();
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
@@ -745,7 +730,7 @@ public class EngineImpl extends Engine {
 
             dns.close();
 
-            if (dnOnly) return rc;
+            if (dnOnly) return;
             //if (unique && effectiveSources.size() == 1) return LDAPException.SUCCESS;
 
             load(partition, entryMapping, entriesToLoad, loadedEntries);
@@ -776,8 +761,6 @@ public class EngineImpl extends Engine {
             });
 
             merge(partition, entryMapping, loadedEntries, newEntries);
-
-            return rc;
 
         } finally {
             if (log.isDebugEnabled()) {

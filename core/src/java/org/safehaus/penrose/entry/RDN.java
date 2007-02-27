@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.entry;
 
-import org.ietf.ldap.LDAPDN;
-
 import java.util.TreeMap;
 import java.util.Map;
 import java.util.Collection;
@@ -33,7 +31,15 @@ public class RDN implements Comparable {
 
     public Map values = new TreeMap();
 
+    protected String original;
+    protected String normalized;
+    public String pattern;
+
     public RDN() {
+    }
+
+    public RDN(String rdn) {
+        values = new DN(rdn).getRdn().values;
     }
 
     public RDN(Map values) {
@@ -48,44 +54,10 @@ public class RDN implements Comparable {
         return values.isEmpty();
     }
     
-    public void add(RDN rdn) {
-        values.putAll(rdn.getValues());
-    }
-
-    public void set(RDN rdn) {
-        values.clear();
-        values.putAll(rdn.getValues());
-    }
-
-    public void add(String prefix, RDN rdn) {
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = rdn.get(name);
-            values.put(prefix == null ? name : prefix+"."+name, value);
-        }
-    }
-
-    public void set(String prefix, RDN rdn) {
-        values.clear();
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = rdn.get(name);
-            values.put(prefix == null ? name : prefix+"."+name, value);
-        }
-    }
-
-    public void set(String name, Object value) {
-        this.values.put(name, value);
-    }
-
     public Object get(String name) {
         return values.get(name);
     }
 
-    public Object remove(String name) {
-        return values.remove(name);
-    }
-    
     public Collection getNames() {
         return values.keySet();
     }
@@ -98,31 +70,61 @@ public class RDN implements Comparable {
         return values;
     }
 
-    public String toString() {
-        StringBuffer sb = new StringBuffer();
+    public String getOriginal() {
+        if (original != null) return original;
+
+        StringBuilder sb = new StringBuilder();
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = values.get(name);
-            String rdn = name+"="+value;
+            if (value == null) continue;
 
-            if (sb.length() > 0) sb.append("+");
-            sb.append(LDAPDN.escapeRDN(rdn));
+            if (sb.length() > 0) sb.append('+');
+            sb.append(name);
+            sb.append('=');
+            sb.append(escape(value.toString()));
         }
 
-        return sb.toString();
+        original = sb.toString();
+        return original;
+    }
+
+    public String getNormalized() {
+        if (normalized != null) return normalized;
+
+        StringBuilder sb = new StringBuilder();
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = values.get(name);
+
+            if (sb.length() > 0) sb.append('+');
+            sb.append(name.toLowerCase());
+            sb.append('=');
+            sb.append(escape(value.toString().toLowerCase()));
+        }
+
+        normalized = sb.toString();
+        return normalized;
     }
 
     public int hashCode() {
-        //System.out.println("RDN "+values+" hash code: "+values.hashCode());
-        return values.hashCode();
+        return getOriginal().hashCode();
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
     }
 
     public boolean equals(Object object) {
-        //System.out.println("Comparing row "+values+" with "+object);
-        if (object == null) return false;
-        if (!(object instanceof RDN)) return false;
+        if (this == object) return true;
+        if((object == null) || (object.getClass() != this.getClass())) return false;
+
         RDN rdn = (RDN)object;
-        return values.equals(rdn.values);
+        if (!equals(getOriginal(), rdn.getOriginal())) return false;
+
+        return true;
     }
 
     public int compareTo(Object object) {
@@ -165,5 +167,137 @@ public class RDN implements Comparable {
         }
 
         return c;
+    }
+
+    public String toString() {
+        return getOriginal();
+    }
+
+    public String getPattern() {
+        if (pattern == null) createPattern(0);
+        return pattern;
+    }
+
+    public int createPattern(int counter) {
+
+        StringBuilder sb = new StringBuilder();
+        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = (String)values.get(name);
+
+            if (sb.length() > 0) sb.append('+');
+
+            sb.append(name);
+            sb.append('=');
+
+            if ("...".equals(value)) {
+                sb.append('{');
+                sb.append(counter++);
+                sb.append('}');
+
+            } else {
+                sb.append(value);
+            }
+        }
+
+        pattern = sb.toString();
+
+        return counter;
+    }
+
+    public boolean match(RDN rdn) {
+
+        if (rdn == null) return false;
+        if (getNormalized().equals(rdn.getNormalized())) return true;
+
+        Collection names = values.keySet();
+        Collection names2 = rdn.values.keySet();
+        if (names.size() != names2.size()) return false;
+
+        Iterator i = names.iterator();
+        Iterator j = names2.iterator();
+
+        while (i.hasNext() && j.hasNext()) {
+            String name = (String)i.next();
+            String name2 = (String)j.next();
+
+            if (!name.equalsIgnoreCase(name2)) {
+                return false;
+            }
+
+            String value = (String)values.get(name);
+            String value2 = (String)rdn.values.get(name2);
+
+            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static String escape(String value) {
+
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
+
+        boolean quote = chars[0] == ' ' || chars[chars.length-1] == ' ';
+        boolean space = false;
+
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
+
+            // checking special characters
+            if (c == ',' || c == '=' || c == '+'
+                    || c == '<' || c == '>'
+                    || c == '#' || c == ';'
+                    || c == '\\' || c == '"') {
+                sb.append('\\');
+            }
+
+            if (c == '\n') {
+                quote = true;
+            }
+
+            // checking double space
+            if (c == ' ') {
+                if (space) {
+                    quote = true;
+                } else {
+                    space = true;
+                }
+            } else {
+                space = false;
+            }
+
+            sb.append(c);
+        }
+
+        if (quote) {
+            sb.insert(0, '"');
+            sb.append('"');
+        }
+
+        return sb.toString();
+    }
+
+    public static String unescape(String value) {
+        char chars[] = value.toCharArray();
+
+        if (chars[0] == '"' && chars[chars.length-1] == '"') {
+            return value.substring(1, chars.length-1);
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
+            if (c == '\\') {
+                c = chars[++i];
+            }
+            sb.append(c);
+        }
+
+        return sb.toString();
     }
 }

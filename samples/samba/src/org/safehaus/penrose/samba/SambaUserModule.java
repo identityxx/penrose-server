@@ -7,6 +7,7 @@ import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class SambaUserModule extends Module {
 
         if (event.getReturnCode() != LDAPException.SUCCESS) return;
 
-        String dn = event.getDn();
+        DN dn = event.getDn();
         log.debug("Checking NT Password and LM Password for "+dn+".");
 
         PenroseSearchResults results = new PenroseSearchResults();
@@ -80,7 +81,7 @@ public class SambaUserModule extends Module {
     public boolean beforeAdd(AddEvent event) throws Exception {
         Attributes attributes = event.getAttributes();
 
-        String dn = event.getDn();
+        String dn = event.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String username = dn.substring(i+1, j);
@@ -163,7 +164,7 @@ public class SambaUserModule extends Module {
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
 
-        String dn = event.getDn();
+        String dn = event.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String username = dn.substring(i+1, j);

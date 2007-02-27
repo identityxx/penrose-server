@@ -20,6 +20,7 @@ package org.safehaus.penrose.util;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.ietf.ldap.LDAPEntry;
 import org.ietf.ldap.LDAPAttributeSet;
@@ -105,8 +106,8 @@ public class EntryUtil {
     }
 
     public static RDN getRdn(String dn) {
-        RDN rdn = new RDN();
-        if (dn == null || "".equals(dn)) return rdn;
+        RDNBuilder rb = new RDNBuilder();
+        if (dn == null || "".equals(dn)) return rb.toRdn();
 
         try {
             //log.debug("###### Getting RDN from "+dn);
@@ -126,14 +127,14 @@ public class EntryUtil {
                 String value =  s.substring(index+1);
 
                 //log.debug(" - "+attribute+": "+value);
-                rdn.set(attribute, value);
+                rb.set(attribute, value);
             }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
 
-        return rdn;
+        return rb.toRdn();
     }
 
     public static String getParentDn(String dn) {
@@ -242,7 +243,7 @@ public class EntryUtil {
     }
 
     public static SearchResult toSearchResult(Entry entry) {
-        return new SearchResult(entry.getDn(), entry, getAttributes(entry));
+        return new SearchResult(entry.getDn().toString(), entry, getAttributes(entry));
     }
 
     public static Attributes getAttributes(LDAPEntry entry) {
@@ -373,13 +374,14 @@ public class EntryUtil {
     public static List parseDn(String dn) {
         List list = new ArrayList();
 
+        RDNBuilder rb = new RDNBuilder();
         String compositeRdns[] = LDAPDN.explodeDN(dn, false);
         for (int i=0; i<compositeRdns.length; i++) {
             String compositeRdn = compositeRdns[i];
 
             StringTokenizer st = new StringTokenizer(compositeRdn, "+");
-            RDN rdn = new RDN();
 
+            rb.clear();
             while (st.hasMoreTokens()) {
                 String s = LDAPDN.unescapeRDN(st.nextToken());
 
@@ -390,9 +392,10 @@ public class EntryUtil {
 
                 String value = s.substring(index+1);
 
-                rdn.set(name, value);
+                rb.set(name, value);
             }
 
+            RDN rdn = rb.toRdn();
             list.add(rdn);
         }
 

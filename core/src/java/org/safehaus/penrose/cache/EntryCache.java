@@ -20,6 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
@@ -80,7 +81,7 @@ public class EntryCache {
 
     public EntryCacheStorage getCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        String key = entryMapping.getDn();
+        DN key = entryMapping.getDn();
         //log.debug("Getting cache storage for "+key);
         //log.debug("entry cache: "+caches.keySet());
 
@@ -95,7 +96,7 @@ public class EntryCache {
         return cacheStorage;
     }
 
-    public void add(Partition partition, EntryMapping entryMapping, String baseDn, Filter filter, String dn) throws Exception {
+    public void add(Partition partition, EntryMapping entryMapping, DN baseDn, Filter filter, DN dn) throws Exception {
         log.info("["+entryMapping.getDn()+"] add("+filter+", "+dn+")");
 
         getCacheStorage(partition, entryMapping).add(baseDn, filter, dn);
@@ -107,7 +108,7 @@ public class EntryCache {
         getCacheStorage(partition, entryMapping).search(sourceConfig, filter, results);
     }
 
-    public boolean contains(Partition partition, EntryMapping entryMapping, String parentDn, Filter filter) throws Exception {
+    public boolean contains(Partition partition, EntryMapping entryMapping, DN parentDn, Filter filter) throws Exception {
         log.info("["+entryMapping.getDn()+"] contains("+parentDn+", "+filter+")");
 
         return getCacheStorage(partition, entryMapping).contains(parentDn, filter);
@@ -124,7 +125,7 @@ public class EntryCache {
     public boolean search(
             Partition partition,
             EntryMapping entryMapping,
-            String baseDn,
+            DN baseDn,
             Filter filter,
             PenroseSearchResults results)
             throws Exception {
@@ -149,13 +150,13 @@ public class EntryCache {
         getCacheStorage(partition, entryMapping).put(filter, dns);
     }
 
-    public Entry get(Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public Entry get(Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
         log.info("["+entryMapping.getDn()+"]: get("+dn+")");
 
         return getCacheStorage(partition, entryMapping).get(dn);
     }
 
-    public void remove(Partition partition, EntryMapping entryMapping, String dn) throws Exception {
+    public void remove(Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
         log.info("["+entryMapping.getDn()+"] remove("+dn+")");
 
         Collection children = partition.getChildren(entryMapping);
@@ -167,7 +168,7 @@ public class EntryCache {
             childDns.close();
 
             for (Iterator j=childDns.iterator(); j.hasNext(); ) {
-                String childDn = (String)j.next();
+                DN childDn = (DN)j.next();
 
                 remove(partition, childMapping, childDn);
             }

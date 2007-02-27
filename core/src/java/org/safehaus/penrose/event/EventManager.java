@@ -18,6 +18,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.entry.DN;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -38,7 +39,7 @@ public class EventManager {
     public Collection modrdnListeners = new ArrayList();
     public Collection searchListeners = new ArrayList();
 
-    public boolean postEvent(String dn, AddEvent event) throws Exception {
+    public boolean postEvent(DN dn, AddEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(addListeners);
@@ -61,7 +62,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, BindEvent event) throws Exception {
+    public boolean postEvent(DN dn, BindEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(bindListeners);
@@ -93,7 +94,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, CompareEvent event) throws Exception {
+    public boolean postEvent(DN dn, CompareEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(compareListeners);
@@ -116,7 +117,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, DeleteEvent event) throws Exception {
+    public boolean postEvent(DN dn, DeleteEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(deleteListeners);
@@ -139,7 +140,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, ModifyEvent event) throws Exception {
+    public boolean postEvent(DN dn, ModifyEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modifyListeners);
@@ -162,7 +163,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, ModRdnEvent event) throws Exception {
+    public boolean postEvent(DN dn, ModRdnEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modrdnListeners);
@@ -185,7 +186,7 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, SearchEvent event) throws Exception {
+    public boolean postEvent(DN dn, SearchEvent event) throws Exception {
 
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(searchListeners);

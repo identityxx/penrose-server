@@ -34,6 +34,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.connector.Adapter;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 
 import java.util.*;
 
@@ -179,7 +180,7 @@ public class LDAPAdapter extends Adapter {
 
     public RDN getPkValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
-        RDN rdn = new RDN();
+        RDNBuilder rb = new RDNBuilder();
 
         Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
@@ -199,9 +200,10 @@ public class LDAPAdapter extends Adapter {
                 values.add(value);
             }
 
-            rdn.set(name, values.iterator().next());
+            rb.set(name, values.iterator().next());
         }
 
+        RDN rdn = rb.toRdn();
         return rdn;
     }
 

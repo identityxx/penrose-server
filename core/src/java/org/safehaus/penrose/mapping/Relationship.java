@@ -45,7 +45,7 @@ public class Relationship implements Cloneable {
     }
 
     public String getExpression() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Iterator i=operands.iterator(); i.hasNext(); ) {
             String operand = i.next().toString();
             if (sb.length() > 0) {

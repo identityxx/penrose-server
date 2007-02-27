@@ -25,6 +25,8 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     private String name;
     private String path;
 
+    private String handlerName = "DEFAULT";
+
     public PartitionConfig() {
     }
 
@@ -49,9 +51,18 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         this.path = path;
     }
 
+    public String getHandlerName() {
+        return handlerName;
+    }
+
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
+    }
+
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (path == null ? 0 : path.hashCode());
+                (path == null ? 0 : path.hashCode()) +
+                (handlerName == null ? 0 : handlerName.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -66,6 +77,7 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         PartitionConfig partitionConfig = (PartitionConfig)object;
         if (!equals(name, partitionConfig.name)) return false;
         if (!equals(path, partitionConfig.path)) return false;
+        if (!equals(handlerName, partitionConfig.handlerName)) return false;
 
         return true;
     }

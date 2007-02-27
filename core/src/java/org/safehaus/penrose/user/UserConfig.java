@@ -18,28 +18,37 @@
 package org.safehaus.penrose.user;
 
 import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.entry.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class UserConfig implements Cloneable {
 
-    private String dn;
+    private DN dn;
     private String password;
 
     public UserConfig() {
     }
 
     public UserConfig(String dn, String password) {
+        this(new DN(dn), password);
+    }
+
+    public UserConfig(DN dn, String password) {
         this.dn = dn;
         this.password = password;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
     public void setDn(String dn) {
+        this.dn = new DN(dn);
+    }
+
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

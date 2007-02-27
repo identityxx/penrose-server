@@ -49,7 +49,7 @@ public class Demo {
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("dc");
         attribute.setConstant("Example");
-        attribute.setRdn(AttributeMapping.RDN_TRUE);
+        attribute.setRdn(true);
 
         entryMapping.addAttributeMapping(attribute);
 
@@ -72,7 +72,7 @@ public class Demo {
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("ou");
         attribute.setConstant("Users");
-        attribute.setRdn(AttributeMapping.RDN_TRUE);
+        attribute.setRdn(true);
 
         entryMapping.addAttributeMapping(attribute);
 

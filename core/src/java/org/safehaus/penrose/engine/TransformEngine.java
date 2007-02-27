@@ -27,6 +27,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -140,7 +141,9 @@ public class TransformEngine {
 
         log.debug("into source "+sourceMapping.getName()+":");
         Collection fields = sourceMapping.getFieldMappings();
-        RDN pk = new RDN();
+
+        RDNBuilder rb = new RDNBuilder();
+
         for (Iterator i =fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             String name = fieldMapping.getName();
@@ -150,7 +153,7 @@ public class TransformEngine {
             log.debug(" - "+name+": "+newValues+(fieldConfig.isPK() ? " (pk)" : ""));
 
             if (newValues == null) {
-                if (fieldConfig.isPK()) pk = null;
+                if (fieldConfig.isPK()) rb.clear();
                 continue;
             }
 
@@ -187,13 +190,14 @@ public class TransformEngine {
             }
 */
             if (fieldConfig.isPK()) {
-                if (pk != null) pk.set(name, newValues);
+                rb.set(name, newValues);
                 output.set("primaryKey."+name, newValues);
             }
 
             output.add(name, newValues);
         }
 
+        RDN pk = rb.toRdn();
         log.debug("PK: "+pk);
 
         interpreter.clear();
@@ -204,8 +208,8 @@ public class TransformEngine {
     public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
         Collection list = new ArrayList();
-        RDN pk = new RDN();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith("primaryKey.")) continue;
@@ -215,9 +219,10 @@ public class TransformEngine {
 
             String targetName = name.substring("primaryKey.".length());
             Object value = values.iterator().next();
-            pk.set(targetName, value);
+            rb.set(targetName, value);
         }
 
+        RDN pk = new RDN();
         list.add(pk);
 /*
         AttributeValues pkValues = new AttributeValues();
@@ -252,6 +257,7 @@ public class TransformEngine {
         Collection rows = convert(output);
         Map map = new TreeMap();
 
+        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
             log.debug(" - "+rdn);
@@ -259,11 +265,12 @@ public class TransformEngine {
             AttributeValues av = new AttributeValues();
             av.add(rdn);
 
-            RDN pk = new RDN();
+            rb.clear();
             for (Iterator j=fields.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                pk.set(fieldConfig.getName(), rdn.get(fieldConfig.getName()));
+                rb.set(fieldConfig.getName(), rdn.get(fieldConfig.getName()));
             }
+            RDN pk = rb.toRdn();
 
             map.put(pk, av);
         }

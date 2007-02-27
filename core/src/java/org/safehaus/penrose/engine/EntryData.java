@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.DN;
 
 import java.util.Collection;
 
@@ -27,7 +28,7 @@ import java.util.Collection;
  */
 public class EntryData {
 
-    private String dn;
+    private DN dn;
     private AttributeValues mergedValues;
     private Collection rows;
     private RDN filter;
@@ -37,11 +38,11 @@ public class EntryData {
     public EntryData() {
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
-    public void setDn(String dn) {
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

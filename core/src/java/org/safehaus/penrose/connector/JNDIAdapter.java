@@ -19,8 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.util.*;
@@ -99,20 +98,24 @@ public class JNDIAdapter extends Adapter {
             PenroseSearchResults results
     ) throws Exception {
 
-        String ldapBase = sourceConfig.getParameter(BASE_DN);
+        DNBuilder db = new DNBuilder();
+
+        db.append(sourceConfig.getParameter(BASE_DN));
         String ldapScope = sourceConfig.getParameter(SCOPE);
         String ldapFilter = sourceConfig.getParameter(FILTER);
 
-        ldapBase = EntryUtil.append(ldapBase, client.getSuffix());
+        db.append(client.getSuffix());
         if (filter != null) {
             ldapFilter = "(&"+ldapFilter+filter+")";
         }
 
         if (filter instanceof SimpleFilter) {
             SimpleFilter sf = (SimpleFilter)filter;
-            ldapBase = EntryUtil.append(sf.toString(), ldapBase);
+            db.prepend(sf.toString());
             ldapScope = "OBJECT";
         }
+
+        DN ldapBase = db.toDn();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -142,13 +145,18 @@ public class JNDIAdapter extends Adapter {
         DirContext ctx = null;
         try {
             ctx = ((JNDIClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
+            NamingEnumeration ne = ctx.search(ldapBase.toString(), ldapFilter, ctls);
 
             log.debug("Result:");
 
             while (ne.hasMore()) {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                String dn = EntryUtil.append(sr.getName(), ldapBase);
+
+                db.clear();
+                db.append(sr.getName());
+                db.append(ldapBase);
+                DN dn = db.toDn();
+
                 log.debug(" - "+dn);
 
                 if (attributes.size() == 1 && attributes.contains("dn")) {
@@ -179,7 +187,7 @@ public class JNDIAdapter extends Adapter {
 
     public RDN getPkValues(SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
-        RDN rdn = new RDN();
+        RDNBuilder rb = new RDNBuilder();
 
         Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
@@ -199,17 +207,17 @@ public class JNDIAdapter extends Adapter {
                 values.add(value);
             }
 
-            rdn.set(name, values.iterator().next());
+            rb.set(name, values.iterator().next());
         }
 
-        return rdn;
+        return rb.toRdn();
     }
 
-    public AttributeValues getValues(String dn, SourceConfig sourceConfig, SearchResult sr) throws Exception {
+    public AttributeValues getValues(DN dn, SourceConfig sourceConfig, SearchResult sr) throws Exception {
 
         AttributeValues av = new AttributeValues();
 
-        RDN rdn = EntryUtil.getRdn(dn);
+        RDN rdn = dn.getRdn();
         av.add("primaryKey", rdn);
 
         Attributes attrs = sr.getAttributes();

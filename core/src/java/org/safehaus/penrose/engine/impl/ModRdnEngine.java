@@ -48,7 +48,7 @@ public class ModRdnEngine {
     public void modrdn(
             Partition partition,
             Entry entry,
-            String newRdn,
+            RDN newRdn,
             boolean deleteOldRdn
     ) throws Exception {
 
@@ -58,10 +58,10 @@ public class ModRdnEngine {
             AttributeValues oldAttributeValues = entry.getAttributeValues();
             AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
 
-            RDN rdn1 = EntryUtil.getRdn(entry.getDn());
+            RDN rdn1 = entry.getDn().getRdn();
             oldAttributeValues.set("rdn", rdn1);
 
-            RDN rdn2 = EntryUtil.getRdn(newRdn);
+            RDN rdn2 = newRdn;
             newAttributeValues.set("rdn", rdn2);
             newAttributeValues.add(rdn2);
 
