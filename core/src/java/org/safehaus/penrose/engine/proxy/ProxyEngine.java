@@ -168,10 +168,7 @@ public class ProxyEngine extends Engine {
 
                 if (client == null) {
 
-                    DN rootDn = penroseConfig.getRootDn();
-                    DN bindDn = session == null ? null : session.getBindDn();
-
-                    if (session == null || rootDn.equals(bindDn)) {
+                    if (session == null || session.isRootUser()) {
                         log.debug("Creating new connection.");
                         Map parameters = new HashMap();
                         parameters.putAll(connection.getParameters());
@@ -240,10 +237,7 @@ public class ProxyEngine extends Engine {
 
                 if (client == null) {
 
-                    DN rootDn = penroseConfig.getRootDn();
-                    DN bindDn = session == null ? null : session.getBindDn();
-
-                    if (session == null || rootDn.equals(bindDn)) {
+                    if (session == null || session.isRootUser()) {
                         log.debug("Creating new connection.");
                         Map parameters = new HashMap();
                         parameters.putAll(connection.getParameters());
@@ -313,10 +307,7 @@ public class ProxyEngine extends Engine {
 
                 if (client == null) {
 
-                    DN rootDn = penroseConfig.getRootDn();
-                    DN bindDn = session == null ? null : session.getBindDn();
-
-                    if (session == null || rootDn.equals(bindDn)) {
+                    if (session == null || session.isRootUser()) {
                         log.debug("Creating new connection.");
                         Map parameters = new HashMap();
                         parameters.putAll(connection.getParameters());
@@ -384,10 +375,7 @@ public class ProxyEngine extends Engine {
 
                 if (client == null) {
 
-                    DN rootDn = penroseConfig.getRootDn();
-                    DN bindDn = session.getBindDn();
-
-                    if (session == null || rootDn.equals(bindDn)) {
+                    if (session == null || session.isRootUser()) {
                         log.debug("Creating new connection.");
                         Map parameters = new HashMap();
                         parameters.putAll(connection.getParameters());
@@ -634,10 +622,7 @@ Mapping: ou=Groups,dc=Proxy,dc=Example,dc=org
 
                 if (client == null) {
 
-                    DN rootDn = penroseConfig.getRootDn();
-                    DN bindDn = session == null ? null : session.getBindDn();
-
-                    if (session == null || rootDn.equals(bindDn)) {
+                    if (session == null || session.isRootUser()) {
                         log.debug("Creating new connection.");
                         Map parameters = new HashMap();
                         parameters.putAll(connection.getParameters());

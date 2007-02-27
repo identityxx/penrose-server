@@ -118,8 +118,10 @@ public class PenroseConfigWriter {
             element.add(schema);
         }
 
-        if (penroseConfig.getInterpreterConfig() != null) {
-            element.add(toElement(penroseConfig.getInterpreterConfig()));
+        Collection interpreterConfigs = penroseConfig.getInterpreterConfigs();
+        for (Iterator i=interpreterConfigs.iterator(); i.hasNext(); ) {
+            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
+            element.add(toElement(interpreterConfig));
         }
 
         if (penroseConfig.getEntryCacheConfig() != null) {
@@ -157,12 +159,7 @@ public class PenroseConfigWriter {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-
-            Element partition = new DefaultElement("partition");
-            if (partitionConfig.getName() != null) partition.addAttribute("name", partitionConfig.getName());
-            if (partitionConfig.getPath() != null) partition.addAttribute("path", partitionConfig.getPath());
-
-            element.add(partition);
+            element.add(toElement(partitionConfig));
         }
 
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
@@ -360,6 +357,19 @@ public class PenroseConfigWriter {
         return element;
     }
 
+    public Element toElement(PartitionConfig partitionConfig)  {
+        Element element = new DefaultElement("partition");
+
+        if (partitionConfig.getName() != null) element.addAttribute("name", partitionConfig.getName());
+        if (partitionConfig.getPath() != null) element.addAttribute("path", partitionConfig.getPath());
+
+        Element handlerName = new DefaultElement("handler-name");
+        handlerName.add(new DefaultText(partitionConfig.getHandlerName()));
+        element.add(handlerName);
+
+        return element;
+    }
+    
     public void addElements(Element element, CacheConfig cacheConfig) {
 /*
         Element cacheName = new DefaultElement("cache-name");

@@ -24,6 +24,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.slf4j.Logger;
@@ -57,15 +58,19 @@ public class HandlerManager {
 
     public void init(HandlerConfig handlerConfig, EngineManager engineManager) throws Exception {
 
-        log.debug("Initializing handler.");
+        String name = handlerConfig.getName();
+        String className = handlerConfig.getHandlerClass();
+        if (className == null) {
+            className = Handler.class.getName();
+        }
 
-        Handler handler = new Handler(penrose);
-        handler.setSessionManager(sessionManager);
-        handler.setSchemaManager(schemaManager);
-        handler.setInterpreterFactory(interpreterManager);
-        handler.setEngineManager(engineManager);
-        handler.setPartitionManager(partitionManager);
-        handler.setThreadManager(threadManager);
+        log.debug("Initializing handler "+name+": "+className);
+
+        Class clazz = Class.forName(className);
+        Handler handler = (Handler)clazz.newInstance();
+
+        handler.setPenrose(penrose);
+        handler.init(handlerConfig);
 
         handlers.put(handlerConfig.getName(), handler);
     }
@@ -74,6 +79,14 @@ public class HandlerManager {
         return (Handler)handlers.get(name);
     }
 
+    public Handler getHandler(Partition partition) {
+        String handlerName = partition == null ? "DEFAULT" : partition.getHandlerName();
+        if (log.isDebugEnabled()) {
+            log.debug("Getting handler for partition "+partition+": "+handlerName);
+        }
+        return (Handler)handlers.get(handlerName);
+    }
+    
     public void clear() {
         handlers.clear();
     }

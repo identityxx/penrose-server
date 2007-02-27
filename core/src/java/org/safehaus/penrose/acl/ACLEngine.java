@@ -169,11 +169,9 @@ public class ACLEngine {
             return rc;
         }
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        DN rootDn = penroseConfig.getRootDn();
         DN bindDn = session.getBindDn();
 
-        if (rootDn != null && rootDn.equals(bindDn)) {
+        if (session.isRootUser()) {
             log.debug("Root user => SUCCESS");
             return rc;
         }

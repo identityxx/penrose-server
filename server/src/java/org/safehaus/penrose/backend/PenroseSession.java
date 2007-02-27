@@ -184,6 +184,6 @@ public class PenroseSession implements Session {
     }
 
     public boolean isRoot() {
-        return false;
+        return session.isRootUser();
     }
 }

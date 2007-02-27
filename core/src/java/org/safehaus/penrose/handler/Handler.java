@@ -63,9 +63,10 @@ public class Handler {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    private PenroseConfig penroseConfig;
+    PenroseConfig penroseConfig;
+    HandlerConfig handlerConfig;
 
-    private Penrose penrose;
+    Penrose penrose;
 
     private AddHandler addHandler;
     private BindHandler bindHandler;
@@ -94,10 +95,18 @@ public class Handler {
     public Handler() throws Exception {
     }
 
-    public Handler(Penrose penrose) throws Exception {
-        this.penrose = penrose;
+    public void init(HandlerConfig handlerConfig) throws Exception {
+        this.handlerConfig = handlerConfig;
+
+        sessionManager     = penrose.getSessionManager();
+        schemaManager      = penrose.getSchemaManager();
+        interpreterManager = penrose.getInterpreterFactory();
+        engineManager      = penrose.getEngineManager();
+        partitionManager   = penrose.getPartitionManager();
+        threadManager      = penrose.getThreadManager();
 
         aclEngine = new ACLEngine(penrose);
+        aclEngine.setSchemaManager(schemaManager);
 
         addHandler = createAddHandler();
         bindHandler = createBindHandler();
@@ -112,7 +121,7 @@ public class Handler {
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
 
-        log.debug("Initializing entry cache "+cacheClass);
+        //log.debug("Initializing entry cache "+cacheClass);
         Class clazz = Class.forName(cacheClass);
         entryCache = (EntryCache)clazz.newInstance();
 
@@ -770,14 +779,14 @@ public class Handler {
         AttributeValues attributeValues = entry.getAttributeValues();
         attributeValues.set("objectClass", "top");
         attributeValues.add("objectClass", "extensibleObject");
-        attributeValues.set("vendorName", Penrose.PRODUCT_VENDOR);
+        attributeValues.set("vendorName", Penrose.VENDOR_NAME);
         attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition p = (Partition)i.next();
             for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping e = (EntryMapping)j.next();
-                if ("".equals(e.getDn())) continue;
+                if (e.getDn().isEmpty()) continue;
                 attributeValues.add("namingContexts", e.getDn());
             }
         }

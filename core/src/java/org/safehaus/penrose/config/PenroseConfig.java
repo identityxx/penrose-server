@@ -22,7 +22,9 @@ import java.util.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
+import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
@@ -45,15 +47,16 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     private String home;
 
-    private Map systemProperties = new LinkedHashMap();
-    private Map serviceConfigs   = new LinkedHashMap();
+    private Map systemProperties   = new LinkedHashMap();
+    private Map properties         = new LinkedHashMap();
+    private Map serviceConfigs     = new LinkedHashMap();
 
-    private Map schemaConfigs    = new LinkedHashMap();
-    private Map adapterConfigs   = new LinkedHashMap();
-    private Map partitionConfigs = new LinkedHashMap();
-    private Map engineConfigs    = new LinkedHashMap();
-    private Map handlerConfigs   = new LinkedHashMap();
-    private InterpreterConfig interpreterConfig;
+    private Map schemaConfigs      = new LinkedHashMap();
+    private Map adapterConfigs     = new LinkedHashMap();
+    private Map partitionConfigs   = new LinkedHashMap();
+    private Map engineConfigs      = new LinkedHashMap();
+    private Map handlerConfigs     = new LinkedHashMap();
+    private Map interpreterConfigs = new LinkedHashMap();
 
     private CacheConfig entryCacheConfig;
     private CacheConfig sourceCacheConfig;
@@ -64,8 +67,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private UserConfig rootUserConfig;
 
     public PenroseConfig() {
-
-        interpreterConfig = new InterpreterConfig();
 
         sourceCacheConfig = new CacheConfig();
         sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
@@ -78,7 +79,9 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         connectorConfig = new ConnectorConfig();
         sessionConfig = new SessionConfig();
 
+        addInterpreterConfig(new InterpreterConfig("DEFAULT", DefaultInterpreter.class.getName()));
         addHandlerConfig(new HandlerConfig("DEFAULT", Handler.class.getName()));
+        addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
 
         rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
     }
@@ -101,6 +104,26 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public String removeSystemProperty(String name) {
         return (String)systemProperties.remove(name);
+    }
+
+    public String getProperty(String name) {
+        return (String)properties.get(name);
+    }
+
+    public Map getProperties() {
+        return properties;
+    }
+
+    public Collection getPropertyNames() {
+        return properties.keySet();
+    }
+
+    public void setProperty(String name, String value) {
+        properties.put(name, value);
+    }
+
+    public String removeProperty(String name) {
+        return (String)properties.remove(name);
     }
 
     public void addServiceConfig(ServiceConfig serviceConfig) {
@@ -139,12 +162,12 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return engineConfigs.keySet();
     }
 
-    public void setInterpreterConfig(InterpreterConfig interpreterConfig) {
-        this.interpreterConfig = interpreterConfig;
+    public Collection getInterpreterConfigs() {
+        return interpreterConfigs.values();
     }
 
-    public InterpreterConfig getInterpreterConfig() {
-        return interpreterConfig;
+    public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
+        interpreterConfigs.put(interpreterConfig.getName(), interpreterConfig);
     }
 
     public Collection getAdapterConfigs() {
@@ -299,12 +322,13 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     public int hashCode() {
         return (home == null ? 0 : home.hashCode()) +
                 (systemProperties == null ? 0 : systemProperties.hashCode()) +
+                (properties == null ? 0 : properties.hashCode()) +
                 (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
-                (interpreterConfig == null ? 0 : interpreterConfig.hashCode()) +
+                (interpreterConfigs == null ? 0 : interpreterConfigs.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
                 (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
                 (sessionConfig == null ? 0 : sessionConfig.hashCode()) +
@@ -328,14 +352,14 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         if (!equals(home, penroseConfig.home)) return false;
 
         if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
+        if (!equals(properties, penroseConfig.properties)) return false;
         if (!equals(serviceConfigs, penroseConfig.serviceConfigs)) return false;
 
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
         if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
         if (!equals(handlerConfigs, penroseConfig.handlerConfigs)) return false;
-
-        if (!equals(interpreterConfig, penroseConfig.interpreterConfig)) return false;
+        if (!equals(interpreterConfigs, penroseConfig.interpreterConfigs)) return false;
 
         if (!equals(entryCacheConfig, penroseConfig.entryCacheConfig)) return false;
         if (!equals(sourceCacheConfig, penroseConfig.sourceCacheConfig)) return false;
@@ -355,6 +379,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         home = penroseConfig.home;
 
         systemProperties.putAll(penroseConfig.systemProperties);
+        properties.putAll(penroseConfig.properties);
 
         for (Iterator i=penroseConfig.serviceConfigs.values().iterator(); i.hasNext(); ) {
             ServiceConfig serviceConfig = (ServiceConfig)i.next();
@@ -386,7 +411,10 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
             addHandlerConfig((HandlerConfig)handlerConfig.clone());
         }
 
-        interpreterConfig.copy(interpreterConfig);
+        for (Iterator i=penroseConfig.interpreterConfigs.values().iterator(); i.hasNext(); ) {
+            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
+            addInterpreterConfig((InterpreterConfig)interpreterConfig.clone());
+        }
 
         entryCacheConfig.copy(entryCacheConfig);
         sourceCacheConfig.copy(sourceCacheConfig);
@@ -399,12 +427,14 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public void clear() {
         systemProperties.clear();
+        properties.clear();
         serviceConfigs.clear();
         schemaConfigs.clear();
         adapterConfigs.clear();
         partitionConfigs.clear();
         engineConfigs.clear();
         handlerConfigs.clear();
+        interpreterConfigs.clear();
     }
 
     public Object clone() {

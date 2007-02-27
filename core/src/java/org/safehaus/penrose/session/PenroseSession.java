@@ -18,14 +18,19 @@
 package org.safehaus.penrose.session;
 
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -43,21 +48,25 @@ public class PenroseSession {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private Penrose penrose;
     private SessionManager sessionManager;
     private EventManager eventManager;
+    private SchemaManager schemaManager;
     private PartitionManager partitionManager;
-
-    private Handler handler;
+    private HandlerManager handlerManager;
 
     private String sessionId;
 
     private DN bindDn;
     private String bindPassword;
+    private boolean rootUser;
 
     private Date createDate;
     private Date lastActivityDate;
 
     private Map attributes = new HashMap();
+    
+    boolean enableEventListeners = true;
 
     public PenroseSession(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -71,9 +80,9 @@ public class PenroseSession {
     }
 
     public void setBindDn(String bindDn) {
-        setBindDn(new DN(bindDn));
+        this.bindDn = new DN(bindDn);
     }
-    
+
     public void setBindDn(DN bindDn) {
         this.bindDn = bindDn;
     }
@@ -86,13 +95,17 @@ public class PenroseSession {
         this.lastActivityDate = lastActivityDate;
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
+    public boolean isValid() {
+    	if (sessionManager.isExpired(this))
+    	{
+    		return sessionManager.isValid(this);
+    	}
+    	return true;
     }
 
-    public boolean isValid() {
-        return sessionManager.isValid(this);
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ADD
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(String dn, Attributes attributes) throws LDAPException {
         add(new DN(dn), attributes);
@@ -119,126 +132,189 @@ public class PenroseSession {
     }
 
     public void add(Partition partition, DN dn, Attributes attributes) throws LDAPException {
-        int rc = LDAPException.SUCCESS;
-
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
+            
+            if (enableEventListeners) {
+            	AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
+            	boolean b = eventManager.postEvent(dn, beforeModifyEvent);
 
-            AddEvent beforeAddEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, dn, attributes);
-            boolean b = eventManager.postEvent(dn, beforeAddEvent);
-
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            	if (!b) {
+            		throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+            	}
             }
 
-            handler.add(this, dn, attributes);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
-
-        } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            AddEvent afterAddEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, dn, attributes);
-            afterAddEvent.setReturnCode(rc);
+            int rc = LDAPException.SUCCESS;
             try {
-                eventManager.postEvent(dn, afterAddEvent);
-            } catch (Exception e) {
-                // ignore
+                Handler handler = handlerManager.getHandler(partition);
+                handler.add(this, dn, attributes);
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
             }
+            finally {
+                if (enableEventListeners) {
+                	AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, dn, attributes);
+                	afterModifyEvent.setReturnCode(rc);
+                	eventManager.postEvent(dn, afterModifyEvent);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // BIND
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(String dn, String password) throws LDAPException {
     	bind(new DN(dn), password);
     }
 
     public void bind(DN dn, String password) throws LDAPException {
-        int rc = LDAPException.SUCCESS;
-
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
-            boolean b = eventManager.postEvent(dn, beforeBindEvent);
+            if (enableEventListeners) {
+            	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, dn, password);
+            	boolean b = eventManager.postEvent(dn, beforeBindEvent);
+            
+            	if (!b) {
+            		throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+            	}
+        	}
+            
+            int rc = LDAPException.SUCCESS;
+    		if (enableEventListeners) {        		
+    			BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, dn, password);
+    			afterBindEvent.setReturnCode(rc);
+    			eventManager.postEvent(dn, afterBindEvent);
+        	}
 
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            PenroseConfig penroseConfig = penrose.getPenroseConfig();
+            DN rootDn = penroseConfig.getRootDn();
+
+            try {
+                if (dn.matches(rootDn)) {
+                    if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
+                        log.debug("Password doesn't match => BIND FAILED");
+                        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                    }
+
+                    log.debug("Bound as root user.");
+
+                    rootUser = true;
+
+                } else {
+                    Partition partition = partitionManager.getPartition(dn);
+
+                    if (partition == null) {
+                        log.debug("Partition for entry "+dn+" not found.");
+                        throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+                    }
+
+                    Handler handler = handlerManager.getHandler(partition);
+                    handler.bind(this, dn, password);
+
+                    rootUser = false;
+                }
+
+                bindDn = dn;
+                bindPassword = password;
+
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            } finally {
+                if (enableEventListeners) {
+                	BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, dn, password);
+                	afterBindEvent.setReturnCode(rc);
+                	eventManager.postEvent(dn, afterBindEvent);
+                }
             }
-
-            handler.bind(this, dn, password);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, dn, password);
-            afterBindEvent.setReturnCode(rc);
-            try {
-                eventManager.postEvent(dn, afterBindEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // COMPARE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public boolean compare(String dn, String attributeName, Object attributeValue) throws LDAPException {
         return compare(new DN(dn), attributeName, attributeValue);
     }
 
     public boolean compare(DN dn, String attributeName, Object attributeValue) throws LDAPException {
-        int rc = LDAPException.SUCCESS;
+        Partition partition = null;
 
+        try {
+            partition = partitionManager.getPartition(dn);
+
+            if (partition == null) {
+                log.debug("Partition for entry "+dn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        return compare(partition, dn, attributeName, attributeValue);
+    }
+
+    public boolean compare(Partition partition, DN dn, String attributeName, Object attributeValue) throws LDAPException {
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
-            boolean b = eventManager.postEvent(dn, beforeCompareEvent);
+            if (enableEventListeners) {
+            	CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, dn, attributeName, attributeValue);
+            	boolean b = eventManager.postEvent(dn, beforeCompareEvent);
 
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            	if (!b) {
+            		throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+            	}
             }
 
-            return handler.compare(this, dn, attributeName, attributeValue);
+            int rc = LDAPException.SUCCESS;
+            boolean result = false;
+            try {
+                Handler handler = handlerManager.getHandler(partition);
+                result = handler.compare(this, dn, attributeName, attributeValue);
 
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            }
+            finally {
+                if (enableEventListeners) {
+                	CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, dn, attributeName, attributeValue);
+                	afterCompareEvent.setReturnCode(rc);
+                	eventManager.postEvent(dn, afterCompareEvent);
+                }
+            }
+            return result;
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, dn, attributeName, attributeValue);
-            afterCompareEvent.setReturnCode(rc);
-            try {
-                eventManager.postEvent(dn, afterCompareEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
-     }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // DELETE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(String dn) throws LDAPException {
         delete(new DN(dn));
@@ -246,42 +322,64 @@ public class PenroseSession {
 
     public void delete(DN dn) throws LDAPException {
 
-        int rc = LDAPException.SUCCESS;
+        Partition partition = null;
 
+        try {
+            partition = partitionManager.getPartition(dn);
+
+            if (partition == null) {
+                log.debug("Partition for entry "+dn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        delete(partition, dn);
+    }
+
+    public void delete(Partition partition, DN dn) throws LDAPException {
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
-            boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
+            if (enableEventListeners) {
+            	DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, dn);
+            	boolean b = eventManager.postEvent(dn, beforeDeleteEvent);
 
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            	if (!b) {
+            		throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+            	}
             }
-
-            handler.delete(this, dn);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
+            
+            int rc = LDAPException.SUCCESS;
+            try {
+                Handler handler = handlerManager.getHandler(partition);
+                handler.delete(this, dn);
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            }
+            finally {
+                if (enableEventListeners) {
+                	DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, dn);
+                	afterDeleteEvent.setReturnCode(rc);
+                	eventManager.postEvent(dn, afterDeleteEvent);
+                }
+            }
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, dn);
-            afterDeleteEvent.setReturnCode(rc);
-            try {
-                eventManager.postEvent(dn, afterDeleteEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // MODIFY
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(String dn, Collection modifications) throws LDAPException {
         modify(new DN(dn), modifications);
@@ -289,42 +387,63 @@ public class PenroseSession {
 
     public void modify(DN dn, Collection modifications) throws LDAPException {
 
-        int rc = LDAPException.SUCCESS;
+        Partition partition = null;
 
+        try {
+            partition = partitionManager.getPartition(dn);
+
+            if (partition == null) {
+                log.debug("Partition for entry "+dn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        modify(partition, dn, modifications);
+    }
+
+    public void modify(Partition partition, DN dn, Collection modifications) throws LDAPException {
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
+            if (enableEventListeners) {
+            	ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
+            	boolean b = eventManager.postEvent(dn, beforeModifyEvent);
 
-            ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, dn, modifications);
-            boolean b = eventManager.postEvent(dn, beforeModifyEvent);
-
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            	if (!b) {
+            		throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+            	}
             }
 
-            handler.modify(this, dn, modifications);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
+            int rc = LDAPException.SUCCESS;
+            try {
+                Handler handler = handlerManager.getHandler(partition);
+                handler.modify(this, dn, modifications);
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            }
+            finally {
+                if (enableEventListeners) {
+                	ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, dn, modifications);
+                	afterModifyEvent.setReturnCode(rc);
+                	eventManager.postEvent(dn, afterModifyEvent);
+                }
+            }
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, dn, modifications);
-            afterModifyEvent.setReturnCode(rc);
-            try {
-                eventManager.postEvent(dn, afterModifyEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // MODRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(String dn, String newRdn, boolean deleteOldRdn) throws LDAPException {
         modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
@@ -332,42 +451,63 @@ public class PenroseSession {
 
     public void modrdn(DN dn, RDN newRdn, boolean deleteOldRdn) throws LDAPException {
 
-        int rc = LDAPException.SUCCESS;
+        Partition partition = null;
 
+        try {
+            partition = partitionManager.getPartition(dn);
+
+            if (partition == null) {
+                log.debug("Partition for entry "+dn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        modrdn(partition, dn, newRdn, deleteOldRdn);
+    }
+
+    public void modrdn(Partition partition, DN dn, RDN newRdn, boolean deleteOldRdn) throws LDAPException {
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
-            boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
-
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            if (enableEventListeners) {
+            	ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, dn, newRdn, deleteOldRdn);
+	            boolean b = eventManager.postEvent(dn, beforeModRdnEvent);
+	
+	            if (!b) {
+	                throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+	            }
             }
 
-            handler.modrdn(this, dn, newRdn, deleteOldRdn);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
+            int rc = LDAPException.SUCCESS;
+            try {
+                Handler handler = handlerManager.getHandler(partition);
+                handler.modrdn(this, dn, newRdn, deleteOldRdn);
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            }
+            finally {
+                if (enableEventListeners) {
+                    ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
+                    afterModRdnEvent.setReturnCode(rc);
+                    eventManager.postEvent(dn, afterModRdnEvent);
+                }
+            }
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
-            afterModRdnEvent.setReturnCode(rc);
-            try {
-                eventManager.postEvent(dn, afterModRdnEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // SEARCH
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Asynchronous search.
@@ -387,24 +527,56 @@ public class PenroseSession {
         search(new DN(baseDn), filter, sc, results);
     }
 
-    public int search(
+    public void search(
             DN baseDn,
             String filter,
             PenroseSearchControls sc,
-            final PenroseSearchResults results)
-            throws LDAPException {
+            PenroseSearchResults results
+    ) throws LDAPException {
+
+        Partition partition = null;
+
+        try {
+            partition = partitionManager.getPartition(baseDn);
+
+            if (partition == null && !baseDn.isEmpty()) {
+                log.debug("Partition for entry "+baseDn+" not found.");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+
+        search(partition, baseDn, filter, sc, results);
+    }
+
+    public void search(
+            final Partition partition,
+            final DN baseDn,
+            final String filter,
+            final PenroseSearchControls sc,
+            final PenroseSearchResults results
+    ) throws LDAPException {
 
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            SearchEvent beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
-            boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
+            //results.setEnableEventListeners(enableEventListeners);
 
-            if (!b) {
-                results.close();
-                return LDAPException.SUCCESS;
+            SearchEvent beforeSearchEvent = null;
+            if (enableEventListeners)
+            {
+	 			beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
+	           	boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
+
+	            if (!b) {
+	                results.close();
+	                throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+	            }
             }
 
             final DN newBaseDn = beforeSearchEvent.getBaseDn();
@@ -428,7 +600,8 @@ public class PenroseSession {
                 }
             });
 
-            return handler.search(this, newBaseDn, newFilter, newSc, results);
+            Handler handler = handlerManager.getHandler(partition);
+            handler.search(this, newBaseDn, newFilter, newSc, results);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -436,40 +609,57 @@ public class PenroseSession {
         }
     }
 
-    public void unbind() throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // UNBIND
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        int rc = LDAPException.SUCCESS;
+    public void unbind() throws LDAPException {
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
+            if (enableEventListeners) {
+            	BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
+	            boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
 
-            BindEvent beforeUnbindEvent = new BindEvent(this, BindEvent.BEFORE_UNBIND, this, bindDn);
-            boolean b = eventManager.postEvent(bindDn, beforeUnbindEvent);
-
-            if (!b) {
-                rc = LDAPException.UNWILLING_TO_PERFORM;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+	            if (!b) {
+	                throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
+	            }
             }
 
-            handler.unbind(this);
+            int rc = LDAPException.SUCCESS;
+            try {
+                if (!rootUser && bindDn != null) {
+                    Partition partition = partitionManager.getPartition(bindDn);
 
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            throw e;
+                    if (partition == null) {
+                        log.debug("Partition for entry "+bindDn+" not found.");
+                        throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+                    }
+
+                    Handler handler = handlerManager.getHandler(partition);
+                    handler.unbind(this);
+                }
+
+                rootUser = false;
+                bindDn = null;
+                bindPassword = null;
+
+            } catch (LDAPException e) {
+                rc = e.getResultCode();
+                throw e;
+            }
+            finally {
+                if (enableEventListeners) {
+	                BindEvent afterUnbindEvent = new BindEvent(this, BindEvent.AFTER_UNBIND, this, bindDn);
+	                afterUnbindEvent.setReturnCode(rc);
+	                eventManager.postEvent(bindDn, afterUnbindEvent);
+                }
+            }
 
         } catch (Exception e) {
-            rc = LDAPException.OPERATIONS_ERROR;
-            String message = e.getMessage();
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            BindEvent afterUnbindEvent = new BindEvent(this, BindEvent.AFTER_UNBIND, this, bindDn);
-            try {
-                eventManager.postEvent(bindDn, afterUnbindEvent);
-            } catch (Exception e) {
-                // ignore
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
@@ -587,5 +777,48 @@ public class PenroseSession {
 
     public void setBindPassword(String bindPassword) {
         this.bindPassword = bindPassword;
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
+    }
+
+    public boolean isRootUser() {
+        return rootUser;
+    }
+
+    public void setRootUser(boolean rootUser) {
+        this.rootUser = rootUser;
+    }
+
+    public HandlerManager getHandlerManager() {
+        return handlerManager;
+    }
+
+    public void setHandlerManager(HandlerManager handlerManager) {
+        this.handlerManager = handlerManager;
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
+    }
+
+    public void setPenrose(Penrose penrose) {
+        this.penrose = penrose;
+        String s = (String)penrose.getPenroseConfig().getProperty("enableEventListeners");
+        enableEventListeners = s == null ? true : new Boolean(s).booleanValue();
+
     }
 }

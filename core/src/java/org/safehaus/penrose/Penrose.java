@@ -53,12 +53,11 @@ public class Penrose {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public static String PRODUCT_NAME;
-    public static String PRODUCT_VERSION;
-    public static String PRODUCT_VENDOR;
-    public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
-
-    public static String SPECIFICATION_VERSION;
+    public static String PRODUCT_NAME          = "Penrose";
+    public static String PRODUCT_VERSION       = "1.2";
+    public static String VENDOR_NAME           = "Identyx";
+    public static String PRODUCT_COPYRIGHT     = "Copyright (c) 2000-2007, Identyx Corporation.";
+    public static String SPECIFICATION_VERSION = "1.2";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
     public final static String RELEASE_DATE      = "12/15/2006";
@@ -91,11 +90,17 @@ public class Penrose {
         try {
             Package pkg = Penrose.class.getPackage();
 
-            PRODUCT_NAME    = pkg.getImplementationTitle();
-            PRODUCT_VERSION = pkg.getImplementationVersion();
-            PRODUCT_VENDOR     = pkg.getImplementationVendor();
+            String value = pkg.getImplementationTitle();
+            if (value != null) PRODUCT_NAME = value;
 
-            SPECIFICATION_VERSION = pkg.getSpecificationVersion();
+            value = pkg.getImplementationVersion();
+            if (value != null) PRODUCT_VERSION = value;
+
+            value = pkg.getImplementationVendor();
+            if (value != null) VENDOR_NAME = value;
+
+            value = pkg.getSpecificationVersion();
+            if (value != null) SPECIFICATION_VERSION = value;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -183,6 +188,7 @@ public class Penrose {
 
     public void initSessionManager() throws Exception {
         sessionManager = new SessionManager();
+        sessionManager.setPenrose(this);
         sessionManager.setPenroseConfig(penroseConfig);
     }
 
@@ -262,7 +268,7 @@ public class Penrose {
 
         loadSystemProperties();
 
-        loadInterpreter();
+        loadInterpreters();
         loadSchemas();
 
         loadPartitions();
@@ -270,7 +276,7 @@ public class Penrose {
 
         loadConnector();
         loadEngines();
-        loadHandler();
+        loadHandlers();
 
         loadModules();
     }
@@ -284,9 +290,11 @@ public class Penrose {
         }
     }
 
-    public void loadInterpreter() throws Exception {
-        InterpreterConfig interpreterConfig = penroseConfig.getInterpreterConfig();
-        interpreterManager.init(interpreterConfig);
+    public void loadInterpreters() throws Exception {
+        for (Iterator i=penroseConfig.getInterpreterConfigs().iterator(); i.hasNext(); ) {
+            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
+            interpreterManager.init(interpreterConfig);
+        }
     }
 
     public void loadSchemas() throws Exception {
@@ -357,7 +365,7 @@ public class Penrose {
         }
     }
 
-    public void loadHandler() throws Exception {
+    public void loadHandlers() throws Exception {
 
         Collection handlerConfigs = penroseConfig.getHandlerConfigs();
         for (Iterator i=handlerConfigs.iterator(); i.hasNext(); ) {
@@ -465,11 +473,10 @@ public class Penrose {
         PenroseSession session = sessionManager.newSession();
         if (session == null) return null;
 
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        session.setHandler(handler);
-
+        session.setHandlerManager(handlerManager);
         session.setEventManager(eventManager);
+        session.setSchemaManager(schemaManager);
+        session.setPartitionManager(partitionManager);
 
         return session;
     }
@@ -479,11 +486,10 @@ public class Penrose {
         PenroseSession session = sessionManager.createSession(sessionId);
         if (session == null) return null;
 
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        session.setHandler(handler);
-
+        session.setHandlerManager(handlerManager);
         session.setEventManager(eventManager);
+        session.setSchemaManager(schemaManager);
+        session.setPartitionManager(partitionManager);
 
         return session;
     }
@@ -538,8 +544,7 @@ public class Penrose {
     }
 
     public Handler getHandler() {
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig("DEFAULT");
-        return handlerManager.getHandler(handlerConfig.getName());
+        return handlerManager.getHandler("DEFAULT");
     }
 
     public SchemaManager getSchemaManager() {
@@ -584,5 +589,21 @@ public class Penrose {
 
     public void setEventManager(EventManager eventManager) {
         this.eventManager = eventManager;
+    }
+
+    public EngineManager getEngineManager() {
+        return engineManager;
+    }
+
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    public HandlerManager getHandlerManager() {
+        return handlerManager;
+    }
+
+    public void setHandlerManager(HandlerManager handlerManager) {
+        this.handlerManager = handlerManager;
     }
 }

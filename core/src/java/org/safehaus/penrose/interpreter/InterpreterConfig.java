@@ -31,6 +31,14 @@ public class InterpreterConfig implements Cloneable {
 
     private Properties parameters = new Properties();
 
+    public InterpreterConfig() {
+    }
+
+    public InterpreterConfig(String name, String interpreterClass) {
+        this.name = name;
+        this.interpreterClass = interpreterClass;
+    }
+
     public String getInterpreterClass() {
         return interpreterClass;
     }
