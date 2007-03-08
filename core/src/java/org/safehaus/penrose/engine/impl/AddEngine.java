@@ -68,10 +68,16 @@ public class AddEngine {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
                 AttributeValues output = new AttributeValues();
-                RDN pk = engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, attributeValues, output);
-                if (pk == null) continue;
+                engine.getTransformEngine().translate(
+                        partition,
+                        entryMapping,
+                        sourceMapping,
+                        dn,
+                        attributeValues,
+                        output
+                );
 
-                sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
+                //sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
 
                 for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();

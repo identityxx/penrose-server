@@ -18,16 +18,14 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -38,6 +36,7 @@ import javax.naming.directory.ModificationItem;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
 import java.util.*;
 
 /**
@@ -47,7 +46,7 @@ public class ModifyHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public ModifyHandler(Handler handler) {
         this.handler = handler;
@@ -57,136 +56,65 @@ public class ModifyHandler {
             PenroseSession session,
             Partition partition,
             Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             Collection modifications
-    ) throws LDAPException {
+    ) throws Exception {
 
-        int rc = LDAPException.SUCCESS;
-        String message = null;
+        log.debug("Modifying "+dn);
 
-        try {
-            performModify(session, partition, entry, modifications);
+        Collection normalizedModifications = new ArrayList();
 
-            // refreshing entry cache
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem) i.next();
 
-            EntryMapping entryMapping = entry.getEntryMapping();
-            //handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
+            Attribute attribute = modification.getAttribute();
+            String attributeName = attribute.getID();
 
-            PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
+            AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
+            if (at != null) {
+                attributeName = at.getName();
+            }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
 
-            adminSession.search(
-                    entry.getDn(),
-                    "(objectClass=*)",
-                    sc,
-                    results
-            );
+            log.debug("-");
 
-            while (results.hasNext()) results.next();
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            message = e.getLDAPErrorMessage();
-            throw e;
-
-        } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY RESPONSE:", 80));
-            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
-            log.debug(Formatter.displayLine(" - Message : "+message, 80));
-            log.debug(Formatter.displaySeparator(80));
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
         }
+
+        modifications = normalizedModifications;
+
+        log.info("");
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.modify(session, partition, entry, entryMapping, dn, modifications);
     }
-
-    public void performModify(
-            PenroseSession session,
-            Partition partition,
-            Entry entry,
-            Collection modifications
-    ) throws LDAPException {
-
-        log.debug("Modifying "+entry.getDn());
-
-        try {
-            Collection normalizedModifications = new ArrayList();
-
-            for (Iterator i = modifications.iterator(); i.hasNext();) {
-                ModificationItem modification = (ModificationItem) i.next();
-
-                Attribute attribute = modification.getAttribute();
-                String attributeName = attribute.getID();
-
-                AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
-                if (at != null) {
-                    attributeName = at.getName();
-                } else {
-                    //log.debug("Undefined attribute: "+attributeName);
-                    //return LDAPException.UNDEFINED_ATTRIBUTE_TYPE;
-                }
-
-                switch (modification.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        log.debug("add: " + attributeName);
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        log.debug("delete: " + attributeName);
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        log.debug("replace: " + attributeName);
-                        break;
-                }
-
-                Attribute normalizedAttribute = new BasicAttribute(attributeName);
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    normalizedAttribute.add(value);
-                    log.debug(attributeName + ": "+value);
-                }
-
-                log.debug("-");
-
-                ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
-                normalizedModifications.add(normalizedModification);
-            }
-
-            modifications = normalizedModifications;
-
-            log.info("");
-
-            EntryMapping entryMapping = entry.getEntryMapping();
-
-            String engineName = entryMapping.getEngineName();
-            Engine engine = handler.getEngine(engineName);
-
-            if (engine == null) {
-                int rc = LDAPException.OPERATIONS_ERROR;;
-                String message = "Engine "+engineName+" not found";
-                log.error(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-
-            engine.modify(session, partition, entry, modifications);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-	}
 
     /**
      * Apply encryption/encoding at attribute level.

@@ -33,7 +33,7 @@ public class SQLAndExpr {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             Object child = i.next();
             if (sb.length() > 0) sb.append(" and ");

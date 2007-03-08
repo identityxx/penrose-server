@@ -427,6 +427,10 @@ public class Partition {
         return (SourceConfig)sourceConfigs.get(name);
     }
 
+    public SourceConfig getSourceConfig(SourceMapping sourceMapping) {
+        return getSourceConfig(sourceMapping.getSourceName());
+    }
+    
     public Collection getSourceConfigs() {
         return sourceConfigs.values();
     }

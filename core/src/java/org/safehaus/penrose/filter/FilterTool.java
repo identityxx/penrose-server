@@ -27,9 +27,7 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -684,20 +682,21 @@ public class FilterTool {
 
     public static String escape(String value) {
 
-        StringBuffer sb = new StringBuffer(value);
-        int i = 0;
-        while (i<sb.length()) {
-            char c = sb.charAt(i);
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
+
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
 
             if (c == '*' || c == '(' || c == ')' || c == '\\') {
                 String hex = Integer.toHexString(c);
-                if (hex.length() < 2) hex = "0"+hex;
-                sb.replace(i, i+1, "\\"+hex);
-                i += 3;
-                continue;
-            }
+                sb.append('\\');
+                if (hex.length() < 2) sb.append('0');
+                sb.append(hex);
 
-            i++;
+            } else {
+                sb.append(c);
+            }
         }
 
         return sb.toString();
@@ -705,15 +704,37 @@ public class FilterTool {
 
     public static String unescape(String value) {
 
-        StringBuffer sb = new StringBuffer(value);
-        int i = sb.indexOf("\\");
-        while (i >= 0) {
-            String hex = sb.substring(i+1, i+3);
-            int dec = Integer.parseInt(hex, 16);
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
 
-            sb.setCharAt(i, (char)dec);
-            sb.delete(i+1, i+3);
-            i = sb.indexOf("\\", i+1);
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
+
+            if (c == '\\') {
+                int h1 = chars[++i];
+                if (h1 >= '0' && h1 <= '9') {
+                    h1 = h1 - '0';
+                } else if (h1 >= 'a' && h1 <= 'f') {
+                    h1 = h1 - 'a' + 10;
+                } else { // 'A' - 'F'
+                    h1 = h1 - 'A' + 10;
+                }
+
+                int h0 = chars[++i];
+                if (h0 >= '0' && h0 <= '9') {
+                    h0 = h0 - '0';
+                } else if (h0 >= 'a' && h0 <= 'f') {
+                    h0 = h0 - 'a' + 10;
+                } else { // 'A' - 'F'
+                    h0 = h0 - 'A' + 10;
+                }
+
+                int dec = h1 * 16 + h0;
+                sb.append((char)dec);
+
+            } else {
+                sb.append(c);
+            }
         }
 
         return sb.toString();

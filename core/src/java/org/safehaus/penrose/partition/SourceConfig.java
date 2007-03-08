@@ -17,10 +17,9 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -49,10 +48,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
 
     public final static String SIZE_LIMIT              = "sizeLimit";
-    public final static String LOADING_METHOD          = "loadingMethod";
-
-    public final static String LOAD_ALL                = "loadAll";
-    public final static String SEARCH_AND_LOAD         = "searchAndLoad";
+    public final static String TIME_LIMIT              = "timeLimit";
 
     public final static String CACHE                   = "cache";
 
@@ -66,7 +62,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;
 
     public final static int    DEFAULT_SIZE_LIMIT              = 0;
-    public final static String DEFAULT_LOADING_METHOD          = LOAD_ALL;
+    public final static int    DEFAULT_TIME_LIMIT              = 0;
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
@@ -88,8 +84,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
      * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
      */
     private Map fieldConfigs = new TreeMap();
+    private Map fieldConfigsByOriginalName = new HashMap();
+    private Collection pkFieldConfigs = new ArrayList();
+    private Collection nonPkFieldConfigs = new ArrayList();
 
-	public SourceConfig() {
+    public SourceConfig() {
 	}
 
     public SourceConfig(String name, String connectionName) {
@@ -109,11 +108,14 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return (FieldConfig)fieldConfigs.get(name);
     }
 
+    public FieldConfig getFieldConfigByOriginalName(String originalName) {
+        return (FieldConfig)fieldConfigsByOriginalName.get(originalName);
+    }
+
     public Collection getPrimaryKeyNames() {
         Collection results = new TreeSet();
-        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=pkFieldConfigs.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPK()) continue;
             results.add(fieldConfig.getName());
         }
         return results;
@@ -121,32 +123,19 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public Collection getOriginalPrimaryKeyNames() {
         Collection results = new TreeSet();
-        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+        for (Iterator i=pkFieldConfigs.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPK()) continue;
             results.add(fieldConfig.getOriginalName());
         }
         return results;
     }
 
     public Collection getPrimaryKeyFieldConfigs() {
-        Collection results = new ArrayList();
-        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPK()) continue;
-            results.add(fieldConfig);
-        }
-        return results;
+        return pkFieldConfigs;
     }
 
     public Collection getNonPrimaryKeyFieldConfigs() {
-        Collection results = new ArrayList();
-        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (fieldConfig.isPK()) continue;
-            results.add(fieldConfig);
-        }
-        return results;
+        return nonPkFieldConfigs;
     }
 
     public Collection getUniqueFieldConfigs() {
@@ -163,7 +152,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         Collection results = new ArrayList();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPK() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
+            if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
             results.add(fieldConfig);
         }
         return results;
@@ -175,10 +164,16 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
 	public void addFieldConfig(FieldConfig fieldConfig) {
         String name = fieldConfig.getName();
-        log.debug("Adding field "+name+(fieldConfig.isPK() ? " ("+fieldConfig.getPrimaryKey()+")" : ""));
+        log.debug("Adding field "+name+" ("+fieldConfig.isPrimaryKey()+")");
 
         fieldConfigs.put(name, fieldConfig);
-	}
+        fieldConfigsByOriginalName.put(fieldConfig.getOriginalName(), fieldConfig);
+        if (fieldConfig.isPrimaryKey()) {
+            pkFieldConfigs.add(fieldConfig);
+        } else {
+            nonPkFieldConfigs.add(fieldConfig);
+        }
+    }
 
     public void renameFieldConfig(String oldName, String newName) {
         if (oldName.equals(newName)) return;
@@ -242,11 +237,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public RDN getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
 
-
         RDNBuilder rb = new RDNBuilder();
+
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
-            if (!fieldConfig.isPK()) continue;
+            if (!fieldConfig.isPrimaryKey()) continue;
 
             String fieldName = fieldConfig.getName();
 
@@ -261,16 +256,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
             rb.set(fieldName, value);
         }
 
-        RDN pk = rb.toRdn();
-        return pk;
+        return rb.toRdn();
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (connectionName == null ? 0 : connectionName.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (fieldConfigs == null ? 0 : fieldConfigs.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {

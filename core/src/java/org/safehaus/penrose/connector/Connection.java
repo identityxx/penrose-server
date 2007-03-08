@@ -19,12 +19,14 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +39,7 @@ import java.util.Map;
 public class Connection implements ConnectionMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
-    
+
     private ConnectionConfig connectionConfig;
     private AdapterConfig adapterConfig;
     private Adapter adapter;
@@ -108,29 +110,20 @@ public class Connection implements ConnectionMBean {
     }
 
     public void search(
-    	    SourceConfig sourceConfig,
-    	    Filter filter,
-    	    PenroseSearchControls sc,
-    	    PenroseSearchResults results
+            Partition partition,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            SourceConfig sourceConfig,
+            Collection primaryKeys,
+            Filter filter,
+            PenroseSearchControls sc,
+            Results results
     ) throws Exception {
-        adapter.search(sourceConfig, filter, sc, results);
+        adapter.search(partition, entryMapping, sourceMapping, sourceConfig, filter, sc, results);
     }
 
     public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
         adapter.add(sourceConfig, pk, sourceValues);
-    }
-
-    public AttributeValues get(SourceConfig sourceConfig, RDN pk) throws Exception {
-        if (adapter == null) return null;
-
-        Filter filter = FilterTool.createFilter(pk);
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults sr = new PenroseSearchResults();
-
-        adapter.search(sourceConfig, filter, sc, sr);
-
-        if (!sr.hasNext()) return null;
-        return (AttributeValues)sr.next();
     }
 
     public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {

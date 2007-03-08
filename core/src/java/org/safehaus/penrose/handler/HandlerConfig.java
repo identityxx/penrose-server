@@ -27,7 +27,7 @@ import java.util.Map;
 public class HandlerConfig implements HandlerConfigMBean, Cloneable {
 
     private String name = "DEFAULT";
-    private String handlerClass = Handler.class.getName();
+    private String handlerClass = DefaultHandler.class.getName();
     private String description;
 
     private Properties parameters = new Properties();

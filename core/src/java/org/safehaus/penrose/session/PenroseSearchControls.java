@@ -21,7 +21,6 @@ import org.ietf.ldap.LDAPSearchConstraints;
 import org.ietf.ldap.LDAPConnection;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -45,11 +44,20 @@ public class PenroseSearchControls {
     private long sizeLimit    = 0;
     private int timeLimit     = 0;
 
-    private Collection attributes = new ArrayList();
+    private Collection attributes = null;
 
     public PenroseSearchControls() {
     }
 
+    public PenroseSearchControls(PenroseSearchControls sc) {
+    	scope = sc.getScope();
+    	dereference = sc.getDereference();
+    	typesOnly = sc.isTypesOnly();
+    	sizeLimit = sc.getSizeLimit();
+    	timeLimit = sc.getTimeLimit();
+    	setAttributes(sc.getAttributes());
+    }
+    
     public int getDereference() {
         return dereference;
     }
@@ -75,18 +83,20 @@ public class PenroseSearchControls {
     }
 
     public Collection getAttributes() {
-        return attributes;
+        return (attributes == null) ? null : 
+        	java.util.Collections.unmodifiableCollection(attributes);
     }
 
     public void setAttributes(Collection attributes) {
-        this.attributes.clear();
-        this.attributes.addAll(attributes);
+        this.attributes = attributes;
     }
 
     public void setAttributes(String[] attributes) {
-        this.attributes.clear();
-        if (attributes == null) return;
-        this.attributes.addAll(Arrays.asList(attributes));
+        if (attributes == null) {
+            this.attributes = null;
+            return;
+    	}
+        this.attributes = Arrays.asList(attributes);
     }
 
     public long getSizeLimit() {

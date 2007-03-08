@@ -1,9 +1,9 @@
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.engine.impl.EngineImpl;
+import org.safehaus.penrose.engine.simple.SimpleEngine;
 
 /**
  * @author Endi S. Dewata
  */
-public class DefaultEngine extends EngineImpl {
+public class DefaultEngine extends SimpleEngine {
 }

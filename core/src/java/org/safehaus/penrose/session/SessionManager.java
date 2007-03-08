@@ -57,7 +57,7 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized PenroseSession newSession() {
 
-        String sessionId = createSessionId();
+        Object sessionId = createSessionId();
         while (sessions.get(sessionId) != null) {
             sessionId = createSessionId();
         }
@@ -65,7 +65,7 @@ public class SessionManager implements SessionManagerMBean {
         return createSession(sessionId);
     }
 
-    public synchronized PenroseSession createSession(String sessionId) {
+    public synchronized PenroseSession createSession(Object sessionId) {
 
         purge();
 
@@ -81,24 +81,24 @@ public class SessionManager implements SessionManagerMBean {
         return session;
     }
 
-    public synchronized PenroseSession getSession(String sessionId) {
+    public synchronized PenroseSession getSession(Object sessionId) {
 
         purge();
 
-        //log.debug("Retrieving session "+sessionId);
+        log.debug("Retrieving session "+sessionId);
         return (PenroseSession)sessions.get(sessionId);
     }
 
-    public synchronized PenroseSession removeSession(String sessionId) {
+    public synchronized PenroseSession removeSession(Object sessionId) {
 
         purge();
 
-        //log.debug("Removing session "+sessionId);
+        log.debug("Removing session "+sessionId);
         return (PenroseSession)sessions.remove(sessionId);
     }
 
-    public String createSessionId() {
-        StringBuffer sb = new StringBuffer();
+    public Object createSessionId() {
+        StringBuilder sb = new StringBuilder();
         for (int i=0; i<64; i++) {
             int index = (int)(SESSION_ID_CHARS.length()*Math.random());
             sb.append(SESSION_ID_CHARS.charAt(index));

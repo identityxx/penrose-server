@@ -21,8 +21,10 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
 import org.ietf.ldap.*;
@@ -38,7 +40,7 @@ public class CompareHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public CompareHandler(Handler handler) {
         this.handler = handler;
@@ -47,32 +49,45 @@ public class CompareHandler {
     public boolean compare(
             PenroseSession session,
             Partition partition,
-            Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             String attributeName,
             Object attributeValue
     ) throws LDAPException {
 
+        boolean debug = log.isDebugEnabled();
         int rc = LDAPException.SUCCESS;
         String message = null;
 
         try {
+            Entry entry = ((DefaultHandler)handler).getFindHandler().find(session, partition, entryMapping, dn);
+
+            if (entry == null) {
+                if (debug) log.debug("Entry "+dn+" not found");
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            }
+
             List attributeNames = new ArrayList();
             attributeNames.add(attributeName);
 
             AttributeValues attributeValues = entry.getAttributeValues();
             Collection values = attributeValues.get(attributeName);
+            if (values == null) {
+                if (debug) log.debug("Attribute "+attributeName+" not found.");
+                return false;
+            }
 
             AttributeType attributeType = handler.getSchemaManager().getAttributeType(attributeName);
 
             String equality = attributeType == null ? null : attributeType.getEquality();
             EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
 
-            log.debug("Comparing values:");
+            if (debug) log.debug("Comparing values:");
             for (Iterator i=values.iterator(); i.hasNext(); ) {
                 Object value = i.next();
 
                 boolean b = equalityMatchingRule.compare(value, attributeValue);
-                log.debug(" - ["+value+"] => "+b);
+                if (debug) log.debug(" - ["+value+"] => "+b);
 
                 if (b) return true;
 
@@ -86,17 +101,17 @@ public class CompareHandler {
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("COMPARE RESPONSE:", 80));
-            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
-            log.debug(Formatter.displayLine(" - Message : "+message, 80));
-            log.debug(Formatter.displaySeparator(80));
+            if (debug) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("COMPARE RESPONSE:", 80));
+                log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
+                log.debug(Formatter.displayLine(" - Message : "+message, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
         }
     }
 
@@ -105,6 +120,14 @@ public class CompareHandler {
     }
 
     public void setEngine(Handler handler) {
+        this.handler = handler;
+    }
+
+    public Handler getHandler() {
+        return handler;
+    }
+
+    public void setHandler(Handler handler) {
         this.handler = handler;
     }
 }

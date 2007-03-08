@@ -17,9 +17,10 @@
  */
 package org.safehaus.penrose.engine;
 
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.mapping.EntryMapping;
 
 import java.util.Collection;
 
@@ -29,6 +30,7 @@ import java.util.Collection;
 public class EntryData {
 
     private DN dn;
+    private EntryMapping entryMapping;
     private AttributeValues mergedValues;
     private Collection rows;
     private RDN filter;
@@ -84,5 +86,13 @@ public class EntryData {
 
     public void setComplete(boolean complete) {
         this.complete = complete;
+    }
+
+    public EntryMapping getEntryMapping() {
+        return entryMapping;
+    }
+
+    public void setEntryMapping(EntryMapping entryMapping) {
+        this.entryMapping = entryMapping;
     }
 }

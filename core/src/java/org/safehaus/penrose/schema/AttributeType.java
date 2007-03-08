@@ -95,8 +95,9 @@ public class AttributeType implements Cloneable, Comparable {
 	 * Default: userApplications.
 	 */
 	public String usage = USER_APPLICATIONS;
-	
-	public boolean isCollective() {
+    public boolean operational;
+
+    public boolean isCollective() {
 		return collective;
 	}
 
@@ -208,7 +209,8 @@ public class AttributeType implements Cloneable, Comparable {
 
 	public void setUsage(String usage) {
 		this.usage = usage;
-	}
+        operational = DIRECTORY_OPERATION.equals(usage);
+    }
 
 	public boolean isObsolete() {
 		return obsolete;
@@ -219,19 +221,7 @@ public class AttributeType implements Cloneable, Comparable {
 	}
 
     public int hashCode() {
-        return (oid == null ? 0 : oid.hashCode()) +
-                (names == null ? 0 : names.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (obsolete ? 0 : 1) +
-                (superClass == null ? 0 : superClass.hashCode()) +
-                (equality == null ? 0 : equality.hashCode()) +
-                (ordering == null ? 0 : ordering.hashCode()) +
-                (substring == null ? 0 : substring.hashCode()) +
-                (syntax == null ? 0 : syntax.hashCode()) +
-                (singleValued ? 0 : 1) +
-                (collective ? 0 : 1) +
-                (modifiable ? 0 : 1) +
-                (usage == null ? 0 : usage.hashCode());
+        return oid == null ? 0 : oid.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -279,6 +269,7 @@ public class AttributeType implements Cloneable, Comparable {
         collective = at.collective;
         modifiable = at.modifiable;
         usage = at.usage;
+        operational = at.operational;
     }
 
     public Object clone() {
@@ -393,12 +384,12 @@ public class AttributeType implements Cloneable, Comparable {
     }
 
     public static String escape(String s) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int i=0; i<s.length(); i++) {
             char c = s.charAt(i);
             if (c == '\'' || c == '\\') {
-                sb.append("\\");
+                sb.append('\\');
                 sb.append(toHex(c));
             } else {
                 sb.append(c);
@@ -410,6 +401,14 @@ public class AttributeType implements Cloneable, Comparable {
 
     public static String toHex(char c) {
         String s = Integer.toHexString(c);
-        return s.length() == 1 ? "0"+s : s;
+        return s.length() == 1 ? '0'+s : s;
+    }
+
+    public boolean isOperational() {
+        return operational;
+    }
+
+    public void setOperational(boolean operational) {
+        this.operational = operational;
     }
 }

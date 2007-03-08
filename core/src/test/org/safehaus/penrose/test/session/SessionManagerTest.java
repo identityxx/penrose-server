@@ -18,21 +18,19 @@
 package org.safehaus.penrose.test.session;
 
 import junit.framework.TestCase;
-import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.user.UserConfig;
+import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.PenroseSession;
 
-import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Date;
 
 /**
@@ -44,17 +42,6 @@ public class SessionManagerTest extends TestCase {
     Penrose penrose;
 
     public void setUp() throws Exception {
-
-        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
-        BasicConfigurator.configure(appender);
-
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.OFF);
-
-        Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.INFO);
-        logger.setAdditivity(false);
-
         penroseConfig = new DefaultPenroseConfig();
 
         SessionConfig sessionConfig = penroseConfig.getSessionConfig();
@@ -103,7 +90,7 @@ public class SessionManagerTest extends TestCase {
 
         assertEquals(0, sessionManager.getSessions().size());
     }
-
+/*
     public void testMaxIdleTime() throws Exception {
 
         SessionManager sessionManager = penrose.getSessionManager();
@@ -150,4 +137,5 @@ public class SessionManagerTest extends TestCase {
         }
 
     }
+*/
 }

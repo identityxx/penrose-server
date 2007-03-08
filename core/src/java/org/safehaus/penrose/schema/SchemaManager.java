@@ -18,7 +18,6 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -80,14 +79,6 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public Schema getAllSchema() {
         return allSchema;
-    }
-
-    public String normalize(String dn) throws Exception {
-        return allSchema.normalize(dn);
-    }
-
-    public RDN normalize(RDN rdn) throws Exception {
-        return allSchema.normalize(rdn);
     }
 
     public Collection getObjectClasses() {

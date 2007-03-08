@@ -450,7 +450,7 @@ public class PenroseClient {
                 String serviceName = (String)i.next();
                 String status = client.getStatus(serviceName);
 
-                StringBuffer padding = new StringBuffer();
+                StringBuilder padding = new StringBuilder();
                 for (int j=0; j<20-serviceName.length(); j++) padding.append(" ");
 
                 System.out.println(serviceName+padding+"["+status+"]");

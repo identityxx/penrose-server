@@ -317,7 +317,7 @@ public class SchemaParser implements SchemaParserConstants {
  */
   final public String numericoid() throws ParseException {
         Token t;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
     t = jj_consume_token(DIGIT);
                       sb.append(t.toString());
     label_4:

@@ -18,6 +18,8 @@
 package org.safehaus.penrose;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -37,14 +39,17 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.event.EventManager;
 import org.safehaus.penrose.log4j.Log4jConfigReader;
 import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
+import org.safehaus.penrose.naming.PenroseInitialContextFactory;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
 
 /**
  * @author Endi S. Dewata
@@ -69,7 +74,9 @@ public class Penrose {
 
     private PenroseConfig      penroseConfig;
 
-    private ThreadManager      threadManager;
+    private ThreadGroup        threadGroup;
+    private ThreadPoolExecutor executorService;
+
     private SchemaManager      schemaManager;
     private PartitionManager   partitionManager;
     private PartitionValidator partitionValidator;
@@ -85,6 +92,8 @@ public class Penrose {
     private InterpreterManager interpreterManager;
 
     private String status = STOPPED;
+
+    Context context;
 
     static {
         try {
@@ -136,6 +145,11 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void init() throws Exception {
+
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, PenroseInitialContextFactory.class.getName());
+        context = new InitialContext(env);
+        
         initLoggers();
         initThreadManager();
         initSchemaManager();
@@ -176,10 +190,30 @@ public class Penrose {
     }
 
     public void initThreadManager() throws Exception {
-        //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        //int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
+        String s = penroseConfig.getProperty("maxThreads");
+        int maxThreads = s == null ? 20 : Integer.parseInt(s);
 
-        threadManager = new ThreadManager(20);
+        log.debug("Initializing ThreadManager("+ maxThreads +")");
+
+        threadGroup = new ThreadGroup("Penrose");
+
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                maxThreads,
+                maxThreads,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue()
+        );
+
+        threadPoolExecutor.setThreadFactory(new ThreadFactory() {
+            AtomicInteger threadId = new AtomicInteger();
+            public Thread newThread(Runnable r) {
+                return new Thread(threadGroup, r, threadGroup.getName()+"-"+threadId.getAndIncrement());
+            }
+        });
+        
+        executorService = threadPoolExecutor;
+        context.bind("java:comp/ExecutorService", executorService);
     }
 
     public void initSchemaManager() throws Exception {
@@ -245,7 +279,6 @@ public class Penrose {
         handlerManager.setInterpreterFactory(interpreterManager);
         handlerManager.setPartitionManager(partitionManager);
         handlerManager.setModuleManager(moduleManager);
-        handlerManager.setThreadManager(threadManager);
         handlerManager.setPenrose(this);
     }
 
@@ -448,8 +481,8 @@ public class Penrose {
         try {
             status = STOPPING;
 
-            threadManager.stopRequestAllWorkers();
-
+            executorService.shutdown();
+            
             moduleManager.stop();
             handlerManager.stop();
             sessionManager.stop();
@@ -481,7 +514,7 @@ public class Penrose {
         return session;
     }
 
-    public PenroseSession createSession(String sessionId) throws Exception {
+    public PenroseSession createSession(Object sessionId) throws Exception {
 
         PenroseSession session = sessionManager.createSession(sessionId);
         if (session == null) return null;
@@ -575,12 +608,8 @@ public class Penrose {
         this.sessionManager = sessionManager;
     }
 
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 
     public EventManager getEventManager() {

@@ -74,7 +74,7 @@ public class BuiltInEntriesTest extends TestCase {
         System.out.println("Searching "+baseDn+":");
         session.search(baseDn, "(objectClass=*)", sc, results);
 
-        assertEquals(0, results.size());
+        assertEquals(0, results.getTotalCount());
         assertEquals(LDAPException.NO_SUCH_OBJECT, results.getReturnCode());
 
         session.unbind();

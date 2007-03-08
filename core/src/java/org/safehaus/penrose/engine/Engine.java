@@ -34,15 +34,11 @@ import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.engine.impl.LoadEngine;
-import org.safehaus.penrose.engine.impl.MergeEngine;
-import org.safehaus.penrose.engine.impl.JoinEngine;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -74,10 +70,6 @@ public abstract class Engine {
 
     public Map locks = new HashMap();
     public Queue queue = new Queue();
-
-    public LoadEngine loadEngine;
-    public JoinEngine joinEngine;
-    public MergeEngine mergeEngine;
 
     public TransformEngine transformEngine;
 
@@ -145,28 +137,10 @@ public abstract class Engine {
         return analyzer.getPrimarySource(entryMapping);
     }
 
-    public AttributeValues computeAttributeValues(
-            EntryMapping entryMapping,
-            Interpreter interpreter
-            ) throws Exception {
-
-        return computeAttributeValues(entryMapping, null, interpreter);
-    }
-
-    public AttributeValues computeAttributeValues(
-            EntryMapping entryMapping,
-            AttributeValues sourceValues,
-            Interpreter interpreter
-            ) throws Exception {
-
-        return computeAttributeValues(entryMapping, sourceValues, null, interpreter);
-    }
-
     /**
-     * Compute attribute values of an entry given the source values or row values
+     * Compute attribute values of an entry given the source values
      * @param entryMapping
      * @param sourceValues
-     * @param rows
      * @param interpreter
      * @return attribute values
      * @throws Exception
@@ -174,49 +148,36 @@ public abstract class Engine {
     public AttributeValues computeAttributeValues(
             EntryMapping entryMapping,
             AttributeValues sourceValues,
-            Collection rows,
             Interpreter interpreter
             ) throws Exception {
 
-        log.debug("Generating attributes with source values:");
-        if (sourceValues != null) {
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-
-                for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
-                    Object value = j.next();
-                    String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
-                    log.debug(" - "+name+": "+value+" ("+className+")");
-                }
-            }
-        }
-
         AttributeValues attributeValues = new AttributeValues();
-
-        if (sourceValues != null) interpreter.set(sourceValues, rows);
+        if (sourceValues != null) interpreter.set(sourceValues);
 
         Collection attributeMappings = entryMapping.getAttributeMappings();
-        for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)j.next();
+        //log.debug("Attributes:");
+
+        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
             String name = attributeMapping.getName();
             Object value = interpreter.eval(entryMapping, attributeMapping);
+
             if (value == null) {
                 if (attributeMapping.isRdn()) {
-                    log.debug(" - "+name+" (PK): null");
+                    //log.debug("Primary key "+name+" is null.");
                     return null;
                 }
 
-                log.debug(" - "+name+": null");
+                //log.debug(" - "+name+": null");
                 continue;
             }
 
             attributeValues.add(name, value);
 
-            String className = value.getClass().getName();
-            className = className.substring(className.lastIndexOf(".")+1);
-            log.debug(" - "+name+": "+value+" ("+className+")");
+            //String className = value.getClass().getName();
+            //className = className.substring(className.lastIndexOf(".")+1);
+            //log.debug(" - "+name+": "+value+" ("+className+")");
         }
 
         interpreter.clear();
@@ -381,22 +342,6 @@ public abstract class Engine {
         return filter;
     }
 
-    public MergeEngine getMergeEngine() {
-        return mergeEngine;
-    }
-
-    public void setMergeEngine(MergeEngine mergeEngine) {
-        this.mergeEngine = mergeEngine;
-    }
-
-    public JoinEngine getJoinEngine() {
-        return joinEngine;
-    }
-
-    public void setJoinEngine(JoinEngine joinEngine) {
-        this.joinEngine = joinEngine;
-    }
-
     public boolean isStopping() {
         return stopping;
     }
@@ -426,16 +371,6 @@ public abstract class Engine {
 
     public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
         this.engineFilterTool = engineFilterTool;
-    }
-
-    public void load(
-            Partition partition,
-            EntryMapping entryMapping,
-            PenroseSearchResults entriesToLoad,
-            PenroseSearchResults loadedEntries)
-            throws Exception {
-
-        loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
     }
 
     public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
@@ -474,7 +409,9 @@ public abstract class Engine {
     public abstract void delete(
             PenroseSession session,
             Partition partition,
-            Entry entry
+            Entry entry,
+            EntryMapping entryMapping,
+            DN dn
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -485,6 +422,8 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             Collection modifications
     ) throws Exception;
 
@@ -496,6 +435,8 @@ public abstract class Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             RDN newRdn,
             boolean deleteOldRdn
     ) throws Exception;
@@ -504,14 +445,13 @@ public abstract class Engine {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public List find(
+    public Entry find(
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            List rdns,
-            int position
+            DN dn
     ) throws Exception {
-        return new ArrayList();
+        return null;
     }
 
     public abstract void search(
@@ -522,18 +462,32 @@ public abstract class Engine {
             DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
-            PenroseSearchResults results
+            Results results
     ) throws Exception;
 
+    /**
+     * @param session
+     * @param partition
+     * @param sourceValues
+     * @param baseMapping
+     * @param entryMapping
+     * @param baseDn
+     * @param filter
+     * @param sc
+     * @param results Collection of entries (Entry).
+     * @return
+     * @throws Exception
+     */
     public abstract void expand(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,
+            EntryMapping baseMapping,
             EntryMapping entryMapping,
             DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
-            PenroseSearchResults results
+            Results results
     ) throws Exception;
 
     public synchronized MRSWLock getLock(String dn) {
@@ -545,16 +499,6 @@ public abstract class Engine {
 
 		return lock;
 	}
-
-    public void merge(
-            Partition partition,
-            EntryMapping entryMapping,
-            PenroseSearchResults loadedEntries,
-            PenroseSearchResults newEntries)
-            throws Exception {
-
-        mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);
-    }
 
     public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
 
@@ -587,34 +531,34 @@ public abstract class Engine {
 
     public Filter createFilter(SourceMapping sourceMapping, Collection pks) throws Exception {
 
-        Collection normalizedFilters = null;
-        if (pks != null) {
-            normalizedFilters = new TreeSet();
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                RDN filter = (RDN)i.next();
+        String prefix = sourceMapping.getName()+".";
+        int length = prefix.length();
 
-                RDNBuilder rb = new RDNBuilder();
-                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    if (!name.startsWith(sourceMapping.getName()+".")) continue;
+        if (pks == null) return null;
 
-                    String newName = name.substring(sourceMapping.getName().length()+1);
-                    rb.set(newName, filter.get(name));
-                }
+        Collection normalizedFilters = new TreeSet();
+        RDNBuilder rb = new RDNBuilder();
 
-                if (rb.isEmpty()) continue;
+        for (Iterator i=pks.iterator(); i.hasNext(); ) {
+            RDN filter = (RDN)i.next();
 
-                RDN normalizedFilter = rb.toRdn();
-                normalizedFilters.add(normalizedFilter);
+            rb.clear();
+            for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                if (!name.startsWith(prefix)) continue;
+
+                String newName = name.substring(length);
+                rb.set(newName, filter.get(name));
             }
+
+            if (rb.isEmpty()) continue;
+
+            rb.normalize();
+            RDN normalizedFilter = rb.toRdn();
+            normalizedFilters.add(normalizedFilter);
         }
 
-        Filter filter = null;
-        if (pks != null) {
-            filter = FilterTool.createFilter(normalizedFilters);
-        }
-
-        return filter;
+        return FilterTool.createFilter(normalizedFilters);
     }
 
     public RDN createFilter(
@@ -641,11 +585,11 @@ public abstract class Engine {
             if (value == null) continue;
 
             //log.debug("   ==> "+field.getName()+"="+value);
-            //filter.set(source.getName()+"."+name, value);
+            //rb.set(source.getName()+"."+name, value);
             rb.set(name, value);
         }
 
-        //if (filter.isEmpty()) return null;
+        //if (rb.isEmpty()) return null;
 
         interpreter.clear();
 
@@ -661,63 +605,57 @@ public abstract class Engine {
 
         interpreter.set(sourceValues);
 
-        Collection results = new ArrayList();
-        results.addAll(computeDns(partition, interpreter, entryMapping));
+        log.debug("Generating DNs:");
+        Collection dns = new ArrayList();
+        computeDns(partition, interpreter, entryMapping, dns);
 
         interpreter.clear();
-
-        return results;
-    }
-
-    public Collection computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping) throws Exception {
-
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-
-        Collection parentDns;
-        if (parentMapping != null) {
-            parentDns = computeDns(partition, interpreter, parentMapping);
-        } else {
-            parentDns = new ArrayList();
-            if (entryMapping.getParentDn() != null) {
-                parentDns.add(entryMapping.getParentDn());
-            }
-        }
-
-        Collection rdns = computeRdn(interpreter, entryMapping);
-
-        log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
-        Collection dns = new ArrayList();
-        if (parentDns.isEmpty()) {
-            DN dn = entryMapping.getDn();
-            log.debug(" - "+dn);
-            dns.add(dn);
-            return dns;
-
-        }
-
-        DNBuilder db = new DNBuilder();
-
-        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-            DN parentDn = (DN)i.next();
-            //log.info(" - parent dn: "+parentDn);
-            for (Iterator j=rdns.iterator(); j.hasNext(); ) {
-                RDN rdn = (RDN)j.next();
-                //log.info("   - rdn: "+rdn);
-
-                db.clear();
-                db.append(rdn);
-                db.append(parentDn);
-
-                DN dn = db.toDn();
-                log.debug(" - "+dn);
-                dns.add(dn);
-            }
-        }
 
         return dns;
     }
 
-    public Collection computeRdn(
+    public void computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping, Collection dns) throws Exception {
+
+        EntryMapping parentMapping = partition.getParent(entryMapping);
+
+        Collection parentDns = new ArrayList();
+        if (parentMapping != null) {
+            computeDns(partition, interpreter, parentMapping, parentDns);
+
+        } else if (!entryMapping.getParentDn().isEmpty()) {
+            parentDns.add(entryMapping.getParentDn());
+        }
+
+        if (parentDns.isEmpty()) {
+            DN dn = entryMapping.getDn();
+            log.debug(" - "+dn);
+            dns.add(dn);
+
+        } else {
+            Collection rdns = computeRdns(interpreter, entryMapping);
+
+            DNBuilder db = new DNBuilder();
+
+            for (Iterator iterator=rdns.iterator(); iterator.hasNext(); ) {
+                RDN rdn = (RDN)iterator.next();
+                //log.info("Processing RDN: "+rdn);
+
+                for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
+                    DN parentDn = (DN)j.next();
+                    //log.debug("Appending parent DN: "+parentDn);
+
+                    db.set(rdn);
+                    db.append(parentDn);
+                    DN dn = db.toDn();
+
+                    log.debug(" - "+dn);
+                    dns.add(dn);
+                }
+            }
+        }
+    }
+
+    public Collection computeRdns(
             Interpreter interpreter,
             EntryMapping entryMapping
             ) throws Exception {
@@ -731,27 +669,12 @@ public abstract class Engine {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(entryMapping, attributeMapping);
-            //log.debug(" - "+name+": "+value);
-
             if (value == null) continue;
 
-            if (value instanceof Collection) {
-                Collection c = (Collection)value;
-                if (c.size() > 0) rdns.add(name, c.iterator().next());
-            } else {
-                rdns.add(name, value);
-            }
+            rdns.add(name, value);
         }
 
         return TransformEngine.convert(rdns);
-    }
-
-    public LoadEngine getLoadEngine() {
-        return loadEngine;
-    }
-
-    public void setLoadEngine(LoadEngine loadEngine) {
-        this.loadEngine = loadEngine;
     }
 
     public PenroseConfig getServerConfig() {

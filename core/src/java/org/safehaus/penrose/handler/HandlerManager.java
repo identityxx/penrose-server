@@ -61,7 +61,7 @@ public class HandlerManager {
         String name = handlerConfig.getName();
         String className = handlerConfig.getHandlerClass();
         if (className == null) {
-            className = Handler.class.getName();
+            className = DefaultHandler.class.getName();
         }
 
         log.debug("Initializing handler "+name+": "+className);

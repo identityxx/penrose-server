@@ -40,11 +40,13 @@ public class PenroseFactory {
             try {
                 ClassLoader cl = PenroseFactory.class.getClassLoader();
                 URL url = cl.getResource("org/safehaus/penrose/penrose.properties");
-                Properties properties = new Properties();
-                properties.load(url.openStream());
-
-                String s = properties.getProperty("org.safehaus.penrose.factory");
-                if (s != null) factoryClassName = s;
+                if (url != null) {
+	                Properties properties = new Properties();
+	                properties.load(url.openStream());
+	
+	                String s = properties.getProperty("org.safehaus.penrose.factory");
+	                if (s != null) factoryClassName = s;
+                }
 
             } catch (Exception e) {
                 // ignore

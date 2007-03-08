@@ -44,8 +44,12 @@ public class ThreadManager {
 			workers[i] = new ThreadWorker(idleWorkers);
 		}
 	}
-	
-	public void execute(Runnable runnable) throws InterruptedException {
+
+    public int getSize() {
+        return workers.length;
+    }
+    
+    public void execute(Runnable runnable) throws InterruptedException {
         //execute(runnable, log.isDebugEnabled());
         execute(runnable, false);
     }

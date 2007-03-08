@@ -22,6 +22,7 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -31,10 +32,11 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;
@@ -61,6 +63,7 @@ public class JDBCAdapter extends Adapter {
     public final static String TABLE_NAME   = "tableName";
     public final static String FILTER       = "filter";
 
+    public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
     public final static String MAX_IDLE                             = "maxIdle";
     public final static String MIN_IDLE                             = "minIdle";
@@ -98,7 +101,10 @@ public class JDBCAdapter extends Adapter {
 
         GenericObjectPool.Config config = new GenericObjectPool.Config();
 
-        String s = (String)properties.remove(MAX_ACTIVE);
+        String s = (String)properties.remove(INITIAL_SIZE);
+        int initialSize = s == null ? 0 : Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_ACTIVE);
         if (s != null) config.maxActive = Integer.parseInt(s);
 
         s = (String)properties.remove(MAX_IDLE);
@@ -150,6 +156,11 @@ public class JDBCAdapter extends Adapter {
                         true // auto commit
                 );
 
+        log.debug("Initializing "+initialSize+" connections.");
+        for (int i = 0; i < initialSize; i++) {
+             connectionPool.addObject();
+         }
+
         ds = new PoolingDataSource(connectionPool);
 
         filterTool = new JDBCFilterTool();
@@ -164,7 +175,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public String getFieldNames(SourceConfig sourceConfig) throws Exception {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -177,8 +188,8 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public String getOriginalPrimaryKeyFieldNamesAsString(SourceConfig sourceConfig) throws Exception {
-        StringBuffer sb = new StringBuffer();
+    public String getOringialPrimaryKeyFieldNamesAsString(SourceConfig sourceConfig) throws Exception {
+        StringBuilder sb = new StringBuilder();
 
         Collection fields = sourceConfig.getOriginalPrimaryKeyNames();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -191,17 +202,27 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String cred) throws LDAPException {
-        int rc = LDAPException.INVALID_CREDENTIALS;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+    public void bind(SourceConfig sourceConfig, RDN pk, String cred) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
+    public void search(
+            Partition partition,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            SourceConfig sourceConfig,
+            Filter filter,
+            PenroseSearchControls sc,
+            Results results
+    ) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Load "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displayLine(" - Scope: "+sc.getScope(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -214,18 +235,19 @@ public class JDBCAdapter extends Adapter {
 
         String s = sourceConfig.getParameter(FILTER);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("select ");
         sb.append(getFieldNames(sourceConfig));
         sb.append(" from ");
         sb.append(tableName);
 
-        StringBuffer sqlFilter = new StringBuffer();
+        StringBuilder sqlFilter = new StringBuilder();
         if (s != null) sqlFilter.append(s);
 
         List parameters = new ArrayList();
+        List fieldConfigs = new ArrayList();
         if (filter != null) {
-            String f = filterTool.convert(sourceConfig, filter, parameters);
+            String f = filterTool.convert(sourceConfig, filter, parameters, fieldConfigs);
             if (f != null) {
                 if (sqlFilter.length() > 0) sqlFilter.append(" and ");
                 sqlFilter.append(f);
@@ -239,7 +261,7 @@ public class JDBCAdapter extends Adapter {
 
         if (!sourceConfig.getOriginalPrimaryKeyNames().isEmpty()) {
             sb.append(" order by ");
-            sb.append(getOriginalPrimaryKeyFieldNamesAsString(sourceConfig));
+            sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
         }
 
         String sql = sb.toString();
@@ -251,7 +273,7 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -262,62 +284,65 @@ public class JDBCAdapter extends Adapter {
             }
 
             ps = con.prepareStatement(sql);
-
+    
             if (parameters.size() > 0) {
-                log.debug("Parameters:");
-
                 int counter = 0;
-                for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
                     Object param = i.next();
-                    ps.setObject(++counter, param);
-                    log.debug(" - "+counter+" = "+param);
+                    FieldConfig fieldConfig = (FieldConfig)j.next();
+                    String type = fieldConfig.getType();
+                    setParameter(ps, ++counter, param, type);
+                }
+
+                if (debug) {
+                    log.debug("Parameters:");
+
+                    counter = 0;
+                    for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
+                        Object param = i.next();
+                        FieldConfig fieldConfig = (FieldConfig)j.next();
+                        String type = fieldConfig.getType();
+                        log.debug(" - "+counter+" = "+param+" ("+type+")");
+                    }
                 }
             }
 
             rs = ps.executeQuery();
 
-            int width = 0;
-            boolean first = true;
+            int totalCount = results.getTotalCount();
+            long sizeLimit = sc.getSizeLimit();
 
-            log.debug("Results:");
-            int i = 0;
-            Collection attributes = searchControls.getAttributes();
+            if (debug) {
+                if (sizeLimit == 0) {
+                    log.debug("Retrieving all entries.");
+                } else {
+                    log.debug("Retrieving "+(sizeLimit - totalCount)+" entries.");
+                }
+            }
 
-            while (rs.next() && (searchControls.getSizeLimit() == 0 || i<searchControls.getSizeLimit())) {
+            boolean hasMore = rs.next();
 
-                if (first) {
-                    width = printHeader(sourceConfig);
-                    first = false;
+            while (hasMore && (sizeLimit == 0 || totalCount<sizeLimit)) {
+                AttributeValues row = getValues(sourceConfig, rs);
+
+                if (debug) {
+                    JDBCFormatter.printRecord(row);
                 }
 
-                if (attributes.size() == 0) {
-                    AttributeValues av = getValues(sourceConfig, rs);
-                    results.add(av);
-                    log.debug(format(sourceConfig, av));
+                ConnectorSearchResult result = new ConnectorSearchResult(row);
+                result.setEntryMapping(entryMapping);
+                result.setSourceMapping(sourceMapping);
+                result.setSourceConfig(sourceConfig);
 
-                } else if (attributes.contains("dn")) {
-                    RDN rdn = getPkValues(sourceConfig, rs);
-                    results.add(rdn);
-                    log.debug(format(sourceConfig, rdn));
-                }
-
-                i++;
+                results.add(result);
+                totalCount++;
+                hasMore = rs.next();
             }
 
-            if (width > 0) {
-                log.debug(printFooter(width));
-            } else {
-                log.debug("No results found");
+            if (sizeLimit != 0 && hasMore) {
+                log.debug("Size limit exceeded.");
+                throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
-
-            if (searchControls.getSizeLimit() != 0 && i >= searchControls.getSizeLimit()) {
-                log.debug("RC: size limit exceeded.");
-                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -330,6 +355,7 @@ public class JDBCAdapter extends Adapter {
 
     public RDN getPkValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
+        RDNBuilder rb = new RDNBuilder();
         int c = 1;
 
         ResultSetMetaData rsmd = rs.getMetaData();
@@ -337,7 +363,6 @@ public class JDBCAdapter extends Adapter {
 
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
 
-        RDNBuilder rb = new RDNBuilder();
         for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
 
@@ -347,16 +372,14 @@ public class JDBCAdapter extends Adapter {
             rb.set(fieldConfig.getName(), value);
         }
 
-        //log.debug("=> values: "+rdn);
+        //log.debug("=> values: "+rb);
 
-        RDN rdn = rb.toRdn();
-        return rdn;
+        return rb.toRdn();
     }
 
     public RDN getChanges(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
-
         rb.set("changeNumber", rs.getObject("changeNumber"));
         rb.set("changeTime", rs.getObject("changeTime"));
         rb.set("changeAction", rs.getObject("changeAction"));
@@ -372,44 +395,46 @@ public class JDBCAdapter extends Adapter {
             rb.set(name, value);
         }
 
-        RDN rdn = rb.toRdn();
-        return rdn;
+        return rb.toRdn();
     }
 
     public AttributeValues getValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
 
         AttributeValues av = new AttributeValues();
+        RDNBuilder rb = new RDNBuilder();
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int count = rsmd.getColumnCount();
 
-        int c = 1;
+        for (int c = 1; c<=count; c++) {
+            String originalName = rsmd.getColumnName(c);
+            FieldConfig fieldConfig = sourceConfig.getFieldConfigByOriginalName(originalName);
+            if (fieldConfig == null) {
+                // throw new Exception("Unknown field: "+originalName);
+            	continue;
+            }
 
-        Collection fields = sourceConfig.getFieldConfigs();
-
-        RDNBuilder rb = new RDNBuilder();
-        for (Iterator i=fields.iterator(); i.hasNext() && c<=count; c++) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            
             Object value = rs.getObject(c);
             if (value == null) continue;
 
-            av.add(fieldConfig.getName(), value);
+            String name = fieldConfig.getName();
+            value = formatAttributeValue(rsmd, c, value, fieldConfig);
+            av.add(name, value);
 
-            if (!fieldConfig.isPK()) continue;
-            rb.set(fieldConfig.getName(), value);
+            if (!fieldConfig.isPrimaryKey()) continue;
+            rb.set(name, value);
         }
-        RDN primaryKey = rb.toRdn();
 
-        av.set("primaryKey", primaryKey);
+        av.set("primaryKey", rb.toRdn());
         //log.debug("=> values: "+av);
 
         return av;
     }
 
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("JDBC Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - DN: "+pk, 80));
@@ -433,12 +458,12 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            StringBuffer sb = new StringBuffer();
-            StringBuffer sb2 = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sb2 = new StringBuilder();
 
-            Collection fields = sourceConfig.getFieldConfigs();
+            Collection fieldConfigs = sourceConfig.getFieldConfigs();
             Collection parameters = new ArrayList();
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+            for (Iterator i=fieldConfigs.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
 
                 if (sb.length() > 0) {
@@ -455,7 +480,7 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -467,27 +492,26 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
-
-            int c = 1;
-            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
-                Object obj = i.next();
-                ps.setObject(c, obj);
-                log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            int c = 1;
+            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
+                Object obj = i.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String type = fieldConfig.getType();
+                setParameter(ps, c, obj, type);	//ps.setObject(c, obj)
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
 
             ps.executeUpdate();
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -495,8 +519,9 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
+    public void delete(SourceConfig sourceConfig, RDN pk) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         //log.debug("Deleting entry "+pk);
 
         String catalog = sourceConfig.getParameter(CATALOG);
@@ -512,7 +537,7 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
 
@@ -524,7 +549,7 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "delete from "+tableName+" where "+sb;
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -532,30 +557,28 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug("Parameters:");
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
 
             int c = 1;
             for (Iterator i=pk.getNames().iterator(); i.hasNext(); c++) {
                 String name = (String)i.next();
                 Object value = pk.get(name);
-                ps.setObject(c, value);
-                log.debug(" - "+c+" = "+value);
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                String type = fieldConfig.getType();
+                setParameter(ps, c, value, type);	//ps.setObject(c, value);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
             }
 
             int count = ps.executeUpdate();
-            if (count == 0) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -563,12 +586,9 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public void modify(
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications
-    ) throws LDAPException {
+    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String catalog = sourceConfig.getParameter(CATALOG);
         String schema = sourceConfig.getParameter(SCHEMA);
         String tableName = sourceConfig.getParameter(TABLE);
@@ -582,17 +602,22 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            StringBuffer columns = new StringBuffer();
-            StringBuffer whereClause = new StringBuffer();
+            StringBuilder columns = new StringBuilder();
+            StringBuilder whereClause = new StringBuilder();
             Collection parameters = new ArrayList();
-
+            Collection fieldConfigs = new ArrayList();
+            
             for (Iterator i=modifications.iterator(); i.hasNext(); ) {
                 ModificationItem mi = (ModificationItem)i.next();
                 Attribute attribute = mi.getAttribute();
                 String name = attribute.getID();
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-
+                if (fieldConfig == null) {
+                    throw new Exception("Unknown field: "+name);
+                }
+                fieldConfigs.add(fieldConfig);
+                
                 switch (mi.getModificationOp()) {
                     case DirContext.ADD_ATTRIBUTE:
                         if (columns.length() > 0) columns.append(", ");
@@ -600,7 +625,11 @@ public class JDBCAdapter extends Adapter {
                         columns.append(fieldConfig.getOriginalName());
                         columns.append("=?");
 
-                        parameters.add(attribute.get());
+                        if (attribute.size() == 0) {
+                        	parameters.add(null);
+                        } else {
+                        	parameters.add(attribute.get());
+                		}
                         break;
 
                     case DirContext.REPLACE_ATTRIBUTE:
@@ -608,8 +637,11 @@ public class JDBCAdapter extends Adapter {
 
                         columns.append(fieldConfig.getOriginalName());
                         columns.append("=?");
-
-                        parameters.add(attribute.get());
+                        if (attribute.size() == 0) {
+                        	parameters.add(null);
+                        } else {
+                        	parameters.add(attribute.get());
+                		}
                         break;
 
                     case DirContext.REMOVE_ATTRIBUTE:
@@ -624,7 +656,7 @@ public class JDBCAdapter extends Adapter {
             }
 
             // if there's nothing to update, return
-            if (columns.length() == 0) return;
+            if (columns.length() == 0) throw ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
 /*
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -643,7 +675,8 @@ public class JDBCAdapter extends Adapter {
             Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-
+                fieldConfigs.add(fieldConfig);
+                
                 if (whereClause.length() > 0) whereClause.append(" and ");
 
                 whereClause.append(fieldConfig.getOriginalName());
@@ -655,7 +688,7 @@ public class JDBCAdapter extends Adapter {
 
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -667,31 +700,27 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
 
             int c = 1;
-            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
+            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
                 Object value = i.next();
-                ps.setObject(c, value);
-                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String type = fieldConfig.getType();
+                setParameter(ps, c, value, type);	//ps.setObject(c, value);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
 
             int count = ps.executeUpdate();
-            if (count == 0) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -702,9 +731,11 @@ public class JDBCAdapter extends Adapter {
     public void modrdn(
             SourceConfig sourceConfig,
             RDN oldRdn,
-            RDN newRdn
-    ) throws LDAPException {
+            RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
 
         String catalog = sourceConfig.getParameter(CATALOG);
@@ -720,40 +751,44 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            StringBuffer columns = new StringBuffer();
-            StringBuffer whereClause = new StringBuffer();
+            StringBuilder columns = new StringBuilder();
+            StringBuilder whereClause = new StringBuilder();
             Collection parameters = new ArrayList();
 
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPK()) continue;
+                if (!fieldConfig.isPrimaryKey()) continue;
+
+                Object value = newRdn.get(fieldConfig.getName());
+                if (value == null) continue;
 
                 if (columns.length() > 0) columns.append(", ");
 
                 columns.append(fieldConfig.getOriginalName());
                 columns.append("=?");
 
-                Object value = newRdn.get(fieldConfig.getName());
                 parameters.add(value);
             }
 
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPK()) continue;
+                if (!fieldConfig.isPrimaryKey()) continue;
+
+                Object value = oldRdn.get(fieldConfig.getName());
+                if (value == null) continue;
 
                 if (whereClause.length() > 0) whereClause.append(" and ");
 
                 whereClause.append(fieldConfig.getOriginalName());
                 whereClause.append("=?");
 
-                Object value = oldRdn.get(fieldConfig.getName());
                 parameters.add(value);
             }
 
             String sql = "update "+tableName+" set "+columns+" where "+whereClause;
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -765,31 +800,25 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug(Formatter.displayLine("Parameters:", 80));
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
 
             int c = 1;
             for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
                 Object value = i.next();
                 ps.setObject(c, value);
-                log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
             }
 
-            log.debug(Formatter.displaySeparator(80));
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
 
             int count = ps.executeUpdate();
-            if (count == 0) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -799,6 +828,7 @@ public class JDBCAdapter extends Adapter {
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         String catalog = sourceConfig.getParameter(CATALOG);
         String schema = sourceConfig.getParameter(SCHEMA);
         String tableName = sourceConfig.getParameter(TABLE);
@@ -815,7 +845,7 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -833,9 +863,6 @@ public class JDBCAdapter extends Adapter {
 
             return value.intValue();
 
-        } catch (Exception e) {
-            return 0;
-
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
@@ -845,6 +872,7 @@ public class JDBCAdapter extends Adapter {
 
     public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
         //log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
         PenroseSearchResults results = new PenroseSearchResults();
@@ -858,10 +886,10 @@ public class JDBCAdapter extends Adapter {
 
         int sizeLimit = 100;
 
-        StringBuffer columns = new StringBuffer();
+        StringBuilder columns = new StringBuilder();
         columns.append("select changeNumber, changeTime, changeAction, changeUser");
 
-        StringBuffer table = new StringBuffer();
+        StringBuilder table = new StringBuilder();
         table.append("from ");
         table.append(tableName);
         table.append("_changes");
@@ -873,7 +901,7 @@ public class JDBCAdapter extends Adapter {
             columns.append(fieldConfig.getOriginalName());
         }
 
-        StringBuffer whereClause = new StringBuffer();
+        StringBuilder whereClause = new StringBuilder();
         whereClause.append("where changeNumber > ? order by changeNumber");
 
         List parameters = new ArrayList();
@@ -888,7 +916,7 @@ public class JDBCAdapter extends Adapter {
         try {
             con = (java.sql.Connection)openConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -900,13 +928,17 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
 
-            log.debug("Parameters: changeNumber = "+lastChangeNumber);
+            if (debug) {
+            	log.debug("Parameters: changeNumber = "+lastChangeNumber);
+            }
 
             int counter = 0;
             for (Iterator i=parameters.iterator(); i.hasNext(); ) {
                 Object param = i.next();
                 ps.setObject(++counter, param);
-                //log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+counter+" = "+param, 80));
+                }
             }
 
             rs = ps.executeQuery();
@@ -923,14 +955,14 @@ public class JDBCAdapter extends Adapter {
                     first = false;
                 }
 
-                log.debug(printChanges(sourceConfig, rdn));
+                printChanges(sourceConfig, rdn);
             }
 
-            if (width > 0) log.debug(printFooter(width));
+            JDBCFormatter.printFooter(sourceConfig);
 
             if (rs.next()) {
                 log.debug("RC: size limit exceeded.");
-                results.setReturnCode(LDAPException.SIZE_LIMIT_EXCEEDED);
+                throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
             }
 
         } finally {
@@ -944,35 +976,9 @@ public class JDBCAdapter extends Adapter {
         return results;
     }
 
-    public int printHeader(SourceConfig sourceConfig) throws Exception {
-
-        StringBuffer resultHeader = new StringBuffer();
-        resultHeader.append("|");
-
-        Collection fields = sourceConfig.getFieldConfigs();
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
-
-            String name = fieldConfig.getName();
-            int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
-
-            resultHeader.append(" ");
-            resultHeader.append(Formatter.rightPad(name, length));
-            resultHeader.append(" |");
-        }
-
-        int width = resultHeader.length();
-
-        log.debug(Formatter.displaySeparator(width));
-        log.debug(resultHeader.toString());
-        log.debug(Formatter.displaySeparator(width));
-
-        return width;
-    }
-
     public int printChangesHeader(SourceConfig sourceConfig) throws Exception {
 
-        StringBuffer resultHeader = new StringBuffer();
+        StringBuilder resultHeader = new StringBuilder();
         resultHeader.append("| ");
         resultHeader.append(Formatter.rightPad("#", 5));
         resultHeader.append(" | ");
@@ -1005,51 +1011,8 @@ public class JDBCAdapter extends Adapter {
         return width;
     }
 
-    public String format(SourceConfig sourceConfig, AttributeValues av) throws Exception {
-
-
-        RDNBuilder rb = new RDNBuilder();
-        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection c = av.get(name);
-
-            Object value;
-            if (c == null) {
-                value = null;
-            } else if (c.size() == 1) {
-                value = c.iterator().next().toString();
-            } else {
-                value = c.toString();
-            }
-
-            rb.set(name, value);
-        }
-
-        RDN rdn = rb.toRdn();
-        return format(sourceConfig, rdn);
-    }
-
-    public String format(SourceConfig sourceConfig, RDN rdn) throws Exception {
-        StringBuffer resultFields = new StringBuffer();
-        resultFields.append("|");
-
-        Collection fields = sourceConfig.getFieldConfigs();
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
-
-            Object value = rdn.get(fieldConfig.getName());
-            int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
-
-            resultFields.append(" ");
-            resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));
-            resultFields.append(" |");
-        }
-
-        return resultFields.toString();
-    }
-
-    public String printChanges(SourceConfig sourceConfig, RDN rdn) throws Exception {
-        StringBuffer resultFields = new StringBuffer();
+    public void printChanges(SourceConfig sourceConfig, RDN rdn) throws Exception {
+        StringBuilder resultFields = new StringBuilder();
         resultFields.append("| ");
         resultFields.append(Formatter.rightPad(rdn.get("changeNumber").toString(), 5));
         resultFields.append(" | ");
@@ -1072,11 +1035,7 @@ public class JDBCAdapter extends Adapter {
             resultFields.append(" |");
         }
 
-        return resultFields.toString();
-    }
-
-    public String printFooter(int width) throws Exception {
-        return Formatter.displaySeparator(width);
+        log.debug(resultFields.toString());
     }
 
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
@@ -1093,7 +1052,7 @@ public class JDBCAdapter extends Adapter {
         String sourceName = variable.substring(0, index);
         String fieldName = variable.substring(index+1);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
             Object o = i.next();
             if (o.equals(SubstringFilter.STAR)) {
@@ -1105,5 +1064,15 @@ public class JDBCAdapter extends Adapter {
         }
 
         return new SimpleFilter(fieldName, "like", sb.toString());
+    }
+
+    protected void setParameter(java.sql.PreparedStatement preparedStatement, int paramIndex, Object value, String meta) throws Exception {
+    	((PreparedStatement)preparedStatement).setObject(paramIndex, value);
+    }
+    
+    // to be overridden in super classes
+    protected Object formatAttributeValue(ResultSetMetaData rsmd, int column, Object value, FieldConfig fieldConfig)
+    {
+    	return value;
     }
 }

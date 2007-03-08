@@ -58,7 +58,6 @@ public class SourceMapping implements Cloneable {
     private boolean includeOnModify = true;
     private boolean includeOnModRdn = true;
     private boolean includeOnDelete = true;
-    private String engine = "DEFAULT";
 
 	public SourceMapping() {
 	}
@@ -191,14 +190,6 @@ public class SourceMapping implements Cloneable {
         this.readOnly = readOnly;
     }
 
-    public String getEngine() {
-        return engine;
-    }
-
-    public void setEngine(String engine) {
-        this.engine = engine;
-    }
-
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode()) +
@@ -209,8 +200,7 @@ public class SourceMapping implements Cloneable {
                 (includeOnAdd ? 0 : 1) +
                 (includeOnModify? 0 : 1) +
                 (includeOnModRdn? 0 : 1) +
-                (includeOnDelete ? 0 : 1) +
-                (engine == null ? 0 : engine.hashCode());
+                (includeOnDelete ? 0 : 1);
     }
 
     boolean equals(Object o1, Object o2) {
@@ -234,7 +224,6 @@ public class SourceMapping implements Cloneable {
         if (includeOnModify != sourceMapping.includeOnModify) return false;
         if (includeOnModRdn != sourceMapping.includeOnModRdn) return false;
         if (includeOnDelete != sourceMapping.includeOnDelete) return false;
-        if (!equals(engine, sourceMapping.engine)) return false;
 
         return true;
     }
@@ -261,7 +250,6 @@ public class SourceMapping implements Cloneable {
         includeOnModify = sourceMapping.includeOnModify;
         includeOnModRdn = sourceMapping.includeOnModRdn;
         includeOnDelete = sourceMapping.includeOnDelete;
-        engine = sourceMapping.engine;
     }
 
     public Object clone() {

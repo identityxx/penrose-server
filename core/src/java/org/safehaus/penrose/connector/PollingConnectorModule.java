@@ -120,7 +120,7 @@ public class PollingConnectorModule extends Module {
 
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
+        //connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
         list.close();
     }
 
@@ -179,7 +179,7 @@ public class PollingConnectorModule extends Module {
         log.debug("Reloading data for "+pks);
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults list = new PenroseSearchResults();
-        connector.retrieve(partition, sourceConfig, pks, sc, list);
+        //connector.retrieve(partition, sourceConfig, pks, sc, list);
         list.close();
         while (list.hasNext()) list.next();
 

@@ -43,19 +43,21 @@ public class JDBCFilterTool {
     public String convert(
             SourceConfig sourceConfig,
             Filter filter,
-            Collection parameters)
+            Collection parameters,
+            Collection fieldConfigs)
             throws Exception {
 
-        log.debug("Converting source filter "+filter+" to JDBC filter for source "+sourceConfig.getName());
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Converting source filter "+filter+" to JDBC filter for source "+sourceConfig.getName());
 
-        StringBuffer sb = new StringBuffer();
-        boolean valid = convert(sourceConfig, filter, parameters, sb);
+        StringBuilder sb = new StringBuilder();
+        boolean valid = convert(sourceConfig, filter, parameters, fieldConfigs, sb);
 
         String jdbcFilter = null;
 
         if (valid && sb.length() > 0) jdbcFilter = sb.toString();
 
-        log.debug("JDBC filter: "+jdbcFilter);
+        if (debug) log.debug("JDBC filter: "+jdbcFilter);
 
         return jdbcFilter;
     }
@@ -64,37 +66,40 @@ public class JDBCFilterTool {
             SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
-            StringBuffer sb)
+            Collection fieldConfigs,
+            StringBuilder sb)
             throws Exception {
 
         if (filter instanceof NotFilter) {
-            return convert(sourceConfig, (NotFilter) filter, parameters, sb);
+            return convert(sourceConfig, (NotFilter) filter, parameters, fieldConfigs, sb);
 
         } else if (filter instanceof AndFilter) {
-            return convert(sourceConfig, (AndFilter) filter, parameters, sb);
+            return convert(sourceConfig, (AndFilter) filter, parameters, fieldConfigs, sb);
 
         } else if (filter instanceof OrFilter) {
-            return convert(sourceConfig, (OrFilter) filter, parameters, sb);
+            return convert(sourceConfig, (OrFilter) filter, parameters, fieldConfigs, sb);
 
         } else if (filter instanceof SimpleFilter) {
-            return convert(sourceConfig, (SimpleFilter) filter, parameters, sb);
+            return convert(sourceConfig, (SimpleFilter) filter, parameters, fieldConfigs, sb);
         }
 
         return true;
     }
 
-    boolean convert(
+    protected boolean convert(
             SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
-            StringBuffer sb)
+            Collection fieldConfigs,
+            StringBuilder sb)
             throws Exception {
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
         String value = filter.getValue();
 
-        log.debug("Converting simple filter "+name+" "+operator+" "+value);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Converting simple filter "+name+" "+operator+" "+value);
 
         if (name.equals("objectClass")) {
             if (value.equals("*"))
@@ -110,7 +115,7 @@ public class JDBCFilterTool {
 
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
         if (fieldConfig == null) {
-            log.debug("Unknown field: "+name);
+            if (debug) log.debug("Unknown field: "+name);
             return false;
         }
 
@@ -133,7 +138,7 @@ public class JDBCFilterTool {
         }
 
         parameters.add(value);
-
+        fieldConfigs.add(fieldConfig);
         return true;
     }
 
@@ -141,13 +146,14 @@ public class JDBCFilterTool {
             SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
-            StringBuffer sb)
+            Collection fieldConfigs,
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
 
         Filter f = filter.getFilter();
-        convert(sourceConfig, f, parameters, sb2);
+        convert(sourceConfig, f, parameters, fieldConfigs, sb2);
 
         sb.append("not (");
         sb.append(sb2);
@@ -160,15 +166,16 @@ public class JDBCFilterTool {
             SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
-            StringBuffer sb)
+            Collection fieldConfigs,
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
-            convert(sourceConfig, f, parameters, sb3);
+            StringBuilder sb3 = new StringBuilder();
+            convert(sourceConfig, f, parameters, fieldConfigs, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" and ");
@@ -191,15 +198,16 @@ public class JDBCFilterTool {
             SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
-            StringBuffer sb)
+            Collection fieldConfigs,
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
-            convert(sourceConfig, f, parameters, sb3);
+            StringBuilder sb3 = new StringBuilder();
+            convert(sourceConfig, f, parameters, fieldConfigs, sb3);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
                 sb2.append(" or ");

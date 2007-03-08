@@ -129,11 +129,20 @@ public class LoadGraphVisitor extends GraphVisitor {
         PenroseSearchResults tmp = new PenroseSearchResults();
         
         Connector connector = engine.getConnector(sourceConfig);
-        connector.search(partition, sourceConfig, primaryKeys, filter, sc, tmp);
+        connector.search(
+                partition,
+                entryMapping,
+                sourceMapping,
+                sourceConfig,
+                primaryKeys,
+                filter,
+                sc,
+                tmp
+        );
 
         Collection list = new ArrayList();
-        for (Iterator i=tmp.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+        while (tmp.hasNext()) {
+            AttributeValues av = (AttributeValues)tmp.next();
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceMapping.getName(), av);

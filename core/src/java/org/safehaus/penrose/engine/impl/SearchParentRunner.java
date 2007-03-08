@@ -30,6 +30,7 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class SearchParentRunner extends GraphVisitor {
 
     private Partition partition;
     private Graph graph;
-    private Engine engine;
+    private EngineImpl engine;
     private EntryMapping entryMapping;
     private AttributeValues sourceValues;
     private Map filters;
@@ -56,7 +57,7 @@ public class SearchParentRunner extends GraphVisitor {
     private Collection results;
 
     public SearchParentRunner(
-            Engine engine,
+            EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
             Collection results,
@@ -124,7 +125,7 @@ public class SearchParentRunner extends GraphVisitor {
                     if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
-                    if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, av, av)) continue;
+                    if (!engine.joinEngine.evaluate(partition, entryMapping, relationships, av, av)) continue;
                 }
 
                 list.add(av);
@@ -143,11 +144,20 @@ public class SearchParentRunner extends GraphVisitor {
             PenroseSearchResults tmp = new PenroseSearchResults();
             
             Connector connector = engine.getConnector(sourceConfig);
-            connector.search(partition, sourceConfig, null, filter, sc, tmp);
+            connector.search(
+                    partition,
+                    entryMapping,
+                    sourceMapping,
+                    sourceConfig,
+                    null,
+                    filter,
+                    sc,
+                    tmp
+            );
 
             Collection list = new ArrayList();
-            for (Iterator i=tmp.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
+            while (tmp.hasNext()) {
+                AttributeValues av = (AttributeValues)tmp.next();
 
                 AttributeValues sv = new AttributeValues();
                 sv.add(sourceMapping.getName(), av);
@@ -160,9 +170,9 @@ public class SearchParentRunner extends GraphVisitor {
             } else {
                 Collection temp;
                 if (sourceMapping.isRequired()) {
-                    temp = engine.getJoinEngine().join(results, list, partition, entryMapping, relationships);
+                    temp = engine.joinEngine.join(results, list, partition, entryMapping, relationships);
                 } else {
-                    temp = engine.getJoinEngine().leftJoin(results, list, partition, entryMapping, relationships);
+                    temp = engine.joinEngine.leftJoin(results, list, partition, entryMapping, relationships);
                 }
                 results.clear();
                 results.addAll(temp);

@@ -22,7 +22,7 @@ import java.util.*;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.DefaultEngine;
+import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.connector.ConnectorConfig;
@@ -32,7 +32,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.DefaultHandler;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.entry.DN;
 import org.slf4j.LoggerFactory;
@@ -80,8 +80,8 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         sessionConfig = new SessionConfig();
 
         addInterpreterConfig(new InterpreterConfig("DEFAULT", DefaultInterpreter.class.getName()));
-        addHandlerConfig(new HandlerConfig("DEFAULT", Handler.class.getName()));
-        addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
+        addHandlerConfig(new HandlerConfig("DEFAULT", DefaultHandler.class.getName()));
+        addEngineConfig(new EngineConfig("DEFAULT", SimpleEngine.class.getName()));
 
         rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
     }

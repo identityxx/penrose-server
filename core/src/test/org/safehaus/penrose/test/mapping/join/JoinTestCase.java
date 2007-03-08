@@ -9,11 +9,14 @@ import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.Penrose;
 
 /**
  * @author Endi S. Dewata
  */
 public class JoinTestCase extends JDBCTestCase {
+
+    public Penrose penrose;
 
     public JoinTestCase() throws Exception {
     }
@@ -52,7 +55,7 @@ public class JoinTestCase extends JDBCTestCase {
         groupsSource.setName("groups");
         groupsSource.setConnectionName("HSQLDB");
         groupsSource.setParameter("table", "groups");
-        groupsSource.addFieldConfig(new FieldConfig("groupname", "true"));
+        groupsSource.addFieldConfig(new FieldConfig("groupname", true));
         groupsSource.addFieldConfig(new FieldConfig("description"));
         partition.addSourceConfig(groupsSource);
 
@@ -60,8 +63,8 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsSource.setName("usergroups");
         usergroupsSource.setConnectionName("HSQLDB");
         usergroupsSource.setParameter("table", "usergroups");
-        usergroupsSource.addFieldConfig(new FieldConfig("groupname", "true"));
-        usergroupsSource.addFieldConfig(new FieldConfig("username", "true"));
+        usergroupsSource.addFieldConfig(new FieldConfig("groupname", true));
+        usergroupsSource.addFieldConfig(new FieldConfig("username", true));
         partition.addSourceConfig(usergroupsSource);
 
         EntryMapping ou = new EntryMapping("ou=Groups,dc=Example,dc=com");

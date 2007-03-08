@@ -65,7 +65,7 @@ public class OrFilter extends Filter {
     }
 
 	public String toString() {
-		StringBuffer sb = new StringBuffer("(|");
+		StringBuilder sb = new StringBuilder("(|");
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter filter = (Filter)i.next();
             sb.append(filter);

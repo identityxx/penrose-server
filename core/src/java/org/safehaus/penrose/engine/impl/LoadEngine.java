@@ -102,7 +102,6 @@ public class LoadEngine {
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            batches.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
 
         log.debug("Loading batches.");
@@ -112,13 +111,12 @@ public class LoadEngine {
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            loadedEntries.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
     }
 
     public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries) throws Exception {
-        for (Iterator i=entries.iterator(); i.hasNext(); ) {
-            EntryData map = (EntryData)i.next();
+        while (entries.hasNext()) {
+            EntryData map = (EntryData)entries.next();
 /*
             String dn = (String)map.get("dn");
 
@@ -136,7 +134,6 @@ public class LoadEngine {
 */
             loadedEntries.add(map);
         }
-        loadedEntries.setReturnCode(entries.getReturnCode());
         loadedEntries.close();
 
     }
@@ -158,8 +155,8 @@ public class LoadEngine {
             String s = entryMapping.getParameter(EntryMapping.BATCH_SIZE);
             int batchSize = s == null ? EntryMapping.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
-            for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                EntryData map = (EntryData)i.next();
+            while (entries.hasNext()) {
+                EntryData map = (EntryData)entries.next();
                 DN dn = map.getDn();
                 //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
@@ -196,7 +193,6 @@ public class LoadEngine {
             if (!batch.isEmpty()) batches.add(batch);
 
         } finally {
-            batches.setReturnCode(entries.getReturnCode());
             batches.close();
         }
     }
@@ -242,7 +238,6 @@ public class LoadEngine {
 
         } finally {
             //lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
-            loadedBatches.setReturnCode(batches.getReturnCode());
             loadedBatches.close();
         }
     }
@@ -302,7 +297,7 @@ public class LoadEngine {
         for (Iterator i=fieldMappings.iterator(); !pkDefined && i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
-            if (!fieldConfig.isPK()) continue;
+            if (!fieldConfig.isPrimaryKey()) continue;
             if (!fieldMapping.getType().equalsIgnoreCase(FieldMapping.VARIABLE)) continue;
 
             String attributeName = fieldMapping.getVariable();

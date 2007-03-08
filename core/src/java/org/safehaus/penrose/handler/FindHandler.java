@@ -17,12 +17,16 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -35,7 +39,7 @@ public class FindHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public FindHandler(Handler handler) {
         this.handler = handler;
@@ -47,19 +51,48 @@ public class FindHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public Entry find(Partition partition, DN dn) throws Exception {
+    public Entry find(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
 
-        List path = new ArrayList();
         AttributeValues sourceValues = new AttributeValues();
 
-        find(partition, dn, path, sourceValues);
+        PenroseSearchControls sc = new PenroseSearchControls();
+        PenroseSearchResults sr = new PenroseSearchResults();
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            return null;
+        }
+
+        engine.search(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                dn,
+                null,
+                sc,
+                sr
+        );
+
+        if (!sr.hasNext()) return null;
+        return (Entry)sr.next();
+/*
+        List path = new ArrayList();
+
+        find(session, partition, entryMapping, dn, path, sourceValues);
         if (path.size() == 0) return null;
 
         return (Entry)path.iterator().next();
+*/
     }
 
     public void find(
+            PenroseSession session,
             Partition partition,
+            EntryMapping entryMapping,
             DN dn,
             List path,
             AttributeValues sourceValues
@@ -68,10 +101,62 @@ public class FindHandler {
         if (partition == null) return;
         if (dn == null) return;
 
-        List rdns = new ArrayList();
-        rdns.addAll(dn.getRdns());
-        log.debug("Length ["+rdns.size()+"]");
+        log.debug("DN: "+dn);
+        log.debug("Mapping: "+entryMapping.getDn());
+        
+        for (int i=0; i<dn.getSize() && entryMapping != null; i++) {
+            RDN rdn = (RDN)dn.get(i);
+            log.debug("RDN: "+rdn);
 
+            Collection sourceMappings = entryMapping.getSourceMappings();
+            for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)j.next();
+
+                Collection fieldMappings = sourceMapping.getFieldMappings();
+                for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
+                    FieldMapping fieldMapping = (FieldMapping)k.next();
+                    if (fieldMapping.getVariable() == null) continue;
+
+                    String variable = fieldMapping.getVariable();
+                    Object value = rdn.get(variable);
+                    if (value == null) continue;
+
+                    sourceValues.set(sourceMapping.getName()+"."+fieldMapping.getName(), value);
+                }
+            }
+
+            String engineName = entryMapping.getEngineName();
+            Engine engine = handler.getEngine(engineName);
+
+            if (engine == null) {
+                log.debug("Engine "+engineName+" not found");
+                continue;
+            }
+
+            PenroseSearchControls sc = new PenroseSearchControls();
+            PenroseSearchResults sr = new PenroseSearchResults();
+
+            engine.search(
+                    session,
+                    partition,
+                    sourceValues,
+                    entryMapping,
+                    dn,
+                    null,
+                    sc,
+                    sr
+            );
+
+            while (sr.hasNext()) {
+                Entry entry = (Entry)sr.next();
+                path.add(entry);
+            }
+
+            entryMapping = partition.getParent(entryMapping);
+        }
+
+        log.debug("Source values: "+sourceValues);
+/*
         int p = 0;
         int position = 0;
 
@@ -89,21 +174,18 @@ public class FindHandler {
                 sourceValues.add(newSourceValues);
             }
 
-            DNBuilder db = new DNBuilder();
+            String prefix = null;
             for (int i = 0; i < rdns.size()-1-position; i++) {
-                db.append((RDN)rdns.get(i));
+                prefix = EntryUtil.append(prefix, (RDN)rdns.get(i));
             }
-            DN prefix = db.toDn();
 
-            db.clear();
+            String suffix = null;
             for (int i = rdns.size()-1-position; i < rdns.size(); i++) {
-                db.append((RDN)rdns.get(i));
+                suffix = EntryUtil.append(suffix, (RDN)rdns.get(i));
             }
-            DN suffix = db.toDn();
 
             log.debug("Position ["+position +"]: ["+(prefix == null ? "" : prefix)+"] ["+suffix+"]");
 
-            PartitionManager partitionManager = handler.getPartitionManager();
             Collection entryMappings = partition.findEntryMappings(suffix);
 
             if (entryMappings == null) {
@@ -122,7 +204,9 @@ public class FindHandler {
 
                 log.debug("Check mapping ["+entryMapping.getDn()+"]");
 
-                String engineName = entryMapping.getEngineName();
+                String engineName = "DEFAULT";
+                if (partition.isProxy(entryMapping)) engineName = "PROXY";
+
                 Engine engine = handler.getEngine(engineName);
 
                 if (engine == null) {
@@ -164,11 +248,19 @@ public class FindHandler {
             }
 
         }
-
+*/
         log.debug("Entries:");
         for (Iterator i=path.iterator(); i.hasNext(); ) {
             Entry entry = (Entry)i.next();
             log.debug(" - "+(entry == null ? null : entry.getDn()));
         }
+    }
+
+    public Handler getHandler() {
+        return handler;
+    }
+
+    public void setHandler(Handler handler) {
+        this.handler = handler;
     }
 }

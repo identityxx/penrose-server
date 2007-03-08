@@ -32,7 +32,7 @@ public class EngineConfig implements Cloneable {
     public final static int DEFAULT_THREAD_POOL_SIZE = 20;
 
     private String name = "DEFAULT";
-    private String engineClass = "org.safehaus.penrose.engine.impl.EngineImpl";
+    private String engineClass = "org.safehaus.penrose.engine.DefaultEngine";
     private String description;
 
     private Properties parameters = new Properties();

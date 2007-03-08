@@ -20,41 +20,36 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.acl.ACLEngine;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.naming.PenroseInitialContextFactory;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.util.Formatter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
 
-import javax.naming.*;
 import javax.naming.directory.*;
+import javax.naming.NamingEnumeration;
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author Endi S. Dewata
  */
-public class Handler {
+public abstract class Handler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -68,27 +63,18 @@ public class Handler {
 
     Penrose penrose;
 
-    private AddHandler addHandler;
-    private BindHandler bindHandler;
-    private CompareHandler compareHandler;
-    private DeleteHandler deleteHandler;
-    private ModifyHandler modifyHandler;
-    private ModRdnHandler modRdnHandler;
-    private FindHandler findHandler;
-    private SearchHandler searchHandler;
+    SchemaManager schemaManager;
+    EngineManager engineManager;
 
-    private SchemaManager schemaManager;
-    private EngineManager engineManager;
-
-    private SessionManager sessionManager;
-    private PartitionManager partitionManager;
+    SessionManager sessionManager;
+    PartitionManager partitionManager;
 
     InterpreterManager interpreterManager;
     ACLEngine aclEngine;
     FilterTool filterTool;
     EntryCache entryCache;
 
-    ThreadManager threadManager;
+    ExecutorService executorService;
 
     private String status = STOPPED;
 
@@ -98,24 +84,20 @@ public class Handler {
     public void init(HandlerConfig handlerConfig) throws Exception {
         this.handlerConfig = handlerConfig;
 
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, PenroseInitialContextFactory.class.getName());
+        Context context = new InitialContext(env);
+
         sessionManager     = penrose.getSessionManager();
         schemaManager      = penrose.getSchemaManager();
         interpreterManager = penrose.getInterpreterFactory();
         engineManager      = penrose.getEngineManager();
         partitionManager   = penrose.getPartitionManager();
-        threadManager      = penrose.getThreadManager();
+
+        executorService    = (ExecutorService)context.lookup("java:comp/ExecutorService");
 
         aclEngine = new ACLEngine(penrose);
         aclEngine.setSchemaManager(schemaManager);
-
-        addHandler = createAddHandler();
-        bindHandler = createBindHandler();
-        compareHandler = createCompareHandler();
-        deleteHandler = createDeleteHandler();
-        modifyHandler = createModifyHandler();
-        modRdnHandler = createModRdnHandler();
-        findHandler = createFindHandler();
-        searchHandler = createSearchHandler();
 
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
@@ -129,38 +111,6 @@ public class Handler {
         entryCache.setPenrose(penrose);
 
         entryCache.init();
-    }
-
-    public AddHandler createAddHandler() {
-        return new AddHandler(this);
-    }
-
-    public BindHandler createBindHandler() {
-        return new BindHandler(this);
-    }
-
-    public CompareHandler createCompareHandler() {
-        return new CompareHandler(this);
-    }
-
-    public DeleteHandler createDeleteHandler() {
-        return new DeleteHandler(this);
-    }
-
-    public ModifyHandler createModifyHandler() {
-        return new ModifyHandler(this);
-    }
-
-    public ModRdnHandler createModRdnHandler() {
-        return new ModRdnHandler(this);
-    }
-
-    public FindHandler createFindHandler() {
-        return new FindHandler(this);
-    }
-
-    public SearchHandler createSearchHandler() {
-        return new SearchHandler(this);
     }
 
     public void start() throws Exception {
@@ -200,577 +150,67 @@ public class Handler {
         status = STOPPED;
     }
 
-    public void bind(
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public abstract void bind(
             PenroseSession session,
+            Partition partition,
             DN dn,
             String password
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            PenroseConfig penroseConfig = penrose.getPenroseConfig();
-            DN rootDn = penroseConfig.getRootDn();
+    public abstract void unbind(PenroseSession session) throws Exception;
 
-            int rc;
-
-            if (dn.equals(rootDn)) {
-                if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
-                    log.debug("Password doesn't match => BIND FAILED");
-                    rc = LDAPException.INVALID_CREDENTIALS;
-                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, "Password mismatch.");
-                }
-
-            } else {
-
-                Partition partition = partitionManager.getPartition(dn);
-
-                if (partition == null) {
-                    log.debug("Entry "+dn+" not found");
-                    rc = LDAPException.NO_SUCH_OBJECT;
-                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-                }
-
-                getBindHandler().bind(session, partition, dn, password);
-                session.setBindDn(dn);
-                session.setBindPassword(password);
-            }
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    public void add(
+    public abstract void add(
             PenroseSession session,
+            Partition partition,
             DN dn,
             Attributes attributes
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            attributes = normalize(attributes);
-
-            log.warn("Add entry \""+dn+"\".");
-            log.debug("-------------------------------------------------");
-            log.debug("ADD:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - Entry: "+dn);
-            log.debug("");
-
-            DN parentDn = dn.getParentDn();
-
-            Partition partition = partitionManager.getPartition(parentDn);
-
-            if (partition == null) {
-                log.debug("Parent entry "+parentDn+" not found");
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            Entry parent = findHandler.find(partition, parentDn);
-
-            if (parent == null) {
-                log.debug("Parent entry "+dn+" not found");
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            int rc = aclEngine.checkAdd(session, partition, parent.getEntryMapping(), parentDn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to add "+dn);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            getAddHandler().add(session, partition, parent, dn, attributes);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    public void unbind(PenroseSession session) throws LDAPException {
-
-        if (session == null) return;
-
-        session.setBindDn((DN)null);
-        session.setBindPassword(null);
-    }
-
-    public boolean compare(
+    public abstract boolean compare(
             PenroseSession session,
+            Partition partition,
             DN dn,
             String attributeName,
             Object attributeValue
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("COMPARE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - Attribute Name: " + attributeName);
-            if (attributeValue instanceof byte[]) {
-                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-            } else {
-                log.debug(" - Attribute Value: " + attributeValue);
-            }
-            log.debug("-------------------------------------------------------------------------------");
-
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Entry "+dn+" not found");
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            Entry entry = findHandler.find(partition, dn);
-
-            if (entry == null) {
-                log.debug("Entry "+dn+" not found");
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            int rc = aclEngine.checkRead(session, partition, entry.getEntryMapping(), dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to compare "+dn);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            return getCompareHandler().compare(session, partition, entry, attributeName, attributeValue);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    public void delete(
+    public abstract void delete(
             PenroseSession session,
+            Partition partition,
             DN dn
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            log.warn("Delete entry \""+dn+"\".");
-
-            log.debug("-------------------------------------------------");
-            log.debug("DELETE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - DN: "+dn);
-            log.debug("");
-
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-/*
-            List path = new ArrayList();
-            AttributeValues sourceValues = new AttributeValues();
-
-            findHandler.find(partition, dn, path, sourceValues);
-
-            if (path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-*/
-            Entry entry = findHandler.find(partition, dn);
-
-            if (entry == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-
-            int rc = aclEngine.checkDelete(session, partition, entry.getEntryMapping(), dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to delete "+dn);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            getDeleteHandler().delete(session, partition, entry);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    public void modify(
+    public abstract void modify(
             PenroseSession session,
+            Partition partition,
             DN dn,
             Collection modifications
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            log.warn("Modify entry \""+dn+"\".");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY:", 80));
-            if (session != null && session.getBindDn() != null) {
-                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-            }
-            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-
-            log.debug(Formatter.displayLine(" - Attributes: ", 80));
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
-                Attribute attribute = mi.getAttribute();
-                String op = "replace";
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        op = "add";
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        op = "delete";
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        op = "replace";
-                        break;
-                }
-
-                log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-/*
-            List path = new ArrayList();
-            AttributeValues sourceValues = new AttributeValues();
-
-            findHandler.find(partition, dn, path, sourceValues);
-
-            if (path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-*/
-            Entry entry = findHandler.find(partition, dn);
-
-            if (entry == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-
-            int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to modify "+dn);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            getModifyHandler().modify(session, partition, entry, modifications);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    public void modrdn(
+    public abstract void modrdn(
             PenroseSession session,
+            Partition partition,
             DN dn,
             RDN newRdn,
             boolean deleteOldRdn
-    ) throws LDAPException {
+    ) throws Exception;
 
-        try {
-            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
-
-            log.debug("-------------------------------------------------------------------------------");
-            log.debug("MODRDN:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - New RDN: " + newRdn);
-
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-/*
-            List path = new ArrayList();
-            AttributeValues sourceValues = new AttributeValues();
-
-            findHandler.find(partition, dn, path, sourceValues);
-
-            if (path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                return LDAPException.NO_SUCH_OBJECT;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-*/
-            Entry entry = findHandler.find(partition, dn);
-
-            if (entry == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                String message = "Entry "+dn+" not found";
-                log.debug(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-            }
-
-            int rc = aclEngine.checkModify(session, partition, entry.getEntryMapping(), dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to rename "+dn);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-            getModRdnHandler().modrdn(session, partition, entry, newRdn, deleteOldRdn);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-        }
-    }
-
-    /**
-     * @param session
-     * @param baseDn
-     * @param filter
-     * @param sc
-     * @param results The results will be filled with objects of type SearchResult.
-     * @return return code
-     * @throws Exception
-     */
-    public int search(
-            final PenroseSession session,
-            final DN baseDn,
-            final String filter,
-            final PenroseSearchControls sc,
-            final PenroseSearchResults results
-    ) throws Exception {
-
-        if ("".equals(baseDn) && sc.getScope() == LDAPConnection.SCOPE_BASE) {
-            Entry rootDSE = createRootDSE();
-            filterAttributes(session, rootDSE, sc);
-            results.add(rootDSE);
-            results.close();
-            return LDAPException.SUCCESS;
-        }
-
-        final Partition partition = partitionManager.getPartition(baseDn);
-
-        if (partition == null) {
-            log.debug("Entry "+baseDn+" not found");
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            results.close();
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        threadManager.execute(new Runnable() {
-            public void run() {
-
-                int rc = LDAPException.SUCCESS;
-                try {
-                    rc = searchInBackground(
-                            session,
-                            partition,
-                            baseDn,
-                            filter,
-                            sc,
-                            results
-                    );
-                    results.setReturnCode(rc);
-
-                } catch (LDAPException e) {
-                    rc = e.getResultCode();
-                    results.setReturnCode(rc);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    rc = ExceptionUtil.getReturnCode(e);
-                    results.setReturnCode(rc);
-
-                } finally {
-                    results.close();
-
-                    if (rc == LDAPException.SUCCESS) {
-                        log.warn("Search operation succeded.");
-                    } else {
-                        log.warn("Search operation failed. RC="+rc);
-                    }
-                }
-            }
-        });
-
-        return LDAPException.SUCCESS;
-    }
-
-    public int searchInBackground(
-            final PenroseSession session,
-            final Partition partition,
-            final DN baseDn,
-            final String filter,
-            final PenroseSearchControls sc,
-            final PenroseSearchResults results
-    ) throws Exception {
-
-        String scope = LDAPUtil.getScope(sc.getScope());
-
-        Collection attributeNames = sc.getAttributes();
-        attributeNames = normalize(attributeNames);
-        sc.setAttributes(attributeNames);
-
-        log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
-
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("SEARCH:");
-        if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-        log.debug(" - Base DN: "+baseDn);
-        log.debug(" - Scope: "+scope);
-        log.debug(" - Filter: "+filter);
-        log.debug(" - Attribute Names: "+attributeNames);
-        log.debug("");
-
-        final PenroseSearchResults sr = new PenroseSearchResults();
-        final Filter f = FilterTool.parseFilter(filter);
-
-        sr.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                try {
-                    Entry entry = (Entry)event.getObject();
-                    DN dn = entry.getDn();
-                    EntryMapping entryMapping = entry.getEntryMapping();
-
-                    // check read permission
-                    log.debug("Checking read permission on "+dn);
-                    int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
-                    if (rc != LDAPException.SUCCESS) {
-                        log.debug("Entry \""+entry.getDn()+"\" is not readable.");
-                        return;
-                    }
-
-                    log.debug("Returning entry "+dn);
-                    filterAttributes(session, partition, entryMapping, entry, sc);
-
-                    results.add(entry);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-
-            public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(sr.getReturnCode());
-            }
-        });
-
-        sr.addReferralListener(new ReferralAdapter() {
-            public void referralAdded(ReferralEvent event) {
-                Object referral = event.getReferral();
-                //log.debug("Passing referral: "+referral);
-                results.addReferral(referral);
-            }
-        });
-
-/*
-        List path = new ArrayList();
-        findHandler.find(partition, baseDn, path, sourceValues);
-
-        if (path.isEmpty()) {
-            log.debug("Entry "+baseDn+" not found");
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-
-        final Entry entry = (Entry)path.iterator().next();
-
-        if (entry == null) {
-            log.debug("Entry "+baseDn+" not found");
-            results.setReturnCode(LDAPException.NO_SUCH_OBJECT);
-            return LDAPException.NO_SUCH_OBJECT;
-        }
-*/
-        Collection entryMappings = partition.findEntryMappings(baseDn);
-
-        int rc = LDAPException.SUCCESS;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            final EntryMapping entryMapping = (EntryMapping)i.next();
-
-            rc = aclEngine.checkSearch(session, partition, entryMapping, baseDn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to search "+baseDn);
-                continue;
-            }
-
-            AttributeValues sourceValues = new AttributeValues();
-
-            rc = getSearchHandler().search(
-                    session,
-                    partition,
-                    sourceValues,
-                    entryMapping,
-                    baseDn,
-                    f,
-                    sc,
-                    sr
-            );
-        }
-
-        return rc;
-    }
+    public abstract void search(
+            PenroseSession session,
+            Partition partition,
+            DN baseDn,
+            String filter,
+            PenroseSearchControls sc,
+            Results results
+    ) throws Exception;
 
     public Entry createRootDSE() throws Exception {
 
@@ -794,330 +234,163 @@ public class Handler {
         return entry;
     }
 
-    public void filterAttributes(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            Entry entry,
-            PenroseSearchControls sc
-    ) throws Exception {
-
-        Collection requestedAttributeNames = new HashSet();
-
-        boolean allRegularAttributes = false;
-        boolean opAttributes = false;
-
-        if (sc.getAttributes() != null && !sc.getAttributes().isEmpty()) {
-
-            for (Iterator i=sc.getAttributes().iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
-                requestedAttributeNames.add(attributeName.toLowerCase());
-            }
-
-            allRegularAttributes = requestedAttributeNames.contains("*");
-            opAttributes = requestedAttributeNames.contains("+");
-        }
-
-        log.debug("Requested: "+requestedAttributeNames);
-
-        Collection attributeNames = new ArrayList();
+    public void printResult(Entry entry) throws Exception {
+        log.debug("dn: "+entry.getDn());
         AttributeValues attributeValues = entry.getAttributeValues();
-
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            attributeNames.add(name.toLowerCase());
+            Collection values = attributeValues.get(name);
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                log.debug(name+": "+value);
+            }
         }
+    }
 
-        log.debug("Returned: "+attributeNames);
-
-        Set grants = new HashSet();
-        Set denies = new HashSet();
-        denies.addAll(attributeNames);
-
-        DN targetDn = entry.getDn();
-        aclEngine.getReadableAttributes(session, partition, entryMapping, targetDn, attributeNames, grants, denies);
-
-        log.debug("Granted: "+grants);
-        log.debug("Denied: "+denies);
-
-        Collection opAtNames = new HashSet();
-/*
-        for (Iterator i=entryMapping.getOperationalAttributeNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
-            opAtNames.add(attributeName.toLowerCase());
-        }
-*/        
-        Collection list = new HashSet();
-
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
-            String normalizedName = attributeName.toLowerCase();
-
-            if (denies.contains(normalizedName)) {
-                log.debug("Remove denied attribute "+normalizedName);
-                list.add(attributeName);
-                continue;
-            }
-/*
-            if (partition.isProxy(entryMapping)) {
-                log.debug("Keep proxied attribute "+normalizedName);
-                continue;
-            }
-*/
-            if (requestedAttributeNames.isEmpty()) {
-                if (opAtNames.contains(normalizedName)) {
-                    log.debug("Remove operational attribute "+normalizedName);
-                    list.add(attributeName);
-                } else {
-                    log.debug("Keep regular attribute "+normalizedName);
-                }
-                continue;
-            }
-
-            if (opAttributes && opAtNames.contains(normalizedName)) {
-                log.debug("Keep operational attribute "+normalizedName);
-                continue;
-            }
-
-            if (allRegularAttributes && !opAtNames.contains(normalizedName)) {
-                log.debug("Keep all regular attribute "+normalizedName);
-                continue;
-            }
-
-            if (requestedAttributeNames.contains(normalizedName)) {
-                log.debug("Keep requested attribute "+normalizedName);
-                continue;
-            }
-
-            log.debug("Remove unrequested attribute "+normalizedName);
-            list.add(attributeName);
-        }
-
+    public void removeAttributes(Entry entry, Collection list) throws Exception {
+        AttributeValues attributeValues = entry.getAttributeValues();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             attributeValues.remove(attributeName);
         }
     }
 
-    public void filterAttributes(
+    public Collection filterAttributes(
             PenroseSession session,
+            Partition partition,
             Entry entry,
-            PenroseSearchControls sc
+            Collection requestedAttributeNames,
+            boolean allRegularAttributes,
+            boolean allOpAttributes
     ) throws Exception {
-
-        Collection requestedAttributeNames = new HashSet();
-
-        boolean allRegularAttributes = false;
-        boolean opAttributes = false;
-
-        if (sc.getAttributes() != null && !sc.getAttributes().isEmpty()) {
-
-            for (Iterator i=sc.getAttributes().iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
-                requestedAttributeNames.add(attributeName.toLowerCase());
-            }
-
-            allRegularAttributes = requestedAttributeNames.contains("*");
-            opAttributes = requestedAttributeNames.contains("+");
-        }
-
-        if (allRegularAttributes || opAttributes) return;
-
-        log.debug("Requested: "+requestedAttributeNames);
-
-        Collection attributeNames = new ArrayList();
-        AttributeValues attributes = entry.getAttributeValues();
-
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            attributeNames.add(name.toLowerCase());
-        }
-
-        log.debug("Returned: "+attributeNames);
 
         Collection list = new HashSet();
 
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
-            String normalizedName = attributeName.toLowerCase();
+        if (session == null) return list;
 
-            if (requestedAttributeNames.contains(normalizedName)) {
-                log.debug("Keep requested attribute "+normalizedName);
-                continue;
+        AttributeValues attributeValues = entry.getAttributeValues();
+        Collection attributeNames = attributeValues.getNames();
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
+            log.debug("Returned: "+attributeNames);
+        }
+        
+        if (allRegularAttributes && allOpAttributes) {
+            log.debug("Returning all attributes.");
+            return list;
+        }
+
+        if (allRegularAttributes) {
+
+            // return regular attributes only
+            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+
+                AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+                if (attributeType == null) {
+                    if (debug) log.debug("Attribute "+attributeName+" undefined.");
+                    continue;
+                }
+                
+                if (!attributeType.isOperational()) {
+                    //log.debug("Keep regular attribute "+attributeName);
+                    continue;
+                }
+
+                //log.debug("Remove operational attribute "+attributeName);
+                list.add(attributeName);
+            }
+
+        } else if (allOpAttributes) {
+
+            // return operational attributes only
+            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+
+                AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+                if (attributeType == null) {
+                    if (debug) log.debug("Attribute "+attributeName+" undefined.");
+                    list.add(attributeName);
+                    continue;
+                }
+
+                if (attributeType.isOperational()) {
+                    //log.debug("Keep operational attribute "+attributeName);
+                    continue;
+                }
+
+                //log.debug("Remove regular attribute "+attributeName);
+                list.add(attributeName);
+            }
+
+        } else {
+
+            // return requested attributes
+            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+                String attributeName = (String)i.next();
+
+                if (requestedAttributeNames.contains(attributeName)) {
+                    //log.debug("Keep requested attribute "+attributeName);
+                    continue;
+                }
+
+                //log.debug("Remove unrequested attribute "+attributeName);
+                list.add(attributeName);
             }
         }
 
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
+        return list;
+    }
+
+    public void filterAttributes(
+            PenroseSession session,
+            Partition partition,
+            Entry entry
+    ) throws Exception {
+
+        if (session == null) return;
+
+        EntryMapping entryMapping = entry.getEntryMapping();
+        AttributeValues attributeValues = entry.getAttributeValues();
+
+        Collection attributeNames = new ArrayList();
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
-            attributes.remove(attributeName);
+            attributeNames.add(attributeName.toLowerCase());
         }
-    }
 
-    public BindHandler getBindHandler() {
-        return bindHandler;
-    }
+        Set grants = new HashSet();
+        Set denies = new HashSet();
+        denies.addAll(attributeNames);
 
-    public void setBindHandler(BindHandler bindHandler) {
-        this.bindHandler = bindHandler;
-    }
+        DN bindDn = session.getBindDn();
+        DN targetDn = entry.getDn();
+        aclEngine.getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
 
-    public SearchHandler getSearchHandler() {
-        return searchHandler;
-    }
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
+            log.debug("Returned: "+attributeNames);
+            log.debug("Granted: "+grants);
+            log.debug("Denied: "+denies);
+        }
 
-    public void setSearchHandler(SearchHandler searchHandler) {
-        this.searchHandler = searchHandler;
-    }
+        Collection list = new ArrayList();
 
-    public AddHandler getAddHandler() {
-        return addHandler;
-    }
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String attributeName = (String)i.next();
+            String normalizedName = attributeName.toLowerCase();
 
-    public void setAddHandler(AddHandler addHandler) {
-        this.addHandler = addHandler;
-    }
+            if (!denies.contains(normalizedName)) {
+                //log.debug("Keep undenied attribute "+normalizedName);
+                continue;
+            }
 
-    public ModifyHandler getModifyHandler() {
-        return modifyHandler;
-    }
+            //log.debug("Remove denied attribute "+normalizedName);
+            list.add(attributeName);
+        }
 
-    public void setModifyHandler(ModifyHandler modifyHandler) {
-        this.modifyHandler = modifyHandler;
-    }
-
-    public DeleteHandler getDeleteHandler() {
-        return deleteHandler;
-    }
-
-    public void setDeleteHandler(DeleteHandler deleteHandler) {
-        this.deleteHandler = deleteHandler;
-    }
-
-    public CompareHandler getCompareHandler() {
-        return compareHandler;
-    }
-
-    public void setCompareHandler(CompareHandler compareHandler) {
-        this.compareHandler = compareHandler;
-    }
-
-    public ModRdnHandler getModRdnHandler() {
-        return modRdnHandler;
-    }
-
-    public void setModRdnHandler(ModRdnHandler modRdnHandler) {
-        this.modRdnHandler = modRdnHandler;
-    }
-
-    public InterpreterManager getInterpreterFactory() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
-
-    public Engine getEngine() {
-        return engineManager.getEngine("DEFAULT");
-    }
-
-    public Engine getEngine(String name) {
-        return engineManager.getEngine(name);
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
-    }
-
-    // ------------------------------------------------
-    // Listeners
-    // ------------------------------------------------
-
-    public void addConnectionListener(ConnectionListener l) {
-    }
-
-    public void removeConnectionListener(ConnectionListener l) {
-    }
-
-    public void addBindListener(BindListener l) {
-    }
-
-    public void removeBindListener(BindListener l) {
-    }
-
-    public void addSearchListener(SearchListener l) {
-    }
-
-    public void removeSearchListener(SearchListener l) {
-    }
-
-    public void addCompareListener(CompareListener l) {
-    }
-
-    public void removeCompareListener(CompareListener l) {
-    }
-
-    public void addAddListener(AddListener l) {
-    }
-
-    public void removeAddListener(AddListener l) {
-    }
-
-    public void addDeleteListener(DeleteListener l) {
-    }
-
-    public void removeDeleteListener(DeleteListener l) {
-    }
-
-    public void addModifyListener(ModifyListener l) {
-    }
-
-    public void removeModifyListener(ModifyListener l) {
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-        aclEngine.setSchemaManager(schemaManager);
-    }
-
-    public SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public FindHandler getFindHandler() {
-        return findHandler;
-    }
-
-    public void setFindHandler(FindHandler findHandler) {
-        this.findHandler = findHandler;
+        removeAttributes(entry, list);
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -1164,6 +437,24 @@ public class Handler {
         return newAttributes;
     }
 
+    public DN normalize(DN oldDn) {
+        DNBuilder db = new DNBuilder();
+        RDNBuilder rb = new RDNBuilder();
+
+        for (Iterator i=oldDn.getRdns().iterator(); i.hasNext(); ) {
+            RDN rdn = (RDN)i.next();
+
+            rb.clear();
+            for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Object value = rdn.get(name);
+                rb.set(schemaManager.getNormalizedAttributeName(name), value);
+            }
+            db.append(rb.toRdn());
+        }
+        return db.toDn();
+    }
+
     public Collection normalize(Collection attributeNames) {
         if (attributeNames == null) return null;
 
@@ -1182,6 +473,46 @@ public class Handler {
 
     public void setFilterTool(FilterTool filterTool) {
         this.filterTool = filterTool;
+    }
+
+    public Engine getEngine() {
+        return engineManager.getEngine("DEFAULT");
+    }
+
+    public Engine getEngine(String name) {
+        return engineManager.getEngine(name);
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
+    }
+
+    public SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    public void setSchemaManager(SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
+    public InterpreterManager getInterpreterFactory() {
+        return interpreterManager;
+    }
+
+    public void setInterpreterFactory(InterpreterManager interpreterManager) {
+        this.interpreterManager = interpreterManager;
     }
 
     public EntryCache getEntryCache() {
@@ -1218,5 +549,54 @@ public class Handler {
         return av;
     }
 
+    public void addConnectionListener(ConnectionListener l) {
+    }
+
+    public void removeConnectionListener(ConnectionListener l) {
+    }
+
+    public void addBindListener(BindListener l) {
+    }
+
+    public void removeBindListener(BindListener l) {
+    }
+
+    public void addSearchListener(SearchListener l) {
+    }
+
+    public void removeSearchListener(SearchListener l) {
+    }
+
+    public void addCompareListener(CompareListener l) {
+    }
+
+    public void removeCompareListener(CompareListener l) {
+    }
+
+    public void addAddListener(AddListener l) {
+    }
+
+    public void removeAddListener(AddListener l) {
+    }
+
+    public void addDeleteListener(DeleteListener l) {
+    }
+
+    public void removeDeleteListener(DeleteListener l) {
+    }
+
+    public void addModifyListener(ModifyListener l) {
+    }
+
+    public void removeModifyListener(ModifyListener l) {
+    }
+
+    public HandlerConfig getHandlerConfig() {
+        return handlerConfig;
+    }
+
+    public void setHandlerConfig(HandlerConfig handlerConfig) {
+        this.handlerConfig = handlerConfig;
+    }
 }
 

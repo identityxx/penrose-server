@@ -315,6 +315,17 @@ public class PartitionWriter {
             entryElement.add(toElement(relationship));
         }
 
+        EngineMapping engineMapping = entryMapping.getEngineMapping();
+        if (engineMapping != null) {
+            Element element = new DefaultElement("engine");
+
+            Element engineName = new DefaultElement("engine-name");
+            engineName.add(new DefaultText(engineMapping.getEngineName()));
+            element.add(engineName);
+
+            entryElement.add(element);
+        }
+
         for (Iterator i = entryMapping.getACL().iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
             entryElement.add(toElement(aci));
@@ -390,7 +401,6 @@ public class PartitionWriter {
         if (!sourceMapping.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
         if (!sourceMapping.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));
         if (!sourceMapping.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
-        if (!"DEFAULT".equals(sourceMapping.getEngine())) element.add(new DefaultAttribute("engine", sourceMapping.getEngine()));
 
         Element sourceName = new DefaultElement("source-name");
         sourceName.add(new DefaultText(sourceMapping.getSourceName()));
@@ -445,9 +455,9 @@ public class PartitionWriter {
             element.add(new DefaultAttribute("subject", aci.getSubject()));
         }
 
-        if (aci.getDn() != null && !"".equals(aci.getDn())) {
+        if (aci.getDn() != null && aci.getDn() != null) {
             Element dnElement = new DefaultElement("dn");
-            dnElement.add(new DefaultText(aci.getDn()));
+            dnElement.add(new DefaultText(aci.getDn().toString()));
             element.add(dnElement);
         }
 
@@ -656,7 +666,7 @@ public class PartitionWriter {
         Element element = new DefaultElement("field");
         element.addAttribute("name", field.getName());
         if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
-        if (field.isPK()) element.addAttribute("primaryKey", "true");
+        if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
         if (!field.isSearchable()) element.addAttribute("searchable", "false");
         if (field.isUnique()) element.addAttribute("unique", "true");
         if (field.isIndex()) element.addAttribute("index", "true");

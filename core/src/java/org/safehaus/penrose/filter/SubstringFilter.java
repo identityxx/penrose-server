@@ -75,7 +75,7 @@ public class SubstringFilter extends ItemFilter {
     }
 
 	public String toString() {
-		StringBuffer sb = new StringBuffer("(" + attribute + "=");
+		StringBuilder sb = new StringBuilder("(" + attribute + "=");
 		for (Iterator i=substrings.iterator(); i.hasNext(); ) {
             Object o = i.next();
             if (o.equals(STAR)) {

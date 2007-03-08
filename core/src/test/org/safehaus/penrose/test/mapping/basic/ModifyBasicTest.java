@@ -1,12 +1,15 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.test.mapping.basic.BasicTestCase;
+import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.DirContext;
 import java.util.Collection;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -18,19 +21,19 @@ public class ModifyBasicTest extends BasicTestCase {
 
     public void testModifyingEntry() throws Exception {
 
-        executeUpdate("insert into groups values ('test', 'test')");
+        executeUpdate("insert into groups values ('group', 'olddesc')");
 
         PenroseSession session = penrose.newSession();
-        session.setBindDn("uid=admin,ou=system");
+        session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attribute attribute = new BasicAttribute("description");
-        attribute.add("description");
+        attribute.add("newdesc");
 
         ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
         Collection modifications = new ArrayList();
         modifications.add(mi);
 
-        session.modify("cn=test,ou=Groups,dc=Example,dc=com", modifications);
+        session.modify("cn=group,"+baseDn, modifications);
 
         session.close();
 
@@ -38,7 +41,7 @@ public class ModifyBasicTest extends BasicTestCase {
         assertEquals(results.size(), 1);
 
         Map row = (Map)results.iterator().next();
-        assertEquals(row.get("GROUPNAME"), "test");
-        assertEquals(row.get("DESCRIPTION"), "description");
+        assertEquals("group", row.get("GROUPNAME"));
+        assertEquals("newdesc", row.get("DESCRIPTION"));
     }
 }

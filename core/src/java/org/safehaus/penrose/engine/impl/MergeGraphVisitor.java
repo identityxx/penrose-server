@@ -41,7 +41,7 @@ public class MergeGraphVisitor extends GraphVisitor {
 
     private Partition partition;
     private Graph graph;
-    private Engine engine;
+    private EngineImpl engine;
     private EntryMapping entryMapping;
     private AttributeValues loadedSourceValues;
     private SourceMapping primarySourceMapping;
@@ -51,7 +51,7 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Stack stack = new Stack();
 
     public MergeGraphVisitor(
-            Engine engine,
+            EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
             AttributeValues primarySourceValues,
@@ -120,7 +120,7 @@ public class MergeGraphVisitor extends GraphVisitor {
                         if (!FilterTool.isValid(av, filter)) continue;
 
                     } else {
-                        if (!engine.getJoinEngine().evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
+                        if (!engine.joinEngine.evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
                     }
     
                     sourceValues.add(av);

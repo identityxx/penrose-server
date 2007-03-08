@@ -20,8 +20,6 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -352,43 +350,6 @@ public class Schema implements Cloneable {
         }
 
         return true;
-    }
-
-    public RDN normalize(RDN rdn) throws Exception {
-
-
-        RDNBuilder rb = new RDNBuilder();
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = rdn.get(name);
-
-            if (value == null) continue;
-
-            if (value instanceof String) {
-                value = ((String)value).toLowerCase();
-            }
-
-            //value = value.toString().toLowerCase();
-            rb.set(name.toLowerCase(), value);
-        }
-
-        RDN newRdn = rb.toRdn();
-        return newRdn;
-    }
-
-    public String normalize(String dn) throws Exception {
-        String newDn = null;
-
-        if (dn == null) return newDn;
-
-        Collection rdns = EntryUtil.parseDn(dn);
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
-            RDN newRdn = normalize(rdn);
-            newDn = EntryUtil.append(newDn, newRdn);
-        }
-
-        return newDn;
     }
 
     public int hashCode() {

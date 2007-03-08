@@ -23,10 +23,12 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -67,15 +69,20 @@ public abstract class Adapter {
     /**
      * Search.
      *
-     * @param searchControls
+     * @param partition
+     * @param entryMapping
+     * @param sourceMapping
      * @param results AttributeValues
      * @throws Exception
      */
     public void search(
+            Partition partition,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
             SourceConfig sourceConfig,
             Filter filter,
             PenroseSearchControls searchControls,
-            PenroseSearchResults results
+            Results results
     ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }

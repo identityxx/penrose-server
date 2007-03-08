@@ -53,7 +53,8 @@ public class EngineFilterTool {
             Filter filter
     ) throws Exception {
 
-        log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
 
         if (filter instanceof NotFilter) {
             return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (NotFilter) filter);
@@ -126,20 +127,25 @@ public class EngineFilterTool {
             SubstringFilter filter)
             throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();
-        log.debug("variable: "+variable);
+        if (debug) log.debug("variable: "+variable);
 
         if (variable == null) return null;
 
         int index = variable.indexOf(".");
         String sourceName = variable.substring(0, index);
         String fieldName = variable.substring(index+1);
-        log.debug("sourceName: "+sourceName);
-        log.debug("fieldName: "+fieldName);
+        
+        if (debug) {
+            log.debug("sourceName: "+sourceName);
+            log.debug("fieldName: "+fieldName);
+        }
 
         if (!sourceName.equals(sourceMapping.getName())) return null;
 

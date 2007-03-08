@@ -48,14 +48,18 @@ public class OperationalAttributeModule extends Module {
 
         Attributes attributes = event.getAttributes();
 
-        Attribute creatorsName = new BasicAttribute("creatorsName", bindDn);
-        attributes.put(creatorsName);
+        if (bindDn != null) {
+            Attribute creatorsName = new BasicAttribute("creatorsName", bindDn.toString());
+            attributes.put(creatorsName);
+        }
 
         Attribute createTimestamp = new BasicAttribute("createTimestamp", timestamp);
         attributes.put(createTimestamp);
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        attributes.put(modifiersName);
+        if (bindDn != null) {
+            Attribute modifiersName = new BasicAttribute("modifiersName", bindDn.toString());
+            attributes.put(modifiersName);
+        }
 
         Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
         attributes.put(modifyTimestamp);
@@ -75,12 +79,14 @@ public class OperationalAttributeModule extends Module {
 
         Collection modifications = event.getModifications();
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
-        modifications.add(mi);
+        if (bindDn != null) {
+            Attribute modifiersName = new BasicAttribute("modifiersName", bindDn.toString());
+            ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
+            modifications.add(mi);
+        }
 
         Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
+        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
         modifications.add(mi);
 
         return true;
@@ -98,12 +104,14 @@ public class OperationalAttributeModule extends Module {
 
         Collection modifications = new ArrayList();
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
-        modifications.add(mi);
+        if (bindDn != null) {
+            Attribute modifiersName = new BasicAttribute("modifiersName", bindDn.toString());
+            ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
+            modifications.add(mi);
+        }
 
         Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
+        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
         modifications.add(mi);
 
         DN dn = event.getDn();

@@ -20,15 +20,14 @@ package org.safehaus.penrose.engine.impl;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.util.LDAPUtil;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
@@ -56,6 +55,10 @@ public class EngineImpl extends Engine {
     ModRdnEngine modrdnEngine;
     SearchEngine searchEngine;
 
+    LoadEngine loadEngine;
+    MergeEngine mergeEngine;
+    JoinEngine joinEngine;
+
     public void init() throws Exception {
         super.init();
 
@@ -81,8 +84,6 @@ public class EngineImpl extends Engine {
             String password
     ) throws LDAPException {
 
-        int rc = LDAPException.SUCCESS;
-
         try {
             log.debug("Bind as user "+dn);
 
@@ -92,49 +93,89 @@ public class EngineImpl extends Engine {
             attributeValues.add(rdn);
 
             Collection sources = entryMapping.getSourceMappings();
+            if (sources.isEmpty()) {
+                staticBind(session, partition, entryMapping, dn, password);
+                return;
+            }
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
-                SourceMapping source = (SourceMapping)i.next();
+                SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
+                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-                Map entries = transformEngine.split(partition, entryMapping, source, attributeValues);
+                Map entries = transformEngine.split(
+                        partition,
+                        entryMapping,
+                        sourceMapping,
+                        dn,
+                        attributeValues
+                );
 
                 for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
                     RDN pk = (RDN)j.next();
                     //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
 
-                    log.debug("Bind to "+source.getName()+" as "+pk+".");
+                    log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
 
-                    try {
-                        Connector connector = getConnector(sourceConfig);
-                        connector.bind(partition, sourceConfig, entryMapping, pk, password);
-                        return;
-                    } catch (Exception e) {
-                        // continue
-                    }
+                    Connector connector = getConnector(sourceConfig);
+                    connector.bind(partition, sourceConfig, entryMapping, pk, password);
                 }
             }
 
-            rc = LDAPException.INVALID_CREDENTIALS;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
 
         } catch (LDAPException e) {
-            rc = e.getResultCode();
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+    }
 
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("BIND RC:"+rc, 80));
-                log.debug(Formatter.displaySeparator(80));
+    public void staticBind(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            String password
+    ) throws LDAPException {
+
+        try {
+            PenroseSearchControls sc = new PenroseSearchControls();
+            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+            PenroseSearchResults results = new PenroseSearchResults();
+
+            search(session, partition, new AttributeValues(), entryMapping, dn, null, sc, results);
+
+            if (!results.hasNext()) {
+                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
             }
+
+            Entry entry = (Entry)results.next();
+
+            AttributeValues attributeValues = entry.getAttributeValues();
+
+            Collection userPasswords = attributeValues.get("userPassword");
+
+            if (userPasswords == null) {
+                log.debug("Attribute userPassword not found");
+                throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+            }
+
+            for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
+                Object userPassword = j.next();
+                log.debug("userPassword: "+userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) return;
+            }
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
@@ -146,8 +187,6 @@ public class EngineImpl extends Engine {
             DN dn,
             Attributes attributes
     ) throws LDAPException {
-
-        int rc = LDAPException.SUCCESS;
 
         try {
             // normalize attribute names
@@ -183,27 +222,15 @@ public class EngineImpl extends Engine {
             addEngine.add(partition, parent, entryMapping, dn, attributeValues);
 
         } catch (LDAPException e) {
-            rc = e.getResultCode();
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("ADD RC:"+rc, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
-    public void delete(PenroseSession session, Partition partition, Entry entry) throws LDAPException {
-
-        int rc = LDAPException.SUCCESS;
+    public void delete(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws LDAPException {
 
         try {
             if (log.isDebugEnabled()) {
@@ -217,21 +244,11 @@ public class EngineImpl extends Engine {
             deleteEngine.delete(partition, entry);
 
         } catch (LDAPException e) {
-            rc = e.getResultCode();
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("DELETE RC:"+rc, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
@@ -239,11 +256,11 @@ public class EngineImpl extends Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             RDN newRdn,
             boolean deleteOldRdn
     ) throws LDAPException {
-
-        int rc = LDAPException.SUCCESS;
 
         try {
             if (log.isDebugEnabled()) {
@@ -258,21 +275,11 @@ public class EngineImpl extends Engine {
             modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
 
         } catch (LDAPException e) {
-            rc = e.getResultCode();
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("MODRDN RC:"+rc, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
@@ -280,13 +287,12 @@ public class EngineImpl extends Engine {
             PenroseSession session,
             Partition partition,
             Entry entry,
+            EntryMapping entryMapping,
+            DN dn,
             Collection modifications
     ) throws LDAPException {
 
-        int rc = LDAPException.SUCCESS;
-
         try {
-            EntryMapping entryMapping = entry.getEntryMapping();
             AttributeValues oldValues = entry.getAttributeValues();
 
             log.debug("Old entry:");
@@ -310,8 +316,7 @@ public class EngineImpl extends Engine {
                 String attributeName = attribute.getID();
 
                 if (attributeName.equals("objectClass")) {
-                    rc = LDAPException.OBJECT_CLASS_MODS_PROHIBITED;
-                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+                    throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_MODS_PROHIBITED);
                 }
 
                 Set newAttrValues = new HashSet();
@@ -379,21 +384,11 @@ public class EngineImpl extends Engine {
             modifyEngine.modify(partition, entry, newValues);
 
         } catch (LDAPException e) {
-            rc = e.getResultCode();
             throw e;
 
         } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("MODIFY RC:"+rc, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
     }
 
@@ -554,13 +549,14 @@ public class EngineImpl extends Engine {
             DN baseDn,
             Filter filter,
             PenroseSearchControls sc,
-            PenroseSearchResults results
+            Results results
     ) throws Exception {
 
         expand(
                 session,
                 partition,
                 sourceValues,
+                entryMapping,
                 entryMapping,
                 baseDn,
                 filter,
@@ -573,11 +569,12 @@ public class EngineImpl extends Engine {
             final PenroseSession session,
             final Partition partition,
             final AttributeValues sourceValues,
+            final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final DN baseDn,
             final Filter filter,
             final PenroseSearchControls sc,
-            final PenroseSearchResults results
+            final Results results
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -639,10 +636,8 @@ public class EngineImpl extends Engine {
             final boolean unique = isUnique(partition, entryMapping);
             final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
-            final PenroseSearchResults dns = new PenroseSearchResults();
             final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
             final PenroseSearchResults loadedEntries = new PenroseSearchResults();
-            final PenroseSearchResults newEntries = new PenroseSearchResults();
             final Handler handler = penrose.getHandler();
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
@@ -657,74 +652,51 @@ public class EngineImpl extends Engine {
 
             log.debug("Search DNs only: "+dnOnly);
 
-            dns.addListener(new PipelineAdapter() {
-                public void objectAdded(PipelineEvent event) {
-                    try {
-                        EntryData data = (EntryData)event.getObject();
-                        DN dn = data.getDn();
-
-                        if (dnOnly) {
-                            log.debug("Returning DN only.");
-
-                            AttributeValues sv = data.getMergedValues();
-                            Entry entry = new Entry(dn, entryMapping, null, sv);
-
-                            results.add(entry);
-                            return;
-                        }
-
-                        if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
-                            log.debug("Entry data is complete, returning entry.");
-
-                            AttributeValues sv = data.getMergedValues();
-                            AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
-
-                            Entry entry = new Entry(dn, entryMapping, attributeValues, sv);
-
-                            log.debug("Checking filter "+filter+" on "+entry.getDn());
-                            if (handler.getFilterTool().isValid(entry, filter)) {
-                                results.add(entry);
-                            } else {
-                                log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
-                            }
-
-                            return;
-                        }
-
-                        log.debug("Entry data is incomplete, loading full entry data.");
-                        entriesToLoad.add(data);
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-
-                public void pipelineClosed(PipelineEvent event) {
-                    int rc = dns.getReturnCode();
-                    //log.debug("RC: "+rc);
+            final PenroseSearchResults dns = new PenroseSearchResults() {
+                public void add(Object object) throws Exception {
+                    EntryData data = (EntryData)object;
+                    DN dn = data.getDn();
 
                     if (dnOnly) {
-                        results.setReturnCode(rc);
-                    } else {
-                        entriesToLoad.setReturnCode(rc);
+                        log.debug("Returning DN only.");
+
+                        AttributeValues sv = data.getMergedValues();
+                        Entry entry = new Entry(dn, entryMapping, null, sv);
+
+                        results.add(entry);
+                        return;
+                    }
+
+                    if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
+                        log.debug("Entry data is complete, returning entry.");
+
+                        AttributeValues sv = data.getMergedValues();
+                        AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
+
+                        Entry entry = new Entry(dn, entryMapping, attributeValues, sv);
+
+                        log.debug("Checking filter "+filter+" on "+entry.getDn());
+                        if (handler.getFilterTool().isValid(entry, filter)) {
+                            results.add(entry);
+                        } else {
+                            log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
+                        }
+
+                        return;
+                    }
+
+                    log.debug("Entry data is incomplete, loading full entry data.");
+                    entriesToLoad.add(data);
+                }
+
+                public void close() throws Exception {
+                    if (!dnOnly) {
                         entriesToLoad.close();
                     }
                 }
-            });
+            };
 
             log.debug("Filter cache for "+filter+" not found.");
-
-            dns.addListener(new PipelineAdapter() {
-                public void objectAdded(PipelineEvent event) {
-                    try {
-                        EntryData data = (EntryData)event.getObject();
-                        DN dn = data.getDn();
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-            });
 
             searchEngine.search(partition, sourceValues, entryMapping, filter, dns);
 
@@ -735,30 +707,18 @@ public class EngineImpl extends Engine {
 
             load(partition, entryMapping, entriesToLoad, loadedEntries);
 
-            newEntries.addListener(new PipelineAdapter() {
-                public void objectAdded(PipelineEvent event) {
-                    try {
-                        Entry entry = (Entry)event.getObject();
+            final PenroseSearchResults newEntries = new PenroseSearchResults() {
+                public void add(Object object) throws Exception {
+                    Entry entry = (Entry)object;
 
-                        log.debug("Checking filter "+filter+" on "+entry.getDn());
-                        if (handler.getFilterTool().isValid(entry, filter)) {
-                            results.add(entry);
-                        } else {
-                            log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
-                        }
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
+                    log.debug("Checking filter "+filter+" on "+entry.getDn());
+                    if (handler.getFilterTool().isValid(entry, filter)) {
+                        results.add(entry);
+                    } else {
+                        log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
                     }
                 }
-
-                public void pipelineClosed(PipelineEvent event) {
-                    int rc = newEntries.getReturnCode();
-                    //log.debug("RC: "+rc);
-
-                    results.setReturnCode(rc);
-                }
-            });
+            };
 
             merge(partition, entryMapping, loadedEntries, newEntries);
 
@@ -771,5 +731,24 @@ public class EngineImpl extends Engine {
             }
         }
     }
-}
 
+    public void load(
+            Partition partition,
+            EntryMapping entryMapping,
+            PenroseSearchResults entriesToLoad,
+            PenroseSearchResults loadedEntries)
+            throws Exception {
+
+        loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
+    }
+
+    public void merge(
+            Partition partition,
+            EntryMapping entryMapping,
+            PenroseSearchResults loadedEntries,
+            PenroseSearchResults newEntries)
+            throws Exception {
+
+        mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);
+    }
+}

@@ -125,8 +125,8 @@ public class Demo {
                 sc,
                 results);
 
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult)i.next();
+        while (results.hasNext()) {
+            SearchResult entry = (SearchResult)results.next();
             log.warn("Entry:\n"+toString(entry));
         }
 

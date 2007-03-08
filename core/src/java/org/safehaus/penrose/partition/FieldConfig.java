@@ -31,10 +31,6 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 
-    public final static String PRIMARY_KEY_TRUE  = "true";
-    public final static String PRIMARY_KEY_FIRST = "first";
-    public final static String PRIMARY_KEY_FALSE = "false";
-
 	/**
 	 * Name.
 	 */
@@ -46,7 +42,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     private int length    = DEFAULT_LENGTH;
     private int precision = DEFAULT_PRECISION;
 
-	private String primaryKey = PRIMARY_KEY_FALSE;
+	private boolean primaryKey;
     private boolean searchable = true;
     private boolean unique;
     private boolean index;
@@ -69,8 +65,14 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         this.name = name;
     }
 
-    public FieldConfig(String name, String primaryKey) {
+    public FieldConfig(String name, boolean primaryKey) {
         this.name = name;
+        this.primaryKey = primaryKey;
+    }
+
+    public FieldConfig(String name, String originalName, boolean primaryKey) {
+        this.name = name;
+        this.originalName = originalName;
         this.primaryKey = primaryKey;
     }
 
@@ -82,15 +84,11 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 		this.name = name;
 	}
 
-	public boolean isPK() {
-		return !PRIMARY_KEY_FALSE.equals(primaryKey);
+	public boolean isPrimaryKey() {
+		return primaryKey;
 	}
 
-    public String getPrimaryKey() {
-        return primaryKey;
-    }
-
-    public void setPrimaryKey(String primaryKey) {
+    public void setPrimaryKey(boolean primaryKey) {
 		this.primaryKey = primaryKey;
 	}
 
@@ -175,18 +173,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (originalName == null ? 0 : originalName.hashCode()) +
-                (primaryKey == null ? 0 : primaryKey.hashCode()) +
-                (searchable ? 0 : 1) +
-                (unique ? 0 : 1) +
-                (index ? 0 : 1) +
-                (caseSensitive ? 0 : 1) +
-                (encryption == null ? 0 : encryption.hashCode()) +
-                (encoding == null ? 0 : encoding.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
-                (length) +
-                (precision);
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -202,7 +189,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         FieldConfig fieldConfig = (FieldConfig)object;
         if (!equals(name, fieldConfig.name)) return false;
         if (!equals(originalName, fieldConfig.originalName)) return false;
-        if (!equals(primaryKey, fieldConfig.primaryKey)) return false;
+        if (primaryKey != fieldConfig.primaryKey) return false;
         if (searchable != fieldConfig.searchable) return false;
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;

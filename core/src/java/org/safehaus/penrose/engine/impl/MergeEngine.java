@@ -40,37 +40,20 @@ public class MergeEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
+    private EngineImpl engine;
 
-    public MergeEngine(Engine engine) {
+    public MergeEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
     public void merge(
             final Partition partition,
             final EntryMapping entryMapping,
-            final PenroseSearchResults loadedBatches,
+            final PenroseSearchResults entries,
             final PenroseSearchResults results
             ) throws Exception {
 
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
-
-        try {
-            mergeBackground(partition, entryMapping, loadedBatches, interpreter, results);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(org.ietf.ldap.LDAPException.OPERATIONS_ERROR);
-        }
-    }
-
-    public void mergeBackground(
-            Partition partition,
-            EntryMapping entryMapping,
-            PenroseSearchResults entries,
-            Interpreter interpreter,
-            PenroseSearchResults results
-            ) throws Exception {
 
         try {
             while (entries.hasNext()) {
@@ -100,7 +83,6 @@ public class MergeEngine {
             int rc = entries.getReturnCode();
             //log.debug("RC: "+rc);
 
-            results.setReturnCode(rc);
             results.close();
         }
     }
@@ -201,7 +183,7 @@ public class MergeEngine {
         AttributeValues attributeValues = engine.computeAttributeValues(
                 entryMapping,
                 sourceValues,
-                rows,
+                //rows,
                 interpreter
         );
 
@@ -229,7 +211,7 @@ public class MergeEngine {
         return engine;
     }
 
-    public void setEngine(Engine engine) {
+    public void setEngine(EngineImpl engine) {
         this.engine = engine;
     }
 }

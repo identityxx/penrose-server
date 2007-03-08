@@ -64,7 +64,7 @@ public class SubstringsMatchingRule {
         log.debug("comparing ["+object+"] with "+substrings);
         if (object == null) return false;
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("^");
         for (Iterator i=substrings.iterator(); i.hasNext(); ) {
             Object o = i.next();
@@ -84,7 +84,7 @@ public class SubstringsMatchingRule {
     }
 
     public static String escape(String s) {
-        StringBuffer sb = new StringBuffer(s);
+        StringBuilder sb = new StringBuilder(s);
         int i = 0;
         while (i<sb.length()) {
             char c = sb.charAt(i);

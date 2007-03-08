@@ -22,9 +22,9 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DN;
 
 import java.util.*;
 

@@ -19,9 +19,9 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.RDNBuilder;
 
 import java.util.*;
 
@@ -186,6 +186,7 @@ public class InMemorySourceCache extends SourceCache {
         dataMap.put(pk, values);
         dataExpirationMap.put(pk, new Date(System.currentTimeMillis() + expiration * 60 * 1000));
 
+        RDNBuilder rb = new RDNBuilder();
         Collection uniqueKeys = new ArrayList();
         for (Iterator j=sourceConfig.getFieldConfigs().iterator(); j.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)j.next();
@@ -194,10 +195,10 @@ public class InMemorySourceCache extends SourceCache {
             String fieldName = fieldConfig.getName();
             Object value = values.getOne(fieldName);
 
-            RDNBuilder rb = new RDNBuilder();
+            rb.clear();
             rb.set(fieldName, value);
-            RDN uniqueKey = rb.toRdn();
 
+            RDN uniqueKey = rb.toRdn();
             dataMap.put(uniqueKey, values);
 
             uniqueKeys.add(uniqueKey);

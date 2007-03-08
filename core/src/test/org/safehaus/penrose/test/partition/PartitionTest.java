@@ -1,29 +1,12 @@
-/**
- * Copyright (c) 2000-2006, Identyx Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
 package org.safehaus.penrose.test.partition;
 
 import junit.framework.TestCase;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,19 +16,11 @@ import java.util.Iterator;
  */
 public class PartitionTest extends TestCase {
 
+    Logger log = Logger.getLogger(getClass());
+
     Partition partition;
 
     public PartitionTest() {
-        PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
-        ConsoleAppender appender = new ConsoleAppender(patternLayout);
-        BasicConfigurator.configure(appender);
-
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.OFF);
-
-        Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.DEBUG);
-        logger.setAdditivity(false);
     }
 
     public void setUp() throws Exception {
@@ -87,7 +62,7 @@ public class PartitionTest extends TestCase {
         assertFalse(entryMappings.isEmpty());
 
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertEquals(entryMapping.getDn(), "dc=Example,dc=com");
+        assertTrue(entryMapping.getDn().matches("dc=Example,dc=com"));
     }
 
     public void testFindingStaticEntry() throws Exception {
@@ -96,7 +71,7 @@ public class PartitionTest extends TestCase {
         assertFalse(entryMappings.isEmpty());
 
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertEquals(entryMapping.getDn(), "cn=Users,dc=Example,dc=com");
+        assertTrue(entryMapping.getDn().matches("cn=Users,dc=Example,dc=com"));
     }
 
     public void testFindingDynamicEntry() throws Exception {
@@ -105,11 +80,11 @@ public class PartitionTest extends TestCase {
         assertFalse(entryMappings.isEmpty());
 
         EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertEquals(entryMapping.getDn(), "cn=...,cn=Users,dc=Example,dc=com");
+        assertTrue(entryMapping.getDn().matches("cn=...,cn=Users,dc=Example,dc=com"));
     }
 
     public void print(Partition partition) throws Exception {
-        System.out.println("Entries:");
+        log.debug("Entries:");
         Collection c = partition.getRootEntryMappings();
         print(partition, c, 0);
     }
@@ -120,7 +95,7 @@ public class PartitionTest extends TestCase {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             for (int l=0; l<level; l++) System.out.print("  ");
-            System.out.println(" - "+entryMapping.getRdn());
+            log.debug(" - "+entryMapping.getRdn());
 
             Collection children = partition.getChildren(entryMapping);
             print(partition, children, level+1);

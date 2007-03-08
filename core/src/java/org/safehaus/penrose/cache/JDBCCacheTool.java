@@ -38,7 +38,7 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
@@ -63,7 +63,7 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
@@ -83,7 +83,7 @@ public class JDBCCacheTool {
 
         String t;
 
-        if (fieldConfig.isPK()) {
+        if (fieldConfig.isPrimaryKey()) {
             t = tableName;
         } else {
             t = tableName+"_"+fieldName;
@@ -122,11 +122,11 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
 
         Filter f = filter.getFilter();
         convert(tableName, sourceConfig, f, parameters, sb2, tables);
@@ -143,15 +143,15 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
@@ -176,15 +176,15 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {

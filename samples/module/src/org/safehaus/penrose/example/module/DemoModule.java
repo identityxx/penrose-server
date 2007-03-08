@@ -3,6 +3,8 @@ package org.safehaus.penrose.example.module;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.ResultsAdapter;
+import org.safehaus.penrose.session.ResultsEvent;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.ietf.ldap.LDAPException;
@@ -45,8 +47,8 @@ public class DemoModule extends Module {
         PenroseSearchResults results = event.getSearchResults();
 
         // register result listener
-        results.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
+        results.addListener(new ResultsAdapter() {
+            public void postAdd(ResultsEvent event) {
                 SearchResult sr = (SearchResult)event.getObject();
                 String dn = sr.getName();
                 System.out.println("Returning "+dn+".");

@@ -10,9 +10,7 @@ import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.SearchResult;
@@ -69,8 +67,8 @@ public class DemoListener implements SearchListener {
                 sc,
                 results);
 
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult)i.next();
+        while (results.hasNext()) {
+            SearchResult entry = (SearchResult)results.next();
             System.out.println(toString(entry));
         }
 
@@ -113,8 +111,8 @@ public class DemoListener implements SearchListener {
 
         PenroseSearchResults results = event.getSearchResults();
 
-        results.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
+        results.addListener(new ResultsAdapter() {
+            public void postAdd(ResultsEvent event) {
                 SearchResult entry = (SearchResult)event.getObject();
                 System.out.println("#### Returning "+entry.getName());
             }

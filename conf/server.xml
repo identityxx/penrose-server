@@ -62,13 +62,11 @@
 
   <source-cache/>
 
-  <engine>
-    <engine-name>DEFAULT</engine-name>
+  <engine name="DEFAULT">
     <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>
   </engine>
 
-  <engine>
-    <engine-name>PROXY</engine-name>
+  <engine name="PROXY">
     <engine-class>org.safehaus.penrose.engine.proxy.ProxyEngine</engine-class>
   </engine>
     

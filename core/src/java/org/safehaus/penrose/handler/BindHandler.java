@@ -23,11 +23,10 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -42,7 +41,7 @@ public class BindHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public BindHandler(Handler handler) {
         this.handler = handler;
@@ -50,42 +49,13 @@ public class BindHandler {
 
     public void bind(PenroseSession session, Partition partition, DN dn, String password) throws Exception {
 
-        int rc = LDAPException.SUCCESS;
-        String message = null;
+        log.warn("Bind as \""+dn+"\".");
+        log.debug(Formatter.displaySeparator(80));
+        log.debug(Formatter.displayLine("BIND:", 80));
+        log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
+        log.debug(Formatter.displayLine(" - Password : "+password, 80));
+        log.debug(Formatter.displaySeparator(80));
 
-        try {
-            log.warn("Bind as \""+dn+"\".");
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("BIND REQUEST:", 80));
-            log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
-            log.debug(Formatter.displayLine(" - Password : "+password, 80));
-            log.debug(Formatter.displaySeparator(80));
-
-            performBind(session, partition, dn, password);
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            message = e.getLDAPErrorMessage();
-            throw e;
-
-        } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(message, LDAPException.OPERATIONS_ERROR, message);
-
-        } finally {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("BIND RESPONSE:", 80));
-            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
-            log.debug(Formatter.displayLine(" - Message : "+message, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-    }
-
-    public void performBind(PenroseSession session, Partition partition, DN dn, String password) throws Exception {
-
-        PartitionManager partitionManager = handler.getPartitionManager();
         Collection entryMappings = partition.findEntryMappings(dn);
 
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
@@ -100,13 +70,7 @@ public class BindHandler {
             }
 
             // attempt direct bind to the source
-            try {
-                engine.bind(session, partition, entryMapping, dn, password);
-                return;
-
-            } catch (LDAPException e) {
-                // continue
-            }
+            engine.bind(session, partition, entryMapping, dn, password);
 
             // attempt to compare the userPassword attribute
 /*
@@ -122,8 +86,9 @@ public class BindHandler {
 
             Entry entry = (Entry)path.iterator().next();
 */
-            Entry entry = handler.getFindHandler().find(partition, dn);
-            
+/*
+            Entry entry = ((DefaultHandler)handler).getFindHandler().find(session, partition, entryMapping, dn);
+
             if (entry == null) {
                 log.debug("Entry "+dn+" not found");
                 continue;
@@ -143,10 +108,8 @@ public class BindHandler {
                 log.debug("userPassword: "+userPassword);
                 if (PasswordUtil.comparePassword(password, userPassword)) return;
             }
+*/
         }
-
-        int rc = LDAPException.INVALID_CREDENTIALS;
-        throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
     }
 
     public Handler getHandler() {

@@ -19,8 +19,8 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
@@ -167,8 +167,8 @@ public class EntryCache {
             search(partition, childMapping, dn, null, childDns);
             childDns.close();
 
-            for (Iterator j=childDns.iterator(); j.hasNext(); ) {
-                DN childDn = (DN)j.next();
+            while (childDns.hasNext()) {
+                DN childDn = (DN)childDns.next();
 
                 remove(partition, childMapping, childDn);
             }

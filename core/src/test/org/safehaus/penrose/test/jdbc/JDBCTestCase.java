@@ -1,12 +1,10 @@
 package org.safehaus.penrose.test.jdbc;
 
-import org.apache.log4j.*;
+import junit.framework.TestCase;
 import org.safehaus.penrose.Penrose;
 
 import java.sql.*;
 import java.util.*;
-
-import junit.framework.TestCase;
 
 /**
  * @author Endi S. Dewata
@@ -18,21 +16,7 @@ public class JDBCTestCase extends TestCase {
     public String user = "sa";
     public String password = "";
 
-    public Penrose penrose;
-
     public JDBCTestCase() throws Exception {
-        PatternLayout patternLayout = new PatternLayout("%-20C{1} [%4L] %m%n");
-
-        ConsoleAppender appender = new ConsoleAppender(patternLayout);
-        BasicConfigurator.configure(appender);
-
-        Logger rootLogger = Logger.getRootLogger();
-        rootLogger.setLevel(Level.OFF);
-
-        Logger logger = Logger.getLogger("org.safehaus.penrose");
-        logger.setLevel(Level.DEBUG);
-        logger.setAdditivity(false);
-
         Class.forName(driver);
     }
 
@@ -101,5 +85,42 @@ public class JDBCTestCase extends TestCase {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
+    }
+
+    public String getDriver() {
+        return driver;
+    }
+
+    public void setDriver(String driver) {
+        this.driver = driver;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    public void testDummy()
+    {
+    	assertEquals("a", "a");
     }
 }

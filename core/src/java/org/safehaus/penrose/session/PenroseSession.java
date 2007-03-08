@@ -20,8 +20,6 @@ package org.safehaus.penrose.session;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -29,6 +27,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class PenroseSession {
     private PartitionManager partitionManager;
     private HandlerManager handlerManager;
 
-    private String sessionId;
+    private Object sessionId;
 
     private DN bindDn;
     private String bindPassword;
@@ -149,7 +148,7 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             try {
                 Handler handler = handlerManager.getHandler(partition);
-                handler.add(this, dn, attributes);
+                handler.add(this, partition, dn, attributes);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
@@ -220,7 +219,7 @@ public class PenroseSession {
                     }
 
                     Handler handler = handlerManager.getHandler(partition);
-                    handler.bind(this, dn, password);
+                    handler.bind(this, partition, dn, password);
 
                     rootUser = false;
                 }
@@ -291,7 +290,7 @@ public class PenroseSession {
             boolean result = false;
             try {
                 Handler handler = handlerManager.getHandler(partition);
-                result = handler.compare(this, dn, attributeName, attributeValue);
+                result = handler.compare(this, partition, dn, attributeName, attributeValue);
 
             } catch (LDAPException e) {
                 rc = e.getResultCode();
@@ -358,7 +357,7 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             try {
                 Handler handler = handlerManager.getHandler(partition);
-                handler.delete(this, dn);
+                handler.delete(this, partition, dn);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
@@ -422,7 +421,7 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             try {
                 Handler handler = handlerManager.getHandler(partition);
-                handler.modify(this, dn, modifications);
+                handler.modify(this, partition, dn, modifications);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
@@ -486,7 +485,7 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             try {
                 Handler handler = handlerManager.getHandler(partition);
-                handler.modrdn(this, dn, newRdn, deleteOldRdn);
+                handler.modrdn(this, partition, dn, newRdn, deleteOldRdn);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
@@ -565,11 +564,10 @@ public class PenroseSession {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            //results.setEnableEventListeners(enableEventListeners);
+            results.setEnableEventListeners(enableEventListeners);
 
             SearchEvent beforeSearchEvent = null;
-            if (enableEventListeners)
-            {
+            if (enableEventListeners) {
 	 			beforeSearchEvent = new SearchEvent(this, SearchEvent.BEFORE_SEARCH, this, baseDn, filter, sc, results);
 	           	boolean b = eventManager.postEvent(baseDn, beforeSearchEvent);
 
@@ -579,29 +577,36 @@ public class PenroseSession {
 	            }
             }
 
-            final DN newBaseDn = beforeSearchEvent.getBaseDn();
-            final String newFilter = beforeSearchEvent.getFilter();
-            final PenroseSearchControls newSc = beforeSearchEvent.getSearchControls();
-
+            final DN newBaseDn = enableEventListeners ? beforeSearchEvent.getBaseDn() : baseDn;
+            final String newFilter = enableEventListeners ? beforeSearchEvent.getFilter() : filter;
+            final PenroseSearchControls newSc = enableEventListeners ? beforeSearchEvent.getSearchControls() : sc;
             final PenroseSession session = this;
 
-            results.addListener(new PipelineAdapter() {
-                public void pipelineClosed(PipelineEvent event) {
-                    try {
+            results.setSizeLimit(newSc.getSizeLimit());
+            Results resultsToUse = results;
+
+            if (enableEventListeners) {
+            	Pipeline sr = new Pipeline(results) {
+                   public void close() throws Exception {
+                        results.close();
+    
                         lastActivityDate.setTime(System.currentTimeMillis());
+    
+                        SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, baseDn, newFilter, newSc, results);
+    
+                        LDAPException exception = results.getException();
+                        if (exception != null) {
+                            afterSearchEvent.setReturnCode(exception.getResultCode());
+                        }
 
-                        SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, newBaseDn, newFilter, newSc, results);
-                        afterSearchEvent.setReturnCode(results.getReturnCode());
-                        eventManager.postEvent(newBaseDn, afterSearchEvent);
-
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
+                        eventManager.postEvent(baseDn, afterSearchEvent);
                     }
-                }
-            });
+                };
+	            resultsToUse = sr;
+            }
 
             Handler handler = handlerManager.getHandler(partition);
-            handler.search(this, newBaseDn, newFilter, newSc, results);
+            handler.search(this, partition, newBaseDn, newFilter, newSc, resultsToUse);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -667,11 +672,11 @@ public class PenroseSession {
         sessionManager.closeSession(this);
     }
 
-    public String getSessionId() {
+    public Object getSessionId() {
         return sessionId;
     }
 
-    public void setSessionId(String sessionId) {
+    public void setSessionId(Object sessionId) {
         this.sessionId = sessionId;
     }
 

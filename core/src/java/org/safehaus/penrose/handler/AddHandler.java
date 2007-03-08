@@ -18,24 +18,22 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.BasicAttributes;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -46,7 +44,7 @@ public class AddHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public AddHandler(Handler handler) {
         this.handler = handler;
@@ -55,116 +53,96 @@ public class AddHandler {
     public void add(
             PenroseSession session,
             Partition partition,
-            Entry parent,
+            EntryMapping entryMapping,
             DN dn,
             Attributes attributes)
     throws Exception {
 
-        int rc = LDAPException.SUCCESS;
-        String message = null;
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Adding entry "+dn);
 
-        try {
-            log.warn("Adding entry \""+dn+"\".");
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ADD REQUEST:", 80));
-            log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
+        Attributes normalizedAttributes = new BasicAttributes();
 
-            performAdd(session, partition, parent, dn, attributes);
+        for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+            Attribute attribute = (Attribute)ne.next();
 
-            // refreshing entry cache
+            String attributeName = attribute.getID();
+            String normalizedAttributeName = attributeName;
 
-            PenroseSession adminSession = handler.getPenrose().newSession();
-            adminSession.setBindDn(handler.getPenrose().getPenroseConfig().getRootDn());
+            AttributeType at = handler.getSchemaManager().getAttributeType(attributeName);
+            if (debug) log.debug("Attribute "+attributeName+": "+at);
+            if (at != null) {
+                normalizedAttributeName = at.getName();
+            }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            Attribute normalizedAttribute = new BasicAttribute(normalizedAttributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+            }
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_SUB);
-
-            adminSession.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results
-            );
-
-            while (results.hasNext()) results.next();
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            message = e.getLDAPErrorMessage();
-            throw e;
-
-        } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(message, LDAPException.OPERATIONS_ERROR, message);
-
-        } finally {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ADD RESPONSE:", 80));
-            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
-            log.debug(Formatter.displayLine(" - Message : "+message, 80));
-            log.debug(Formatter.displaySeparator(80));
+            normalizedAttributes.put(normalizedAttribute);
         }
-    }
 
-    public void performAdd(
-            PenroseSession session,
-            Partition partition,
-            Entry parent,
-            DN dn,
-            Attributes attributes)
-    throws Exception {
+        if (debug) {
+            log.debug("Original attributes:");
+            for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
 
-        log.debug("Adding entry under "+parent.getDn());
-
-        try {
-            EntryMapping parentMapping = parent.getEntryMapping();
-
-            Collection children = partition.getChildren(parentMapping);
-
-            for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)iterator.next();
-                if (!partition.isDynamic(entryMapping)) continue;
-
-                String engineName = entryMapping.getEngineName();
-                Engine engine = handler.getEngine(engineName);
-
-                if (engine == null) {
-                    int rc = LDAPException.OPERATIONS_ERROR;;
-                    String message = "Engine "+engineName+" not found";
-                    log.error(message);
-                    throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
                 }
-
-                engine.add(session, partition, parent, entryMapping, dn, attributes);
-                return;
             }
 
-            String engineName = parentMapping.getEngineName();
-            Engine engine = handler.getEngine(engineName);
+            log.debug("Normalized attributes:");
+            for (NamingEnumeration ne = normalizedAttributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
 
-            if (engine == null) {
-                int rc = LDAPException.OPERATIONS_ERROR;;
-                String message = "Engine "+engineName+" not found";
-                log.error(message);
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
+                }
             }
-
-            engine.add(session, partition, parent, parentMapping, dn, attributes);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
+
+        attributes = normalizedAttributes;
+
+        // -dlc- if the objectClass of the add Attributes does
+        // not match any of the objectClasses of the entryMapping, there
+        // is no sense trying to perform an add on this entryMapping
+        Attribute at = attributes.get("objectClass");
+
+        boolean childHasObjectClass = false;
+        for (Iterator it2 = entryMapping.getObjectClasses().iterator();
+            (!childHasObjectClass) && it2.hasNext();)
+        {
+            String cObjClass = (String) it2.next();
+            for (int i = 0; i < at.size(); i++)
+            {
+                String objectClass = (String) at.get(i);
+                if (childHasObjectClass = cObjClass.equalsIgnoreCase(objectClass))
+                {
+                    break;
+                }
+            }
+        }
+        if (!childHasObjectClass)
+        {
+            throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
+        }
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = handler.getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.add(session, partition, null, entryMapping, dn, attributes);
     }
 
     public Handler getHandler() {
@@ -175,7 +153,7 @@ public class AddHandler {
         this.handler = handler;
     }
 
-    public int addStaticEntry(EntryMapping parent, DN dn, Attributes attributes) throws Exception {
+    public int addStaticEntry(Partition partition, EntryMapping parent, DN dn, Attributes attributes) throws Exception {
         log.debug("Adding static entry "+dn);
 
         AttributeValues values = new AttributeValues();
@@ -198,11 +176,8 @@ public class AddHandler {
             newEntry = new EntryMapping(dn);
 
         } else {
-            newEntry = new EntryMapping(rdn.toString(), parent);
+            newEntry = new EntryMapping(rdn, parent);
         }
-
-        Partition partition = handler.getPartitionManager().getPartition(dn);
-        if (partition == null) return LDAPException.NO_SUCH_OBJECT;
 
         partition.addEntryMapping(newEntry);
 

@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.user;
 
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.entry.DN;
 
 /**
@@ -32,7 +31,8 @@ public class UserConfig implements Cloneable {
     }
 
     public UserConfig(String dn, String password) {
-        this(new DN(dn), password);
+        this.dn = new DN(dn);
+        this.password = password;
     }
 
     public UserConfig(DN dn, String password) {
@@ -89,7 +89,6 @@ public class UserConfig implements Cloneable {
     public Object clone() {
         UserConfig userConfig = new UserConfig();
         userConfig.copy(this);
-
         return userConfig;
     }
 }

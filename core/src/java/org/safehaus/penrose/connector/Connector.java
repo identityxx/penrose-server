@@ -17,8 +17,8 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
@@ -28,13 +28,9 @@ import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.pipeline.PipelineEvent;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -146,15 +142,9 @@ public class Connector {
 		return lock;
 	}
 
-    public void bind(
-            Partition partition,
-            SourceConfig sourceConfig,
-            EntryMapping entry,
-            RDN pk,
-            String password
-    ) throws Exception {
+    public void bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, RDN pk, String password) throws Exception {
 
-        log.debug("Binding as entry in "+sourceConfig.getName());
+        if (log.isDebugEnabled()) log.debug("Binding as entry in "+sourceConfig.getName());
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
         connection.bind(sourceConfig, pk, password);
@@ -164,231 +154,102 @@ public class Connector {
             Partition partition,
             SourceConfig sourceConfig,
             AttributeValues sourceValues
-    ) throws LDAPException {
+    ) throws Exception {
 
-        log.debug("----------------------------------------------------------------");
-        log.debug("Adding entry into "+sourceConfig.getName());
-        log.debug("Values: "+sourceValues);
+    	if (log.isDebugEnabled()) {
+    		log.debug("----------------------------------------------------------------");
+    		log.debug("Adding entry into "+sourceConfig.getName());
+    		log.debug("Values: "+sourceValues);
+    	}
 
-        try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-            // Add rows
-            for (Iterator i = pks.iterator(); i.hasNext();) {
-                RDN pk = (RDN) i.next();
-                AttributeValues newEntry = (AttributeValues)sourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                log.debug("Adding entry: "+pk);
-                log.debug(" - "+newEntry);
-
-                // Add row to source table in the source database/directory
-                Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                connection.add(sourceConfig, pk, newEntry);
-
-                AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
+        // Add rows
+        for (Iterator i = pks.iterator(); i.hasNext();) {
+            RDN pk = (RDN) i.next();
+            AttributeValues newEntry = (AttributeValues)sourceValues.clone();
+            newEntry.set("primaryKey", pk);
+            if (log.isDebugEnabled()) {
+            	log.debug("Adding entry: "+pk);
+            	log.debug(" - "+newEntry);
             }
-/*
-            sourceValues.clear();
-            Collection list = retrieve(sourceConfig, pks);
-            log.debug("Added rows:");
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)i.next();
-                sourceValues.add(sv);
-                log.debug(" - "+sv);
-            }
-*/
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
 
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            // Add row to source table in the source database/directory
+            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+            connection.add(sourceConfig, pk, newEntry);
         }
     }
 
-    public void delete(
-            Partition partition,
-            SourceConfig sourceConfig,
-            AttributeValues sourceValues
-    ) throws LDAPException {
+    public void delete(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
 
-        log.debug("Deleting entry in "+sourceConfig.getName());
+    	if (log.isDebugEnabled()) log.debug("Deleting entry in "+sourceConfig.getName()+": "+sourceValues);
 
-        try {
-            Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
+        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
 
-            // Remove rows
-            for (Iterator i = pks.iterator(); i.hasNext();) {
-                RDN pk = (RDN) i.next();
-                AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
-                oldEntry.set(pk);
-                log.debug("DELETE ("+pk+"): "+oldEntry);
+        // Remove rows
+        for (Iterator i = pks.iterator(); i.hasNext();) {
+            RDN pk = (RDN)i.next();
+            AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
+            oldEntry.set(pk);
+            if (log.isDebugEnabled()) log.debug("DELETE ("+pk+"): "+oldEntry);
 
-                // Delete row from source table in the source database/directory
-                Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                connection.delete(sourceConfig, pk);
-
-                // Delete row from source table in the cache
-                getSourceCacheManager().remove(partition, sourceConfig, pk);
-            }
-
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            // Delete row from source table in the source database/directory
+            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+            connection.delete(sourceConfig, pk);
         }
     }
 
     public void modify(
             Partition partition,
             SourceConfig sourceConfig,
+            RDN pk,
+            Collection modifications,
             AttributeValues oldSourceValues,
             AttributeValues newSourceValues
-    ) throws LDAPException {
+    ) throws Exception {
 
-        log.debug("Modifying entry in " + sourceConfig.getName());
+    	if (log.isDebugEnabled()) log.debug("Modifying entry in " + sourceConfig.getName());
 
-        try {
-            Collection oldPKs = TransformEngine.getPrimaryKeys(sourceConfig, oldSourceValues);
-            Collection newPKs = TransformEngine.getPrimaryKeys(sourceConfig, newSourceValues);
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-            log.debug("Old PKs: " + oldPKs);
-            log.debug("New PKs: " + newPKs);
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            ModificationItem mi = (ModificationItem)i.next();
+            int op = mi.getModificationOp();
+            Attribute attribute = mi.getAttribute();
+            String name = attribute.getID();
 
-            Set removeRows = new HashSet(oldPKs);
-            removeRows.removeAll(newPKs);
-            log.debug("PKs to remove: " + removeRows);
+            if (!pk.contains(name)) continue;
 
-            Set addRows = new HashSet(newPKs);
-            addRows.removeAll(oldPKs);
-            log.debug("PKs to add: " + addRows);
+            AttributeValues av = new AttributeValues();
+            av.add(pk);
 
-            Set replaceRows = new HashSet(oldPKs);
-            replaceRows.retainAll(newPKs);
-            log.debug("PKs to replace: " + replaceRows);
+            switch (op) {
+                case DirContext.ADD_ATTRIBUTE:
+                    connection.add(sourceConfig, pk, av);
 
-            Collection pks = new ArrayList();
+                case DirContext.REPLACE_ATTRIBUTE:
+                    connection.add(sourceConfig, pk, av);
 
-            // Remove rows
-            for (Iterator i = removeRows.iterator(); i.hasNext();) {
-                RDN pk = (RDN) i.next();
-                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set("primaryKey", pk);
-                //log.debug("DELETE ROW: " + oldEntry);
-
-                // Delete row from source table in the source database/directory
-                Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                connection.delete(sourceConfig, pk);
-
-                // Delete row from source table in the cache
-                getSourceCacheManager().remove(partition, sourceConfig, pk);
+                case DirContext.REMOVE_ATTRIBUTE:
+                    connection.delete(sourceConfig, pk);
             }
-
-            // Add rows
-            for (Iterator i = addRows.iterator(); i.hasNext();) {
-                RDN pk = (RDN) i.next();
-                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                //log.debug("ADDING ROW: " + newEntry);
-
-                // Add row to source table in the source database/directory
-                Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                connection.add(sourceConfig, pk, newEntry);
-
-                Filter filter = FilterTool.createFilter(pk);
-
-                AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
-
-                pks.add(pk);
-            }
-
-            // Replace rows
-            for (Iterator i = replaceRows.iterator(); i.hasNext();) {
-                RDN pk = (RDN) i.next();
-                AttributeValues oldEntry = (AttributeValues)oldSourceValues.clone();
-                oldEntry.set("primaryKey", pk);
-                AttributeValues newEntry = (AttributeValues)newSourceValues.clone();
-                newEntry.set("primaryKey", pk);
-                //log.debug("REPLACE ROW: " + oldEntry+" with "+newEntry);
-
-                // Modify row from source table in the source database/directory
-                Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-                Collection modifications = createModifications(oldEntry, newEntry);
-                connection.modify(sourceConfig, pk, modifications);
-
-                // Modify row from source table in the cache
-                Filter filter = FilterTool.createFilter(pk);
-
-                AttributeValues sv = connection.get(sourceConfig, pk);
-                getSourceCacheManager().remove(partition, sourceConfig, pk);
-                getSourceCacheManager().put(partition, sourceConfig, pk, sv);
-
-                pks.add(pk);
-            }
-
-            newSourceValues.clear();
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, pks, sc, list);
-            list.close();
-
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues sv = (AttributeValues)i.next();
-                newSourceValues.add(sv);
-            }
-
-            //getQueryCache(connectionConfig, sourceConfig).invalidate();
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
+
+        connection.modify(sourceConfig, pk, modifications);
     }
 
-    public int modrdn(
+    public void modrdn(
             Partition partition,
             SourceConfig sourceConfig,
             RDN oldPk,
             RDN newPk,
-            AttributeValues sourceValues
+            boolean deleteOldRdn
     ) throws Exception {
 
-        log.debug("Renaming entry in " + sourceConfig.getName());
+    	if (log.isDebugEnabled()) log.debug("Renaming entry in " + sourceConfig.getName());
 
-        MRSWLock lock = getLock(sourceConfig);
-        lock.getWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-
-        try {
-            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            connection.add(sourceConfig, newPk, sourceValues);
-            connection.delete(sourceConfig, oldPk);
-
-            getSourceCacheManager().put(partition, sourceConfig, newPk, sourceValues);
-            getSourceCacheManager().remove(partition, sourceConfig, oldPk);
-
-        } finally {
-            lock.releaseWriteLock(ConnectorConfig.DEFAULT_TIMEOUT);
-        }
-
-        return LDAPException.SUCCESS;
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+        connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
     }
 
     public Collection createModifications(AttributeValues oldValues, AttributeValues newValues) throws Exception {
@@ -456,169 +317,60 @@ public class Connector {
 
     /**
      * Search the data sources.
+     * @param partition
+     * @param entryMapping
+     * @param sourceMapping
+     * @param sourceConfig
+     * @param primaryKeys
+     * @param filter
+     * @param searchControls
+     * @param results Collection of source values. @throws Exception
      */
     public void search(
             final Partition partition,
+            final EntryMapping entryMapping,
+            final SourceMapping sourceMapping,
             final SourceConfig sourceConfig,
-            Collection primaryKeys,
+            final Collection primaryKeys,
             final Filter filter,
-            PenroseSearchControls searchControls,
-            final PenroseSearchResults results)
-            throws Exception {
-
-        String method = sourceConfig.getParameter(SourceConfig.LOADING_METHOD);
-        if (SourceConfig.SEARCH_AND_LOAD.equals(method)) { // search for PKs first then load full record
-
-            log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            searchAndLoad(partition, sourceConfig, filter, searchControls, results);
-
-        } else { // load full record immediately
-
-            log.debug("Loading source "+sourceConfig.getName()+" with filter "+filter);
-            fullLoad(partition, sourceConfig, primaryKeys, filter, searchControls, results);
-        }
-    }
-
-    /**
-     * Check query cache, peroform search, store results in query cache.
-     */
-    public void searchAndLoad(
-            Partition partition,
-            SourceConfig sourceConfig,
-            Filter filter,
-            PenroseSearchControls searchControls,
-            PenroseSearchResults results)
-            throws Exception {
-
-        log.debug("Checking query cache for "+filter);
-        Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
-
-        log.debug("Cached results: "+pks);
-
-        if (pks == null) {
-            log.debug("Searching source "+sourceConfig.getName()+" with filter "+filter);
-            PenroseSearchResults sr = new PenroseSearchResults();
-            performSearch(partition, sourceConfig, filter, searchControls, sr);
-            pks = sr.getAll();
-
-            int rc = sr.getReturnCode();
-            if (rc != 0) {
-                log.debug("RC: "+rc);
-                results.setReturnCode(rc);
-            }
-
-            log.debug("Storing query cache for: "+pks);
-            getSourceCacheManager().put(partition, sourceConfig, filter, pks);
-        }
-
-        log.debug("Loading source "+sourceConfig.getName()+" with pks "+pks);
-        load(partition, sourceConfig, pks, searchControls, results);
-    }
-
-    /**
-     * Load then store in data cache.
-     */
-    public void fullLoad(
-            Partition partition,
-            SourceConfig sourceConfig,
-            Collection primaryKeys,
-            Filter filter,
-            PenroseSearchControls searchControls,
-            PenroseSearchResults results
+            final PenroseSearchControls searchControls,
+            final Results results
     ) throws Exception {
 
-        Collection pks = getSourceCacheManager().search(partition, sourceConfig, filter);
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-        if (pks != null) {
-            load(partition, sourceConfig, pks, searchControls, results);
+        long sizeLimit = searchControls.getSizeLimit();
+        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
+        long maxSizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        } else {
-            performLoad(partition, sourceConfig, filter, searchControls, results);
-            //store(sourceConfig, values);
-        }
-    }
+        int timeLimit = searchControls.getTimeLimit();
+        s = sourceConfig.getParameter(SourceConfig.TIME_LIMIT);
+        int maxTimeLimit = s == null ? SourceConfig.DEFAULT_TIME_LIMIT : Integer.parseInt(s);
 
-    /**
-     * Check data cache then load.
-     */
-    public void load(
-            final Partition partition,
-            final SourceConfig sourceConfig,
-            final Collection pks,
-            PenroseSearchControls searchControls,
-            final PenroseSearchResults results
-    ) throws Exception {
+        PenroseSearchControls sc = new PenroseSearchControls(searchControls);
+        sc.setSizeLimit((sizeLimit > 0 && maxSizeLimit > 0) ? Math.min(sizeLimit, maxSizeLimit) : Math.max(sizeLimit, maxSizeLimit));
+       	sc.setTimeLimit((timeLimit > 0 && maxTimeLimit > 0) ? Math.min(timeLimit, maxTimeLimit) : Math.max(timeLimit, maxTimeLimit));
+        sc.setScope(searchControls.getScope());
 
-        if (pks == null || pks.isEmpty()) {
-            results.close();
-            return;
-        }
-
-        try {
-            log.debug("Checking data cache for "+pks);
-            Collection missingPks = new ArrayList();
-            Map loadedRows = getSourceCacheManager().load(partition, sourceConfig, pks, missingPks);
-
-            log.debug("Cached values: "+loadedRows.keySet());
-            results.addAll(loadedRows.values());
-
-            log.debug("Loading missing keys: "+missingPks);
-            PenroseSearchResults list = new PenroseSearchResults();
-            retrieve(partition, sourceConfig, missingPks, searchControls, list);
-            list.close();
-
-            results.addAll(list.getAll());
-
-            int rc = list.getReturnCode();
-            log.debug("RC: "+rc);
-            results.setReturnCode(rc);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-        }
-
-        results.close();
-    }
-
-    /**
-     * Load then store in data cache.
-     */
-    public void retrieve(
-            Partition partition,
-            SourceConfig sourceConfig,
-            Collection keys,
-            PenroseSearchControls searchControls,
-            PenroseSearchResults results
-    ) throws Exception {
-
-        if (keys.isEmpty()) return;
-
-        Filter filter = FilterTool.createFilter(keys);
-
-        performLoad(partition, sourceConfig, filter, searchControls, results);
-
-        //Collection values = new ArrayList();
-        //values.addAll(results.getAll());
-
-        //store(sourceConfig, values);
+        connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, filter, sc, results);
     }
 
     public RDN store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
         RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         //RDN pk = sourceValues.getRdn();
+        RDN npk = normalize(pk);
 
-        log.debug("Storing source cache: "+pk);
+        if (log.isDebugEnabled()) log.debug("Storing source cache: "+pk);
         getSourceCacheManager().put(partition, sourceConfig, pk, sourceValues);
 
-        Filter f = FilterTool.createFilter(pk);
+        Filter f = FilterTool.createFilter(npk);
         Collection c = new TreeSet();
-        c.add(pk);
+        c.add(npk);
 
-        log.debug("Storing filter cache "+f+": "+c);
+        if (log.isDebugEnabled()) log.debug("Storing filter cache "+f+": "+c);
         getSourceCacheManager().put(partition, sourceConfig, f, c);
 
-        return pk;
+        return npk;
     }
 
     public void store(Partition partition, SourceConfig sourceConfig, Collection values) throws Exception {
@@ -633,126 +385,30 @@ public class Connector {
             RDN npk = store(partition, sourceConfig, sourceValues);
             pks.add(npk);
 
+            RDNBuilder rb = new RDNBuilder();
             for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
                 String fieldName = fieldConfig.getName();
 
                 Object value = sourceValues.getOne(fieldName);
 
-                RDNBuilder rb = new RDNBuilder();
+                rb.clear();
                 rb.set(fieldName, value);
-                RDN uniqueKey = rb.toRdn();
 
-                uniqueKeys.add(uniqueKey);
+                uniqueKeys.add(rb.toRdn());
             }
         }
 
         if (!uniqueKeys.isEmpty()) {
             Filter f = FilterTool.createFilter(uniqueKeys);
-            log.debug("Storing query cache "+f+": "+pks);
+            if (log.isDebugEnabled()) log.debug("Storing query cache "+f+": "+pks);
             getSourceCacheManager().put(partition, sourceConfig, f, pks);
         }
 
         if (pks.size() <= 10) {
             Filter filter = FilterTool.createFilter(pks);
-            log.debug("Storing query cache "+filter+": "+pks);
+            if (log.isDebugEnabled()) log.debug("Storing query cache "+filter+": "+pks);
             getSourceCacheManager().put(partition, sourceConfig, filter, pks);
-        }
-    }
-
-    /**
-     * Perform the search operation.
-     */
-    public void performSearch(
-            Partition partition,
-            SourceConfig sourceConfig,
-            Filter filter,
-            PenroseSearchControls searchControls,
-            PenroseSearchResults results
-    ) throws Exception {
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        PenroseSearchResults sr = new PenroseSearchResults();
-        try {
-
-            long sizeLimit = searchControls.getSizeLimit();
-            if (sizeLimit == 0) {
-                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-                sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-            }
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setSizeLimit(sizeLimit);
-            sc.setAttributes(new String[] { "dn" });
-
-            connection.search(sourceConfig, filter, sc, sr);
-
-            log.debug("Search results:");
-            for (Iterator i=sr.iterator(); i.hasNext();) {
-                RDN pk = (RDN)i.next();
-                log.debug(" - "+pk);
-                results.add(pk);
-            }
-
-            results.setReturnCode(sr.getReturnCode());
-            
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            
-        } finally {
-            results.close();
-        }
-    }
-
-    /**
-     * Perform the load operation.
-     */
-    public void performLoad(
-            final Partition partition,
-            final SourceConfig sourceConfig,
-            final Filter filter,
-            PenroseSearchControls searchControls,
-            final PenroseSearchResults results
-    ) throws Exception {
-
-        final PenroseSearchResults sr = new PenroseSearchResults();
-
-        sr.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                try {
-                    AttributeValues sourceValues = (AttributeValues)event.getObject();
-                    store(partition, sourceConfig, sourceValues);
-                    results.add(sourceValues);
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-                }
-            }
-            public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(sr.getReturnCode());
-                results.close();
-            }
-        });
-
-        try {
-            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-            long sizeLimit = searchControls.getSizeLimit();
-            if (sizeLimit == 0) {
-                String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-                sizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-            }
-
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setSizeLimit(sizeLimit);
-
-            connection.search(sourceConfig, filter, sc, sr);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            sr.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
     }
 

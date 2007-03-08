@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.acl;
 
+import org.safehaus.penrose.entry.DN;
+
 /**
  * @author Endi S. Dewata
  */
@@ -46,7 +48,7 @@ public class ACI implements Cloneable {
 
 
     private String subject     = SUBJECT_ANYBODY;
-    private String dn;
+    private DN dn;
     private String target      = TARGET_OBJECT;
     private String attributes;
     private String scope       = SCOPE_SUBTREE;
@@ -108,11 +110,15 @@ public class ACI implements Cloneable {
         this.attributes = attributes;
     }
 
-    public String getDn() {
+    public DN getDn() {
         return dn;
     }
 
     public void setDn(String dn) {
+        this.dn = new DN(dn);
+    }
+
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 

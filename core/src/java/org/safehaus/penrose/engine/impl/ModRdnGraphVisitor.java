@@ -28,6 +28,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -138,8 +139,19 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
 
+        RDN pk = new RDN();
+        Collection modifications = new ArrayList();
+
         try {
-            connector.modify(partition, sourceConfig, oldValues, newValues);
+            connector.modify(
+                    partition,
+                    sourceConfig,
+                    pk,
+                    modifications,
+                    oldValues,
+                    newValues
+            );
+
         } catch (LDAPException e) {
             returnCode = e.getResultCode();
             return;

@@ -21,15 +21,15 @@ import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -38,66 +38,23 @@ public class DeleteHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Handler handler;
+    public Handler handler;
 
     public DeleteHandler(Handler handler) {
         this.handler = handler;
     }
 
-    public void delete(PenroseSession session, Partition partition, Entry entry) throws Exception {
-
-        int rc = LDAPException.SUCCESS;
-        String message = null;
-
-        try {
-            DN dn = entry.getDn();
-            log.warn("Deleting entry \""+dn+"\".");
-
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("DELETE REQUEST:", 80));
-            log.debug(Formatter.displayLine(" - DN       : "+dn, 80));
-            log.debug(Formatter.displaySeparator(80));
-
-            performDelete(session, partition, entry);
-
-            EntryMapping entryMapping = entry.getEntryMapping();
-            //handler.getEntryCache().remove(partition, entryMapping, entry.getDn());
-
-        } catch (LDAPException e) {
-            rc = e.getResultCode();
-            message = e.getLDAPErrorMessage();
-            throw e;
-
-        } catch (Exception e) {
-            rc = ExceptionUtil.getReturnCode(e);
-            message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
-
-        } finally {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("DELETE RESPONSE:", 80));
-            log.debug(Formatter.displayLine(" - RC      : "+rc, 80));
-            log.debug(Formatter.displayLine(" - Message : "+message, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-    }
-
-    public void performDelete(PenroseSession session, Partition partition, Entry entry) throws Exception {
-
-        EntryMapping entryMapping = entry.getEntryMapping();
+    public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
 
         String engineName = entryMapping.getEngineName();
         Engine engine = handler.getEngine(engineName);
 
         if (engine == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;;
-            String message = "Engine "+engineName+" not found";
-            log.error(message);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
-        engine.delete(session, partition, entry);
+        engine.delete(session, partition, null, entryMapping, dn);
     }
 
     public int deleteStaticEntry(Partition partition, EntryMapping entryMapping) throws Exception {
@@ -118,6 +75,10 @@ public class DeleteHandler {
     }
 
     public void getHandler(Handler handler) {
+        this.handler = handler;
+    }
+
+    public void setHandler(Handler handler) {
         this.handler = handler;
     }
 }

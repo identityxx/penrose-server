@@ -30,10 +30,12 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.DNBuilder;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -142,11 +144,13 @@ public class LDAPClient {
         if (connection != null) connection.disconnect();
     }
 
-    public void bind(String dn, String password) throws Exception {
+    public void bind(String bindDn, String password) throws Exception {
 
-        dn = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(bindDn);
+        db.append(suffix);
 
-        parameters.put(Context.SECURITY_PRINCIPAL, dn);
+        parameters.put(Context.SECURITY_PRINCIPAL, db.toString());
         parameters.put(Context.SECURITY_CREDENTIALS, password);
 
         LdapContext context = null;
@@ -159,9 +163,12 @@ public class LDAPClient {
         }
     }
 
-    public int add(String dn, Attributes attributes) throws Exception {
+    public void add(String targetDn, Attributes attributes) throws Exception {
 
-        dn = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(targetDn);
+        db.append(suffix);
+        DN dn = db.toDn();
 
         log.debug("Adding "+dn);
 
@@ -195,21 +202,19 @@ public class LDAPClient {
 
         try {
             context = getContext();
-            context.createSubcontext(dn, attrs);
+            context.createSubcontext(dn.toString(), attrs);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int delete(String dn) throws Exception {
+    public void delete(String targetDn) throws Exception {
 
-        dn = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(targetDn);
+        db.append(suffix);
+        DN dn = db.toDn();
 
         log.debug("Deleting "+dn);
 
@@ -217,21 +222,19 @@ public class LDAPClient {
 
         try {
             context = getContext();
-            context.destroySubcontext(dn);
+            context.destroySubcontext(dn.toString());
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modify(String dn, Collection modifications) throws Exception {
+    public void modify(String targetDn, Collection modifications) throws Exception {
 
-        dn = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(targetDn);
+        db.append(suffix);
+        DN dn = db.toDn();
 
         log.debug("Modifying "+dn);
 
@@ -281,36 +284,29 @@ public class LDAPClient {
 
         try {
             context = getContext();
-            context.modifyAttributes(dn, mods);
+            context.modifyAttributes(dn.toString(), mods);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
-    public int modrdn(String dn, String newRdn) throws Exception {
+    public void modrdn(String targetDn, String newRdn) throws Exception {
 
-        dn = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(targetDn);
+        db.append(suffix);
+        DN dn = db.toDn();
 
         LdapContext context = null;
 
         try {
             context = getContext();
-            context.rename(dn, newRdn);
+            context.rename(dn.toString(), newRdn);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) {}
         }
-
-        return LDAPException.SUCCESS;
     }
 
     public boolean isBinaryAttribute(String name) throws Exception {
@@ -697,10 +693,14 @@ public class LDAPClient {
             String baseDn,
             String filter,
             PenroseSearchControls searchControls,
-            PenroseSearchResults results
+            Results results
             ) throws Exception {
 
-        String ldapBase = EntryUtil.append(baseDn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(baseDn);
+        db.append(suffix);
+        DN ldapBase = db.toDn();
+
         log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+searchControls.getScope()+" attrs="+searchControls.getAttributes()+":");
 
         String attributes[] = (String[])searchControls.getAttributes().toArray(new String[searchControls.getAttributes().size()]);
@@ -735,7 +735,7 @@ public class LDAPClient {
                         attrs.put("ref", referral);
                         attrs.put("objectClass", "referral");
 
-                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
+                        SearchResult sr = new ConnectorSearchResult(url.getDN(), null, attrs);
                         results.add(sr);
                         //results.addReferral(referral);
                     }
@@ -748,21 +748,22 @@ public class LDAPClient {
 
             while (moreReferrals) {
                 try {
-                    ne = context.search(ldapBase, filter, ctls);
+                    ne = context.search(ldapBase.toString(), filter, ctls);
 
                     while (ne.hasMore()) {
                         SearchResult sr = (SearchResult)ne.next();
-                        String dn = sr.getName();
-                        log.debug("SearchResult: ["+dn+"]");
+                        String s = sr.getName();
+                        log.debug("SearchResult: ["+s+"]");
 
-                        if (dn.startsWith("ldap://")) {
-                            LDAPUrl url = new LDAPUrl(dn);
-                            dn = LDAPUrl.decode(url.getDN());
+                        if (s.startsWith("ldap://")) {
+                            LDAPUrl url = new LDAPUrl(s);
+                            db.set(LDAPUrl.decode(url.getDN()));
                         } else {
-                            dn = EntryUtil.append(dn, baseDn);
+                            db.set(s);
+                            db.append(baseDn);
                         }
 
-                        sr.setName(dn);
+                        sr.setName(db.toString());
 
                         results.add(sr);
                     }
@@ -801,7 +802,10 @@ public class LDAPClient {
 
     public SearchResult getEntry(String dn) throws Exception {
 
-        String searchBase = EntryUtil.append(dn, suffix);
+        DNBuilder db = new DNBuilder();
+        db.set(dn);
+        db.append(suffix);
+        DN searchBase = db.toDn();
 
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
@@ -814,7 +818,7 @@ public class LDAPClient {
                 
             } else {
                 context = getContext();
-                NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+                NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
                 if (!entries.hasMore()) return null;
 
                 SearchResult sr = (SearchResult)entries.next();
@@ -838,7 +842,10 @@ public class LDAPClient {
         LdapContext context = null;
 
         try {
-            String searchBase = EntryUtil.append(baseDn, suffix);
+            DNBuilder db = new DNBuilder();
+            db.set(baseDn);
+            db.append(suffix);
+            DN searchBase = db.toDn();
 
             if ("".equals(searchBase)) {
                 SearchResult rootDse = getRootDSE();
@@ -850,7 +857,7 @@ public class LDAPClient {
 
                 context = getContext();
                 NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-                SearchResult rootDse = (SearchResult)entries.next();
+                SearchResult rootDse = (ConnectorSearchResult)entries.next();
 */
                 Attributes attributes = rootDse.getAttributes();
                 Attribute attribute = attributes.get("namingContexts");
@@ -872,14 +879,16 @@ public class LDAPClient {
                 ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
                 context = getContext();
-                NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
+                NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
                 try {
                     while (entries.hasMore()) {
                         SearchResult sr = (SearchResult)entries.next();
-                        String rdn = sr.getName();
-                        String dn = EntryUtil.append(rdn, baseDn);
+                        db.set(sr.getName());
+                        db.append(baseDn);
+                        DN dn = db.toDn();
+
                         log.debug(" - "+dn);
-                        sr.setName(dn);
+                        sr.setName(dn.toString());
                         results.add(sr);
                     }
                 } catch (Exception e) {

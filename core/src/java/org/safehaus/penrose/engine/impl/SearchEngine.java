@@ -31,6 +31,7 @@ import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EntryData;
+import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
@@ -46,9 +47,9 @@ public class SearchEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
+    private EngineImpl engine;
 
-    public SearchEngine(Engine engine) {
+    public SearchEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
@@ -95,7 +96,6 @@ public class SearchEngine {
 
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
-                results.setReturnCode(LDAPException.OPERATIONS_ERROR);
             }
             return;
         }
@@ -105,7 +105,6 @@ public class SearchEngine {
 
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
         }
     }
 
@@ -148,7 +147,6 @@ public class SearchEngine {
 
         PenroseSearchResults values = new PenroseSearchResults();
         searchSources(partition, parentSourceValues, entryMapping, filter, values);
-        values.close();
 
         Map sourceValues = new HashMap();
         Map rows = new HashMap();
@@ -157,8 +155,8 @@ public class SearchEngine {
         Map childDns = new HashMap();
 
         //log.debug("Search results for "+entryMapping.getDn()+":");
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
+        while (values.hasNext()) {
+            AttributeValues sv = (AttributeValues)values.next();
             //log.debug("==> "+sv);
 
             Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
@@ -234,7 +232,6 @@ public class SearchEngine {
 
         if (rc != LDAPException.SUCCESS) {
             log.debug("RC: "+rc);
-            results.setReturnCode(rc);
         }
     }
 
@@ -276,11 +273,9 @@ public class SearchEngine {
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
         PenroseSearchControls sc = new PenroseSearchControls();
-        final PenroseSearchResults sr = new PenroseSearchResults();
-
-        sr.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                AttributeValues av = (AttributeValues)event.getObject();
+        final PenroseSearchResults sr = new PenroseSearchResults() {
+            public void add(Object object) {
+                AttributeValues av = (AttributeValues)object;
 
                 try {
                     AttributeValues sv = new AttributeValues();
@@ -304,14 +299,22 @@ public class SearchEngine {
                 }
             }
 
-            public void pipelineClosed(PipelineEvent event) {
-                results.setReturnCode(sr.getReturnCode());
+            public void close() throws Exception {
                 results.close();
             }
-        });
+        };
 
         Connector connector = engine.getConnector(sourceConfig);
-        connector.search(partition, sourceConfig, null, newFilter, sc, sr);
+        connector.search(
+                partition,
+                entryMapping,
+                sourceMapping,
+                sourceConfig,
+                null,
+                newFilter,
+                sc,
+                sr
+        );
     }
 
     public void searchSources(
@@ -322,13 +325,7 @@ public class SearchEngine {
             final PenroseSearchResults results)
             throws Exception {
 
-        try {
-            searchSourcesInBackground(partition, sourceValues, entryMapping, filter, results);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-        }
+        searchSourcesInBackground(partition, sourceValues, entryMapping, filter, results);
     }
 
     public void searchSourcesInBackground(
@@ -396,7 +393,6 @@ public class SearchEngine {
         );
 
         results.addAll(parentResults);
-        results.setReturnCode(rc);
 
         if (rc != LDAPException.SUCCESS) {
             log.debug("RC: "+rc);
@@ -539,7 +535,6 @@ public class SearchEngine {
 */
         PenroseSearchResults results = new PenroseSearchResults();
         results.addAll(list);
-        results.setReturnCode(rc);
         results.close();
 
         return results;
@@ -553,7 +548,10 @@ public class SearchEngine {
             Collection startingSources) throws Exception {
 
         Collection results = new ArrayList();
-        results.addAll(localResults.getAll());
+
+        while (localResults.hasNext()) {
+            results.add(localResults.next());
+        }
 
         AttributeValues sourceValues = new AttributeValues();
         for (Iterator i=results.iterator(); i.hasNext(); ) {
@@ -683,7 +681,7 @@ public class SearchEngine {
         return engine;
     }
 
-    public void setEngine(Engine engine) {
+    public void setEngine(EngineImpl engine) {
         this.engine = engine;
     }
 }

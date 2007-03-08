@@ -3,7 +3,6 @@ package org.safehaus.penrose.test.mapping.join;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.test.mapping.join.JoinTestCase;
 
 import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attributes;

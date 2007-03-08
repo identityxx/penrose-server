@@ -19,18 +19,14 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DN;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.entry.*;
 
 import javax.naming.NamingException;
 import java.util.*;
@@ -120,7 +116,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
             ps = con.prepareStatement(sql);
-            ps.setObject(1, dn);
+            ps.setObject(1, dn.getNormalizedDn());
 
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -162,7 +158,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
 
             ps = con.prepareStatement(sql);
-            ps.setObject(1, dn);
+            ps.setObject(1, dn.getNormalizedDn());
 
             ps.execute();
 
@@ -179,14 +175,14 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_queries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("select id from ");
         sb.append(tableName);
         sb.append(" where baseDn=? and filter=?");
 
-        parameters.add(baseDn);
+        parameters.add(baseDn.toString());
         parameters.add(filter);
 
         String sql = sb.toString();
@@ -250,7 +246,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_query_results";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("select entryId from ");
@@ -383,14 +379,14 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_queries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("insert into ");
         sb.append(tableName);
         sb.append(" values (null, ?, ?, ?)");
 
-        parameters.add(baseDn);
+        parameters.add(baseDn.toString());
         parameters.add(filter);
         parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
 
@@ -444,15 +440,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("select id from ");
         sb.append(tableName);
         sb.append(" where rdn=? and parentDn=?");
 
-        RDN rdn = dn.getRdn();
         DN parentDn = dn.getParentDn();
+        RDN rdn = dn.getRdn();
 
         parameters.add(rdn.toString());
         parameters.add(parentDn.toString());
@@ -518,18 +514,18 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("insert into ");
         sb.append(tableName);
         sb.append(" values (null, ?, ?, ?)");
 
-        RDN rdn = dn.getRdn();
         DN parentDn = dn.getParentDn();
+        RDN rdn = dn.getRdn();
 
         parameters.add(rdn.toString());
-        parameters.add(parentDn);
+        parameters.add(parentDn.toString());
         parameters.add(new Timestamp(System.currentTimeMillis() + expiration * 60 * 1000));
 
         String sql = sb.toString();
@@ -585,7 +581,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("delete from ");
@@ -648,7 +644,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             String tableName = partition.getName()+"_"+mappingId+"_entries";
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("create table ");
             sb.append(tableName);
             sb.append(" (id integer auto_increment, rdn varchar(255), parentDn varchar(255), expiration DATETIME, primary key (id))");
@@ -681,7 +677,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             String tableName = partition.getName()+"_"+mappingId+"_queries";
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("create table ");
             sb.append(tableName);
             sb.append(" (id integer auto_increment, baseDn varchar(255), filter varchar(255), expiration DATETIME, primary key (id))");
@@ -714,7 +710,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             String tableName = partition.getName()+"_"+mappingId+"_query_results";
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("create table ");
             sb.append(tableName);
             sb.append(" (queryId integer, entryId integer, primary key (queryId, entryId))");
@@ -747,7 +743,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("create table ");
         sb.append(tableName);
         sb.append(" (id integer, value ");
@@ -785,7 +781,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public String getColumnTypeDeclaration(AttributeMapping attributeMapping) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         sb.append(attributeMapping.getType());
         if ("VARCHAR".equals(attributeMapping.getType()) && attributeMapping.getLength() > 0) {
@@ -798,7 +794,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     }
 
     public String getColumnTypeDeclaration(FieldConfig fieldConfig) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(fieldConfig.getType());
 
         if ("VARCHAR".equals(fieldConfig.getType()) && fieldConfig.getLength() > 0) {
@@ -814,7 +810,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("create table ");
         sb.append(tableName);
         sb.append(" (id integer, value ");
@@ -853,7 +849,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void drop() throws Exception {
         if (!getPartition().isDynamic(getEntryMapping())) {
-            remove(getEntryMapping().getDn());
+            DN dn = getEntryMapping().getDn();
+            remove(dn);
         }
 
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
@@ -1112,7 +1109,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return entry;
     }
 
-    public boolean convert(Filter filter, Map tables, Collection parameters, StringBuffer sb) throws Exception {
+    public boolean convert(Filter filter, Map tables, Collection parameters, StringBuilder sb) throws Exception {
         if (filter instanceof NotFilter) {
             return convert((NotFilter) filter, tables, parameters, sb);
 
@@ -1133,7 +1130,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             SimpleFilter filter,
             Map tables,
             Collection parameters,
-            StringBuffer sb)
+            StringBuilder sb)
             throws Exception {
 
         String name = filter.getAttribute();
@@ -1169,10 +1166,10 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             NotFilter filter,
             Map tables,
             Collection parameters,
-            StringBuffer sb)
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
 
         Filter f = filter.getFilter();
         boolean b = convert(f, tables, parameters, sb2);
@@ -1189,14 +1186,14 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             AndFilter filter,
             Map tables,
             Collection parameters,
-            StringBuffer sb)
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             boolean b = convert(f, tables, parameters, sb3);
             if (!b) return false;
 
@@ -1220,14 +1217,14 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             OrFilter filter,
             Map tables,
             Collection parameters,
-            StringBuffer sb)
+            StringBuilder sb)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             boolean b = convert(f, tables, parameters, sb3);
             if (!b) return false;
 
@@ -1247,19 +1244,19 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         return true;
     }
 
-    public boolean contains(DN baseDn, Filter filter) throws Exception {
+    public boolean contains(String baseDn, Filter filter) throws Exception {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
         Map tables = new LinkedHashMap();
 
         Collection parameters = new ArrayList();
-        StringBuffer whereClause = new StringBuffer();
+        StringBuilder whereClause = new StringBuilder();
 
         boolean b = convert(filter, tables, parameters, whereClause);
         if (!b) return false;
 
-        StringBuffer fromClause = new StringBuffer();
+        StringBuilder fromClause = new StringBuilder();
         fromClause.append(tableName);
         fromClause.append(" t");
 
@@ -1375,15 +1372,15 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
         Map tables = new LinkedHashMap();
 
         Collection parameters = new ArrayList();
-        StringBuffer whereClause = new StringBuffer();
+        StringBuilder whereClause = new StringBuilder();
 
         boolean b = convert(filter, tables, parameters, whereClause);
         if (!b) return true;
 
-        StringBuffer selectClause = new StringBuffer();
+        StringBuilder selectClause = new StringBuilder();
         selectClause.append("t.rdn, t.parentDn");
 
-        StringBuffer fromClause = new StringBuffer();
+        StringBuilder fromClause = new StringBuilder();
         fromClause.append(tableName);
         fromClause.append(" t");
 
@@ -1481,10 +1478,10 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
 
-        StringBuffer tableNames = new StringBuffer();
+        StringBuilder tableNames = new StringBuilder();
         tableNames.append(partition.getName()+"_"+mappingId+"_entries t");
 
-        StringBuffer whereClause = new StringBuffer();
+        StringBuilder whereClause = new StringBuilder();
 
         Collection parameters = new ArrayList();
 
@@ -1493,7 +1490,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             String name = (String)i.next();
             Object value = filter.get(name);
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
             Collection sourceMappings = entryMapping.getSourceMappings();
             for (Iterator j=sourceMappings.iterator(); j.hasNext(); c++) {
@@ -1525,7 +1522,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             whereClause.append(")");
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("select t.rdn, t.parentDn from ");
         sb.append(tableNames);
         sb.append(" where ");
@@ -1575,7 +1572,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            throw ExceptionUtil.createLDAPException(e);
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -1612,7 +1609,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_query_results";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Collection parameters = new ArrayList();
 
         sb.append("insert into ");
@@ -1728,7 +1725,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("insert into ");
         sb.append(tableName);
         sb.append(" values (?, ?)");
@@ -1787,7 +1784,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_entries";
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("select rdn, parentDn from ");
         sb.append(tableName);
         sb.append(" where id=?");
@@ -1830,7 +1827,11 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             String rdn = rs.getString(1);
             String parentDn = rs.getString(2);
-            DN dn = new DN(EntryUtil.append(rdn, parentDn));
+
+            DNBuilder db = new DNBuilder();
+            db.append(rdn);
+            db.append(parentDn);
+            DN dn = db.toDn();
 
             log.debug("DN: "+dn);
 
@@ -1851,7 +1852,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_attribute_"+attributeMapping.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("select value from ");
         sb.append(tableName);
         sb.append(" where id=?");
@@ -1920,7 +1921,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("insert into ");
         sb.append(tableName);
         sb.append(" values (?, ?)");
@@ -1973,7 +1974,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String tableName = partition.getName()+"_"+mappingId+"_field_"+sourceMapping.getName()+"_"+fieldConfig.getName();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("select value from ");
         sb.append(tableName);
         sb.append(" where id=?");
@@ -2107,7 +2108,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         Collection parameters = new ArrayList();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("delete from ");
         sb.append(tableName);
 
@@ -2166,7 +2167,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         Collection parameters = new ArrayList();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("delete from ");
         sb.append(tableName);
 

@@ -77,8 +77,10 @@ public class SQLParser implements SQLParserConstants {
   String rs = "", ts;
   SQLCompareExpr compareExpr = new SQLCompareExpr();
   SQLCompareExprRight compareExprRight;
+  SQLSelect select;
     if (jj_2_4(2147483647)) {
-      ts = SQLSelect();
+      select = SQLSelect();
+      ts = select.toString();
       rs = rs + ts;
       compareExpr.addChild(ts);
     } else if (jj_2_5(2147483647)) {
@@ -247,8 +249,9 @@ public class SQLParser implements SQLParserConstants {
   }
 
   final public void SQLCursorDeclare() throws ParseException {
- Token x, y;
- String rs = new String(""), ts;
+  Token x, y;
+  String rs = new String(""), ts;
+  SQLSelect select;
     jj_consume_token(CURSOR);
     x = jj_consume_token(ID);
           fout.indent();
@@ -266,32 +269,36 @@ public class SQLParser implements SQLParserConstants {
       ;
     }
     jj_consume_token(IS);
-    ts = SQLSelect();
+    select = SQLSelect();
     jj_consume_token(SEMICOLON);
-                  rs = rs + fout.print(ts);
-          rs = rs + fout.println(";");
-          fout.outdent();
-          fout.outdent();
-          fout.outdent();
-                  fout.print(rs); // out
+    ts = select.toString();
+    rs = rs + fout.print(ts);
+    rs = rs + fout.println(";");
+    fout.outdent();
+    fout.outdent();
+    fout.outdent();
+        fout.print(rs); // out
 
   }
 
   final public String SQLCursorFetch() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelectCols selectCols;
     jj_consume_token(FETCH);
-            rs = rs + fout.print("Exec SQL FETCH ");
-            fout.align();
-            inSelect = true;
-    ts = SQLSelectCols();
-          rs = rs + ts;
-          inSelect = false;
+    rs = rs + fout.print("Exec SQL FETCH ");
+    fout.align();
+    inSelect = true;
+    selectCols = SQLSelectCols();
+    ts = selectCols.toString();
+    rs = rs + ts;
+    inSelect = false;
     if (jj_2_30(10)) {
       jj_consume_token(INTO);
           inSQL = true;
           rs = rs + fout.println();
           rs = rs + fout.printRj("INTO ");
-      ts = SQLSelectCols();
+      selectCols = SQLSelectCols();
+      ts = selectCols.toString();
           rs = rs + ts;
           fout.outalign();
     } else {
@@ -381,38 +388,44 @@ public class SQLParser implements SQLParserConstants {
 
   final public String SQLDelete() throws ParseException {
   String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLWhere where;
     jj_consume_token(DELETE);
     jj_consume_token(FROM);
-          if (inProcedure) rs = rs + fout.print("Exec SQL ");
-          rs = rs + fout.print("DELETE FROM ");
-          fout.align();
-          inSQL = true;
-    ts = SQLTableList();
-                        rs = rs + ts;
+        if (inProcedure) rs = rs + fout.print("Exec SQL ");
+        rs = rs + fout.print("DELETE FROM ");
+    fout.align();
+        inSQL = true;
+    tableList = SQLTableList();
+    ts = tableList.toString();
+    rs = rs + ts;
     if (jj_2_43(10)) {
-      ts = SQLWhere();
-                      rs = rs + ts;
+      where = SQLWhere();
+      ts = where.toString();
+      rs = rs + ts;
     } else {
       ;
     }
-          fout.outalign();
-          inSQL = false;
+    fout.outalign();
+        inSQL = false;
     {if (true) return rs;}
     throw new Error("Missing return statement in function");
   }
 
   final public String SQLExistsClause() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelect select;
     jj_consume_token(EXISTS);
-          rs = rs + fout.print("EXISTS (");
-          fout.align();
+    rs = rs + fout.print("EXISTS (");
+    fout.align();
     jj_consume_token(OPENPAREN);
-    ts = SQLSelect();
-                         rs = rs + ts;
+    select = SQLSelect();
+    ts = select.toString();
+    rs = rs + ts;
     jj_consume_token(CLOSEPAREN);
-          rs = rs + fout.print(")");
-          fout.outalign();
-          {if (true) return rs;}
+    rs = rs + fout.print(")");
+    fout.outalign();
+    {if (true) return rs;}
     throw new Error("Missing return statement in function");
   }
 
@@ -587,19 +600,23 @@ public class SQLParser implements SQLParserConstants {
 
   final public String SQLInsert() throws ParseException {
   String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLSelectCols selectCols;
     jj_consume_token(INSERT);
     jj_consume_token(INTO);
             if (inProcedure) rs = rs + fout.print("Exec SQL ");
             rs = rs + fout.print("INSERT INTO ");
           fout.align();
-    ts = SQLTableList();
-                        rs = rs + ts;
+    tableList = SQLTableList();
+    ts = tableList.toString();
+    rs = rs + ts;
     if (jj_2_65(10)) {
       jj_consume_token(OPENPAREN);
           rs = rs + fout.print("(");
           inSelect = true;
-      ts = SQLSelectCols();
-                           rs = rs + ts;
+      selectCols = SQLSelectCols();
+      ts = selectCols.toString();
+      rs = rs + ts;
       jj_consume_token(CLOSEPAREN);
           rs = rs + fout.print(")");
           inSelect = false;
@@ -611,12 +628,13 @@ public class SQLParser implements SQLParserConstants {
     jj_consume_token(OPENPAREN);
           rs = rs + fout.print(" (");
           inSQL = true;
-    ts = SQLSelectCols();
-                         rs = rs + ts;
+    selectCols = SQLSelectCols();
+    ts = selectCols.toString();
+    rs = rs + ts;
     jj_consume_token(CLOSEPAREN);
           rs = rs + fout.print(")");
           inSelect = false;
-        fout.outalign();
+      fout.outalign();
           {if (true) return rs;}
     throw new Error("Missing return statement in function");
   }
@@ -947,55 +965,69 @@ public class SQLParser implements SQLParserConstants {
     throw new Error("Missing return statement in function");
   }
 
-  final public String SQLSelect() throws ParseException {
+  final public SQLSelect SQLSelect() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelect select = new SQLSelect();
+  SQLSelectCols selectCols;
+  SQLTableList tableList;
+  SQLWhere where;
     jj_consume_token(SELECT);
-          if (inProcedure) rs = rs + fout.print("Exec SQL ");
-          rs = rs + fout.print("SELECT ");
-          fout.align();
-          inSelect = true;
-    ts = SQLSelectCols();
-          rs = rs + ts; inSelect = false;
+        if (inProcedure) rs = rs + fout.print("Exec SQL ");
+        rs = rs + fout.print("SELECT ");
+        fout.align();
+        inSelect = true;
+    selectCols = SQLSelectCols();
+    ts = selectCols.toString();
+    rs = rs + ts;
+    inSelect = false;
     if (jj_2_96(10)) {
       jj_consume_token(INTO);
-          rs = rs + fout.println();
-          rs = rs + fout.printRj("INTO ");
+      rs = rs + fout.println();
+      rs = rs + fout.printRj("INTO ");
           inSQL = true;
-      ts = SQLSelectCols();
-          rs = rs + ts; inSQL = false;
+      selectCols = SQLSelectCols();
+          ts = selectCols.toString();
+          rs = rs + ts;
+          inSQL = false;
     } else {
       ;
     }
     jj_consume_token(FROM);
-          rs = rs + fout.println();
-          rs = rs + fout.printRj("FROM ");
-    ts = SQLTableList();
-                        rs = rs + ts;
+    rs = rs + fout.println();
+    rs = rs + fout.printRj("FROM ");
+    tableList = SQLTableList();
+    ts = tableList.toString();
+    rs = rs + ts;
+    select.setTableList(tableList);
     if (jj_2_97(10)) {
-      ts = SQLWhere();
-                        rs = rs + ts;
+      where = SQLWhere();
+      ts = where.toString();
+      rs = rs + ts;
+      select.setWhere(where);
     } else {
       ;
     }
     if (jj_2_98(10)) {
       ts = SQLGroupBy();
-                        rs = rs + ts;
+      rs = rs + ts;
     } else {
       ;
     }
     if (jj_2_99(10)) {
       ts = SQLOrderBy();
-                        rs = rs + ts;
+      rs = rs + ts;
     } else {
       ;
     }
-          fout.outalign();
-          {if (true) return rs;}
+    fout.outalign();
+    select.setString(rs);
+    {if (true) return select;}
     throw new Error("Missing return statement in function");
   }
 
-  final public String SQLSelectCols() throws ParseException {
+  final public SQLSelectCols SQLSelectCols() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelectCols selectCols = new SQLSelectCols();
     label_8:
     while (true) {
       if (jj_2_100(10)) {
@@ -1005,10 +1037,10 @@ public class SQLParser implements SQLParserConstants {
       }
       if (jj_2_101(10)) {
         jj_consume_token(ALL);
-            rs = rs + fout.print("ALL ");
+      rs = rs + fout.print("ALL ");
       } else if (jj_2_102(10)) {
         jj_consume_token(DISTINCT);
-                 rs = rs + fout.print("DISTINCT ");
+      rs = rs + fout.print("DISTINCT ");
       } else {
         jj_consume_token(-1);
         throw new ParseException();
@@ -1017,10 +1049,10 @@ public class SQLParser implements SQLParserConstants {
     if (jj_2_105(10)) {
       if (jj_2_103(10)) {
         jj_consume_token(ASTERISK);
-             rs = rs + fout.print("*");
+      rs = rs + fout.print("*");
       } else if (jj_2_104(10)) {
         ts = SQLSelectList();
-                                                                   rs = rs + ts;
+        rs = rs + ts;
       } else {
         jj_consume_token(-1);
         throw new ParseException();
@@ -1028,7 +1060,8 @@ public class SQLParser implements SQLParserConstants {
     } else {
       ;
     }
-    {if (true) return rs;}
+    selectCols.setString(rs);
+    {if (true) return selectCols;}
     throw new Error("Missing return statement in function");
   }
 
@@ -1055,9 +1088,11 @@ public class SQLParser implements SQLParserConstants {
 
   final public String SQLStatement() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelect select;
     if (jj_2_107(10)) {
-      ts = SQLSelect();
-                       rs = rs + ts;
+      select = SQLSelect();
+      ts = select.toString();
+      rs = rs + ts;
     } else if (jj_2_108(10)) {
       ts = SQLInsert();
                        rs = rs + ts;
@@ -1117,10 +1152,14 @@ public class SQLParser implements SQLParserConstants {
     throw new Error("Missing return statement in function");
   }
 
-  final public String SQLTableList() throws ParseException {
+  final public SQLTableList SQLTableList() throws ParseException {
   String rs = new String(""), ts;
-    ts = SQLTableRef();
-                       rs = rs + ts;
+  SQLTableList tableList = new SQLTableList();
+  SQLTableRef tableRef;
+    tableRef = SQLTableRef();
+    ts = tableRef.toString();
+    rs = rs + ts;
+    tableList.addTableRef(tableRef);
     label_11:
     while (true) {
       if (jj_2_118(2)) {
@@ -1129,27 +1168,33 @@ public class SQLParser implements SQLParserConstants {
         break label_11;
       }
       jj_consume_token(132);
-                       rs = rs + fout.println(", ");
-      ts = SQLTableRef();
-                                                     rs = rs + ts;
+      rs = rs + fout.println(", ");
+      tableRef = SQLTableRef();
+      ts = tableRef.toString();
+      rs = rs + ts;
+      tableList.addTableRef(tableRef);
     }
-    {if (true) return rs;}
+    tableList.setString(rs);
+    {if (true) return tableList;}
     throw new Error("Missing return statement in function");
   }
 
-  final public String SQLTableRef() throws ParseException {
- Token tableName, aliasName;
- String rs = new String("");
+  final public SQLTableRef SQLTableRef() throws ParseException {
+  Token tableName, aliasName;
+  String rs = new String("");
+  SQLTableRef tableRef = new SQLTableRef();
     tableName = jj_consume_token(ID);
-          rs = rs + fout.print(TitleCaseString.fixCase(tableName.image));
+    rs = rs + fout.print(TitleCaseString.fixCase(tableName.image));
+    tableRef.setTableName(tableName.image);
     if (jj_2_119(10)) {
       aliasName = jj_consume_token(ID);
-          rs = rs + fout.print(" ");
-          rs = rs + fout.print(TitleCaseString.fixCase(aliasName.image));
+      rs = rs + fout.print(" ");
+      rs = rs + fout.print(TitleCaseString.fixCase(aliasName.image));
+      tableRef.setAliasName(aliasName.image);
     } else {
       ;
     }
-    {if (true) return rs;}
+    {if (true) return tableRef;}
     throw new Error("Missing return statement in function");
   }
 
@@ -1159,23 +1204,23 @@ public class SQLParser implements SQLParserConstants {
   SQLOrExpr orExpr;
     if (jj_2_120(10)) {
       jj_consume_token(OPENPAREN);
-          rs = rs + fout.print("(");
-          fout.align();
+      rs = rs + fout.print("(");
+      fout.align();
       orExpr = SQLOrExpr();
       ts = orExpr.toString();
       rs = rs + ts;
       jj_consume_token(CLOSEPAREN);
-          rs = rs + fout.print(")");
-          fout.outalign();
+      rs = rs + fout.print(")");
+      fout.outalign();
     } else if (jj_2_121(10)) {
       ts = SQLColRef();
-                       rs = rs + ts;
+      rs = rs + ts;
     } else if (jj_2_122(10)) {
       ts = SQLLiteral();
-                        rs = rs + ts;
+      rs = rs + ts;
     } else if (jj_2_123(10)) {
       ts = SQLFunction();
-                         rs = rs + ts;
+      rs = rs + ts;
     } else {
       jj_consume_token(-1);
       throw new ParseException();
@@ -1208,12 +1253,15 @@ public class SQLParser implements SQLParserConstants {
 
   final public String SQLUpdate() throws ParseException {
   String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLWhere where;
     jj_consume_token(UPDATE);
           if (inProcedure) rs = rs + fout.print("Exec SQL ");
           rs = rs + fout.print("UPDATE ");
           fout.align();
-    ts = SQLTableList();
-                        rs = rs + ts;
+    tableList = SQLTableList();
+    ts = tableList.toString();
+    rs = rs + ts;
     jj_consume_token(SET);
           inSQL = true;
           rs = rs + fout.println();
@@ -1236,13 +1284,14 @@ public class SQLParser implements SQLParserConstants {
       }
     }
     if (jj_2_129(10)) {
-      ts = SQLWhere();
-                      rs = rs + ts;
+      where = SQLWhere();
+      ts = where.toString();
+      rs = rs + ts;
     } else {
       ;
     }
-          fout.outalign();
-          inSQL = false;
+    fout.outalign();
+        inSQL = false;
     {if (true) return rs;}
     throw new Error("Missing return statement in function");
   }
@@ -1282,6 +1331,7 @@ public class SQLParser implements SQLParserConstants {
 
   final public String SQLLValueElement() throws ParseException {
   String rs = new String(""), ts;
+  SQLSelect select;
     if (jj_2_133(10)) {
       jj_consume_token(NULL);
              rs = rs + fout.print("NULL");
@@ -1289,8 +1339,9 @@ public class SQLParser implements SQLParserConstants {
       ts = SQLSumExpr();
                         rs = rs + ts;
     } else if (jj_2_135(10)) {
-      ts = SQLSelect();
-                       rs = rs + ts;
+      select = SQLSelect();
+      ts = select.toString();
+      rs = rs + ts;
     } else {
       jj_consume_token(-1);
       throw new ParseException();
@@ -1320,8 +1371,9 @@ public class SQLParser implements SQLParserConstants {
     throw new Error("Missing return statement in function");
   }
 
-  final public String SQLWhere() throws ParseException {
+  final public SQLWhere SQLWhere() throws ParseException {
   String rs = new String(""), ts;
+  SQLWhere where = new SQLWhere();
   SQLOrExpr orExpr;
     jj_consume_token(WHERE);
     rs = rs + fout.println();
@@ -1329,7 +1381,10 @@ public class SQLParser implements SQLParserConstants {
         inSQL = true;
     orExpr = SQLOrExpr();
     ts = orExpr.toString();
-    rs = rs + ts; inSQL = false; {if (true) return rs;}
+    rs = rs + ts;
+    inSQL = false;
+    where.setExpression(orExpr);
+    {if (true) return where;}
     throw new Error("Missing return statement in function");
   }
 
@@ -2285,61 +2340,43 @@ public class SQLParser implements SQLParserConstants {
     finally { jj_save(135, xla); }
   }
 
-  final private boolean jj_3_128() {
-    if (jj_3R_35()) return true;
-    if (jj_scan_token(EQUAL)) return true;
+  final private boolean jj_3_66() {
+    if (jj_scan_token(NOT)) return true;
     return false;
   }
 
-  final private boolean jj_3_129() {
-    if (jj_3R_29()) return true;
+  final private boolean jj_3_113() {
+    if (jj_3R_45()) return true;
     return false;
   }
 
-  final private boolean jj_3_76() {
-    if (jj_scan_token(REQUEST)) return true;
-    if (jj_scan_token(DOT)) return true;
-    if (jj_3R_31()) return true;
+  final private boolean jj_3_112() {
+    if (jj_3R_44()) return true;
     return false;
   }
 
-  final private boolean jj_3_127() {
-    if (jj_scan_token(132)) return true;
+  final private boolean jj_3_111() {
+    if (jj_3R_43()) return true;
     return false;
   }
 
-  final private boolean jj_3_69() {
-    if (jj_scan_token(ZERO)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_35() {
+  final private boolean jj_3R_64() {
+    if (jj_3R_18()) return true;
+    if (jj_scan_token(IS)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_76()) {
-    jj_scanpos = xsp;
-    if (jj_3_77()) {
-    jj_scanpos = xsp;
-    if (jj_3_78()) {
-    jj_scanpos = xsp;
-    if (jj_3_79()) {
-    jj_scanpos = xsp;
-    if (jj_3_80()) {
-    jj_scanpos = xsp;
-    if (jj_3_81()) return true;
-    }
-    }
-    }
-    }
-    }
+    if (jj_3_66()) jj_scanpos = xsp;
+    if (jj_scan_token(NULL)) return true;
     return false;
   }
 
-  final private boolean jj_3R_58() {
-    if (jj_3R_63()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_127()) jj_scanpos = xsp;
+  final private boolean jj_3_110() {
+    if (jj_3R_42()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_109() {
+    if (jj_3R_41()) return true;
     return false;
   }
 
@@ -2356,18 +2393,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_75() {
-    if (jj_scan_token(ASTERISK)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_68() {
-    if (jj_scan_token(ZEROS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_74() {
-    if (jj_scan_token(SPACES)) return true;
+  final private boolean jj_3_108() {
+    if (jj_3R_40()) return true;
     return false;
   }
 
@@ -2376,28 +2403,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_73() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_68()) {
-    jj_scanpos = xsp;
-    if (jj_3_69()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_72() {
-    if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_71() {
-    if (jj_scan_token(INTEGER_LITERAL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_70() {
-    if (jj_scan_token(STRING_LITERAL)) return true;
+  final private boolean jj_3_107() {
+    if (jj_3R_17()) return true;
     return false;
   }
 
@@ -2406,60 +2413,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_49() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_70()) {
-    jj_scanpos = xsp;
-    if (jj_3_71()) {
-    jj_scanpos = xsp;
-    if (jj_3_72()) {
-    jj_scanpos = xsp;
-    if (jj_3_73()) {
-    jj_scanpos = xsp;
-    if (jj_3_74()) {
-    jj_scanpos = xsp;
-    if (jj_3_75()) return true;
-    }
-    }
-    }
-    }
-    }
-    return false;
-  }
-
-  final private boolean jj_3R_41() {
-    if (jj_scan_token(UPDATE)) return true;
-    if (jj_3R_54()) return true;
-    if (jj_scan_token(SET)) return true;
-    Token xsp;
-    if (jj_3R_58()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_58()) { jj_scanpos = xsp; break; }
-    }
-    xsp = jj_scanpos;
-    if (jj_3_129()) jj_scanpos = xsp;
-    return false;
-  }
-
   final private boolean jj_3_10() {
     if (jj_3R_22()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_125() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_67() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_124() {
-    if (jj_scan_token(PLUS)) return true;
     return false;
   }
 
@@ -2468,30 +2423,19 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_20() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_67()) jj_scanpos = xsp;
-    if (jj_scan_token(LIKE)) return true;
-    if (jj_3R_55()) return true;
+  final private boolean jj_3_106() {
+    if (jj_scan_token(132)) return true;
+    if (jj_3R_19()) return true;
     return false;
   }
 
-  final private boolean jj_3_126() {
+  final private boolean jj_3R_39() {
+    if (jj_3R_19()) return true;
     Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_124()) {
-    jj_scanpos = xsp;
-    if (jj_3_125()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_106()) { jj_scanpos = xsp; break; }
     }
-    return false;
-  }
-
-  final private boolean jj_3R_36() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_126()) jj_scanpos = xsp;
-    if (jj_3R_50()) return true;
     return false;
   }
 
@@ -2522,25 +2466,31 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_123() {
-    if (jj_3R_26()) return true;
+  final private boolean jj_3_104() {
+    if (jj_3R_39()) return true;
     return false;
   }
 
-  final private boolean jj_3_122() {
-    if (jj_3R_49()) return true;
+  final private boolean jj_3_65() {
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_3R_28()) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    if (jj_scan_token(VALUES)) return true;
     return false;
   }
 
-  final private boolean jj_3_121() {
-    if (jj_3R_18()) return true;
+  final private boolean jj_3_103() {
+    if (jj_scan_token(ASTERISK)) return true;
     return false;
   }
 
-  final private boolean jj_3R_22() {
-    if (jj_scan_token(JOINPLUS)) return true;
-    if (jj_3R_23()) return true;
-    if (jj_3R_19()) return true;
+  final private boolean jj_3_105() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_103()) {
+    jj_scanpos = xsp;
+    if (jj_3_104()) return true;
+    }
     return false;
   }
 
@@ -2549,46 +2499,13 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_66() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_120() {
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_3R_48()) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
-    return false;
-  }
-
   final private boolean jj_3_6() {
     if (jj_scan_token(EXISTS)) return true;
     return false;
   }
 
-  final private boolean jj_3R_50() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_120()) {
-    jj_scanpos = xsp;
-    if (jj_3_121()) {
-    jj_scanpos = xsp;
-    if (jj_3_122()) {
-    jj_scanpos = xsp;
-    if (jj_3_123()) return true;
-    }
-    }
-    }
-    return false;
-  }
-
-  final private boolean jj_3R_64() {
-    if (jj_3R_18()) return true;
-    if (jj_scan_token(IS)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_66()) jj_scanpos = xsp;
-    if (jj_scan_token(NULL)) return true;
+  final private boolean jj_3_102() {
+    if (jj_scan_token(DISTINCT)) return true;
     return false;
   }
 
@@ -2606,8 +2523,42 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_4() {
-    if (jj_3R_17()) return true;
+  final private boolean jj_3_100() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_101()) {
+    jj_scanpos = xsp;
+    if (jj_3_102()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_101() {
+    if (jj_scan_token(ALL)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_40() {
+    if (jj_scan_token(INSERT)) return true;
+    if (jj_scan_token(INTO)) return true;
+    if (jj_3R_54()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_65()) jj_scanpos = xsp;
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_3R_28()) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_28() {
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_100()) { jj_scanpos = xsp; break; }
+    }
+    xsp = jj_scanpos;
+    if (jj_3_105()) jj_scanpos = xsp;
     return false;
   }
 
@@ -2616,8 +2567,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_119() {
-    if (jj_scan_token(ID)) return true;
+  final private boolean jj_3_4() {
+    if (jj_3R_17()) return true;
     return false;
   }
 
@@ -2626,16 +2577,24 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_47() {
-    if (jj_scan_token(ID)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_119()) jj_scanpos = xsp;
+  final private boolean jj_3_64() {
+    if (jj_scan_token(NOT)) return true;
     return false;
   }
 
   final private boolean jj_3R_59() {
     if (jj_3R_17()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_21() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_64()) jj_scanpos = xsp;
+    if (jj_scan_token(IN)) return true;
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_3R_66()) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
     return false;
   }
 
@@ -2655,127 +2614,13 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_118() {
-    if (jj_scan_token(132)) return true;
-    if (jj_3R_47()) return true;
+  final private boolean jj_3_99() {
+    if (jj_3R_38()) return true;
     return false;
   }
 
-  final private boolean jj_3R_54() {
-    if (jj_3R_47()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_118()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3R_18() {
-    if (jj_3R_35()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_65() {
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_3R_28()) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
-    if (jj_scan_token(VALUES)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_117() {
-    if (jj_scan_token(CONCAT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_40() {
-    if (jj_scan_token(INSERT)) return true;
-    if (jj_scan_token(INTO)) return true;
-    if (jj_3R_54()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_65()) jj_scanpos = xsp;
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_3R_28()) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_2() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_116() {
-    if (jj_scan_token(MINUS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_24() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_2()) jj_scanpos = xsp;
-    if (jj_scan_token(BETWEEN)) return true;
-    if (jj_3R_19()) return true;
-    if (jj_scan_token(AND)) return true;
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_115() {
-    if (jj_scan_token(PLUS)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_64() {
-    if (jj_scan_token(NOT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_114() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_115()) {
-    jj_scanpos = xsp;
-    if (jj_3_116()) {
-    jj_scanpos = xsp;
-    if (jj_3_117()) return true;
-    }
-    }
-    if (jj_3R_46()) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_21() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_64()) jj_scanpos = xsp;
-    if (jj_scan_token(IN)) return true;
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_3R_66()) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_104() {
-    if (jj_3R_39()) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_19() {
-    if (jj_3R_46()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_114()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_1() {
-    if (jj_scan_token(AND)) return true;
-    if (jj_3R_15()) return true;
+  final private boolean jj_3_98() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
@@ -2786,18 +2631,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_34() {
-    if (jj_3R_15()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_1()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_113() {
-    if (jj_3R_45()) return true;
+  final private boolean jj_3R_18() {
+    if (jj_3R_35()) return true;
     return false;
   }
 
@@ -2807,18 +2642,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_112() {
-    if (jj_3R_44()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_111() {
-    if (jj_3R_43()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_110() {
-    if (jj_3R_42()) return true;
+  final private boolean jj_3_97() {
+    if (jj_3R_29()) return true;
     return false;
   }
 
@@ -2829,21 +2654,6 @@ public class SQLParser implements SQLParserConstants {
       xsp = jj_scanpos;
       if (jj_3_62()) { jj_scanpos = xsp; break; }
     }
-    return false;
-  }
-
-  final private boolean jj_3_109() {
-    if (jj_3R_41()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_108() {
-    if (jj_3R_40()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_107() {
-    if (jj_3R_17()) return true;
     return false;
   }
 
@@ -2862,8 +2672,18 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_106() {
-    if (jj_scan_token(132)) return true;
+  final private boolean jj_3_2() {
+    if (jj_scan_token(NOT)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_24() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_2()) jj_scanpos = xsp;
+    if (jj_scan_token(BETWEEN)) return true;
+    if (jj_3R_19()) return true;
+    if (jj_scan_token(AND)) return true;
     if (jj_3R_19()) return true;
     return false;
   }
@@ -2881,36 +2701,11 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_39() {
-    if (jj_3R_19()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_106()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
   final private boolean jj_3_59() {
     if (jj_scan_token(ORIGINPLUS)) return true;
     if (jj_scan_token(DOT)) return true;
     if (jj_scan_token(FORMAT_ATTRIBUTE_SUBSTRING)) return true;
     if (jj_3R_30()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_103() {
-    if (jj_scan_token(ASTERISK)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_105() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_103()) {
-    jj_scanpos = xsp;
-    if (jj_3_104()) return true;
-    }
     return false;
   }
 
@@ -2930,40 +2725,21 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_102() {
-    if (jj_scan_token(DISTINCT)) return true;
+  final private boolean jj_3_96() {
+    if (jj_scan_token(INTO)) return true;
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_1() {
+    if (jj_scan_token(AND)) return true;
+    if (jj_3R_15()) return true;
     return false;
   }
 
   final private boolean jj_3_56() {
     if (jj_scan_token(TO_NUMBER)) return true;
     if (jj_3R_30()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_100() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_101()) {
-    jj_scanpos = xsp;
-    if (jj_3_102()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_101() {
-    if (jj_scan_token(ALL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_28() {
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_100()) { jj_scanpos = xsp; break; }
-    }
-    xsp = jj_scanpos;
-    if (jj_3_105()) jj_scanpos = xsp;
     return false;
   }
 
@@ -2985,6 +2761,16 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
+  final private boolean jj_3R_34() {
+    if (jj_3R_15()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_1()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
   final private boolean jj_3_52() {
     if (jj_scan_token(LENGTH)) return true;
     if (jj_3R_30()) return true;
@@ -2997,30 +2783,38 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_99() {
-    if (jj_3R_38()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_98() {
-    if (jj_3R_37()) return true;
-    return false;
-  }
-
   final private boolean jj_3_50() {
     if (jj_scan_token(LTRIM)) return true;
     if (jj_3R_30()) return true;
     return false;
   }
 
-  final private boolean jj_3_97() {
-    if (jj_3R_29()) return true;
+  final private boolean jj_3R_29() {
+    if (jj_scan_token(WHERE)) return true;
+    if (jj_3R_48()) return true;
     return false;
   }
 
   final private boolean jj_3_49() {
     if (jj_scan_token(LPAD)) return true;
     if (jj_3R_30()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_17() {
+    if (jj_scan_token(SELECT)) return true;
+    if (jj_3R_28()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_96()) jj_scanpos = xsp;
+    if (jj_scan_token(FROM)) return true;
+    if (jj_3R_54()) return true;
+    xsp = jj_scanpos;
+    if (jj_3_97()) jj_scanpos = xsp;
+    xsp = jj_scanpos;
+    if (jj_3_98()) jj_scanpos = xsp;
+    xsp = jj_scanpos;
+    if (jj_3_99()) jj_scanpos = xsp;
     return false;
   }
 
@@ -3051,12 +2845,6 @@ public class SQLParser implements SQLParserConstants {
   final private boolean jj_3_44() {
     if (jj_scan_token(UPPER)) return true;
     if (jj_3R_30()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_96() {
-    if (jj_scan_token(INTO)) return true;
-    if (jj_3R_28()) return true;
     return false;
   }
 
@@ -3118,28 +2906,19 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_17() {
-    if (jj_scan_token(SELECT)) return true;
-    if (jj_3R_28()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_96()) jj_scanpos = xsp;
-    if (jj_scan_token(FROM)) return true;
-    if (jj_3R_54()) return true;
-    xsp = jj_scanpos;
-    if (jj_3_97()) jj_scanpos = xsp;
-    xsp = jj_scanpos;
-    if (jj_3_98()) jj_scanpos = xsp;
-    xsp = jj_scanpos;
-    if (jj_3_99()) jj_scanpos = xsp;
+  final private boolean jj_3_136() {
+    if (jj_scan_token(132)) return true;
+    if (jj_3R_51()) return true;
     return false;
   }
 
-  final private boolean jj_3R_65() {
-    if (jj_scan_token(EXISTS)) return true;
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_3R_17()) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
+  final private boolean jj_3R_66() {
+    if (jj_3R_51()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_136()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 
@@ -3150,20 +2929,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_43() {
-    if (jj_3R_29()) return true;
-    return false;
-  }
-
   final private boolean jj_3_95() {
     if (jj_scan_token(SLASH)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_36() {
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_scan_token(INTEGER_LITERAL)) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
     return false;
   }
 
@@ -3183,20 +2950,13 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_35() {
-    if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_scan_token(INTEGER_LITERAL)) return true;
-    if (jj_scan_token(CLOSEPAREN)) return true;
+  final private boolean jj_3_135() {
+    if (jj_3R_17()) return true;
     return false;
   }
 
-  final private boolean jj_3R_42() {
-    if (jj_scan_token(DELETE)) return true;
-    if (jj_scan_token(FROM)) return true;
-    if (jj_3R_54()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_43()) jj_scanpos = xsp;
+  final private boolean jj_3_134() {
+    if (jj_3R_19()) return true;
     return false;
   }
 
@@ -3210,20 +2970,35 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_34() {
-    if (jj_scan_token(CHARACTER)) return true;
+  final private boolean jj_3_133() {
+    if (jj_scan_token(NULL)) return true;
     return false;
   }
 
-  final private boolean jj_3_32() {
+  final private boolean jj_3R_65() {
+    if (jj_scan_token(EXISTS)) return true;
     if (jj_scan_token(OPENPAREN)) return true;
-    if (jj_scan_token(INTEGER_LITERAL)) return true;
+    if (jj_3R_17()) return true;
     if (jj_scan_token(CLOSEPAREN)) return true;
     return false;
   }
 
-  final private boolean jj_3_42() {
-    if (jj_scan_token(BOOLEAN)) return true;
+  final private boolean jj_3R_51() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_133()) {
+    jj_scanpos = xsp;
+    if (jj_3_134()) {
+    jj_scanpos = xsp;
+    if (jj_3_135()) return true;
+    }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_131() {
+    if (jj_3R_50()) return true;
+    if (jj_scan_token(CONCAT)) return true;
     return false;
   }
 
@@ -3232,11 +3007,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_41() {
-    if (jj_scan_token(VARCHAR2)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_36()) jj_scanpos = xsp;
+  final private boolean jj_3_132() {
+    if (jj_3R_19()) return true;
     return false;
   }
 
@@ -3250,25 +3022,14 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_33() {
-    if (jj_scan_token(CHAR)) return true;
+  final private boolean jj_3_130() {
+    if (jj_scan_token(CONCAT)) return true;
+    if (jj_3R_50()) return true;
     return false;
   }
 
   final private boolean jj_3_89() {
     if (jj_scan_token(STRING_LITERAL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_40() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_33()) {
-    jj_scanpos = xsp;
-    if (jj_3_34()) return true;
-    }
-    xsp = jj_scanpos;
-    if (jj_3_35()) jj_scanpos = xsp;
     return false;
   }
 
@@ -3285,6 +3046,160 @@ public class SQLParser implements SQLParserConstants {
     }
     }
     }
+    return false;
+  }
+
+  final private boolean jj_3R_67() {
+    if (jj_3R_50()) return true;
+    Token xsp;
+    if (jj_3_130()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_130()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_43() {
+    if (jj_3R_29()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_63() {
+    if (jj_3R_35()) return true;
+    if (jj_scan_token(EQUAL)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_67()) {
+    jj_scanpos = xsp;
+    if (jj_3_132()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_88() {
+    if (jj_scan_token(OR)) return true;
+    if (jj_3R_34()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_42() {
+    if (jj_scan_token(DELETE)) return true;
+    if (jj_scan_token(FROM)) return true;
+    if (jj_3R_54()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_43()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_36() {
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_scan_token(INTEGER_LITERAL)) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_129() {
+    if (jj_3R_29()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_48() {
+    if (jj_3R_34()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_88()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_128() {
+    if (jj_3R_35()) return true;
+    if (jj_scan_token(EQUAL)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_35() {
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_scan_token(INTEGER_LITERAL)) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_34() {
+    if (jj_scan_token(CHARACTER)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_32() {
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_scan_token(INTEGER_LITERAL)) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_127() {
+    if (jj_scan_token(132)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_42() {
+    if (jj_scan_token(BOOLEAN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_58() {
+    if (jj_3R_63()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_127()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_87() {
+    if (jj_scan_token(DESC)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_41() {
+    if (jj_scan_token(VARCHAR2)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_36()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_86() {
+    if (jj_scan_token(ASC)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_33() {
+    if (jj_scan_token(CHAR)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_32() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_86()) {
+    jj_scanpos = xsp;
+    if (jj_3_87()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_40() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_33()) {
+    jj_scanpos = xsp;
+    if (jj_3_34()) return true;
+    }
+    xsp = jj_scanpos;
+    if (jj_3_35()) jj_scanpos = xsp;
     return false;
   }
 
@@ -3328,62 +3243,6 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_31() {
-    if (jj_3R_27()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_88() {
-    if (jj_scan_token(OR)) return true;
-    if (jj_3R_34()) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_43() {
-    if (jj_scan_token(OPEN)) return true;
-    if (jj_scan_token(ID)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_31()) jj_scanpos = xsp;
-    return false;
-  }
-
-  final private boolean jj_3R_48() {
-    if (jj_3R_34()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_88()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_87() {
-    if (jj_scan_token(DESC)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_86() {
-    if (jj_scan_token(ASC)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_32() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_86()) {
-    jj_scanpos = xsp;
-    if (jj_3_87()) return true;
-    }
-    return false;
-  }
-
-  final private boolean jj_3_30() {
-    if (jj_scan_token(INTO)) return true;
-    if (jj_3R_28()) return true;
-    return false;
-  }
-
   final private boolean jj_3_85() {
     if (jj_scan_token(132)) return true;
     if (jj_3R_33()) return true;
@@ -3400,17 +3259,28 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_44() {
-    if (jj_scan_token(FETCH)) return true;
-    if (jj_3R_28()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_30()) jj_scanpos = xsp;
+  final private boolean jj_3_84() {
+    if (jj_3R_32()) return true;
     return false;
   }
 
-  final private boolean jj_3_84() {
-    if (jj_3R_32()) return true;
+  final private boolean jj_3R_41() {
+    if (jj_scan_token(UPDATE)) return true;
+    if (jj_3R_54()) return true;
+    if (jj_scan_token(SET)) return true;
+    Token xsp;
+    if (jj_3R_58()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_58()) { jj_scanpos = xsp; break; }
+    }
+    xsp = jj_scanpos;
+    if (jj_3_129()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_31() {
+    if (jj_3R_27()) return true;
     return false;
   }
 
@@ -3422,18 +3292,32 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_27() {
-    if (jj_3R_26()) return true;
+  final private boolean jj_3R_43() {
+    if (jj_scan_token(OPEN)) return true;
+    if (jj_scan_token(ID)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_31()) jj_scanpos = xsp;
     return false;
   }
 
-  final private boolean jj_3_23() {
-    if (jj_3R_26()) return true;
+  final private boolean jj_3_125() {
+    if (jj_scan_token(MINUS)) return true;
     return false;
   }
 
-  final private boolean jj_3_29() {
-    if (jj_3R_27()) return true;
+  final private boolean jj_3_124() {
+    if (jj_scan_token(PLUS)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_126() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_124()) {
+    jj_scanpos = xsp;
+    if (jj_3_125()) return true;
+    }
     return false;
   }
 
@@ -3444,13 +3328,22 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_25() {
-    if (jj_3R_25()) return true;
+  final private boolean jj_3R_36() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_126()) jj_scanpos = xsp;
+    if (jj_3R_50()) return true;
     return false;
   }
 
-  final private boolean jj_3_21() {
-    if (jj_3R_25()) return true;
+  final private boolean jj_3_30() {
+    if (jj_scan_token(INTO)) return true;
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_123() {
+    if (jj_3R_26()) return true;
     return false;
   }
 
@@ -3464,6 +3357,124 @@ public class SQLParser implements SQLParserConstants {
     xsp = jj_scanpos;
     if (jj_3_83()) jj_scanpos = xsp;
     if (jj_3R_52()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_122() {
+    if (jj_3R_49()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_121() {
+    if (jj_3R_18()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_44() {
+    if (jj_scan_token(FETCH)) return true;
+    if (jj_3R_28()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_30()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_82() {
+    if (jj_scan_token(DOT)) return true;
+    if (jj_scan_token(ID)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_120() {
+    if (jj_scan_token(OPENPAREN)) return true;
+    if (jj_3R_48()) return true;
+    if (jj_scan_token(CLOSEPAREN)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_27() {
+    if (jj_3R_26()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_50() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_120()) {
+    jj_scanpos = xsp;
+    if (jj_3_121()) {
+    jj_scanpos = xsp;
+    if (jj_3_122()) {
+    jj_scanpos = xsp;
+    if (jj_3_123()) return true;
+    }
+    }
+    }
+    return false;
+  }
+
+  final private boolean jj_3R_31() {
+    if (jj_scan_token(ID)) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_82()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_29() {
+    if (jj_3R_27()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_23() {
+    if (jj_3R_26()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_81() {
+    if (jj_3R_31()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_25() {
+    if (jj_3R_25()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_80() {
+    if (jj_scan_token(ROW_NOT_FOUND)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_119() {
+    if (jj_scan_token(ID)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_79() {
+    if (jj_scan_token(SQL_I_O_CORRECT)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_21() {
+    if (jj_3R_25()) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_47() {
+    if (jj_scan_token(ID)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_119()) jj_scanpos = xsp;
+    return false;
+  }
+
+  final private boolean jj_3_78() {
+    if (jj_scan_token(REPLY)) return true;
+    if (jj_scan_token(DOT)) return true;
+    if (jj_3R_31()) return true;
     return false;
   }
 
@@ -3500,6 +3511,13 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
+  final private boolean jj_3_77() {
+    if (jj_scan_token(REPLY_REPEATING_GROUP)) return true;
+    if (jj_scan_token(DOT)) return true;
+    if (jj_3R_31()) return true;
+    return false;
+  }
+
   final private boolean jj_3_28() {
     Token xsp;
     xsp = jj_scanpos;
@@ -3514,18 +3532,6 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_82() {
-    if (jj_scan_token(DOT)) return true;
-    if (jj_scan_token(ID)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_29() {
-    if (jj_scan_token(WHERE)) return true;
-    if (jj_3R_48()) return true;
-    return false;
-  }
-
   final private boolean jj_3R_27() {
     if (jj_scan_token(OPENPAREN)) return true;
     Token xsp;
@@ -3535,12 +3541,42 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_31() {
-    if (jj_scan_token(ID)) return true;
+  final private boolean jj_3_76() {
+    if (jj_scan_token(REQUEST)) return true;
+    if (jj_scan_token(DOT)) return true;
+    if (jj_3R_31()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_118() {
+    if (jj_scan_token(132)) return true;
+    if (jj_3R_47()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_69() {
+    if (jj_scan_token(ZERO)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_35() {
     Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_82()) { jj_scanpos = xsp; break; }
+    xsp = jj_scanpos;
+    if (jj_3_76()) {
+    jj_scanpos = xsp;
+    if (jj_3_77()) {
+    jj_scanpos = xsp;
+    if (jj_3_78()) {
+    jj_scanpos = xsp;
+    if (jj_3_79()) {
+    jj_scanpos = xsp;
+    if (jj_3_80()) {
+    jj_scanpos = xsp;
+    if (jj_3_81()) return true;
+    }
+    }
+    }
+    }
     }
     return false;
   }
@@ -3550,18 +3586,12 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_136() {
-    if (jj_scan_token(132)) return true;
-    if (jj_3R_51()) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_66() {
-    if (jj_3R_51()) return true;
+  final private boolean jj_3R_54() {
+    if (jj_3R_47()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3_136()) { jj_scanpos = xsp; break; }
+      if (jj_3_118()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
@@ -3571,8 +3601,33 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_81() {
-    if (jj_3R_31()) return true;
+  final private boolean jj_3_75() {
+    if (jj_scan_token(ASTERISK)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_68() {
+    if (jj_scan_token(ZEROS)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_74() {
+    if (jj_scan_token(SPACES)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_73() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_68()) {
+    jj_scanpos = xsp;
+    if (jj_3_69()) return true;
+    }
+    return false;
+  }
+
+  final private boolean jj_3_72() {
+    if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
     return false;
   }
 
@@ -3581,40 +3636,33 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_135() {
-    if (jj_3R_17()) return true;
+  final private boolean jj_3_71() {
+    if (jj_scan_token(INTEGER_LITERAL)) return true;
     return false;
   }
 
-  final private boolean jj_3_131() {
-    if (jj_3R_50()) return true;
-    if (jj_scan_token(CONCAT)) return true;
+  final private boolean jj_3_70() {
+    if (jj_scan_token(STRING_LITERAL)) return true;
     return false;
   }
 
-  final private boolean jj_3_134() {
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_133() {
-    if (jj_scan_token(NULL)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_80() {
-    if (jj_scan_token(ROW_NOT_FOUND)) return true;
-    return false;
-  }
-
-  final private boolean jj_3R_51() {
+  final private boolean jj_3R_49() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_133()) {
+    if (jj_3_70()) {
     jj_scanpos = xsp;
-    if (jj_3_134()) {
+    if (jj_3_71()) {
     jj_scanpos = xsp;
-    if (jj_3_135()) return true;
+    if (jj_3_72()) {
+    jj_scanpos = xsp;
+    if (jj_3_73()) {
+    jj_scanpos = xsp;
+    if (jj_3_74()) {
+    jj_scanpos = xsp;
+    if (jj_3_75()) return true;
+    }
+    }
+    }
     }
     }
     return false;
@@ -3625,19 +3673,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_132() {
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_79() {
-    if (jj_scan_token(SQL_I_O_CORRECT)) return true;
-    return false;
-  }
-
-  final private boolean jj_3_130() {
+  final private boolean jj_3_117() {
     if (jj_scan_token(CONCAT)) return true;
-    if (jj_3R_50()) return true;
     return false;
   }
 
@@ -3646,14 +3683,22 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_67() {
-    if (jj_3R_50()) return true;
+  final private boolean jj_3_67() {
+    if (jj_scan_token(NOT)) return true;
+    return false;
+  }
+
+  final private boolean jj_3_116() {
+    if (jj_scan_token(MINUS)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_20() {
     Token xsp;
-    if (jj_3_130()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_130()) { jj_scanpos = xsp; break; }
-    }
+    xsp = jj_scanpos;
+    if (jj_3_67()) jj_scanpos = xsp;
+    if (jj_scan_token(LIKE)) return true;
+    if (jj_3R_55()) return true;
     return false;
   }
 
@@ -3662,10 +3707,8 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_78() {
-    if (jj_scan_token(REPLY)) return true;
-    if (jj_scan_token(DOT)) return true;
-    if (jj_3R_31()) return true;
+  final private boolean jj_3_115() {
+    if (jj_scan_token(PLUS)) return true;
     return false;
   }
 
@@ -3674,15 +3717,17 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3R_63() {
-    if (jj_3R_35()) return true;
-    if (jj_scan_token(EQUAL)) return true;
+  final private boolean jj_3_114() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_67()) {
+    if (jj_3_115()) {
     jj_scanpos = xsp;
-    if (jj_3_132()) return true;
+    if (jj_3_116()) {
+    jj_scanpos = xsp;
+    if (jj_3_117()) return true;
     }
+    }
+    if (jj_3R_46()) return true;
     return false;
   }
 
@@ -3711,10 +3756,20 @@ public class SQLParser implements SQLParserConstants {
     return false;
   }
 
-  final private boolean jj_3_77() {
-    if (jj_scan_token(REPLY_REPEATING_GROUP)) return true;
-    if (jj_scan_token(DOT)) return true;
-    if (jj_3R_31()) return true;
+  final private boolean jj_3R_19() {
+    if (jj_3R_46()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_114()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3R_22() {
+    if (jj_scan_token(JOINPLUS)) return true;
+    if (jj_3R_23()) return true;
+    if (jj_3R_19()) return true;
     return false;
   }
 

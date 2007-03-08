@@ -78,23 +78,29 @@ public abstract class Interpreter {
 
     public Object eval(EntryMapping entryMapping, AttributeMapping attributeMapping) throws Exception {
         try {
-            if (attributeMapping.getConstant() != null) {
-                return attributeMapping.getConstant();
+            Object constant = attributeMapping.getConstant();
+            if (constant != null) {
+                return constant;
+            }
 
-            } else if (attributeMapping.getVariable() != null) {
-                String name = attributeMapping.getVariable();
-                Object value = get(name);
-                if (value == null && name.startsWith("primaryKey.")) {
-                    value = get(name.substring(11));
+            String variable = attributeMapping.getVariable();
+            if (variable != null) {
+                Object value = get(variable);
+                if (value == null && variable.startsWith("primaryKey.")) {
+                    value = get(variable.substring(11));
                 }
                 return value;
 
-            } else if (attributeMapping.getExpression() != null) {
-                return eval(entryMapping, attributeMapping.getExpression());
-
-            } else {
-                return null;
             }
+
+            Expression expression = attributeMapping.getExpression();
+            if (expression != null) {
+                return eval(entryMapping, expression);
+
+            }
+
+            return null;
+
         } catch (Exception e) {
             throw new Exception("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage(), e);
         }
