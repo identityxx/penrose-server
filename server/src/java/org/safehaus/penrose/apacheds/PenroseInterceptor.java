@@ -24,6 +24,7 @@ import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
@@ -71,7 +72,8 @@ public class PenroseInterceptor extends BaseInterceptor {
         allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
 
         Penrose penrose = penroseServer.getPenrose();
-        this.partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        partitionManager = penroseContext.getPartitionManager();
     }
 
     public void init(

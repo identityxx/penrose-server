@@ -6,6 +6,7 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.*;
@@ -34,7 +35,8 @@ public class StaticTestCase extends TestCase {
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
         Partition partition = new Partition(partitionConfig);

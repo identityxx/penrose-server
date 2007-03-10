@@ -17,6 +17,9 @@
  */
 package org.safehaus.penrose.interpreter;
 
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
+
 import java.util.TreeMap;
 import java.util.Map;
 
@@ -24,6 +27,9 @@ import java.util.Map;
  * @author Endi S. Dewata
  */
 public class InterpreterManager {
+
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
     Map interpreters = new TreeMap();
 
@@ -47,5 +53,21 @@ public class InterpreterManager {
 
         Class clazz = Class.forName(interpreterConfig.getInterpreterClass());
         return (Interpreter)clazz.newInstance();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

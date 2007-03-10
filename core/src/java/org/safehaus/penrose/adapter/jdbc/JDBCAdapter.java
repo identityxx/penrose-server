@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jdbc;
+package org.safehaus.penrose.adapter.jdbc;
 
 import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -37,6 +37,9 @@ import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.jdbc.JDBCFilterTool;
+import org.safehaus.penrose.jdbc.JDBCFormatter;
 
 import javax.sql.DataSource;
 import javax.naming.directory.ModificationItem;

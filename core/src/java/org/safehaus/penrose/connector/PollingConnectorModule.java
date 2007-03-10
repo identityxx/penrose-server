@@ -22,18 +22,22 @@ import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -65,9 +69,14 @@ public class PollingConnectorModule extends Module {
         interval = s == null ? DEFAULT_INTERVAL : Integer.parseInt(s);
         log.debug("Interval: "+interval);
 
-        connector = penrose.getConnector();
+        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
+        ConnectorManager connectorManager = penroseContext.getConnectorManager();
+        connector = connectorManager.getConnector(connectorConfig.getName());
+        
         sourceCacheManager = connector.getSourceCacheManager();
-        engine = penrose.getEngine();
+
+        EngineManager engineManager = penroseContext.getEngineManager();
+        engine = engineManager.getEngine("DEFAULT");
     }
 
     public void start() throws Exception {
@@ -194,7 +203,9 @@ public class PollingConnectorModule extends Module {
         }
 
         log.debug("Invalidating entry cache");
-        EntryCache entryCache = penrose.getHandler().getEntryCache();
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
+        EntryCache entryCache = handler.getEntryCache();
         entryCache.invalidate(partition);
 
         sourceCacheManager.setLastChangeNumber(partition, sourceConfig, lastChangeNumber);
@@ -226,9 +237,9 @@ public class PollingConnectorModule extends Module {
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
         Collection dns = engine.computeDns(partition, interpreter, entryMapping, sourceValues);
 
-        PenroseSession session = penrose.newSession();
+        SessionManager sessionManager = penroseContext.getSessionManager();
+        PenroseSession session = sessionManager.newSession();
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         session.setBindDn(penroseConfig.getRootDn());
 
         PenroseSearchControls sc = new PenroseSearchControls();
@@ -268,7 +279,8 @@ public class PollingConnectorModule extends Module {
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
         Collection dns = engine.computeDns(partition, interpreter, entryMapping, sourceValues);
 
-        Handler handler = penrose.getHandler();
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
         EntryCache entryCache = handler.getEntryCache();
 
         for (Iterator i=dns.iterator(); i.hasNext(); ) {

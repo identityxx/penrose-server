@@ -15,7 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.adapter;
+
+import org.safehaus.penrose.adapter.AdapterConfigMBean;
 
 import java.util.Properties;
 import java.util.Collection;

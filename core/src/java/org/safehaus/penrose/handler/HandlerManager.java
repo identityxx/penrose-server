@@ -17,16 +17,9 @@
  */
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,20 +36,13 @@ public class HandlerManager {
     
     Map handlers = new TreeMap();
 
-    private Penrose penrose;
-    private SessionManager sessionManager;
-    private SchemaManager schemaManager;
-    private InterpreterManager interpreterManager;
-
     private PenroseConfig penroseConfig;
-    private PartitionManager partitionManager;
-    private ModuleManager moduleManager;
-    private ThreadManager threadManager;
+    private PenroseContext penroseContext;
 
     public HandlerManager() {
     }
 
-    public void init(HandlerConfig handlerConfig, EngineManager engineManager) throws Exception {
+    public void init(HandlerConfig handlerConfig) throws Exception {
 
         String name = handlerConfig.getName();
         String className = handlerConfig.getHandlerClass();
@@ -69,7 +55,8 @@ public class HandlerManager {
         Class clazz = Class.forName(className);
         Handler handler = (Handler)clazz.newInstance();
 
-        handler.setPenrose(penrose);
+        handler.setPenroseConfig(penroseConfig);
+        handler.setPenroseContext(penroseContext);
         handler.init(handlerConfig);
 
         handlers.put(handlerConfig.getName(), handler);
@@ -105,30 +92,6 @@ public class HandlerManager {
         }
     }
 
-    public SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
-    public InterpreterManager getInterpreterFactory() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
-
     public PenroseConfig getPenroseConfig() {
         return penroseConfig;
     }
@@ -137,35 +100,11 @@ public class HandlerManager {
         this.penroseConfig = penroseConfig;
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
-    }
-
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

@@ -27,8 +27,10 @@ import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.naming.PenroseContext;
 
 import javax.naming.directory.*;
 import java.util.Collection;
@@ -40,25 +42,23 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
     public final static String CONNECTION = "connection";
 
-    public PartitionManager partitionManager;
-    public ConnectionManager connectionManager;
-
     public String connectionName;
 
     public void init() throws Exception {
 
         connectionName = getParameter(CONNECTION);
 
-        partitionManager = penrose.getPartitionManager();
-        connectionManager = penrose.getConnectionManager();
-
-        Handler handler = penrose.getHandlerManager().getHandler(partition);
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler(partition);
         EntryCache entryCache = handler.getEntryCache();
 
         entryCache.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+
         LDAPClient client = (LDAPClient)connectionManager.openConnection(connectionName);
         return client.getContext();
     }
@@ -93,6 +93,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
         DN baseDn = (DN)event.getSource();
+
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition partition = partitionManager.getPartition(baseDn);
         Collection entryMappings = partition.findEntryMappings(baseDn);
 

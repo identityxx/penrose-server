@@ -18,13 +18,14 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.TreeMap;
 import java.util.Map;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -33,21 +34,20 @@ public class SchemaManager implements SchemaManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+
     private Map schemas = new TreeMap();
     private Schema allSchema = new Schema();
 
     public SchemaManager() {
     }
 
-    public void load(String home, Collection schemaConfigs) throws Exception {
-
-        for (Iterator i=schemaConfigs.iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
-            load(home, schemaConfig);
-        }
+    public void init(SchemaConfig schemaConfig) throws Exception {
+        init(penroseConfig.getHome(), schemaConfig);
     }
 
-    public void load(String home, SchemaConfig schemaConfig) throws Exception {
+    public void init(String home, SchemaConfig schemaConfig) throws Exception {
 
         Schema schema = getSchema(schemaConfig.getName());
         if (schema != null) return;
@@ -123,5 +123,21 @@ public class SchemaManager implements SchemaManagerMBean {
         if (attributeType == null) return attributeName;
 
         return attributeType.getName();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

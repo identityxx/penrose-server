@@ -19,6 +19,8 @@ package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -37,7 +39,9 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public final static String STARTING = "STARTING";
     public final static String STARTED  = "STARTED";
 
-    public Penrose penrose;
+    public PenroseConfig penroseConfig;
+    public PenroseContext penroseContext;
+
     public Partition partition;
     public ModuleConfig moduleConfig;
 
@@ -122,14 +126,6 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public void afterSearch(SearchEvent event) throws Exception {
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
     public void setModuleConfig(ModuleConfig moduleConfig) {
         this.moduleConfig = moduleConfig;
     }
@@ -152,5 +148,21 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

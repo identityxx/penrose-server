@@ -3,27 +3,28 @@ package org.safehaus.penrose.mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Properties;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
  */
-public class EngineMapping implements Cloneable {
+public class HandlerMapping implements Cloneable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
 	private String name = "DEFAULT";
 
-    private String engineName;
+    private String handlerName;
 
     private Properties parameters = new Properties();
 
-	public EngineMapping() {
+	public HandlerMapping() {
 	}
 
-    public EngineMapping(String name, String engineName) {
+    public HandlerMapping(String name, String handlerName) {
         this.name = name;
-        this.engineName = engineName;
+        this.handlerName = handlerName;
     }
 
 	public String getName() {
@@ -34,12 +35,12 @@ public class EngineMapping implements Cloneable {
 		this.name = name;
 	}
 
-    public String getEngineName() {
-        return engineName;
+    public String getHandlerName() {
+        return handlerName;
     }
 
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
     }
 
     public String getParameter(String name) {
@@ -64,7 +65,7 @@ public class EngineMapping implements Cloneable {
 
     public int hashCode() {
         return (name == null ? 0 : name.hashCode()) +
-                (engineName == null ? 0 : engineName.hashCode()) +
+                (handlerName == null ? 0 : handlerName.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode());
     }
 
@@ -78,25 +79,25 @@ public class EngineMapping implements Cloneable {
         if (this == object) return true;
         if((object == null) || (object.getClass() != this.getClass())) return false;
 
-        EngineMapping engineMapping = (EngineMapping)object;
-        if (!equals(name, engineMapping.name)) return false;
-        if (!equals(engineName, engineMapping.engineName)) return false;
-        if (!equals(parameters, engineMapping.parameters)) return false;
+        HandlerMapping handlerMapping = (HandlerMapping)object;
+        if (!equals(name, handlerMapping.name)) return false;
+        if (!equals(handlerName, handlerMapping.handlerName)) return false;
+        if (!equals(parameters, handlerMapping.parameters)) return false;
 
         return true;
     }
 
-    public void copy(EngineMapping engineMapping) {
-        name = engineMapping.name;
-        engineName = engineMapping.engineName;
+    public void copy(HandlerMapping handlerMapping) {
+        name = handlerMapping.name;
+        handlerName = handlerMapping.handlerName;
 
         removeParameters();
-        parameters.putAll(engineMapping.parameters);
+        parameters.putAll(handlerMapping.parameters);
     }
 
     public Object clone() {
-        EngineMapping engineMapping = new EngineMapping();
-        engineMapping.copy(this);
-        return engineMapping;
+        HandlerMapping handlerMapping = new HandlerMapping();
+        handlerMapping.copy(this);
+        return handlerMapping;
     }
 }

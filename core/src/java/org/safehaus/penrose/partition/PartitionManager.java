@@ -19,8 +19,13 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.connector.ConnectionManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -34,42 +39,59 @@ public class PartitionManager implements PartitionManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private SchemaManager schemaManager;
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
-    private Map partitions = new TreeMap();
+    private PartitionValidator partitionValidator = new PartitionValidator();
+
+    private Map partitions = new LinkedHashMap();
 
     public PartitionManager() {
     }
 
-    public Collection load(String home, Collection partitionConfigs) throws Exception {
-
-        Collection newPartitions = new ArrayList();
-
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-
-            Partition partition = load(home, partitionConfig);
-            if (partition == null) continue;
-
-            newPartitions.add(partition);
-        }
-
-        return newPartitions;
+    public void load(PartitionConfig partitionConfig) throws Exception {
+        load(penroseConfig.getHome(), partitionConfig);
     }
 
-    public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
-
-        Partition partition = getPartition(partitionConfig.getName());
-        if (partition != null) return null;
+    public void load(String home, PartitionConfig partitionConfig) throws Exception {
 
         log.debug("Loading "+partitionConfig.getName()+" partition.");
 
         PartitionReader partitionReader = new PartitionReader(home);
-        partition = partitionReader.read(partitionConfig);
+        Partition partition = partitionReader.read(partitionConfig);
 
-        addPartition(partition);
+        Collection results = partitionValidator.validate(partition);
 
-        return partition;
+        for (Iterator i=results.iterator(); i.hasNext(); ) {
+            PartitionValidationResult resultPartition = (PartitionValidationResult)i.next();
+
+            if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
+                log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+            } else {
+                log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+            }
+        }
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        for (Iterator i=partition.getConnectionConfigs().iterator(); i.hasNext(); ) {
+            ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
+
+            String adapterName = connectionConfig.getAdapterName();
+            if (adapterName == null) throw new Exception("Missing adapter name");
+
+            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+
+            connectionManager.init(partition, connectionConfig, adapterConfig);
+        }
+
+        ModuleManager moduleManager = penroseContext.getModuleManager();
+        for (Iterator i=partition.getModuleConfigs().iterator(); i.hasNext(); ) {
+            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+            moduleManager.load(partition, moduleConfig);
+        }
+
+        partitions.put(partition.getName(), partition);
     }
 
     public void store(String home, Collection partitionConfigs) throws Exception {
@@ -194,11 +216,29 @@ public class PartitionManager implements PartitionManagerMBean {
         return partitions.keySet();
     }
 
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+        partitionValidator.setPenroseContext(penroseContext);
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+        partitionValidator.setPenroseConfig(penroseConfig);
+    }
+
+    public PartitionValidator getPartitionValidator() {
+        return partitionValidator;
+    }
+
+    public void setPartitionValidator(PartitionValidator partitionValidator) {
+        this.partitionValidator = partitionValidator;
     }
 }

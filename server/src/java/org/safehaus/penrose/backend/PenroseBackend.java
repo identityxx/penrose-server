@@ -21,6 +21,7 @@ import java.util.*;
 import java.io.File;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
@@ -85,7 +86,8 @@ public class PenroseBackend implements Backend {
         if (penroseConfig.getRootDn().equals(dn)) return true;
         
         Penrose penrose = penroseServer.getPenrose();
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         return partitionManager.getPartition(dn) != null;
     }
 

@@ -18,10 +18,15 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.jdbc.JDBCAdapter;
+import org.safehaus.penrose.connector.ConnectorConfig;
+import org.safehaus.penrose.connector.ConnectorManager;
+import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.*;
 
@@ -44,14 +49,21 @@ public class CacheManager {
     }
 
     public static void create(Penrose penrose) throws Exception {
-        Connector connector = penrose.getConnector();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+
+        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
+        ConnectorManager connectorManager = penroseContext.getConnectorManager();
+        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.create();
 
-        Handler handler = penrose.getHandler();
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
         EntryCache entryCache = handler.getEntryCache();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -61,14 +73,21 @@ public class CacheManager {
     }
 
     public static void load(Penrose penrose) throws Exception {
-        Connector connector = penrose.getConnector();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+
+        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
+        ConnectorManager connectorManager = penroseContext.getConnectorManager();
+        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.load();
 
-        Handler handler = penrose.getHandler();
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
         EntryCache entryCache = handler.getEntryCache();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -78,41 +97,56 @@ public class CacheManager {
 
     public static void clean(Penrose penrose) throws Exception {
 
-        Handler handler = penrose.getHandler();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
         EntryCache entryCache = handler.getEntryCache();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             entryCache.clean(partition);
         }
 
-        Connector connector = penrose.getConnector();
+        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
+        ConnectorManager connectorManager = penroseContext.getConnectorManager();
+        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.clean();
     }
 
     public static void drop(Penrose penrose) throws Exception {
 
-        Handler handler = penrose.getHandler();
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+
+        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler("DEFAULT");
         EntryCache entryCache = handler.getEntryCache();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
             entryCache.drop(partition);
         }
 
-        Connector connector = penrose.getConnector();
+        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
+        ConnectorManager connectorManager = penroseContext.getConnectorManager();
+        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+
         SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
         sourceCacheManager.drop();
     }
 
     public static void changeTable(Penrose penrose) throws Exception {
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         Collection partitions = partitionManager.getPartitions();
         for (Iterator i=partitions.iterator(); i.hasNext(); ) {

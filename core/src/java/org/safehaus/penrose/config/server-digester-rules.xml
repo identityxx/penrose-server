@@ -180,7 +180,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 		<!-- adapter -->
 		<pattern value="adapter">
-			<object-create-rule classname="org.safehaus.penrose.connector.AdapterConfig" />
+			<object-create-rule classname="org.safehaus.penrose.adapter.AdapterConfig" />
             <set-properties-rule>
                 <alias attr-name="class" prop-name="adapterClass" />
             </set-properties-rule>

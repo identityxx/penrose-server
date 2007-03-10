@@ -1,6 +1,7 @@
 package org.safehaus.penrose.mina;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
@@ -35,8 +36,9 @@ public class MinaLDAPService extends LDAPService {
         super.init();
 
         Penrose penrose = getPenroseServer().getPenrose();
+        PenroseContext penroseContext = penrose.getPenroseContext();
 
-        SchemaManager schemaManager = penrose.getSchemaManager();
+        SchemaManager schemaManager = penroseContext.getSchemaManager();
         Collection attributeTypes = schemaManager.getAttributeTypes();
         Set binaryAttributes = new HashSet();
 

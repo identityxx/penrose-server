@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 
 public class SessionManager implements SessionManagerMBean {
 
@@ -30,8 +31,9 @@ public class SessionManager implements SessionManagerMBean {
 
     public final static String SESSION_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
-    private Penrose penrose;
     private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+
     private SessionConfig sessionConfig;
 
     public Map sessions = new LinkedHashMap();
@@ -74,7 +76,8 @@ public class SessionManager implements SessionManagerMBean {
         //log.debug("Creating session "+sessionId);
         PenroseSession session = new PenroseSession(this);
         session.setSessionId(sessionId);
-        session.setPenrose(penrose);
+        session.setPenroseConfig(penroseConfig);
+        session.setPenroseContext(penroseContext);
 
         sessions.put(sessionId, session);
 
@@ -190,14 +193,15 @@ public class SessionManager implements SessionManagerMBean {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-        this.sessionConfig = penroseConfig.getSessionConfig();
+
+        sessionConfig = penroseConfig.getSessionConfig();
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

@@ -27,7 +27,9 @@ public class InMemoryEntryCache extends EntryCache {
 
     public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage(penrose);
+        EntryCacheStorage cacheStorage = new InMemoryEntryCacheStorage();
+        cacheStorage.setPenroseConfig(penroseConfig);
+        cacheStorage.setPenroseContext(penroseContext);
         cacheStorage.setCacheConfig(cacheConfig);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);

@@ -23,6 +23,9 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSearchResults;
@@ -30,8 +33,6 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.DefaultEngine;
-import org.safehaus.penrose.jdbc.JDBCAdapter;
-import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -78,7 +79,8 @@ public class PartitionManagerTest extends TestCase {
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
         Partition partition = new Partition(partitionConfig);

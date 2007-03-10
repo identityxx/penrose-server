@@ -2,14 +2,15 @@ package org.safehaus.penrose.test.mapping.nested;
 
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
-import org.safehaus.penrose.jdbc.JDBCAdapter;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 
 /**
  * @author Endi S. Dewata
@@ -116,7 +117,8 @@ public class NestedTestCase extends JDBCTestCase {
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         partitionManager.addPartition(partition);
 
         penrose.start();

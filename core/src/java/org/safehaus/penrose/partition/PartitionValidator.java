@@ -18,12 +18,13 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -40,7 +41,7 @@ public class PartitionValidator {
     Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
-    private SchemaManager schemaManager;
+    private PenroseContext penroseContext;
 
     public PartitionValidator() {
     }
@@ -154,6 +155,8 @@ public class PartitionValidator {
         Collection objectClasses = entryMapping.getObjectClasses();
         //System.out.println("Checking "+entryMapping" object classes "+objectClasses);
 
+        SchemaManager schemaManager = penroseContext.getSchemaManager();
+
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
             String ocName = (String)i.next();
 
@@ -186,6 +189,7 @@ public class PartitionValidator {
         Collection results = new ArrayList();
 
         //log.debug("Validating entry "+entryMapping"'s attributes");
+        SchemaManager schemaManager = penroseContext.getSchemaManager();
 
         for (Iterator i=entryMapping.getAttributeMappings().iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
@@ -346,11 +350,11 @@ public class PartitionValidator {
         this.penroseConfig = penroseConfig;
     }
 
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

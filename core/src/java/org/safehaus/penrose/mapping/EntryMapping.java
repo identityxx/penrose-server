@@ -91,6 +91,7 @@ public class EntryMapping implements Cloneable {
      */
     private Collection relationships = new ArrayList();
 
+    private HandlerMapping handlerMapping;
     private EngineMapping engineMapping;
 
     /**
@@ -383,6 +384,10 @@ public class EntryMapping implements Cloneable {
         this.childMappings = childMappings;
     }
 
+    public String getHandlerName() {
+        return handlerMapping == null ? "DEFAULT" : handlerMapping.getHandlerName();
+    }
+
     public String getEngineName() {
         return engineMapping == null ? "DEFAULT" : engineMapping.getEngineName();
     }
@@ -443,6 +448,7 @@ public class EntryMapping implements Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(handlerMapping, entryMapping.handlerMapping)) return false;
         if (!equals(engineMapping, entryMapping.engineMapping)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
         if (!equals(parameters, entryMapping.parameters)) return false;
@@ -481,6 +487,7 @@ public class EntryMapping implements Cloneable {
             addRelationship((Relationship)relationship.clone());
         }
 
+        handlerMapping = (HandlerMapping)entryMapping.handlerMapping.clone();
         engineMapping = (EngineMapping)entryMapping.engineMapping.clone();
 
         removeACL();
@@ -497,6 +504,14 @@ public class EntryMapping implements Cloneable {
         EntryMapping entryMapping = new EntryMapping();
         entryMapping.copy(this);
         return entryMapping;
+    }
+
+    public HandlerMapping getHandlerMapping() {
+        return handlerMapping;
+    }
+
+    public void setHandlerMapping(HandlerMapping handlerMapping) {
+        this.handlerMapping = handlerMapping;
     }
 
     public EngineMapping getEngineMapping() {

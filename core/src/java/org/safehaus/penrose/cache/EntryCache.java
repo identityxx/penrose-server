@@ -24,6 +24,8 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.filter.Filter;
 import org.slf4j.LoggerFactory;
@@ -43,14 +45,17 @@ public class EntryCache {
 
     CacheConfig cacheConfig;
 
-    Penrose penrose;
+    PenroseConfig penroseConfig;
+    PenroseContext penroseContext;
 
     public Map caches = new TreeMap();
     public Collection listeners = new ArrayList();
 
     public EntryCacheStorage createCacheStorage(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        EntryCacheStorage cacheStorage = new EntryCacheStorage(penrose);
+        EntryCacheStorage cacheStorage = new EntryCacheStorage();
+        cacheStorage.setPenroseConfig(penroseConfig);
+        cacheStorage.setPenroseContext(penroseContext);
         cacheStorage.setCacheConfig(cacheConfig);
         cacheStorage.setPartition(partition);
         cacheStorage.setEntryMapping(entryMapping);
@@ -298,11 +303,19 @@ public class EntryCache {
         }
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

@@ -23,6 +23,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -37,11 +38,12 @@ public class ACLEngine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    Penrose penrose;
+    PenroseConfig penroseConfig;
+    PenroseContext penroseContext;
+
     private SchemaManager schemaManager;
 
-    public ACLEngine(Penrose penrose) {
-        this.penrose = penrose;
+    public ACLEngine() {
     }
 
     public void addPermission(Set set, String permission) {
@@ -381,5 +383,23 @@ public class ACLEngine {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+
+        schemaManager = penroseContext.getSchemaManager();
     }
 }

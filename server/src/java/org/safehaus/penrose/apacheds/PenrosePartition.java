@@ -22,6 +22,7 @@ import org.apache.directory.shared.ldap.name.LdapDN;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.server.core.configuration.PartitionConfiguration;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -53,7 +54,8 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
     public void setPenrose(Penrose penrose) throws Exception {
         this.penrose = penrose;
-        this.partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        partitionManager = penroseContext.getPartitionManager();
     }
 
     public void init(

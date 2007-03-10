@@ -26,6 +26,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -39,7 +41,8 @@ public class EntryCacheStorage {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Penrose penrose;
+    PenroseConfig penroseConfig;
+    PenroseContext penroseContext;
 
     Partition partition;
     EntryMapping entryMapping;
@@ -49,8 +52,7 @@ public class EntryCacheStorage {
     int size;
     int expiration; // minutes
 
-    public EntryCacheStorage(Penrose penrose) throws Exception {
-        this.penrose = penrose;
+    public EntryCacheStorage() throws Exception {
     }
 
     public CacheConfig getCacheConfig() {
@@ -150,11 +152,19 @@ public class EntryCacheStorage {
 
     public void remove(DN dn) throws Exception { }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

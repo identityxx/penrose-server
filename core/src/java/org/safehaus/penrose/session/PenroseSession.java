@@ -30,6 +30,7 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -47,11 +48,11 @@ public class PenroseSession {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Penrose penrose;
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+
     private SessionManager sessionManager;
     private EventManager eventManager;
-    private SchemaManager schemaManager;
-    private PartitionManager partitionManager;
     private HandlerManager handlerManager;
 
     private Object sessionId;
@@ -115,6 +116,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
@@ -196,7 +198,6 @@ public class PenroseSession {
     			eventManager.postEvent(dn, afterBindEvent);
         	}
 
-            PenroseConfig penroseConfig = penrose.getPenroseConfig();
             DN rootDn = penroseConfig.getRootDn();
 
             try {
@@ -211,6 +212,7 @@ public class PenroseSession {
                     rootUser = true;
 
                 } else {
+                    PartitionManager partitionManager = penroseContext.getPartitionManager();
                     Partition partition = partitionManager.getPartition(dn);
 
                     if (partition == null) {
@@ -256,6 +258,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
@@ -324,6 +327,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
@@ -389,6 +393,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
@@ -453,6 +458,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(dn);
 
             if (partition == null) {
@@ -536,6 +542,7 @@ public class PenroseSession {
         Partition partition = null;
 
         try {
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
             partition = partitionManager.getPartition(baseDn);
 
             if (partition == null && !baseDn.isEmpty()) {
@@ -635,6 +642,7 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             try {
                 if (!rootUser && bindDn != null) {
+                    PartitionManager partitionManager = penroseContext.getPartitionManager();
                     Partition partition = partitionManager.getPartition(bindDn);
 
                     if (partition == null) {
@@ -784,22 +792,6 @@ public class PenroseSession {
         this.bindPassword = bindPassword;
     }
 
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
     public boolean isRootUser() {
         return rootUser;
     }
@@ -816,14 +808,25 @@ public class PenroseSession {
         this.handlerManager = handlerManager;
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-        String s = (String)penrose.getPenroseConfig().getProperty("enableEventListeners");
-        enableEventListeners = s == null ? true : new Boolean(s).booleanValue();
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
 
+        handlerManager = penroseContext.getHandlerManager();
+        eventManager = penroseContext.getEventManager();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+
+        String s = penroseConfig.getProperty("enableEventListeners");
+        enableEventListeners = s == null ? true : new Boolean(s).booleanValue();
     }
 }

@@ -19,6 +19,8 @@ package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,7 +31,8 @@ import java.util.ArrayList;
  */
 public class EventManager {
 
-    private ModuleManager moduleManager;
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
     public Collection addListeners = new ArrayList();
     public Collection bindListeners = new ArrayList();
@@ -41,6 +44,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, AddEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(addListeners);
 
@@ -64,6 +68,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, BindEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(bindListeners);
 
@@ -96,6 +101,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, CompareEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(compareListeners);
 
@@ -119,6 +125,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, DeleteEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(deleteListeners);
 
@@ -142,6 +149,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, ModifyEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modifyListeners);
 
@@ -165,6 +173,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, ModRdnEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modrdnListeners);
 
@@ -188,6 +197,7 @@ public class EventManager {
 
     public boolean postEvent(DN dn, SearchEvent event) throws Exception {
 
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(searchListeners);
 
@@ -207,14 +217,6 @@ public class EventManager {
         }
 
         return true;
-    }
-
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
     }
 
     public void addAddListener(AddListener listener) {
@@ -273,4 +275,19 @@ public class EventManager {
         searchListeners.remove(listener);
     }
 
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
 }

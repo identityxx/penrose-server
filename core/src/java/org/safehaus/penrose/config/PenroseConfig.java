@@ -26,7 +26,7 @@ import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;

@@ -315,6 +315,17 @@ public class PartitionWriter {
             entryElement.add(toElement(relationship));
         }
 
+        HandlerMapping handlerMapping = entryMapping.getHandlerMapping();
+        if (handlerMapping != null) {
+            Element element = new DefaultElement("handler");
+
+            Element handlerName = new DefaultElement("handler-name");
+            handlerName.add(new DefaultText(handlerMapping.getHandlerName()));
+            element.add(handlerName);
+
+            entryElement.add(element);
+        }
+
         EngineMapping engineMapping = entryMapping.getEngineMapping();
         if (engineMapping != null) {
             Element element = new DefaultElement("engine");

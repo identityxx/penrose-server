@@ -18,6 +18,8 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -33,20 +35,10 @@ public class ModuleManager implements ModuleManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Penrose penrose;
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
     private Map modules = new LinkedHashMap();
-
-    public void load(Collection partitions) throws Exception {
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
-                ModuleConfig moduleConfig = (ModuleConfig)j.next();
-                load(partition, moduleConfig);
-            }
-        }
-    }
 
     public void load(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
@@ -62,7 +54,8 @@ public class ModuleManager implements ModuleManagerMBean {
 
         module.setModuleConfig(moduleConfig);
         module.setPartition(partition);
-        module.setPenrose(penrose);
+        module.setPenroseConfig(penroseConfig);
+        module.setPenroseContext(penroseContext);
         module.init();
 
         addModule(partition.getName(), module);
@@ -193,21 +186,13 @@ public class ModuleManager implements ModuleManagerMBean {
         modules.clear();
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
     public Collection getModules(DN dn) throws Exception {
 
         //log.debug("Finding matching modules for \""+dn+"\".");
 
         Collection list = new ArrayList();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition partition = partitionManager.getPartition(dn);
         
         if (partition == null) return list;
@@ -232,4 +217,19 @@ public class ModuleManager implements ModuleManagerMBean {
         return list;
     }
 
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
 }

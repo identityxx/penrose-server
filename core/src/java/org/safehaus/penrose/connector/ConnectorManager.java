@@ -20,6 +20,7 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +38,7 @@ public class ConnectorManager {
     Map connectors = new TreeMap();
 
     private PenroseConfig penroseConfig;
-    private ConnectionManager connectionManager;
-    private PartitionManager partitionManager;
+    private PenroseContext penroseContext;
 
     public ConnectorManager() {
     }
@@ -52,8 +52,8 @@ public class ConnectorManager {
 
         connector.setConnectorConfig(connectorConfig);
         connector.setPenroseConfig(penroseConfig);
-        connector.setConnectionManager(connectionManager);
-        connector.setPartitionManager(partitionManager);
+        connector.setConnectionManager(penroseContext.getConnectionManager());
+        connector.setPartitionManager(penroseContext.getPartitionManager());
         
         connector.init();
 
@@ -69,6 +69,8 @@ public class ConnectorManager {
     }
 
     public void start() throws Exception {
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+
         for (Iterator i=connectors.values().iterator(); i.hasNext(); ) {
             Connector connector = (Connector)i.next();
 
@@ -96,19 +98,11 @@ public class ConnectorManager {
         this.penroseConfig = penroseConfig;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

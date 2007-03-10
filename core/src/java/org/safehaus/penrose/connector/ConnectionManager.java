@@ -19,6 +19,9 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -30,6 +33,9 @@ import java.util.*;
 public class ConnectionManager implements ConnectionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
     public Map connectionConfigs = new TreeMap();
     public Map adapterConfigs = new TreeMap();
@@ -101,5 +107,21 @@ public class ConnectionManager implements ConnectionManagerMBean {
     public Object openConnection(Partition partition, String connectionName) throws Exception {
         Connection connection = getConnection(partition, connectionName);
         return connection.openConnection();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

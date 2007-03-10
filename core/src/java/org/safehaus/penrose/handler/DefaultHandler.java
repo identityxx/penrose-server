@@ -471,7 +471,9 @@ public class DefaultHandler extends Handler {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        getSearchHandler().search(
+
+                        SearchHandler searchHandler = getSearchHandler();
+                        searchHandler.search(
                                 session,
                                 partition,
                                 entryMapping,
@@ -492,7 +494,7 @@ public class DefaultHandler extends Handler {
                 }
             };
 
-            executorService.execute(runnable);
+            threadManager.execute(runnable);
         }
     }
 

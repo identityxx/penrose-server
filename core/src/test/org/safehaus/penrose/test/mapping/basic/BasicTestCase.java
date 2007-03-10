@@ -2,12 +2,13 @@ package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.connector.AdapterConfig;
-import org.safehaus.penrose.jdbc.JDBCAdapter;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
@@ -44,7 +45,8 @@ public class BasicTestCase extends JDBCTestCase {
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
         Partition partition = new Partition(partitionConfig);

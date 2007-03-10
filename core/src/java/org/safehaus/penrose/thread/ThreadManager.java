@@ -19,100 +19,70 @@ package org.safehaus.penrose.thread;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadManager {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-	private Queue idleWorkers;
-	private ThreadWorker[] workers;
-	
-	public ThreadManager(int numberOfThreads) {
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
-        //log.debug("Creating ThreadManager("+numberOfThreads+")");
+    private ThreadGroup        threadGroup;
+    private ThreadPoolExecutor executorService;
 
-		// make sure that it is at least one
-		numberOfThreads = Math.max(1, numberOfThreads);
-		
-		idleWorkers = new Queue();
-		workers = new ThreadWorker[numberOfThreads];
-		
-		for (int i=0; i<workers.length; i++) {
-			workers[i] = new ThreadWorker(idleWorkers);
-		}
-	}
-
-    public int getSize() {
-        return workers.length;
-    }
-    
-    public void execute(Runnable runnable) throws InterruptedException {
-        //execute(runnable, log.isDebugEnabled());
-        execute(runnable, false);
+    public ThreadManager() {
+        threadGroup = new ThreadGroup("Penrose");
     }
 
-    public void execute(Runnable runnable, boolean foreground) throws InterruptedException {
-        //log.info("Executing new thread");
+    public void start() throws Exception {
+        String s = penroseConfig.getProperty("maxThreads");
+        int maxThreads = s == null ? 20 : Integer.parseInt(s);
 
-        //String s = engineConfig.getParameter(EngineConfig.ALLOW_CONCURRENCY);
-        //boolean allowConcurrency = s == null ? true : new Boolean(s).booleanValue();
+        executorService = new ThreadPoolExecutor(
+                maxThreads,
+                maxThreads,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue()
+        );
 
-        //if (threadManager == null || !allowConcurrency || log.isDebugEnabled()) {
+        executorService.setThreadFactory(new ThreadFactory() {
+            AtomicInteger threadId = new AtomicInteger();
+            public Thread newThread(Runnable r) {
+                return new Thread(threadGroup, r, threadGroup.getName()+"-"+threadId.getAndIncrement());
+            }
+        });
+    }
 
-        if (foreground) {
-            runnable.run();
+    public void stop() throws Exception {
+        executorService.shutdown();
+    }
 
-        } else {
-            ThreadWorker worker = (ThreadWorker)idleWorkers.remove();
-            worker.process(runnable);
-        }
-	}
-	
-	public void stopRequestIdleWorkers() {
-        Collection c = idleWorkers.getAll();
-        for (Iterator i=c.iterator(); i.hasNext(); ) {
-            ((ThreadWorker)i.next()).stopRequest();
-        }
-	}
-	
-	public void stopRequestAllWorkers() {
-		// Stop the idle one's first productive
-		stopRequestIdleWorkers();
-		
-		// give the idle workers a quick chance to die
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException ex) {
-			// ignore
-		}
-		
-		// Step through the list of all workers
-		for (int i=0; i<workers.length; i++) {
-			if (workers[i].isAlive()) {
-				workers[i].stopRequest();
-			}
-		}
-	}
-	
-	public void stopRequest() {
-		// Stop the idle one's first productive
-		stopRequestIdleWorkers();
-		
-		// give the idle workers a quick chance to die
-		try {
-			Thread.sleep(250);
-		} catch (InterruptedException ex) {
-			// ignore
-		}
-		
-		// Step through the list of all workers
-		for (int i=0; i<workers.length; i++) {
-			if (workers[i].isAlive()) {
-				workers[i].stopRequest();
-			}
-		}
-	}
+    public void execute(Runnable runnable) throws Exception {
+        executorService.execute(runnable);
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
 }

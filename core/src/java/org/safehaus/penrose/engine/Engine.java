@@ -38,6 +38,7 @@ import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -52,9 +53,10 @@ public abstract class Engine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public Penrose penrose;
-    public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;
+    public PenroseContext penroseContext;
+
+    public EngineConfig engineConfig;
 
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
@@ -108,7 +110,7 @@ public abstract class Engine {
         return interpreterManager;
     }
 
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
+    public void setInterpreterManager(InterpreterManager interpreterManager) {
         this.interpreterManager = interpreterManager;
     }
 
@@ -697,12 +699,18 @@ public abstract class Engine {
         this.connectorManager = connectorManager;
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+
+        schemaManager = penroseContext.getSchemaManager();
+        interpreterManager = penroseContext.getInterpreterManager();
+        connectorManager = penroseContext.getConnectorManager();
+        connectionManager =penroseContext.getConnectionManager();
+        partitionManager = penroseContext.getPartitionManager();
     }
 }
 

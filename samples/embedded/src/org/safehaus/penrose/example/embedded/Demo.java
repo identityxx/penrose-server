@@ -5,6 +5,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -102,7 +103,8 @@ public class Demo {
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         partitionManager.addPartition(partition);
 
         log.warn("Starting Penrose.");

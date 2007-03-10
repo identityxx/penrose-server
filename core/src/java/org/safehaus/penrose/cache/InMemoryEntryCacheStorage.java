@@ -39,8 +39,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     Map dataMap = new TreeMap();
     Map dataExpirationMap = new LinkedHashMap();
 
-    public InMemoryEntryCacheStorage(Penrose penrose) throws Exception {
-        super(penrose);
+    public InMemoryEntryCacheStorage() throws Exception {
     }
 
     public Entry get(DN dn) throws Exception {

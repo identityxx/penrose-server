@@ -32,7 +32,8 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.naming.PenroseInitialContextFactory;
+import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
@@ -41,10 +42,7 @@ import org.slf4j.Logger;
 
 import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author Endi S. Dewata
@@ -59,22 +57,21 @@ public abstract class Handler {
     public final static String STOPPING = "STOPPING";
 
     PenroseConfig penroseConfig;
-    HandlerConfig handlerConfig;
+    PenroseContext penroseContext;
 
-    Penrose penrose;
+    HandlerConfig handlerConfig;
 
     SchemaManager schemaManager;
     EngineManager engineManager;
 
     SessionManager sessionManager;
-    PartitionManager partitionManager;
 
     InterpreterManager interpreterManager;
     ACLEngine aclEngine;
     FilterTool filterTool;
     EntryCache entryCache;
 
-    ExecutorService executorService;
+    ThreadManager threadManager;
 
     private String status = STOPPED;
 
@@ -84,22 +81,17 @@ public abstract class Handler {
     public void init(HandlerConfig handlerConfig) throws Exception {
         this.handlerConfig = handlerConfig;
 
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, PenroseInitialContextFactory.class.getName());
-        Context context = new InitialContext(env);
+        sessionManager     = penroseContext.getSessionManager();
+        schemaManager      = penroseContext.getSchemaManager();
+        interpreterManager = penroseContext.getInterpreterManager();
+        engineManager      = penroseContext.getEngineManager();
 
-        sessionManager     = penrose.getSessionManager();
-        schemaManager      = penrose.getSchemaManager();
-        interpreterManager = penrose.getInterpreterFactory();
-        engineManager      = penrose.getEngineManager();
-        partitionManager   = penrose.getPartitionManager();
+        threadManager = penroseContext.getThreadManager();
 
-        executorService    = (ExecutorService)context.lookup("java:comp/ExecutorService");
+        aclEngine = new ACLEngine();
+        aclEngine.setPenroseConfig(penroseConfig);
+        aclEngine.setPenroseContext(penroseContext);
 
-        aclEngine = new ACLEngine(penrose);
-        aclEngine.setSchemaManager(schemaManager);
-
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
 
@@ -108,8 +100,8 @@ public abstract class Handler {
         entryCache = (EntryCache)clazz.newInstance();
 
         entryCache.setCacheConfig(cacheConfig);
-        entryCache.setPenrose(penrose);
-
+        entryCache.setPenroseConfig(penroseConfig);
+        entryCache.setPenroseContext(penroseContext);
         entryCache.init();
     }
 
@@ -222,6 +214,7 @@ public abstract class Handler {
         attributeValues.set("vendorName", Penrose.VENDOR_NAME);
         attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
 
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition p = (Partition)i.next();
             for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
@@ -401,14 +394,6 @@ public abstract class Handler {
         this.penroseConfig = penroseConfig;
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
     public EngineManager getEngineManager() {
         return engineManager;
     }
@@ -481,14 +466,6 @@ public abstract class Handler {
 
     public Engine getEngine(String name) {
         return engineManager.getEngine(name);
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
     }
 
     public SchemaManager getSchemaManager() {
@@ -597,6 +574,14 @@ public abstract class Handler {
 
     public void setHandlerConfig(HandlerConfig handlerConfig) {
         this.handlerConfig = handlerConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }
 

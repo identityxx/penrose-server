@@ -32,12 +32,14 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.FindHandler;
+import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.*;
@@ -638,7 +640,9 @@ public class EngineImpl extends Engine {
 
             final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
             final PenroseSearchResults loadedEntries = new PenroseSearchResults();
-            final Handler handler = penrose.getHandler();
+
+            HandlerManager handlerManager = penroseContext.getHandlerManager();
+            final Handler handler = handlerManager.getHandler("DEFAULT");
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
 

@@ -35,9 +35,10 @@ import java.util.Iterator;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.connector.AdapterConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 
@@ -301,12 +302,13 @@ public class PenroseJMXService extends Service {
 
     public void registerServices() throws Exception {
         Penrose penrose = getPenroseServer().getPenrose();
+        PenroseContext penroseContext = penrose.getPenroseContext();
 
-        register("Penrose:service=SchemaManager", penrose.getSchemaManager());
-        register("Penrose:service=ConnectionManager", penrose.getConnectionManager());
-        register("Penrose:service=PartitionManager", penrose.getPartitionManager());
-        register("Penrose:service=ModuleManager", penrose.getModuleManager());
-        register("Penrose:service=SessionManager", penrose.getSessionManager());
+        register("Penrose:service=SchemaManager", penroseContext.getSchemaManager());
+        register("Penrose:service=ConnectionManager", penroseContext.getConnectionManager());
+        register("Penrose:service=PartitionManager", penroseContext.getPartitionManager());
+        register("Penrose:service=ModuleManager", penroseContext.getModuleManager());
+        register("Penrose:service=SessionManager", penroseContext.getSessionManager());
         register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
     }
 
@@ -322,7 +324,8 @@ public class PenroseJMXService extends Service {
     public void registerPartitions() throws Exception {
 
         Penrose penrose = getPenroseServer().getPenrose();
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         Collection partitions = partitionManager.getPartitions();
         for (Iterator i=partitions.iterator(); i.hasNext(); ) {
@@ -340,7 +343,8 @@ public class PenroseJMXService extends Service {
     public void unregisterPartitions() throws Exception {
 
         Penrose penrose = getPenroseServer().getPenrose();
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         Collection partitions = partitionManager.getPartitions();
         for (Iterator i=partitions.iterator(); i.hasNext(); ) {
