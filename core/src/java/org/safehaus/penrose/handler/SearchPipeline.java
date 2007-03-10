@@ -7,7 +7,8 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.acl.ACLEngine;
+import org.safehaus.penrose.acl.ACLManager;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +24,10 @@ public class SearchPipeline extends Pipeline {
 
     PenroseSession session;
     Partition partition;
-    Handler handler;
-    ACLEngine aclEngine;
+
+    HandlerManager handlerManager;
+    SchemaManager schemaManager;
+    ACLManager aclEngine;
 
     Set requestedAttributes;
     boolean allRegularAttributes;
@@ -38,8 +41,9 @@ public class SearchPipeline extends Pipeline {
             Results parent,
             PenroseSession session,
             Partition partition,
-            Handler handler,
-            ACLEngine aclEngine,
+            HandlerManager handlerManager,
+            SchemaManager schemaManager,
+            ACLManager aclEngine,
             Set requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
@@ -49,8 +53,10 @@ public class SearchPipeline extends Pipeline {
 
         this.session = session;
         this.partition = partition;
-        this.handler = handler;
-        this.aclEngine = aclEngine;
+
+        this.handlerManager = handlerManager;
+        this.schemaManager  = schemaManager;
+        this.aclEngine      = aclEngine;
 
         this.requestedAttributes = requestedAttributes;
         this.allRegularAttributes = allRegularAttributes;
@@ -77,7 +83,7 @@ public class SearchPipeline extends Pipeline {
                 if (debug) log.debug("Entry \""+entry.getDn()+"\" is not readable.");
                 return;
             }
-            handler.filterAttributes(session, partition, entry);
+            handlerManager.filterAttributes(session, partition, entry);
         }
 
         if (debug) {
@@ -87,10 +93,10 @@ public class SearchPipeline extends Pipeline {
 
         Collection list = (Collection) attributesToRemove.get(entryMapping.getId());
         if (list == null) {
-            list = handler.filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
+            list = handlerManager.filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entryMapping.getId(), list);
         }
-        handler.removeAttributes(entry, list);
+        handlerManager.removeAttributes(entry, list);
 
         if (debug) {
             log.debug("After: "+entry.getDn());

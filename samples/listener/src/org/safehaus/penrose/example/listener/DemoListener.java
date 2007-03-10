@@ -6,6 +6,7 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.pipeline.PipelineAdapter;
 import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.event.SearchListener;
@@ -53,7 +54,9 @@ public class DemoListener implements SearchListener {
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();
 
-        PenroseSession session = penrose.newSession();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        SessionManager sessionManager = penroseContext.getSessionManager();
+        PenroseSession session = sessionManager.newSession();
         session.addSearchListener(this);
 
         session.bind("uid=admin,ou=system", "secret");

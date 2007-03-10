@@ -55,8 +55,8 @@ public class AddHandler {
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
-            Attributes attributes)
-    throws Exception {
+            Attributes attributes
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Adding entry "+dn);

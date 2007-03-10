@@ -17,23 +17,14 @@
  */
 package org.safehaus.penrose;
 
-import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.log4j.Log4jConfigReader;
-import org.safehaus.penrose.log4j.Log4jConfig;
-import org.safehaus.penrose.log4j.LoggerConfig;
-import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.adapter.AdapterConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -109,41 +100,6 @@ public class Penrose {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Initialize Penrose components
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    void init() throws Exception {
-
-        initLoggers();
-
-        penroseContext = new PenroseContext();
-        penroseContext.init(penroseConfig);
-    }
-
-    public void initLoggers() throws Exception {
-
-        String home = penroseConfig.getHome();
-
-        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
-        if (!log4jXml.exists()) return;
-
-        Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
-        Log4jConfig config = configReader.read();
-
-        log.debug("Appenders:");
-        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
-            AppenderConfig appenderConfig = (AppenderConfig)i.next();
-            log.debug(" - "+appenderConfig.getName());
-        }
-
-        log.debug("Loggers:");
-        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
-            LoggerConfig loggerConfig = (LoggerConfig)i.next();
-            log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Load Penrose Configurations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,19 +114,17 @@ public class Penrose {
         penroseConfig.setHome(home);
     }
 
-    public void load() throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Initialize Penrose components
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        loadSystemProperties();
-        penroseContext.load();
+    void init() throws Exception {
+        penroseContext = new PenroseContext();
+        penroseContext.init(penroseConfig);
     }
 
-    public void loadSystemProperties() throws Exception {
-        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = penroseConfig.getSystemProperty(name);
-
-            System.setProperty(name, value);
-        }
+    public void load() throws Exception {
+        penroseContext.load();
     }
 
     public void clear() throws Exception {
@@ -185,16 +139,7 @@ public class Penrose {
     }
 
     public void store() throws Exception {
-
-        String home = penroseConfig.getHome();
-        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
-        log.debug("Storing Penrose configuration into "+filename);
-
-        PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
-        serverConfigWriter.write(penroseConfig);
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        partitionManager.store(home, penroseConfig.getPartitionConfigs());
+        penroseContext.store();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,36 +150,24 @@ public class Penrose {
 
         if (status != STOPPED) return;
 
-        try {
-            status = STARTING;
+        status = STARTING;
 
-            penroseContext.start();
+        penroseContext.start();
 
-            status = STARTED;
-
-        } catch (Exception e) {
-            status = STOPPED;
-            log.error(e.getMessage(), e);
-            throw e;
-        }
+        status = STARTED;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Stop Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void stop() {
+    public void stop() throws Exception {
 
         if (status != STARTED) return;
 
-        try {
-            status = STOPPING;
+        status = STOPPING;
 
-            penroseContext.stop();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
+        penroseContext.stop();
 
         status = STOPPED;
     }

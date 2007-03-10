@@ -22,14 +22,12 @@ import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -149,13 +147,11 @@ public class PenroseSession {
 
             int rc = LDAPException.SUCCESS;
             try {
-                Handler handler = handlerManager.getHandler(partition);
-                handler.add(this, partition, dn, attributes);
+                handlerManager.add(this, partition, dn, attributes);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
-            }
-            finally {
+            } finally {
                 if (enableEventListeners) {
                 	AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, dn, attributes);
                 	afterModifyEvent.setReturnCode(rc);
@@ -220,10 +216,7 @@ public class PenroseSession {
                         throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
                     }
 
-                    Handler handler = handlerManager.getHandler(partition);
-                    handler.bind(this, partition, dn, password);
-
-                    rootUser = false;
+                    handlerManager.bind(this, partition, dn, password);
                 }
 
                 bindDn = dn;
@@ -292,14 +285,12 @@ public class PenroseSession {
             int rc = LDAPException.SUCCESS;
             boolean result = false;
             try {
-                Handler handler = handlerManager.getHandler(partition);
-                result = handler.compare(this, partition, dn, attributeName, attributeValue);
+                result = handlerManager.compare(this, partition, dn, attributeName, attributeValue);
 
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
-            }
-            finally {
+            } finally {
                 if (enableEventListeners) {
                 	CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, dn, attributeName, attributeValue);
                 	afterCompareEvent.setReturnCode(rc);
@@ -360,13 +351,11 @@ public class PenroseSession {
             
             int rc = LDAPException.SUCCESS;
             try {
-                Handler handler = handlerManager.getHandler(partition);
-                handler.delete(this, partition, dn);
+                handlerManager.delete(this, partition, dn);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
-            }
-            finally {
+            } finally {
                 if (enableEventListeners) {
                 	DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, dn);
                 	afterDeleteEvent.setReturnCode(rc);
@@ -425,13 +414,11 @@ public class PenroseSession {
 
             int rc = LDAPException.SUCCESS;
             try {
-                Handler handler = handlerManager.getHandler(partition);
-                handler.modify(this, partition, dn, modifications);
+                handlerManager.modify(this, partition, dn, modifications);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
-            }
-            finally {
+            } finally {
                 if (enableEventListeners) {
                 	ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, dn, modifications);
                 	afterModifyEvent.setReturnCode(rc);
@@ -490,13 +477,11 @@ public class PenroseSession {
 
             int rc = LDAPException.SUCCESS;
             try {
-                Handler handler = handlerManager.getHandler(partition);
-                handler.modrdn(this, partition, dn, newRdn, deleteOldRdn);
+                handlerManager.modrdn(this, partition, dn, newRdn, deleteOldRdn);
             } catch (LDAPException e) {
                 rc = e.getResultCode();
                 throw e;
-            }
-            finally {
+            } finally {
                 if (enableEventListeners) {
                     ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, dn, newRdn, deleteOldRdn);
                     afterModRdnEvent.setReturnCode(rc);
@@ -612,8 +597,7 @@ public class PenroseSession {
 	            resultsToUse = sr;
             }
 
-            Handler handler = handlerManager.getHandler(partition);
-            handler.search(this, partition, newBaseDn, newFilter, newSc, resultsToUse);
+            handlerManager.search(this, partition, newBaseDn, newFilter, newSc, resultsToUse);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -650,8 +634,7 @@ public class PenroseSession {
                         throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
                     }
 
-                    Handler handler = handlerManager.getHandler(partition);
-                    handler.unbind(this);
+                    handlerManager.unbind(this, partition, bindDn);
                 }
 
                 rootUser = false;

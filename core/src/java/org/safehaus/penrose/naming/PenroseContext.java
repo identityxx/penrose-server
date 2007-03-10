@@ -8,7 +8,6 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.event.EventManager;
@@ -17,12 +16,17 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.config.PenroseConfigWriter;
+import org.safehaus.penrose.log4j.Log4jConfigReader;
+import org.safehaus.penrose.log4j.Log4jConfig;
+import org.safehaus.penrose.log4j.AppenderConfig;
+import org.safehaus.penrose.log4j.LoggerConfig;
+import org.safehaus.penrose.acl.ACLManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.Collection;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -52,13 +56,14 @@ public class PenroseContext {
 
     private SchemaManager      schemaManager;
 
+    private InterpreterManager interpreterManager;
+    private ConnectorManager   connectorManager;
+    private EngineManager      engineManager;
+    private ACLManager aclEngine;
+
     private SessionManager     sessionManager;
     private HandlerManager     handlerManager;
     private EventManager       eventManager;
-
-    private EngineManager      engineManager;
-    private InterpreterManager interpreterManager;
-    private ConnectorManager   connectorManager;
 
     private PartitionManager   partitionManager;
     private ConnectionManager  connectionManager;
@@ -155,6 +160,26 @@ public class PenroseContext {
     public void init(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
 
+        String home = penroseConfig.getHome();
+
+        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
+        if (!log4jXml.exists()) return;
+
+        Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
+        Log4jConfig config = configReader.read();
+
+        log.debug("Appenders:");
+        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
+            AppenderConfig appenderConfig = (AppenderConfig)i.next();
+            log.debug(" - "+appenderConfig.getName());
+        }
+
+        log.debug("Loggers:");
+        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
+            LoggerConfig loggerConfig = (LoggerConfig)i.next();
+            log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
+        }
+
         threadManager = new ThreadManager();
         threadManager.setPenroseConfig(penroseConfig);
         threadManager.setPenroseContext(this);
@@ -174,6 +199,10 @@ public class PenroseContext {
         engineManager = new EngineManager();
         engineManager.setPenroseConfig(penroseConfig);
         engineManager.setPenroseContext(this);
+
+        aclEngine = new ACLManager();
+        aclEngine.setPenroseConfig(penroseConfig);
+        aclEngine.setPenroseContext(this);
 
         sessionManager = new SessionManager();
         sessionManager.setPenroseConfig(penroseConfig);
@@ -202,6 +231,13 @@ public class PenroseContext {
 
     public void load() throws Exception {
 
+        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = penroseConfig.getSystemProperty(name);
+
+            System.setProperty(name, value);
+        }
+
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
             schemaManager.init(schemaConfig);
@@ -228,14 +264,19 @@ public class PenroseContext {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
             partitionManager.load(partitionConfig);
         }
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-            load(partition);
-        }
     }
 
-    public void load(Partition partition) throws Exception {
+
+    public void store() throws Exception {
+
+        String home = penroseConfig.getHome();
+        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
+        log.debug("Storing Penrose configuration into "+filename);
+
+        PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
+        serverConfigWriter.write(penroseConfig);
+
+        partitionManager.store(home, penroseConfig.getPartitionConfigs());
     }
 
     public void start() throws Exception {
@@ -274,5 +315,13 @@ public class PenroseContext {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public ACLManager getAclEngine() {
+        return aclEngine;
+    }
+
+    public void setAclEngine(ACLManager aclEngine) {
+        this.aclEngine = aclEngine;
     }
 }

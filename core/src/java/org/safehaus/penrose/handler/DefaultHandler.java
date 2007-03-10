@@ -1,22 +1,32 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
+import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
 import javax.naming.directory.*;
-import java.util.*;
+import javax.naming.NamingEnumeration;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -46,6 +56,428 @@ public class DefaultHandler extends Handler {
         modRdnHandler = createModRdnHandler();
         findHandler = createFindHandler();
         searchHandler = createSearchHandler();
+    }
+
+    public void bind(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            String password
+    ) throws Exception {
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.bind(session, partition, entryMapping, dn, password);
+    }
+
+    public void unbind(PenroseSession session, Partition partition, EntryMapping entryMapping, DN bindDn) throws Exception {
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        //engine.unbind(session, partition, entryMapping, bindDn);
+    }
+
+    public void add(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Attributes attributes) throws Exception {
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Adding entry "+dn);
+
+        Attributes normalizedAttributes = new BasicAttributes();
+
+        for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+            Attribute attribute = (Attribute)ne.next();
+
+            String attributeName = attribute.getID();
+            String normalizedAttributeName = attributeName;
+
+            AttributeType at = schemaManager.getAttributeType(attributeName);
+            if (debug) log.debug("Attribute "+attributeName+": "+at);
+            if (at != null) {
+                normalizedAttributeName = at.getName();
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(normalizedAttributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+            }
+
+            normalizedAttributes.put(normalizedAttribute);
+        }
+
+        if (debug) {
+            log.debug("Original attributes:");
+            for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
+                }
+            }
+
+            log.debug("Normalized attributes:");
+            for (NamingEnumeration ne = normalizedAttributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
+                }
+            }
+        }
+
+        attributes = normalizedAttributes;
+
+        // -dlc- if the objectClass of the add Attributes does
+        // not match any of the objectClasses of the entryMapping, there
+        // is no sense trying to perform an add on this entryMapping
+        Attribute at = attributes.get("objectClass");
+
+        boolean childHasObjectClass = false;
+        for (Iterator it2 = entryMapping.getObjectClasses().iterator();
+            (!childHasObjectClass) && it2.hasNext();)
+        {
+            String cObjClass = (String) it2.next();
+            for (int i = 0; i < at.size(); i++)
+            {
+                String objectClass = (String) at.get(i);
+                if (childHasObjectClass = cObjClass.equalsIgnoreCase(objectClass))
+                {
+                    break;
+                }
+            }
+        }
+        if (!childHasObjectClass)
+        {
+            throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
+        }
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.add(session, partition, null, entryMapping, dn, attributes);
+    }
+
+    public boolean compare(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, String attributeName, Object attributeValue) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        Entry entry = findHandler.find(session, partition, entryMapping, dn);
+
+        if (entry == null) {
+            if (debug) log.debug("Entry "+dn+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+        }
+
+        List attributeNames = new ArrayList();
+        attributeNames.add(attributeName);
+
+        AttributeValues attributeValues = entry.getAttributeValues();
+        Collection values = attributeValues.get(attributeName);
+        if (values == null) {
+            if (debug) log.debug("Attribute "+attributeName+" not found.");
+            return false;
+        }
+
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        if (debug) log.debug("Comparing values:");
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            Object value = i.next();
+
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            if (debug) log.debug(" - ["+value+"] => "+b);
+
+            if (b) return true;
+
+        }
+
+        return false;
+    }
+
+    public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.delete(session, partition, null, entryMapping, dn);
+    }
+
+    public void modify(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn, Collection modifications) throws Exception {
+        log.debug("Modifying "+dn);
+
+        Collection normalizedModifications = new ArrayList();
+
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem) i.next();
+
+            Attribute attribute = modification.getAttribute();
+            String attributeName = attribute.getID();
+
+            AttributeType at = schemaManager.getAttributeType(attributeName);
+            if (at != null) {
+                attributeName = at.getName();
+            }
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
+
+            log.debug("-");
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+        }
+
+        modifications = normalizedModifications;
+
+        log.info("");
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.modify(session, partition, entry, entryMapping, dn, modifications);
+    }
+
+    public void modrdn(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn, RDN newRdn, boolean deleteOldRdn) throws Exception {
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        engine.modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
+    }
+
+    public void search(
+            final PenroseSession session,
+            final Partition partition,
+            final EntryMapping entryMapping,
+            final DN baseDn,
+            final Filter filter,
+            final PenroseSearchControls sc,
+            final Results results
+    ) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
+        if (debug) {
+            log.debug("Searching "+baseDn);
+            log.debug("in mapping "+entryMapping.getDn());
+        }
+
+        AttributeValues sourceValues = new AttributeValues();
+
+        Pipeline sr = new Pipeline(results) {
+
+            // Check LDAP filter
+            public void add(Object object) throws Exception {
+                Entry child = (Entry)object;
+
+                if (debug) log.debug("Checking filter "+filter+" on "+child.getDn());
+
+                if (!filterTool.isValid(child, filter)) {
+                    if (debug) log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
+                    return;
+                }
+
+                super.add(child);
+            }
+        };
+
+        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
+            searchBase(
+                    session,
+                    partition,
+                    sourceValues,
+                    entryMapping,
+                    baseDn,
+                    filter,
+                    sc,
+                    sr
+            );
+        }
+
+        if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
+
+            Collection children = partition.getChildren(entryMapping);
+
+            for (Iterator i = children.iterator(); i.hasNext();) {
+                EntryMapping childMapping = (EntryMapping) i.next();
+
+                searchChildren(
+                        session,
+                        partition,
+                        sourceValues,
+                        entryMapping,
+                        childMapping,
+                        baseDn,
+                        filter,
+                        sc,
+                        sr
+                );
+            }
+        }
+    }
+
+    public void searchBase(
+            final PenroseSession session,
+            final Partition partition,
+            final AttributeValues sourceValues,
+            final EntryMapping entryMapping,
+            final DN baseDn,
+            final Filter filter,
+            final PenroseSearchControls sc,
+            final Results results
+    ) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            if (debug) log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Pipeline sr = new Pipeline(results);
+
+        engine.search(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                sr
+        );
+    }
+
+    public void searchChildren(
+            final PenroseSession session,
+            final Partition partition,
+            final AttributeValues sourceValues,
+            final EntryMapping baseMapping,
+            final EntryMapping entryMapping,
+            final DN baseDn,
+            final Filter filter,
+            final PenroseSearchControls sc,
+            final Results results
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
+            log.debug("Search mapping \""+entryMapping.getDn()+"\":");
+        }
+
+        String engineName = entryMapping.getEngineName();
+        Engine engine = getEngine(engineName);
+
+        if (engine == null) {
+            if (debug) log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        // use a new pipeline so that results is not closed
+        Pipeline sr = new Pipeline(results);
+
+        engine.expand(
+                session,
+                partition,
+                sourceValues,
+                baseMapping,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                sr
+        );
+
+        if (sc.getScope() != LDAPConnection.SCOPE_SUB) return;
+
+        Collection children = partition.getChildren(entryMapping);
+        if (children.isEmpty()) return;
+
+        Interpreter interpreter = interpreterManager.newInstance();
+        AttributeValues attributeValues = engine.computeAttributeValues(entryMapping, sourceValues, interpreter);
+        interpreter.clear();
+
+        AttributeValues newSourceValues = new AttributeValues();
+        newSourceValues.add("parent", sourceValues);
+        newSourceValues.add("parent", attributeValues);
+        //AttributeValues newSourceValues = handler.pushSourceValues(sourceValues, attributeValues);
+
+        if (debug) {
+            log.debug("New parent source values:");
+            newSourceValues.print();
+        }
+
+        for (Iterator i = children.iterator(); i.hasNext();) {
+            EntryMapping childMapping = (EntryMapping) i.next();
+
+            searchChildren(
+                    session,
+                    partition,
+                    newSourceValues,
+                    baseMapping,
+                    childMapping,
+                    baseDn,
+                    filter,
+                    sc,
+                    results
+            );
+        }
     }
 
     public AddHandler createAddHandler() {
@@ -78,424 +510,6 @@ public class DefaultHandler extends Handler {
 
     public SearchHandler createSearchHandler() {
         return new SearchHandler(this);
-    }
-
-    public void bind(
-            PenroseSession session,
-            Partition partition,
-            DN dn,
-            String password
-    ) throws Exception {
-
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("BIND:");
-            log.debug(" - Bind DN: "+dn);
-            log.debug(" - Bind Password: "+password);
-            log.debug("");
-        }
-
-        getBindHandler().bind(session, partition, dn, password);
-    }
-
-    public void unbind(PenroseSession session) throws Exception {
-    }
-
-    public void add(
-            PenroseSession session,
-            Partition partition,
-            DN dn,
-            Attributes attributes
-    ) throws Exception {
-
-        if (log.isWarnEnabled()) {
-            log.warn("Add entry \""+dn+"\".");
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("ADD:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - Entry: "+dn);
-            log.debug("");
-        }
-
-        DN parentDn = dn.getParentDn();
-        attributes = normalize(attributes);
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        Exception exception = null;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            EntryMapping parentMapping = partition.getParent(entryMapping);
-            int rc = aclEngine.checkAdd(session, partition, parentMapping, parentDn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to add "+dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                continue;
-            }
-
-            try {
-                getAddHandler().add(session, partition, entryMapping, dn, attributes);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-
-        throw exception;
-    }
-
-    public boolean compare(
-            PenroseSession session,
-            Partition partition,
-            DN dn,
-            String attributeName,
-            Object attributeValue
-    ) throws Exception {
-
-        if (log.isWarnEnabled()) {
-            log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("COMPARE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - DN: " + dn);
-            log.debug(" - Attribute Name: " + attributeName);
-            if (attributeValue instanceof byte[]) {
-                log.debug(" - Attribute Value: " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue));
-            } else {
-                log.debug(" - Attribute Value: " + attributeValue);
-            }
-        }
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        Exception exception = null;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to compare "+dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                continue;
-            }
-
-            try {
-                return getCompareHandler().compare(session, partition, entryMapping, dn, attributeName, attributeValue);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-
-        throw exception;
-    }
-
-    public void delete(
-            PenroseSession session,
-            Partition partition,
-            DN dn
-    ) throws Exception {
-
-        if (log.isWarnEnabled()) {
-            log.warn("Delete entry \""+dn+"\".");
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("DELETE:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
-            log.debug(" - DN: "+dn);
-            log.debug("");
-        }
-
-        Entry entry = null; //findHandler.find(partition, dn);
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        Exception exception = null;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            int rc = aclEngine.checkDelete(session, partition, entryMapping, dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to delete "+dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                continue;
-            }
-
-            try {
-                getDeleteHandler().delete(session, partition, entryMapping, dn);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-
-        throw exception;
-    }
-
-    public void modify(
-            PenroseSession session,
-            Partition partition,
-            DN dn,
-            Collection modifications
-    ) throws Exception {
-
-        dn = normalize(dn);
-
-        if (log.isWarnEnabled()) {
-            log.warn("Modify entry \""+dn+"\".");
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODIFY:", 80));
-            if (session != null && session.getBindDn() != null) {
-                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-            }
-            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-
-            log.debug(Formatter.displayLine(" - Attributes: ", 80));
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
-                Attribute attribute = mi.getAttribute();
-                String op = "replace";
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        op = "add";
-                        break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        op = "delete";
-                        break;
-                    case DirContext.REPLACE_ATTRIBUTE:
-                        op = "replace";
-                        break;
-                }
-
-                if (attribute.size() == 0) {
-                    log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+null, 80));
-                } else {
-                    log.debug(Formatter.displayLine("   - "+op+": "+attribute.getID()+" => "+attribute.get(), 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Entry entry = null; //findHandler.find(partition, dn);
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        Exception exception = null;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            int rc = aclEngine.checkModify(session, partition, entryMapping, dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to modify "+dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                continue;
-            }
-
-            try {
-                getModifyHandler().modify(session, partition, entry, entryMapping, dn, modifications);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-
-        throw exception;
-    }
-
-    public void modrdn(
-            PenroseSession session,
-            Partition partition,
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        if (log.isWarnEnabled()) {
-            log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("MODRDN:", 80));
-            if (session != null && session.getBindDn() != null) {
-                log.debug(Formatter.displayLine(" - Bind DN: " + session.getBindDn(), 80));
-            }
-            log.debug(Formatter.displayLine(" - DN: " + dn, 80));
-            log.debug(Formatter.displayLine(" - New RDN: " + newRdn, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        Entry entry = null; //findHandler.find(partition, dn);
-
-        Collection entryMappings = partition.findEntryMappings(dn);
-        Exception exception = null;
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            int rc = aclEngine.checkModify(session, partition, entryMapping, dn);
-
-            if (rc != LDAPException.SUCCESS) {
-                log.debug("Not allowed to modify "+dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-                continue;
-            }
-
-            try {
-                getModRdnHandler().modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-
-        throw exception;
-    }
-
-    /**
-     * @param session
-     * @param dn
-     * @param filter
-     * @param sc
-     * @param results The results will be filled with objects of type SearchResult.
-     * @return return code
-     * @throws Exception
-     */
-    public void search(
-            final PenroseSession session,
-            final Partition partition,
-            final DN dn,
-            final String filter,
-            final PenroseSearchControls sc,
-            final Results results
-    ) throws Exception {
-
-        final DN baseDn = normalize(dn);
-
-        String scope = LDAPUtil.getScope(sc.getScope());
-
-        Collection attributeNames = sc.getAttributes();
-        attributeNames = normalize(attributeNames);
-        sc.setAttributes(attributeNames);
-
-        if (log.isWarnEnabled()) {
-            log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
-        }
-
-        final boolean debug = log.isDebugEnabled();
-        if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("SEARCH:");
-            if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: " + session.getBindDn());
-            log.debug(" - Base DN: "+baseDn);
-            log.debug(" - Scope: "+scope);
-            log.debug(" - Filter: "+filter);
-            log.debug(" - Attribute Names: "+attributeNames);
-            log.debug("");
-        }
-
-        final Filter f = FilterTool.parseFilter(filter);
-
-        final Set requestedAttributes = new HashSet();
-        if (sc.getAttributes() != null) requestedAttributes.addAll(sc.getAttributes());
-
-        final boolean allRegularAttributes = sc.getAttributes() == null || sc.getAttributes().isEmpty() || sc.getAttributes().contains("*");
-        final boolean allOpAttributes = sc.getAttributes() != null && sc.getAttributes().contains("+");
-
-        if (debug) log.debug("Requested: "+sc.getAttributes());
-
-        if (baseDn.isEmpty()) {
-            if (sc.getScope() == LDAPConnection.SCOPE_BASE) {
-                Entry entry = createRootDSE();
-
-                if (debug) {
-                    log.debug("Before: "+entry.getDn());
-                    entry.getAttributeValues().print();
-                }
-
-                Collection list = filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
-                removeAttributes(entry, list);
-
-                if (debug) {
-                    log.debug("After: "+entry.getDn());
-                    entry.getAttributeValues().print();
-                }
-
-                results.add(entry);
-            }
-            results.close();
-            return;
-        }
-
-        Collection entryMappings = partition.findEntryMappings(baseDn);
-
-        if (entryMappings.isEmpty()) {
-            if (debug) log.debug("Base DN "+baseDn+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-        }
-
-        final SearchPipeline sr = new SearchPipeline(
-                results,
-                session,
-                partition,
-                this,
-                aclEngine,
-                requestedAttributes,
-                allRegularAttributes,
-                allOpAttributes,
-                entryMappings
-        );
-
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            final EntryMapping entryMapping = (EntryMapping)i.next();
-
-            int rc = aclEngine.checkSearch(session, partition, entryMapping, baseDn);
-
-            if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to search "+baseDn);
-                continue;
-            }
-
-            Runnable runnable = new Runnable() {
-                public void run() {
-                    try {
-
-                        SearchHandler searchHandler = getSearchHandler();
-                        searchHandler.search(
-                                session,
-                                partition,
-                                entryMapping,
-                                baseDn,
-                                f,
-                                sc,
-                                sr
-                        );
-
-                        sr.setResult(entryMapping, ExceptionUtil.createLDAPException(LDAPException.SUCCESS));
-
-                    } catch (Exception e) {
-                        sr.setResult(entryMapping, ExceptionUtil.createLDAPException(e));
-
-                    } finally {
-                        try { sr.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-                    }
-                }
-            };
-
-            threadManager.execute(runnable);
-        }
     }
 
     public BindHandler getBindHandler() {

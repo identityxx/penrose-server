@@ -47,7 +47,7 @@ public class BindHandler {
         this.handler = handler;
     }
 
-    public void bind(PenroseSession session, Partition partition, DN dn, String password) throws Exception {
+    public void bind(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, String password) throws Exception {
 
         log.warn("Bind as \""+dn+"\".");
         log.debug(Formatter.displaySeparator(80));
@@ -56,60 +56,15 @@ public class BindHandler {
         log.debug(Formatter.displayLine(" - Password : "+password, 80));
         log.debug(Formatter.displaySeparator(80));
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        String engineName = entryMapping.getEngineName();
+        Engine engine = handler.getEngine(engineName);
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-
-            String engineName = entryMapping.getEngineName();
-            Engine engine = handler.getEngine(engineName);
-
-            if (engine == null) {
-                log.debug("Engine "+engineName+" not found");
-                continue;
-            }
-
-            // attempt direct bind to the source
-            engine.bind(session, partition, entryMapping, dn, password);
-
-            // attempt to compare the userPassword attribute
-/*
-            List path = new ArrayList();
-            AttributeValues sourceValues = new AttributeValues();
-
-            handler.getFindHandler().find(partition, dn, path, sourceValues);
-
-            if (path.isEmpty()) {
-                log.debug("Entry "+dn+" not found");
-                continue;
-            }
-
-            Entry entry = (Entry)path.iterator().next();
-*/
-/*
-            Entry entry = ((DefaultHandler)handler).getFindHandler().find(session, partition, entryMapping, dn);
-
-            if (entry == null) {
-                log.debug("Entry "+dn+" not found");
-                continue;
-            }
-
-            AttributeValues attributeValues = entry.getAttributeValues();
-
-            Collection userPasswords = attributeValues.get("userPassword");
-
-            if (userPasswords == null) {
-                log.debug("Attribute userPassword not found");
-                continue;
-            }
-
-            for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
-                Object userPassword = j.next();
-                log.debug("userPassword: "+userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) return;
-            }
-*/
+        if (engine == null) {
+            log.debug("Engine "+engineName+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
+
+        engine.bind(session, partition, entryMapping, dn, password);
     }
 
     public Handler getHandler() {

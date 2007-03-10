@@ -44,7 +44,12 @@ public class DeleteHandler {
         this.handler = handler;
     }
 
-    public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public void delete(
+            PenroseSession session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn
+    ) throws Exception {
 
         String engineName = entryMapping.getEngineName();
         Engine engine = handler.getEngine(engineName);

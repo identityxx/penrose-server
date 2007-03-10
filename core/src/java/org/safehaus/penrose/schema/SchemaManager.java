@@ -20,12 +20,19 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.DNBuilder;
+import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.TreeMap;
-import java.util.Map;
-import java.util.Collection;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.NamingEnumeration;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -139,5 +146,55 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public DN normalize(DN oldDn) {
+        DNBuilder db = new DNBuilder();
+        RDNBuilder rb = new RDNBuilder();
+
+        for (Iterator i=oldDn.getRdns().iterator(); i.hasNext(); ) {
+            RDN rdn = (RDN)i.next();
+
+            rb.clear();
+            for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Object value = rdn.get(name);
+                rb.set(getNormalizedAttributeName(name), value);
+            }
+            db.append(rb.toRdn());
+        }
+        return db.toDn();
+    }
+
+    public Collection normalize(Collection attributeNames) {
+        if (attributeNames == null) return null;
+
+        Collection list = new ArrayList();
+        for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            list.add(getNormalizedAttributeName(name));
+        }
+
+        return list;
+    }
+
+    public Attributes normalize(Attributes attributes) throws Exception{
+
+        BasicAttributes newAttributes = new BasicAttributes();
+
+        for (NamingEnumeration e=attributes.getAll(); e.hasMore(); ) {
+            Attribute attribute = (Attribute)e.next();
+            String attributeName = getNormalizedAttributeName(attribute.getID());
+
+            BasicAttribute newAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration e2=attribute.getAll(); e2.hasMore(); ) {
+                Object value = e2.next();
+                newAttribute.add(value);
+            }
+
+            newAttributes.put(newAttribute);
+        }
+
+        return newAttributes;
     }
 }

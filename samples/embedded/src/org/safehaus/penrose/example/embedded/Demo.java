@@ -14,6 +14,7 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.SessionManager;
 
 import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attributes;
@@ -113,7 +114,8 @@ public class Demo {
 
         log.warn("Connecting to Penrose.");
 
-        PenroseSession session = penrose.newSession();
+        SessionManager sessionManager = penroseContext.getSessionManager();
+        PenroseSession session = sessionManager.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
         log.warn("Searching all entries.");

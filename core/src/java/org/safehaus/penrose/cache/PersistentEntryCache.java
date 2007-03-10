@@ -26,6 +26,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SessionManager;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -136,6 +137,7 @@ public class PersistentEntryCache extends EntryCache {
 
     public void load(Penrose penrose, Partition partition) throws Exception {
 
+        SessionManager sessionManager = penroseContext.getSessionManager();
         Collection entryMappings = partition.getRootEntryMappings();
 
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
@@ -143,7 +145,7 @@ public class PersistentEntryCache extends EntryCache {
 
             log.debug("Loading entries under "+entryMapping.getDn());
 
-            PenroseSession adminSession = penrose.newSession();
+            PenroseSession adminSession = sessionManager.newSession();
             adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
 
             PenroseSearchResults sr = new PenroseSearchResults();
