@@ -23,8 +23,6 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -57,9 +55,6 @@ public class Connector {
     private SourceCacheManager sourceCacheManager;
 
     private boolean stopping = false;
-
-    private Map locks = new HashMap();
-    private Queue queue = new Queue();
 
     public Connector() {
     }
@@ -130,17 +125,6 @@ public class Connector {
 
         return rb.toRdn();
     }
-
-    public synchronized MRSWLock getLock(SourceConfig sourceConfig) {
-		String name = sourceConfig.getConnectionName() + "." + sourceConfig.getName();
-
-		MRSWLock lock = (MRSWLock)locks.get(name);
-
-		if (lock == null) lock = new MRSWLock(queue);
-		locks.put(name, lock);
-
-		return lock;
-	}
 
     public void bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, RDN pk, String password) throws Exception {
 

@@ -15,7 +15,6 @@
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
 
-
     <target name="init">
         <echo message="Operating System: ${os.name} ${os.version}" />
         <echo message="Java Version: ${java.version}" />

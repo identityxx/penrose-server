@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.DN;

@@ -204,9 +204,6 @@ public class LoadEngine {
             PenroseSearchResults loadedBatches
             ) throws Exception {
 
-        //MRSWLock lock = getLock(entryMapping;
-        //lock.getWriteLock(Penrose.WAIT_TIMEOUT);
-
         log.info("Loading data for "+entryMapping.getDn()+".");
 
         try {
@@ -237,7 +234,6 @@ public class LoadEngine {
             }
 
         } finally {
-            //lock.releaseWriteLock(Penrose.WAIT_TIMEOUT);
             loadedBatches.close();
         }
     }

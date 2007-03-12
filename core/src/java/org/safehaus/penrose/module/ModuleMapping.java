@@ -51,6 +51,10 @@ public class ModuleMapping implements Cloneable {
         return baseDn;
     }
 
+    public void setBaseDn(String baseDn) {
+        setBaseDn(new DN(baseDn));
+    }
+    
     public void setBaseDn(DN baseDn) {
         this.baseDn = baseDn;
     }

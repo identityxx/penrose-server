@@ -30,6 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadManager {
 
+    public final static String MAX_THREADS      = "maxThreads";
+    public final static int DEFAULT_MAX_THREADS = 20;
+
     Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
@@ -43,8 +46,8 @@ public class ThreadManager {
     }
 
     public void start() throws Exception {
-        String s = penroseConfig.getProperty("maxThreads");
-        int maxThreads = s == null ? 20 : Integer.parseInt(s);
+        String s = penroseConfig.getProperty(MAX_THREADS);
+        int maxThreads = s == null ? DEFAULT_MAX_THREADS : Integer.parseInt(s);
 
         executorService = new ThreadPoolExecutor(
                 maxThreads,

@@ -29,15 +29,12 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.thread.Queue;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.Results;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
@@ -69,9 +66,6 @@ public abstract class Engine {
     public EngineFilterTool engineFilterTool;
 
     private FilterTool filterTool;
-
-    public Map locks = new HashMap();
-    public Queue queue = new Queue();
 
     public TransformEngine transformEngine;
 
@@ -491,16 +485,6 @@ public abstract class Engine {
             PenroseSearchControls sc,
             Results results
     ) throws Exception;
-
-    public synchronized MRSWLock getLock(String dn) {
-
-		MRSWLock lock = (MRSWLock)locks.get(dn);
-
-		if (lock == null) lock = new MRSWLock(queue);
-		locks.put(dn, lock);
-
-		return lock;
-	}
 
     public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
 
