@@ -91,79 +91,25 @@ public class DefaultHandler extends Handler {
     }
 
     public void add(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Attributes attributes) throws Exception {
-        boolean debug = log.isDebugEnabled();
-        if (debug) log.debug("Adding entry "+dn);
-
-        Attributes normalizedAttributes = new BasicAttributes();
-
-        for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
-            Attribute attribute = (Attribute)ne.next();
-
-            String attributeName = attribute.getID();
-            String normalizedAttributeName = attributeName;
-
-            AttributeType at = schemaManager.getAttributeType(attributeName);
-            if (debug) log.debug("Attribute "+attributeName+": "+at);
-            if (at != null) {
-                normalizedAttributeName = at.getName();
-            }
-
-            Attribute normalizedAttribute = new BasicAttribute(normalizedAttributeName);
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                normalizedAttribute.add(value);
-            }
-
-            normalizedAttributes.put(normalizedAttribute);
-        }
-
-        if (debug) {
-            log.debug("Original attributes:");
-            for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
-                Attribute attribute = (Attribute)ne.next();
-                String attributeName = attribute.getID();
-
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    log.debug(" - "+attributeName+": "+value);
-                }
-            }
-
-            log.debug("Normalized attributes:");
-            for (NamingEnumeration ne = normalizedAttributes.getAll(); ne.hasMore(); ) {
-                Attribute attribute = (Attribute)ne.next();
-                String attributeName = attribute.getID();
-
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    log.debug(" - "+attributeName+": "+value);
-                }
-            }
-        }
-
-        attributes = normalizedAttributes;
 
         // -dlc- if the objectClass of the add Attributes does
         // not match any of the objectClasses of the entryMapping, there
         // is no sense trying to perform an add on this entryMapping
         Attribute at = attributes.get("objectClass");
 
+        Collection objectClasses = entryMapping.getObjectClasses();
         boolean childHasObjectClass = false;
-        for (Iterator it2 = entryMapping.getObjectClasses().iterator();
-            (!childHasObjectClass) && it2.hasNext();)
-        {
-            String cObjClass = (String) it2.next();
-            for (int i = 0; i < at.size(); i++)
-            {
-                String objectClass = (String) at.get(i);
-                if (childHasObjectClass = cObjClass.equalsIgnoreCase(objectClass))
-                {
-                    break;
-                }
+
+        for (Iterator i = objectClasses.iterator(); !childHasObjectClass && i.hasNext(); ) {
+            String oc = (String)i.next();
+
+            for (int j = 0; j < at.size(); j++) {
+                String objectClass = (String) at.get(j);
+                if (childHasObjectClass = oc.equalsIgnoreCase(objectClass)) break;
             }
         }
-        if (!childHasObjectClass)
-        {
+
+        if (!childHasObjectClass) {
             throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
         }
 
@@ -219,6 +165,8 @@ public class DefaultHandler extends Handler {
 
     public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
 
+        Entry entry = null; //findHandler.find(partition, dn);
+
         String engineName = entryMapping.getEngineName();
         Engine engine = getEngine(engineName);
 
@@ -227,53 +175,12 @@ public class DefaultHandler extends Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
-        engine.delete(session, partition, null, entryMapping, dn);
+        engine.delete(session, partition, entry, entryMapping, dn);
     }
 
-    public void modify(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn, Collection modifications) throws Exception {
-        log.debug("Modifying "+dn);
+    public void modify(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Collection modifications) throws Exception {
 
-        Collection normalizedModifications = new ArrayList();
-
-        for (Iterator i = modifications.iterator(); i.hasNext();) {
-            ModificationItem modification = (ModificationItem) i.next();
-
-            Attribute attribute = modification.getAttribute();
-            String attributeName = attribute.getID();
-
-            AttributeType at = schemaManager.getAttributeType(attributeName);
-            if (at != null) {
-                attributeName = at.getName();
-            }
-
-            switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    log.debug("add: " + attributeName);
-                    break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    log.debug("delete: " + attributeName);
-                    break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    log.debug("replace: " + attributeName);
-                    break;
-            }
-
-            Attribute normalizedAttribute = new BasicAttribute(attributeName);
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                normalizedAttribute.add(value);
-                log.debug(attributeName + ": "+value);
-            }
-
-            log.debug("-");
-
-            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
-            normalizedModifications.add(normalizedModification);
-        }
-
-        modifications = normalizedModifications;
-
-        log.info("");
+        Entry entry = null; //findHandler.find(partition, dn);
 
         String engineName = entryMapping.getEngineName();
         Engine engine = getEngine(engineName);
@@ -286,7 +193,9 @@ public class DefaultHandler extends Handler {
         engine.modify(session, partition, entry, entryMapping, dn, modifications);
     }
 
-    public void modrdn(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn, RDN newRdn, boolean deleteOldRdn) throws Exception {
+    public void modrdn(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, RDN newRdn, boolean deleteOldRdn) throws Exception {
+
+        Entry entry = null; //findHandler.find(partition, dn);
 
         String engineName = entryMapping.getEngineName();
         Engine engine = getEngine(engineName);

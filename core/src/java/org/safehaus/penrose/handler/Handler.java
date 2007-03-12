@@ -187,7 +187,6 @@ public abstract class Handler {
     public abstract void modify(
             PenroseSession session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DN dn,
             Collection modifications
@@ -196,7 +195,6 @@ public abstract class Handler {
     public abstract void modrdn(
             PenroseSession session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DN dn,
             RDN newRdn,

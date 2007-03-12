@@ -42,10 +42,8 @@ import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.Attributes;
+import javax.naming.directory.*;
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -193,10 +191,13 @@ public class HandlerManager {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         if (log.isWarnEnabled()) {
             log.warn("Add entry \""+dn+"\".");
         }
-        if (log.isDebugEnabled()) {
+        
+        if (debug) {
             log.debug("----------------------------------------------------------------------------------");
             log.debug("ADD:");
             if (session != null && session.getBindDn() != null) log.debug(" - Bind DN: "+session.getBindDn());
@@ -206,6 +207,57 @@ public class HandlerManager {
 
         DN parentDn = dn.getParentDn();
         attributes = schemaManager.normalize(attributes);
+
+        if (debug) log.debug("Adding entry "+dn);
+
+        Attributes normalizedAttributes = new BasicAttributes();
+
+        for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+            Attribute attribute = (Attribute)ne.next();
+
+            String attributeName = attribute.getID();
+            String normalizedAttributeName = attributeName;
+
+            AttributeType at = schemaManager.getAttributeType(attributeName);
+            if (debug) log.debug("Attribute "+attributeName+": "+at);
+            if (at != null) {
+                normalizedAttributeName = at.getName();
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(normalizedAttributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+            }
+
+            normalizedAttributes.put(normalizedAttribute);
+        }
+
+        if (debug) {
+            log.debug("Original attributes:");
+            for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
+                }
+            }
+
+            log.debug("Normalized attributes:");
+            for (NamingEnumeration ne = normalizedAttributes.getAll(); ne.hasMore(); ) {
+                Attribute attribute = (Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    Object value = j.next();
+                    log.debug(" - "+attributeName+": "+value);
+                }
+            }
+        }
+
+        attributes = normalizedAttributes;
 
         Collection entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
@@ -300,8 +352,6 @@ public class HandlerManager {
             log.debug("");
         }
 
-        Entry entry = null; //findHandler.find(partition, dn);
-
         Collection entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
@@ -375,7 +425,49 @@ public class HandlerManager {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
         }
 
-        Entry entry = null; //findHandler.find(partition, dn);
+        log.debug("Modifying "+dn);
+
+        Collection normalizedModifications = new ArrayList();
+
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem) i.next();
+
+            Attribute attribute = modification.getAttribute();
+            String attributeName = attribute.getID();
+
+            AttributeType at = schemaManager.getAttributeType(attributeName);
+            if (at != null) {
+                attributeName = at.getName();
+            }
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+                log.debug(attributeName + ": "+value);
+            }
+
+            log.debug("-");
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+        }
+
+        modifications = normalizedModifications;
+
+        log.debug("");
 
         Collection entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
@@ -393,7 +485,7 @@ public class HandlerManager {
 
             try {
                 Handler handler = getHandler(entryMapping);
-                handler.modify(session, partition, entry, entryMapping, dn, modifications);
+                handler.modify(session, partition, entryMapping, dn, modifications);
                 return;
             } catch (Exception e) {
                 exception = e;
@@ -426,8 +518,6 @@ public class HandlerManager {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
         }
 
-        Entry entry = null; //findHandler.find(partition, dn);
-
         Collection entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
@@ -444,7 +534,7 @@ public class HandlerManager {
 
             try {
                 Handler handler = getHandler(entryMapping);
-                handler.modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
+                handler.modrdn(session, partition, entryMapping, dn, newRdn, deleteOldRdn);
                 return;
             } catch (Exception e) {
                 exception = e;

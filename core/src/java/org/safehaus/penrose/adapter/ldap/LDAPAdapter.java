@@ -19,6 +19,10 @@ package org.safehaus.penrose.adapter.ldap;
 
 import javax.naming.directory.*;
 import javax.naming.*;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.PagedResultsResponseControl;
 
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.filter.Filter;
@@ -49,6 +53,7 @@ public class LDAPAdapter extends Adapter {
     public final static String SCOPE          = "scope";
     public final static String FILTER         = "filter";
     public final static String OBJECT_CLASSES = "objectClasses";
+    public final static String PAGE_SIZE      = "pageSize";
 
     private LDAPClient client;
 
@@ -95,15 +100,20 @@ public class LDAPAdapter extends Adapter {
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
             Filter filter,
-            PenroseSearchControls sc,
+            PenroseSearchControls searchControls,
             Results results
     ) throws LDAPException {
+
+        boolean debug = log.isDebugEnabled();
 
         DNBuilder db = new DNBuilder();
         db.set(sourceConfig.getParameter(BASE_DN));
 
         String ldapScope = sourceConfig.getParameter(SCOPE);
         String ldapFilter = sourceConfig.getParameter(FILTER);
+
+        String s = sourceConfig.getParameter(PAGE_SIZE);
+        int pageSize = s == null ? 1000 : Integer.parseInt(s);
 
         db.append(client.getSuffix());
         if (filter != null) {
@@ -116,7 +126,7 @@ public class LDAPAdapter extends Adapter {
         }
 
         DN ldapBase = db.toDn();
-        if (log.isDebugEnabled()) {
+        if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
@@ -125,47 +135,78 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        SearchControls ctls = new SearchControls();
+        SearchControls sc = new SearchControls();
         if ("OBJECT".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
 
         } else if ("ONELEVEL".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
 
         } else if ("SUBTREE".equals(ldapScope)) {
-            ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
-        ctls.setCountLimit(sc.getSizeLimit());
+        sc.setCountLimit(searchControls.getSizeLimit());
+        sc.setTimeLimit(searchControls.getTimeLimit());
 
-        DirContext ctx = null;
+        LdapContext ctx = null;
         try {
             ctx = ((LDAPClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase.toString(), ldapFilter, ctls);
 
-            log.debug("Result:");
+            Control[] controls = new Control[] { new PagedResultsControl(pageSize, Control.NONCRITICAL) };
+            ctx.setRequestControls(controls);
 
-            while (ne.hasMore()) {
-                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                db.set(sr.getName());
-                db.append(ldapBase);
-                DN dn = db.toDn();
+            int page = 0;
+            byte[] cookie = null;
 
-                log.debug(" - "+dn);
+            do {
+                if (debug) log.debug("Searching page #"+page);
+                NamingEnumeration ne = ctx.search(ldapBase.toString(), ldapFilter, sc);
 
-                AttributeValues row = getValues(dn, sourceConfig, sr);
-                for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = (Collection)row.get(name);
-                    log.debug("   "+name+": "+values);
+                if (debug) log.debug("Results from page #"+page+":");
+                while (ne.hasMore()) {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+
+                    db.set(sr.getName());
+                    db.append(ldapBase);
+                    DN dn = db.toDn();
+                    AttributeValues row = getValues(dn, sourceConfig, sr);
+
+                    if (debug) {
+                        log.debug(" - "+dn);
+
+                        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
+                            String name = (String)i.next();
+                            Collection values = (Collection)row.get(name);
+                            log.debug("   "+name+": "+values);
+                        }
+                    }
+
+                    ConnectorSearchResult result = new ConnectorSearchResult(row);
+                    result.setEntryMapping(entryMapping);
+                    result.setSourceMapping(sourceMapping);
+                    result.setSourceConfig(sourceConfig);
+
+                    results.add(result);
                 }
 
-                ConnectorSearchResult result = new ConnectorSearchResult(row);
-                result.setEntryMapping(entryMapping);
-                result.setSourceMapping(sourceMapping);
-                result.setSourceConfig(sourceConfig);
+                // get cookie returned by server
+                controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
+                    }
+                }
 
-                results.add(result);
-            }
+                // pass cookie back to server for the next page
+                controls = new Control[] { new PagedResultsControl(pageSize, cookie, Control.CRITICAL) };
+                ctx.setRequestControls(controls);
+
+                page++;
+                
+            } while (cookie != null && cookie.length != 0);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -94,8 +94,7 @@ public class PenroseSession {
     }
 
     public boolean isValid() {
-    	if (sessionManager.isExpired(this))
-    	{
+    	if (sessionManager.isExpired(this)) {
     		return sessionManager.isValid(this);
     	}
     	return true;
