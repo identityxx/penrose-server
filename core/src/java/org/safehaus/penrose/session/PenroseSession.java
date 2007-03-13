@@ -193,9 +193,13 @@ public class PenroseSession {
     			eventManager.postEvent(dn, afterBindEvent);
         	}
 
-            DN rootDn = penroseConfig.getRootDn();
-
             try {
+                if (dn.isEmpty()) {
+                    log.debug("Anonymous bind.");
+                    return;
+                }
+
+                DN rootDn = penroseConfig.getRootDn();
                 if (dn.matches(rootDn)) {
                     if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
                         log.debug("Password doesn't match => BIND FAILED");
