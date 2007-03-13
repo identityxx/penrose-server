@@ -11,7 +11,10 @@ import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.apacheds.FilterTool;
 import org.ietf.ldap.LDAPException;
+
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -30,10 +33,11 @@ public class SearchHandler implements MessageHandler {
 
         SearchRequest request = (SearchRequest)message;
         LdapResult result = request.getResultResponse().getLdapResult();
+        Map controls = request.getControls();
 
         try {
             String baseDn = request.getBase().toString();
-            String filter = request.getFilter().toString();
+            String filter = FilterTool.convert(request.getFilter()).toString();
 
             PenroseSearchResults results = new PenroseSearchResults();
 

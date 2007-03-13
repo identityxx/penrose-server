@@ -439,7 +439,7 @@ public class ProxyEngine extends Engine {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("EXPAND PROXY", 80));
+            log.debug(Formatter.displayLine("SEARCH", 80));
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));

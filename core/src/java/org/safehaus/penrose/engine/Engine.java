@@ -64,8 +64,7 @@ public abstract class Engine {
     public boolean stopping = false;
 
     public EngineFilterTool engineFilterTool;
-
-    private FilterTool filterTool;
+    private FilterTool      filterTool;
 
     public TransformEngine transformEngine;
 

@@ -65,7 +65,6 @@ public class SearchPipeline extends Pipeline {
         this.entryMappings = entryMappings;
     }
 
-    // Perform ACL evaluation, convert Entry into SearchResult.
     public void add(Object object) throws Exception {
         Entry entry = (Entry)object;
 
@@ -78,6 +77,7 @@ public class SearchPipeline extends Pipeline {
 
         if (!session.isRootUser()) {
             if (debug) log.debug("Checking read permission on "+dn);
+            
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
             if (rc != LDAPException.SUCCESS) {
                 if (debug) log.debug("Entry \""+entry.getDn()+"\" is not readable.");

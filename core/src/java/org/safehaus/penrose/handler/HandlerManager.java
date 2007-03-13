@@ -657,6 +657,7 @@ public class HandlerManager {
                         sr.setResult(entryMapping, ExceptionUtil.createLDAPException(LDAPException.SUCCESS));
 
                     } catch (Exception e) {
+                        log.error(e.getMessage(), e);
                         sr.setResult(entryMapping, ExceptionUtil.createLDAPException(e));
 
                     } finally {

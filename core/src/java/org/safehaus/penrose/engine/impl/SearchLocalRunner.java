@@ -29,6 +29,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.entry.AttributeValues;
@@ -133,11 +134,11 @@ public class SearchLocalRunner extends GraphVisitor {
 
         Collection list = new ArrayList();
         while (tmp.hasNext()) {
-            AttributeValues av = (AttributeValues)tmp.next();
+            ConnectorSearchResult result = (ConnectorSearchResult)tmp.next();
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceValues);
-            sv.add(sourceMapping.getName(), av);
+            sv.add(sourceMapping.getName(), result.getSourceValues());
             list.add(sv);
         }
 

@@ -1,47 +1,43 @@
-/**
- * Copyright (c) 2000-2006, Identyx Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
-package org.safehaus.penrose.engine.simple;
+package org.safehaus.penrose.engine.basic;
 
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineFilterTool;
+import org.safehaus.penrose.engine.TransformEngine;
+import org.safehaus.penrose.engine.EngineTool;
+import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.PenroseSearchResults;
 import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.session.Results;
-import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.pipeline.Pipeline;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.LDAPUtil;
-import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
+import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SimpleEngine extends Engine {
+public class BasicEngine extends Engine {
 
     SearchEngine searchEngine;
 
@@ -440,10 +436,11 @@ public class SimpleEngine extends Engine {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Mapping DN: "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
-            log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc.getScope()), 80));
+            log.debug(Formatter.displayLine("Base DN         : "+baseDn, 80));
+            log.debug(Formatter.displayLine("Base Mapping    : "+baseMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Current Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Filter          : "+filter, 80));
+            log.debug(Formatter.displayLine("Scope           : "+ LDAPUtil.getScope(sc.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -470,7 +467,7 @@ public class SimpleEngine extends Engine {
                 sourceValues.print();
             }
 
-            Pipeline sr = new SearchPipeline(results);
+            Pipeline sr = new SearchPipeline(results, interpreterManager.newInstance());
 
             searchEngine.search(partition, sourceValues, entryMapping, filter, sc, sr);
 
@@ -481,36 +478,43 @@ public class SimpleEngine extends Engine {
 
     public void extractSourceValues(Partition partition, EntryMapping entryMapping, DN dn, AttributeValues sourceValues) throws Exception {
 
+        Interpreter interpreter = interpreterManager.newInstance();
+
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
-        for (Iterator i=dn.getRdns().iterator(); i.hasNext(); ) {
+        for (Iterator i=dn.getRdns().iterator(); i.hasNext() && entryMapping != null; ) {
             RDN rdn = (RDN)i.next();
 
             Collection sourceMappings = entryMapping.getSourceMappings();
             for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)j.next();
-                extractSourceValues(rdn, sourceMapping, sourceValues);
+                extractSourceValues(interpreter, rdn, entryMapping, sourceMapping, sourceValues);
             }
 
             entryMapping = partition.getParent(entryMapping);
         }
     }
 
-    public void extractSourceValues(RDN rdn, SourceMapping sourceMapping, AttributeValues sourceValues) throws Exception {
+    public void extractSourceValues(
+            Interpreter interpreter,
+            RDN rdn,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            AttributeValues sourceValues
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
+        interpreter.clear();
+        interpreter.set(rdn);
+
         Collection fieldMappings = sourceMapping.getFieldMappings();
         for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)k.next();
-            //log.debug("Field: "+fieldMapping.getName());
-            if (fieldMapping.getVariable() == null) continue;
 
-            String variable = fieldMapping.getVariable();
-            //log.debug("Variable: "+variable);
-            Object value = rdn.get(variable);
+            Object value = interpreter.eval(entryMapping, fieldMapping);
             if (value == null) continue;
 
             String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
@@ -520,4 +524,3 @@ public class SimpleEngine extends Engine {
     }
 
 }
-
