@@ -59,7 +59,7 @@ public class PenroseContext {
     private InterpreterManager interpreterManager;
     private ConnectorManager   connectorManager;
     private EngineManager      engineManager;
-    private ACLManager aclEngine;
+    private ACLManager         aclManager;
 
     private SessionManager     sessionManager;
     private HandlerManager     handlerManager;
@@ -200,9 +200,9 @@ public class PenroseContext {
         engineManager.setPenroseConfig(penroseConfig);
         engineManager.setPenroseContext(this);
 
-        aclEngine = new ACLManager();
-        aclEngine.setPenroseConfig(penroseConfig);
-        aclEngine.setPenroseContext(this);
+        aclManager = new ACLManager();
+        aclManager.setPenroseConfig(penroseConfig);
+        aclManager.setPenroseContext(this);
 
         sessionManager = new SessionManager();
         sessionManager.setPenroseConfig(penroseConfig);
@@ -317,11 +317,11 @@ public class PenroseContext {
         this.penroseConfig = penroseConfig;
     }
 
-    public ACLManager getAclEngine() {
-        return aclEngine;
+    public ACLManager getAclManager() {
+        return aclManager;
     }
 
-    public void setAclEngine(ACLManager aclEngine) {
-        this.aclEngine = aclEngine;
+    public void setAclManager(ACLManager aclManager) {
+        this.aclManager = aclManager;
     }
 }

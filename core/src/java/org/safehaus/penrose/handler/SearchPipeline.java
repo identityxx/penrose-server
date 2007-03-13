@@ -27,7 +27,7 @@ public class SearchPipeline extends Pipeline {
 
     HandlerManager handlerManager;
     SchemaManager schemaManager;
-    ACLManager aclEngine;
+    ACLManager aclManager;
 
     Set requestedAttributes;
     boolean allRegularAttributes;
@@ -43,7 +43,7 @@ public class SearchPipeline extends Pipeline {
             Partition partition,
             HandlerManager handlerManager,
             SchemaManager schemaManager,
-            ACLManager aclEngine,
+            ACLManager aclManager,
             Set requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
@@ -56,7 +56,7 @@ public class SearchPipeline extends Pipeline {
 
         this.handlerManager = handlerManager;
         this.schemaManager  = schemaManager;
-        this.aclEngine      = aclEngine;
+        this.aclManager = aclManager;
 
         this.requestedAttributes = requestedAttributes;
         this.allRegularAttributes = allRegularAttributes;
@@ -78,7 +78,7 @@ public class SearchPipeline extends Pipeline {
 
         if (!session.isRootUser()) {
             if (debug) log.debug("Checking read permission on "+dn);
-            int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
+            int rc = aclManager.checkRead(session, partition, entryMapping, dn);
             if (rc != LDAPException.SUCCESS) {
                 if (debug) log.debug("Entry \""+entry.getDn()+"\" is not readable.");
                 return;

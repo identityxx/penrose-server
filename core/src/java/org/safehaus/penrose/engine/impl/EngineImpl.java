@@ -24,14 +24,11 @@ import org.safehaus.penrose.session.Results;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.handler.FindHandler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
@@ -39,7 +36,6 @@ import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.*;
@@ -149,7 +145,16 @@ public class EngineImpl extends Engine {
 
             PenroseSearchResults results = new PenroseSearchResults();
 
-            search(session, partition, new AttributeValues(), entryMapping, dn, null, sc, results);
+            search(
+                    session,
+                    partition,
+                    new AttributeValues(),
+                    entryMapping,
+                    dn,
+                    null,
+                    sc,
+                    results
+            );
 
             if (!results.hasNext()) {
                 throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
@@ -544,30 +549,6 @@ public class EngineImpl extends Engine {
     }
 
     public void search(
-            PenroseSession session,
-            Partition partition,
-            AttributeValues sourceValues,
-            EntryMapping entryMapping,
-            DN baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
-    ) throws Exception {
-
-        expand(
-                session,
-                partition,
-                sourceValues,
-                entryMapping,
-                entryMapping,
-                baseDn,
-                filter,
-                sc,
-                results
-        );
-    }
-
-    public void expand(
             final PenroseSession session,
             final Partition partition,
             final AttributeValues sourceValues,
@@ -583,7 +564,7 @@ public class EngineImpl extends Engine {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("EXPAND MAPPING", 80));
+            log.debug(Formatter.displayLine("SEARCH", 80));
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));

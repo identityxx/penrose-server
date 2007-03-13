@@ -60,7 +60,7 @@ public class HandlerManager {
 
     ThreadManager threadManager;
     SchemaManager schemaManager;
-    ACLManager aclEngine;
+    ACLManager aclManager;
 
     public HandlerManager() {
     }
@@ -82,7 +82,7 @@ public class HandlerManager {
 
         threadManager = penroseContext.getThreadManager();
         schemaManager = penroseContext.getSchemaManager();
-        aclEngine     = penroseContext.getAclEngine();
+        aclManager = penroseContext.getAclManager();
     }
 
     public void init(HandlerConfig handlerConfig) throws Exception {
@@ -266,7 +266,7 @@ public class HandlerManager {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
             EntryMapping parentMapping = partition.getParent(entryMapping);
-            int rc = aclEngine.checkAdd(session, partition, parentMapping, parentDn);
+            int rc = aclManager.checkAdd(session, partition, parentMapping, parentDn);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Not allowed to add "+dn);
@@ -316,7 +316,7 @@ public class HandlerManager {
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            int rc = aclEngine.checkRead(session, partition, entryMapping, dn);
+            int rc = aclManager.checkRead(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Not allowed to compare "+dn);
@@ -357,7 +357,7 @@ public class HandlerManager {
 
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
-            int rc = aclEngine.checkDelete(session, partition, entryMapping, dn);
+            int rc = aclManager.checkDelete(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Not allowed to delete "+dn);
@@ -475,7 +475,7 @@ public class HandlerManager {
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            int rc = aclEngine.checkModify(session, partition, entryMapping, dn);
+            int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Not allowed to modify "+dn);
@@ -524,7 +524,7 @@ public class HandlerManager {
         for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            int rc = aclEngine.checkModify(session, partition, entryMapping, dn);
+            int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
                 log.debug("Not allowed to modify "+dn);
@@ -623,7 +623,7 @@ public class HandlerManager {
                 partition,
                 this,
                 schemaManager,
-                aclEngine,
+                aclManager,
                 requestedAttributes,
                 allRegularAttributes,
                 allOpAttributes,
@@ -634,7 +634,7 @@ public class HandlerManager {
             final EntryMapping entryMapping = (EntryMapping)i.next();
             final Handler handler = getHandler(entryMapping);
 
-            int rc = aclEngine.checkSearch(session, partition, entryMapping, baseDn);
+            int rc = aclManager.checkSearch(session, partition, entryMapping, baseDn);
 
             if (rc != LDAPException.SUCCESS) {
                 if (debug) log.debug("Not allowed to search "+baseDn);
@@ -811,7 +811,7 @@ public class HandlerManager {
 
         DN bindDn = session.getBindDn();
         DN targetDn = entry.getDn();
-        aclEngine.getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
+        aclManager.getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
 
         boolean debug = log.isDebugEnabled();
         if (debug) {

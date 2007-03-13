@@ -450,7 +450,7 @@ public abstract class Engine {
         return null;
     }
 
-    public abstract void search(
+    public void search(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,
@@ -459,22 +459,22 @@ public abstract class Engine {
             Filter filter,
             PenroseSearchControls sc,
             Results results
-    ) throws Exception;
+    ) throws Exception {
 
-    /**
-     * @param session
-     * @param partition
-     * @param sourceValues
-     * @param baseMapping
-     * @param entryMapping
-     * @param baseDn
-     * @param filter
-     * @param sc
-     * @param results Collection of entries (Entry).
-     * @return
-     * @throws Exception
-     */
-    public abstract void expand(
+        search(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                results
+        );
+    }
+
+    public abstract void search(
             PenroseSession session,
             Partition partition,
             AttributeValues sourceValues,

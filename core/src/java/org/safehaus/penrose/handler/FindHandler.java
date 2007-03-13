@@ -58,11 +58,10 @@ public class FindHandler {
         PenroseSearchControls sc = new PenroseSearchControls();
         PenroseSearchResults sr = new PenroseSearchResults();
 
-        String engineName = entryMapping.getEngineName();
-        Engine engine = handler.getEngine(engineName);
+        Engine engine = handler.getEngine(entryMapping);
 
         if (engine == null) {
-            log.debug("Engine "+engineName+" not found");
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
             return null;
         }
 
@@ -125,11 +124,10 @@ public class FindHandler {
                 }
             }
 
-            String engineName = entryMapping.getEngineName();
-            Engine engine = handler.getEngine(engineName);
+            Engine engine = handler.getEngine(entryMapping);
 
             if (engine == null) {
-                log.debug("Engine "+engineName+" not found");
+                log.debug("Engine "+entryMapping.getEngineName()+" not found.");
                 continue;
             }
 

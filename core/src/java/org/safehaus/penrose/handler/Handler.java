@@ -23,6 +23,8 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
@@ -35,8 +37,10 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.*;
 import java.util.*;
@@ -53,24 +57,25 @@ public abstract class Handler {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    PenroseConfig penroseConfig;
-    PenroseContext penroseContext;
+    protected PenroseConfig      penroseConfig;
+    protected PenroseContext     penroseContext;
 
-    HandlerConfig handlerConfig;
+    protected HandlerConfig      handlerConfig;
 
-    SchemaManager schemaManager;
-    EngineManager engineManager;
-    ACLManager aclEngine;
+    protected ThreadManager      threadManager;
+    protected SchemaManager      schemaManager;
+    protected InterpreterManager interpreterManager;
 
-    SessionManager sessionManager;
+    protected SessionManager     sessionManager;
+    protected HandlerManager     handlerManager;
 
-    InterpreterManager interpreterManager;
-    FilterTool filterTool;
-    EntryCache entryCache;
+    protected EngineManager      engineManager;
+    protected ACLManager         aclManager;
 
-    ThreadManager threadManager;
+    protected FilterTool         filterTool;
+    protected EntryCache         entryCache;
 
-    private String status = STOPPED;
+    protected String status = STOPPED;
 
     public Handler() throws Exception {
     }
@@ -80,12 +85,14 @@ public abstract class Handler {
 
         threadManager      = penroseContext.getThreadManager();
         schemaManager      = penroseContext.getSchemaManager();
-
         interpreterManager = penroseContext.getInterpreterManager();
-        engineManager      = penroseContext.getEngineManager();
-        aclEngine          = penroseContext.getAclEngine();
 
         sessionManager     = penroseContext.getSessionManager();
+        handlerManager     = penroseContext.getHandlerManager();
+
+        engineManager      = penroseContext.getEngineManager();
+        aclManager         = penroseContext.getAclManager();
+
 
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
@@ -145,65 +152,178 @@ public abstract class Handler {
         this.status = status;
     }
 
-    public abstract void bind(
+    public void add(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Attributes attributes) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
+        engine.add(session, partition, parent, entryMapping, dn, attributes);
+    }
+
+    public void bind(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
             String password
-    ) throws Exception;
+    ) throws Exception {
 
-    public abstract void unbind(
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        engine.bind(session, partition, entryMapping, dn, password);
+    }
+
+    public void unbind(PenroseSession session, Partition partition, EntryMapping entryMapping, DN bindDn) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        //engine.unbind(session, partition, entryMapping, bindDn);
+    }
+
+    public Entry find(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        PenroseSearchControls sc = new PenroseSearchControls();
+        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+
+        PenroseSearchResults results = new PenroseSearchResults();
+
+        search(
+                session,
+                partition,
+                entryMapping,
+                dn,
+                null,
+                sc,
+                results
+        );
+
+        if (results.hasNext()) {
+            if (debug) log.debug("Entry "+dn+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+        }
+
+        return (Entry)results.next();
+    }
+
+    public boolean compare(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, String attributeName, Object attributeValue) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        Entry entry = find(session, partition, entryMapping, dn);
+
+        List attributeNames = new ArrayList();
+        attributeNames.add(attributeName);
+
+        AttributeValues attributeValues = entry.getAttributeValues();
+        Collection values = attributeValues.get(attributeName);
+        if (values == null) {
+            if (debug) log.debug("Attribute "+attributeName+" not found.");
+            return false;
+        }
+
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        if (debug) log.debug("Comparing values:");
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            Object value = i.next();
+
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            if (debug) log.debug(" - ["+value+"] => "+b);
+
+            if (b) return true;
+
+        }
+
+        return false;
+    }
+
+    public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        engine.delete(session, partition, entry, entryMapping, dn);
+    }
+
+    public void modify(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Collection modifications) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        engine.modify(session, partition, entry, entryMapping, dn, modifications);
+    }
+
+    public void modrdn(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, RDN newRdn, boolean deleteOldRdn) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        engine.modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
+    }
+
+    public void search(
             PenroseSession session,
             Partition partition,
             EntryMapping entryMapping,
-            DN bindDn
-    ) throws Exception;
+            DN baseDn,
+            Filter filter,
+            PenroseSearchControls sc,
+            Results results
+    ) throws Exception {
 
-    public abstract void add(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            Attributes attributes
-    ) throws Exception;
-
-    public abstract boolean compare(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            String attributeName,
-            Object attributeValue
-    ) throws Exception;
-
-    public abstract void delete(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn
-    ) throws Exception;
-
-    public abstract void modify(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            Collection modifications
-    ) throws Exception;
-
-    public abstract void modrdn(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception;
+        search(
+                session,
+                partition,
+                entryMapping,
+                entryMapping,
+                baseDn,
+                filter,
+                sc,
+                results
+        );
+    }
 
     public abstract void search(
             PenroseSession session,
             Partition partition,
+            EntryMapping baseMapping,
             EntryMapping entryMapping,
             DN baseDn,
             Filter filter,
@@ -235,12 +355,8 @@ public abstract class Handler {
         this.filterTool = filterTool;
     }
 
-    public Engine getEngine() {
-        return engineManager.getEngine("DEFAULT");
-    }
-
-    public Engine getEngine(String name) {
-        return engineManager.getEngine(name);
+    public Engine getEngine(EntryMapping entryMapping) {
+        return engineManager.getEngine(entryMapping.getEngineName());
     }
 
     public SchemaManager getSchemaManager() {
@@ -273,32 +389,6 @@ public abstract class Handler {
 
     public void setEntryCache(EntryCache entryCache) {
         this.entryCache = entryCache;
-    }
-
-    public AttributeValues pushSourceValues(
-            AttributeValues oldSourceValues,
-            AttributeValues newSourceValues
-    ) {
-        AttributeValues av = new AttributeValues();
-
-        for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = oldSourceValues.get(name);
-
-            if (name.startsWith("parent.")) name = "parent."+name;
-            av.add(name, values);
-        }
-
-        if (newSourceValues != null) {
-            for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                Collection values = newSourceValues.get(name);
-
-                av.add("parent."+name, values);
-            }
-        }
-
-        return av;
     }
 
     public void addConnectionListener(ConnectionListener l) {

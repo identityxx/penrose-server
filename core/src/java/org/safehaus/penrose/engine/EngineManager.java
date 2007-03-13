@@ -18,7 +18,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.apache.log4j.Logger;
 

@@ -235,11 +235,10 @@ public class SimpleEngine extends Engine {
         RDN rdn = dn.getRdn();
         Filter filter = FilterTool.createFilter(rdn);
 
-        expand(
+        search(
                 null,
                 partition,
                 sourceValues,
-                entryMapping,
                 entryMapping,
                 dn,
                 filter,
@@ -279,30 +278,6 @@ public class SimpleEngine extends Engine {
     }
 
     public void search(
-            final PenroseSession session,
-            final Partition partition,
-            final AttributeValues sourceValues,
-            final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
-    ) throws Exception {
-
-        expand(
-                session,
-                partition,
-                sourceValues,
-                entryMapping,
-                entryMapping,
-                baseDn,
-                filter,
-                sc,
-                results
-        );
-    }
-
-    public void expand(
             final PenroseSession session,
             final Partition partition,
             final AttributeValues sourceValues,
