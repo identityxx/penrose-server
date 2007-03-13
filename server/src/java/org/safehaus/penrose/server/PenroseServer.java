@@ -237,6 +237,11 @@ public class PenroseServer {
             String javaHome = System.getProperty("java.home");
             log.info("Java home: "+javaHome);
 
+            String userDir = System.getProperty("user.dir");
+            log.info("Current directory: "+userDir);
+
+            log.info("Penrose home: "+homeDirectory);
+
             PenroseServer server = new PenroseServer(homeDirectory);
             server.start();
 
@@ -245,7 +250,7 @@ public class PenroseServer {
         } catch (Exception e) {
             String name = e.getClass().getName();
             name = name.substring(name.lastIndexOf(".")+1);
-            log.debug(name, e);
+            log.debug(e.getMessage(), e);
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }
