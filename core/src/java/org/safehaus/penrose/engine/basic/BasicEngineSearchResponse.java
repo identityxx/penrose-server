@@ -4,9 +4,11 @@ import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,8 @@ public class BasicEngineSearchResponse extends SearchResponse {
             attributeValues.print();
         }
 
-        Entry entry = new Entry(data.getDn(), data.getEntryMapping(), attributeValues, data.getMergedValues());
+        Attributes attributes = EntryUtil.computeAttributes(attributeValues);
+        Entry entry = new Entry(data.getDn(), data.getEntryMapping(), attributes, data.getMergedValues());
 
         parent.add(entry);
     }

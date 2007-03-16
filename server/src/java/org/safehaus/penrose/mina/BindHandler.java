@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -29,7 +30,7 @@ public class BindHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            String bindDn = request.getName().toString();
+            DN bindDn = new DN(request.getName().toString());
             String password = new String(request.getCredentials());
 
             Session session = handler.getPenroseSession(ioSession);

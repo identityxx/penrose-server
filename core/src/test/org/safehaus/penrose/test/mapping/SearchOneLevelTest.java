@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -34,12 +35,12 @@ public class SearchOneLevelTest extends StaticTestCase {
         String dn = entry.getDn().toString();
         assertEquals(dn, "uid=member1,cn=group,"+baseDn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("uid");
+        Object value = attributes.getValue("uid");
         assertEquals("member1", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         assertEquals("group", value);
 
         assertTrue(response.hasNext());
@@ -48,12 +49,12 @@ public class SearchOneLevelTest extends StaticTestCase {
         dn = entry.getDn().toString();
         assertEquals(dn, "uid=member2,cn=group,"+baseDn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("uid");
+        value = attributes.getValue("uid");
         assertEquals("member2", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         assertEquals("group", value);
 
         assertFalse(response.hasNext());

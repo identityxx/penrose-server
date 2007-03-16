@@ -7,6 +7,7 @@ import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
@@ -19,14 +20,12 @@ import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.Attribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -89,9 +88,10 @@ public class BasicEngine extends Engine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            Attributes attributes
     ) throws Exception {
 
+        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         Collection sourceMappings = entryMapping.getSourceMappings();
 
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
@@ -198,13 +198,10 @@ public class BasicEngine extends Engine {
         attributeValues.add(rdn);
 
         for (Iterator iterator=modifications.iterator(); iterator.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)iterator.next();
+            Modification mi = (Modification)iterator.next();
             Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
-
-            for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
-                attributeValues.add(name, ne.next());
-            }
+            String name = attribute.getName();
+            attributeValues.add(name, attribute.getValues());
         }
 
         Collection sourceMappings = entryMapping.getSourceMappings();
@@ -237,17 +234,17 @@ public class BasicEngine extends Engine {
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
 
                 for (Iterator k=modifications.iterator(); k.hasNext(); ) {
-                    ModificationItem mi = (ModificationItem)k.next();
+                    Modification mi = (Modification)k.next();
+
+                    int op = mi.getType();
                     Attribute attribute = mi.getAttribute();
-                    if (!attribute.getID().equals(variable)) continue;
+                    if (!attribute.getName().equals(variable)) continue;
 
                     if (log.isDebugEnabled()) log.debug("Converting modification for attribute "+variable);
-                    int op = mi.getModificationOp();
-                    Attribute newAttr = new BasicAttribute(name);
-                    for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
-                        newAttr.add(ne.next());
-                    }
-                    mods.add(new ModificationItem(op, newAttr));
+
+                    Attribute newAttr = new Attribute(name);
+                    newAttr.setValues(attribute.getValues());
+                    mods.add(new Modification(op, newAttr));
 
                     if ((!sourceMapping.equals(primarySourceMapping)) && fieldConfig.isPrimaryKey()) {
                         deleteExistingEntries = true;
@@ -450,7 +447,12 @@ public class BasicEngine extends Engine {
         }
     }
 
-    public void extractSourceValues(Partition partition, EntryMapping entryMapping, DN dn, AttributeValues sourceValues) throws Exception {
+    public void extractSourceValues(
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            AttributeValues sourceValues
+    ) throws Exception {
 
         Interpreter interpreter = interpreterManager.newInstance();
 

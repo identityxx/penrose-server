@@ -212,13 +212,14 @@ public class ProxyEngine extends Engine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            Attributes attributes
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
         EntryMapping proxyMapping = parent.getEntryMapping();
 
+        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         SourceMapping sourceMapping = proxyMapping.getSourceMapping(0);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
@@ -231,7 +232,7 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
 
-            javax.naming.directory.Attributes attributes = new javax.naming.directory.BasicAttributes();
+            javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
 
             for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
@@ -244,7 +245,7 @@ public class ProxyEngine extends Engine {
                 }
             }
             
-            client.add(targetDn.toString(), attributes);
+            client.add(targetDn.toString(), attrs);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -523,7 +524,8 @@ public class ProxyEngine extends Engine {
                         }
                     }
 
-                    Entry entry = new Entry(dn.toString(), entryMapping, attributeValues);
+                    Attributes attributes = EntryUtil.computeAttributes(attributeValues);
+                    Entry entry = new Entry(dn.toString(), entryMapping, attributes);
                     response.add(entry);
                 }
 

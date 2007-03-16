@@ -24,10 +24,6 @@ public class PenroseSearchRequest
         this.searchRequest = searchRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        searchRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         searchRequest.setDn(penroseDn.getDn());
@@ -35,10 +31,6 @@ public class PenroseSearchRequest
 
     public DN getDn() throws Exception {
         return new PenroseDN(searchRequest.getDn());
-    }
-
-    public void setFilter(String filter) throws Exception {
-        searchRequest.setFilter(filter);
     }
 
     public void setFilter(Filter filter) throws Exception {

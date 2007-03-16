@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.safehaus.penrose.session.SearchRequest;
 
 import javax.naming.directory.DirContext;
-import javax.naming.directory.Attribute;
 import javax.naming.directory.SearchControls;
 import javax.naming.NamingEnumeration;
 
@@ -33,7 +32,7 @@ public class LDAPUtil {
 
     public static Logger log = LoggerFactory.getLogger(LDAPUtil.class);
 
-    public static boolean isBinary(Attribute attribute) throws Exception {
+    public static boolean isBinary(javax.naming.directory.Attribute attribute) throws Exception {
 
         log.debug("Attribute "+attribute.getID()+" definition:");
 

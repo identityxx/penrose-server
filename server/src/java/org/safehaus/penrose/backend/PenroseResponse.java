@@ -12,7 +12,7 @@ import java.util.Iterator;
  */
 public class PenroseResponse implements com.identyx.javabackend.Response {
 
-    private Response response;
+    Response response;
 
     public PenroseResponse(Response response) {
         this.response = response;

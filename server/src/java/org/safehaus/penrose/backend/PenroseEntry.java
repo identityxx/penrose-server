@@ -20,6 +20,6 @@ public class PenroseEntry implements com.identyx.javabackend.Entry {
     }
 
     public Attributes getAttributes() throws Exception {
-        return new PenroseAttributes(entry.getAttributeValues());
+        return new PenroseAttributes(entry.getAttributes());
     }
 }

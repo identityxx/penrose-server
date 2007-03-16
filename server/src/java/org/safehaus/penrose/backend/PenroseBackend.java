@@ -21,11 +21,13 @@ import java.util.*;
 import java.io.File;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
@@ -145,8 +147,12 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return new PenroseRDN(new RDN(rdn));
     }
 
+    public com.identyx.javabackend.Filter createFilter(String filter) throws Exception {
+        return new PenroseFilter(FilterTool.parseFilter(filter));
+    }
+
     public com.identyx.javabackend.Attributes createAttributes() throws Exception {
-        return new PenroseAttributes(new AttributeValues());
+        return new PenroseAttributes(new Attributes());
     }
 
     public com.identyx.javabackend.Attribute createAttribute(String name) throws Exception {

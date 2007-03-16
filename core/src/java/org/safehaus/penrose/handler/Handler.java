@@ -29,7 +29,6 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -166,7 +165,7 @@ public abstract class Handler {
         }
 
         DN dn = request.getDn();
-        AttributeValues attributeValues = request.getAttributeValues();
+        Attributes attributeValues = request.getAttributes();
 
         Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
         engine.add(session, partition, parent, entryMapping, dn, attributeValues);
@@ -265,13 +264,14 @@ public abstract class Handler {
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 
-        AttributeValues attributeValues = entry.getAttributeValues();
-        Collection values = attributeValues.get(attributeName);
-        if (values == null) {
+        Attributes attributes = entry.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) {
             if (debug) log.debug("Attribute "+attributeName+" not found.");
             return false;
         }
 
+        Collection values = attribute.getValues();
         AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         String equality = attributeType == null ? null : attributeType.getEquality();

@@ -25,6 +25,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.Attribute;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -55,7 +56,12 @@ public class ModRdnEngine {
         try {
             EntryMapping entryMapping = entry.getEntryMapping();
 
-            AttributeValues oldAttributeValues = entry.getAttributeValues();
+            AttributeValues oldAttributeValues = new AttributeValues();
+            for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
+                Attribute attribute = (Attribute)i.next();
+                oldAttributeValues.set(attribute.getName(), attribute.getValues());
+            }
+            
             AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
 
             RDN rdn1 = entry.getDn().getRdn();

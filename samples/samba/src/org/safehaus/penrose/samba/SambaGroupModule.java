@@ -4,11 +4,10 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
 import java.util.Map;
 import java.util.Collection;
 import java.util.TreeMap;
@@ -46,8 +45,8 @@ public class SambaGroupModule extends Module {
 
         log.debug("Checking Samba attributes before adding \""+dn+"\".");
 
-        AttributeValues attributeValues = request.getAttributeValues();
-        if (attributeValues.get("sambaSID") == null || attributeValues.get("gidNumber") == null) {
+        Attributes attributes = request.getAttributes();
+        if (attributes.get("sambaSID") == null || attributes.get("gidNumber") == null) {
 
             log.debug("Generating Group SID and GID ...");
 
@@ -84,13 +83,13 @@ public class SambaGroupModule extends Module {
             log.debug("Group SID: "+groupSID);
             log.debug("GID: "+gid);
 
-            attributeValues.set("gidNumber", gid);
+            attributes.setValue("gidNumber", gid);
 
-            attributeValues.set("sambaSID", groupSID);
+            attributes.setValue("sambaSID", groupSID);
         }
 
-        if (attributeValues.get("sambaGroupType") == null) {
-            attributeValues.set("sambaGroupType", "2");
+        if (attributes.get("sambaGroupType") == null) {
+            attributes.setValue("sambaGroupType", "2");
         }
 
         return true;
@@ -100,10 +99,9 @@ public class SambaGroupModule extends Module {
 
         ModifyRequest modifyRequest = event.getRequest();
 
-        String dn = modifyRequest.getDn().toString();
-        int i = dn.indexOf("=");
-        int j = dn.indexOf(",", i);
-        String groupname = dn.substring(i+1, j);
+        DN dn = modifyRequest.getDn();
+        RDN rdn = dn.getRdn();
+        String groupname = (String)rdn.get("cn");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
 
@@ -118,7 +116,8 @@ public class SambaGroupModule extends Module {
 
         session.search(searchRequest, response);
 
-        SearchResult entry = (SearchResult) response.next();
+        SearchResult result = (SearchResult) response.next();
+        Entry entry = result.getEntry();
         Attributes values = entry.getAttributes();
 
         Collection modifications = modifyRequest.getModifications();
@@ -160,18 +159,18 @@ public class SambaGroupModule extends Module {
             log.debug("Group SID: "+groupSID);
             log.debug("GID: "+gid);
 
-            Attribute attribute = new BasicAttribute("gidNumber", gid);
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("gidNumber", gid);
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaSID", groupSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaSID", groupSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 
         if (values.get("sambaGroupType") == null) {
-            Attribute attribute = new BasicAttribute("sambaGroupType", "2");
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("sambaGroupType", "2");
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 

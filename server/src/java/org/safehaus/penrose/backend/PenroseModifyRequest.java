@@ -1,12 +1,9 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.session.ModifyRequest;
+import org.safehaus.penrose.session.Modification;
 import com.identyx.javabackend.DN;
-import com.identyx.javabackend.Modification;
-import com.identyx.javabackend.Attribute;
 
-import javax.naming.directory.ModificationItem;
-import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -25,10 +22,6 @@ public class PenroseModifyRequest
         this.modifyRequest = modifyRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        modifyRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         modifyRequest.setDn(penroseDn.getDn());
@@ -41,38 +34,17 @@ public class PenroseModifyRequest
     public void setModifications(Collection modifications) throws Exception {
         Collection list = new ArrayList();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification modification = (Modification)i.next();
-
-            int type = modification.getType();
-            Attribute attribute = modification.getAttribute();
-
-            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(attribute.getName());
-            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                attr.add(value);
-            }
-            ModificationItem mi = new ModificationItem(type, attr);
-            list.add(mi);
+            PenroseModification modification = (PenroseModification)i.next();
+            list.add(modification.getModification());
         }
-        modifyRequest.setModifications(list);
+        modifyRequest.setModifications(modifications);
     }
 
     public Collection getModifications() throws Exception {
         Collection list = new ArrayList();
         for (Iterator i=modifyRequest.getModifications().iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-
-            int type = mi.getModificationOp();
-            javax.naming.directory.Attribute attribute = mi.getAttribute();
-
-            Attribute attr = new PenroseAttribute(attribute.getID());
-            for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
-                Object value = ne.next();
-                attr.addValue(value);
-            }
-
-            Modification modification = new PenroseModification(type, attr);
-            list.add(modification);
+            Modification modification = (Modification)i.next();
+            list.add(new PenroseModification(modification));
         }
         return list;
     }

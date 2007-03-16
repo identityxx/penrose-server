@@ -1,12 +1,9 @@
 package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.test.mapping.join.JoinTestCase;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.entry.Attribute;
 
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.DirContext;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Map;
@@ -29,15 +26,15 @@ public class ModifyJoinTest extends JoinTestCase {
 
         Collection modifications = new ArrayList();
 
-        Attribute attribute = new BasicAttribute("description");
-        attribute.add("newdesc1");
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+        Attribute attribute = new Attribute("description");
+        attribute.addValue("newdesc1");
+        Modification mi = new Modification(Modification.REPLACE, attribute);
 
         modifications.add(mi);
 
-        attribute = new BasicAttribute("uniqueMember");
-        attribute.add("member2");
-        mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+        attribute = new Attribute("uniqueMember");
+        attribute.addValue("member2");
+        mi = new Modification(Modification.REPLACE, attribute);
 
         modifications.add(mi);
 

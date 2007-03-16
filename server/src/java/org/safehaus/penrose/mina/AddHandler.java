@@ -10,9 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.Attributes;
+import javax.naming.NamingEnumeration;
 
 /**
  * @author Endi S. Dewata
@@ -34,14 +36,14 @@ public class AddHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            String dn = request.getEntry().toString();
-            Attributes attributes = request.getAttributes();
+            DN dn = new DN(request.getEntry().toString());
+            Attributes attributes = handler.createAttributes(request.getAttributes());
 
             Session session = handler.getPenroseSession(ioSession);
 
             org.safehaus.penrose.session.AddRequest penroseRequest = new org.safehaus.penrose.session.AddRequest();
             penroseRequest.setDn(dn);
-            penroseRequest.setAttributeValues(attributes);
+            penroseRequest.setAttributes(attributes);
             handler.getControls(request, penroseRequest);
 
             org.safehaus.penrose.session.AddResponse penroseResponse = new org.safehaus.penrose.session.AddResponse();

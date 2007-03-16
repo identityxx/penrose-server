@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -37,15 +38,15 @@ public class SearchSizeLimitTest extends StaticTestCase {
         String dn = entry.getDn().toString();
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
             value = i.next();
@@ -83,15 +84,15 @@ public class SearchSizeLimitTest extends StaticTestCase {
         String dn = entry.getDn().toString();
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
             value = i.next();
@@ -106,12 +107,12 @@ public class SearchSizeLimitTest extends StaticTestCase {
         dn = entry.getDn().toString();
         assertEquals("uid=member1,cn=group,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("uid");
+        value = attributes.getValue("uid");
         assertEquals("member1", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         assertEquals("group", value);
 
         try {
@@ -143,15 +144,15 @@ public class SearchSizeLimitTest extends StaticTestCase {
         String dn = entry.getDn().toString();
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
             value = i.next();
@@ -166,12 +167,12 @@ public class SearchSizeLimitTest extends StaticTestCase {
         dn = entry.getDn().toString();
         assertEquals("uid=member1,cn=group,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("uid");
+        value = attributes.getValue("uid");
         assertEquals("member1", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         assertEquals("group", value);
 
         assertTrue(response.hasNext());
@@ -180,12 +181,12 @@ public class SearchSizeLimitTest extends StaticTestCase {
         dn = entry.getDn().toString();
         assertEquals("uid=member2,cn=group,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("uid");
+        value = attributes.getValue("uid");
         assertEquals("member2", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         assertEquals("group", value);
 
         assertFalse(response.hasNext());

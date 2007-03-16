@@ -26,7 +26,6 @@ import org.apache.directory.shared.ldap.name.LdapDN;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.RDN;
@@ -34,6 +33,7 @@ import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.session.SearchResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.ietf.ldap.*;
@@ -161,7 +161,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public void add(
             NextInterceptor next,
             LdapDN name,
-            Attributes attributes
+            Attributes attrs
     ) throws NamingException {
 
         log.debug("===============================================================================");
@@ -174,7 +174,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             Partition partition = partitionManager.getPartition(dn);
             if (partition == null) {
             	if (debug) log.debug(dn+" is a static entry");
-                next.add(name, attributes);
+                next.add(name, attrs);
                 return;
             }
 
@@ -184,9 +184,20 @@ public class PenroseInterceptor extends BaseInterceptor {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
+            org.safehaus.penrose.entry.Attributes attributes = new org.safehaus.penrose.entry.Attributes();
+            for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
+                javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
+                    Object value = ne2.next();
+                    attributes.addValue(attributeName, value);
+                }
+            }
+
             AddRequest request = new AddRequest();
             request.setDn(dn);
-            request.setAttributeValues(attributes);
+            request.setAttributes(attributes);
 
             AddResponse response = new AddResponse();
 
@@ -428,10 +439,11 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             session.search(request, response);
 
-            Entry entry = (Entry) response.next();
-            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
+            SearchResult result = (SearchResult)response.next();
+            Entry entry = result.getEntry();
 
-            return result.getAttributes();
+            javax.naming.directory.SearchResult sr = EntryTool.createSearchResult(entry);
+            return sr.getAttributes();
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -475,10 +487,11 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             session.search(request, response);
 
-            Entry entry = (Entry) response.next();
-            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
+            SearchResult result = (SearchResult)response.next();
+            Entry entry = result.getEntry();
 
-            return result.getAttributes();
+            javax.naming.directory.SearchResult sr = EntryTool.createSearchResult(entry);
+            return sr.getAttributes();
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -528,7 +541,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                     NamingEnumeration ne = next.search(base, env, filter, searchControls);
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                    Attributes attributes = sr.getAttributes();
+                    javax.naming.directory.Attributes attrs = sr.getAttributes();
 
                     SearchRequest request = new SearchRequest();
                     request.setDn(baseDn);
@@ -541,18 +554,23 @@ public class PenroseInterceptor extends BaseInterceptor {
 
                     session.search(request, response);
 
-                    Entry entry = (Entry) response.next();
-                    AttributeValues attributeValues = entry.getAttributeValues();
+                    org.safehaus.penrose.session.SearchResult result = (org.safehaus.penrose.session.SearchResult)response.next();
+                    org.safehaus.penrose.entry.Entry entry = result.getEntry();
 
-                    for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
-                        Attribute attribute = (Attribute)ne2.next();
-                        String name = attribute.getID();
+                    org.safehaus.penrose.entry.Attributes attributes = entry.getAttributes();
+
+                    for (NamingEnumeration ne2=attrs.getAll(); ne2.hasMore(); ) {
+                        Attribute attr = (Attribute)ne2.next();
+                        String name = attr.getID();
                         if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
 
-                        for (NamingEnumeration ne3=attribute.getAll(); ne3.hasMore(); ) {
+                        org.safehaus.penrose.entry.Attribute attribute = new org.safehaus.penrose.entry.Attribute(name);
+                        for (NamingEnumeration ne3=attr.getAll(); ne3.hasMore(); ) {
                             Object value = ne3.next();
-                            attributeValues.add(name, value);
+                            attribute.addValue(value);
                         }
+
+                        attributes.add(attribute);
                     }
 
                     SearchResponse results2 = new SearchResponse();

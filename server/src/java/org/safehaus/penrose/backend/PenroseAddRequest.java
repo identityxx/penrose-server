@@ -18,10 +18,6 @@ public class PenroseAddRequest
         this.addRequest = addRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        addRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         addRequest.setDn(penroseDn.getDn());
@@ -33,11 +29,11 @@ public class PenroseAddRequest
 
     public void setAttributes(Attributes attributes) throws Exception {
         PenroseAttributes penroseAttributes = (PenroseAttributes)attributes;
-        addRequest.setAttributeValues(penroseAttributes.getAttributeValues());
+        addRequest.setAttributes(penroseAttributes.getAttributes());
     }
 
     public Attributes getAttributes() throws Exception {
-        return new PenroseAttributes(addRequest.getAttributeValues());
+        return new PenroseAttributes(addRequest.getAttributes());
     }
 
     public AddRequest getAddRequest() {

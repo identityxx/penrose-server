@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -46,12 +47,12 @@ public class SearchFilterTest extends BasicTestCase {
         String dn = entry.getDn().toString();
         assertEquals("cn=aabb,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         assertEquals("aabb", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("AABB", value);
 
         assertTrue(response.hasNext());
@@ -60,12 +61,12 @@ public class SearchFilterTest extends BasicTestCase {
         dn = entry.getDn().toString();
         assertEquals("cn=bbcc,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("cn");
+        value = attributes.getValue("cn");
         assertEquals("bbcc", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("BBCC", value);
 
         assertFalse(response.hasNext());

@@ -96,7 +96,7 @@ public class HandlerSearchResponse extends SearchResponse {
 
         if (debug) {
             log.debug("Returning "+dn+":");
-            entry.getAttributeValues().print();
+            entry.getAttributes().print();
         }
 
         parent.add(new SearchResult(entry));

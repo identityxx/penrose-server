@@ -19,18 +19,16 @@ package org.safehaus.penrose.entry;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 
-import java.util.*;
-
 /**
  * @author Endi S. Dewata
  */
 public class Entry {
 
-    private DN dn;
-    private EntryMapping entryMapping;
+    protected DN dn;
+    private Attributes attributes;
 
-    private AttributeValues sourceValues;
-    private AttributeValues attributeValues;
+    protected EntryMapping entryMapping;
+    protected AttributeValues sourceValues;
 
     public Entry(String dn, EntryMapping entryMapping) {
         this(new DN(dn), entryMapping);
@@ -38,39 +36,38 @@ public class Entry {
 
     public Entry(DN dn, EntryMapping entryMapping) {
         this.dn = dn;
+        this.attributes = new Attributes();
+
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
-        this.attributeValues = new AttributeValues();
     }
 
-    public Entry(String dn, EntryMapping entryMapping, AttributeValues attributes) {
+    public Entry(String dn, EntryMapping entryMapping, Attributes attributes) {
         this(new DN(dn), entryMapping, attributes);
     }
 
-    public Entry(DN dn, EntryMapping entryMapping, AttributeValues attributes) {
+    public Entry(DN dn, EntryMapping entryMapping, Attributes attributes) {
         this.dn = dn;
+        this.attributes = attributes;
+
         this.entryMapping = entryMapping;
         this.sourceValues = new AttributeValues();
-        this.attributeValues = attributes;
     }
 
-    public Entry(String dn, EntryMapping entryMapping, AttributeValues attributeValues, AttributeValues sourceValues) {
-        this(new DN(dn), entryMapping, attributeValues, sourceValues);
+    public Entry(String dn, EntryMapping entryMapping, Attributes attributes, AttributeValues sourceValues) {
+        this(new DN(dn), entryMapping, attributes, sourceValues);
     }
 
-    public Entry(DN dn, EntryMapping entryMapping, AttributeValues attributeValues, AttributeValues sourceValues) {
+    public Entry(DN dn, EntryMapping entryMapping, Attributes attributes, AttributeValues sourceValues) {
         this.dn = dn;
+        this.attributes = attributes;
+
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
-        this.attributeValues = attributeValues;
     }
 
     public DN getDn() {
         return dn;
-    }
-
-    public AttributeValues getAttributeValues() {
-        return attributeValues;
     }
 
     public EntryMapping getEntryMapping() {
@@ -87,5 +84,13 @@ public class Entry {
 
     public void setSourceValues(AttributeValues sourceValues) {
         this.sourceValues = sourceValues;
+    }
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 }

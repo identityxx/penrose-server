@@ -31,6 +31,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -39,6 +40,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.ldap.LDAPClient;
 
 import java.util.*;
@@ -220,7 +222,7 @@ public class LDAPAdapter extends Adapter {
 
         RDNBuilder rb = new RDNBuilder();
 
-        Attributes attrs = sr.getAttributes();
+        javax.naming.directory.Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
@@ -228,7 +230,7 @@ public class LDAPAdapter extends Adapter {
             String name = fieldConfig.getName();
             if (name.equals("objectClass")) continue;
 
-            Attribute attr = attrs.get(fieldConfig.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
             Collection values = new ArrayList();
@@ -251,7 +253,7 @@ public class LDAPAdapter extends Adapter {
         RDN rdn = dn.getRdn();
         av.add("primaryKey", rdn);
 
-        Attributes attrs = sr.getAttributes();
+        javax.naming.directory.Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getFieldConfigs();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
@@ -259,7 +261,7 @@ public class LDAPAdapter extends Adapter {
             String name = fieldConfig.getName();
             //if (name.equals("objectClass")) continue;
 
-            Attribute attr = attrs.get(fieldConfig.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
             if (attr == null) continue;
 
             Collection values = new ArrayList();
@@ -288,11 +290,11 @@ public class LDAPAdapter extends Adapter {
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            Attributes attributes = new BasicAttributes();
+            javax.naming.directory.Attributes attributes = new BasicAttributes();
 
             String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
 
-            Attribute ocAttribute = new BasicAttribute("objectClass");
+            javax.naming.directory.Attribute ocAttribute = new BasicAttribute("objectClass");
             for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
                 String objectClass = st.nextToken().trim();
                 ocAttribute.add(objectClass);
@@ -307,7 +309,7 @@ public class LDAPAdapter extends Adapter {
                 Collection values = sourceValues.get(name);
                 if (values.isEmpty()) continue;
 
-                Attribute attribute = new BasicAttribute(name);
+                javax.naming.directory.Attribute attribute = new BasicAttribute(name);
                 for (Iterator j=values.iterator(); j.hasNext(); ) {
                     Object value = j.next();
 
@@ -354,7 +356,7 @@ public class LDAPAdapter extends Adapter {
             if (fieldConfig == null) continue;
 
             Set set = (Set)entry.get(name);
-            Attribute attribute = new BasicAttribute(name);
+            javax.naming.directory.Attribute attribute = new BasicAttribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 String value = (String)j.next();
                 log.debug(" - "+name+": "+value);
@@ -422,17 +424,19 @@ public class LDAPAdapter extends Adapter {
             List list = new ArrayList();
 
             for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
+                Modification modification = (Modification)i.next();
 
-                Attribute attribute = mi.getAttribute();
-                String name = attribute.getID();
+                int type = modification.getType();
+                Attribute attribute = modification.getAttribute();
+                String name = attribute.getName();
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 if (fieldConfig == null) continue;
 
-                if ("unicodePwd".equals(name) && mi.getModificationOp() == DirContext.ADD_ATTRIBUTE) { // need to encode unicodePwd
-                    Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                ModificationItem mi = null;
+                if ("unicodePwd".equals(name) && type == Modification.ADD) { // need to encode unicodePwd
+                    javax.naming.directory.Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                    for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                         Object value = j.next();
                         newAttribute.add(PasswordUtil.toUnicodePassword(value));
                     }
@@ -440,12 +444,12 @@ public class LDAPAdapter extends Adapter {
                     mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
 
                 } else {
-                    Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                    for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                    javax.naming.directory.Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
+                    for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                         Object value = j.next();
                         newAttribute.add(value);
                     }
-                    mi = new ModificationItem(mi.getModificationOp(), attribute);
+                    mi = new ModificationItem(type, newAttribute);
                 }
 
                 list.add(mi);
@@ -511,7 +515,7 @@ public class LDAPAdapter extends Adapter {
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 if (fieldConfig == null) continue;
 
-                Attribute attribute = new BasicAttribute(name);
+                javax.naming.directory.Attribute attribute = new BasicAttribute(name);
                 for (Iterator j = set.iterator(); j.hasNext(); ) {
                     Object v = j.next();
                     if ("unicodePwd".equals(name)) {

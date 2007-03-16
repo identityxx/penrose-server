@@ -31,7 +31,7 @@ public class ModRdnRequest extends Request {
     public void setNewRdn(String rdn) {
         this.newRdn = new RDN(rdn);
     }
-    
+
     public void setNewRdn(RDN newRdn) {
         this.newRdn = newRdn;
     }

@@ -12,7 +12,7 @@ import java.util.Iterator;
  */
 public class PenroseRequest implements com.identyx.javabackend.Request {
 
-    private Request request;
+    Request request;
 
     public PenroseRequest(Request request) {
         this.request = request;

@@ -18,7 +18,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
@@ -29,11 +28,13 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.entry.*;
 
 import javax.naming.directory.*;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.Attribute;
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -78,7 +79,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             DN baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            SearchResult searchResult = EntryUtil.toSearchResult(entry);
+            SearchResult searchResult = createSearchResult(entry);
             Attributes attributes = searchResult.getAttributes();
             ctx.createSubcontext(searchResult.getName(), attributes);
 
@@ -88,6 +89,41 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
+    }
+
+    public javax.naming.directory.SearchResult createSearchResult(Entry entry) {
+
+        //log.debug("Converting "+entry.getDn());
+
+        org.safehaus.penrose.entry.Attributes attributes = entry.getAttributes();
+        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
+
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.entry.Attribute attribute = (org.safehaus.penrose.entry.Attribute)i.next();
+
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
+
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+
+                //String className = value.getClass().getName();
+                //className = className.substring(className.lastIndexOf(".")+1);
+                //log.debug(" - "+name+": "+value+" ("+className+")");
+
+                if (value instanceof byte[]) {
+                    attr.add(value);
+
+                } else {
+                    attr.add(value.toString());
+                }
+            }
+
+            attrs.put(attr);
+        }
+
+        return new javax.naming.directory.SearchResult(entry.getDn().toString(), entry, attrs);
     }
 
     public void cacheRemoved(EntryCacheEvent event) throws Exception {

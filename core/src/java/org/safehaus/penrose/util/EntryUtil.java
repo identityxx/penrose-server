@@ -17,17 +17,12 @@
  */
 package org.safehaus.penrose.util;
 
-import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.ietf.ldap.LDAPEntry;
-import org.ietf.ldap.LDAPAttributeSet;
-import org.ietf.ldap.LDAPAttribute;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -35,138 +30,27 @@ import java.util.*;
  */
 public class EntryUtil {
 
-    static Logger log = LoggerFactory.getLogger(EntryUtil.class);
+    Logger log = LoggerFactory.getLogger(EntryUtil.class);
 
-    public static SearchResult toSearchResult(LDAPEntry entry) {
-        return new SearchResult(entry.getDN(), entry, getAttributes(entry));
-    }
-
-    public static SearchResult toSearchResult(Entry entry) {
-        return new SearchResult(entry.getDn().toString(), entry, getAttributes(entry));
-    }
-
-    public static Attributes getAttributes(LDAPEntry entry) {
-
-        //log.debug("Converting attributes for "+entry.getDN());
-
-        LDAPAttributeSet attributeSet = entry.getAttributeSet();
-        Attributes attributes = new BasicAttributes();
-
-        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
-            LDAPAttribute ldapAttribute = (LDAPAttribute)i.next();
-            //log.debug(" - "+ldapAttribute.getName()+": "+Arrays.asList(ldapAttribute.getSubtypes()));
-            Attribute attribute = new BasicAttribute(ldapAttribute.getName());
-
-            for (Enumeration j=ldapAttribute.getStringValues(); j.hasMoreElements(); ) {
-                String value = (String)j.nextElement();
-                //log.debug("   - "+value);
-                attribute.add(value);
-            }
-
-            attributes.put(attribute);
-        }
-
-        return attributes;
-    }
-
-    public static Attributes getAttributes(Entry entry) {
-
-        //log.debug("Converting "+entry.getDn());
-
-        AttributeValues attributeValues = entry.getAttributeValues();
-
-        Attributes attributes = new BasicAttributes();
-        if (attributeValues == null) return attributes;
-
+    public static Attributes computeAttributes(AttributeValues attributeValues) {
+        Attributes attributes = new Attributes();
         for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = attributeValues.get(name);
-
-            Attribute attribute = new BasicAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-
-                //String className = value.getClass().getName();
-                //className = className.substring(className.lastIndexOf(".")+1);
-                //log.debug(" - "+name+": "+value+" ("+className+")");
-
-                if (value instanceof byte[]) {
-                    attribute.add(value);
-
-                } else {
-                    attribute.add(value.toString());
-                }
-            }
-
-            attributes.put(attribute);
+            attributes.add(new Attribute(name, values));
         }
-
-        EntryMapping entryMapping = entry.getEntryMapping();
-        if (entryMapping != null) {
-            Collection objectClasses = entryMapping.getObjectClasses();
-
-            if (!objectClasses.isEmpty()) {
-                Attribute objectClass = new BasicAttribute("objectClass");
-                for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-                    String oc = (String)i.next();
-                    objectClass.add(oc);
-                }
-
-                attributes.put(objectClass);
-            }
-        }
-
         return attributes;
     }
 
-    public static String toString(SearchResult searchResult) throws Exception {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("dn: ");
-        sb.append(searchResult.getName());
-        sb.append("\n");
-
-        sb.append(toString(searchResult.getAttributes()));
-
-        return sb.toString();
-    }
-
-    public static String toString(Entry entry) throws Exception {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("dn: ");
-        sb.append(entry.getDn());
-        sb.append("\n");
-
-        sb.append(toString(getAttributes(entry)));
-
-        return sb.toString();
-    }
-
-    public static String toString(Attributes attributes) throws Exception {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (NamingEnumeration i = attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
-
-            for (NamingEnumeration j = attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-
-                String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
-
-                sb.append(name);
-                sb.append(": ");
-                sb.append(value);
-                sb.append(" (");
-                sb.append(className);
-                sb.append(")");
-                sb.append("\n");
-            }
+    public static AttributeValues computeAttributeValues(Attributes attributes) {
+        AttributeValues attributeValues = new AttributeValues();
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributes.getValues(name);
+            attributeValues.set(name, values);
         }
-
-        return sb.toString();
+        return attributeValues;
     }
+
+
 }

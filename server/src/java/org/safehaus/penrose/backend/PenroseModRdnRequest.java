@@ -18,10 +18,6 @@ public class PenroseModRdnRequest
         this.modRdnRequest = modRdnRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        modRdnRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         modRdnRequest.setDn(penroseDn.getDn());
@@ -29,10 +25,6 @@ public class PenroseModRdnRequest
 
     public DN getDn() throws Exception {
         return new PenroseDN(modRdnRequest.getDn());
-    }
-
-    public void setNewRdn(String rdn) throws Exception {
-        modRdnRequest.setNewRdn(rdn);
     }
 
     public void setNewRdn(RDN rdn) throws Exception {

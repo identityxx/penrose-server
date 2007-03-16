@@ -6,6 +6,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -46,36 +47,36 @@ public class SearchSubtreeTest extends NestedTestCase {
         while (hasNext) {
             Entry entry = (Entry) response.next();
             String dn = entry.getDn().toString();
-            AttributeValues attributes = entry.getAttributeValues();
+            Attributes attributes = entry.getAttributes();
 
             if (dn.equals(baseDn)) {
                 // ignore
             } else if (dn.equals("cn=group1,"+baseDn)) {
-                Object value = attributes.getOne("description");
+                Object value = attributes.getValue("description");
                 assertEquals("desc1", value);
 
             } else if (dn.equals("cn=group2,"+baseDn)) {
-                Object value = attributes.getOne("description");
+                Object value = attributes.getValue("description");
                 assertEquals("desc2", value);
 
             } else if (dn.equals("cn=group3,"+baseDn)) {
-                Object value = attributes.getOne("description");
+                Object value = attributes.getValue("description");
                 assertEquals("desc3", value);
 
             } else if (dn.equals("uid=member1,cn=group1,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group1", value);
 
             } else if (dn.equals("uid=member2,cn=group1,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group1", value);
 
             } else if (dn.equals("uid=member3,cn=group2,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group2", value);
 
             } else if (dn.equals("uid=member4,cn=group2,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group2", value);
 
             } else {

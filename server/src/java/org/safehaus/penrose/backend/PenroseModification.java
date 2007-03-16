@@ -1,45 +1,44 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.Modification;
-import com.identyx.javabackend.Attribute;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseModification implements Modification {
+public class PenroseModification implements com.identyx.javabackend.Modification {
 
-    int type;
-    Attribute attribute;
+    Modification modification;
 
-    public PenroseModification(int type, Attribute attribute) throws Exception {
-        this.type = type;
-        this.attribute = attribute;
+    public PenroseModification(Modification modification) throws Exception {
+        this.modification = modification;
+    }
+    
+    public PenroseModification(int type, com.identyx.javabackend.Attribute attribute) throws Exception {
+        PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
+        this.modification = new Modification(type, penroseAttribute.getAttribute());
     }
 
     public void setType(int type) throws Exception {
-        this.type = type;
+        modification.setType(type);
     }
 
     public int getType() throws Exception {
-        return type;
+        return modification.getType();
     }
 
-    public void setAttribute(Attribute attribute) throws Exception {
-        this.attribute = attribute;
+    public void setAttribute(com.identyx.javabackend.Attribute attribute) throws Exception {
+        PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
+        modification.setAttribute(penroseAttribute.getAttribute());
     }
 
-    public Attribute getAttribute() throws Exception {
-        return attribute;
+    public com.identyx.javabackend.Attribute getAttribute() throws Exception {
+        return new PenroseAttribute(modification.getAttribute());
     }
 
-    public javax.naming.directory.ModificationItem getModificationItem() throws Exception {
-        javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(attribute.getName());
-        for (Iterator i=attribute.getValues().iterator(); i.hasNext(); ) {
-            Object value = i.next();
-            attr.add(value);
-        }
-        return new javax.naming.directory.ModificationItem(type, attr);
+    public Modification getModification() throws Exception {
+        return modification;
     }
 }

@@ -32,10 +32,11 @@ import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.DNBuilder;
+
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -243,36 +244,24 @@ public class LDAPClient {
         Collection list = new ArrayList();
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem modification = (ModificationItem)i.next();
+            Modification modification = (Modification)i.next();
 
-            Attribute attribute = modification.getAttribute();
-            String name = attribute.getID();
+            int type = modification.getType();
+            org.safehaus.penrose.entry.Attribute attribute = modification.getAttribute();
+            String name = attribute.getName();
 
-            Attribute attr = new BasicAttribute(name);
-
-            switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attr));
-                    break;
-
-                case DirContext.REPLACE_ATTRIBUTE:
-                    list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attr));
-                    break;
-
-                case DirContext.REMOVE_ATTRIBUTE:
-                    list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attr));
-                    break;
-            }
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
+            list.add(new ModificationItem(type, attr));
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                     Object value = j.next();
                     attr.add(PasswordUtil.toUnicodePassword(value));
                     log.debug(" - "+name+": (binary)");
                 }
 
             } else {
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                     Object value = j.next();
                     attr.add(value);
                     log.debug(" - "+name+": "+value);
@@ -360,13 +349,37 @@ public class LDAPClient {
             LDAPSearchResults sr = connection.search("", LDAPConnection.SCOPE_BASE, "(objectClass=*)", new String[] { "*", "+" }, false);
             LDAPEntry entry = sr.next();
 
-            rootDSE = EntryUtil.toSearchResult(entry);
+            rootDSE = createSearchResult(entry);
 
         } finally {
             if (connection != null) try { connection.disconnect(); } catch (Exception e) {}
         }
 
         return rootDSE;
+    }
+
+    public javax.naming.directory.SearchResult createSearchResult(LDAPEntry entry) {
+
+        //log.debug("Converting attributes for "+entry.getDN());
+
+        LDAPAttributeSet attributeSet = entry.getAttributeSet();
+        javax.naming.directory.Attributes attributes = new javax.naming.directory.BasicAttributes();
+
+        for (Iterator i=attributeSet.iterator(); i.hasNext(); ) {
+            LDAPAttribute ldapAttribute = (LDAPAttribute)i.next();
+            //log.debug(" - "+ldapAttribute.getName()+": "+Arrays.asList(ldapAttribute.getSubtypes()));
+            javax.naming.directory.Attribute attribute = new javax.naming.directory.BasicAttribute(ldapAttribute.getName());
+
+            for (Enumeration j=ldapAttribute.getStringValues(); j.hasMoreElements(); ) {
+                String value = (String)j.nextElement();
+                //log.debug("   - "+value);
+                attribute.add(value);
+            }
+
+            attributes.put(attribute);
+        }
+
+        return new javax.naming.directory.SearchResult(entry.getDN(), entry, attributes);
     }
 
     public Collection getNamingContexts() throws Exception {

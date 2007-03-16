@@ -20,20 +20,22 @@ package org.safehaus.penrose.engine.simple;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.Connection;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -95,9 +97,10 @@ public class SimpleEngine extends Engine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            Attributes attributes
     ) throws Exception {
 
+        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         Collection sourceMappings = entryMapping.getSourceMappings();
 
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
@@ -204,13 +207,10 @@ public class SimpleEngine extends Engine {
         attributeValues.add(rdn);
 
         for (Iterator iterator=modifications.iterator(); iterator.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)iterator.next();
+            Modification mi = (Modification)iterator.next();
             Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
-
-            for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
-                attributeValues.add(name, ne.next());
-            }
+            String name = attribute.getName();
+            attributeValues.add(name, attribute.getValues());
         }
 
         Collection sourceMappings = entryMapping.getSourceMappings();
@@ -243,17 +243,16 @@ public class SimpleEngine extends Engine {
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
 
                 for (Iterator k=modifications.iterator(); k.hasNext(); ) {
-                    ModificationItem mi = (ModificationItem)k.next();
+                    Modification mi = (Modification)k.next();
+
+                    int type = mi.getType();
                     Attribute attribute = mi.getAttribute();
-                    if (!attribute.getID().equals(variable)) continue;
+                    if (!attribute.getName().equals(variable)) continue;
 
                     if (log.isDebugEnabled()) log.debug("Converting modification for attribute "+variable);
-                    int op = mi.getModificationOp();
-                    Attribute newAttr = new BasicAttribute(name);
-                    for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
-                        newAttr.add(ne.next());
-                    }
-                    mods.add(new ModificationItem(op, newAttr));
+
+                    Attribute newAttr = new Attribute(name, attribute.getValues());
+                    mods.add(new Modification(type, newAttr));
 
                     if ((!sourceMapping.equals(primarySourceMapping)) && fieldConfig.isPrimaryKey()) {
                         deleteExistingEntries = true;

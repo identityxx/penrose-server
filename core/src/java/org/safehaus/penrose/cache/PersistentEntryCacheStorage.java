@@ -20,6 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
@@ -1062,7 +1063,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 attributeValues.set(attributeMapping.getName(), values);
             }
 
-            entry = new Entry(dn, entryMapping, attributeValues);
+            Attributes attributes = EntryUtil.computeAttributes(attributeValues);
+            entry = new Entry(dn, entryMapping, attributes);
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1665,7 +1667,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public void put(DN dn, Entry entry) throws Exception {
 
-        AttributeValues attributeValues = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
         log.debug("Storing "+dn);
 
@@ -1681,7 +1683,8 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
             deleteAttribute(attributeDefinition, entryId);
 
-            Collection values = attributeValues.get(attributeDefinition.getName());
+            Attribute attribute = attributes.get(attributeDefinition.getName());
+            Collection values = attribute.getValues();
             if (values == null) continue;
 
             for (Iterator j=values.iterator(); j.hasNext(); ) {

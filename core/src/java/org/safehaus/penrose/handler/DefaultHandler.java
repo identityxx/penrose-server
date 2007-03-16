@@ -5,6 +5,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
@@ -35,9 +36,8 @@ public class DefaultHandler extends Handler {
             AddResponse response
     ) throws Exception {
 
-        AttributeValues attributeValues = request.getAttributeValues();
-
-        Collection values = attributeValues.get("objectClass");
+        Attributes attributes = request.getAttributes();
+        Collection values = attributes.getValues("objectClass");
 
         Collection objectClasses = entryMapping.getObjectClasses();
         boolean childHasObjectClass = false;

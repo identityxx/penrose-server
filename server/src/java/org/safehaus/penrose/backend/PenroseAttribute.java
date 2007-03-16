@@ -1,50 +1,53 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.Attribute;
+import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseAttribute implements Attribute {
+public class PenroseAttribute implements com.identyx.javabackend.Attribute {
 
-    String name;
-    Collection values;
+    Attribute attribute;
 
     public PenroseAttribute(String name) throws Exception {
-        this.name = name;
-        this.values = new ArrayList();
+        this.attribute = new Attribute(name);
     }
 
     public PenroseAttribute(String name, Collection values) throws Exception {
-        this.name = name;
-        this.values = values;
+        this.attribute = new Attribute(name, values);
+    }
+
+    public PenroseAttribute(Attribute attribute) {
+        this.attribute = attribute;
     }
 
     public void setName(String name) throws Exception {
-        this.name = name;
+        attribute.setName(name);
     }
 
     public String getName() throws Exception {
-        return name;
+        return attribute.getName();
     }
 
     public void addValue(Object value) throws Exception {
-        values.add(value);
+        attribute.addValue(value);
     }
 
     public void removeValue(Object value) throws Exception {
-        values.remove(value);
+        attribute.removeValue(value);
     }
 
     public Object getValue() throws Exception {
-        if (values == null || values.isEmpty()) return null;
-        return values.iterator().next();
+        return attribute.getValue();
     }
 
     public Collection getValues() throws Exception {
-        return values;
+        return attribute.getValues();
+    }
+
+    public Attribute getAttribute() {
+        return attribute;
     }
 }

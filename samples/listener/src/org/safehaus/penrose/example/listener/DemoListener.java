@@ -5,17 +5,17 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.session.*;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
 import javax.naming.NoPermissionException;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -55,13 +55,9 @@ public class DemoListener implements SearchListener {
 
         session.bind("uid=admin,ou=system", "secret");
 
-        SearchRequest request = new SearchRequest();
-        request.setDn(DemoListener.SUFFIX);
-        request.setFilter("(objectClass=*)");
-
         SearchResponse response = new SearchResponse();
 
-        session.search(request, response);
+        session.search(DemoListener.SUFFIX, "(objectClass=*)", response);
 
         while (response.hasNext()) {
             SearchResult entry = (SearchResult) response.next();
@@ -75,17 +71,19 @@ public class DemoListener implements SearchListener {
         penrose.stop();
     }
 
-    public String toString(SearchResult entry) throws Exception {
+    public String toString(SearchResult result) throws Exception {
+
+        Entry entry = result.getEntry();
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getName()+"\n");
+        sb.append("dn: "+entry.getDn()+"\n");
 
         Attributes attributes = entry.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
+            String name = attribute.getName();
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 sb.append(name+": "+value+"\n");
             }
@@ -110,8 +108,9 @@ public class DemoListener implements SearchListener {
 
         response.addListener(new SearchResponseAdapter() {
             public void postAdd(SearchResponseEvent event) {
-                SearchResult entry = (SearchResult)event.getObject();
-                System.out.println("#### Returning "+entry.getName());
+                SearchResult result = (SearchResult)event.getObject();
+                Entry entry = result.getEntry();
+                System.out.println("#### Returning "+entry.getDn());
             }
         });
 

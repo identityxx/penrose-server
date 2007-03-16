@@ -9,10 +9,17 @@ import org.apache.directory.shared.ldap.message.ModifyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 
+import javax.naming.NamingEnumeration;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -34,9 +41,9 @@ public class ModifyHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            String dn = request.getName().toString();
-            Collection modifications = request.getModificationItems();
-            
+            DN dn = new DN(request.getName().toString());
+            Collection modifications = handler.createModifications(request.getModificationItems());
+
             Session session = handler.getPenroseSession(ioSession);
 
             org.safehaus.penrose.session.ModifyRequest penroseRequest = new org.safehaus.penrose.session.ModifyRequest();

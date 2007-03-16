@@ -21,7 +21,8 @@ import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -32,13 +33,10 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.control.Control;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.Attribute;
 import java.util.*;
 
 /**
@@ -106,15 +104,15 @@ public class Session {
     // ADD
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void add(String dn, AttributeValues attributeValues) throws LDAPException {
-        add(new DN(dn), attributeValues);
+    public void add(String dn, Attributes attributes) throws LDAPException {
+        add(new DN(dn), attributes);
     }
 
-    public void add(DN dn, AttributeValues attributeValues) throws LDAPException {
+    public void add(DN dn, Attributes attributes) throws LDAPException {
         try {
             AddRequest request = new AddRequest();
             request.setDn(dn);
-            request.setAttributeValues(attributeValues);
+            request.setAttributes(attributes);
 
             AddResponse response = new AddResponse();
 
@@ -552,14 +550,11 @@ public class Session {
                 log.debug(" - Attributes : ");
 
                 for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                    ModificationItem mi = (ModificationItem)i.next();
-                    Attribute attribute = mi.getAttribute();
+                    Modification modification = (Modification)i.next();
+                    Attribute attribute = modification.getAttribute();
 
-                    String op = LDAPUtil.getModificationOperations(mi.getModificationOp());
-
-                    Object value = null;
-                    if (attribute.size() > 0) value = attribute.get();
-                    log.debug("   - "+op+": "+attribute.getID()+" => "+value);
+                    String op = LDAPUtil.getModificationOperations(modification.getType());
+                    log.debug("   - "+op+": "+attribute.getName()+" => "+attribute.getValues());
                 }
 
                 log.debug("");

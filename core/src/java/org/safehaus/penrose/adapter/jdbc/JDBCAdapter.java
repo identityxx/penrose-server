@@ -22,6 +22,7 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -36,14 +37,12 @@ import org.safehaus.penrose.connector.*;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.jdbc.JDBCFilterTool;
 import org.safehaus.penrose.jdbc.JDBCFormatter;
 
 import javax.sql.DataSource;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.DirContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -610,9 +609,11 @@ public class JDBCAdapter extends Adapter {
             Collection fieldConfigs = new ArrayList();
             
             for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
+                Modification mi = (Modification)i.next();
+
+                int type = mi.getType();
                 Attribute attribute = mi.getAttribute();
-                String name = attribute.getID();
+                String name = attribute.getName();
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
                 if (fieldConfig == null) {
@@ -620,38 +621,28 @@ public class JDBCAdapter extends Adapter {
                 }
                 fieldConfigs.add(fieldConfig);
                 
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
+                switch (type) {
+                    case Modification.ADD:
                         if (columns.length() > 0) columns.append(", ");
 
                         columns.append(fieldConfig.getOriginalName());
                         columns.append("=?");
-
-                        if (attribute.size() == 0) {
-                        	parameters.add(null);
-                        } else {
-                        	parameters.add(attribute.get());
-                		}
+                        parameters.add(attribute.getValue());
                         break;
 
-                    case DirContext.REPLACE_ATTRIBUTE:
+                    case Modification.REPLACE:
                         if (columns.length() > 0) columns.append(", ");
 
                         columns.append(fieldConfig.getOriginalName());
                         columns.append("=?");
-                        if (attribute.size() == 0) {
-                        	parameters.add(null);
-                        } else {
-                        	parameters.add(attribute.get());
-                		}
+                        parameters.add(attribute.getValue());
                         break;
 
-                    case DirContext.REMOVE_ATTRIBUTE:
+                    case Modification.DELETE:
                         if (columns.length() > 0) columns.append(", ");
 
                         columns.append(fieldConfig.getOriginalName());
                         columns.append("=?");
-
                         parameters.add(null);
                         break;
                 }

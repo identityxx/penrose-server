@@ -22,10 +22,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -153,8 +150,8 @@ public class HandlerManager {
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
-        AttributeValues attributeValues = schemaManager.normalize(request.getAttributeValues());
-        request.setAttributeValues(attributeValues);
+        Attributes attributes = schemaManager.normalize(request.getAttributes());
+        request.setAttributes(attributes);
 
         DN parentDn = dn.getParentDn();
 
@@ -426,7 +423,7 @@ public class HandlerManager {
 
                 if (debug) {
                     log.debug("Before: "+entry.getDn());
-                    entry.getAttributeValues().print();
+                    entry.getAttributes().print();
                 }
 
                 Collection list = filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
@@ -434,7 +431,7 @@ public class HandlerManager {
 
                 if (debug) {
                     log.debug("After: "+entry.getDn());
-                    entry.getAttributeValues().print();
+                    entry.getAttributes().print();
                 }
 
                 response.add(new SearchResult(entry));
@@ -533,11 +530,11 @@ public class HandlerManager {
 
         Entry entry = new Entry("", null);
 
-        AttributeValues attributeValues = entry.getAttributeValues();
-        attributeValues.set("objectClass", "top");
-        attributeValues.add("objectClass", "extensibleObject");
-        attributeValues.set("vendorName", Penrose.VENDOR_NAME);
-        attributeValues.set("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+        Attributes attributes = entry.getAttributes();
+        attributes.addValue("objectClass", "top");
+        attributes.addValue("objectClass", "extensibleObject");
+        attributes.addValue("vendorName", Penrose.VENDOR_NAME);
+        attributes.addValue("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
@@ -545,7 +542,7 @@ public class HandlerManager {
             for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping e = (EntryMapping)j.next();
                 if (e.getDn().isEmpty()) continue;
-                attributeValues.add("namingContexts", e.getDn());
+                attributes.addValue("namingContexts", e.getDn());
             }
         }
 
@@ -553,10 +550,10 @@ public class HandlerManager {
     }
 
     public void removeAttributes(Entry entry, Collection list) throws Exception {
-        AttributeValues attributeValues = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
-            attributeValues.remove(attributeName);
+            attributes.remove(attributeName);
         }
     }
 
@@ -573,8 +570,8 @@ public class HandlerManager {
 
         if (session == null) return list;
 
-        AttributeValues attributeValues = entry.getAttributeValues();
-        Collection attributeNames = attributeValues.getNames();
+        Attributes attributes = entry.getAttributes();
+        Collection attributeNames = attributes.getNames();
 
         boolean debug = log.isDebugEnabled();
         if (debug) {
@@ -589,7 +586,7 @@ public class HandlerManager {
         if (allRegularAttributes) {
 
             // return regular attributes only
-            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
                 String attributeName = (String)i.next();
 
                 AttributeType attributeType = schemaManager.getAttributeType(attributeName);
@@ -610,7 +607,7 @@ public class HandlerManager {
         } else if (allOpAttributes) {
 
             // return operational attributes only
-            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
                 String attributeName = (String)i.next();
 
                 AttributeType attributeType = schemaManager.getAttributeType(attributeName);
@@ -632,7 +629,7 @@ public class HandlerManager {
         } else {
 
             // return requested attributes
-            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
                 String attributeName = (String)i.next();
 
                 if (requestedAttributeNames.contains(attributeName)) {
@@ -657,10 +654,10 @@ public class HandlerManager {
         if (session == null) return;
 
         EntryMapping entryMapping = entry.getEntryMapping();
-        AttributeValues attributeValues = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
         Collection attributeNames = new ArrayList();
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             attributeNames.add(attributeName.toLowerCase());
         }
@@ -682,7 +679,7 @@ public class HandlerManager {
 
         Collection list = new ArrayList();
 
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             String normalizedName = attributeName.toLowerCase();
 

@@ -1,6 +1,8 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -8,11 +10,6 @@ import java.util.Map;
 import java.util.Iterator;
 
 import junit.framework.Assert;
-
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.DirContext;
 
 /**
  * @author Endi S. Dewata
@@ -35,9 +32,10 @@ public class ModifyNestedTest extends NestedTestCase {
 
         Collection modifications = new ArrayList();
 
-        Attribute attribute = new BasicAttribute("description");
-        attribute.add("newchild1");
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+        Attribute attribute = new Attribute("description");
+        attribute.addValue("newchild1");
+
+        Modification mi = new Modification(Modification.REPLACE, attribute);
         modifications.add(mi);
 
         session.modify("uid=child,cn=group1,"+baseDn, modifications);

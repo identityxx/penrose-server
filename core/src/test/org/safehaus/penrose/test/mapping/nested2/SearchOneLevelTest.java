@@ -6,6 +6,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -47,13 +48,13 @@ public class SearchOneLevelTest extends NestedTestCase {
         log.debug("DN: "+dn);
         assertEquals("uid=child,cn=parent1,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = (String)attributes.getOne("uid");
+        Object value = (String)attributes.getValue("uid");
         log.debug("uid: "+ value);
         assertEquals("child", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("child1", value);
 

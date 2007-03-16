@@ -17,10 +17,6 @@ public class PenroseBindRequest
         this.bindRequest = bindRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        bindRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         bindRequest.setDn(penroseDn.getDn());

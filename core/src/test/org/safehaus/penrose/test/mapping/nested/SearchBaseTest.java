@@ -6,6 +6,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -82,9 +83,9 @@ public class SearchBaseTest extends NestedTestCase {
         String dn = entry.getDn().toString();
         assertEquals(dn, "uid=member3,cn=group2,"+baseDn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("memberOf");
+        Object value = attributes.getValue("memberOf");
         assertEquals("group2", value);
 
         assertFalse(response.hasNext());

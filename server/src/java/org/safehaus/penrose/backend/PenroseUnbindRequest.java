@@ -17,10 +17,6 @@ public class PenroseUnbindRequest
         this.unbindRequest = unbindRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        unbindRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         unbindRequest.setDn(penroseDn.getDn());

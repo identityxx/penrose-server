@@ -3,11 +3,12 @@ package org.safehaus.penrose.example.module;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Attribute;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -50,7 +51,8 @@ public class DemoModule extends Module {
         response.addListener(new SearchResponseAdapter() {
             public void postAdd(SearchResponseEvent event) {
                 SearchResult sr = (SearchResult)event.getObject();
-                String dn = sr.getName();
+                Entry entry = sr.getEntry();
+                DN dn = entry.getDn();
                 System.out.println("Returning "+dn+".");
             }
         });
@@ -71,10 +73,11 @@ public class DemoModule extends Module {
         AddRequest request = event.getRequest();
         System.out.println("#### Adding "+request.getDn()+":");
 
-        AttributeValues attributeValues = request.getAttributeValues();
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
+        Attributes attributes = request.getAttributes();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 System.out.println(" - "+name+": "+value);
@@ -82,8 +85,8 @@ public class DemoModule extends Module {
         }
 
         // change sn attribute to upper case
-        String sn = (String)attributeValues.getOne("sn");
-        attributeValues.set("sn", sn.toUpperCase());
+        String sn = (String)attributes.getValue("sn");
+        attributes.setValue("sn", sn.toUpperCase());
 
         return true;
     }
@@ -103,23 +106,25 @@ public class DemoModule extends Module {
 
         Collection modifications = request.getModifications();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-            Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
+            Modification mi = (Modification)i.next();
 
-            switch (mi.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
+            int type = mi.getType();
+            Attribute attribute = mi.getAttribute();
+            String name = attribute.getName();
+
+            switch (type) {
+                case Modification.ADD:
                     System.out.println(" - add: "+name);
                     break;
-                case DirContext.REMOVE_ATTRIBUTE:
+                case Modification.DELETE:
                     System.out.println(" - delete: "+name);
                     break;
-                case DirContext.REPLACE_ATTRIBUTE:
+                case Modification.REPLACE:
                     System.out.println(" - replace: "+name);
                     break;
             }
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 System.out.println("   "+name+": "+value);
             }

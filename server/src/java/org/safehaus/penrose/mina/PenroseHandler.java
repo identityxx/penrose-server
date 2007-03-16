@@ -8,10 +8,17 @@ import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.directory.shared.ldap.message.*;
 import org.apache.directory.shared.ldap.message.extended.NoticeOfDisconnect;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -146,9 +153,21 @@ public class PenroseHandler extends DemuxingIoHandler {
     }
 
     public void setControls(
+            SearchResult result,
+            SearchResponseEntry response
+    ) throws Exception {
+        Collection controls = result.getControls();
+        for (Iterator i=controls.iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            Control ctrl = createControl(control);
+            response.add(ctrl);
+        }
+    }
+
+    public void setControls(
             org.safehaus.penrose.session.Response penroseResponse,
             ResultResponse response
-    ) {
+    ) throws Exception {
         Collection controls = penroseResponse.getControls();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
             org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
@@ -169,5 +188,77 @@ public class PenroseHandler extends DemuxingIoHandler {
         ctrl.setCritical(control.isCritical());
 
         return ctrl;
+    }
+
+    public Collection createModifications(Collection modificationItems) throws Exception {
+
+        Collection modifications = new ArrayList();
+
+        for (Iterator i=modificationItems.iterator(); i.hasNext(); ) {
+            javax.naming.directory.ModificationItem mi = (javax.naming.directory.ModificationItem)i.next();
+            modifications.add(createModification(mi));
+        }
+
+        return modifications;
+    }
+
+    public Modification createModification(javax.naming.directory.ModificationItem modificationItem) throws Exception {
+        int type = modificationItem.getModificationOp();
+        Attribute attribute = createAttribute(modificationItem.getAttribute());
+        return new Modification(type, attribute);
+    }
+
+    public Attributes createAttributes(javax.naming.directory.Attributes attrs) throws Exception {
+
+        Attributes attributes = new Attributes();
+
+        for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
+            javax.naming.directory.Attribute attr = (javax.naming.directory.Attribute)ne.next();
+            Attribute attribute = createAttribute(attr);
+            attributes.add(attribute);
+        }
+
+        return attributes;
+    }
+
+    public Attribute createAttribute(javax.naming.directory.Attribute attr) throws Exception {
+
+        String name = attr.getID();
+        Attribute attribute = new Attribute(name);
+
+        for (NamingEnumeration ne2 = attr.getAll(); ne2.hasMore(); ) {
+            Object value = ne2.next();
+            attribute.addValue(value);
+        }
+
+        return attribute;
+    }
+    
+    public javax.naming.directory.Attributes createAttributes(Attributes attributes) {
+
+        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
+
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
+
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+
+                if (value instanceof byte[]) {
+                    attr.add(value);
+
+                } else {
+                    attr.add(value.toString());
+                }
+            }
+
+            attrs.put(attr);
+        }
+
+        return attrs;
     }
 }

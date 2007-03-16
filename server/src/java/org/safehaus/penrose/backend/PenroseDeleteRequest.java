@@ -17,10 +17,6 @@ public class PenroseDeleteRequest
         this.deleteRequest = deleteRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        deleteRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         deleteRequest.setDn(penroseDn.getDn());

@@ -17,10 +17,6 @@ public class PenroseCompareRequest
         this.compareRequest = compareRequest;
     }
 
-    public void setDn(String dn) throws Exception {
-        compareRequest.setDn(dn);
-    }
-
     public void setDn(DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         compareRequest.setDn(penroseDn.getDn());

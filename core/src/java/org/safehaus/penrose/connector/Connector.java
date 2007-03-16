@@ -19,6 +19,7 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
@@ -29,13 +30,10 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attribute;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.DirContext;
 import java.util.*;
 
 /**
@@ -164,7 +162,11 @@ public class Connector {
         }
     }
 
-    public void delete(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public void delete(
+            Partition partition,
+            SourceConfig sourceConfig,
+            AttributeValues sourceValues
+    ) throws Exception {
 
     	if (log.isDebugEnabled()) log.debug("Deleting entry in "+sourceConfig.getName()+": "+sourceValues);
 
@@ -197,24 +199,25 @@ public class Connector {
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
-            int op = mi.getModificationOp();
+            Modification mi = (Modification)i.next();
+
+            int type = mi.getType();
             Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
+            String name = attribute.getName();
 
             if (!pk.contains(name)) continue;
 
             AttributeValues av = new AttributeValues();
             av.add(pk);
 
-            switch (op) {
-                case DirContext.ADD_ATTRIBUTE:
+            switch (type) {
+                case Modification.ADD:
                     connection.add(sourceConfig, pk, av);
 
-                case DirContext.REPLACE_ATTRIBUTE:
+                case Modification.REPLACE:
                     connection.add(sourceConfig, pk, av);
 
-                case DirContext.REMOVE_ATTRIBUTE:
+                case Modification.DELETE:
                     connection.delete(sourceConfig, pk);
             }
         }
@@ -236,7 +239,10 @@ public class Connector {
         connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
     }
 
-    public Collection createModifications(AttributeValues oldValues, AttributeValues newValues) throws Exception {
+    public Collection createModifications(
+            AttributeValues oldValues,
+            AttributeValues newValues
+    ) throws Exception {
 
         Collection list = new ArrayList();
 
@@ -248,15 +254,15 @@ public class Connector {
             String name = (String)i.next();
 
             Collection values = newValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
+            Attribute attribute = new Attribute(name);
 
             for (Iterator j = values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.add(value);
+                attribute.addValue(value);
             }
 
-            list.add(new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute));
+            list.add(new Modification(Modification.ADD, attribute));
         }
 
         Set removeAttributes = new HashSet(oldValues.getNames());
@@ -267,14 +273,14 @@ public class Connector {
             String name = (String)i.next();
 
             Collection values = newValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
+            Attribute attribute = new Attribute(name);
             for (Iterator j = values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.add(value);
+                attribute.addValue(value);
             }
 
-            list.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
+            list.add(new Modification(Modification.DELETE, attribute));
         }
 
         Set replaceAttributes = new HashSet(oldValues.getNames());
@@ -286,14 +292,14 @@ public class Connector {
             if (name.startsWith("primaryKey.")) continue;
             
             Set set = (Set)newValues.get(name);
-            Attribute attribute = new BasicAttribute(name);
+            Attribute attribute = new Attribute(name);
             for (Iterator j = set.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.add(value);
+                attribute.addValue(value);
             }
 
-            list.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
+            list.add(new Modification(Modification.REPLACE, attribute));
         }
 
         return list;
@@ -340,7 +346,12 @@ public class Connector {
         connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, newRequest, response);
     }
 
-    public RDN store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public RDN store(
+            Partition partition,
+            SourceConfig sourceConfig,
+            AttributeValues sourceValues
+    ) throws Exception {
+
         RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
         //RDN pk = sourceValues.getRdn();
         RDN npk = normalize(pk);
@@ -358,7 +369,11 @@ public class Connector {
         return npk;
     }
 
-    public void store(Partition partition, SourceConfig sourceConfig, Collection values) throws Exception {
+    public void store(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Collection values
+    ) throws Exception {
 
         Collection pks = new TreeSet();
 

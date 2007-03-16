@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -68,12 +69,12 @@ public class SearchOneLevelTest extends BasicTestCase {
             //System.out.println(" - "+dn);
             assertEquals("cn="+groupnames[i]+","+baseDn, dn);
 
-            AttributeValues attributes = entry.getAttributeValues();
+            Attributes attributes = entry.getAttributes();
 
-            Object value = attributes.getOne("cn");
+            Object value = attributes.getValue("cn");
             assertEquals(groupnames[i], value);
 
-            value = attributes.getOne("description");
+            value = attributes.getValue("description");
             assertEquals(descriptions[i], value);
         }
 

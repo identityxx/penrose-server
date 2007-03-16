@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -73,15 +74,15 @@ public class SearchFilterTest extends NestedTestCase {
             String dn = entry.getDn().toString();
             log.info("Checking "+dn+":");
 
-            AttributeValues attributes = entry.getAttributeValues();
+            Attributes attributes = entry.getAttributes();
             attributes.print();
 
             if (dn.equals("uid=member3,cn=group2,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group2", value);
 
             } else if (dn.equals("uid=member4,cn=group2,"+baseDn)) {
-                Object value = attributes.getOne("memberOf");
+                Object value = attributes.getValue("memberOf");
                 assertEquals("group2", value);
 
             } else {

@@ -3,10 +3,12 @@ package org.safehaus.penrose.test.mapping.join;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchResult;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,15 +82,16 @@ public class SearchJoinTest extends JoinTestCase {
             assertTrue(response.hasNext());
 
             SearchResult sr = (SearchResult) response.next();
-            String dn = sr.getName();
+            Entry entry = sr.getEntry();
+            DN dn = entry.getDn();
             System.out.println(" - "+dn);
-            assertEquals(dn, "cn="+groups[i][0]+",ou=Groups,dc=Example,dc=com");
+            assertTrue(dn.matches("cn="+groups[i][0]+",ou=Groups,dc=Example,dc=com"));
 
-            Attributes attributes = sr.getAttributes();
+            Attributes attributes = entry.getAttributes();
             Attribute attribute = attributes.get("cn");
-            assertEquals(attribute.get(), groups[i][0]);
+            assertEquals(attribute.getValue(), groups[i][0]);
             attribute = attributes.get("description");
-            assertEquals(attribute.get(), groups[i][1]);
+            assertEquals(attribute.getValue(), groups[i][1]);
         }
 
         session.close();
@@ -120,14 +123,15 @@ public class SearchJoinTest extends JoinTestCase {
         assertTrue(response.hasNext());
 
         SearchResult sr = (SearchResult) response.next();
-        String dn = sr.getName();
-        assertEquals(dn, "cn=def,ou=Groups,dc=Example,dc=com");
+        Entry entry = sr.getEntry();
+        DN dn = entry.getDn();
+        assertTrue(dn.matches("cn=def,ou=Groups,dc=Example,dc=com"));
 
-        Attributes attributes = sr.getAttributes();
+        Attributes attributes = entry.getAttributes();
         Attribute attribute = attributes.get("cn");
-        assertEquals(attribute.get(), "def");
+        assertEquals(attribute.getValue(), "def");
         attribute = attributes.get("description");
-        assertEquals(attribute.get(), "DEF");
+        assertEquals(attribute.getValue(), "DEF");
 
         assertFalse(response.hasNext());
 
@@ -188,26 +192,28 @@ public class SearchJoinTest extends JoinTestCase {
         assertTrue(response.hasNext());
 
         SearchResult sr = (SearchResult) response.next();
-        String dn = sr.getName();
-        assertEquals(dn, "cn=aabb,ou=Groups,dc=Example,dc=com");
+        Entry entry = sr.getEntry();
+        DN dn = entry.getDn();
+        assertTrue(dn.matches("cn=aabb,ou=Groups,dc=Example,dc=com"));
 
-        Attributes attributes = sr.getAttributes();
+        Attributes attributes = entry.getAttributes();
         Attribute attribute = attributes.get("cn");
-        assertEquals(attribute.get(), "aabb");
+        assertEquals(attribute.getValue(), "aabb");
         attribute = attributes.get("description");
-        assertEquals(attribute.get(), "AABB");
+        assertEquals(attribute.getValue(), "AABB");
 
         assertTrue(response.hasNext());
 
         sr = (SearchResult) response.next();
-        dn = sr.getName();
-        assertEquals(dn, "cn=bbcc,ou=Groups,dc=Example,dc=com");
+        entry = sr.getEntry();
+        dn = entry.getDn();
+        assertTrue(dn.matches("cn=bbcc,ou=Groups,dc=Example,dc=com"));
 
-        attributes = sr.getAttributes();
+        attributes = entry.getAttributes();
         attribute = attributes.get("cn");
-        assertEquals(attribute.get(), "bbcc");
+        assertEquals(attribute.getValue(), "bbcc");
         attribute = attributes.get("description");
-        assertEquals(attribute.get(), "BBCC");
+        assertEquals(attribute.getValue(), "BBCC");
 
         assertFalse(response.hasNext());
 

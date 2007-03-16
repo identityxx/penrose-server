@@ -6,9 +6,10 @@ import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.apacheds.FilterTool;
+import org.safehaus.penrose.filter.Filter;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -34,8 +35,8 @@ public class SearchHandler implements MessageHandler {
         LdapResult ldapResult = response.getLdapResult();
 
         try {
-            String baseDn = request.getBase().toString();
-            String filter = FilterTool.convert(request.getFilter()).toString();
+            DN baseDn = new DN(request.getBase().toString());
+            Filter filter = FilterTool.convert(request.getFilter());
 
             org.safehaus.penrose.session.Session session = handler.getPenroseSession(ioSession);
 
@@ -87,14 +88,8 @@ public class SearchHandler implements MessageHandler {
 
         SearchResponseEntry response = new SearchResponseEntryImpl(request.getMessageId());
         response.setObjectName(new PenroseDN(entry.getDn().toString()));
-        response.setAttributes(EntryUtil.getAttributes(entry));
-
-        Collection controls = result.getControls();
-        for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
-            Control ctrl = handler.createControl(control);
-            response.add(ctrl);
-        }
+        response.setAttributes(handler.createAttributes(entry.getAttributes()));
+        handler.setControls(result, response);
 
         ioSession.write(response);
     }

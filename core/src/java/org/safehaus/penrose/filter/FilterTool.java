@@ -91,9 +91,11 @@ public class FilterTool {
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
-        AttributeValues values = entry.getAttributeValues();
-        Collection set = values.get(attributeName);
-        if (set == null) return false;
+        Attributes attributes = entry.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) return false;
+
+        Collection set = attribute.getValues();
 
         AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
@@ -118,8 +120,8 @@ public class FilterTool {
         if (attributeName.equalsIgnoreCase("objectclass")) {
             return true;
         } else {
-            AttributeValues values = entry.getAttributeValues();
-            return values.contains(attributeName);
+            Attributes attributes = entry.getAttributes();
+            return attributes.get(attributeName) != null;
         }
     }
 
@@ -132,10 +134,11 @@ public class FilterTool {
             return entry.getEntryMapping().containsObjectClass(attributeValue);
         }
 
-        AttributeValues values = entry.getAttributeValues();
-        Collection set = values.get(attributeName);
-        if (set == null) return false;
+        Attributes attributes = entry.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) return false;
 
+        Collection set = attribute.getValues();
         AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         if ("=".equals(operator)) {

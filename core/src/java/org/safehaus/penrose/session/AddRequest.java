@@ -1,11 +1,7 @@
 package org.safehaus.penrose.session;
 
 import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.AttributeValues;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
+import org.safehaus.penrose.entry.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -13,7 +9,7 @@ import javax.naming.NamingEnumeration;
 public class AddRequest extends Request {
 
     protected DN dn;
-    protected AttributeValues attributeValues;
+    protected Attributes attributes;
 
     public DN getDn() {
         return dn;
@@ -27,25 +23,11 @@ public class AddRequest extends Request {
         this.dn = dn;
     }
 
-    public AttributeValues getAttributeValues() {
-        return attributeValues;
+    public Attributes getAttributes() {
+        return attributes;
     }
 
-    public void setAttributeValues(Attributes attributes) throws Exception {
-        attributeValues = new AttributeValues();
-
-        for (NamingEnumeration ne = attributes.getAll(); ne.hasMore(); ) {
-            Attribute attribute = (Attribute)ne.next();
-            String name = attribute.getID();
-
-            for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
-                Object value = ne2.next();
-                attributeValues.add(name, value);
-            }
-        }
-    }
-
-    public void setAttributeValues(AttributeValues attributeValues) {
-        this.attributeValues = attributeValues;
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 }

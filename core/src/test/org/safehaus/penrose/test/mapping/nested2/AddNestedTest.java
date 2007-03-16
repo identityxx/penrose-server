@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class AddNestedTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        AttributeValues attributes = new AttributeValues();
-        attributes.add("uid", "child");
-        attributes.add("description", "child1");
-        attributes.add("objectClass", "person");
-        attributes.add("objectClass", "organizationalPerson");
-        attributes.add("objectClass", "inetOrgPerson");
+        Attributes attributes = new Attributes();
+        attributes.addValue("uid", "child");
+        attributes.addValue("description", "child1");
+        attributes.addValue("objectClass", "person");
+        attributes.addValue("objectClass", "organizationalPerson");
+        attributes.addValue("objectClass", "inetOrgPerson");
 
         session.add("uid=child,cn=group1,"+baseDn, attributes);
 

@@ -23,7 +23,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EntryData;
@@ -180,24 +179,17 @@ public class MergeEngine {
             sourceValues = primarySourceValues;
         }
 
-        AttributeValues attributeValues = engine.computeAttributeValues(
+        log.debug("Generating entry "+dn);
+        
+        Attributes attributes = engine.createAttributes(
                 entryMapping,
                 sourceValues,
                 //rows,
                 interpreter
         );
 
-        if (attributeValues == null) {
-            log.debug("Attribute values: "+attributeValues);
-            return null;
-        }
-
-        //log.debug(" - attribute values: "+attributeValues);
-
-        log.debug("Generating entry "+dn);
-
-        Entry entry = new Entry(dn, entryMapping, attributeValues, sourceValues);
-        log.debug("\n"+EntryUtil.toString(entry));
+        Entry entry = new Entry(dn, entryMapping, attributes, sourceValues);
+        entry.getAttributes().print();
 
         //RDN rdn = entry.getRdn();
 

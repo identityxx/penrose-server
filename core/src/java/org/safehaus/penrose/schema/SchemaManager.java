@@ -21,11 +21,12 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.session.Modification;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -187,66 +188,45 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public Attributes normalize(Attributes attributes) throws Exception{
 
-        BasicAttributes newAttributes = new BasicAttributes();
-
-        for (NamingEnumeration e=attributes.getAll(); e.hasMore(); ) {
-            Attribute attribute = (Attribute)e.next();
-            String attributeName = normalizeAttributeName(attribute.getID());
-
-            BasicAttribute newAttribute = new BasicAttribute(attributeName);
-            for (NamingEnumeration e2=attribute.getAll(); e2.hasMore(); ) {
-                Object value = e2.next();
-                newAttribute.add(value);
-            }
-
-            newAttributes.put(newAttribute);
-        }
-
-        return newAttributes;
-    }
-
-    public AttributeValues normalize(AttributeValues attributeValues) throws Exception{
-
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = attributeValues.get(name);
-            attributeValues.remove(name);
+
+            Collection values = attributes.getValues(name);
+            attributes.remove(name);
 
             name = normalizeAttributeName(name);
-            attributeValues.set(name, values);
+            attributes.setValues(name, values);
         }
 
-        return attributeValues;
+        return attributes;
     }
 
     public Collection normalizeModifications(Collection modifications) throws Exception {
         Collection normalizedModifications = new ArrayList();
 
         for (Iterator i = modifications.iterator(); i.hasNext();) {
-            ModificationItem modification = (ModificationItem) i.next();
+            Modification modification = (Modification) i.next();
 
+            int type = modification.getType();
             Attribute attribute = modification.getAttribute();
-            String attributeName = normalizeAttributeName(attribute.getID());
+            String name = normalizeAttributeName(attribute.getName());
 
-            switch (modification.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    log.debug("add: " + attributeName);
+            switch (type) {
+                case Modification.ADD:
+                    log.debug("add: " + name);
                     break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    log.debug("delete: " + attributeName);
+                case Modification.DELETE:
+                    log.debug("delete: " + name);
                     break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    log.debug("replace: " + attributeName);
+                case Modification.REPLACE:
+                    log.debug("replace: " + name);
                     break;
             }
 
-            Attribute normalizedAttribute = new BasicAttribute(attributeName);
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                normalizedAttribute.add(value);
-            }
+            Attribute normalizedAttribute = new Attribute(name);
+            normalizedAttribute.addValues(attribute.getValues());
 
-            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            Modification normalizedModification = new Modification(type, normalizedAttribute);
             normalizedModifications.add(normalizedModification);
         }
 

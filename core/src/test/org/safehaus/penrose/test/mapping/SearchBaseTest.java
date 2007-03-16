@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,18 +41,18 @@ public class SearchBaseTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
         attributes.print();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
             value = i.next();
@@ -91,14 +92,14 @@ public class SearchBaseTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("uid=member1,cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
         attributes.print();
 
-        Object value = attributes.getOne("uid");
+        Object value = attributes.getValue("uid");
         log.debug("uid: "+value);
         assertEquals("member1", value);
 
-        value = attributes.getOne("memberOf");
+        value = attributes.getValue("memberOf");
         log.debug("memberOf: "+value);
         assertEquals("group", value);
 

@@ -20,6 +20,7 @@ package org.safehaus.penrose.engine.impl;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
@@ -35,10 +36,10 @@ import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -161,15 +162,15 @@ public class EngineImpl extends Engine {
 
             Entry entry = (Entry) response.next();
 
-            AttributeValues attributeValues = entry.getAttributeValues();
+            Attributes attributes = entry.getAttributes();
+            Attribute attribute = attributes.get("userPassword");
 
-            Collection userPasswords = attributeValues.get("userPassword");
-
-            if (userPasswords == null) {
+            if (attribute == null) {
                 log.debug("Attribute userPassword not found");
                 throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
             }
 
+            Collection userPasswords = attribute.getValues();
             for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
                 Object userPassword = j.next();
                 log.debug("userPassword: "+userPassword);
@@ -191,9 +192,10 @@ public class EngineImpl extends Engine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            Attributes attributes
     ) throws LDAPException {
 
+        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         try {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -284,10 +286,14 @@ public class EngineImpl extends Engine {
     ) throws LDAPException {
 
         try {
-            AttributeValues oldValues = entry.getAttributeValues();
+            AttributeValues oldValues = new AttributeValues();
+            for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
+                Attribute attribute = (Attribute)i.next();
+                oldValues.set(attribute.getName(), attribute.getValues());
+            }
 
             log.debug("Old entry:");
-            log.debug("\n"+EntryUtil.toString(entry));
+            entry.getAttributes().print();
 
             log.debug("--- perform modification:");
             AttributeValues newValues = new AttributeValues(oldValues);
@@ -301,20 +307,19 @@ public class EngineImpl extends Engine {
             log.debug("Object classes: "+objectClassNames);
 
             for (Iterator i = modifications.iterator(); i.hasNext();) {
-                ModificationItem modification = (ModificationItem)i.next();
+                Modification modification = (Modification)i.next();
 
+                int type = modification.getType();
                 Attribute attribute = modification.getAttribute();
-                String attributeName = attribute.getID();
+                String attributeName = attribute.getName();
 
                 if (attributeName.equals("objectClass")) {
                     throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_MODS_PROHIBITED);
                 }
 
+                Collection values = attribute.getValues();
                 Set newAttrValues = new HashSet();
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    newAttrValues.add(value);
-                }
+                newAttrValues.addAll(values);
 
                 Collection value = newValues.get(attributeName);
                 log.debug("old value " + attributeName + ": "
@@ -323,18 +328,18 @@ public class EngineImpl extends Engine {
                 Set newValue = new HashSet();
                 if (value != null) newValue.addAll(value);
 
-                switch (modification.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
+                switch (type) {
+                    case Modification.ADD:
                         newValue.addAll(newAttrValues);
                         break;
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        if (attribute.get() == null) {
+                    case Modification.DELETE:
+                        if (values.isEmpty()) {
                             newValue.clear();
                         } else {
                             newValue.removeAll(newAttrValues);
                         }
                         break;
-                    case DirContext.REPLACE_ATTRIBUTE:
+                    case Modification.REPLACE:
                         newValue = newAttrValues;
                         break;
                 }
@@ -345,10 +350,11 @@ public class EngineImpl extends Engine {
                         + newValues.get(attributeName));
             }
 
-            Entry newEntry = new Entry(entry.getDn(), entryMapping, newValues, entry.getSourceValues());
+            Attributes attributes = EntryUtil.computeAttributes(newValues);
+            Entry newEntry = new Entry(entry.getDn(), entryMapping, attributes, entry.getSourceValues());
 
             log.debug("New entry:");
-            log.debug("\n"+EntryUtil.toString(newEntry));
+            newEntry.getAttributes().print();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -640,9 +646,8 @@ public class EngineImpl extends Engine {
                         log.debug("Entry data is complete, returning entry.");
 
                         AttributeValues sv = data.getMergedValues();
-                        AttributeValues attributeValues = computeAttributeValues(entryMapping, sv, interpreter);
-
-                        Entry entry = new Entry(dn, entryMapping, attributeValues, sv);
+                        Attributes attributes = createAttributes(entryMapping, sv, interpreter);
+                        Entry entry = new Entry(dn, entryMapping, attributes, sv);
 
                         log.debug("Checking filter "+filter+" on "+entry.getDn());
                         if (handler.getFilterTool().isValid(entry, filter)) {

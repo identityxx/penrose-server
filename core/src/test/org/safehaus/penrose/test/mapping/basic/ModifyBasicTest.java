@@ -1,11 +1,9 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.entry.Attribute;
 
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.DirContext;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Map;
@@ -25,10 +23,10 @@ public class ModifyBasicTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attribute attribute = new BasicAttribute("description");
-        attribute.add("newdesc");
+        Attribute attribute = new Attribute("description");
+        attribute.addValue("newdesc");
 
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+        Modification mi = new Modification(Modification.REPLACE, attribute);
         Collection modifications = new ArrayList();
         modifications.add(mi);
 

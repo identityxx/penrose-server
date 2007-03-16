@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 import org.apache.log4j.Logger;
 
 /**
@@ -48,9 +49,9 @@ public class SearchBaseTest extends NestedTestCase {
         log.debug("DN: "+dn);
         assertEquals("cn=parent1,"+baseDn, dn);
 
-        AttributeValues attributes = sr.getAttributeValues();
+        Attributes attributes = sr.getAttributes();
 
-        Object value = attributes.getOne("description");
+        Object value = attributes.getValue("description");
         log.debug("description: "+ value);
         assertEquals("description1", value);
 
@@ -96,13 +97,13 @@ public class SearchBaseTest extends NestedTestCase {
         log.debug("DN: "+dn);
         assertEquals("uid=child,cn=parent1,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("uid");
+        Object value = attributes.getValue("uid");
         log.debug("uid: "+ value);
         assertEquals("child", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("child1", value);
 

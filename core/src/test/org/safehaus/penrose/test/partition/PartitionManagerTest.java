@@ -23,12 +23,15 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchResult;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -36,8 +39,6 @@ import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-
-import javax.naming.directory.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -85,11 +86,11 @@ public class PartitionManagerTest extends TestCase {
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
         Partition partition = new Partition(partitionConfig);
 
-        EntryMapping entry = new EntryMapping();
-        entry.setDn("ou=Test,dc=Example,dc=com");
-        entry.addObjectClass("organizationalUnit");
-        entry.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
-        partition.addEntryMapping(entry);
+        EntryMapping entryMapping = new EntryMapping();
+        entryMapping.setDn("ou=Test,dc=Example,dc=com");
+        entryMapping.addObjectClass("organizationalUnit");
+        entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
+        partition.addEntryMapping(entryMapping);
 
         partitionManager.addPartition(partition);
 
@@ -110,8 +111,9 @@ public class PartitionManagerTest extends TestCase {
         assertTrue(response.hasNext());
 
         SearchResult sr = (SearchResult) response.next();
-        String dn = sr.getName();
-        assertEquals(dn, "ou=Test,dc=Example,dc=com");
+        Entry entry = sr.getEntry();
+        DN dn = entry.getDn();
+        assertTrue(dn.matches("ou=Test,dc=Example,dc=com"));
 
         penrose.stop();
     }

@@ -24,10 +24,12 @@ import org.apache.directory.server.core.configuration.PartitionConfiguration;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.session.SearchResult;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -130,19 +132,28 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         }
     }
 
-    public void add(LdapDN name, Attributes attributes) throws NamingException {
-        String dn = name.getUpName();
-         log.info("Adding \""+dn+"\"");
-
-        if (getSuffix().equals(dn)) return;
+    public void add(LdapDN name, Attributes attrs) throws NamingException {
+        DN dn = new DN(name.getUpName());
+        log.info("Adding \""+dn+"\"");
 
         try {
             Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
+            org.safehaus.penrose.entry.Attributes attributes = new org.safehaus.penrose.entry.Attributes();
+            for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
+                javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)ne.next();
+                String attributeName = attribute.getID();
+
+                for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
+                    Object value = ne2.next();
+                    attributes.addValue(attributeName, value);
+                }
+            }
+
             AddRequest request = new AddRequest();
             request.setDn(dn);
-            request.setAttributeValues(attributes);
+            request.setAttributes(attributes);
 
             AddResponse response = new AddResponse();
 
@@ -214,7 +225,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public NamingEnumeration list(LdapDN name) throws NamingException {
-        String dn = name.getUpName();
+        DN dn = new DN(name.getUpName());
         log.info("Listing \""+dn+"\"");
 
         try {
@@ -248,7 +259,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
         Session session = null;
         try {
-            String dn = base.getUpName();
+            DN dn = new DN(base.getUpName());
             String deref = (String)env.get("java.naming.ldap.derefAliases");
             int scope = searchControls.getSearchScope();
             String returningAttributes[] = searchControls.getReturningAttributes();
@@ -291,7 +302,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public Attributes lookup(LdapDN name) throws NamingException {
-        String dn = name.getUpName();
+        DN dn = new DN(name.getUpName());
         log.debug("Looking up \""+dn+"\"");
 
         try {
@@ -310,9 +321,11 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
             session.close();
 
-            javax.naming.directory.SearchResult result = (javax.naming.directory.SearchResult) response.next();
+            SearchResult result = (SearchResult)response.next();
+            Entry entry = result.getEntry();
 
-            return result.getAttributes();
+            javax.naming.directory.SearchResult sr = EntryTool.createSearchResult(entry);
+            return sr.getAttributes();
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -324,7 +337,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public Attributes lookup(LdapDN name, String[] attrIds) throws NamingException {
-        String dn = name.getUpName();
+        DN dn = new DN(name.getUpName());
 
         try {
             //log.debug("===============================================================================");
@@ -343,11 +356,11 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
             session.search(request, response);
 
-            Entry entry = (Entry) response.next();
-            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
-            session.close();
+            SearchResult result = (SearchResult)response.next();
+            Entry entry = result.getEntry();
 
-            return result.getAttributes();
+            javax.naming.directory.SearchResult sr = EntryTool.createSearchResult(entry);
+            return sr.getAttributes();
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -359,7 +372,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
     }
 
     public boolean hasEntry(LdapDN name) throws NamingException {
-        String dn = name.getUpName();
+        DN dn = new DN(name.getUpName());
         log.info("Checking \""+dn+"\"");
 
         try {

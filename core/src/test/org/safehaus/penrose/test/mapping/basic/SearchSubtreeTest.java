@@ -4,6 +4,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -44,13 +45,13 @@ public class SearchSubtreeTest extends BasicTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=def,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertEquals("def", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("DEF", value);
 

@@ -5,13 +5,11 @@ import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -54,7 +52,8 @@ public class SambaUserModule extends Module {
         Session session = event.getSession();
         session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult) searchResponse.next();
+        SearchResult result = (SearchResult) searchResponse.next();
+        Entry entry = result.getEntry();
         Attributes attributes = entry.getAttributes();
 
         if (attributes.get("sambaNTPassword") == null ||
@@ -64,9 +63,8 @@ public class SambaUserModule extends Module {
 
             Collection modifications = new ArrayList();
 
-            Attribute attribute = new BasicAttribute("userPassword", bindRequest.getPassword());
-
-            ModificationItem modification = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("userPassword", bindRequest.getPassword());
+            Modification modification = new Modification(Modification.REPLACE, attribute);
             modifications.add(modification);
 
             session.modify(dn, modifications);
@@ -86,12 +84,12 @@ public class SambaUserModule extends Module {
 
         log.debug("Checking Samba attributes before adding \""+dn+"\".");
 
-        AttributeValues attributeValues = request.getAttributeValues();
-        if (attributeValues.get("uidNumber") == null ||
-                attributeValues.get("gidNumber") == null ||
-                attributeValues.get("sambaSID") == null ||
-                attributeValues.get("sambaPrimaryGroupSID") == null ||
-                attributeValues.get("sambaAcctFlags") == null) {
+        Attributes attributes = request.getAttributes();
+        if (attributes.get("uidNumber") == null ||
+                attributes.get("gidNumber") == null ||
+                attributes.get("sambaSID") == null ||
+                attributes.get("sambaPrimaryGroupSID") == null ||
+                attributes.get("sambaAcctFlags") == null) {
 
             log.debug("Generating UID, GID, User SID, Group SID, and Flags.");
 
@@ -142,11 +140,11 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            attributeValues.set("uidNumber", uid);
-            attributeValues.set("gidNumber", gid);
-            attributeValues.set("sambaSID", userSID);
-            attributeValues.set("sambaPrimaryGroupSID", groupSID);
-            attributeValues.set("sambaAcctFlags", flags);
+            attributes.setValue("uidNumber", uid);
+            attributes.setValue("gidNumber", gid);
+            attributes.setValue("sambaSID", userSID);
+            attributes.setValue("sambaPrimaryGroupSID", groupSID);
+            attributes.setValue("sambaAcctFlags", flags);
         }
 
         return true;
@@ -156,10 +154,9 @@ public class SambaUserModule extends Module {
 
         ModifyRequest modifyRequest = event.getRequest();
 
-        String dn = modifyRequest.getDn().toString();
-        int i = dn.indexOf("=");
-        int j = dn.indexOf(",", i);
-        String username = dn.substring(i+1, j);
+        DN dn = modifyRequest.getDn();
+        RDN rdn = dn.getRdn();
+        String username = (String)rdn.get("uid");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
 
@@ -174,7 +171,8 @@ public class SambaUserModule extends Module {
 
         session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult) searchResponse.next();
+        SearchResult result = (SearchResult) searchResponse.next();
+        Entry entry = result.getEntry();
         Attributes attributes = entry.getAttributes();
 
         if (attributes.get("uidNumber") == null ||
@@ -235,24 +233,24 @@ public class SambaUserModule extends Module {
 
             Collection modifications = modifyRequest.getModifications();
 
-            Attribute attribute = new BasicAttribute("uidNumber", uid);
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("uidNumber", uid);
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("gidNumber", gid);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("gidNumber", gid);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaSID", userSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaSID", userSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaPrimaryGroupSID", groupSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaPrimaryGroupSID", groupSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaAcctFlags", flags);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaAcctFlags", flags);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 

@@ -7,6 +7,8 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
@@ -119,13 +121,9 @@ public class Demo {
 
         log.warn("Searching all entries.");
 
-        SearchRequest request = new SearchRequest();
-        request.setDn("dc=Example,dc=com");
-        request.setFilter("(objectClass=*)");
-
         SearchResponse response = new SearchResponse();
 
-        session.search(request, response);
+        session.search("dc=Example,dc=com", "(objectClass=*)", response);
 
         while (response.hasNext()) {
             Entry entry = (Entry) response.next();
@@ -140,10 +138,12 @@ public class Demo {
         StringBuffer sb = new StringBuffer();
         sb.append("dn: "+entry.getDn()+"\n");
 
-        AttributeValues attributeValues = entry.getAttributeValues();
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = attributeValues.get(name);
+        Attributes attributes = entry.getAttributes();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
 
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();

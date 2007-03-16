@@ -5,18 +5,16 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.DirContext;
-import javax.naming.NamingEnumeration;
 import java.util.Iterator;
 import java.util.Collection;
 import java.util.Map;
@@ -47,7 +45,11 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
+    public void bind(
+            SourceConfig sourceConfig,
+            RDN pk,
+            String password
+    ) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
@@ -78,7 +80,12 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, SearchRequest searchRequest, SearchResponse response) throws Exception {
+    public void search(
+            SourceConfig sourceConfig,
+            Filter filter,
+            SearchRequest searchRequest,
+            SearchResponse response
+    ) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
@@ -114,7 +121,11 @@ public class DemoAdapter extends Adapter {
         response.close();
     }
 
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
+    public void add(
+            SourceConfig sourceConfig,
+            RDN pk,
+            AttributeValues sourceValues
+    ) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Adding entry "+pk+" into "+sourceName+":");
@@ -133,7 +144,11 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
+    public void modify(
+            SourceConfig sourceConfig,
+            RDN pk,
+            Collection modifications
+    ) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
@@ -146,35 +161,38 @@ public class DemoAdapter extends Adapter {
             }
 
             for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                ModificationItem mi = (ModificationItem)i.next();
-                Attribute attribute = (Attribute)mi.getAttribute();
-                String name = attribute.getID();
+                Modification mi = (Modification)i.next();
 
-                switch (mi.getModificationOp()) {
-                    case DirContext.ADD_ATTRIBUTE:
-                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                int type = mi.getType();
+                Attribute attribute = mi.getAttribute();
+                String name = attribute.getName();
+                Collection values = attribute.getValues();
+
+                switch (type) {
+                    case Modification.ADD:
+                        for (Iterator j=values.iterator(); j.hasNext(); ) {
                             Object value = j.next();
                             System.out.println(" - add "+name+": "+value);
                             sourceValues.add(name, value);
                         }
                         break;
 
-                    case DirContext.REPLACE_ATTRIBUTE:
+                    case Modification.REPLACE:
                         sourceValues.remove(name);
-                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                        for (Iterator j=values.iterator(); j.hasNext(); ) {
                             Object value = j.next();
                             System.out.println(" - replace "+name+": "+value);
                             sourceValues.add(name, value);
                         }
                         break;
 
-                    case DirContext.REMOVE_ATTRIBUTE:
-                        if (attribute.size() == 0) {
+                    case Modification.DELETE:
+                        if (values.size() == 0) {
                             System.out.println(" - remove "+name);
                             sourceValues.remove(name);
 
                         } else {
-                            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                            for (Iterator j=values.iterator(); j.hasNext(); ) {
                                 Object value = j.next();
                                 System.out.println(" - remove "+name+": "+value);
                                 sourceValues.remove(name, value);
@@ -195,7 +213,10 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
+    public void delete(
+            SourceConfig sourceConfig,
+            RDN pk
+    ) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Deleting entry "+pk+" from "+sourceName+".");

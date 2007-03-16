@@ -5,6 +5,8 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.Penrose;
 
 import java.util.Collection;
@@ -41,17 +43,17 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
         log.debug("uniqueMember: "+values);
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
@@ -61,7 +63,7 @@ public class SearchAttributesTest extends StaticTestCase {
             }
         }
 
-        value = attributes.getOne("creatorsName");
+        value = attributes.getValue("creatorsName");
         log.debug("creatorsName: "+value);
         assertNull(value);
 
@@ -93,17 +95,17 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertEquals("description", value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
         log.debug("uniqueMember: "+values);
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
@@ -113,7 +115,7 @@ public class SearchAttributesTest extends StaticTestCase {
             }
         }
 
-        value = attributes.getOne("creatorsName");
+        value = attributes.getValue("creatorsName");
         log.debug("creatorsName: "+value);
         assertNull(value);
 
@@ -145,21 +147,21 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertNull(value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertNull(value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
         log.debug("uniqueMember: "+values);
         assertNull(value);
 
-        value = attributes.getOne("creatorsName");
+        value = attributes.getValue("creatorsName");
         log.debug("creatorsName: "+value);
         assertEquals(penroseConfig.getRootDn().toString(), value);
 
@@ -191,17 +193,17 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("cn");
+        Object value = attributes.getValue("cn");
         log.debug("cn: "+value);
         assertEquals("group", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         log.debug("description: "+value);
         assertNull(value);
 
-        Collection values = attributes.get("uniqueMember");
+        Collection values = attributes.getValues("uniqueMember");
         log.debug("uniqueMember: "+values);
 
         for (Iterator i = values.iterator(); i.hasNext(); ) {
@@ -211,7 +213,7 @@ public class SearchAttributesTest extends StaticTestCase {
             }
         }
 
-        value = attributes.getOne("creatorsName");
+        value = attributes.getValue("creatorsName");
         log.debug("creatorsName: "+value);
         assertEquals(penroseConfig.getRootDn().toString(), value);
 
@@ -243,13 +245,13 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("dn: "+dn);
         assertEquals("", dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("vendorName");
+        Object value = attributes.getValue("vendorName");
         log.debug("vendorName: "+value);
         assertEquals(Penrose.VENDOR_NAME, value);
 
-        value = attributes.getOne("vendorVersion");
+        value = attributes.getValue("vendorVersion");
         log.debug("vendorVersion: "+value);
         assertEquals(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION, value);
 

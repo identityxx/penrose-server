@@ -139,39 +139,25 @@ public abstract class Engine {
      * @return attribute values
      * @throws Exception
      */
-    public AttributeValues computeAttributeValues(
+    public Attributes createAttributes(
             EntryMapping entryMapping,
             AttributeValues sourceValues,
             Interpreter interpreter
             ) throws Exception {
 
-        AttributeValues attributeValues = new AttributeValues();
+        Attributes attributes = new Attributes();
+
         if (sourceValues != null) interpreter.set(sourceValues);
 
         Collection attributeMappings = entryMapping.getAttributeMappings();
-        //log.debug("Attributes:");
-
         for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            String name = attributeMapping.getName();
             Object value = interpreter.eval(entryMapping, attributeMapping);
+            if (value == null) continue;
 
-            if (value == null) {
-                if (attributeMapping.isRdn()) {
-                    //log.debug("Primary key "+name+" is null.");
-                    return null;
-                }
-
-                //log.debug(" - "+name+": null");
-                continue;
-            }
-
-            attributeValues.add(name, value);
-
-            //String className = value.getClass().getName();
-            //className = className.substring(className.lastIndexOf(".")+1);
-            //log.debug(" - "+name+": "+value+" ("+className+")");
+            String name = attributeMapping.getName();
+            attributes.addValue(name, value);
         }
 
         interpreter.clear();
@@ -179,10 +165,10 @@ public abstract class Engine {
         Collection objectClasses = entryMapping.getObjectClasses();
         for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
             String objectClass = (String)i.next();
-            attributeValues.add("objectClass", objectClass);
+            attributes.addValue("objectClass", objectClass);
         }
 
-        return attributeValues;
+        return attributes;
     }
 
     public TransformEngine getTransformEngine() {
@@ -280,7 +266,11 @@ public abstract class Engine {
         return filter;
     }
 
-    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues sv) throws Exception {
+    public Filter generateFilter(
+            SourceMapping toSource,
+            Collection relationships,
+            AttributeValues sv
+    ) throws Exception {
 /*
         log.debug("Generating filters using source values:");
         for (Iterator i=sv.getNames().iterator(); i.hasNext(); ) {
@@ -372,18 +362,6 @@ public abstract class Engine {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Bind
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public abstract void bind(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            String password
-    ) throws Exception;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -393,7 +371,19 @@ public abstract class Engine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            Attributes attributes
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract void bind(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            String password
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -478,7 +468,10 @@ public abstract class Engine {
             SearchResponse response
     ) throws Exception;
 
-    public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
+    public Relationship getConnectingRelationship(
+            Partition partition,
+            EntryMapping entryMapping
+    ) throws Exception {
 
         // log.debug("Searching the connecting relationship for "+entryMapping;
 
@@ -507,7 +500,10 @@ public abstract class Engine {
         return null;
     }
 
-    public Filter createFilter(SourceMapping sourceMapping, Collection pks) throws Exception {
+    public Filter createFilter(
+            SourceMapping sourceMapping,
+            Collection pks
+    ) throws Exception {
 
         String prefix = sourceMapping.getName()+".";
         int length = prefix.length();
@@ -544,7 +540,8 @@ public abstract class Engine {
             Interpreter interpreter,
             SourceMapping sourceMapping,
             EntryMapping entryMapping,
-            RDN rdn) throws Exception {
+            RDN rdn
+    ) throws Exception {
 
         if (sourceMapping == null) {
             return new RDN();
@@ -578,8 +575,8 @@ public abstract class Engine {
             Partition partition,
             Interpreter interpreter,
             EntryMapping entryMapping,
-            AttributeValues sourceValues)
-            throws Exception {
+            AttributeValues sourceValues
+    ) throws Exception {
 
         interpreter.set(sourceValues);
 
@@ -592,7 +589,12 @@ public abstract class Engine {
         return dns;
     }
 
-    public void computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping, Collection dns) throws Exception {
+    public void computeDns(
+            Partition partition,
+            Interpreter interpreter,
+            EntryMapping entryMapping,
+            Collection dns
+    ) throws Exception {
 
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
@@ -636,7 +638,7 @@ public abstract class Engine {
     public Collection computeRdns(
             Interpreter interpreter,
             EntryMapping entryMapping
-            ) throws Exception {
+    ) throws Exception {
 
         //log.debug("Computing RDNs:");
         AttributeValues rdns = new AttributeValues();

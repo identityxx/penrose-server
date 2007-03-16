@@ -5,6 +5,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -37,9 +38,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         String dn = entry.getDn().toString();
         assertEquals(baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("ou");
+        Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
 
         try {
@@ -74,9 +75,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         String dn = entry.getDn().toString();
         assertEquals(baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("ou");
+        Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
 
         assertTrue(response.hasNext());
@@ -85,12 +86,12 @@ public class SearchSizeLimitTest extends BasicTestCase {
         dn = entry.getDn().toString();
         assertEquals("cn=group1,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("cn");
+        value = attributes.getValue("cn");
         assertEquals("group1", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("desc1", value);
 
         try {
@@ -126,9 +127,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         log.debug("DN: "+dn);
         assertEquals(baseDn, dn);
 
-        AttributeValues attributes = entry.getAttributeValues();
+        Attributes attributes = entry.getAttributes();
 
-        Object value = attributes.getOne("ou");
+        Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
 
         assertTrue(response.hasNext());
@@ -138,12 +139,12 @@ public class SearchSizeLimitTest extends BasicTestCase {
         log.debug("DN: "+dn);
         assertEquals("cn=group1,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("cn");
+        value = attributes.getValue("cn");
         assertEquals("group1", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("desc1", value);
 
         assertTrue(response.hasNext());
@@ -153,12 +154,12 @@ public class SearchSizeLimitTest extends BasicTestCase {
         log.debug("DN: "+dn);
         assertEquals("cn=group2,"+baseDn, dn);
 
-        attributes = entry.getAttributeValues();
+        attributes = entry.getAttributes();
 
-        value = attributes.getOne("cn");
+        value = attributes.getValue("cn");
         assertEquals("group2", value);
 
-        value = attributes.getOne("description");
+        value = attributes.getValue("description");
         assertEquals("desc2", value);
 
         assertFalse(response.hasNext());

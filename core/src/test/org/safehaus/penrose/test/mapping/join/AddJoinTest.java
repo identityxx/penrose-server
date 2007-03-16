@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.Map;
@@ -19,10 +19,10 @@ public class AddJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        AttributeValues attributes = new AttributeValues();
-        attributes.add("cn", "new");
-        attributes.add("description", "description");
-        attributes.add("uniqueMember", "member1");
+        Attributes attributes = new Attributes();
+        attributes.addValue("cn", "new");
+        attributes.addValue("description", "description");
+        attributes.addValue("uniqueMember", "member1");
 
         session.add("cn=new,ou=Groups,dc=Example,dc=com", attributes);
 

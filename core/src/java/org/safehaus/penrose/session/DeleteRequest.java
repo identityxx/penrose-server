@@ -16,7 +16,7 @@ public class DeleteRequest extends Request {
     public void setDn(String dn) {
         this.dn = new DN(dn);
     }
-    
+
     public void setDn(DN dn) {
         this.dn = dn;
     }

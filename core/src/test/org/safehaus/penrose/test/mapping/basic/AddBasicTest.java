@@ -2,6 +2,7 @@ package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
 
 import java.util.Collection;
 import java.util.Map;
@@ -21,10 +22,10 @@ public class AddBasicTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        AttributeValues attributes = new AttributeValues();
-        attributes.set("cn", "group");
-        attributes.set("description", "description");
-        attributes.set("objectClass", "groupOfUniqueNames");
+        Attributes attributes = new Attributes();
+        attributes.setValue("cn", "group");
+        attributes.setValue("description", "description");
+        attributes.setValue("objectClass", "groupOfUniqueNames");
 
         session.add("cn=group,"+baseDn, attributes);
 
@@ -45,9 +46,9 @@ public class AddBasicTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        AttributeValues attributes = new AttributeValues();
-        attributes.set("cn", "group");
-        attributes.set("objectClass", "groupOfUniqueNames");
+        Attributes attributes = new Attributes();
+        attributes.setValue("cn", "group");
+        attributes.setValue("objectClass", "groupOfUniqueNames");
 
         session.add("cn=group,"+baseDn, attributes);
 
