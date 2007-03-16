@@ -2,8 +2,14 @@ package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.session.ModifyRequest;
 import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Modification;
+import com.identyx.javabackend.Attribute;
 
+import javax.naming.directory.ModificationItem;
+import javax.naming.NamingEnumeration;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -33,11 +39,42 @@ public class PenroseModifyRequest
     }
 
     public void setModifications(Collection modifications) throws Exception {
-        modifyRequest.setModifications(modifications);
+        Collection list = new ArrayList();
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            Modification modification = (Modification)i.next();
+
+            int type = modification.getType();
+            Attribute attribute = modification.getAttribute();
+
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(attribute.getName());
+            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                attr.add(value);
+            }
+            ModificationItem mi = new ModificationItem(type, attr);
+            list.add(mi);
+        }
+        modifyRequest.setModifications(list);
     }
 
     public Collection getModifications() throws Exception {
-        return modifyRequest.getModifications();
+        Collection list = new ArrayList();
+        for (Iterator i=modifyRequest.getModifications().iterator(); i.hasNext(); ) {
+            ModificationItem mi = (ModificationItem)i.next();
+
+            int type = mi.getModificationOp();
+            javax.naming.directory.Attribute attribute = mi.getAttribute();
+
+            Attribute attr = new PenroseAttribute(attribute.getID());
+            for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
+                Object value = ne.next();
+                attr.addValue(value);
+            }
+
+            Modification modification = new PenroseModification(type, attr);
+            list.add(modification);
+        }
+        return list;
     }
     
     public ModifyRequest getModifyRequest() {

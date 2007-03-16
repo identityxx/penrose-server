@@ -153,6 +153,10 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return new PenroseAttribute(name);
     }
 
+    public com.identyx.javabackend.Modification createModification(int type, com.identyx.javabackend.Attribute attribute) throws Exception {
+        return new PenroseModification(type, attribute);
+    }
+
     public com.identyx.javabackend.AddRequest createAddRequest() throws Exception {
         return new PenroseAddRequest(new AddRequest());
     }

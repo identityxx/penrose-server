@@ -152,18 +152,22 @@ public class PenroseHandler extends DemuxingIoHandler {
         Collection controls = penroseResponse.getControls();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
             org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
-
-            Control ctrl = new ControlImpl() {
-                public byte[] getEncodedValue() {
-                    return getValue();
-                }
-            };
-
-            ctrl.setType(control.getOid());
-            ctrl.setValue(control.getValue());
-            ctrl.setCritical(control.isCritical());
-
+            Control ctrl = createControl(control);
             response.add(ctrl);
         }
+    }
+
+    public Control createControl(org.safehaus.penrose.control.Control control) {
+        Control ctrl = new ControlImpl() {
+            public byte[] getEncodedValue() {
+                return getValue();
+            }
+        };
+
+        ctrl.setType(control.getOid());
+        ctrl.setValue(control.getValue());
+        ctrl.setCritical(control.isCritical());
+
+        return ctrl;
     }
 }

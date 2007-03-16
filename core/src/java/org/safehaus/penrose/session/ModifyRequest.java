@@ -32,7 +32,6 @@ public class ModifyRequest extends Request {
     public void setModifications(Collection modifications) {
         if (this.modifications == modifications) return;
         this.modifications.clear();
-        if (modifications == null) return;
-        this.modifications.addAll(modifications);
+        if (modifications != null) this.modifications.addAll(modifications);
     }
 }

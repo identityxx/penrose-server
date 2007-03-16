@@ -5,12 +5,14 @@ import org.apache.mina.handler.demux.MessageHandler;
 import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.apacheds.FilterTool;
 import org.ietf.ldap.LDAPException;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -29,13 +31,13 @@ public class SearchHandler implements MessageHandler {
 
         SearchRequest request = (SearchRequest)message;
         SearchResponseDone response = (SearchResponseDone)request.getResultResponse();
-        LdapResult result = response.getLdapResult();
+        LdapResult ldapResult = response.getLdapResult();
 
         try {
             String baseDn = request.getBase().toString();
             String filter = FilterTool.convert(request.getFilter()).toString();
 
-            Session session = handler.getPenroseSession(ioSession);
+            org.safehaus.penrose.session.Session session = handler.getPenroseSession(ioSession);
 
             org.safehaus.penrose.session.SearchRequest penroseRequest = new org.safehaus.penrose.session.SearchRequest();
             penroseRequest.setDn(baseDn);
@@ -52,36 +54,48 @@ public class SearchHandler implements MessageHandler {
             session.search(penroseRequest, penroseResponse);
 
             while (penroseResponse.hasNext()) {
-                Entry entry = (Entry)penroseResponse.next();
-                ioSession.write(createEntry(request, entry));
+                org.safehaus.penrose.session.SearchResult result = (org.safehaus.penrose.session.SearchResult)penroseResponse.next();
+                sendSearchResult(ioSession, request, result);
             }
 
             handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
-            result.setResultCode(rce);
-            result.setErrorMessage(e.getMessage());
+            ldapResult.setResultCode(rce);
+            ldapResult.setErrorMessage(e.getMessage());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             LDAPException le = ExceptionUtil.createLDAPException(e);
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
-            result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            ldapResult.setResultCode(rce);
+            ldapResult.setErrorMessage(le.getMessage());
 
         } finally {
             ioSession.write(response);
         }
     }
 
-    public Response createEntry(org.apache.directory.shared.ldap.message.SearchRequest request, Entry entry) throws Exception {
+    public void sendSearchResult(
+            IoSession ioSession,
+            org.apache.directory.shared.ldap.message.SearchRequest request,
+            org.safehaus.penrose.session.SearchResult result
+    ) throws Exception {
+
+        Entry entry = result.getEntry();
+
         SearchResponseEntry response = new SearchResponseEntryImpl(request.getMessageId());
         response.setObjectName(new PenroseDN(entry.getDn().toString()));
         response.setAttributes(EntryUtil.getAttributes(entry));
 
-        //response.add(control);
-        
-        return response;
+        Collection controls = result.getControls();
+        for (Iterator i=controls.iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            Control ctrl = handler.createControl(control);
+            response.add(ctrl);
+        }
+
+        ioSession.write(response);
     }
 }

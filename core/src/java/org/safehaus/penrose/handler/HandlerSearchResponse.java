@@ -5,6 +5,7 @@ import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -98,7 +99,7 @@ public class HandlerSearchResponse extends SearchResponse {
             entry.getAttributeValues().print();
         }
 
-        parent.add(entry);
+        parent.add(new SearchResult(entry));
     }
 
     public void setResult(EntryMapping entryMapping, LDAPException exception) {

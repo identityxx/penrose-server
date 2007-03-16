@@ -310,7 +310,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
 
             session.close();
 
-            SearchResult result = (SearchResult) response.next();
+            javax.naming.directory.SearchResult result = (javax.naming.directory.SearchResult) response.next();
 
             return result.getAttributes();
 
@@ -344,7 +344,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             session.search(request, response);
 
             Entry entry = (Entry) response.next();
-            SearchResult result = EntryTool.createSearchResult(entry);
+            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
             session.close();
 
             return result.getAttributes();

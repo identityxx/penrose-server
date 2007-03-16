@@ -34,7 +34,6 @@ import org.safehaus.penrose.engine.TransformEngine;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
-import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -232,11 +231,11 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
 
-            Attributes attributes = new BasicAttributes();
+            javax.naming.directory.Attributes attributes = new javax.naming.directory.BasicAttributes();
 
             for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
-                Attribute attribute = new BasicAttribute(name);
+                javax.naming.directory.Attribute attribute = new javax.naming.directory.BasicAttribute(name);
 
                 Collection values = attributeValues.get(name);
                 for (Iterator j=values.iterator(); j.hasNext(); ) {
@@ -500,7 +499,7 @@ public class ProxyEngine extends Engine {
 
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    SearchResult ldapEntry = (SearchResult)object;
+                    javax.naming.directory.SearchResult ldapEntry = (javax.naming.directory.SearchResult)object;
 
                     DN dn = new DN(ldapEntry.getName());
                     //String dn = EntryUtil.append(ldapEntry.getName(), proxyBaseDn);
@@ -514,7 +513,7 @@ public class ProxyEngine extends Engine {
 
                     //log.debug("Entry "+dn+":");
                     for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
-                        Attribute attribute = (Attribute)i.next();
+                        javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)i.next();
                         String name = attribute.getID();
 
                         for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {

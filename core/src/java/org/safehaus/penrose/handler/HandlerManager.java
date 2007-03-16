@@ -437,7 +437,7 @@ public class HandlerManager {
                     entry.getAttributeValues().print();
                 }
 
-                response.add(entry);
+                response.add(new SearchResult(entry));
             }
             response.close();
             return;

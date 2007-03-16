@@ -17,8 +17,12 @@
  */
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchResult;
+
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -35,8 +39,17 @@ public class PenroseSearchResponse
     }
 
     public Object next() throws Exception {
-        Entry entry = (Entry)searchResponse.next();
-        return new PenroseEntry(entry);
+        SearchResult result = (SearchResult)searchResponse.next();
+
+        PenroseEntry entry = new PenroseEntry(result.getEntry());
+
+        Collection controls = new ArrayList();
+        for (Iterator i= result.getControls().iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            controls.add(new PenroseControl(control));
+        }
+
+        return new PenroseSearchResult(entry, controls);
     }
 
     public boolean hasNext() throws Exception {

@@ -429,7 +429,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.search(request, response);
 
             Entry entry = (Entry) response.next();
-            SearchResult result = EntryTool.createSearchResult(entry);
+            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
 
@@ -476,7 +476,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             session.search(request, response);
 
             Entry entry = (Entry) response.next();
-            SearchResult result = EntryTool.createSearchResult(entry);
+            javax.naming.directory.SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
 
@@ -527,7 +527,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 if (baseDn.isEmpty() && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
 
                     NamingEnumeration ne = next.search(base, env, filter, searchControls);
-                    SearchResult sr = (SearchResult)ne.next();
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
                     SearchRequest request = new SearchRequest();
