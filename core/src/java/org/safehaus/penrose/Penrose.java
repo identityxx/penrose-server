@@ -22,7 +22,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
@@ -176,22 +176,22 @@ public class Penrose {
     // Penrose Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public PenroseSession newSession() throws Exception {
+    public Session newSession() throws Exception {
         SessionManager sessionManager = penroseContext.getSessionManager();
         return sessionManager.newSession();
     }
 
-    public PenroseSession createSession(Object sessionId) throws Exception {
+    public Session createSession(Object sessionId) throws Exception {
         SessionManager sessionManager = penroseContext.getSessionManager();
         return sessionManager.createSession(sessionId);
     }
 
-    public PenroseSession getSession(String sessionId) throws Exception {
+    public Session getSession(String sessionId) throws Exception {
         SessionManager sessionManager = penroseContext.getSessionManager();
         return sessionManager.getSession(sessionId);
     }
 
-    public PenroseSession removeSession(String sessionId) throws Exception {
+    public Session removeSession(String sessionId) throws Exception {
         SessionManager sessionManager = penroseContext.getSessionManager();
         return sessionManager.removeSession(sessionId);
     }

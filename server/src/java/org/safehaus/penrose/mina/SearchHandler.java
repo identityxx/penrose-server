@@ -5,16 +5,12 @@ import org.apache.mina.handler.demux.MessageHandler;
 import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.apacheds.FilterTool;
 import org.ietf.ldap.LDAPException;
-
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -29,33 +25,38 @@ public class SearchHandler implements MessageHandler {
         this.handler = handler;
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    public void messageReceived(IoSession ioSession, Object message) throws Exception {
 
         SearchRequest request = (SearchRequest)message;
-        LdapResult result = request.getResultResponse().getLdapResult();
-        Map controls = request.getControls();
+        SearchResponseDone response = (SearchResponseDone)request.getResultResponse();
+        LdapResult result = response.getLdapResult();
 
         try {
             String baseDn = request.getBase().toString();
             String filter = FilterTool.convert(request.getFilter()).toString();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            Session session = handler.getPenroseSession(ioSession);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setSizeLimit(request.getSizeLimit() );
-            sc.setTimeLimit(request.getTimeLimit());
-            sc.setScope(request.getScope().getValue() );
-            sc.setTypesOnly(request.getTypesOnly());
-            sc.setAttributes(request.getAttributes());
+            org.safehaus.penrose.session.SearchRequest penroseRequest = new org.safehaus.penrose.session.SearchRequest();
+            penroseRequest.setDn(baseDn);
+            penroseRequest.setFilter(filter);
+            penroseRequest.setSizeLimit(request.getSizeLimit() );
+            penroseRequest.setTimeLimit(request.getTimeLimit());
+            penroseRequest.setScope(request.getScope().getValue() );
+            penroseRequest.setTypesOnly(request.getTypesOnly());
+            penroseRequest.setAttributes(request.getAttributes());
+            handler.getControls(request, penroseRequest);
 
-            PenroseSession penroseSession = handler.getPenroseSession(session);
-            penroseSession.search(baseDn, filter, sc, results);
+            org.safehaus.penrose.session.SearchResponse penroseResponse = new org.safehaus.penrose.session.SearchResponse();
 
-            while (results.hasNext()) {
-                Entry entry = (Entry)results.next();
-                Response response = createEntry(request, entry);
-                session.write(response);
+            session.search(penroseRequest, penroseResponse);
+
+            while (penroseResponse.hasNext()) {
+                Entry entry = (Entry)penroseResponse.next();
+                ioSession.write(createEntry(request, entry));
             }
+
+            handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
@@ -70,14 +71,17 @@ public class SearchHandler implements MessageHandler {
             result.setErrorMessage(le.getMessage());
 
         } finally {
-            session.write(request.getResultResponse());
+            ioSession.write(response);
         }
     }
 
-    public Response createEntry(SearchRequest request, Entry entry) throws Exception {
+    public Response createEntry(org.apache.directory.shared.ldap.message.SearchRequest request, Entry entry) throws Exception {
         SearchResponseEntry response = new SearchResponseEntryImpl(request.getMessageId());
         response.setObjectName(new PenroseDN(entry.getDn().toString()));
         response.setAttributes(EntryUtil.getAttributes(entry));
+
+        //response.add(control);
+        
         return response;
     }
 }

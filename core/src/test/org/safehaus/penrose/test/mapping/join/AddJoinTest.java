@@ -1,14 +1,10 @@
 package org.safehaus.penrose.test.mapping.join;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.entry.AttributeValues;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -20,15 +16,14 @@ public class AddJoinTest extends JoinTestCase {
 
     public void testAddingEntry() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("cn", "new");
-        attributes.put("description", "description");
-        Attribute attribute = new BasicAttribute("uniqueMember");
-        attribute.add("member1");
-        attributes.put(attribute);
+        AttributeValues attributes = new AttributeValues();
+        attributes.add("cn", "new");
+        attributes.add("description", "description");
+        attributes.add("uniqueMember", "member1");
+
         session.add("cn=new,ou=Groups,dc=Example,dc=com", attributes);
 
         session.close();

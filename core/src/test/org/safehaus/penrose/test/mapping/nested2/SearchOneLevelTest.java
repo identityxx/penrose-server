@@ -1,9 +1,9 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -26,19 +26,23 @@ public class SearchOneLevelTest extends NestedTestCase {
         executeUpdate("insert into children values ('parent1', 'child1')");
         executeUpdate("insert into children values ('parent2', 'child2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=parent1,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "cn=parent1,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("uid=child,cn=parent1,"+baseDn, dn);
@@ -53,11 +57,11 @@ public class SearchOneLevelTest extends NestedTestCase {
         log.debug("description: "+value);
         assertEquals("child1", value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
-        int totalCount = results.getTotalCount();
+        int totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(1, totalCount);
 
@@ -73,19 +77,23 @@ public class SearchOneLevelTest extends NestedTestCase {
         executeUpdate("insert into children values ('parent1', 'child1')");
         executeUpdate("insert into children values ('parent2', 'child2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=parent3,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "cn=parent3,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
-        int totalCount = results.getTotalCount();
+        int totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(0, totalCount);
 

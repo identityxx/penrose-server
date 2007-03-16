@@ -32,15 +32,14 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.Attributes;
 import java.util.*;
 
 /**
@@ -377,7 +376,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void bind(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -389,12 +388,12 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void add(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            Attributes attributes
+            AttributeValues attributeValues
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,7 +401,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void delete(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -414,7 +413,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void modify(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -427,7 +426,7 @@ public abstract class Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void modrdn(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -450,14 +449,12 @@ public abstract class Engine {
     }
 
     public void search(
-            PenroseSession session,
+            Session session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
-            DN baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
 
         search(
@@ -466,23 +463,19 @@ public abstract class Engine {
                 sourceValues,
                 entryMapping,
                 entryMapping,
-                baseDn,
-                filter,
-                sc,
-                results
+                request,
+                response
         );
     }
 
     public abstract void search(
-            PenroseSession session,
+            Session session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            DN baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception;
 
     public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {

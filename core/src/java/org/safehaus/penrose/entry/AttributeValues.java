@@ -19,7 +19,7 @@ package org.safehaus.penrose.entry;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.*;
 
@@ -377,7 +377,7 @@ public class AttributeValues implements Cloneable, Comparable {
         return c;
     }
 
-    public void print() {
+    public void print() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
 
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
@@ -389,6 +389,10 @@ public class AttributeValues implements Cloneable, Comparable {
                 String className = value.getClass().getName();
                 className = className.substring(className.lastIndexOf(".")+1);
                 
+                if (value instanceof byte[]) {
+                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])value);
+                }
+
                 log.debug(" - "+name+": "+value+" ("+className+")");
             }
         }

@@ -18,7 +18,7 @@
 package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -157,7 +157,7 @@ public class ACLManager {
     }
 
     public int checkPermission(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -190,23 +190,23 @@ public class ACLManager {
         return rc;
     }
 
-    public int checkRead(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public int checkRead(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public int checkSearch(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public int checkAdd(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public int checkDelete(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public int checkModify(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
     	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_WRITE);
     }
 

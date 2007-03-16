@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping.nested;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.apache.log4j.Logger;
 
 /**
@@ -17,15 +17,19 @@ public class SearchNestedTest extends NestedTestCase {
 
     public void testSearchingEmptyDatabase() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertFalse(results.hasNext());
+        session.search(
+                baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        assertFalse(response.hasNext());
 
         session.close();
     }

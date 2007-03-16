@@ -27,9 +27,7 @@ import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -116,7 +114,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.info("Deleting \""+dn+"\"");
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             session.delete(dn);
@@ -139,10 +137,16 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         if (getSuffix().equals(dn)) return;
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            session.add(dn, attributes);
+            AddRequest request = new AddRequest();
+            request.setDn(dn);
+            request.setAttributeValues(attributes);
+
+            AddResponse response = new AddResponse();
+
+            session.add(request, response);
 
             session.close();
 
@@ -170,7 +174,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
                 modifications.add(modification);
             }
 
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             session.modify(dn, modifications);
@@ -192,7 +196,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.debug("changetype: modify");
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             Collection modifications = new ArrayList(Arrays.asList(modificationItems));
@@ -214,22 +218,20 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.info("Listing \""+dn+"\"");
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_ONE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_ONE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            return new PenroseEnumeration(results);
+            return new PenroseEnumeration(response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -244,7 +246,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             SearchControls searchControls
     ) throws NamingException {
 
-        PenroseSession session = null;
+        Session session = null;
         try {
             String dn = base.getUpName();
             String deref = (String)env.get("java.naming.ldap.derefAliases");
@@ -263,20 +265,18 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter(newFilter);
+            request.setScope(searchControls.getSearchScope());
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
+            request.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(searchControls.getSearchScope());
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    newFilter,
-                    sc,
-                    results);
+            session.search(request, response);
 
-            return new PenroseEnumeration(results);
+            return new PenroseEnumeration(response);
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -295,24 +295,22 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.debug("Looking up \""+dn+"\"");
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
             session.close();
 
-            SearchResult result = (SearchResult)results.next();
+            SearchResult result = (SearchResult) response.next();
 
             return result.getAttributes();
 
@@ -332,22 +330,20 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             //log.debug("===============================================================================");
             //log.debug("lookup(\""+dn+"\") as \""+principalDn+"\"");
 
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
             SearchResult result = EntryTool.createSearchResult(entry);
             session.close();
 
@@ -367,22 +363,20 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
         log.info("Checking \""+dn+"\"");
 
         try {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            boolean result = results.hasNext();
+            boolean result = response.hasNext();
 
             session.close();
 
@@ -400,7 +394,7 @@ public class PenrosePartition implements org.apache.directory.server.core.partit
             log.debug("===============================================================================");
             log.debug("modifyDn(\""+dn+"\")");
 
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             if (session == null) throw new ServiceUnavailableException();
 
             session.modrdn(dn, newRn, deleteOldRn);

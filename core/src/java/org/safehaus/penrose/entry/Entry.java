@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.entry;
 
-
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 
 import java.util.*;
 
@@ -79,24 +77,8 @@ public class Entry {
         return entryMapping;
     }
 
-    public Collection getSources() {
-        return entryMapping.getSourceMappings();
-    }
-
-    public Collection getRelationships() {
-        return entryMapping.getRelationships();
-    }
-
     public void setEntryMapping(EntryMapping entryMapping) {
         this.entryMapping = entryMapping;
-    }
-
-    public Collection getObjectClasses() {
-        return entryMapping.getObjectClasses();
-    }
-
-    public Collection getACL() {
-        return entryMapping.getACL();
     }
 
     public AttributeValues getSourceValues() {

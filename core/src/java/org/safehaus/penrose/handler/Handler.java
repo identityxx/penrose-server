@@ -28,7 +28,6 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.*;
 import java.util.*;
 
 /**
@@ -152,25 +150,12 @@ public abstract class Handler {
         this.status = status;
     }
 
-    public void add(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Attributes attributes) throws Exception {
-
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
-
-        Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
-        engine.add(session, partition, parent, entryMapping, dn, attributes);
-    }
-
-    public void bind(
-            PenroseSession session,
+    public void add(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
-            DN dn,
-            String password
+            AddRequest request,
+            AddResponse response
     ) throws Exception {
 
         Engine engine = getEngine(entryMapping);
@@ -180,11 +165,20 @@ public abstract class Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.bind(session, partition, entryMapping, dn, password);
+        DN dn = request.getDn();
+        AttributeValues attributeValues = request.getAttributeValues();
+
+        Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
+        engine.add(session, partition, parent, entryMapping, dn, attributeValues);
     }
 
-    public void unbind(PenroseSession session, Partition partition, EntryMapping entryMapping, DN bindDn) throws Exception {
+    public void bind(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
 
         Engine engine = getEngine(entryMapping);
 
@@ -193,40 +187,78 @@ public abstract class Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
+        DN dn = request.getDn();
+        String password = request.getPassword();
+
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        engine.bind(session, partition, entryMapping, dn, password);
+    }
+
+    public void unbind(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            UnbindRequest request,
+            UnbindResponse response
+    ) throws Exception {
+
+        Engine engine = getEngine(entryMapping);
+
+        if (engine == null) {
+            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
+        DN bindDn = request.getDn();
         Entry entry = null; //find(session, partition, entryMapping, dn);
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
 
-    public Entry find(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public Entry find(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter((Filter)null);
+        request.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchResponse response = new SearchResponse();
 
         search(
                 session,
                 partition,
                 entryMapping,
-                dn,
-                null,
-                sc,
-                results
+                request,
+                response
         );
 
-        if (results.hasNext()) {
+        if (response.hasNext()) {
             if (debug) log.debug("Entry "+dn+" not found");
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
-        return (Entry)results.next();
+        return (Entry) response.next();
     }
 
-    public boolean compare(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, String attributeName, Object attributeValue) throws Exception {
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        String attributeName = request.getAttributeName();
+        Object attributeValue = request.getAttributeValue();
 
         Entry entry = find(session, partition, entryMapping, dn);
 
@@ -259,7 +291,13 @@ public abstract class Handler {
         return false;
     }
 
-    public void delete(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
+    public void delete(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
 
         Engine engine = getEngine(entryMapping);
 
@@ -267,12 +305,20 @@ public abstract class Handler {
             log.debug("Engine "+entryMapping.getEngineName()+" not found.");
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
+
+        DN dn = request.getDn();
 
         Entry entry = null; //find(session, partition, entryMapping, dn);
         engine.delete(session, partition, entry, entryMapping, dn);
     }
 
-    public void modify(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Collection modifications) throws Exception {
+    public void modify(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
 
         Engine engine = getEngine(entryMapping);
 
@@ -280,12 +326,21 @@ public abstract class Handler {
             log.debug("Engine "+entryMapping.getEngineName()+" not found.");
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
+
+        DN dn = request.getDn();
+        Collection modifications = request.getModifications();
 
         Entry entry = null; //find(session, partition, entryMapping, dn);
         engine.modify(session, partition, entry, entryMapping, dn, modifications);
     }
 
-    public void modrdn(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, RDN newRdn, boolean deleteOldRdn) throws Exception {
+    public void modrdn(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
 
         Engine engine = getEngine(entryMapping);
 
@@ -293,19 +348,21 @@ public abstract class Handler {
             log.debug("Engine "+entryMapping.getEngineName()+" not found.");
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
+
+        DN dn = request.getDn();
+        RDN newRdn = request.getNewRdn();
+        boolean deleteOldRdn = request.getDeleteOldRdn();
 
         Entry entry = null; //find(session, partition, entryMapping, dn);
         engine.modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
     }
 
     public void search(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
-            DN baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse results
     ) throws Exception {
 
         search(
@@ -313,22 +370,18 @@ public abstract class Handler {
                 partition,
                 entryMapping,
                 entryMapping,
-                baseDn,
-                filter,
-                sc,
+                request,
                 results
         );
     }
 
     public abstract void search(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            DN baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception;
 
     public PenroseConfig getPenroseConfig() {
@@ -389,48 +442,6 @@ public abstract class Handler {
 
     public void setEntryCache(EntryCache entryCache) {
         this.entryCache = entryCache;
-    }
-
-    public void addConnectionListener(ConnectionListener l) {
-    }
-
-    public void removeConnectionListener(ConnectionListener l) {
-    }
-
-    public void addBindListener(BindListener l) {
-    }
-
-    public void removeBindListener(BindListener l) {
-    }
-
-    public void addSearchListener(SearchListener l) {
-    }
-
-    public void removeSearchListener(SearchListener l) {
-    }
-
-    public void addCompareListener(CompareListener l) {
-    }
-
-    public void removeCompareListener(CompareListener l) {
-    }
-
-    public void addAddListener(AddListener l) {
-    }
-
-    public void removeAddListener(AddListener l) {
-    }
-
-    public void addDeleteListener(DeleteListener l) {
-    }
-
-    public void removeDeleteListener(DeleteListener l) {
-    }
-
-    public void addModifyListener(ModifyListener l) {
-    }
-
-    public void removeModifyListener(ModifyListener l) {
     }
 
     public HandlerConfig getHandlerConfig() {

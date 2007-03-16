@@ -1,16 +1,12 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.entry.AttributeValues;
 
 import java.util.Collection;
 import java.util.Map;
 
 import junit.framework.Assert;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
 
 /**
  * @author Endi S. Dewata
@@ -25,18 +21,15 @@ public class AddNestedTest extends NestedTestCase {
         executeUpdate("insert into parents values ('group1', 'desc1')");
         executeUpdate("insert into parents values ('group2', 'desc2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("uid", "child");
-        attributes.put("description", "child1");
-
-        Attribute attribute = new BasicAttribute("objectClass");
-        attribute.add("person");
-        attribute.add("organizationalPerson");
-        attribute.add("inetOrgPerson");
-        attributes.put(attribute);
+        AttributeValues attributes = new AttributeValues();
+        attributes.add("uid", "child");
+        attributes.add("description", "child1");
+        attributes.add("objectClass", "person");
+        attributes.add("objectClass", "organizationalPerson");
+        attributes.add("objectClass", "inetOrgPerson");
 
         session.add("uid=child,cn=group1,"+baseDn, attributes);
 

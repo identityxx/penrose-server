@@ -23,9 +23,9 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -61,21 +61,23 @@ public class BuiltInEntriesTest extends TestCase {
 
     public void testSearch() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
 
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-
         String baseDn = "ou=system";
-
         System.out.println("Searching "+baseDn+":");
-        session.search(baseDn, "(objectClass=*)", sc, results);
 
-        assertEquals(0, results.getTotalCount());
-        assertEquals(LDAPException.NO_SUCH_OBJECT, results.getReturnCode());
+        SearchResponse response = new SearchResponse();
+
+        session.search(
+                baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        assertEquals(0, response.getTotalCount());
+        assertEquals(LDAPException.NO_SUCH_OBJECT, response.getReturnCode());
 
         session.unbind();
 

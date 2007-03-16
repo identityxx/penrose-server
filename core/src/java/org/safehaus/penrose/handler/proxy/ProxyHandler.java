@@ -1,17 +1,15 @@
 package org.safehaus.penrose.handler.proxy;
 
 import org.safehaus.penrose.handler.DefaultHandler;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -27,17 +25,17 @@ public class ProxyHandler extends DefaultHandler {
     }
 
     public void search(
-            final PenroseSession session,
+            final Session session,
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+
+        final DN baseDn = request.getDn();
 
         if (debug) {
             log.debug("Base DN: "+baseDn);
@@ -51,7 +49,11 @@ public class ProxyHandler extends DefaultHandler {
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
-        Pipeline sr = new Pipeline(results);
+        SearchResponse sr = new SearchResponse() {
+            public void add(Object object) throws Exception {
+                response.add(object);
+            }
+        };
 
         AttributeValues sourceValues = new AttributeValues();
 
@@ -60,9 +62,7 @@ public class ProxyHandler extends DefaultHandler {
                 partition,
                 sourceValues,
                 entryMapping,
-                baseDn,
-                filter,
-                sc,
+                request,
                 sr
         );
 	}

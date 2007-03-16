@@ -22,9 +22,17 @@ public class PenroseAttributes implements Attributes {
         return attributeValues.getNames();
     }
 
+    public void add(Attribute attribute) throws Exception {
+        attributeValues.add(attribute.getName(), attribute.getValues());
+    }
+
     public Attribute get(String name) throws Exception {
         Collection values = attributeValues.get(name);
         if (values == null) return null;
         return new PenroseAttribute(name, values);
+    }
+
+    public AttributeValues getAttributeValues() {
+        return attributeValues;
     }
 }

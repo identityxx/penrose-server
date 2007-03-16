@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.join;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.test.mapping.join.JoinTestCase;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class ModRdnJoinTest extends JoinTestCase {
 
         executeUpdate("insert into groups values ('old', 'description')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
         session.modrdn("cn=old,ou=Groups,dc=Example,dc=com", "cn=new", true);

@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -16,17 +16,21 @@ public class SearchOneLevelTest extends StaticTestCase {
 
     public void testSearchingOneLevelOnGroup() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertTrue(results.hasNext());
+        session.search(
+                "cn=group,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals(dn, "uid=member1,cn=group,"+baseDn);
 
@@ -38,9 +42,9 @@ public class SearchOneLevelTest extends StaticTestCase {
         value = attributes.getOne("memberOf");
         assertEquals("group", value);
 
-        assertTrue(results.hasNext());
+        assertTrue(response.hasNext());
 
-        entry = (Entry)results.next();
+        entry = (Entry) response.next();
         dn = entry.getDn().toString();
         assertEquals(dn, "uid=member2,cn=group,"+baseDn);
 
@@ -52,7 +56,7 @@ public class SearchOneLevelTest extends StaticTestCase {
         value = attributes.getOne("memberOf");
         assertEquals("group", value);
 
-        assertFalse(results.hasNext());
+        assertFalse(response.hasNext());
 
         session.close();
     }

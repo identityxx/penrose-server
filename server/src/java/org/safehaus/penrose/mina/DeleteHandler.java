@@ -5,10 +5,11 @@ import org.apache.mina.common.IoSession;
 import org.apache.directory.shared.ldap.message.DeleteRequest;
 import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 import org.apache.directory.shared.ldap.message.LdapResult;
+import org.apache.directory.shared.ldap.message.DeleteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -24,16 +25,26 @@ public class DeleteHandler implements MessageHandler {
         this.handler = handler;
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    public void messageReceived(IoSession ioSession, Object message) throws Exception {
 
         DeleteRequest request = (DeleteRequest)message;
-        LdapResult result = request.getResultResponse().getLdapResult();
+        DeleteResponse response = (DeleteResponse)request.getResultResponse();
+        LdapResult result = response.getLdapResult();
 
         try {
             String dn = request.getName().toString();
 
-            PenroseSession penroseSession = handler.getPenroseSession(session);
-            penroseSession.delete(dn);
+            Session session = handler.getPenroseSession(ioSession);
+
+            org.safehaus.penrose.session.DeleteRequest penroseRequest = new org.safehaus.penrose.session.DeleteRequest();
+            penroseRequest.setDn(dn);
+            handler.getControls(request, penroseRequest);
+
+            org.safehaus.penrose.session.DeleteResponse penroseResponse = new org.safehaus.penrose.session.DeleteResponse();
+
+            session.delete(penroseRequest, penroseResponse);
+
+            handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
@@ -48,7 +59,7 @@ public class DeleteHandler implements MessageHandler {
             result.setErrorMessage(le.getMessage());
 
         } finally {
-            session.write(request.getResultResponse());
+            ioSession.write(request.getResultResponse());
         }
     }
 }

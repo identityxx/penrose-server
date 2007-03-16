@@ -4,10 +4,9 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -41,22 +40,21 @@ public class SambaUserModule extends Module {
 
         if (event.getReturnCode() != LDAPException.SUCCESS) return;
 
-        DN dn = event.getDn();
+        BindRequest bindRequest = event.getRequest();
+        DN dn = bindRequest.getDn();
         log.debug("Checking NT Password and LM Password for "+dn+".");
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchResponse searchResponse = new SearchResponse();
 
-        PenroseSession session = event.getSession();
-        session.search(
-                dn,
-                "(objectClass=*)",
-                sc,
-                results);
+        Session session = event.getSession();
+        session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult)results.next();
+        SearchResult entry = (SearchResult) searchResponse.next();
         Attributes attributes = entry.getAttributes();
 
         if (attributes.get("sambaNTPassword") == null ||
@@ -66,7 +64,7 @@ public class SambaUserModule extends Module {
 
             Collection modifications = new ArrayList();
 
-            Attribute attribute = new BasicAttribute("userPassword", event.getPassword());
+            Attribute attribute = new BasicAttribute("userPassword", bindRequest.getPassword());
 
             ModificationItem modification = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
             modifications.add(modification);
@@ -79,20 +77,21 @@ public class SambaUserModule extends Module {
     }
 
     public boolean beforeAdd(AddEvent event) throws Exception {
-        Attributes attributes = event.getAttributes();
+        AddRequest request = event.getRequest();
 
-        String dn = event.getDn().toString();
+        String dn = request.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String username = dn.substring(i+1, j);
 
         log.debug("Checking Samba attributes before adding \""+dn+"\".");
 
-        if (attributes.get("uidNumber") == null ||
-                attributes.get("gidNumber") == null ||
-                attributes.get("sambaSID") == null ||
-                attributes.get("sambaPrimaryGroupSID") == null ||
-                attributes.get("sambaAcctFlags") == null) {
+        AttributeValues attributeValues = request.getAttributeValues();
+        if (attributeValues.get("uidNumber") == null ||
+                attributeValues.get("gidNumber") == null ||
+                attributeValues.get("sambaSID") == null ||
+                attributeValues.get("sambaPrimaryGroupSID") == null ||
+                attributeValues.get("sambaAcctFlags") == null) {
 
             log.debug("Generating UID, GID, User SID, Group SID, and Flags.");
 
@@ -143,20 +142,11 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Attribute set = new BasicAttribute("uidNumber", uid);
-            attributes.put(set);
-
-            set = new BasicAttribute("gidNumber", gid);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaSID", userSID);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaPrimaryGroupSID", groupSID);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaAcctFlags", flags);
-            attributes.put(set);
+            attributeValues.set("uidNumber", uid);
+            attributeValues.set("gidNumber", gid);
+            attributeValues.set("sambaSID", userSID);
+            attributeValues.set("sambaPrimaryGroupSID", groupSID);
+            attributeValues.set("sambaAcctFlags", flags);
         }
 
         return true;
@@ -164,27 +154,27 @@ public class SambaUserModule extends Module {
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
 
-        String dn = event.getDn().toString();
+        ModifyRequest modifyRequest = event.getRequest();
+
+        String dn = modifyRequest.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String username = dn.substring(i+1, j);
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchResponse searchResponse = new SearchResponse();
 
-        session.search(
-                dn,
-                "(objectClass=*)",
-                sc,
-                results);
+        session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult)results.next();
+        SearchResult entry = (SearchResult) searchResponse.next();
         Attributes attributes = entry.getAttributes();
 
         if (attributes.get("uidNumber") == null ||
@@ -243,7 +233,7 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Collection modifications = event.getModifications();
+            Collection modifications = modifyRequest.getModifications();
 
             Attribute attribute = new BasicAttribute("uidNumber", uid);
             ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);

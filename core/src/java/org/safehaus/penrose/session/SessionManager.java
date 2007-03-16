@@ -22,7 +22,6 @@ import java.util.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 
 public class SessionManager implements SessionManagerMBean {
@@ -57,7 +56,7 @@ public class SessionManager implements SessionManagerMBean {
         sessions.clear();
     }
 
-    public synchronized PenroseSession newSession() {
+    public synchronized Session newSession() {
 
         Object sessionId = createSessionId();
         while (sessions.get(sessionId) != null) {
@@ -67,14 +66,14 @@ public class SessionManager implements SessionManagerMBean {
         return createSession(sessionId);
     }
 
-    public synchronized PenroseSession createSession(Object sessionId) {
+    public synchronized Session createSession(Object sessionId) {
 
         purge();
 
         if (sessions.size() >= maxSessions) return null;
 
         //log.debug("Creating session "+sessionId);
-        PenroseSession session = new PenroseSession(this);
+        Session session = new Session(this);
         session.setSessionId(sessionId);
         session.setPenroseConfig(penroseConfig);
         session.setPenroseContext(penroseContext);
@@ -84,20 +83,20 @@ public class SessionManager implements SessionManagerMBean {
         return session;
     }
 
-    public synchronized PenroseSession getSession(Object sessionId) {
+    public synchronized Session getSession(Object sessionId) {
 
         purge();
 
         log.debug("Retrieving session "+sessionId);
-        return (PenroseSession)sessions.get(sessionId);
+        return (Session)sessions.get(sessionId);
     }
 
-    public synchronized PenroseSession removeSession(Object sessionId) {
+    public synchronized Session removeSession(Object sessionId) {
 
         purge();
 
         log.debug("Removing session "+sessionId);
-        return (PenroseSession)sessions.remove(sessionId);
+        return (Session)sessions.remove(sessionId);
     }
 
     public Object createSessionId() {
@@ -113,7 +112,7 @@ public class SessionManager implements SessionManagerMBean {
         Collection expiredSessions = new ArrayList();
 
         for (Iterator i=sessions.values().iterator(); i.hasNext(); ) {
-            PenroseSession session = (PenroseSession)i.next();
+            Session session = (Session)i.next();
             if (isExpired(session)) expiredSessions.add(session.getSessionId());
         }
 
@@ -124,7 +123,7 @@ public class SessionManager implements SessionManagerMBean {
         }
     }
 
-    public synchronized boolean isValid(PenroseSession session) {
+    public synchronized boolean isValid(Session session) {
         purge();
         if (session == null) return true;
 
@@ -132,7 +131,7 @@ public class SessionManager implements SessionManagerMBean {
         return sessions.get(session.getSessionId()) != null;
     }
 
-    public boolean isExpired(PenroseSession session) {
+    public boolean isExpired(Session session) {
         if (session == null) return false;
 
         long idleTime = System.currentTimeMillis() - session.getLastActivityDate().getTime();
@@ -141,7 +140,7 @@ public class SessionManager implements SessionManagerMBean {
         return idleTime > maxIdleTime * 60 * 1000;
     }
 
-    public synchronized void closeSession(PenroseSession session) {
+    public synchronized void closeSession(Session session) {
         log.debug("Removing session "+session.getSessionId());
         sessions.remove(session.getSessionId());
     }

@@ -26,7 +26,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.filter.Filter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -107,10 +107,10 @@ public class EntryCache {
         getCacheStorage(partition, entryMapping).add(baseDn, filter, dn);
     }
     
-    public void search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
+    public void search(Partition partition, EntryMapping entryMapping, SourceConfig sourceConfig, RDN filter, SearchResponse response) throws Exception {
         log.info("["+entryMapping.getDn()+"] search("+sourceConfig.getName()+", "+filter+")");
 
-        getCacheStorage(partition, entryMapping).search(sourceConfig, filter, results);
+        getCacheStorage(partition, entryMapping).search(sourceConfig, filter, response);
     }
 
     public boolean contains(Partition partition, EntryMapping entryMapping, DN parentDn, Filter filter) throws Exception {
@@ -119,12 +119,12 @@ public class EntryCache {
         return getCacheStorage(partition, entryMapping).contains(parentDn, filter);
     }
 
-    public void update(Partition partition, EntryMapping entryMapping, PenroseSearchResults results) throws Exception {
+    public void update(Partition partition, EntryMapping entryMapping, SearchResponse response) throws Exception {
         log.info("["+entryMapping.getDn()+"] update()");
 
-        getCacheStorage(partition, entryMapping).search(null, (Filter)null, results);
+        getCacheStorage(partition, entryMapping).search(null, (Filter)null, response);
 
-        results.close();
+        response.close();
     }
 
     public boolean search(
@@ -132,12 +132,12 @@ public class EntryCache {
             EntryMapping entryMapping,
             DN baseDn,
             Filter filter,
-            PenroseSearchResults results)
+            SearchResponse response)
             throws Exception {
 
         log.info("["+entryMapping.getDn()+"] search("+baseDn +", "+filter+")");
 
-        return getCacheStorage(partition, entryMapping).search(baseDn, filter, results);
+        return getCacheStorage(partition, entryMapping).search(baseDn, filter, response);
     }
 
     public void put(Partition partition, EntryMapping entryMapping, Entry entry) throws Exception {
@@ -168,7 +168,7 @@ public class EntryCache {
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
 
-            PenroseSearchResults childDns = new PenroseSearchResults();
+            SearchResponse childDns = new SearchResponse();
             search(partition, childMapping, dn, null, childDns);
             childDns.close();
 

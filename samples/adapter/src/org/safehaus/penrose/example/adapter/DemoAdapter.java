@@ -7,8 +7,8 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
@@ -78,12 +78,12 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls searchControls, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, Filter filter, SearchRequest searchRequest, SearchResponse response) throws Exception {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
 
-        Collection attributes = searchControls.getAttributes();
+        Collection attributes = searchRequest.getAttributes();
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
             RDN pk = (RDN)i.next();
             AttributeValues sourceValues = (AttributeValues)entries.get(pk);
@@ -104,14 +104,14 @@ public class DemoAdapter extends Adapter {
                 }
                 av.add(sourceValues);
 
-                results.add(av);
+                response.add(av);
 
             } else if (attributes.contains("dn")) {
-                results.add(pk);
+                response.add(pk);
             }
         }
 
-        results.close();
+        response.close();
     }
 
     public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {

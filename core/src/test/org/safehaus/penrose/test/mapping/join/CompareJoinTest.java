@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.join;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 /**
  * @author Endi S. Dewata
@@ -14,7 +14,7 @@ public class CompareJoinTest extends JoinTestCase {
 
         executeUpdate("insert into groups values ('test', 'correct')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
         boolean result = session.compare("cn=test,ou=Groups,dc=Example,dc=com", "description", "correct");

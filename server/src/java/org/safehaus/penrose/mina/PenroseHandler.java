@@ -8,12 +8,11 @@ import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.directory.shared.ldap.message.*;
 import org.apache.directory.shared.ldap.message.extended.NoticeOfDisconnect;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -80,14 +79,14 @@ public class PenroseHandler extends DemuxingIoHandler {
         super.sessionCreated(session);
     }
 
-    public void sessionClosed(IoSession session) throws Exception {
+    public void sessionClosed(IoSession ioSession) throws Exception {
 
-        PenroseSession penroseSession = (PenroseSession)sessions.get(session);
-        if (penroseSession != null) {
-            penroseSession.close();
+        Session session = (Session)sessions.get(ioSession);
+        if (session != null) {
+            session.close();
         }
         
-        super.sessionClosed(session);
+        super.sessionClosed(ioSession);
     }
 
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
@@ -122,7 +121,49 @@ public class PenroseHandler extends DemuxingIoHandler {
         this.codecFactory = codecFactory;
     }
 
-    public PenroseSession getPenroseSession(IoSession session) {
-        return (PenroseSession)sessions.get(session);
+    public Session getPenroseSession(IoSession session) {
+        return (Session)sessions.get(session);
+    }
+
+    public void getControls(
+            Message message,
+            org.safehaus.penrose.session.Request request
+    ) {
+        Map controls = message.getControls();
+        Collection list = new ArrayList();
+        for (Iterator i=controls.values().iterator(); i.hasNext(); ) {
+            Control control = (Control)i.next();
+
+            String oid = control.getID();
+            byte[] value = control.getValue();
+            boolean critical = control.isCritical();
+
+            org.safehaus.penrose.control.Control ctrl = new org.safehaus.penrose.control.Control(oid, value, critical);
+            list.add(ctrl);
+
+        }
+        request.setControls(list);
+    }
+
+    public void setControls(
+            org.safehaus.penrose.session.Response penroseResponse,
+            ResultResponse response
+    ) {
+        Collection controls = penroseResponse.getControls();
+        for (Iterator i=controls.iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+
+            Control ctrl = new ControlImpl() {
+                public byte[] getEncodedValue() {
+                    return getValue();
+                }
+            };
+
+            ctrl.setType(control.getOid());
+            ctrl.setValue(control.getValue());
+            ctrl.setCritical(control.isCritical());
+
+            response.add(ctrl);
+        }
     }
 }

@@ -1,11 +1,10 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.session.Results;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -18,11 +17,13 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SearchPipeline extends Pipeline {
+public class HandlerSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseSession session;
+    SearchResponse parent;
+
+    Session session;
     Partition partition;
 
     HandlerManager handlerManager;
@@ -37,9 +38,9 @@ public class SearchPipeline extends Pipeline {
     Map attributesToRemove = new HashMap();
     Map results = new HashMap();
 
-    public SearchPipeline(
-            Results parent,
-            PenroseSession session,
+    public HandlerSearchResponse(
+            SearchResponse parent,
+            Session session,
             Partition partition,
             HandlerManager handlerManager,
             SchemaManager schemaManager,
@@ -49,8 +50,7 @@ public class SearchPipeline extends Pipeline {
             boolean allOpAttributes,
             Collection entryMappings
     ) {
-        super(parent);
-
+        this.parent = parent;
         this.session = session;
         this.partition = partition;
 
@@ -71,12 +71,10 @@ public class SearchPipeline extends Pipeline {
         boolean debug = log.isDebugEnabled();
 
         DN dn = entry.getDn();
-        if (debug) log.debug("Returning "+dn);
-        
         EntryMapping entryMapping = entry.getEntryMapping();
 
         if (!session.isRootUser()) {
-            if (debug) log.debug("Checking read permission on "+dn);
+            if (debug) log.debug("Checking read permission.");
             
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
             if (rc != LDAPException.SUCCESS) {
@@ -86,24 +84,21 @@ public class SearchPipeline extends Pipeline {
             handlerManager.filterAttributes(session, partition, entry);
         }
 
-        if (debug) {
-            log.debug("Before: "+entry.getDn());
-            entry.getAttributeValues().print();
-        }
-
         Collection list = (Collection) attributesToRemove.get(entryMapping.getId());
         if (list == null) {
             list = handlerManager.filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entryMapping.getId(), list);
         }
+
+        if (debug) log.debug("Removing attributes: "+list);
         handlerManager.removeAttributes(entry, list);
 
         if (debug) {
-            log.debug("After: "+entry.getDn());
+            log.debug("Returning "+dn+":");
             entry.getAttributeValues().print();
         }
 
-        super.add(entry);
+        parent.add(entry);
     }
 
     public void setResult(EntryMapping entryMapping, LDAPException exception) {
@@ -111,7 +106,17 @@ public class SearchPipeline extends Pipeline {
     }
 
     public void close() throws Exception {
-        if (results.size() < entryMappings.size()) return;
+
+        boolean debug = log.isDebugEnabled();
+
+        int count = entryMappings.size() - results.size();
+
+        if (count > 0) {
+            if (debug) log.debug("Search thread ended. Waiting for "+count+" more.");
+            return;
+        } else {
+            if (debug) log.debug("All search threads have ended.");
+        }
 
         boolean successes = false;
         LDAPException noSuchObject = null;
@@ -137,10 +142,7 @@ public class SearchPipeline extends Pipeline {
             }
         }
 
-        boolean debug = log.isDebugEnabled();
-        if (debug) {
-            log.debug("Found successes: "+successes);
-        }
+        if (debug) log.debug("Found successes: "+successes);
 
         if (exception != null) {
             if (debug) log.debug("Returning: "+exception.getMessage());

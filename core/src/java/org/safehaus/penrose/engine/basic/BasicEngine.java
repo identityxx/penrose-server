@@ -4,16 +4,14 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
@@ -23,11 +21,9 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.BasicAttribute;
@@ -51,7 +47,7 @@ public class BasicEngine extends Engine {
         log.debug("Default engine initialized.");
     }
 
-    public void bind(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, String password) throws Exception {
+    public void bind(Session session, Partition partition, EntryMapping entryMapping, DN dn, String password) throws Exception {
 
         log.debug("Bind as user "+dn);
 
@@ -88,35 +84,13 @@ public class BasicEngine extends Engine {
     }
 
     public void add(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            Attributes attributes
+            AttributeValues attributeValues
     ) throws Exception {
-
-        // normalize attribute names
-        AttributeValues attributeValues = new AttributeValues();
-
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
-
-            if ("objectClass".equalsIgnoreCase(name)) continue;
-
-            AttributeMapping attributeMapping = entryMapping.getAttributeMapping(name);
-            if (attributeMapping == null) {
-                log.debug("Undefined attribute "+name);
-                throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
-            }
-
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                attributeValues.add(name, value);
-            }
-        }
-
 
         Collection sourceMappings = entryMapping.getSourceMappings();
 
@@ -138,7 +112,7 @@ public class BasicEngine extends Engine {
         }
     }
 
-    public void delete(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws Exception {
+    public void delete(Session session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws Exception {
 
         RDN rdn = dn.getRdn();
         AttributeValues attributeValues = new AttributeValues();
@@ -165,7 +139,7 @@ public class BasicEngine extends Engine {
     }
 
     public void modrdn(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -209,7 +183,7 @@ public class BasicEngine extends Engine {
     }
 
     public void modify(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -369,28 +343,28 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
         RDN rdn = dn.getRdn();
         Filter filter = FilterTool.createFilter(rdn);
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter(filter);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse response = new SearchResponse();
 
         search(
                 null,
                 partition,
                 sourceValues,
                 entryMapping,
-                dn,
-                filter,
-                sc,
-                results
+                request,
+                response
         );
 
         Entry entry = null;
-        if (results.hasNext() && getFilterTool().isValid(entry, filter)) {
-            entry = (Entry)results.next();
+        if (response.hasNext() && getFilterTool().isValid(entry, filter)) {
+            entry = (Entry) response.next();
         }
 
 
@@ -420,18 +394,18 @@ public class BasicEngine extends Engine {
     }
 
     public void search(
-            final PenroseSession session,
+            final Session session,
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+        final DN baseDn = request.getDn();
+        final Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -440,7 +414,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displayLine("Base Mapping    : "+baseMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Current Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Filter          : "+filter, 80));
-            log.debug(Formatter.displayLine("Scope           : "+ LDAPUtil.getScope(sc.getScope()), 80));
+            log.debug(Formatter.displayLine("Scope           : "+ LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -467,12 +441,12 @@ public class BasicEngine extends Engine {
                 sourceValues.print();
             }
 
-            Pipeline sr = new SearchPipeline(results, interpreterManager.newInstance());
+            SearchResponse sr = new BasicEngineSearchResponse(response, interpreterManager.newInstance());
 
-            searchEngine.search(partition, sourceValues, entryMapping, filter, sc, sr);
+            searchEngine.search(partition, sourceValues, entryMapping, filter, request, sr);
 
         } finally {
-            results.close();
+            response.close();
         }
     }
 

@@ -5,9 +5,10 @@ import org.apache.mina.common.IoSession;
 import org.apache.directory.shared.ldap.message.AddRequest;
 import org.apache.directory.shared.ldap.message.LdapResult;
 import org.apache.directory.shared.ldap.message.ResultCodeEnum;
+import org.apache.directory.shared.ldap.message.AddResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 
@@ -26,17 +27,28 @@ public class AddHandler implements MessageHandler {
         this.handler = handler;
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    public void messageReceived(IoSession ioSession, Object message) throws Exception {
 
         AddRequest request = (AddRequest)message;
-        LdapResult result = request.getResultResponse().getLdapResult();
+        AddResponse response = (AddResponse)request.getResultResponse();
+        LdapResult result = response.getLdapResult();
 
         try {
             String dn = request.getEntry().toString();
             Attributes attributes = request.getAttributes();
 
-            PenroseSession penroseSession = handler.getPenroseSession(session);
-            penroseSession.add(dn, attributes);
+            Session session = handler.getPenroseSession(ioSession);
+
+            org.safehaus.penrose.session.AddRequest penroseRequest = new org.safehaus.penrose.session.AddRequest();
+            penroseRequest.setDn(dn);
+            penroseRequest.setAttributeValues(attributes);
+            handler.getControls(request, penroseRequest);
+
+            org.safehaus.penrose.session.AddResponse penroseResponse = new org.safehaus.penrose.session.AddResponse();
+
+            session.add(penroseRequest, penroseResponse);
+
+            handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
@@ -51,7 +63,7 @@ public class AddHandler implements MessageHandler {
             result.setErrorMessage(le.getMessage());
 
         } finally {
-            session.write(request.getResultResponse());
+            ioSession.write(request.getResultResponse());
         }
     }
 }

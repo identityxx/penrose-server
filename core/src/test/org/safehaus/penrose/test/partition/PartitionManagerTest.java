@@ -26,9 +26,9 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -95,17 +95,21 @@ public class PartitionManagerTest extends TestCase {
 
         penrose.start();
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("ou=Test,dc=Example,dc=com", "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertTrue(results.hasNext());
+        session.search(
+                "ou=Test,dc=Example,dc=com",
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
 
-        SearchResult sr = (SearchResult)results.next();
+        assertTrue(response.hasNext());
+
+        SearchResult sr = (SearchResult) response.next();
         String dn = sr.getName();
         assertEquals(dn, "ou=Test,dc=Example,dc=com");
 
@@ -130,13 +134,13 @@ public class PartitionManagerTest extends TestCase {
 
     public int search() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchResponse results = new SearchResponse();
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
+        SearchRequest sc = new SearchRequest();
+        sc.setScope(SearchRequest.SCOPE_ONE);
 
         String baseDn = "ou=Categories,dc=Shop,dc=Example,dc=com";
 

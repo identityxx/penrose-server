@@ -17,11 +17,9 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -117,11 +115,10 @@ public class Connection implements ConnectionMBean {
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
             Collection primaryKeys,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
-        adapter.search(partition, entryMapping, sourceMapping, sourceConfig, filter, sc, results);
+        adapter.search(partition, entryMapping, sourceMapping, sourceConfig, request, response);
     }
 
     public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
@@ -144,7 +141,7 @@ public class Connection implements ConnectionMBean {
         return adapter.getLastChangeNumber(sourceConfig);
     }
 
-    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
         return adapter.getChanges(sourceConfig, lastChangeNumber);
     }
 

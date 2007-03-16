@@ -25,4 +25,8 @@ public class PenroseRDN implements com.identyx.javabackend.RDN {
         values.add(rdn.get(name));
         return values;
     }
+
+    public RDN getRdn() {
+        return rdn;
+    }
 }

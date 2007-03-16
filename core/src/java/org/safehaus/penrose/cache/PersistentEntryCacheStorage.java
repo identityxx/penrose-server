@@ -23,10 +23,8 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 
 import javax.naming.NamingException;
@@ -1341,7 +1339,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
     public boolean search(
             final DN baseDn,
             final Filter filter,
-            final PenroseSearchResults results
+            final SearchResponse response
     ) throws Exception {
 
         log.debug(Formatter.displaySeparator(80));
@@ -1358,13 +1356,13 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             for (Iterator i=entryIds.iterator(); i.hasNext(); ) {
                 Integer entryId = (Integer)i.next();
                 Entry entry = get(entryId.intValue());
-                results.add(entry);
+                response.add(entry);
             }
 
             return true;
 
         } finally {
-            results.close();
+            response.close();
         }
 /*
         String tableName = partition.getName()+"_"+mappingId+"_entries";
@@ -1454,7 +1452,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 String dn = rdn+","+pdn;
                 log.debug(Formatter.displayLine(" - "+dn, 80));
                 Entry entry = get(dn);
-                results.add(entry);
+                response.add(entry);
                 empty = false;
             }
 
@@ -1464,19 +1462,19 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
+            response.setReturnCode(LDAPException.OPERATIONS_ERROR);
             return false;
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
-            results.close();
+            response.close();
         }
 */
     }
 
-    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, SearchResponse response) throws Exception {
 
         StringBuilder tableNames = new StringBuilder();
         tableNames.append(partition.getName()+"_"+mappingId+"_entries t");
@@ -1567,7 +1565,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 String parentDn = (String)rs.getObject(2);
                 String dn = rdn+","+parentDn;
                 log.debug(" - "+dn);
-                results.add(dn);
+                response.add(dn);
             }
 
         } catch (Exception e) {
@@ -1578,7 +1576,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             if (rs != null) try { rs.close(); } catch (Exception e) {}
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
-            results.close();
+            response.close();
         }
     }
 

@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 
@@ -21,7 +21,7 @@ public class DeleteNestedTest extends NestedTestCase {
 
         executeUpdate("insert into children values ('group1', 'child1')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.delete("uid=child,cn=group1,"+baseDn);

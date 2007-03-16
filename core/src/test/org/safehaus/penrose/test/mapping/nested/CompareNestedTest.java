@@ -1,8 +1,6 @@
 package org.safehaus.penrose.test.mapping.nested;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.ietf.ldap.LDAPException;
-import junit.framework.Assert;
+import org.safehaus.penrose.session.Session;
 
 /**
  * @author Endi S. Dewata
@@ -17,7 +15,7 @@ public class CompareNestedTest extends NestedTestCase {
         executeUpdate("insert into groups values ('group', 'description')");
         executeUpdate("insert into members values ('member', 'group', 'Member')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         boolean result = session.compare("cn=group,"+baseDn, "description", "description");

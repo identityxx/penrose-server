@@ -18,7 +18,7 @@
 package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -49,9 +49,9 @@ public class MergeEngine {
     public void merge(
             final Partition partition,
             final EntryMapping entryMapping,
-            final PenroseSearchResults entries,
-            final PenroseSearchResults results
-            ) throws Exception {
+            final SearchResponse entries,
+            final SearchResponse response
+    ) throws Exception {
 
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
@@ -76,14 +76,14 @@ public class MergeEngine {
                         filter
                 );
 
-                results.add(entry);
+                response.add(entry);
             }
 
         } finally {
             int rc = entries.getReturnCode();
             //log.debug("RC: "+rc);
 
-            results.close();
+            response.close();
         }
     }
 

@@ -19,9 +19,8 @@ package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
@@ -54,8 +53,8 @@ public class LoadEngine {
     public void load(
             Partition partition,
             final EntryMapping entryMapping,
-            final PenroseSearchResults entries,
-            final PenroseSearchResults loadedEntries
+            final SearchResponse entries,
+            final SearchResponse loadedEntries
     ) throws Exception {
 
 /*
@@ -95,7 +94,7 @@ public class LoadEngine {
 */
         log.debug("Creating batches of entries.");
 
-        final PenroseSearchResults batches = new PenroseSearchResults();
+        final SearchResponse batches = new SearchResponse();
 
         try {
             createBatches(partition, entryMapping, entries, batches);
@@ -114,7 +113,7 @@ public class LoadEngine {
         }
     }
 
-    public void checkCache(EntryMapping entryMapping, PenroseSearchResults entries, PenroseSearchResults loadedEntries) throws Exception {
+    public void checkCache(EntryMapping entryMapping, SearchResponse entries, SearchResponse loadedEntries) throws Exception {
         while (entries.hasNext()) {
             EntryData map = (EntryData)entries.next();
 /*
@@ -141,8 +140,8 @@ public class LoadEngine {
     public void createBatches(
             Partition partition,
             EntryMapping entryMapping,
-            PenroseSearchResults entries,
-            PenroseSearchResults batches
+            SearchResponse entries,
+            SearchResponse batches
             ) throws Exception {
 
         try {
@@ -200,8 +199,8 @@ public class LoadEngine {
     public void loadBackground(
             Partition partition,
             EntryMapping entryMapping,
-            PenroseSearchResults batches,
-            PenroseSearchResults loadedBatches
+            SearchResponse batches,
+            SearchResponse loadedBatches
             ) throws Exception {
 
         log.info("Loading data for "+entryMapping.getDn()+".");

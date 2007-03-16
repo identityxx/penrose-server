@@ -21,6 +21,9 @@ import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.session.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,6 +33,8 @@ import java.util.ArrayList;
  * @author Endi S. Dewata
  */
 public class EventManager {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -41,8 +46,15 @@ public class EventManager {
     public Collection modifyListeners = new ArrayList();
     public Collection modrdnListeners = new ArrayList();
     public Collection searchListeners = new ArrayList();
+    public Collection unbindListeners = new ArrayList();
 
-    public boolean postEvent(DN dn, AddEvent event) throws Exception {
+    public boolean postEvent(AddEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        AddRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -66,7 +78,13 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(DN dn, BindEvent event) throws Exception {
+    public boolean postEvent(BindEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        BindRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -84,22 +102,19 @@ public class EventManager {
                 case BindEvent.AFTER_BIND:
                     listener.afterBind(event);
                     break;
-
-                case BindEvent.BEFORE_UNBIND:
-                    b = listener.beforeUnbind(event);
-                    if (!b) return false;
-                    break;
-
-                case BindEvent.AFTER_UNBIND:
-                    listener.afterUnbind((BindEvent)event);
-                    break;
             }
         }
 
         return true;
     }
 
-    public boolean postEvent(DN dn, CompareEvent event) throws Exception {
+    public boolean postEvent(CompareEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        CompareRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -123,7 +138,13 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(DN dn, DeleteEvent event) throws Exception {
+    public boolean postEvent(DeleteEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        DeleteRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -147,7 +168,13 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(DN dn, ModifyEvent event) throws Exception {
+    public boolean postEvent(ModifyEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        ModifyRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -171,7 +198,13 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(DN dn, ModRdnEvent event) throws Exception {
+    public boolean postEvent(ModRdnEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        ModRdnRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -195,7 +228,13 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(DN dn, SearchEvent event) throws Exception {
+    public boolean postEvent(SearchEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        SearchRequest request = event.getRequest();
+        DN dn = request.getDn();
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
@@ -219,6 +258,36 @@ public class EventManager {
         return true;
     }
 
+    public boolean postEvent(UnbindEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        UnbindRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = penroseContext.getModuleManager();
+        Collection listeners = moduleManager.getModules(dn);
+        listeners.addAll(unbindListeners);
+
+        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
+            BindListener listener = (BindListener)i.next();
+
+            switch (event.getType()) {
+                case UnbindEvent.BEFORE_UNBIND:
+                    boolean b = listener.beforeUnbind(event);
+                    if (!b) return false;
+                    break;
+
+                case UnbindEvent.AFTER_UNBIND:
+                    listener.afterUnbind((UnbindEvent)event);
+                    break;
+            }
+        }
+
+        return true;
+    }
+
     public void addAddListener(AddListener listener) {
         if (!addListeners.contains(listener)) addListeners.add(listener);
     }
@@ -233,6 +302,14 @@ public class EventManager {
 
     public void removeBindListener(BindListener listener) {
         bindListeners.remove(listener);
+    }
+
+    public void addUnbindListener(UnbindListener listener) {
+        if (!unbindListeners.contains(listener)) unbindListeners.add(listener);
+    }
+
+    public void removeUnbindListener(UnbindListener listener) {
+        unbindListeners.remove(listener);
     }
 
     public void addCompareListener(CompareListener listener) {

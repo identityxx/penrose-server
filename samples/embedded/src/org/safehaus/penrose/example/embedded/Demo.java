@@ -5,22 +5,21 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SessionManager;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -115,39 +114,38 @@ public class Demo {
         log.warn("Connecting to Penrose.");
 
         SessionManager sessionManager = penroseContext.getSessionManager();
-        PenroseSession session = sessionManager.newSession();
+        Session session = sessionManager.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
         log.warn("Searching all entries.");
 
-        PenroseSearchResults results = new PenroseSearchResults();
-        PenroseSearchControls sc = new PenroseSearchControls();
+        SearchRequest request = new SearchRequest();
+        request.setDn("dc=Example,dc=com");
+        request.setFilter("(objectClass=*)");
 
-        session.search(
-                "dc=Example,dc=com",
-                "(objectClass=*)",
-                sc,
-                results);
+        SearchResponse response = new SearchResponse();
 
-        while (results.hasNext()) {
-            SearchResult entry = (SearchResult)results.next();
+        session.search(request, response);
+
+        while (response.hasNext()) {
+            Entry entry = (Entry) response.next();
             log.warn("Entry:\n"+toString(entry));
         }
 
         penrose.stop();
     }
 
-    public String toString(SearchResult entry) throws Exception {
+    public String toString(Entry entry) throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getName()+"\n");
+        sb.append("dn: "+entry.getDn()+"\n");
 
-        Attributes attributes = entry.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
+        AttributeValues attributeValues = entry.getAttributeValues();
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 sb.append(name+": "+value+"\n");
             }

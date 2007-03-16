@@ -25,6 +25,6 @@ public interface BindListener {
     public boolean beforeBind(BindEvent event) throws Exception;
     public void afterBind(BindEvent event) throws Exception;
 
-    public boolean beforeUnbind(BindEvent event) throws Exception;
-    public void afterUnbind(BindEvent event) throws Exception;
+    public boolean beforeUnbind(UnbindEvent event) throws Exception;
+    public void afterUnbind(UnbindEvent event) throws Exception;
 }

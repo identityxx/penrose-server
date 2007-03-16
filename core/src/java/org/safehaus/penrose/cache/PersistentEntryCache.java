@@ -20,12 +20,11 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.connector.ConnectionManager;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 
 import java.util.Collection;
@@ -145,22 +144,19 @@ public class PersistentEntryCache extends EntryCache {
 
             log.debug("Loading entries under "+entryMapping.getDn());
 
-            PenroseSession adminSession = sessionManager.newSession();
+            Session adminSession = sessionManager.newSession();
             adminSession.setBindDn(penrose.getPenroseConfig().getRootDn());
 
-            PenroseSearchResults sr = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(entryMapping.getDn());
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_SUB);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_SUB);
+            SearchResponse response = new SearchResponse();
 
-            adminSession.search(
-                    entryMapping.getDn(),
-                    "(objectClass=*)",
-                    sc,
-                    sr
-            );
+            adminSession.search(request, response);
 
-            while (sr.hasNext()) sr.next();
+            while (response.hasNext()) response.next();
 
             adminSession.close();
         }

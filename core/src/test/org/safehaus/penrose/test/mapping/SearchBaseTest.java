@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -19,19 +19,23 @@ public class SearchBaseTest extends StaticTestCase {
 
     public void testSearchingBaseOnGroup() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "cn=group,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
@@ -57,7 +61,7 @@ public class SearchBaseTest extends StaticTestCase {
             }
         }
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
@@ -66,19 +70,23 @@ public class SearchBaseTest extends StaticTestCase {
 
     public void testSearchingBaseOnMember() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("uid=member1,cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "uid=member1,cn=group,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("uid=member1,cn=group,"+baseDn, dn);
@@ -94,7 +102,7 @@ public class SearchBaseTest extends StaticTestCase {
         log.debug("memberOf: "+value);
         assertEquals("group", value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 

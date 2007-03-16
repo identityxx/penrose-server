@@ -15,29 +15,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.backend;
-
-import com.identyx.javabackend.Results;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.entry.Entry;
+package org.safehaus.penrose.session;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseResults implements Results {
+public class SearchResponseAdapter implements SearchResponseListener {
 
-    private PenroseSearchResults results;
-
-    public PenroseResults(PenroseSearchResults results) {
-        this.results = results;
+    public boolean preAdd(SearchResponseEvent event) throws Exception {
+        return true;
+    }
+    
+    public void postAdd(SearchResponseEvent event) throws Exception {
     }
 
-    public Object next() throws Exception {
-        Entry entry = (Entry)results.next();
-        return new PenroseEntry(entry);
+    public boolean preRemove(SearchResponseEvent event) throws Exception {
+        return true;
     }
 
-    public boolean hasNext() throws Exception {
-        return results.hasNext();
+    public void postRemove(SearchResponseEvent event) throws Exception {
     }
+
+    public boolean preClose(SearchResponseEvent event) throws Exception {
+        return true;
+    }
+
+    public void postClose(SearchResponseEvent event) throws Exception {
+    }
+    
 }

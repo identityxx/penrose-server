@@ -20,17 +20,11 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.DNBuilder;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.*;
 import javax.naming.NamingEnumeration;
 import java.util.*;
 
@@ -124,7 +118,7 @@ public class SchemaManager implements SchemaManagerMBean {
         return allSchema.getAttributeType(attributeName);
     }
 
-    public String getNormalizedAttributeName(String attributeName) {
+    public String normalizeAttributeName(String attributeName) {
 
         AttributeType attributeType = getAttributeType(attributeName);
         if (attributeType == null) return attributeName;
@@ -148,21 +142,34 @@ public class SchemaManager implements SchemaManagerMBean {
         this.penroseContext = penroseContext;
     }
 
-    public DN normalize(DN oldDn) {
+    public RDN normalize(RDN rdn) {
+        RDNBuilder rb = new RDNBuilder();
+
+        for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
+            String name = (String)j.next();
+            Object value = rdn.get(name);
+            rb.set(normalizeAttributeName(name), value);
+        }
+
+        return rb.toRdn();
+    }
+
+    public DN normalize(DN dn) {
         DNBuilder db = new DNBuilder();
         RDNBuilder rb = new RDNBuilder();
 
-        for (Iterator i=oldDn.getRdns().iterator(); i.hasNext(); ) {
+        for (Iterator i=dn.getRdns().iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
 
             rb.clear();
             for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
                 Object value = rdn.get(name);
-                rb.set(getNormalizedAttributeName(name), value);
+                rb.set(normalizeAttributeName(name), value);
             }
             db.append(rb.toRdn());
         }
+
         return db.toDn();
     }
 
@@ -172,7 +179,7 @@ public class SchemaManager implements SchemaManagerMBean {
         Collection list = new ArrayList();
         for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            list.add(getNormalizedAttributeName(name));
+            list.add(normalizeAttributeName(name));
         }
 
         return list;
@@ -184,7 +191,7 @@ public class SchemaManager implements SchemaManagerMBean {
 
         for (NamingEnumeration e=attributes.getAll(); e.hasMore(); ) {
             Attribute attribute = (Attribute)e.next();
-            String attributeName = getNormalizedAttributeName(attribute.getID());
+            String attributeName = normalizeAttributeName(attribute.getID());
 
             BasicAttribute newAttribute = new BasicAttribute(attributeName);
             for (NamingEnumeration e2=attribute.getAll(); e2.hasMore(); ) {
@@ -196,5 +203,53 @@ public class SchemaManager implements SchemaManagerMBean {
         }
 
         return newAttributes;
+    }
+
+    public AttributeValues normalize(AttributeValues attributeValues) throws Exception{
+
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+            attributeValues.remove(name);
+
+            name = normalizeAttributeName(name);
+            attributeValues.set(name, values);
+        }
+
+        return attributeValues;
+    }
+
+    public Collection normalizeModifications(Collection modifications) throws Exception {
+        Collection normalizedModifications = new ArrayList();
+
+        for (Iterator i = modifications.iterator(); i.hasNext();) {
+            ModificationItem modification = (ModificationItem) i.next();
+
+            Attribute attribute = modification.getAttribute();
+            String attributeName = normalizeAttributeName(attribute.getID());
+
+            switch (modification.getModificationOp()) {
+                case DirContext.ADD_ATTRIBUTE:
+                    log.debug("add: " + attributeName);
+                    break;
+                case DirContext.REMOVE_ATTRIBUTE:
+                    log.debug("delete: " + attributeName);
+                    break;
+                case DirContext.REPLACE_ATTRIBUTE:
+                    log.debug("replace: " + attributeName);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new BasicAttribute(attributeName);
+            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+                Object value = j.next();
+                normalizedAttribute.add(value);
+            }
+
+            ModificationItem normalizedModification = new ModificationItem(modification.getModificationOp(), normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+        }
+
+        return normalizedModifications;
     }
 }

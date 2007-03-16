@@ -32,6 +32,10 @@ public class PenroseDN implements com.identyx.javabackend.DN {
         return rdns;
     }
 
+    public DN getDn() {
+        return dn;
+    }
+
     public String toString() {
         return dn.toString();
     }

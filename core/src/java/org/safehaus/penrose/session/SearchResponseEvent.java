@@ -17,33 +17,40 @@
  */
 package org.safehaus.penrose.session;
 
-import org.safehaus.penrose.session.ResultsEvent;
-import org.safehaus.penrose.session.ResultsListener;
-
 /**
  * @author Endi S. Dewata
  */
-public class ResultsAdapter implements ResultsListener {
+public class SearchResponseEvent {
 
-    public boolean preAdd(ResultsEvent event) throws Exception {
-        return true;
-    }
-    
-    public void postAdd(ResultsEvent event) throws Exception {
-    }
+    public final static int ADD_EVENT    = 0;
+    public final static int REMOVE_EVENT = 1;
+    public final static int CLOSE_EVENT  = 2;
 
-    public boolean preRemove(ResultsEvent event) throws Exception {
-        return true;
-    }
+    private int type;
+    private Object object;
 
-    public void postRemove(ResultsEvent event) throws Exception {
+    public SearchResponseEvent(int type) {
+        this.type = type;
     }
 
-    public boolean preClose(ResultsEvent event) throws Exception {
-        return true;
+    public SearchResponseEvent(int type, Object object) {
+        this.type = type;
+        this.object = object;
     }
 
-    public void postClose(ResultsEvent event) throws Exception {
+    public int getType() {
+        return type;
     }
-    
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public Object getObject() {
+        return object;
+    }
+
+    public void setObject(Object object) {
+        this.object = object;
+    }
 }

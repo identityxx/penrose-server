@@ -1,9 +1,8 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.entry.AttributeValues;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
 import java.util.Collection;
 import java.util.Map;
 
@@ -19,13 +18,13 @@ public class AddBasicTest extends BasicTestCase {
 
     public void testAddingEntry() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("cn", "group");
-        attributes.put("description", "description");
-        attributes.put("objectClass", "groupOfUniqueNames");
+        AttributeValues attributes = new AttributeValues();
+        attributes.set("cn", "group");
+        attributes.set("description", "description");
+        attributes.set("objectClass", "groupOfUniqueNames");
 
         session.add("cn=group,"+baseDn, attributes);
 
@@ -43,12 +42,12 @@ public class AddBasicTest extends BasicTestCase {
 
     public void testAddingPartialEntry() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("cn", "group");
-        attributes.put("objectClass", "groupOfUniqueNames");
+        AttributeValues attributes = new AttributeValues();
+        attributes.set("cn", "group");
+        attributes.set("objectClass", "groupOfUniqueNames");
 
         session.add("cn=group,"+baseDn, attributes);
 

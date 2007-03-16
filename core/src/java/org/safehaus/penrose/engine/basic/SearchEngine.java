@@ -15,9 +15,8 @@ import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
-import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.connector.Connector;
 
@@ -51,8 +50,8 @@ public class SearchEngine {
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest sc,
+            final SearchResponse results
     ) throws Exception {
 
         try {
@@ -92,7 +91,7 @@ public class SearchEngine {
 
             if (debug) log.debug("Source filter: "+f);
 
-            Pipeline sr = new Pipeline(results) {
+            SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     ConnectorSearchResult result = (ConnectorSearchResult)object;
                     EntryMapping em = result.getEntryMapping();
@@ -115,7 +114,7 @@ public class SearchEngine {
                     data.setEntryMapping(em);
                     data.setMergedValues(sv);
 
-                    super.add(data);
+                    results.add(data);
                 }
             };
 

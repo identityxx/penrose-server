@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
@@ -20,17 +20,20 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setSizeLimit(1);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn(baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setSizeLimit(1);
 
-        assertTrue(results.hasNext());
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals(baseDn, dn);
 
@@ -40,7 +43,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         assertEquals("Groups", value);
 
         try {
-            results.hasNext();
+            response.hasNext();
             fail();
         } catch (LDAPException e) {
             assertEquals(LDAPException.SIZE_LIMIT_EXCEEDED, e.getResultCode());
@@ -54,17 +57,20 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setSizeLimit(2);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn(baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setSizeLimit(2);
 
-        assertTrue(results.hasNext());
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals(baseDn, dn);
 
@@ -73,9 +79,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         Object value = attributes.getOne("ou");
         assertEquals("Groups", value);
 
-        assertTrue(results.hasNext());
+        assertTrue(response.hasNext());
 
-        entry = (Entry)results.next();
+        entry = (Entry) response.next();
         dn = entry.getDn().toString();
         assertEquals("cn=group1,"+baseDn, dn);
 
@@ -88,7 +94,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         assertEquals("desc1", value);
 
         try {
-            results.hasNext();
+            response.hasNext();
             fail();
         } catch (LDAPException e) {
             assertEquals(LDAPException.SIZE_LIMIT_EXCEEDED, e.getResultCode());
@@ -102,17 +108,20 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setSizeLimit(3);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn(baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setSizeLimit(3);
 
-        assertTrue(results.hasNext());
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals(baseDn, dn);
@@ -122,9 +131,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         Object value = attributes.getOne("ou");
         assertEquals("Groups", value);
 
-        assertTrue(results.hasNext());
+        assertTrue(response.hasNext());
 
-        entry = (Entry)results.next();
+        entry = (Entry) response.next();
         dn = entry.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("cn=group1,"+baseDn, dn);
@@ -137,9 +146,9 @@ public class SearchSizeLimitTest extends BasicTestCase {
         value = attributes.getOne("description");
         assertEquals("desc1", value);
 
-        assertTrue(results.hasNext());
+        assertTrue(response.hasNext());
 
-        entry = (Entry)results.next();
+        entry = (Entry) response.next();
         dn = entry.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("cn=group2,"+baseDn, dn);
@@ -152,7 +161,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         value = attributes.getOne("description");
         assertEquals("desc2", value);
 
-        assertFalse(results.hasNext());
+        assertFalse(response.hasNext());
 
         session.close();
     }

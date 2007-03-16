@@ -20,9 +20,8 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -214,18 +213,18 @@ public class JDBCAdapter extends Adapter {
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
-            Filter filter,
-            PenroseSearchControls sc,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+        Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
             log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
-            log.debug(Formatter.displayLine(" - Scope: "+sc.getScope(), 80));
+            log.debug(Formatter.displayLine(" - Scope: "+request.getScope(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -312,8 +311,8 @@ public class JDBCAdapter extends Adapter {
 
             rs = ps.executeQuery();
 
-            int totalCount = results.getTotalCount();
-            long sizeLimit = sc.getSizeLimit();
+            int totalCount = response.getTotalCount();
+            long sizeLimit = request.getSizeLimit();
 
             if (debug) {
                 if (sizeLimit == 0) {
@@ -337,7 +336,7 @@ public class JDBCAdapter extends Adapter {
                 result.setSourceMapping(sourceMapping);
                 result.setSourceConfig(sourceConfig);
 
-                results.add(result);
+                response.add(result);
                 totalCount++;
                 hasMore = rs.next();
             }
@@ -352,7 +351,7 @@ public class JDBCAdapter extends Adapter {
             if (ps != null) try { ps.close(); } catch (Exception e) {}
             if (con != null) try { con.close(); } catch (Exception e) {}
 
-            results.close();
+            response.close();
         }
     }
 
@@ -873,12 +872,12 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         //log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchResponse response = new SearchResponse();
 
         String catalog = sourceConfig.getParameter(CATALOG);
         String schema = sourceConfig.getParameter(SCHEMA);
@@ -951,7 +950,7 @@ public class JDBCAdapter extends Adapter {
 
             for (int i=0; rs.next() && (sizeLimit == 0 || i<sizeLimit); i++) {
                 RDN rdn = getChanges(sourceConfig, rs);
-                results.add(rdn);
+                response.add(rdn);
 
                 if (first) {
                     width = printChangesHeader(sourceConfig);
@@ -974,9 +973,9 @@ public class JDBCAdapter extends Adapter {
             if (con != null) try { con.close(); } catch (Exception e) {}
         }
 
-        results.close();
+        response.close();
 
-        return results;
+        return response;
     }
 
     public int printChangesHeader(SourceConfig sourceConfig) throws Exception {

@@ -27,7 +27,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -79,7 +79,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
         try {
             Penrose penrose = penroseServer.getPenrose();
-            PenroseSession session = penrose.getSession(dn);
+            Session session = penrose.getSession(dn);
 
             if (session == null) {
                 session = penrose.createSession(dn);

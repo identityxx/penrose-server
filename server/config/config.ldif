@@ -338,7 +338,7 @@ cn: JMX Connection Handler
 ds-cfg-connection-handler-class: org.opends.server.protocols.jmx.JmxConnectionHandler
 ds-cfg-connection-handler-enabled: true
 ds-cfg-use-ssl: false
-ds-cfg-listen-port: 1689
+ds-cfg-listen-port: 10689
 ds-cfg-ssl-cert-nickname: adm-server-cert
 
 dn: cn=Entry Cache,cn=config
@@ -1602,7 +1602,7 @@ objectClass: top
 objectClass: ds-cfg-plugin
 objectClass: extensibleObject
 cn: Java Backend
-ds-cfg-plugin-class: com.identyx.javabackend.opends.JavaBackend
+ds-cfg-plugin-class: com.identyx.javabackend.opends.JavaBackendPlugin
 ds-cfg-plugin-enabled: true
 ds-cfg-plugin-type: postConnect
 ds-cfg-plugin-type: postDisconnect

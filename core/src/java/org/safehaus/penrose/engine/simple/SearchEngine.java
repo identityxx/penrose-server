@@ -21,11 +21,10 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.entry.DN;
@@ -55,17 +54,15 @@ public class SearchEngine {
      * @param partition
      * @param sourceValues
      * @param entryMapping
-     * @param filter
-     * @param results Collection of EntryData.
+     * @param response Collection of EntryData.
      * @throws Exception
      */
     public void search(
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         try {
@@ -80,7 +77,7 @@ public class SearchEngine {
                 data.setEntryMapping(entryMapping);
                 data.setMergedValues(new AttributeValues());
 
-                results.add(data);
+                response.add(data);
                 return;
             }
 
@@ -90,7 +87,7 @@ public class SearchEngine {
             final String sourceName = sourceMapping.getName();
             String prefix = sourceName+".";
 
-            Filter f = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, sourceMapping, filter);
+            Filter filter = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, sourceMapping, request.getFilter());
             for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
                 if (!name.startsWith(prefix)) continue;
@@ -100,12 +97,12 @@ public class SearchEngine {
                 if (values == null) continue;
 
                 Object value = values.iterator().next();
-                f = FilterTool.appendAndFilter(f, new SimpleFilter(fieldName, "=", value.toString()));
+                filter = FilterTool.appendAndFilter(filter, new SimpleFilter(fieldName, "=", value.toString()));
             }
 
-            if (debug) log.debug("Source filter: "+f);
+            if (debug) log.debug("Source filter: "+filter);
 
-            Pipeline sr = new Pipeline(results) {
+            SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     ConnectorSearchResult result = (ConnectorSearchResult)object;
                     EntryMapping em = result.getEntryMapping();
@@ -128,15 +125,15 @@ public class SearchEngine {
                     data.setEntryMapping(em);
                     data.setMergedValues(sv);
 
-                    super.add(data);
+                    response.add(data);
                 }
             };
 
             Connector connector = engine.getConnector(sourceConfig);
-            connector.search(partition, entryMapping, sourceMapping, sourceConfig, null, f, sc, sr);
+            connector.search(partition, entryMapping, sourceMapping, sourceConfig, null, filter, request, sr);
 
         } finally {
-            results.close();
+            response.close();
         }
     }
 

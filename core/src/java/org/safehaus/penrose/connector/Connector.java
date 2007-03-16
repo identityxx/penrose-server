@@ -17,8 +17,8 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
@@ -307,8 +307,8 @@ public class Connector {
      * @param sourceConfig
      * @param primaryKeys
      * @param filter
-     * @param searchControls
-     * @param results Collection of source values. @throws Exception
+     * @param request
+     * @param response Collection of source values. @throws Exception
      */
     public void search(
             final Partition partition,
@@ -317,26 +317,27 @@ public class Connector {
             final SourceConfig sourceConfig,
             final Collection primaryKeys,
             final Filter filter,
-            final PenroseSearchControls searchControls,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-        long sizeLimit = searchControls.getSizeLimit();
+        long sizeLimit = request.getSizeLimit();
         String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
         long maxSizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
 
-        int timeLimit = searchControls.getTimeLimit();
+        long timeLimit = request.getTimeLimit();
         s = sourceConfig.getParameter(SourceConfig.TIME_LIMIT);
-        int maxTimeLimit = s == null ? SourceConfig.DEFAULT_TIME_LIMIT : Integer.parseInt(s);
+        long maxTimeLimit = s == null ? SourceConfig.DEFAULT_TIME_LIMIT : Integer.parseInt(s);
 
-        PenroseSearchControls sc = new PenroseSearchControls(searchControls);
-        sc.setSizeLimit((sizeLimit > 0 && maxSizeLimit > 0) ? Math.min(sizeLimit, maxSizeLimit) : Math.max(sizeLimit, maxSizeLimit));
-       	sc.setTimeLimit((timeLimit > 0 && maxTimeLimit > 0) ? Math.min(timeLimit, maxTimeLimit) : Math.max(timeLimit, maxTimeLimit));
-        sc.setScope(searchControls.getScope());
+        SearchRequest newRequest = new SearchRequest(request);
+        newRequest.setFilter(filter);
+        newRequest.setSizeLimit((sizeLimit > 0 && maxSizeLimit > 0) ? Math.min(sizeLimit, maxSizeLimit) : Math.max(sizeLimit, maxSizeLimit));
+       	newRequest.setTimeLimit((timeLimit > 0 && maxTimeLimit > 0) ? Math.min(timeLimit, maxTimeLimit) : Math.max(timeLimit, maxTimeLimit));
+        newRequest.setScope(request.getScope());
 
-        connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, filter, sc, results);
+        connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, newRequest, response);
     }
 
     public RDN store(Partition partition, SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {

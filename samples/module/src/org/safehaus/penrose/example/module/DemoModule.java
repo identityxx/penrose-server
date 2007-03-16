@@ -2,11 +2,8 @@ package org.safehaus.penrose.example.module;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.ResultsAdapter;
-import org.safehaus.penrose.session.ResultsEvent;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.directory.*;
@@ -24,31 +21,34 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeBind(BindEvent event) throws Exception {
-        System.out.println("#### Binding as "+event.getDn()+" with password "+event.getPassword()+".");
+        BindRequest request = event.getRequest();
+        System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
         return true;
     }
 
     public void afterBind(BindEvent event) throws Exception {
+        BindRequest request = event.getRequest();
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("#### Bound as "+event.getDn()+".");
+            System.out.println("#### Bound as "+request.getDn()+".");
         } else {
-            System.out.println("#### Failed to bind as "+event.getDn()+". RC="+rc);
+            System.out.println("#### Failed to bind as "+request.getDn()+". RC="+rc);
         }
     }
 
     public boolean beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+        SearchRequest request = event.getRequest();
+        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
-        if (event.getFilter().equalsIgnoreCase("(cn=secret)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(cn=secret)")) {
             return false;
         }
 
-        PenroseSearchResults results = event.getSearchResults();
+        SearchResponse response = event.getResponse();
 
         // register result listener
-        results.addListener(new ResultsAdapter() {
-            public void postAdd(ResultsEvent event) {
+        response.addListener(new SearchResponseAdapter() {
+            public void postAdd(SearchResponseEvent event) {
                 SearchResult sr = (SearchResult)event.getObject();
                 String dn = sr.getName();
                 System.out.println("Returning "+dn+".");
@@ -68,23 +68,22 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeAdd(AddEvent event) throws Exception {
-        System.out.println("#### Adding "+event.getDn()+":");
+        AddRequest request = event.getRequest();
+        System.out.println("#### Adding "+request.getDn()+":");
 
-        Attributes attributes = event.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+        AttributeValues attributeValues = request.getAttributeValues();
+        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = attributeValues.get(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 System.out.println(" - "+name+": "+value);
             }
         }
 
         // change sn attribute to upper case
-        Attribute sn = attributes.get("sn");
-        String value = (String)sn.get();
-        sn.clear();
-        sn.add(value.toUpperCase());
+        String sn = (String)attributeValues.getOne("sn");
+        attributeValues.set("sn", sn.toUpperCase());
 
         return true;
     }
@@ -99,9 +98,10 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
-        System.out.println("#### Modifying "+event.getDn()+":");
+        ModifyRequest request = event.getRequest();
+        System.out.println("#### Modifying "+request.getDn()+":");
 
-        Collection modifications = event.getModifications();
+        Collection modifications = request.getModifications();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             ModificationItem mi = (ModificationItem)i.next();
             Attribute attribute = mi.getAttribute();
@@ -138,7 +138,8 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeDelete(DeleteEvent event) throws Exception {
-        System.out.println("#### Deleting "+event.getDn());
+        DeleteRequest request = event.getRequest();
+        System.out.println("#### Deleting "+request.getDn());
         return true;
     }
 

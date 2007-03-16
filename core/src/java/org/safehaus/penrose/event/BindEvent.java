@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.BindRequest;
+import org.safehaus.penrose.session.BindResponse;
 
 /**
  * @author Endi S. Dewata
@@ -28,26 +29,18 @@ public class BindEvent extends Event {
     public final static int BEFORE_BIND = 0;
     public final static int AFTER_BIND  = 1;
 
-    public final static int BEFORE_UNBIND = 3;
-    public final static int AFTER_UNBIND  = 4;
+    protected Session session;
+    protected int returnCode;
 
-    private PenroseSession session;
-    private DN dn;
-    private int returnCode;
+    protected BindRequest request;
+    protected BindResponse response;
 
-    private String password;
 
-    public BindEvent(Object source, int type, PenroseSession session, DN dn, String password) {
+    public BindEvent(Object source, int type, Session session, BindRequest request, BindResponse response) {
         super(source, type);
         this.session = session;
-        this.dn = dn;
-        this.password = password;
-    }
-
-    public BindEvent(Object source, int type, PenroseSession session, DN dn) {
-        super(source, type);
-        this.session = session;
-        this.dn = dn;
+        this.request = request;
+        this.response = response;
     }
 
     public int getReturnCode() {
@@ -58,27 +51,31 @@ public class BindEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public DN getDn() {
-        return dn;
-    }
-
-    public void setDn(DN dn) {
-        this.dn = dn;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public PenroseSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(PenroseSession session) {
+    public void setSession(Session session) {
         this.session = session;
+    }
+
+    public BindRequest getRequest() {
+        return request;
+    }
+
+    public void setRequest(BindRequest request) {
+        this.request = request;
+    }
+
+    public BindResponse getResponse() {
+        return response;
+    }
+
+    public void setResponse(BindResponse response) {
+        this.response = response;
+    }
+
+    public String toString() {
+        return (type == BEFORE_BIND ? "Before" : "After")+"Bind";
     }
 }

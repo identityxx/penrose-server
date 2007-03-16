@@ -19,7 +19,7 @@ package org.safehaus.penrose.util;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.SearchRequest;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.Attribute;
@@ -63,50 +63,66 @@ public class LDAPUtil {
         return binary;
     }
 
-    public static PenroseSearchControls convert(SearchControls sc) {
-        PenroseSearchControls psc = new PenroseSearchControls();
-        psc.setScope(sc.getSearchScope());
-        psc.setSizeLimit(sc.getCountLimit());
-        psc.setTimeLimit(sc.getTimeLimit());
-        psc.setAttributes(sc.getReturningAttributes());
-        psc.setTypesOnly(sc.getReturningObjFlag());
-        return psc;
+    public static SearchRequest convert(SearchControls sc) {
+        SearchRequest request = new SearchRequest();
+        request.setScope(sc.getSearchScope());
+        request.setSizeLimit(sc.getCountLimit());
+        request.setTimeLimit(sc.getTimeLimit());
+        request.setAttributes(sc.getReturningAttributes());
+        request.setTypesOnly(sc.getReturningObjFlag());
+        return request;
     }
 
     public static String getScope(int scope) {
 
         switch (scope) {
-            case PenroseSearchControls.SCOPE_BASE:
+            case SearchRequest.SCOPE_BASE:
                 return "base";
 
-            case PenroseSearchControls.SCOPE_ONE:
+            case SearchRequest.SCOPE_ONE:
                 return "one level";
 
-            case PenroseSearchControls.SCOPE_SUB:
+            case SearchRequest.SCOPE_SUB:
                 return "subtree";
         }
 
         return null;
     }
 
-    public static String getDereference(PenroseSearchControls sc) {
+    public static String getDereference(SearchRequest sc) {
         return getDereference(sc.getDereference());
     }
 
     public static String getDereference(int deref) {
 
         switch (deref) {
-            case PenroseSearchControls.DEREF_NEVER:
+            case SearchRequest.DEREF_NEVER:
                 return "never";
 
-            case PenroseSearchControls.DEREF_SEARCHING:
+            case SearchRequest.DEREF_SEARCHING:
                 return "searching";
 
-            case PenroseSearchControls.DEREF_FINDING:
+            case SearchRequest.DEREF_FINDING:
                 return "finding";
 
-            case PenroseSearchControls.DEREF_ALWAYS:
+            case SearchRequest.DEREF_ALWAYS:
                 return "always";
+        }
+
+        return null;
+    }
+
+    public static String getModificationOperations(int op) {
+
+        switch (op) {
+            case DirContext.ADD_ATTRIBUTE:
+                return "add";
+
+            case DirContext.REMOVE_ATTRIBUTE:
+                return "delete";
+
+            case DirContext.REPLACE_ATTRIBUTE:
+                return "replace";
         }
 
         return null;

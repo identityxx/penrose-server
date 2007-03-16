@@ -1,8 +1,6 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
@@ -11,11 +9,9 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
-import javax.naming.directory.*;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -31,12 +27,17 @@ public class DefaultHandler extends Handler {
         super.init(handlerConfig);
     }
 
-    public void add(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn, Attributes attributes) throws Exception {
+    public void add(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
 
-        // -dlc- if the objectClass of the add Attributes does
-        // not match any of the objectClasses of the entryMapping, there
-        // is no sense trying to perform an add on this entryMapping
-        Attribute at = attributes.get("objectClass");
+        AttributeValues attributeValues = request.getAttributeValues();
+
+        Collection values = attributeValues.get("objectClass");
 
         Collection objectClasses = entryMapping.getObjectClasses();
         boolean childHasObjectClass = false;
@@ -44,8 +45,8 @@ public class DefaultHandler extends Handler {
         for (Iterator i = objectClasses.iterator(); !childHasObjectClass && i.hasNext(); ) {
             String oc = (String)i.next();
 
-            for (int j = 0; j < at.size(); j++) {
-                String objectClass = (String) at.get(j);
+            for (Iterator j = values.iterator(); j.hasNext(); ) {
+                String objectClass = (String)j.next();
                 if (childHasObjectClass = oc.equalsIgnoreCase(objectClass)) break;
             }
         }
@@ -54,40 +55,42 @@ public class DefaultHandler extends Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
         }
 
-        super.add(session, partition, entryMapping, dn, attributes);
+        super.add(session, partition, entryMapping, request, response);
     }
 
     public void search(
-            final PenroseSession session,
+            final Session session,
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
+
+        final DN baseDn = request.getDn();
+        final Filter filter = request.getFilter();
+
         if (debug) {
             log.debug("Base DN: "+baseDn);
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
-        if (sc.getScope() == LDAPConnection.SCOPE_BASE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
+        if (request.getScope() == LDAPConnection.SCOPE_BASE || request.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
 
-            Pipeline sr = new Pipeline(results) {
+            SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     Entry child = (Entry)object;
 
-                    if (debug) log.debug("Checking filter "+filter+" on "+child.getDn());
+                    if (debug) log.debug("Checking filter "+filter);
 
                     if (!filterTool.isValid(child, filter)) { // Check LDAP filter
                         if (debug) log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
                         return;
                     }
 
-                    super.add(child);
+                    response.add(child);
                 }
             };
 
@@ -105,14 +108,12 @@ public class DefaultHandler extends Handler {
                     partition,
                     sourceValues,
                     entryMapping,
-                    baseDn,
-                    filter,
-                    sc,
+                    request,
                     sr
             );
         }
 
-        if (sc.getScope() == LDAPConnection.SCOPE_ONE || sc.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
+        if (request.getScope() == LDAPConnection.SCOPE_ONE || request.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
 
             Collection children = partition.getChildren(entryMapping);
 
@@ -125,10 +126,8 @@ public class DefaultHandler extends Handler {
                         partition,
                         baseMapping,
                         childMapping,
-                        baseDn,
-                        filter,
-                        sc,
-                        results
+                        request,
+                        response
                 );
             }
         }

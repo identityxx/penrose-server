@@ -20,37 +20,15 @@ package org.safehaus.penrose.session;
 /**
  * @author Endi S. Dewata
  */
-public class ResultsEvent {
+public interface SearchResponseListener {
 
-    public final static int ADD_EVENT    = 0;
-    public final static int REMOVE_EVENT = 1;
-    public final static int CLOSE_EVENT  = 2;
+    public boolean preAdd(SearchResponseEvent event) throws Exception;
+    public void postAdd(SearchResponseEvent event) throws Exception;
 
-    private int type;
-    private Object object;
+    public boolean preRemove(SearchResponseEvent event) throws Exception;
+    public void postRemove(SearchResponseEvent event) throws Exception;
 
-    public ResultsEvent(int type) {
-        this.type = type;
-    }
+    public boolean preClose(SearchResponseEvent event) throws Exception;
+    public void postClose(SearchResponseEvent event) throws Exception;
 
-    public ResultsEvent(int type, Object object) {
-        this.type = type;
-        this.object = object;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public Object getObject() {
-        return object;
-    }
-
-    public void setObject(Object object) {
-        this.object = object;
-    }
 }

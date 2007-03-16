@@ -18,7 +18,6 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -30,7 +29,16 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener {
+public class Module implements
+        AddListener,
+        BindListener,
+        CompareListener,
+        DeleteListener,
+        ModifyListener,
+        ModRdnListener,
+        SearchListener,
+        UnbindListener
+{
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -77,11 +85,11 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public void afterBind(BindEvent event) throws Exception {
     }
 
-    public boolean beforeUnbind(BindEvent event) throws Exception {
+    public boolean beforeUnbind(UnbindEvent event) throws Exception {
         return true;
     }
 
-    public void afterUnbind(BindEvent event) throws Exception {
+    public void afterUnbind(UnbindEvent event) throws Exception {
     }
 
     public boolean beforeCompare(CompareEvent event) throws Exception {

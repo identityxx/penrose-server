@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -28,17 +28,21 @@ public class SearchFilterTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(cn=*b*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertTrue(results.hasNext());
+        session.search(
+                baseDn,
+                "(cn=*b*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals("cn=aabb,"+baseDn, dn);
 
@@ -50,9 +54,9 @@ public class SearchFilterTest extends BasicTestCase {
         value = attributes.getOne("description");
         assertEquals("AABB", value);
 
-        assertTrue(results.hasNext());
+        assertTrue(response.hasNext());
 
-        entry = (Entry)results.next();
+        entry = (Entry) response.next();
         dn = entry.getDn().toString();
         assertEquals("cn=bbcc,"+baseDn, dn);
 
@@ -64,7 +68,7 @@ public class SearchFilterTest extends BasicTestCase {
         value = attributes.getOne("description");
         assertEquals("BBCC", value);
 
-        assertFalse(results.hasNext());
+        assertFalse(response.hasNext());
 
         session.close();
     }
@@ -80,15 +84,19 @@ public class SearchFilterTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(cn=*f*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertFalse(results.hasNext());
+        session.search(
+                baseDn,
+                "(cn=*f*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        assertFalse(response.hasNext());
 
         session.close();
     }

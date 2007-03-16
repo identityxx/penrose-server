@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.Map;
@@ -17,7 +17,7 @@ public class ModRdnBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('old', 'description')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.modrdn("cn=old,"+baseDn, "cn=new", true);

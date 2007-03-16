@@ -24,8 +24,7 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
@@ -121,11 +120,11 @@ public class EntryCacheStorage {
         return false;
     }
 
-    public boolean search(DN baseDn, Filter filter, PenroseSearchResults results) throws Exception {
+    public boolean search(DN baseDn, Filter filter, SearchResponse response) throws Exception {
         return false;
     }
 
-    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, SearchResponse response) throws Exception {
     }
 
     public void add(DN baseDn, Filter filter, DN dn) throws Exception { }

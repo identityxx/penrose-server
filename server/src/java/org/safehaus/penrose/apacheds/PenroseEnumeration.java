@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.apacheds;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -33,15 +33,15 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public PenroseSearchResults searchResults;
+    public SearchResponse searchResponse;
 
-    public PenroseEnumeration(PenroseSearchResults searchResults) {
-        this.searchResults = searchResults;
+    public PenroseEnumeration(SearchResponse searchResponse) {
+        this.searchResponse = searchResponse;
     }
 
     public void close() throws NamingException {
         try {
-            searchResults.close();
+            searchResponse.close();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionTool.createNamingException(e);
@@ -50,10 +50,10 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public boolean hasMore() throws NamingException {
         try {
-            boolean hasNext = searchResults.hasNext();
+            boolean hasNext = searchResponse.hasNext();
             if (hasNext) return true;
 
-            List referrals = searchResults.getReferrals();
+            List referrals = searchResponse.getReferrals();
             //log.debug("Search operation returned "+referrals.size()+" referral(s).");
 
             if (!referrals.isEmpty()) {
@@ -66,7 +66,7 @@ public class PenroseEnumeration implements NamingEnumeration {
                 */
             }
 
-            //log.warn("Search operation returned "+searchResults.getTotalCount()+" entries.");
+            //log.warn("Search operation returned "+searchResponse.getTotalCount()+" entries.");
 
             return false;
 
@@ -78,7 +78,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         try {
-            Entry entry = (Entry)searchResults.next();
+            Entry entry = (Entry) searchResponse.next();
             return EntryTool.createSearchResult(entry);
 
         } catch (Exception e) {

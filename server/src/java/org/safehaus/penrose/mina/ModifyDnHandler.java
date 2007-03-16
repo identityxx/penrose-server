@@ -5,9 +5,10 @@ import org.apache.mina.common.IoSession;
 import org.apache.directory.shared.ldap.message.LdapResult;
 import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 import org.apache.directory.shared.ldap.message.ModifyDnRequest;
+import org.apache.directory.shared.ldap.message.ModifyDnResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 
@@ -24,18 +25,30 @@ public class ModifyDnHandler implements MessageHandler {
         this.handler = handler;
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    public void messageReceived(IoSession ioSession, Object message) throws Exception {
 
         ModifyDnRequest request = (ModifyDnRequest)message;
-        LdapResult result = request.getResultResponse().getLdapResult();
+        ModifyDnResponse response = (ModifyDnResponse)request.getResultResponse();
+        LdapResult result = response.getLdapResult();
 
         try {
             String dn = request.getName().toString();
             String newRdn = request.getNewRdn().toString();
             boolean deleteOldRdn = request.getDeleteOldRdn();
 
-            PenroseSession penroseSession = handler.getPenroseSession(session);
-            penroseSession.modrdn(dn, newRdn, deleteOldRdn);
+            Session session = handler.getPenroseSession(ioSession);
+
+            org.safehaus.penrose.session.ModRdnRequest penroseRequest = new org.safehaus.penrose.session.ModRdnRequest();
+            penroseRequest.setDn(dn);
+            penroseRequest.setNewRdn(newRdn);
+            penroseRequest.setDeleteOldRdn(deleteOldRdn);
+            handler.getControls(request, penroseRequest);
+
+            org.safehaus.penrose.session.ModRdnResponse penroseResponse = new org.safehaus.penrose.session.ModRdnResponse();
+
+            session.modrdn(penroseRequest, penroseResponse);
+
+            handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
@@ -50,7 +63,7 @@ public class ModifyDnHandler implements MessageHandler {
             result.setErrorMessage(le.getMessage());
 
         } finally {
-            session.write(request.getResultResponse());
+            ioSession.write(request.getResultResponse());
         }
     }
 }

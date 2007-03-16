@@ -17,30 +17,22 @@
  */
 package org.safehaus.penrose.pipeline;
 
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
 import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
  */
-public class Pipeline extends Results {
+public class Pipeline extends SearchResponse {
 
-    public Results parent;
+    public SearchResponse parent;
 
-    public Pipeline(Results parent) {
+    public Pipeline(SearchResponse parent) {
         this.parent = parent;
     }
 
     public void add(Object object) throws Exception {
         parent.add(object);
-    }
-
-    public boolean hasNext() throws Exception {
-        return false;
-    }
-
-    public Object next() throws Exception {
-        return null;
     }
 
     public int getTotalCount() throws Exception {
@@ -56,13 +48,14 @@ public class Pipeline extends Results {
     }
 
     public void close() throws Exception {
+        // don't close parent
     }
 
-    public Results getParent() {
+    public SearchResponse getParent() {
         return parent;
     }
 
-    public void setParent(Results parent) {
+    public void setParent(SearchResponse parent) {
         this.parent = parent;
     }
 }

@@ -1,7 +1,6 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.session.Session;
 
 import javax.naming.directory.Attribute;
 import javax.naming.directory.BasicAttribute;
@@ -23,7 +22,7 @@ public class ModifyBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('group', 'olddesc')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attribute attribute = new BasicAttribute("description");

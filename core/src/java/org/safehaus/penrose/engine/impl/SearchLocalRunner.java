@@ -26,12 +26,10 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -117,8 +115,8 @@ public class SearchLocalRunner extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults tmp = new PenroseSearchResults();
+        SearchRequest request = new SearchRequest();
+        SearchResponse response = new SearchResponse();
         
         Connector connector = engine.getConnector(sourceConfig);
         connector.search(
@@ -128,13 +126,13 @@ public class SearchLocalRunner extends GraphVisitor {
                 sourceConfig,
                 null,
                 filter,
-                sc,
-                tmp
+                request,
+                response
         );
 
         Collection list = new ArrayList();
-        while (tmp.hasNext()) {
-            ConnectorSearchResult result = (ConnectorSearchResult)tmp.next();
+        while (response.hasNext()) {
+            ConnectorSearchResult result = (ConnectorSearchResult)response.next();
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceValues);
@@ -142,7 +140,7 @@ public class SearchLocalRunner extends GraphVisitor {
             list.add(sv);
         }
 
-        returnCode = tmp.getReturnCode();
+        returnCode = response.getReturnCode();
         //log.debug("RC: "+returnCode);
         
         if (results.isEmpty()) {

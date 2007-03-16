@@ -2,13 +2,11 @@ package org.safehaus.penrose.mina;
 
 import org.apache.mina.handler.demux.MessageHandler;
 import org.apache.mina.common.IoSession;
-import org.apache.directory.shared.ldap.message.BindRequest;
-import org.apache.directory.shared.ldap.message.LdapResult;
-import org.apache.directory.shared.ldap.message.ResultCodeEnum;
+import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -24,17 +22,28 @@ public class BindHandler implements MessageHandler {
         this.handler = handler;
     }
 
-    public void messageReceived(IoSession session, Object message) throws Exception {
+    public void messageReceived(IoSession ioSession, Object message) throws Exception {
 
         BindRequest request = (BindRequest)message;
-        LdapResult result = request.getResultResponse().getLdapResult();
+        BindResponse response = (BindResponse)request.getResultResponse();
+        LdapResult result = response.getLdapResult();
 
         try {
             String bindDn = request.getName().toString();
             String password = new String(request.getCredentials());
 
-            PenroseSession penroseSession = handler.getPenroseSession(session);
-            penroseSession.bind(bindDn, password);
+            Session session = handler.getPenroseSession(ioSession);
+
+            org.safehaus.penrose.session.BindRequest penroseRequest = new org.safehaus.penrose.session.BindRequest();
+            penroseRequest.setDn(bindDn);
+            penroseRequest.setPassword(password);
+            handler.getControls(request, penroseRequest);
+
+            org.safehaus.penrose.session.BindResponse penroseResponse = new org.safehaus.penrose.session.BindResponse();
+
+            session.bind(penroseRequest, penroseResponse);
+
+            handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
@@ -49,7 +58,7 @@ public class BindHandler implements MessageHandler {
             result.setErrorMessage(le.getMessage());
 
         } finally {
-            session.write(request.getResultResponse());
+            ioSession.write(request.getResultResponse());
         }
     }
 }

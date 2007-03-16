@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2006, Identyx Corporation.
+ * Copyright (c) 2000-2005, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,35 @@
  */
 package org.safehaus.penrose.session;
 
+import org.ietf.ldap.LDAPException;
+
 /**
  * @author Endi S. Dewata
  */
-public interface ResultsListener {
+public class AbstractSearchResponse extends Response {
 
-    public boolean preAdd(ResultsEvent event) throws Exception;
-    public void postAdd(ResultsEvent event) throws Exception;
+    public void add(Object object) throws Exception {
+    }
 
-    public boolean preRemove(ResultsEvent event) throws Exception;
-    public void postRemove(ResultsEvent event) throws Exception;
+    public boolean hasNext() throws Exception {
+        return false;
+    }
 
-    public boolean preClose(ResultsEvent event) throws Exception;
-    public void postClose(ResultsEvent event) throws Exception;
+    public Object next() throws Exception {
+        return null;
+    }
 
+    public int getTotalCount() throws Exception {
+        return 0;
+    }
+
+    public void setException(Exception e) {
+    }
+
+    public LDAPException getException() {
+        return null;
+    }
+
+    public void close() throws Exception {
+    }
 }

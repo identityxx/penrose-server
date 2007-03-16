@@ -1,12 +1,7 @@
 package org.safehaus.penrose.test.mapping.nested;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.ietf.ldap.LDAPException;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.BasicAttribute;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.entry.AttributeValues;
 
 import junit.framework.Assert;
 
@@ -23,13 +18,13 @@ public class AddNestedTest extends NestedTestCase {
 
     public void testAddingGroup() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("cn", "group");
-        attributes.put("description", "description");
-        attributes.put("objectClass", "groupOfUniqueNames");
+        AttributeValues attributes = new AttributeValues();
+        attributes.set("cn", "group");
+        attributes.set("description", "description");
+        attributes.set("objectClass", "groupOfUniqueNames");
 
         session.add("cn=group,"+baseDn, attributes);
 
@@ -48,18 +43,15 @@ public class AddNestedTest extends NestedTestCase {
         executeUpdate("insert into groups values ('group1', 'description')");
         executeUpdate("insert into groups values ('group2', 'description')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Attributes attributes = new BasicAttributes();
-        attributes.put("uid", "member");
-        attributes.put("cn", "Member");
-
-        Attribute attribute = new BasicAttribute("objectClass");
-        attribute.add("person");
-        attribute.add("organizationalPerson");
-        attribute.add("inetOrgPerson");
-        attributes.put(attribute);
+        AttributeValues attributes = new AttributeValues();
+        attributes.add("uid", "member");
+        attributes.add("cn", "Member");
+        attributes.add("objectClass", "person");
+        attributes.add("objectClass", "organizationalPerson");
+        attributes.add("objectClass", "inetOrgPerson");
 
         session.add("uid=member,cn=group2,"+baseDn, attributes);
 

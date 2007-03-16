@@ -17,10 +17,9 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 
 /**
  * @author Endi S. Dewata
@@ -30,45 +29,31 @@ public class SearchEvent extends Event {
     public final static int BEFORE_SEARCH = 0;
     public final static int AFTER_SEARCH  = 1;
 
-    private PenroseSession session;
-    private DN baseDn;
-    private String filter;
-    private PenroseSearchControls searchControls;
-    private PenroseSearchResults searchResults;
+    protected Session session;
+    protected int returnCode;
 
-    private int returnCode;
+    protected SearchRequest request;
+    protected SearchResponse response;
 
     public SearchEvent(
             Object source,
             int type,
-            PenroseSession session,
-            DN baseDn,
-            String filter,
-            PenroseSearchControls searchControls,
-            PenroseSearchResults searchResults
+            Session session,
+            SearchRequest request,
+            SearchResponse response
     ) {
         super(source, type);
         this.session = session;
-        this.baseDn = baseDn;
-        this.filter = filter;
-        this.searchControls = searchControls;
-        this.searchResults = searchResults;
+        this.request = request;
+        this.response = response;
     }
 
-    public PenroseSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(PenroseSession session) {
+    public void setSession(Session session) {
         this.session = session;
-    }
-
-    public DN getBaseDn() {
-        return baseDn;
-    }
-
-    public void setBaseDn(DN baseDn) {
-        this.baseDn = baseDn;
     }
 
     public int getReturnCode() {
@@ -79,27 +64,23 @@ public class SearchEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public String getFilter() {
-        return filter;
+    public SearchRequest getRequest() {
+        return request;
     }
 
-    public void setFilter(String filter) {
-        this.filter = filter;
+    public void setRequest(SearchRequest request) {
+        this.request = request;
     }
 
-    public PenroseSearchControls getSearchControls() {
-        return searchControls;
+    public SearchResponse getResponse() {
+        return response;
     }
 
-    public void setSearchControls(PenroseSearchControls searchControls) {
-        this.searchControls = searchControls;
+    public void setResponse(SearchResponse response) {
+        this.response = response;
     }
 
-    public PenroseSearchResults getSearchResults() {
-        return searchResults;
-    }
-
-    public void setSearchResults(PenroseSearchResults searchResults) {
-        this.searchResults = searchResults;
+    public String toString() {
+        return (type == BEFORE_SEARCH ? "Before" : "After")+"Search";
     }
 }

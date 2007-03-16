@@ -17,19 +17,16 @@
  */
 package org.safehaus.penrose.adapter;
 
-
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.connector.Connection;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -74,7 +71,7 @@ public abstract class Adapter {
      * @param partition
      * @param entryMapping
      * @param sourceMapping
-     * @param results AttributeValues
+     * @param response AttributeValues
      * @throws Exception
      */
     public void search(
@@ -82,9 +79,8 @@ public abstract class Adapter {
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
-            Filter filter,
-            PenroseSearchControls searchControls,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
@@ -129,7 +125,7 @@ public abstract class Adapter {
         return 0;
     }
 
-    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
         return null;
     }
 

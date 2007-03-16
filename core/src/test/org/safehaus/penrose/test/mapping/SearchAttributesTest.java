@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.Penrose;
@@ -20,19 +20,23 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchDefaultAttributes() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "cn=group,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
@@ -61,27 +65,30 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("creatorsName: "+value);
         assertNull(value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
     }
 
     public void testSearchRegularAttributes() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setAttributes(new String[] { "*" });
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn("cn=group,"+baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setScope(SearchRequest.SCOPE_BASE);
+        request.setAttributes(new String[] { "*" });
 
-        boolean hasNext = results.hasNext();
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
@@ -110,27 +117,30 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("creatorsName: "+value);
         assertNull(value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
     }
 
     public void testSearchOperationalAttributes() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setAttributes(new String[] { "+" });
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn("cn=group,"+baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setScope(SearchRequest.SCOPE_BASE);
+        request.setAttributes(new String[] { "+" });
 
-        boolean hasNext = results.hasNext();
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
@@ -153,27 +163,30 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("creatorsName: "+value);
         assertEquals(penroseConfig.getRootDn().toString(), value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
     }
 
     public void testSearchSomeAttributes() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setAttributes(new String[] { "cn", "uniqueMember", "creatorsName" });
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group,"+baseDn, "(objectClass=*)", sc, results);
+        SearchRequest request = new SearchRequest();
+        request.setDn("cn=group,"+baseDn);
+        request.setFilter("(objectClass=*)");
+        request.setScope(SearchRequest.SCOPE_BASE);
+        request.setAttributes(new String[] { "cn", "uniqueMember", "creatorsName" });
 
-        boolean hasNext = results.hasNext();
+        SearchResponse response = new SearchResponse();
+        session.search(request, response);
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=group,"+baseDn, dn);
@@ -202,26 +215,30 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("creatorsName: "+value);
         assertEquals(penroseConfig.getRootDn().toString(), value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
     }
 
     public void testSearchAllRootDSEAttributes() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("", "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                "",
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("", dn);
@@ -236,7 +253,7 @@ public class SearchAttributesTest extends StaticTestCase {
         log.debug("vendorVersion: "+value);
         assertEquals(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION, value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
     }

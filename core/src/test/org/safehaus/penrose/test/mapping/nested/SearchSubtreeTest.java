@@ -1,9 +1,9 @@
 package org.safehaus.penrose.test.mapping.nested;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -28,19 +28,23 @@ public class SearchSubtreeTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_SUB);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search(
+                baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_SUB,
+                response
+        );
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
 
         while (hasNext) {
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
             String dn = entry.getDn().toString();
             AttributeValues attributes = entry.getAttributeValues();
 
@@ -78,11 +82,11 @@ public class SearchSubtreeTest extends NestedTestCase {
                 fail("Unexpected entry: "+dn);
             }
 
-            hasNext = results.hasNext();
+            hasNext = response.hasNext();
             log.debug("hasNext: "+hasNext);
         }
 
-        int totalCount = results.getTotalCount();
+        int totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(8, totalCount);
 

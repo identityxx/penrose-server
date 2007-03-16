@@ -23,16 +23,14 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Date;
 
 /**
  * @author Endi S. Dewata
@@ -71,7 +69,7 @@ public class SessionManagerTest extends TestCase {
         Collection sessions = new ArrayList();
 
         for (int i=0; i<6; i++) {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             assertNotNull("Session should not be null", session);
             if (session != null) sessions.add(session);
         }
@@ -79,14 +77,14 @@ public class SessionManagerTest extends TestCase {
         assertEquals(6, sessionManager.getSessions().size());
 
         for (int i=0; i<6; i++) {
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             assertNull("Session should be null", session);
         }
 
         assertEquals(6, sessionManager.getSessions().size());
 
         for (Iterator i=sessions.iterator(); i.hasNext(); ) {
-            PenroseSession session = (PenroseSession)i.next();
+            Session session = (Session)i.next();
             session.close();
         }
 
@@ -106,7 +104,7 @@ public class SessionManagerTest extends TestCase {
 
         for (int i=0; i<6; i++) {
 
-            PenroseSession session = penrose.newSession();
+            Session session = penrose.newSession();
             System.out.println("Created 1 session at "+session.getCreateDate());
 
             assertNotNull("Session should not be null", session);
@@ -126,7 +124,7 @@ public class SessionManagerTest extends TestCase {
         int c = 5;
         for (Iterator i=sessions.iterator(); i.hasNext(); c--) {
 
-            PenroseSession session = (PenroseSession)i.next();
+            Session session = (Session)i.next();
 
             Date date = new Date();
             int size = sessionManager.getSessions().size();

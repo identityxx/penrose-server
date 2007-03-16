@@ -24,6 +24,7 @@ import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
@@ -32,9 +33,7 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.ietf.ldap.*;
@@ -85,7 +84,7 @@ public class PenroseInterceptor extends BaseInterceptor {
         this.factoryCfg = factoryCfg;
     }
 
-    public PenroseSession getSession() throws Exception {
+    public Session getSession() throws Exception {
 
         Penrose penrose = penroseServer.getPenrose();
         if (penrose == null) {
@@ -94,7 +93,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().getUpName();
 
-        PenroseSession session = penrose.getSession(bindDn);
+        Session session = penrose.getSession(bindDn);
 
         if (session == null) {
             session = penrose.createSession(bindDn);
@@ -135,7 +134,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
-            PenroseSession session = getSession();
+            Session session = getSession();
             session.bind(dn, password);
 
             //log.debug("Bind successful.");
@@ -179,13 +178,20 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            session.add(dn, attributes);
+            AddRequest request = new AddRequest();
+            request.setDn(dn);
+            request.setAttributeValues(attributes);
+
+            AddResponse response = new AddResponse();
+
+            session.add(request, response);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -214,7 +220,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.compare(name, attributeName, value);
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
@@ -248,7 +254,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
@@ -314,25 +320,23 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.list(name);
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_ONE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_ONE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            return new PenroseEnumeration(results);
+            return new PenroseEnumeration(response);
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -362,25 +366,23 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             if (debug) log.debug("searching \""+dn+"\"");
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            return results.hasNext();
+            return response.hasNext();
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -410,25 +412,23 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name, attrIds);
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
             SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
@@ -459,25 +459,23 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return next.lookup(name);
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+            request.setScope(SearchRequest.SCOPE_BASE);
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    dn,
-                    "(objectClass=*)",
-                    sc,
-                    results);
+            session.search(request, response);
 
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
             SearchResult result = EntryTool.createSearchResult(entry);
 
             return result.getAttributes();
@@ -510,7 +508,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             	log.debug("search(\""+baseDn+"\")");
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
@@ -532,20 +530,18 @@ public class PenroseInterceptor extends BaseInterceptor {
                     SearchResult sr = (SearchResult)ne.next();
                     Attributes attributes = sr.getAttributes();
 
-                    PenroseSearchResults results = new PenroseSearchResults();
+                    SearchRequest request = new SearchRequest();
+                    request.setDn(baseDn);
+                    request.setFilter("(objectClass=*)");
+                    request.setScope(SearchRequest.SCOPE_BASE);
+                    request.setDereference(SearchRequest.DEREF_ALWAYS);
+                    request.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-                    PenroseSearchControls sc = new PenroseSearchControls();
-                    sc.setScope(PenroseSearchControls.SCOPE_BASE);
-                    sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-                    sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
+                    SearchResponse response = new SearchResponse();
 
-                    session.search(
-                            baseDn,
-                            "(objectClass=*)",
-                            sc,
-                            results);
+                    session.search(request, response);
 
-                    Entry entry = (Entry)results.next();
+                    Entry entry = (Entry) response.next();
                     AttributeValues attributeValues = entry.getAttributeValues();
 
                     for (NamingEnumeration ne2=attributes.getAll(); ne2.hasMore(); ) {
@@ -559,7 +555,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                         }
                     }
 
-                    PenroseSearchResults results2 = new PenroseSearchResults();
+                    SearchResponse results2 = new SearchResponse();
                     results2.add(entry);
                     results2.close();
 
@@ -572,7 +568,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            String newFilter = FilterTool.convert(filter).toString();
+            Filter newFilter = FilterTool.convert(filter);
             if (debug) {
 	            log.debug("Searching \""+base+"\"");
 	            log.debug(" - deref: "+deref);
@@ -581,22 +577,20 @@ public class PenroseInterceptor extends BaseInterceptor {
 	            log.debug(" - attributeNames: "+attributeNames);
             }
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(baseDn);
+            request.setFilter(newFilter);
+            request.setScope(searchControls.getSearchScope());
+            request.setSizeLimit(searchControls.getCountLimit());
+            request.setTimeLimit(searchControls.getTimeLimit());
+            request.setDereference(SearchRequest.DEREF_ALWAYS);
+            request.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(searchControls.getSearchScope());
-            sc.setSizeLimit(searchControls.getCountLimit());
-            sc.setTimeLimit(searchControls.getTimeLimit());
-            sc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            sc.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
+            SearchResponse response = new SearchResponse();
 
-            session.search(
-                    baseDn,
-                    newFilter,
-                    sc,
-                    results);
+            session.search(request, response);
 
-            return new PenroseEnumeration(results);
+            return new PenroseEnumeration(response);
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -636,7 +630,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 modifications.add(modification);
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
@@ -671,7 +665,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
@@ -710,7 +704,7 @@ public class PenroseInterceptor extends BaseInterceptor {
                 return;
             }
 
-            PenroseSession session = getSession();
+            Session session = getSession();
 
             if (session.getBindDn() == null && !allowAnonymousAccess) {
                 throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);

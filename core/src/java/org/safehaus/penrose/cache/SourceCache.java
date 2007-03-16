@@ -24,8 +24,8 @@ import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,7 +178,7 @@ public class SourceCache {
 
         final Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
 
-        PenroseSearchResults results = new PenroseSearchResults() {
+        SearchResponse response = new SearchResponse() {
 
             public void add(Object object) throws Exception {
                 AttributeValues sourceValues = (AttributeValues)object;
@@ -199,12 +199,12 @@ public class SourceCache {
             }
         };
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setSizeLimit(sizeLimit);
+        SearchRequest request = new SearchRequest();
+        request.setSizeLimit(sizeLimit);
 
-        connection.search(partition, null, null, sourceConfig, null, null, sc, results);
+        connection.search(partition, null, null, sourceConfig, null, request, response);
 
-        results.close();
+        response.close();
     }
 
     public Partition getPartition() {

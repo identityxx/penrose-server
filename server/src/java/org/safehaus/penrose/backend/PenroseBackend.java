@@ -21,14 +21,16 @@ import java.util.*;
 import java.io.File;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfig;
-import com.identyx.javabackend.Backend;
-import com.identyx.javabackend.Session;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -36,7 +38,7 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseBackend implements Backend {
+public class PenroseBackend implements com.identyx.javabackend.Backend {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -81,6 +83,11 @@ public class PenroseBackend implements Backend {
         return contains(new DN(dn));
     }
 
+    public boolean contains(com.identyx.javabackend.DN dn) throws Exception {
+        PenroseDN penroseDn = (PenroseDN)dn;
+        return contains(penroseDn.getDn());
+    }
+
     public boolean contains(DN dn) throws Exception {
         PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
         if (penroseConfig.getRootDn().equals(dn)) return true;
@@ -97,7 +104,7 @@ public class PenroseBackend implements Backend {
      * @param connectionId
      * @return session
      */
-    public Session getSession(long connectionId) throws Exception {
+    public com.identyx.javabackend.Session getSession(long connectionId) throws Exception {
         return (PenroseSession)sessions.get(new Long(connectionId));
     }
 
@@ -106,7 +113,7 @@ public class PenroseBackend implements Backend {
      *
      * @param connectionId
      */
-    public Session createSession(long connectionId) throws Exception {
+    public com.identyx.javabackend.Session createSession(long connectionId) throws Exception {
         log.debug("openConnection("+connectionId+")");
         Penrose penrose = penroseServer.getPenrose();
         PenroseSession session = new PenroseSession(penrose.newSession());
@@ -126,4 +133,87 @@ public class PenroseBackend implements Backend {
         if (session != null) session.close();
     }
 
+    public com.identyx.javabackend.Control createControl(String oid, byte[] value, boolean critical) throws Exception {
+        return new PenroseControl(new Control(oid, value, critical));
+    }
+
+    public com.identyx.javabackend.DN createDn(String dn) throws Exception {
+        return new PenroseDN(new DN(dn));
+    }
+
+    public com.identyx.javabackend.RDN createRdn(String rdn) throws Exception {
+        return new PenroseRDN(new RDN(rdn));
+    }
+
+    public com.identyx.javabackend.Attributes createAttributes() throws Exception {
+        return new PenroseAttributes(new AttributeValues());
+    }
+
+    public com.identyx.javabackend.Attribute createAttribute(String name) throws Exception {
+        return new PenroseAttribute(name);
+    }
+
+    public com.identyx.javabackend.AddRequest createAddRequest() throws Exception {
+        return new PenroseAddRequest(new AddRequest());
+    }
+
+    public com.identyx.javabackend.AddResponse createAddResponse() throws Exception {
+        return new PenroseAddResponse(new AddResponse());
+    }
+
+    public com.identyx.javabackend.BindRequest createBindRequest() throws Exception {
+        return new PenroseBindRequest(new BindRequest());
+    }
+
+    public com.identyx.javabackend.BindResponse createBindResponse() throws Exception {
+        return new PenroseBindResponse(new BindResponse());
+    }
+
+    public com.identyx.javabackend.CompareRequest createCompareRequest() throws Exception {
+        return new PenroseCompareRequest(new CompareRequest());
+    }
+
+    public com.identyx.javabackend.CompareResponse createCompareResponse() throws Exception {
+        return new PenroseCompareResponse(new CompareResponse());
+    }
+
+    public com.identyx.javabackend.DeleteRequest createDeleteRequest() throws Exception {
+        return new PenroseDeleteRequest(new DeleteRequest());
+    }
+
+    public com.identyx.javabackend.DeleteResponse createDeleteResponse() throws Exception {
+        return new PenroseDeleteResponse(new DeleteResponse());
+    }
+
+    public com.identyx.javabackend.ModifyRequest createModifyRequest() throws Exception {
+        return new PenroseModifyRequest(new ModifyRequest());
+    }
+
+    public com.identyx.javabackend.ModifyResponse createModifyResponse() throws Exception {
+        return new PenroseModifyResponse(new ModifyResponse());
+    }
+
+    public com.identyx.javabackend.ModRdnRequest createModRdnRequest() throws Exception {
+        return new PenroseModRdnRequest(new ModRdnRequest());
+    }
+
+    public com.identyx.javabackend.ModRdnResponse createModRdnResponse() throws Exception {
+        return new PenroseModRdnResponse(new ModRdnResponse());
+    }
+
+    public com.identyx.javabackend.SearchRequest createSearchRequest() throws Exception {
+        return new PenroseSearchRequest(new SearchRequest());
+    }
+
+    public com.identyx.javabackend.SearchResponse createSearchResponse() throws Exception {
+        return new PenroseSearchResponse(new SearchResponse());
+    }
+
+    public com.identyx.javabackend.UnbindRequest createUnbindRequest() throws Exception {
+        return new PenroseUnbindRequest(new UnbindRequest());
+    }
+
+    public com.identyx.javabackend.UnbindResponse createUnbindResponse() throws Exception {
+        return new PenroseUnbindResponse(new UnbindResponse());
+    }
 }

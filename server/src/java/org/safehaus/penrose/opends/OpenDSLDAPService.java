@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-import com.identyx.javabackend.opends.JavaBackend;
+import com.identyx.javabackend.opends.JavaBackendPlugin;
 
 /**
  * @author Endi S. Dewata
@@ -80,7 +80,7 @@ public class OpenDSLDAPService extends LDAPService {
         directoryServer.startServer();
 
         PluginConfigManager pluginConfigManager = DirectoryServer.getPluginConfigManager();
-        JavaBackend javaBackend = (JavaBackend)pluginConfigManager.getRegisteredPlugin(DN.decode("cn=Java Backend,cn=Plugins,cn=config"));
+        JavaBackendPlugin javaBackend = (JavaBackendPlugin)pluginConfigManager.getRegisteredPlugin(DN.decode("cn=Java Backend,cn=Plugins,cn=config"));
         javaBackend.setBackend(new PenroseBackend(getPenroseServer()));
 
         log.warn("Listening to port "+value.getStringValue()+" (LDAP).");

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2005, Identyx Corporation.
+ * Copyright (c) 2000-2006, Identyx Corporation.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,37 +15,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.session;
+package org.safehaus.penrose.backend;
 
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.session.SearchResponse;
 
 /**
  * @author Endi S. Dewata
  */
-public class Results {
+public class PenroseSearchResponse
+        extends PenroseResponse
+        implements com.identyx.javabackend.SearchResponse {
 
-    public void add(Object object) throws Exception {
-    }
+    SearchResponse searchResponse;
 
-    public boolean hasNext() throws Exception {
-        return false;
+    public PenroseSearchResponse(SearchResponse searchResponse) {
+        super(searchResponse);
+        this.searchResponse = searchResponse;
     }
 
     public Object next() throws Exception {
-        return null;
+        Entry entry = (Entry)searchResponse.next();
+        return new PenroseEntry(entry);
     }
 
-    public int getTotalCount() throws Exception {
-        return 0;
+    public boolean hasNext() throws Exception {
+        return searchResponse.hasNext();
     }
 
-    public void setException(Exception e) {
-    }
-
-    public LDAPException getException() {
-        return null;
-    }
-
-    public void close() throws Exception {
+    public SearchResponse getSearchResponse() {
+        return searchResponse;
     }
 }

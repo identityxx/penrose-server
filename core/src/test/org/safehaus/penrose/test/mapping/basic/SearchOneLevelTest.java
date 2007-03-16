@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -19,15 +19,19 @@ public class SearchOneLevelTest extends BasicTestCase {
 
     public void testSearchEmptyDatabase() throws Exception {
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertFalse(results.hasNext());
+        session.search(
+                baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
+
+        assertFalse(response.hasNext());
 
         session.close();
     }
@@ -43,19 +47,23 @@ public class SearchOneLevelTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_ONE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search(baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
+
+        session.search(
+                baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_ONE,
+                response
+        );
 
         //System.out.println("Results:");
         for (int i=0; i<groupnames.length; i++) {
-            assertTrue(results.hasNext());
+            assertTrue(response.hasNext());
 
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
             String dn = entry.getDn().toString();
             //System.out.println(" - "+dn);
             assertEquals("cn="+groupnames[i]+","+baseDn, dn);

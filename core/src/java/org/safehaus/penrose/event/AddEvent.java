@@ -17,10 +17,9 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.entry.DN;
-
-import javax.naming.directory.Attributes;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.AddRequest;
+import org.safehaus.penrose.session.AddResponse;
 
 /**
  * @author Endi S. Dewata
@@ -30,17 +29,17 @@ public class AddEvent extends Event {
     public final static int BEFORE_ADD = 0;
     public final static int AFTER_ADD  = 1;
 
-    private PenroseSession session;
-    private int returnCode;
+    protected Session session;
+    protected int returnCode;
 
-    private DN dn;
-    private Attributes attributes;
+    protected AddRequest request;
+    protected AddResponse response;
 
-    public AddEvent(Object source, int type, PenroseSession session, DN dn, Attributes attributes) {
+    public AddEvent(Object source, int type, Session session, AddRequest request, AddResponse response) {
         super(source, type);
         this.session = session;
-        this.dn = dn;
-        this.attributes = attributes;
+        this.request = request;
+        this.response = response;
     }
 
     public int getReturnCode() {
@@ -51,27 +50,31 @@ public class AddEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public PenroseSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(PenroseSession session) {
+    public void setSession(Session session) {
         this.session = session;
     }
 
-    public DN getDn() {
-        return dn;
+    public AddRequest getRequest() {
+        return request;
     }
 
-    public void setDn(DN dn) {
-        this.dn = dn;
+    public void setRequest(AddRequest request) {
+        this.request = request;
     }
 
-    public Attributes getAttributes() {
-        return attributes;
+    public AddResponse getResponse() {
+        return response;
     }
 
-    public void setAttributes(Attributes attributes) {
-        this.attributes = attributes;
+    public void setResponse(AddResponse response) {
+        this.response = response;
+    }
+
+    public String toString() {
+        return (type == BEFORE_ADD ? "Before" : "After")+"Add";
     }
 }

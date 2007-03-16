@@ -19,9 +19,9 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.Module;
@@ -32,12 +32,10 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -127,10 +125,10 @@ public class PollingConnectorModule extends Module {
             log.debug(" - "+pk+": "+av);
         }
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults list = new PenroseSearchResults();
-        //connector.retrieve(partition, sourceConfig, map.keySet(), sc, list);
-        list.close();
+        SearchRequest request = new SearchRequest();
+        SearchResponse response = new SearchResponse();
+        //connector.retrieve(partition, sourceConfig, map.keySet(), request, response);
+        response.close();
     }
 
     public void pollChanges(SourceConfig sourceConfig) throws Exception {
@@ -138,7 +136,7 @@ public class PollingConnectorModule extends Module {
         int lastChangeNumber = sourceCacheManager.getLastChangeNumber(partition, sourceConfig);
 
         Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
-        PenroseSearchResults sr = connection.getChanges(sourceConfig, lastChangeNumber);
+        SearchResponse sr = connection.getChanges(sourceConfig, lastChangeNumber);
         if (!sr.hasNext()) return;
 
         ConnectionConfig connectionConfig = connection.getConnectionConfig();
@@ -186,11 +184,11 @@ public class PollingConnectorModule extends Module {
         }
 
         log.debug("Reloading data for "+pks);
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults list = new PenroseSearchResults();
-        //connector.retrieve(partition, sourceConfig, pks, sc, list);
-        list.close();
-        while (list.hasNext()) list.next();
+        SearchRequest request = new SearchRequest();
+        SearchResponse response = new SearchResponse();
+        //connector.retrieve(partition, sourceConfig, pks, request, response);
+        response.close();
+        while (response.hasNext()) response.next();
 
         log.debug("Creating entries with "+pks);
         for (Iterator i=pks.iterator(); i.hasNext(); ) {
@@ -238,18 +236,21 @@ public class PollingConnectorModule extends Module {
         Collection dns = engine.computeDns(partition, interpreter, entryMapping, sourceValues);
 
         SessionManager sessionManager = penroseContext.getSessionManager();
-        PenroseSession session = sessionManager.newSession();
+        Session session = sessionManager.newSession();
 
         session.setBindDn(penroseConfig.getRootDn());
-
-        PenroseSearchControls sc = new PenroseSearchControls();
 
         for (Iterator i=dns.iterator(); i.hasNext(); ) {
             DN dn = (DN)i.next();
 
-            PenroseSearchResults sr = new PenroseSearchResults();
-            session.search(dn, "(objectClass=*)", sc, sr);
-            while (sr.hasNext()) sr.next();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter("(objectClass=*)");
+
+            SearchResponse response = new SearchResponse();
+            
+            session.search(request, response);
+            while (response.hasNext()) response.next();
         }
     }
 

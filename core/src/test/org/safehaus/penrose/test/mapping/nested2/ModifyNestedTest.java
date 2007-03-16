@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class ModifyNestedTest extends NestedTestCase {
         executeUpdate("insert into children values ('group1', 'child1')");
         executeUpdate("insert into children values ('group2', 'child2')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Collection modifications = new ArrayList();

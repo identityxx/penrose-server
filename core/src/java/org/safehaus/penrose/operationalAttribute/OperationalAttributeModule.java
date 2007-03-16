@@ -19,8 +19,12 @@ package org.safehaus.penrose.operationalAttribute;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.AddRequest;
+import org.safehaus.penrose.session.ModRdnRequest;
+import org.safehaus.penrose.session.ModifyRequest;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.AttributeValues;
 
 import javax.naming.directory.*;
 import java.util.Collection;
@@ -41,28 +45,25 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Adding "+event.getDn()+" at "+timestamp);
+        AddRequest request = event.getRequest();
+        System.out.println("#### Adding "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
-        Attributes attributes = event.getAttributes();
+        AttributeValues attributeValues = request.getAttributeValues();
 
         if (bindDn != null) {
-            Attribute creatorsName = new BasicAttribute("creatorsName", bindDn.toString());
-            attributes.put(creatorsName);
+            attributeValues.set("creatorsName", bindDn.toString());
         }
 
-        Attribute createTimestamp = new BasicAttribute("createTimestamp", timestamp);
-        attributes.put(createTimestamp);
+        attributeValues.set("createTimestamp", timestamp);
 
         if (bindDn != null) {
-            Attribute modifiersName = new BasicAttribute("modifiersName", bindDn.toString());
-            attributes.put(modifiersName);
+            attributeValues.set("modifiersName", bindDn.toString());
         }
 
-        Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        attributes.put(modifyTimestamp);
+        attributeValues.set("modifyTimestamp", timestamp);
 
         return true;
     }
@@ -72,12 +73,13 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Modifying "+event.getDn()+" at "+timestamp);
+        ModifyRequest request = event.getRequest();
+        System.out.println("#### Modifying "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
-        Collection modifications = event.getModifications();
+        Collection modifications = request.getModifications();
 
         if (bindDn != null) {
             Attribute modifiersName = new BasicAttribute("modifiersName", bindDn.toString());
@@ -97,9 +99,10 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Renaming "+event.getDn()+" at "+timestamp);
+        ModRdnRequest request = event.getRequest();
+        System.out.println("#### Renaming "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
         Collection modifications = new ArrayList();
@@ -114,7 +117,7 @@ public class OperationalAttributeModule extends Module {
         ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
         modifications.add(mi);
 
-        DN dn = event.getDn();
+        DN dn = request.getDn();
         session.modify(dn, modifications);
     }
 }

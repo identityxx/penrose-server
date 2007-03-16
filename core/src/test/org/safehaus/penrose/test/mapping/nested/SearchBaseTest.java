@@ -1,9 +1,9 @@
 package org.safehaus.penrose.test.mapping.nested;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 
@@ -28,23 +28,27 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=group2,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertTrue(results.hasNext());
+        session.search(
+                "cn=group2,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals("cn=group2,"+baseDn, dn);
 
-        assertFalse(results.hasNext());
+        assertFalse(response.hasNext());
 
-        assertEquals(1, results.getTotalCount());
+        assertEquals(1, response.getTotalCount());
 
         session.close();
     }
@@ -60,17 +64,21 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("uid=member3,cn=group2,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        assertTrue(results.hasNext());
+        session.search(
+                "uid=member3,cn=group2,"+baseDn,
+                "(objectClass=*)",
+                SearchRequest.SCOPE_BASE,
+                response
+        );
 
-        Entry entry = (Entry)results.next();
+        assertTrue(response.hasNext());
+
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         assertEquals(dn, "uid=member3,cn=group2,"+baseDn);
 
@@ -79,9 +87,9 @@ public class SearchBaseTest extends NestedTestCase {
         Object value = attributes.getOne("memberOf");
         assertEquals("group2", value);
 
-        assertFalse(results.hasNext());
+        assertFalse(response.hasNext());
 
-        assertEquals(1, results.getTotalCount());
+        assertEquals(1, response.getTotalCount());
 
         session.close();
     }

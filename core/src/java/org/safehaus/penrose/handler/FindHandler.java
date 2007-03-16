@@ -20,13 +20,14 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.filter.Filter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -51,12 +52,7 @@ public class FindHandler {
 	 * @param dn
 	 * @return path from the entry to the root entry
 	 */
-    public Entry find(PenroseSession session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-
-        AttributeValues sourceValues = new AttributeValues();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults sr = new PenroseSearchResults();
+    public Entry find(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
 
         Engine engine = handler.getEngine(entryMapping);
 
@@ -65,19 +61,25 @@ public class FindHandler {
             return null;
         }
 
+        AttributeValues sourceValues = new AttributeValues();
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter((Filter)null);
+
+        SearchResponse response = new SearchResponse();
+
         engine.search(
                 session,
                 partition,
                 sourceValues,
                 entryMapping,
-                dn,
-                null,
-                sc,
-                sr
+                request,
+                response
         );
 
-        if (!sr.hasNext()) return null;
-        return (Entry)sr.next();
+        if (!response.hasNext()) return null;
+        return (Entry)response.next();
 /*
         List path = new ArrayList();
 
@@ -89,7 +91,7 @@ public class FindHandler {
     }
 
     public void find(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -131,22 +133,23 @@ public class FindHandler {
                 continue;
             }
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            PenroseSearchResults sr = new PenroseSearchResults();
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter((Filter)null);
+
+            SearchResponse response = new SearchResponse();
 
             engine.search(
                     session,
                     partition,
                     sourceValues,
                     entryMapping,
-                    dn,
-                    null,
-                    sc,
-                    sr
+                    request,
+                    response
             );
 
-            while (sr.hasNext()) {
-                Entry entry = (Entry)sr.next();
+            while (response.hasNext()) {
+                Entry entry = (Entry)response.next();
                 path.add(entry);
             }
 

@@ -25,7 +25,6 @@ import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
@@ -81,7 +80,7 @@ public class ProxyEngine extends Engine {
         return newDn.toDn();
     }
 
-    public LDAPClient createClient(PenroseSession session, Partition partition, SourceConfig sourceConfig) throws Exception {
+    public LDAPClient createClient(Session session, Partition partition, SourceConfig sourceConfig) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -102,7 +101,7 @@ public class ProxyEngine extends Engine {
         return new LDAPClient(parameters);
     }
 
-    public void storeClient(PenroseSession session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
+    public void storeClient(Session session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -121,7 +120,7 @@ public class ProxyEngine extends Engine {
         }
     }
 
-    public void closeClient(PenroseSession session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
+    public void closeClient(Session session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -133,7 +132,7 @@ public class ProxyEngine extends Engine {
         }
     }
 
-    public LDAPClient getClient(PenroseSession session, Partition partition, SourceConfig sourceConfig) throws Exception {
+    public LDAPClient getClient(Session session, Partition partition, SourceConfig sourceConfig) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -176,7 +175,7 @@ public class ProxyEngine extends Engine {
     }
 
     public void bind(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -209,12 +208,12 @@ public class ProxyEngine extends Engine {
     }
 
     public void add(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            Attributes attributes
+            AttributeValues attributeValues
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -233,6 +232,19 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
 
+            Attributes attributes = new BasicAttributes();
+
+            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Attribute attribute = new BasicAttribute(name);
+
+                Collection values = attributeValues.get(name);
+                for (Iterator j=values.iterator(); j.hasNext(); ) {
+                    Object value = j.next();
+                    attribute.add(value);
+                }
+            }
+            
             client.add(targetDn.toString(), attributes);
 
         } catch (Exception e) {
@@ -245,7 +257,7 @@ public class ProxyEngine extends Engine {
     }
 
     public void modify(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -279,7 +291,7 @@ public class ProxyEngine extends Engine {
     }
 
     public void modrdn(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -314,7 +326,7 @@ public class ProxyEngine extends Engine {
     }
 
     public void delete(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -371,28 +383,28 @@ public class ProxyEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
-
         RDN rdn = dn.getRdn();
         Filter filter = FilterTool.createFilter(rdn);
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter(filter);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse response = new SearchResponse();
 
         search(
                 null,
                 partition,
                 sourceValues,
                 entryMapping,
-                dn,
-                filter,
-                sc,
-                results
+                request,
+                response
         );
 
         Entry entry = null;
-        if (results.hasNext() && getFilterTool().isValid(entry, filter)) {
-            entry = (Entry)results.next();
+        if (response.hasNext() && getFilterTool().isValid(entry, filter)) {
+            entry = (Entry) response.next();
         }
 
         if (log.isDebugEnabled()) {
@@ -422,20 +434,18 @@ public class ProxyEngine extends Engine {
     }
 
     public void search(
-            final PenroseSession session,
+            final Session session,
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls searchControls,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
-
-        long sizeLimit = searchControls.getSizeLimit();
+        final DN baseDn = request.getDn();
+        final Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -443,8 +453,7 @@ public class ProxyEngine extends Engine {
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(searchControls.getScope()), 80));
-            log.debug(Formatter.displayLine("Size Limit: "+sizeLimit, 80));
+            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -463,33 +472,33 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Result: "+found);
 
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setAttributes(searchControls.getAttributes());
-            sc.setScope(searchControls.getScope());
-            sc.setSizeLimit(searchControls.getSizeLimit());
-            sc.setTimeLimit(searchControls.getTimeLimit());
+            SearchRequest newRequest = new SearchRequest();
+            newRequest.setAttributes(newRequest.getAttributes());
+            newRequest.setScope(newRequest.getScope());
+            newRequest.setSizeLimit(newRequest.getSizeLimit());
+            newRequest.setTimeLimit(newRequest.getTimeLimit());
 
             DN targetDn = null;
             if (found) {
                 targetDn = convertDn(baseDn, proxyDn, proxyBaseDn);
 
             } else {
-                if (searchControls.getScope() == LDAPConnection.SCOPE_BASE) {
+                if (newRequest.getScope() == LDAPConnection.SCOPE_BASE) {
                     return;
 
-                } else if (searchControls.getScope() == LDAPConnection.SCOPE_ONE) {
-                    sc.setScope(LDAPConnection.SCOPE_BASE);
+                } else if (newRequest.getScope() == LDAPConnection.SCOPE_ONE) {
+                    newRequest.setScope(LDAPConnection.SCOPE_BASE);
                 }
                 targetDn = proxyBaseDn;
             }
 
-            if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+sc.getAttributes());
+            if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+ newRequest.getAttributes());
 
             final LDAPClient client = getClient(session, partition, sourceConfig);
 
             if (debug) log.debug("Creating SearchResult to Entry conversion pipeline.");
 
-            Pipeline sr = new Pipeline(results) {
+            SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     SearchResult ldapEntry = (SearchResult)object;
 
@@ -516,7 +525,7 @@ public class ProxyEngine extends Engine {
                     }
 
                     Entry entry = new Entry(dn.toString(), entryMapping, attributeValues);
-                    super.add(entry);
+                    response.add(entry);
                 }
 
                 public void close() throws Exception {
@@ -525,15 +534,15 @@ public class ProxyEngine extends Engine {
                 }
             };
 
-            //connector.search(partition, sourceConfig, null, filter, sc, sr);
-            client.search(targetDn.toString(), filter.toString(), sc, sr);
+            //connector.search(partition, sourceConfig, null, filter, newRequest, sr);
+            client.search(targetDn.toString(), filter.toString(), newRequest, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            results.close();
+            response.close();
         }
     }
 }

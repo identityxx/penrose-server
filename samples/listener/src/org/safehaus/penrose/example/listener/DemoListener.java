@@ -3,12 +3,9 @@ package org.safehaus.penrose.example.listener;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.session.*;
@@ -18,10 +15,7 @@ import javax.naming.directory.SearchResult;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.Attribute;
 import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
 import javax.naming.NoPermissionException;
-import java.util.Iterator;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -56,22 +50,21 @@ public class DemoListener implements SearchListener {
 
         PenroseContext penroseContext = penrose.getPenroseContext();
         SessionManager sessionManager = penroseContext.getSessionManager();
-        PenroseSession session = sessionManager.newSession();
+        Session session = sessionManager.newSession();
         session.addSearchListener(this);
 
         session.bind("uid=admin,ou=system", "secret");
 
-        PenroseSearchResults results = new PenroseSearchResults();
-        PenroseSearchControls sc = new PenroseSearchControls();
+        SearchRequest request = new SearchRequest();
+        request.setDn(DemoListener.SUFFIX);
+        request.setFilter("(objectClass=*)");
 
-        session.search(
-                DemoListener.SUFFIX,
-                "(objectClass=*)",
-                sc,
-                results);
+        SearchResponse response = new SearchResponse();
 
-        while (results.hasNext()) {
-            SearchResult entry = (SearchResult)results.next();
+        session.search(request, response);
+
+        while (response.hasNext()) {
+            SearchResult entry = (SearchResult) response.next();
             System.out.println(toString(entry));
         }
 
@@ -102,20 +95,21 @@ public class DemoListener implements SearchListener {
     }
 
     public boolean beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+        SearchRequest request = event.getRequest();
+        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
-        if (event.getFilter().equalsIgnoreCase("(ou=*)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(ou=*)")) {
             return false;
         }
 
-        if (event.getFilter().equalsIgnoreCase("(ou=secret)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(ou=secret)")) {
             throw new NoPermissionException();
         }
 
-        PenroseSearchResults results = event.getSearchResults();
+        SearchResponse response = event.getResponse();
 
-        results.addListener(new ResultsAdapter() {
-            public void postAdd(ResultsEvent event) {
+        response.addListener(new SearchResponseAdapter() {
+            public void postAdd(SearchResponseEvent event) {
                 SearchResult entry = (SearchResult)event.getObject();
                 System.out.println("#### Returning "+entry.getName());
             }

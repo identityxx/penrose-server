@@ -1,8 +1,7 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.ietf.ldap.LDAPException;
@@ -29,18 +28,18 @@ public class SearchSubtreeTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=def,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
 
-        boolean hasNext = results.hasNext();
+        session.search("cn=def,"+baseDn, "(objectClass=*)", response);
+
+        boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry)results.next();
+        Entry entry = (Entry) response.next();
         String dn = entry.getDn().toString();
         log.debug("dn: "+dn);
         assertEquals("cn=def,"+baseDn, dn);
@@ -55,7 +54,7 @@ public class SearchSubtreeTest extends BasicTestCase {
         log.debug("description: "+value);
         assertEquals("DEF", value);
 
-        hasNext = results.hasNext();
+        hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
@@ -73,15 +72,15 @@ public class SearchSubtreeTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults results = new PenroseSearchResults();
-        session.search("cn=jkl,"+baseDn, "(objectClass=*)", sc, results);
+        SearchResponse response = new SearchResponse();
+        
+        session.search("cn=jkl,"+baseDn, "(objectClass=*)", response);
 
         try {
-            boolean hasNext = results.hasNext();
+            boolean hasNext = response.hasNext();
             log.debug("hasNext: "+hasNext);
             fail();
         } catch (LDAPException e) {

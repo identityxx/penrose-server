@@ -29,9 +29,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -99,12 +98,12 @@ public class LDAPAdapter extends Adapter {
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
-            Filter filter,
-            PenroseSearchControls searchControls,
-            Results results
+            SearchRequest request,
+            SearchResponse response
     ) throws LDAPException {
 
         boolean debug = log.isDebugEnabled();
+        Filter filter = request.getFilter();
 
         DNBuilder db = new DNBuilder();
         db.set(sourceConfig.getParameter(BASE_DN));
@@ -145,8 +144,8 @@ public class LDAPAdapter extends Adapter {
         } else if ("SUBTREE".equals(ldapScope)) {
             sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
         }
-        sc.setCountLimit(searchControls.getSizeLimit());
-        sc.setTimeLimit(searchControls.getTimeLimit());
+        sc.setCountLimit(request.getSizeLimit());
+        sc.setTimeLimit((int) request.getTimeLimit());
 
         LdapContext ctx = null;
         try {
@@ -186,7 +185,7 @@ public class LDAPAdapter extends Adapter {
                     result.setSourceMapping(sourceMapping);
                     result.setSourceConfig(sourceConfig);
 
-                    results.add(result);
+                    response.add(result);
                 }
 
                 // get cookie returned by server
@@ -579,9 +578,9 @@ public class LDAPAdapter extends Adapter {
         return 0;
     }
 
-    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws LDAPException {
+    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws LDAPException {
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchResponse response = new SearchResponse();
 
         //int sizeLimit = 100;
 
@@ -611,7 +610,7 @@ public class LDAPAdapter extends Adapter {
                 log.debug(" - "+sr.getName()+","+ldapBase);
 
                 RDN rdn = getPkValues(sourceConfig, sr);
-                results.add(rdn);
+                response.add(rdn);
             }
 
         } catch (Exception e) {
@@ -619,11 +618,11 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            try { results.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            try { response.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
 
-        return results;
+        return response;
     }
 
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {

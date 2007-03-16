@@ -17,10 +17,9 @@
  */
 package org.safehaus.penrose.engine.impl;
 
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
@@ -75,7 +74,7 @@ public class EngineImpl extends Engine {
     }
 
     public void bind(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -132,7 +131,7 @@ public class EngineImpl extends Engine {
     }
 
     public void staticBind(
-            PenroseSession session,
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
@@ -140,27 +139,27 @@ public class EngineImpl extends Engine {
     ) throws LDAPException {
 
         try {
-            PenroseSearchControls sc = new PenroseSearchControls();
-            sc.setScope(PenroseSearchControls.SCOPE_BASE);
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter((Filter)null);
+            request.setScope(SearchRequest.SCOPE_BASE);
 
-            PenroseSearchResults results = new PenroseSearchResults();
+            SearchResponse response = new SearchResponse();
 
             search(
                     session,
                     partition,
                     new AttributeValues(),
                     entryMapping,
-                    dn,
-                    null,
-                    sc,
-                    results
+                    request,
+                    response
             );
 
-            if (!results.hasNext()) {
+            if (!response.hasNext()) {
                 throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
             }
 
-            Entry entry = (Entry)results.next();
+            Entry entry = (Entry) response.next();
 
             AttributeValues attributeValues = entry.getAttributeValues();
 
@@ -187,30 +186,15 @@ public class EngineImpl extends Engine {
     }
 
     public void add(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            Attributes attributes
+            AttributeValues attributeValues
     ) throws LDAPException {
 
         try {
-            // normalize attribute names
-            AttributeValues attributeValues = new AttributeValues();
-
-            for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-                Attribute attribute = (Attribute)i.next();
-                String name = attribute.getID();
-
-                if ("objectClass".equalsIgnoreCase(name)) continue;
-
-                for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                    Object value = j.next();
-                    attributeValues.add(name, value);
-                }
-            }
-
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("ADD", 80));
@@ -237,7 +221,7 @@ public class EngineImpl extends Engine {
         }
     }
 
-    public void delete(PenroseSession session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws LDAPException {
+    public void delete(Session session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws LDAPException {
 
         try {
             if (log.isDebugEnabled()) {
@@ -260,7 +244,7 @@ public class EngineImpl extends Engine {
     }
 
     public void modrdn(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -291,7 +275,7 @@ public class EngineImpl extends Engine {
     }
 
     public void modify(
-            PenroseSession session,
+            Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
@@ -549,18 +533,18 @@ public class EngineImpl extends Engine {
     }
 
     public void search(
-            final PenroseSession session,
+            final Session session,
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final DN baseDn,
-            final Filter filter,
-            final PenroseSearchControls sc,
-            final Results results
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
+        final DN baseDn = request.getDn();
+        final Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -568,7 +552,7 @@ public class EngineImpl extends Engine {
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(sc.getScope()), 80));
+            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displayLine("Parent source values:", 80));
 
             if (sourceValues != null) {
@@ -586,17 +570,17 @@ public class EngineImpl extends Engine {
 
         try {
 
-            if (sc.getScope() == PenroseSearchControls.SCOPE_BASE) {
+            if (request.getScope() == SearchRequest.SCOPE_BASE) {
                 if (!(entryMapping.getDn().matches(baseDn))) {
                     return;
                 }
 
-            } else if (sc.getScope() == PenroseSearchControls.SCOPE_ONE) {
+            } else if (request.getScope() == SearchRequest.SCOPE_ONE) {
                 if (!entryMapping.getParentDn().matches(baseDn)) {
                     return;
                 }
 
-            } else { // if (sc.getScope() == PenroseSearchControls.SCOPE_SUB) {
+            } else { // if (request.getScope() == SearchRequest.SCOPE_SUB) {
 
                 log.debug("Checking whether "+baseDn+" is an ancestor of "+entryMapping.getDn());
                 DN dn = entryMapping.getDn();
@@ -619,15 +603,15 @@ public class EngineImpl extends Engine {
             final boolean unique = isUnique(partition, entryMapping);
             final Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
 
-            final PenroseSearchResults entriesToLoad = new PenroseSearchResults();
-            final PenroseSearchResults loadedEntries = new PenroseSearchResults();
+            final SearchResponse entriesToLoad = new SearchResponse();
+            final SearchResponse loadedEntries = new SearchResponse();
 
             HandlerManager handlerManager = penroseContext.getHandlerManager();
             final Handler handler = handlerManager.getHandler("DEFAULT");
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
 
-            Collection attributeNames = sc.getAttributes();
+            Collection attributeNames = request.getAttributes();
             Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
 
             // check if client only requests the dn to be returned
@@ -637,7 +621,7 @@ public class EngineImpl extends Engine {
 
             log.debug("Search DNs only: "+dnOnly);
 
-            final PenroseSearchResults dns = new PenroseSearchResults() {
+            final SearchResponse dns = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     EntryData data = (EntryData)object;
                     DN dn = data.getDn();
@@ -648,7 +632,7 @@ public class EngineImpl extends Engine {
                         AttributeValues sv = data.getMergedValues();
                         Entry entry = new Entry(dn, entryMapping, null, sv);
 
-                        results.add(entry);
+                        response.add(entry);
                         return;
                     }
 
@@ -662,7 +646,7 @@ public class EngineImpl extends Engine {
 
                         log.debug("Checking filter "+filter+" on "+entry.getDn());
                         if (handler.getFilterTool().isValid(entry, filter)) {
-                            results.add(entry);
+                            response.add(entry);
                         } else {
                             log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
                         }
@@ -692,13 +676,13 @@ public class EngineImpl extends Engine {
 
             load(partition, entryMapping, entriesToLoad, loadedEntries);
 
-            final PenroseSearchResults newEntries = new PenroseSearchResults() {
+            final SearchResponse newEntries = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     Entry entry = (Entry)object;
 
                     log.debug("Checking filter "+filter+" on "+entry.getDn());
                     if (handler.getFilterTool().isValid(entry, filter)) {
-                        results.add(entry);
+                        response.add(entry);
                     } else {
                         log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
                     }
@@ -720,8 +704,8 @@ public class EngineImpl extends Engine {
     public void load(
             Partition partition,
             EntryMapping entryMapping,
-            PenroseSearchResults entriesToLoad,
-            PenroseSearchResults loadedEntries)
+            SearchResponse entriesToLoad,
+            SearchResponse loadedEntries)
             throws Exception {
 
         loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
@@ -730,8 +714,8 @@ public class EngineImpl extends Engine {
     public void merge(
             Partition partition,
             EntryMapping entryMapping,
-            PenroseSearchResults loadedEntries,
-            PenroseSearchResults newEntries)
+            SearchResponse loadedEntries,
+            SearchResponse newEntries)
             throws Exception {
 
         mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);

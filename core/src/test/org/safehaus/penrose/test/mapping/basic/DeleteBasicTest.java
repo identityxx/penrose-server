@@ -1,6 +1,6 @@
 package org.safehaus.penrose.test.mapping.basic;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 
@@ -16,7 +16,7 @@ public class DeleteBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('test', 'test')");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.delete("cn=test,"+baseDn);

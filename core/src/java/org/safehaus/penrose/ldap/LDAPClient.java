@@ -30,8 +30,8 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.Results;
+import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.entry.DN;
@@ -694,8 +694,8 @@ public class LDAPClient {
     public void search(
             String baseDn,
             String filter,
-            PenroseSearchControls searchControls,
-            Results results
+            SearchRequest searchRequest,
+            SearchResponse results
             ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -705,22 +705,22 @@ public class LDAPClient {
         db.append(suffix);
         DN ldapBase = db.toDn();
 
-        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+searchControls.getScope()+" attrs="+searchControls.getAttributes()+":");
+        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+ searchRequest.getScope()+" attrs="+ searchRequest.getAttributes()+":");
 
-        String attributes[] = (String[])searchControls.getAttributes().toArray(new String[searchControls.getAttributes().size()]);
+        String attributes[] = (String[]) searchRequest.getAttributes().toArray(new String[searchRequest.getAttributes().size()]);
 
         SearchControls sc = new SearchControls();
-        sc.setSearchScope(searchControls.getScope());
-        sc.setReturningAttributes(searchControls.getAttributes().isEmpty() ? null : attributes);
-        sc.setCountLimit(searchControls.getSizeLimit());
-        sc.setTimeLimit(searchControls.getTimeLimit());
+        sc.setSearchScope(searchRequest.getScope());
+        sc.setReturningAttributes(searchRequest.getAttributes().isEmpty() ? null : attributes);
+        sc.setCountLimit(searchRequest.getSizeLimit());
+        sc.setTimeLimit((int) searchRequest.getTimeLimit());
 
         LdapContext context = null;
         NamingEnumeration ne = null;
 
         try {
 /*
-            LDAPSearchResults searchResults = connection.search(ldapBase, searchControls.getScope(), filter, attributes, searchControls.isTypesOnly());
+            LDAPSearchResults searchResults = connection.search(ldapBase, searchRequest.getScope(), filter, attributes, searchRequest.isTypesOnly());
             while (searchResults.hasMore()) {
                 try {
                     LDAPEntry entry = searchResults.next();

@@ -24,8 +24,8 @@ import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
@@ -125,8 +125,8 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults tmp = new PenroseSearchResults();
+        SearchRequest request = new SearchRequest();
+        SearchResponse response = new SearchResponse();
         
         Connector connector = engine.getConnector(sourceConfig);
         connector.search(
@@ -136,13 +136,13 @@ public class LoadGraphVisitor extends GraphVisitor {
                 sourceConfig,
                 primaryKeys,
                 filter,
-                sc,
-                tmp
+                request,
+                response
         );
 
         Collection list = new ArrayList();
-        while (tmp.hasNext()) {
-            AttributeValues av = (AttributeValues)tmp.next();
+        while (response.hasNext()) {
+            AttributeValues av = (AttributeValues)response.next();
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceMapping.getName(), av);
@@ -153,7 +153,7 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         loadedSourceValues.set(sourceMapping.getName(), list);
 
-        int rc = tmp.getReturnCode();
+        int rc = response.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
             returnCode = rc;
         }

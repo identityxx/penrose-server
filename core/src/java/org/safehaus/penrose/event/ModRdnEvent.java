@@ -17,10 +17,9 @@
  */
 package org.safehaus.penrose.event;
 
-
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.ModRdnRequest;
+import org.safehaus.penrose.session.ModRdnResponse;
 
 /**
  * @author Endi S. Dewata
@@ -30,18 +29,18 @@ public class ModRdnEvent extends Event {
     public final static int BEFORE_MODRDN = 0;
     public final static int AFTER_MODRDN  = 1;
 
-    private PenroseSession session;
-    private DN dn;
-    private RDN newRdn;
-    private boolean deleteOldRdn;
-    private int returnCode;
+    protected Session session;
+    protected int returnCode;
 
-    public ModRdnEvent(Object source, int type, PenroseSession session, DN dn, RDN newRdn, boolean deleteOldRdn) {
+    protected ModRdnRequest request;
+    protected ModRdnResponse response;
+
+    public ModRdnEvent(Object source, int type, Session session, ModRdnRequest request, ModRdnResponse response) {
         super(source, type);
+        
         this.session = session;
-        this.dn = dn;
-        this.newRdn = newRdn;
-        this.deleteOldRdn = deleteOldRdn;
+        this.request = request;
+        this.response = response;
     }
 
     public int getReturnCode() {
@@ -52,35 +51,31 @@ public class ModRdnEvent extends Event {
         this.returnCode = returnCode;
     }
 
-    public PenroseSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(PenroseSession session) {
+    public void setSession(Session session) {
         this.session = session;
     }
 
-    public DN getDn() {
-        return dn;
+    public ModRdnRequest getRequest() {
+        return request;
     }
 
-    public void setDn(DN dn) {
-        this.dn = dn;
+    public void setRequest(ModRdnRequest request) {
+        this.request = request;
     }
 
-    public RDN getNewRdn() {
-        return newRdn;
+    public ModRdnResponse getResponse() {
+        return response;
     }
 
-    public void setNewRdn(RDN newRdn) {
-        this.newRdn = newRdn;
+    public void setResponse(ModRdnResponse response) {
+        this.response = response;
     }
 
-    public boolean isDeleteOldRdn() {
-        return deleteOldRdn;
-    }
-
-    public void setDeleteOldRdn(boolean deleteOldRdn) {
-        this.deleteOldRdn = deleteOldRdn;
+    public String toString() {
+        return (type == BEFORE_MODRDN ? "Before" : "After")+"ModRdn";
     }
 }

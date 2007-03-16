@@ -23,6 +23,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="apacheds" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -386,15 +387,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/java-backend-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/ant/ant-junit.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -414,15 +406,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/server/lib/OpenDS.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/server/lib/java-backend-opends-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -572,6 +555,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="java-backend" />
+    <orderEntry type="module" module-name="java-backend-opends" />
     <orderEntryProperties />
   </component>
 </module>

@@ -19,8 +19,7 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
@@ -109,7 +108,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
     public boolean search(
             DN baseDn,
             Filter filter,
-            PenroseSearchResults results
+            SearchResponse response
     ) throws Exception {
 
         log.debug("search("+baseDn+", "+filter+")");
@@ -134,7 +133,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             for (Iterator i=entries.iterator(); i.hasNext(); ) {
                 Entry entry = (Entry)i.next();
                 log.debug("search("+baseDn+", "+filter+") => "+entry.getDn());
-                results.add(entry);
+                response.add(entry);
             }
 
             Date date = (Date)queryExpirationMap.get(key);
@@ -148,11 +147,11 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             return true;
 
         } finally {
-            results.close();
+            response.close();
         }
     }
 
-    public void search(SourceConfig sourceConfig, RDN filter, PenroseSearchResults results) throws Exception {
+    public void search(SourceConfig sourceConfig, RDN filter, SearchResponse response) throws Exception {
 
         log.debug("search("+sourceConfig.getName()+", "+filter+")");
 
@@ -167,10 +166,10 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             if (!sv.contains(filter)) continue;
 
             log.debug("search("+sourceConfig.getName()+", "+filter+") => "+dn);
-            results.add(dn);
+            response.add(dn);
         }
 
-        results.close();
+        response.close();
     }
 
     public void add(DN baseDn, Filter filter, DN dn) throws Exception {
