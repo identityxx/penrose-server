@@ -195,6 +195,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <object-create-rule classname="org.safehaus.penrose.partition.PartitionConfig" />
             <set-properties-rule/>
             <call-method-rule pattern="handler-name" methodname="setHandlerName" paramcount="0" />
+            <call-method-rule pattern="engine-name" methodname="setEngineName" paramcount="0" />
             <set-next-rule methodname="addPartitionConfig" />
         </pattern>
 

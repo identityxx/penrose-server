@@ -66,7 +66,8 @@ public class ConnectionManager implements ConnectionManagerMBean {
                 AdapterConfig adapterConfig = (AdapterConfig)adapterConfigs.get(name);
 
                 Connection connection = new Connection(connectionConfig, adapterConfig);
-
+                connection.setPenroseConfig(penroseConfig);
+                connection.setPenroseContext(penroseContext);
                 connection.init();
                 connections.put(name, connection);
 

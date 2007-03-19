@@ -64,7 +64,7 @@
 <!ATTLIST adapter name CDATA #REQUIRED>
 <!ELEMENT adapter-class (#PCDATA)>
 
-<!ELEMENT partition (handler-name?)>
+<!ELEMENT partition (handler-name?,engine-name?)>
 <!ATTLIST partition name CDATA #REQUIRED>
 <!ATTLIST partition path CDATA #REQUIRED>
 

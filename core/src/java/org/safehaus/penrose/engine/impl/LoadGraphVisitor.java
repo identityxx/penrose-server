@@ -73,7 +73,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        filter = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, primarySourceMapping, filter);
+        filter = engine.getEngineFilterTool().convert(partition, sourceValues, entryMapping, primarySourceMapping, filter);
 
         Map map = new HashMap();
         map.put("primaryKeys", primaryKeys);

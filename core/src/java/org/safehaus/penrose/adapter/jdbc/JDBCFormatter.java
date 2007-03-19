@@ -1,4 +1,4 @@
-package org.safehaus.penrose.jdbc;
+package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
@@ -45,12 +45,12 @@ public class JDBCFormatter {
         return width;
     }
 
-    public static void printRecord(AttributeValues av) throws Exception {
+    public static void printRecord(AttributeValues record, RDN pk) throws Exception {
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Record:", 80));
-        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
+        log.debug(Formatter.displayLine("Record: "+pk, 80));
+        for (Iterator i=record.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection list = (Collection)av.get(name);
+            Collection list = (Collection)record.get(name);
 
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 Object value = j.next();

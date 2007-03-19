@@ -26,6 +26,7 @@ import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -39,8 +40,7 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.jdbc.JDBCFilterTool;
-import org.safehaus.penrose.jdbc.JDBCFormatter;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -83,8 +83,6 @@ public class JDBCAdapter extends Adapter {
 
     GenericObjectPool connectionPool;
     public DataSource ds;
-
-    public JDBCFilterTool filterTool;
 
     public void init() throws Exception {
 
@@ -163,8 +161,6 @@ public class JDBCAdapter extends Adapter {
          }
 
         ds = new PoolingDataSource(connectionPool);
-
-        filterTool = new JDBCFilterTool();
     }
 
     public void dispose() throws Exception {
@@ -173,6 +169,32 @@ public class JDBCAdapter extends Adapter {
 
     public Object openConnection() throws Exception {
         return ds.getConnection();
+    }
+
+    public String toList(Collection list) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            Object object = i.next();
+
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(object.toString());
+        }
+
+        return sb.toString();
+    }
+
+    public String toFilter(Collection list) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        for (Iterator i=list.iterator(); i.hasNext(); ) {
+            Object object = i.next();
+
+            if (sb.length() > 0) sb.append(" and ");
+            sb.append(object.toString());
+        }
+
+        return sb.toString();
     }
 
     public String getFieldNames(SourceConfig sourceConfig) throws Exception {
@@ -245,13 +267,28 @@ public class JDBCAdapter extends Adapter {
         StringBuilder sqlFilter = new StringBuilder();
         if (s != null) sqlFilter.append(s);
 
-        List parameters = new ArrayList();
-        List fieldConfigs = new ArrayList();
+        List parameterValues = new ArrayList();
+        List parameterFieldConfigs = new ArrayList();
+
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+
         if (filter != null) {
-            String f = filterTool.convert(sourceConfig, filter, parameters, fieldConfigs);
-            if (f != null) {
+
+            JDBCFilterFactory filterFactory = new JDBCFilterFactory(
+                    partition,
+                    entryMapping,
+                    sourceMapping,
+                    interpreter,
+                    parameterValues,
+                    parameterFieldConfigs
+            );
+
+            Filter newFilter = filterFactory.convert(filter);
+            String sourceFilter = filterFactory.generate(newFilter);
+
+            if (sourceFilter != null) {
                 if (sqlFilter.length() > 0) sqlFilter.append(" and ");
-                sqlFilter.append(f);
+                sqlFilter.append(sourceFilter);
             }
         }
 
@@ -286,9 +323,9 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
     
-            if (parameters.size() > 0) {
+            if (parameterValues.size() > 0) {
                 int counter = 0;
-                for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
+                for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
                     Object param = i.next();
                     FieldConfig fieldConfig = (FieldConfig)j.next();
                     String type = fieldConfig.getType();
@@ -299,7 +336,7 @@ public class JDBCAdapter extends Adapter {
                     log.debug("Parameters:");
 
                     counter = 0;
-                    for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
+                    for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
                         Object param = i.next();
                         FieldConfig fieldConfig = (FieldConfig)j.next();
                         String type = fieldConfig.getType();
@@ -324,13 +361,14 @@ public class JDBCAdapter extends Adapter {
             boolean hasMore = rs.next();
 
             while (hasMore && (sizeLimit == 0 || totalCount<sizeLimit)) {
-                AttributeValues row = getValues(sourceConfig, rs);
+                AttributeValues record = new AttributeValues();
+                RDN pk = getRecord(sourceConfig, rs, record);
 
                 if (debug) {
-                    JDBCFormatter.printRecord(row);
+                    JDBCFormatter.printRecord(record, pk);
                 }
 
-                ConnectorSearchResult result = new ConnectorSearchResult(row);
+                ConnectorSearchResult result = new ConnectorSearchResult(record);
                 result.setEntryMapping(entryMapping);
                 result.setSourceMapping(sourceMapping);
                 result.setSourceConfig(sourceConfig);
@@ -343,6 +381,324 @@ public class JDBCAdapter extends Adapter {
             if (sizeLimit != 0 && hasMore) {
                 log.debug("Size limit exceeded.");
                 throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+
+            response.close();
+        }
+    }
+
+    public String getTableName(SourceConfig sourceConfig) {
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String table = sourceConfig.getParameter(TABLE);
+
+        if (table == null) table = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) table = catalog +"."+table;
+        if (schema != null) table = schema +"."+table;
+
+        return table;
+    }
+
+    public Collection getTables(Partition partition, Collection sourceMappings) {
+
+        Collection tables = new ArrayList();
+
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String name = sourceMapping.getName();
+            String table = getTableName(sourceConfig);
+
+            tables.add(table+" "+name);
+        }
+
+        return tables;
+    }
+
+    public Collection getFields(Partition partition, Collection sourceMappings) {
+
+        Collection fields = new ArrayList();
+
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String name = sourceMapping.getName();
+
+            Collection fieldConfigs = sourceConfig.getFieldConfigs();
+            for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+
+                fields.add(name+"."+fieldConfig.getOriginalName());
+            }
+        }
+
+        return fields;
+    }
+
+    public Collection getRelationships(Partition partition, EntryMapping entryMapping, Collection sourceMappings) {
+
+        Collection sourceNames = new HashSet();
+
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            sourceNames.add(sourceMapping.getName());
+        }
+
+        Collection relationships = new ArrayList();
+
+        for (Iterator i=entryMapping.getRelationships().iterator(); i.hasNext(); ) {
+            Relationship relationship = (Relationship)i.next();
+
+            String leftSource = relationship.getLeftSource();
+            String rightSource = relationship.getRightSource();
+
+            if (!sourceNames.contains(leftSource) || !sourceNames.contains(rightSource)) continue;
+
+            relationships.add(relationship.getExpression());
+        }
+
+        return relationships;
+    }
+
+    public Collection getOrders(Partition partition, Collection sourceMappings) {
+
+        Collection orders = new ArrayList();
+
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String name = sourceMapping.getName();
+
+            Collection fieldConfigs = sourceConfig.getFieldConfigs();
+            for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+
+                orders.add(name+"."+fieldConfig.getOriginalName());
+            }
+        }
+
+        return orders;
+    }
+
+    public void search(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        Filter filter = request.getFilter();
+
+        if (debug) {
+            Collection names = new ArrayList();
+            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                names.add(sourceMapping.getName());
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Search "+names, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displayLine(" - Scope: "+ LDAPUtil.getScope(request.getScope()), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        Collection fields = getFields(partition, sourceMappings);
+        Collection tables = getTables(partition, sourceMappings);
+
+        Collection filters = getRelationships(partition, entryMapping, sourceMappings);
+
+        List parameterValues = new ArrayList();
+        List parameterFieldCofigs = new ArrayList();
+
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+
+        JDBCFilterFactory filterFactory = new JDBCFilterFactory(
+                partition,
+                entryMapping,
+                sourceMappings,
+                interpreter,
+                parameterValues,
+                parameterFieldCofigs
+        );
+
+        Filter sourceFilter = filterFactory.convert(filter);
+        if (debug) log.debug("Source filter: "+sourceFilter);
+
+        String sqlFilter = filterFactory.generate(sourceFilter);
+        if (sqlFilter.length() > 0) {
+            if (debug) log.debug("SQL filter: "+sqlFilter);
+            filters.add(sqlFilter);
+        }
+
+        Map tableAliases = filterFactory.getTableAliases();
+        for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
+            String alias = (String)i.next();
+            String sourceName = (String)tableAliases.get(alias);
+
+            SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String table = getTableName(sourceConfig);
+            tables.add(table+" "+alias);
+
+            for (Iterator j=entryMapping.getRelationships().iterator(); j.hasNext(); ) {
+                Relationship relationship = (Relationship)j.next();
+
+                String leftSource = relationship.getLeftSource();
+                String leftField = relationship.getLeftField();
+
+                String rightSource = relationship.getRightSource();
+                String rightField = relationship.getRightField();
+
+                String expression;
+                if (sourceName.equals(leftSource)) {
+                    expression = alias+"."+leftField+" = "+rightSource+"."+rightField;
+
+                } else if (sourceName.equals(rightSource)) {
+                    expression = leftSource+"."+leftField+" = "+alias+"."+rightField;
+
+                } else {
+                    continue;
+                }
+
+                filters.add(expression);
+            }
+        }
+/*
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String defaultFilter = sourceConfig.getParameter(FILTER);
+
+            if (defaultFilter != null) {
+                if (debug) log.debug("Default filter: "+defaultFilter);
+                filters.add(defaultFilter);
+            }
+        }
+*/
+        Collection orders = getOrders(partition, sourceMappings);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("select distinct ");
+        sb.append(toList(fields));
+
+        sb.append(" from ");
+        sb.append(toList(tables));
+
+        if (filters.size() > 0) {
+            sb.append(" where ");
+            sb.append(toFilter(filters));
+        }
+
+        sb.append(" order by ");
+        sb.append(toList(orders));
+
+/*
+        int totalCount = response.getTotalCount();
+        long sizeLimit = request.getSizeLimit();
+
+        if (debug) {
+            if (sizeLimit == 0) {
+                log.debug("Retrieving all entries.");
+            } else {
+                log.debug("Retrieving "+(sizeLimit - totalCount)+" entries.");
+            }
+        }
+*/
+
+        String sql = sb.toString();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            Collection lines = Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(Formatter.displayLine(line, 80));
+            }
+            log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Parameters:");
+
+            int counter = 1;
+            for (Iterator i=parameterValues.iterator(), j=parameterFieldCofigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
+                Object param = i.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String type = fieldConfig.getType();
+                log.debug(" - "+counter+" = "+param+" ("+type+")");
+            }
+        }
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            ps = con.prepareStatement(sql);
+
+            int counter = 1;
+            for (Iterator i=parameterValues.iterator(), j=parameterFieldCofigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
+                Object param = i.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                String type = fieldConfig.getType();
+                setParameter(ps, counter, param, type);
+            }
+
+            rs = ps.executeQuery();
+
+            RDN lastPk = null;
+            AttributeValues lastRecord = null;
+
+            boolean hasMore = rs.next();
+            while (hasMore) {
+                AttributeValues record = new AttributeValues();
+                RDN pk = getRecord(partition, sourceMappings, rs, record);
+
+                if (lastPk == null) {
+                    lastPk = pk;
+                    lastRecord = record;
+
+                } else if (pk.equals(lastPk)) {
+                    lastRecord.add(record);
+
+                } else {
+                    ConnectorSearchResult result = new ConnectorSearchResult(lastRecord);
+                    result.setEntryMapping(entryMapping);
+                    //result.setSourceMapping(sourceMapping);
+                    //result.setSourceConfig(sourceConfig);
+                    response.add(result);
+
+                    lastPk = pk;
+                    lastRecord = record;
+                }
+
+                if (debug) {
+                    JDBCFormatter.printRecord(record, pk);
+                }
+
+                hasMore = rs.next();
+            }
+
+            if (lastPk != null) {
+                ConnectorSearchResult result = new ConnectorSearchResult(lastRecord);
+                result.setEntryMapping(entryMapping);
+                //result.setSourceMapping(sourceMapping);
+                //result.setSourceConfig(sourceConfig);
+                response.add(result);
             }
 
         } finally {
@@ -399,9 +755,53 @@ public class JDBCAdapter extends Adapter {
         return rb.toRdn();
     }
 
-    public AttributeValues getValues(SourceConfig sourceConfig, ResultSet rs) throws Exception {
+    public RDN getRecord(
+            Partition partition,
+            Collection sourceMappings,
+            ResultSet rs,
+            AttributeValues record
+    ) throws Exception {
 
-        AttributeValues av = new AttributeValues();
+        RDNBuilder rb = new RDNBuilder();
+
+        int source = 1;
+        int column = 1;
+
+        for (Iterator i=sourceMappings.iterator(); i.hasNext(); source++) {
+            SourceMapping sourceMapping = (SourceMapping)i.next();
+            String sourceName = sourceMapping.getName();
+
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            Collection fieldConfigs = sourceConfig.getFieldConfigs();
+            for (Iterator j=fieldConfigs.iterator(); j.hasNext(); column++) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+
+                Object value = rs.getObject(column);
+                if (value == null) continue;
+
+                String fieldName = fieldConfig.getName();
+                String name = sourceName+"."+fieldName;
+
+                record.add(name, value);
+
+                if (source != 1 || !fieldConfig.isPrimaryKey()) continue;
+                rb.set(name, value);
+            }
+        }
+
+        //record.set("primaryKey", rb.toRdn());
+        //log.debug("=> values: "+record);
+
+        return rb.toRdn();
+    }
+
+    public RDN getRecord(
+            SourceConfig sourceConfig,
+            ResultSet rs,
+            AttributeValues record
+    ) throws Exception {
+
         RDNBuilder rb = new RDNBuilder();
 
         ResultSetMetaData rsmd = rs.getMetaData();
@@ -420,16 +820,16 @@ public class JDBCAdapter extends Adapter {
 
             String name = fieldConfig.getName();
             value = formatAttributeValue(rsmd, c, value, fieldConfig);
-            av.add(name, value);
+            record.add(name, value);
 
             if (!fieldConfig.isPrimaryKey()) continue;
             rb.set(name, value);
         }
 
-        av.set("primaryKey", rb.toRdn());
-        //log.debug("=> values: "+av);
+        //record.set("primaryKey", rb.toRdn());
+        //log.debug("=> values: "+record);
 
-        return av;
+        return rb.toRdn();
     }
 
     public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {

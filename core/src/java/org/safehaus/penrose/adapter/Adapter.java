@@ -28,6 +28,8 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -42,8 +44,11 @@ public abstract class Adapter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private AdapterConfig adapterConfig;
-    private Connection connection;
+    protected PenroseConfig penroseConfig;
+    protected PenroseContext penroseContext;
+
+    protected AdapterConfig adapterConfig;
+    protected Connection connection;
 
     /**
      * Initialize.
@@ -79,6 +84,16 @@ public abstract class Adapter {
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SourceConfig sourceConfig,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void search(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
@@ -180,5 +195,21 @@ public abstract class Adapter {
 
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
         return filter;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

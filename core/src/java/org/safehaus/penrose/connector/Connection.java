@@ -27,6 +27,8 @@ import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +42,12 @@ public class Connection implements ConnectionMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private ConnectionConfig connectionConfig;
-    private AdapterConfig adapterConfig;
-    private Adapter adapter;
+    protected PenroseConfig penroseConfig;
+    protected PenroseContext penroseContext;
+
+    protected ConnectionConfig connectionConfig;
+    protected AdapterConfig adapterConfig;
+    protected Adapter adapter;
 
     public Connection(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
         this.connectionConfig = connectionConfig;
@@ -59,6 +64,8 @@ public class Connection implements ConnectionMBean {
         Class clazz = Class.forName(adapterClass);
         adapter = (Adapter)clazz.newInstance();
 
+        adapter.setPenroseConfig(penroseConfig);
+        adapter.setPenroseContext(penroseContext);
         adapter.setAdapterConfig(adapterConfig);
         adapter.setConnection(this);
 
@@ -121,6 +128,17 @@ public class Connection implements ConnectionMBean {
         adapter.search(partition, entryMapping, sourceMapping, sourceConfig, request, response);
     }
 
+    public void search(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            Collection primaryKeys,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+        adapter.search(partition, entryMapping, sourceMappings, request, response);
+    }
+
     public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
         adapter.add(sourceConfig, pk, sourceValues);
     }
@@ -155,5 +173,21 @@ public class Connection implements ConnectionMBean {
 
     public void setAdapterConfig(AdapterConfig adapterConfig) {
         this.adapterConfig = adapterConfig;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

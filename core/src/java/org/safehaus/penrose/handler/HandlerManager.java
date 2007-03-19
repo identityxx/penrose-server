@@ -100,20 +100,21 @@ public class HandlerManager {
         return (Handler)handlers.get(name);
     }
 
-    public Handler getHandler(EntryMapping entryMapping) {
-        String handlerName = entryMapping == null ? "DEFAULT" : entryMapping.getHandlerName();
-        if (log.isDebugEnabled()) {
-            log.debug("Getting handler for entry "+entryMapping.getDn()+": "+handlerName);
-        }
-        return (Handler)handlers.get(handlerName);
+    public Handler getHandler(Partition partition, EntryMapping entryMapping) {
+        String handlerName = entryMapping.getHandlerName();
+        if (handlerName != null) return (Handler)handlers.get(handlerName);
+
+        handlerName = partition.getHandlerName();
+        if (handlerName != null) return (Handler)handlers.get(handlerName);
+
+        return (Handler)handlers.get("DEFAULT");
     }
 
     public Handler getHandler(Partition partition) {
-        String handlerName = partition == null ? "DEFAULT" : partition.getHandlerName();
-        if (log.isDebugEnabled()) {
-            log.debug("Getting handler for partition "+partition+": "+handlerName);
-        }
-        return (Handler)handlers.get(handlerName);
+        String handlerName = partition.getHandlerName();
+        if (handlerName != null) return (Handler)handlers.get(handlerName);
+
+        return (Handler)handlers.get("DEFAULT");
     }
     
     public void clear() {
@@ -172,7 +173,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(entryMapping);
+                Handler handler = getHandler(partition, entryMapping);
                 handler.add(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -205,7 +206,7 @@ public class HandlerManager {
             EntryMapping entryMapping = (EntryMapping)i.next();
             if (debug) log.debug("Binding "+dn+" in "+entryMapping.getDn());
 
-            Handler handler = getHandler(entryMapping);
+            Handler handler = getHandler(partition, entryMapping);
             handler.bind(session, partition, entryMapping, request, response);
         }
     }
@@ -245,7 +246,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(entryMapping);
+                Handler handler = getHandler(partition, entryMapping);
                 return handler.compare(session, partition, entryMapping, request, response);
             } catch (Exception e) {
                 exception = e;
@@ -287,7 +288,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(entryMapping);
+                Handler handler = getHandler(partition, entryMapping);
                 handler.delete(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -333,7 +334,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(entryMapping);
+                Handler handler = getHandler(partition, entryMapping);
                 handler.modify(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -379,7 +380,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(entryMapping);
+                Handler handler = getHandler(partition, entryMapping);
                 handler.modrdn(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -474,7 +475,7 @@ public class HandlerManager {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        Handler handler = getHandler(entryMapping);
+                        Handler handler = getHandler(partition, entryMapping);
 
                         handler.search(
                                 session,
@@ -521,7 +522,7 @@ public class HandlerManager {
             EntryMapping entryMapping = (EntryMapping)i.next();
             if (debug) log.debug("Unbinding "+bindDn+" from "+entryMapping.getDn());
 
-            Handler handler = getHandler(entryMapping);
+            Handler handler = getHandler(partition, entryMapping);
             handler.unbind(session, partition, entryMapping, request, response);
         }
     }

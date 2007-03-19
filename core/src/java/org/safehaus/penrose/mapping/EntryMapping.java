@@ -274,7 +274,7 @@ public class EntryMapping implements Cloneable {
     public SourceMapping getSourceMapping(String name) {
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
-            if (name.equals(sourceMapping.getName())) return sourceMapping;
+            if (sourceMapping.getName().equals(name)) return sourceMapping;
         }
         return null;
     }
@@ -389,7 +389,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public String getEngineName() {
-        return engineMapping == null ? "DEFAULT" : engineMapping.getEngineName();
+        return engineMapping == null ? null : engineMapping.getEngineName();
     }
 
     public void addACI(ACI aci) {

@@ -81,35 +81,13 @@ public class SearchEngine {
                 return;
             }
 
-            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-            final String sourceName = sourceMapping.getName();
-            String prefix = sourceName+".";
-
-            Filter filter = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, sourceMapping, request.getFilter());
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                if (!name.startsWith(prefix)) continue;
-
-                String fieldName = name.substring(sourceName.length()+1);
-                Collection values = sourceValues.get(name);
-                if (values == null) continue;
-
-                Object value = values.iterator().next();
-                filter = FilterTool.appendAndFilter(filter, new SimpleFilter(fieldName, "=", value.toString()));
-            }
-
-            if (debug) log.debug("Source filter: "+filter);
-
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     ConnectorSearchResult result = (ConnectorSearchResult)object;
                     EntryMapping em = result.getEntryMapping();
-                    SourceMapping sm = result.getSourceMapping();
 
                     AttributeValues sv = new AttributeValues(sourceValues);
-                    sv.set(sm.getName(), result.getSourceValues());
+                    sv.set(result.getSourceValues());
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -129,8 +107,22 @@ public class SearchEngine {
                 }
             };
 
+            Filter filter = request.getFilter();
+
+            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
             Connector connector = engine.getConnector(sourceConfig);
-            connector.search(partition, entryMapping, sourceMapping, sourceConfig, null, filter, request, sr);
+            
+            connector.search(
+                    partition,
+                    entryMapping,
+                    sourceMappings,
+                    null,
+                    filter,
+                    request,
+                    sr
+            );
 
         } finally {
             response.close();

@@ -45,7 +45,7 @@ public class EngineFilterTool {
         this.engine = engine;
     }
 
-    public Filter toSourceFilter(
+    public Filter convert(
             Partition partition,
             AttributeValues parentValues,
             EntryMapping entryMapping,
@@ -57,25 +57,25 @@ public class EngineFilterTool {
         if (debug) log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
 
         if (filter instanceof NotFilter) {
-            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (NotFilter) filter);
+            return convert(partition, parentValues, entryMapping, sourceMapping, (NotFilter) filter);
 
         } else if (filter instanceof AndFilter) {
-            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (AndFilter) filter);
+            return convert(partition, parentValues, entryMapping, sourceMapping, (AndFilter) filter);
 
         } else if (filter instanceof OrFilter) {
-            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (OrFilter) filter);
+            return convert(partition, parentValues, entryMapping, sourceMapping, (OrFilter) filter);
 
         } else if (filter instanceof SimpleFilter) {
-            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (SimpleFilter) filter);
+            return convert(partition, parentValues, entryMapping, sourceMapping, (SimpleFilter) filter);
 
         } else if (filter instanceof SubstringFilter) {
-            return toSourceFilter(partition, parentValues, entryMapping, sourceMapping, (SubstringFilter) filter);
+            return convert(partition, parentValues, entryMapping, sourceMapping, (SubstringFilter) filter);
         }
 
         return null;
     }
 
-    public Filter toSourceFilter(
+    public Filter convert(
             Partition partition,
             AttributeValues parentValues,
             EntryMapping entryMapping,
@@ -87,7 +87,7 @@ public class EngineFilterTool {
         String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
-        if (attributeName.equals("objectClass")) {
+        if (attributeName.equalsIgnoreCase("objectClass")) {
             if (attributeValue.equals("*"))
                 return null;
         }
@@ -119,7 +119,7 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(
+    public Filter convert(
             Partition partition,
             AttributeValues parentValues,
             EntryMapping entryMapping,
@@ -162,17 +162,17 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
+    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
             throws Exception {
 
         Filter f = filter.getFilter();
 
-        Filter newFilter = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
+        Filter newFilter = convert(partition, parentValues, entry, sourceMapping, f);
 
         return new NotFilter(newFilter);
     }
 
-    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
+    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -181,7 +181,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
+            Filter nf = convert(partition, parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             af.addFilter(nf);
@@ -192,7 +192,7 @@ public class EngineFilterTool {
         return af;
     }
 
-    public Filter toSourceFilter(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
+    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -201,7 +201,7 @@ public class EngineFilterTool {
         for (Iterator i=filters.iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
 
-            Filter nf = toSourceFilter(partition, parentValues, entry, sourceMapping, f);
+            Filter nf = convert(partition, parentValues, entry, sourceMapping, f);
             if (nf == null) continue;
 
             of.addFilter(nf);

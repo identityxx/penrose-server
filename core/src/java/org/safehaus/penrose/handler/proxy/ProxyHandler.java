@@ -20,7 +20,7 @@ public class ProxyHandler extends DefaultHandler {
     public ProxyHandler() throws Exception {
     }
 
-    public Engine getEngine(EntryMapping entryMapping) {
+    public Engine getEngine(Partition partition, EntryMapping entryMapping) {
         return engineManager.getEngine("PROXY");
     }
 
@@ -42,12 +42,7 @@ public class ProxyHandler extends DefaultHandler {
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         SearchResponse sr = new SearchResponse() {
             public void add(Object object) throws Exception {

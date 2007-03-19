@@ -157,12 +157,7 @@ public abstract class Handler {
             AddResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN dn = request.getDn();
         Attributes attributeValues = request.getAttributes();
@@ -179,12 +174,7 @@ public abstract class Handler {
             BindResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN dn = request.getDn();
         String password = request.getPassword();
@@ -201,12 +191,7 @@ public abstract class Handler {
             UnbindResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN bindDn = request.getDn();
         Entry entry = null; //find(session, partition, entryMapping, dn);
@@ -299,12 +284,7 @@ public abstract class Handler {
             DeleteResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN dn = request.getDn();
 
@@ -320,12 +300,7 @@ public abstract class Handler {
             ModifyResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN dn = request.getDn();
         Collection modifications = request.getModifications();
@@ -342,12 +317,7 @@ public abstract class Handler {
             ModRdnResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-        }
+        Engine engine = getEngine(partition, entryMapping);
 
         DN dn = request.getDn();
         RDN newRdn = request.getNewRdn();
@@ -408,8 +378,14 @@ public abstract class Handler {
         this.filterTool = filterTool;
     }
 
-    public Engine getEngine(EntryMapping entryMapping) {
-        return engineManager.getEngine(entryMapping.getEngineName());
+    public Engine getEngine(Partition partition, EntryMapping entryMapping) {
+        String engineName = entryMapping.getEngineName();
+        if (engineName != null) return engineManager.getEngine(engineName);
+
+        engineName = partition.getEngineName();
+        if (engineName != null) return engineManager.getEngine(engineName);
+
+        return engineManager.getEngine("DEFAULT");
     }
 
     public SchemaManager getSchemaManager() {

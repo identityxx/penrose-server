@@ -363,9 +363,19 @@ public class PenroseConfigWriter {
         if (partitionConfig.getName() != null) element.addAttribute("name", partitionConfig.getName());
         if (partitionConfig.getPath() != null) element.addAttribute("path", partitionConfig.getPath());
 
-        Element handlerName = new DefaultElement("handler-name");
-        handlerName.add(new DefaultText(partitionConfig.getHandlerName()));
-        element.add(handlerName);
+        String s = partitionConfig.getHandlerName();
+        if (s != null && !"".equals(s)) {
+            Element handlerName = new DefaultElement("handler-name");
+            handlerName.add(new DefaultText(s));
+            element.add(handlerName);
+        }
+
+        s = partitionConfig.getEngineName();
+        if (s != null && !"".equals(s)) {
+            Element engineName = new DefaultElement("engine-name");
+            engineName.add(new DefaultText(s));
+            element.add(engineName);
+        }
 
         return element;
     }

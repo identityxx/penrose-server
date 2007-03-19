@@ -61,6 +61,10 @@ public class Partition {
         return partitionConfig.getHandlerName();
     }
 
+    public String getEngineName() {
+        return partitionConfig.getEngineName();
+    }
+
     public boolean contains(DN dn) {
         for (Iterator i=rootEntryMappings.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
@@ -502,8 +506,8 @@ public class Partition {
                 EntryMapping parentMapping = (EntryMapping)i.next();
                 if (log.isDebugEnabled()) log.debug("Found parent "+parentMapping.getDn());
 
-                String engineName = parentMapping.getEngineName();
-                if ("PROXY".equals(engineName)) { // if parent is proxy, include it in results
+                String handlerName = parentMapping.getHandlerName();
+                if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
 
                 } else { // otherwise check for matching siblings

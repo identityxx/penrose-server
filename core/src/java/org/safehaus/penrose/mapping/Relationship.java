@@ -87,6 +87,18 @@ public class Relationship implements Cloneable {
         return operands.get(0).toString();
     }
 
+    public String getLeftSource() {
+        String lhs = getLhs();
+        int i = lhs.indexOf(".");
+        return lhs.substring(0, i);
+    }
+
+    public String getLeftField() {
+        String lhs = getLhs();
+        int i = lhs.indexOf(".");
+        return lhs.substring(i+1);
+    }
+
     public void setLhs(String lhs) {
         operands.set(0, lhs);
     }
@@ -102,6 +114,18 @@ public class Relationship implements Cloneable {
     public String getRhs() {
         if (operands.size() < 2) return null;
         return operands.get(1).toString();
+    }
+
+    public String getRightSource() {
+        String rhs = getRhs();
+        int i = rhs.indexOf(".");
+        return rhs.substring(0, i);
+    }
+
+    public String getRightField() {
+        String rhs = getRhs();
+        int i = rhs.indexOf(".");
+        return rhs.substring(i+1);
     }
 
     public void setRhs(String rhs) {

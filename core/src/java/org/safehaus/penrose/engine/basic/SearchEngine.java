@@ -19,6 +19,7 @@ import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -41,7 +42,6 @@ public class SearchEngine {
      * @param partition
      * @param sourceValues
      * @param entryMapping
-     * @param filter
      * @param results Collection of EntryData.
      * @throws Exception
      */
@@ -49,8 +49,7 @@ public class SearchEngine {
             final Partition partition,
             final AttributeValues sourceValues,
             final EntryMapping entryMapping,
-            final Filter filter,
-            final SearchRequest sc,
+            final SearchRequest request,
             final SearchResponse results
     ) throws Exception {
 
@@ -70,35 +69,13 @@ public class SearchEngine {
                 return;
             }
 
-            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-            final String sourceName = sourceMapping.getName();
-            String prefix = sourceName+".";
-
-            Filter f = engine.getEngineFilterTool().toSourceFilter(partition, sourceValues, entryMapping, sourceMapping, filter);
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                if (!name.startsWith(prefix)) continue;
-
-                String fieldName = name.substring(sourceName.length()+1);
-                Collection values = sourceValues.get(name);
-                if (values == null) continue;
-
-                Object value = values.iterator().next();
-                f = FilterTool.appendAndFilter(f, new SimpleFilter(fieldName, "=", value.toString()));
-            }
-
-            if (debug) log.debug("Source filter: "+f);
-
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     ConnectorSearchResult result = (ConnectorSearchResult)object;
                     EntryMapping em = result.getEntryMapping();
-                    SourceMapping sm = result.getSourceMapping();
 
                     AttributeValues sv = new AttributeValues(sourceValues);
-                    sv.set(sm.getName(), result.getSourceValues());
+                    sv.set(result.getSourceValues());
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -118,8 +95,22 @@ public class SearchEngine {
                 }
             };
 
+            Filter filter = request.getFilter();
+
+            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
             Connector connector = engine.getConnector(sourceConfig);
-            connector.search(partition, entryMapping, sourceMapping, sourceConfig, null, f, sc, sr);
+
+            connector.search(
+                    partition,
+                    entryMapping,
+                    sourceMappings,
+                    null,
+                    filter,
+                    request,
+                    sr
+            );
 
         } finally {
             results.close();
@@ -137,8 +128,8 @@ public class SearchEngine {
     public DN computeDn(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues)
-            throws Exception {
+            AttributeValues sourceValues
+    ) throws Exception {
 
         //boolean debug = log.isDebugEnabled();
 
@@ -172,23 +163,21 @@ public class SearchEngine {
 
         EntryMapping em = entryMapping;
 
+        Interpreter interpreter = engine.getInterpreterManager().newInstance();
+        interpreter.set(sourceValues);
+
         while (em != null) {
             Collection rdnAttributes = em.getRdnAttributeMappings();
 
             for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
                 AttributeMapping attributeMapping = (AttributeMapping)i.next();
-                String variable = attributeMapping.getVariable();
-                if (variable == null) continue; // skip static rdn
 
-                Object value = null;
-
-                Collection values = sourceValues.get(variable);
-                if (values != null) {
-                    if (values.size() >= 1) {
-                        value = values.iterator().next();
-                    }
+                Object value = interpreter.eval(em, attributeMapping);
+                if (value instanceof Collection) {
+                    Collection c = (Collection)value;
+                    value = c.iterator().next();
                 }
-
+                
                 args.add(value);
             }
 

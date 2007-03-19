@@ -82,7 +82,7 @@ public class AttributeValues implements Cloneable, Comparable {
 
             String targetName = prefix == null ? name : prefix+"."+name;
             Collection c = get(targetName);
-            if (c == null) c = new LinkedList();
+            if (c == null) c = new LinkedHashSet();
             c.add(value);
             set(targetName, c);
         }
@@ -98,7 +98,7 @@ public class AttributeValues implements Cloneable, Comparable {
             Object value = rdn.get(name);
 
             String targetName = prefix == null ? name : prefix+"."+name;
-            Collection c = new LinkedList();
+            Collection c = new LinkedHashSet();
             c.add(value);
             set(targetName, c);
         }
@@ -122,7 +122,7 @@ public class AttributeValues implements Cloneable, Comparable {
     }
 
     public void set(String name, Collection values) {
-        Collection c = new LinkedList();
+        Collection c = new LinkedHashSet();
         c.addAll(values);
         this.values.put(name, c);
     }
@@ -136,7 +136,7 @@ public class AttributeValues implements Cloneable, Comparable {
             return;
         }
 
-        Collection c = new LinkedList();
+        Collection c = new LinkedHashSet();
         c.add(value);
         this.values.put(name, c);
     }
@@ -152,8 +152,7 @@ public class AttributeValues implements Cloneable, Comparable {
         
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            //c = new TreeSet();
-            c = new LinkedList();
+            c = new LinkedHashSet();
             this.values.put(name, c);
         }
         c.add(value);
@@ -167,8 +166,7 @@ public class AttributeValues implements Cloneable, Comparable {
         if (values == null) return;
         Collection c = (Collection)this.values.get(name);
         if (c == null) {
-            //c = new TreeSet();
-            c = new LinkedList();
+            c = new LinkedHashSet();
             this.values.put(name, c);
         }
         c.addAll(values);
@@ -317,7 +315,7 @@ public class AttributeValues implements Cloneable, Comparable {
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = (Collection)values.get(name);
-            Collection s = new LinkedList();
+            Collection s = new LinkedHashSet();
             s.addAll(c);
             attributeValues.values.put(name, s);
         }

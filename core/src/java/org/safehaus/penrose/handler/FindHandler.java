@@ -54,12 +54,7 @@ public class FindHandler {
 	 */
     public Entry find(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
 
-        Engine engine = handler.getEngine(entryMapping);
-
-        if (engine == null) {
-            log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-            return null;
-        }
+        Engine engine = handler.getEngine(partition, entryMapping);
 
         AttributeValues sourceValues = new AttributeValues();
 
@@ -126,12 +121,7 @@ public class FindHandler {
                 }
             }
 
-            Engine engine = handler.getEngine(entryMapping);
-
-            if (engine == null) {
-                log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-                continue;
-            }
+            Engine engine = handler.getEngine(partition, entryMapping);
 
             SearchRequest request = new SearchRequest();
             request.setDn(dn);

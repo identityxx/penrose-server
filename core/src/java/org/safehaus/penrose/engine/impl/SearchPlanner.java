@@ -137,7 +137,7 @@ public class SearchPlanner extends GraphVisitor {
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getEngineFilterTool().toSourceFilter(partition, null, entryMapping, sourceMapping, searchFilter);
+        Filter sourceFilter = engine.getEngineFilterTool().convert(partition, null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 

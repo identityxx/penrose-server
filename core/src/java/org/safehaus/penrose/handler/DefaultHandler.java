@@ -94,12 +94,7 @@ public class DefaultHandler extends Handler {
                 }
             };
 
-            Engine engine = getEngine(entryMapping);
-
-            if (engine == null) {
-                if (debug) log.debug("Engine "+entryMapping.getEngineName()+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-            }
+            Engine engine = getEngine(partition, entryMapping);
 
             AttributeValues sourceValues = new AttributeValues();
 
@@ -119,7 +114,7 @@ public class DefaultHandler extends Handler {
 
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
-                Handler handler = handlerManager.getHandler(childMapping);
+                Handler handler = handlerManager.getHandler(partition, childMapping);
 
                 handler.search(
                         session,

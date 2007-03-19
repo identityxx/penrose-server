@@ -346,6 +346,24 @@ public class Connector {
         connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, newRequest, response);
     }
 
+    public void search(
+            final Partition partition,
+            final EntryMapping entryMapping,
+            final Collection sourceMappings,
+            final Collection primaryKeys,
+            final Filter filter,
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+        connection.search(partition, entryMapping, sourceMappings, primaryKeys, request, response);
+    }
+
     public RDN store(
             Partition partition,
             SourceConfig sourceConfig,

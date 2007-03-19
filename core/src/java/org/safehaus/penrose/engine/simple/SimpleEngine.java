@@ -415,10 +415,11 @@ public class SimpleEngine extends Engine {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Mapping DN: "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
-            log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(request.getScope()), 80));
+            log.debug(Formatter.displayLine("Base DN       : "+baseDn, 80));
+            log.debug(Formatter.displayLine("Base Mapping  : "+baseMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Filter        : "+filter, 80));
+            log.debug(Formatter.displayLine("Scope         : "+LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -454,12 +455,17 @@ public class SimpleEngine extends Engine {
         }
     }
 
-    public void extractSourceValues(Partition partition, EntryMapping entryMapping, DN dn, AttributeValues sourceValues) throws Exception {
+    public void extractSourceValues(
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            AttributeValues sourceValues
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
-        for (Iterator i=dn.getRdns().iterator(); i.hasNext(); ) {
+        for (Iterator i=dn.getRdns().iterator(); i.hasNext() && entryMapping != null; ) {
             RDN rdn = (RDN)i.next();
 
             Collection sourceMappings = entryMapping.getSourceMappings();
