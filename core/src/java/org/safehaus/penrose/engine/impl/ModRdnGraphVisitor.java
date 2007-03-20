@@ -149,7 +149,9 @@ public class ModRdnGraphVisitor extends GraphVisitor {
                     pk,
                     modifications,
                     oldValues,
-                    newValues
+                    newValues,
+                    null,
+                    null
             );
 
         } catch (LDAPException e) {

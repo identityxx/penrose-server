@@ -148,7 +148,9 @@ public class ModifyGraphVisitor extends GraphVisitor {
                 pk,
                 modifications,
                 oldValues,
-                newValues
+                newValues,
+                null,
+                null
         );
 
         modifiedSourceValues.remove(sourceMapping.getName());

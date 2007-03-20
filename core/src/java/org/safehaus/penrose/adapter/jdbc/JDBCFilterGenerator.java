@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCFilterFactory {
+public class JDBCFilterGenerator {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -48,28 +48,37 @@ public class JDBCFilterFactory {
 
     Map tableAliases = new HashMap();
 
-    public JDBCFilterFactory(
+    Filter ldapFilter;
+    Filter sourceFilter;
+    String jdbcFilter;
+
+    public JDBCFilterGenerator(
             Partition partition,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             Interpreter interpreter,
             Collection parameterValues,
-            Collection parameterFieldConfigs
+            Collection parameterFieldConfigs,
+            Filter ldapFilter
     ) {
         this.partition = partition;
         this.entryMapping = entryMapping;
+
         this.interpreter = interpreter;
         this.parameterValues = parameterValues;
         this.parameterFieldConfigs = parameterFieldConfigs;
+
+        this.ldapFilter = ldapFilter;
     }
 
-    public JDBCFilterFactory(
+    public JDBCFilterGenerator(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
             Interpreter interpreter,
             Collection parameterValues,
-            Collection parameterFieldConfigs
+            Collection parameterFieldConfigs,
+            Filter ldapFilter
     ) {
         this.partition = partition;
         this.entryMapping = entryMapping;
@@ -80,6 +89,8 @@ public class JDBCFilterFactory {
         this.interpreter = interpreter;
         this.parameterValues = parameterValues;
         this.parameterFieldConfigs = parameterFieldConfigs;
+
+        this.ldapFilter = ldapFilter;
     }
 
     public Filter convert(
@@ -100,6 +111,9 @@ public class JDBCFilterFactory {
 
         } else if (filter instanceof SubstringFilter) {
             return convert((SubstringFilter)filter);
+
+        } else if (filter instanceof PresentFilter) {
+            return convert((PresentFilter)filter);
         }
 
         return null;
@@ -178,10 +192,6 @@ public class JDBCFilterFactory {
         String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
-        if (attributeName.equalsIgnoreCase("objectClass")) {
-            if (attributeValue.equals("*")) return null;
-        }
-
         if (attributeValue.startsWith("'") && attributeValue.endsWith("'")) {
             attributeValue = attributeValue.substring(1, attributeValue.length()-1);
         }
@@ -235,29 +245,47 @@ public class JDBCFilterFactory {
         String sourceName = variable.substring(0, index);
         String fieldName = variable.substring(index+1);
 
-        Filter newFilter = null;
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            if (!sourceName.equals(sourceMapping.getName())) continue;
+        String alias = createTableAlias(sourceName);
 
-            StringBuilder sb = new StringBuilder();
-            for (Iterator j=substrings.iterator(); j.hasNext(); ) {
-                Object o = j.next();
-                if (o.equals(SubstringFilter.STAR)) {
-                    sb.append("%");
-                } else {
-                    String substring = (String)o;
-                    sb.append(substring);
-                }
+        StringBuilder sb = new StringBuilder();
+        for (Iterator j=substrings.iterator(); j.hasNext(); ) {
+            Object o = j.next();
+            if (o.equals(SubstringFilter.STAR)) {
+                sb.append("%");
+            } else {
+                String substring = (String)o;
+                sb.append(substring);
             }
-
-            String alias = createTableAlias(sourceName);
-
-            Filter f = new SimpleFilter(alias+"."+fieldName, "like", sb.toString());
-            newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
-        return newFilter;
+        return new SimpleFilter(alias+"."+fieldName, "like", sb.toString());
+    }
+
+    public Filter convert(
+            PresentFilter filter
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String attributeName = filter.getAttribute();
+
+        if (attributeName.equalsIgnoreCase("objectClass")) return null;
+
+        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        String variable = attributeMapping.getVariable();
+
+        if (variable == null) {
+            if (debug) log.debug("Attribute "+attributeName+" is not mapped to a variable.");
+            return null;
+        }
+
+        int index = variable.indexOf(".");
+        String sourceName = variable.substring(0, index);
+        String fieldName = variable.substring(index+1);
+
+        String alias = createTableAlias(sourceName);
+
+        return new PresentFilter(alias+"."+fieldName);
     }
 
     public String createTableAlias(String sourceName) {
@@ -281,11 +309,14 @@ public class JDBCFilterFactory {
         return sourceName == null ? alias : sourceName;
     }
 
-    public String generate(Filter filter) throws Exception {
+    public void run() throws Exception {
+
+        sourceFilter = convert(ldapFilter);
+        if (log.isDebugEnabled()) log.debug("Source filter: "+sourceFilter);
 
         StringBuilder sb = new StringBuilder();
-        generate(filter, sb);
-        return sb.toString();
+        generate(sourceFilter, sb);
+        jdbcFilter = sb.toString();
     }
 
     public void generate(Filter filter, StringBuilder sb) throws Exception {
@@ -301,6 +332,9 @@ public class JDBCFilterFactory {
 
         } else if (filter instanceof SimpleFilter) {
             generate((SimpleFilter)filter, sb);
+
+        } else if (filter instanceof PresentFilter) {
+            generate((PresentFilter)filter, sb);
         }
     }
 
@@ -362,6 +396,17 @@ public class JDBCFilterFactory {
 
         parameterValues.add(value);
         parameterFieldConfigs.add(fieldConfig);
+    }
+
+    public void generate(
+            PresentFilter filter,
+            StringBuilder sb
+    ) throws Exception {
+
+        String name = filter.getAttribute();
+        
+        sb.append(name);
+        sb.append(" is not null");
     }
 
     public void generate(
@@ -449,5 +494,13 @@ public class JDBCFilterFactory {
 
     public void setTableAliases(Map tableAliases) {
         this.tableAliases = tableAliases;
+    }
+
+    public String getJdbcFilter() {
+        return jdbcFilter;
+    }
+
+    public void setJdbcFilter(String jdbcFilter) {
+        this.jdbcFilter = jdbcFilter;
     }
 }

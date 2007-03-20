@@ -159,11 +159,8 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-        Attributes attributeValues = request.getAttributes();
-
         Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
-        engine.add(session, partition, parent, entryMapping, dn, attributeValues);
+        engine.add(session, partition, parent, entryMapping, request, response);
     }
 
     public void bind(
@@ -176,11 +173,8 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-        String password = request.getPassword();
-
         Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.bind(session, partition, entryMapping, dn, password);
+        engine.bind(session, partition, entryMapping, request, response);
     }
 
     public void unbind(
@@ -193,7 +187,6 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN bindDn = request.getDn();
         Entry entry = null; //find(session, partition, entryMapping, dn);
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
@@ -238,42 +231,10 @@ public abstract class Handler {
             CompareResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
+        Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-        String attributeName = request.getAttributeName();
-        Object attributeValue = request.getAttributeValue();
-
-        Entry entry = find(session, partition, entryMapping, dn);
-
-        List attributeNames = new ArrayList();
-        attributeNames.add(attributeName);
-
-        Attributes attributes = entry.getAttributes();
-        Attribute attribute = attributes.get(attributeName);
-        if (attribute == null) {
-            if (debug) log.debug("Attribute "+attributeName+" not found.");
-            return false;
-        }
-
-        Collection values = attribute.getValues();
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        String equality = attributeType == null ? null : attributeType.getEquality();
-        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
-
-        if (debug) log.debug("Comparing values:");
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            Object value = i.next();
-
-            boolean b = equalityMatchingRule.compare(value, attributeValue);
-            if (debug) log.debug(" - ["+value+"] => "+b);
-
-            if (b) return true;
-
-        }
-
-        return false;
+        Entry entry = null; //find(session, partition, entryMapping, dn);
+        return engine.compare(session, partition, entryMapping, request, response);
     }
 
     public void delete(
@@ -286,10 +247,8 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-
         Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.delete(session, partition, entry, entryMapping, dn);
+        engine.delete(session, partition, entry, entryMapping, request, response);
     }
 
     public void modify(
@@ -302,11 +261,8 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-        Collection modifications = request.getModifications();
-
         Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.modify(session, partition, entry, entryMapping, dn, modifications);
+        engine.modify(session, partition, entry, entryMapping, request, response);
     }
 
     public void modrdn(
@@ -319,12 +275,8 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        DN dn = request.getDn();
-        RDN newRdn = request.getNewRdn();
-        boolean deleteOldRdn = request.getDeleteOldRdn();
-
         Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.modrdn(session, partition, entry, entryMapping, dn, newRdn, deleteOldRdn);
+        engine.modrdn(session, partition, entry, entryMapping, request, response);
     }
 
     public void search(

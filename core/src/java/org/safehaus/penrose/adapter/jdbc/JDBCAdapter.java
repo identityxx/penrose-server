@@ -171,32 +171,6 @@ public class JDBCAdapter extends Adapter {
         return ds.getConnection();
     }
 
-    public String toList(Collection list) throws Exception {
-        StringBuilder sb = new StringBuilder();
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(object.toString());
-        }
-
-        return sb.toString();
-    }
-
-    public String toFilter(Collection list) throws Exception {
-        StringBuilder sb = new StringBuilder();
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-
-            if (sb.length() > 0) sb.append(" and ");
-            sb.append(object.toString());
-        }
-
-        return sb.toString();
-    }
-
     public String getFieldNames(SourceConfig sourceConfig) throws Exception {
         StringBuilder sb = new StringBuilder();
 
@@ -225,6 +199,18 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
+    public String getTableName(SourceConfig sourceConfig) {
+        String catalog = sourceConfig.getParameter(CATALOG);
+        String schema = sourceConfig.getParameter(SCHEMA);
+        String table = sourceConfig.getParameter(TABLE);
+
+        if (table == null) table = sourceConfig.getParameter(TABLE_NAME);
+        if (catalog != null) table = catalog +"."+table;
+        if (schema != null) table = schema +"."+table;
+
+        return table;
+    }
+
     public void bind(SourceConfig sourceConfig, RDN pk, String cred) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
     }
@@ -239,30 +225,23 @@ public class JDBCAdapter extends Adapter {
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+request.getFilter(), 80));
             log.debug(Formatter.displayLine(" - Scope: "+request.getScope(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
-
+        String table = getTableName(sourceConfig);
         String s = sourceConfig.getParameter(FILTER);
 
         StringBuilder sb = new StringBuilder();
         sb.append("select ");
         sb.append(getFieldNames(sourceConfig));
         sb.append(" from ");
-        sb.append(tableName);
+        sb.append(table);
 
         StringBuilder sqlFilter = new StringBuilder();
         if (s != null) sqlFilter.append(s);
@@ -272,24 +251,22 @@ public class JDBCAdapter extends Adapter {
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
 
-        if (filter != null) {
+        JDBCFilterGenerator filterGenerator = new JDBCFilterGenerator(
+                partition,
+                entryMapping,
+                sourceMapping,
+                interpreter,
+                parameterValues,
+                parameterFieldConfigs,
+                request.getFilter()
+        );
 
-            JDBCFilterFactory filterFactory = new JDBCFilterFactory(
-                    partition,
-                    entryMapping,
-                    sourceMapping,
-                    interpreter,
-                    parameterValues,
-                    parameterFieldConfigs
-            );
+        filterGenerator.run();
 
-            Filter newFilter = filterFactory.convert(filter);
-            String sourceFilter = filterFactory.generate(newFilter);
-
-            if (sourceFilter != null) {
-                if (sqlFilter.length() > 0) sqlFilter.append(" and ");
-                sqlFilter.append(sourceFilter);
-            }
+        String sourceFilter = filterGenerator.getJdbcFilter();
+        if (sourceFilter != null) {
+            if (sqlFilter.length() > 0) sqlFilter.append(" and ");
+            sqlFilter.append(sourceFilter);
         }
 
         if (sqlFilter.length() > 0) {
@@ -328,8 +305,7 @@ public class JDBCAdapter extends Adapter {
                 for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
                     Object param = i.next();
                     FieldConfig fieldConfig = (FieldConfig)j.next();
-                    String type = fieldConfig.getType();
-                    setParameter(ps, ++counter, param, type);
+                    setParameter(ps, ++counter, param, fieldConfig);
                 }
 
                 if (debug) {
@@ -392,103 +368,6 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public String getTableName(SourceConfig sourceConfig) {
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String table = sourceConfig.getParameter(TABLE);
-
-        if (table == null) table = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) table = catalog +"."+table;
-        if (schema != null) table = schema +"."+table;
-
-        return table;
-    }
-
-    public Collection getTables(Partition partition, Collection sourceMappings) {
-
-        Collection tables = new ArrayList();
-
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String name = sourceMapping.getName();
-            String table = getTableName(sourceConfig);
-
-            tables.add(table+" "+name);
-        }
-
-        return tables;
-    }
-
-    public Collection getFields(Partition partition, Collection sourceMappings) {
-
-        Collection fields = new ArrayList();
-
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String name = sourceMapping.getName();
-
-            Collection fieldConfigs = sourceConfig.getFieldConfigs();
-            for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-
-                fields.add(name+"."+fieldConfig.getOriginalName());
-            }
-        }
-
-        return fields;
-    }
-
-    public Collection getRelationships(Partition partition, EntryMapping entryMapping, Collection sourceMappings) {
-
-        Collection sourceNames = new HashSet();
-
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            sourceNames.add(sourceMapping.getName());
-        }
-
-        Collection relationships = new ArrayList();
-
-        for (Iterator i=entryMapping.getRelationships().iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-
-            String leftSource = relationship.getLeftSource();
-            String rightSource = relationship.getRightSource();
-
-            if (!sourceNames.contains(leftSource) || !sourceNames.contains(rightSource)) continue;
-
-            relationships.add(relationship.getExpression());
-        }
-
-        return relationships;
-    }
-
-    public Collection getOrders(Partition partition, Collection sourceMappings) {
-
-        Collection orders = new ArrayList();
-
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String name = sourceMapping.getName();
-
-            Collection fieldConfigs = sourceConfig.getFieldConfigs();
-            for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-
-                orders.add(name+"."+fieldConfig.getOriginalName());
-            }
-        }
-
-        return orders;
-    }
-
     public void search(
             Partition partition,
             EntryMapping entryMapping,
@@ -514,112 +393,19 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection fields = getFields(partition, sourceMappings);
-        Collection tables = getTables(partition, sourceMappings);
-
-        Collection filters = getRelationships(partition, entryMapping, sourceMappings);
-
-        List parameterValues = new ArrayList();
-        List parameterFieldCofigs = new ArrayList();
-
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
-
-        JDBCFilterFactory filterFactory = new JDBCFilterFactory(
+        JDBCQueryGenerator queryGenerator = new JDBCQueryGenerator(
+                this,
                 partition,
                 entryMapping,
                 sourceMappings,
-                interpreter,
-                parameterValues,
-                parameterFieldCofigs
+                penroseContext.getInterpreterManager().newInstance(),
+                request,
+                response
         );
 
-        Filter sourceFilter = filterFactory.convert(filter);
-        if (debug) log.debug("Source filter: "+sourceFilter);
+        queryGenerator.run();
 
-        String sqlFilter = filterFactory.generate(sourceFilter);
-        if (sqlFilter.length() > 0) {
-            if (debug) log.debug("SQL filter: "+sqlFilter);
-            filters.add(sqlFilter);
-        }
-
-        Map tableAliases = filterFactory.getTableAliases();
-        for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
-            String alias = (String)i.next();
-            String sourceName = (String)tableAliases.get(alias);
-
-            SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String table = getTableName(sourceConfig);
-            tables.add(table+" "+alias);
-
-            for (Iterator j=entryMapping.getRelationships().iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-
-                String leftSource = relationship.getLeftSource();
-                String leftField = relationship.getLeftField();
-
-                String rightSource = relationship.getRightSource();
-                String rightField = relationship.getRightField();
-
-                String expression;
-                if (sourceName.equals(leftSource)) {
-                    expression = alias+"."+leftField+" = "+rightSource+"."+rightField;
-
-                } else if (sourceName.equals(rightSource)) {
-                    expression = leftSource+"."+leftField+" = "+alias+"."+rightField;
-
-                } else {
-                    continue;
-                }
-
-                filters.add(expression);
-            }
-        }
-/*
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String defaultFilter = sourceConfig.getParameter(FILTER);
-
-            if (defaultFilter != null) {
-                if (debug) log.debug("Default filter: "+defaultFilter);
-                filters.add(defaultFilter);
-            }
-        }
-*/
-        Collection orders = getOrders(partition, sourceMappings);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("select distinct ");
-        sb.append(toList(fields));
-
-        sb.append(" from ");
-        sb.append(toList(tables));
-
-        if (filters.size() > 0) {
-            sb.append(" where ");
-            sb.append(toFilter(filters));
-        }
-
-        sb.append(" order by ");
-        sb.append(toList(orders));
-
-/*
-        int totalCount = response.getTotalCount();
-        long sizeLimit = request.getSizeLimit();
-
-        if (debug) {
-            if (sizeLimit == 0) {
-                log.debug("Retrieving all entries.");
-            } else {
-                log.debug("Retrieving "+(sizeLimit - totalCount)+" entries.");
-            }
-        }
-*/
-
-        String sql = sb.toString();
+        String sql = queryGenerator.getSql();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -633,7 +419,9 @@ public class JDBCAdapter extends Adapter {
             log.debug("Parameters:");
 
             int counter = 1;
-            for (Iterator i=parameterValues.iterator(), j=parameterFieldCofigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
+            Collection parameterValues = queryGenerator.getParameterValues();
+            Collection parameterFieldConfigs = queryGenerator.getParameterFieldCofigs();
+            for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
                 Object param = i.next();
                 FieldConfig fieldConfig = (FieldConfig)j.next();
                 String type = fieldConfig.getType();
@@ -651,11 +439,12 @@ public class JDBCAdapter extends Adapter {
             ps = con.prepareStatement(sql);
 
             int counter = 1;
-            for (Iterator i=parameterValues.iterator(), j=parameterFieldCofigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
+            Collection parameterValues = queryGenerator.getParameterValues();
+            Collection parameterFieldConfigs = queryGenerator.getParameterFieldCofigs();
+            for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
                 Object param = i.next();
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                String type = fieldConfig.getType();
-                setParameter(ps, counter, param, type);
+                setParameter(ps, counter, param, fieldConfig);
             }
 
             rs = ps.executeQuery();
@@ -846,12 +635,7 @@ public class JDBCAdapter extends Adapter {
         Collection rows = TransformEngine.convert(sourceValues);
     	RDN rdn = (RDN)rows.iterator().next();
 
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
+        String table = getTableName(sourceConfig);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -879,7 +663,7 @@ public class JDBCAdapter extends Adapter {
                 parameters.add(obj);
             }
 
-            String sql = "insert into "+tableName+" ("+sb+") values ("+sb2+")";
+            String sql = "insert into "+table+" ("+sb+") values ("+sb2+")";
 
             if (debug) {
                 log.debug(Formatter.displaySeparator(80));
@@ -901,8 +685,7 @@ public class JDBCAdapter extends Adapter {
             for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
                 Object obj = i.next();
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                String type = fieldConfig.getType();
-                setParameter(ps, c, obj, type);	//ps.setObject(c, obj)
+                setParameter(ps, c, obj, fieldConfig);
                 if (debug) {
                 	log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
                 }
@@ -925,12 +708,7 @@ public class JDBCAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
         //log.debug("Deleting entry "+pk);
 
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
+        String table = getTableName(sourceConfig);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -948,7 +726,7 @@ public class JDBCAdapter extends Adapter {
                 sb.append("=?");
             }
 
-            String sql = "delete from "+tableName+" where "+sb;
+            String sql = "delete from "+table+" where "+sb;
 
             if (debug) {
                 log.debug(Formatter.displaySeparator(80));
@@ -967,8 +745,7 @@ public class JDBCAdapter extends Adapter {
                 String name = (String)i.next();
                 Object value = pk.get(name);
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                String type = fieldConfig.getType();
-                setParameter(ps, c, value, type);	//ps.setObject(c, value);
+                setParameter(ps, c, value, fieldConfig);
                 if (debug) {
                 	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
                 }
@@ -990,12 +767,8 @@ public class JDBCAdapter extends Adapter {
     public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
+
+        String table = getTableName(sourceConfig);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1079,7 +852,7 @@ public class JDBCAdapter extends Adapter {
                 parameters.add(value);
             }
 
-            String sql = "update "+tableName+" set "+columns+" where "+whereClause;
+            String sql = "update "+table+" set "+columns+" where "+whereClause;
 
             if (debug) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1101,8 +874,7 @@ public class JDBCAdapter extends Adapter {
             for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
                 Object value = i.next();
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                String type = fieldConfig.getType();
-                setParameter(ps, c, value, type);	//ps.setObject(c, value);
+                setParameter(ps, c, value, fieldConfig);
                 if (debug) {
                 	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
                 }
@@ -1131,12 +903,7 @@ public class JDBCAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
         //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
 
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
+        String table = getTableName(sourceConfig);
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1179,7 +946,7 @@ public class JDBCAdapter extends Adapter {
                 parameters.add(value);
             }
 
-            String sql = "update "+tableName+" set "+columns+" where "+whereClause;
+            String sql = "update "+table+" set "+columns+" where "+whereClause;
 
             if (debug) {
                 log.debug(Formatter.displaySeparator(80));
@@ -1222,14 +989,10 @@ public class JDBCAdapter extends Adapter {
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
 
-        String sql = "select max(changeNumber) from "+tableName+"_changes";
+        String table = getTableName(sourceConfig);
+
+        String sql = "select max(changeNumber) from "+table+"_changes";
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1270,22 +1033,17 @@ public class JDBCAdapter extends Adapter {
 
         SearchResponse response = new SearchResponse();
 
-        String catalog = sourceConfig.getParameter(CATALOG);
-        String schema = sourceConfig.getParameter(SCHEMA);
-        String tableName = sourceConfig.getParameter(TABLE);
-        if (tableName == null) tableName = sourceConfig.getParameter(TABLE_NAME);
-        if (catalog != null) tableName = catalog +"."+tableName;
-        if (schema != null) tableName = schema +"."+tableName;
+        String table = getTableName(sourceConfig);
 
         int sizeLimit = 100;
 
         StringBuilder columns = new StringBuilder();
         columns.append("select changeNumber, changeTime, changeAction, changeUser");
 
-        StringBuilder table = new StringBuilder();
-        table.append("from ");
-        table.append(tableName);
-        table.append("_changes");
+        StringBuilder sb = new StringBuilder();
+        sb.append("from ");
+        sb.append(table);
+        sb.append("_changes");
 
         for (Iterator i=sourceConfig.getPrimaryKeyFieldConfigs().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
@@ -1300,7 +1058,7 @@ public class JDBCAdapter extends Adapter {
         List parameters = new ArrayList();
         parameters.add(new Integer(lastChangeNumber));
 
-        String sql = columns+" "+table+" "+whereClause;
+        String sql = columns+" "+sb+" "+whereClause;
 
         java.sql.Connection con = null;
         PreparedStatement ps = null;
@@ -1459,13 +1217,11 @@ public class JDBCAdapter extends Adapter {
         return new SimpleFilter(fieldName, "like", sb.toString());
     }
 
-    protected void setParameter(java.sql.PreparedStatement preparedStatement, int paramIndex, Object value, String meta) throws Exception {
-    	((PreparedStatement)preparedStatement).setObject(paramIndex, value);
+    protected void setParameter(PreparedStatement ps, int paramIndex, Object value, FieldConfig fieldConfig) throws Exception {
+    	ps.setObject(paramIndex, value);
     }
     
-    // to be overridden in super classes
-    protected Object formatAttributeValue(ResultSetMetaData rsmd, int column, Object value, FieldConfig fieldConfig)
-    {
+    protected Object formatAttributeValue(ResultSetMetaData rsmd, int column, Object value, FieldConfig fieldConfig) {
     	return value;
     }
 }

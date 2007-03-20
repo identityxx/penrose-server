@@ -19,6 +19,8 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
@@ -32,15 +34,16 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.util.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
+import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata
@@ -370,8 +373,8 @@ public abstract class Engine {
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            DN dn,
-            Attributes attributes
+            AddRequest request,
+            AddResponse response
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,9 +385,61 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
-            DN dn,
-            String password
+            BindRequest request,
+            BindResponse response
     ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        String attributeName = request.getAttributeName();
+        Object attributeValue = request.getAttributeValue();
+
+        AttributeValues sourceValues = new AttributeValues();
+
+        Entry entry = find(session, partition, sourceValues, entryMapping, dn);
+
+        List attributeNames = new ArrayList();
+        attributeNames.add(attributeName);
+
+        Attributes attributes = entry.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) {
+            if (debug) log.debug("Attribute "+attributeName+" not found.");
+            return false;
+        }
+
+        Collection values = attribute.getValues();
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        if (debug) log.debug("Comparing values:");
+        for (Iterator i=values.iterator(); i.hasNext(); ) {
+            Object value = i.next();
+
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            if (debug) log.debug(" - ["+value+"] => "+b);
+
+            if (b) return true;
+
+        }
+
+        return false;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
@@ -395,7 +450,8 @@ public abstract class Engine {
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
-            DN dn
+            DeleteRequest request,
+            DeleteResponse response
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -407,8 +463,8 @@ public abstract class Engine {
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
-            DN dn,
-            Collection modifications
+            ModifyRequest request,
+            ModifyResponse response
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,23 +476,59 @@ public abstract class Engine {
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
+            ModRdnRequest request,
+            ModRdnResponse response
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Search
+    // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Entry find(
+            Session session,
             Partition partition,
             AttributeValues sourceValues,
             EntryMapping entryMapping,
             DN dn
     ) throws Exception {
-        return null;
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter((Filter)null);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse response = new SearchResponse();
+
+        search(
+                session,
+                partition,
+                sourceValues,
+                entryMapping,
+                request,
+                response
+        );
+
+        if (response.hasNext()) {
+            if (debug) log.debug("Entry "+dn+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+        }
+
+        return (Entry)response.next();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             Session session,

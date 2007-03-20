@@ -17,14 +17,14 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -112,9 +112,81 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            SourceConfig sourceConfig,
+            RDN pk,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        adapter.add(sourceConfig, pk, sourceValues);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            SourceConfig sourceConfig,
+            RDN pk,
+            String password,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
         adapter.bind(sourceConfig, pk, password);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            SourceConfig sourceConfig,
+            RDN pk,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        adapter.delete(sourceConfig, pk);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            SourceConfig sourceConfig,
+            RDN pk,
+            Collection modifications,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        adapter.modify(sourceConfig, pk, modifications);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            SourceConfig sourceConfig,
+            RDN oldPk,
+            RDN newPk,
+            boolean deleteOldRdn,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             Partition partition,
@@ -137,22 +209,6 @@ public class Connection implements ConnectionMBean {
             SearchResponse response
     ) throws Exception {
         adapter.search(partition, entryMapping, sourceMappings, request, response);
-    }
-
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
-        adapter.add(sourceConfig, pk, sourceValues);
-    }
-
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
-        adapter.modify(sourceConfig, pk, modifications);
-    }
-
-    public void modrdn(SourceConfig sourceConfig, RDN oldPk, RDN newPk, boolean deleteOldRdn) throws Exception {
-        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
-    }
-
-    public void delete(SourceConfig sourceConfig, RDN pk) throws Exception {
-        adapter.delete(sourceConfig, pk);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

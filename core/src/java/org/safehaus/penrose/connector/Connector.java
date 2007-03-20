@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.engine.TransformEngine;
@@ -27,10 +25,7 @@ import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.entry.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -124,18 +119,16 @@ public class Connector {
         return rb.toRdn();
     }
 
-    public void bind(Partition partition, SourceConfig sourceConfig, EntryMapping entry, RDN pk, String password) throws Exception {
-
-        if (log.isDebugEnabled()) log.debug("Binding as entry in "+sourceConfig.getName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        connection.bind(sourceConfig, pk, password);
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
             Partition partition,
             SourceConfig sourceConfig,
-            AttributeValues sourceValues
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
     ) throws Exception {
 
     	if (log.isDebugEnabled()) {
@@ -158,14 +151,42 @@ public class Connector {
 
             // Add row to source table in the source database/directory
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            connection.add(sourceConfig, pk, newEntry);
+            connection.add(sourceConfig, pk, newEntry, request, response);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            Partition partition,
+            SourceConfig sourceConfig,
+            EntryMapping entry,
+            RDN pk,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        if (log.isDebugEnabled()) log.debug("Binding as entry in "+sourceConfig.getName());
+
+        DN dn = request.getDn();
+        String password = request.getPassword();
+
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+        connection.bind(sourceConfig, pk, password, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
             Partition partition,
             SourceConfig sourceConfig,
-            AttributeValues sourceValues
+            AttributeValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
     ) throws Exception {
 
     	if (log.isDebugEnabled()) log.debug("Deleting entry in "+sourceConfig.getName()+": "+sourceValues);
@@ -181,9 +202,13 @@ public class Connector {
 
             // Delete row from source table in the source database/directory
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            connection.delete(sourceConfig, pk);
+            connection.delete(sourceConfig, pk, request, response);
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
             Partition partition,
@@ -191,7 +216,9 @@ public class Connector {
             RDN pk,
             Collection modifications,
             AttributeValues oldSourceValues,
-            AttributeValues newSourceValues
+            AttributeValues newSourceValues,
+            ModifyRequest request,
+            ModifyResponse response
     ) throws Exception {
 
     	if (log.isDebugEnabled()) log.debug("Modifying entry in " + sourceConfig.getName());
@@ -212,31 +239,37 @@ public class Connector {
 
             switch (type) {
                 case Modification.ADD:
-                    connection.add(sourceConfig, pk, av);
+                    connection.add(sourceConfig, pk, av, null, null);
 
                 case Modification.REPLACE:
-                    connection.add(sourceConfig, pk, av);
+                    connection.add(sourceConfig, pk, av, null, null);
 
                 case Modification.DELETE:
-                    connection.delete(sourceConfig, pk);
+                    connection.delete(sourceConfig, pk, null, null);
             }
         }
 
-        connection.modify(sourceConfig, pk, modifications);
+        connection.modify(sourceConfig, pk, modifications, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
             Partition partition,
             SourceConfig sourceConfig,
             RDN oldPk,
             RDN newPk,
-            boolean deleteOldRdn
+            boolean deleteOldRdn,
+            ModRdnRequest request,
+            ModRdnResponse response
     ) throws Exception {
 
     	if (log.isDebugEnabled()) log.debug("Renaming entry in " + sourceConfig.getName());
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
+        connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
     }
 
     public Collection createModifications(
@@ -305,17 +338,10 @@ public class Connector {
         return list;
     }
 
-    /**
-     * Search the data sources.
-     * @param partition
-     * @param entryMapping
-     * @param sourceMapping
-     * @param sourceConfig
-     * @param primaryKeys
-     * @param filter
-     * @param request
-     * @param response Collection of source values. @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void search(
             final Partition partition,
             final EntryMapping entryMapping,

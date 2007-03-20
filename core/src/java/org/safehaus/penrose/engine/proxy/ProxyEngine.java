@@ -23,7 +23,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
@@ -173,49 +172,23 @@ public class ProxyEngine extends Engine {
         return client;
     }
 
-    public void bind(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            String password
-    ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-        LDAPClient client = createClient(session, partition, sourceConfig);
-
-        try {
-            DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
-            DN bindDn = convertDn(dn, proxyDn, proxyBaseDn);
-
-            if (debug) log.debug("Binding via proxy as \""+bindDn +"\" with "+password);
-
-            client.bind(bindDn.toString(), password);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            storeClient(session, partition, sourceConfig, client);
-        }
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
             Session session,
             Partition partition,
             Entry parent,
             EntryMapping entryMapping,
-            DN dn,
-            Attributes attributes
+            AddRequest request,
+            AddResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        Attributes attributes = request.getAttributes();
 
         EntryMapping proxyMapping = parent.getEntryMapping();
 
@@ -256,84 +229,62 @@ public class ProxyEngine extends Engine {
         }
     }
 
-    public void modify(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
-            DN dn,
-            Collection modifications
+            BindRequest request,
+            BindResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
+        DN dn = request.getDn();
+        String password = request.getPassword();
+
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
-        LDAPClient client = getClient(session, partition, sourceConfig);
+        LDAPClient client = createClient(session, partition, sourceConfig);
 
         try {
             DN proxyDn = entryMapping.getDn();
             DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
-            DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
+            DN bindDn = convertDn(dn, proxyDn, proxyBaseDn);
 
-            if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
+            if (debug) log.debug("Binding via proxy as \""+bindDn +"\" with "+password);
 
-            client.modify(targetDn.toString(), modifications);
+            client.bind(bindDn.toString(), password);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            closeClient(session, partition, sourceConfig, client);
+            storeClient(session, partition, sourceConfig, client);
         }
     }
 
-    public void modrdn(
-            Session session,
-            Partition partition,
-            Entry entry,
-            EntryMapping entryMapping,
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-        LDAPClient client = getClient(session, partition, sourceConfig);
-
-        try {
-            DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
-            DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
-
-            if (debug) log.debug("Renaming via proxy as \""+targetDn+"\"");
-
-            client.modrdn(targetDn.toString(), newRdn.toString());
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            closeClient(session, partition, sourceConfig, client);
-        }
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
             Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
-            DN dn
+            DeleteRequest request,
+            DeleteResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
@@ -358,80 +309,92 @@ public class ProxyEngine extends Engine {
         }
     }
 
-    public Entry find(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            Session session,
             Partition partition,
-            AttributeValues sourceValues,
+            Entry entry,
             EntryMapping entryMapping,
-            DN dn
+            ModifyRequest request,
+            ModifyResponse response
     ) throws Exception {
 
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND", 80));
-            log.debug(Formatter.displayLine("DN: "+dn, 80));
-            log.debug(Formatter.displayLine("Mapping: "+entryMapping.getDn(), 80));
+        boolean debug = log.isDebugEnabled();
 
-            if (!sourceValues.isEmpty()) {
-                log.debug(Formatter.displayLine("Source values:", 80));
-                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-            }
+        DN dn = request.getDn();
+        Collection modifications = request.getModifications();
 
-            log.debug(Formatter.displaySeparator(80));
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+        LDAPClient client = getClient(session, partition, sourceConfig);
+
+        try {
+            DN proxyDn = entryMapping.getDn();
+            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
+
+            if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
+
+            client.modify(targetDn.toString(), modifications);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+
+        } finally {
+            closeClient(session, partition, sourceConfig, client);
         }
-
-        RDN rdn = dn.getRdn();
-        Filter filter = FilterTool.createFilter(rdn);
-
-        SearchRequest request = new SearchRequest();
-        request.setDn(dn);
-        request.setFilter(filter);
-        request.setScope(SearchRequest.SCOPE_BASE);
-
-        SearchResponse response = new SearchResponse();
-
-        search(
-                null,
-                partition,
-                sourceValues,
-                entryMapping,
-                request,
-                response
-        );
-
-        Entry entry = null;
-        if (response.hasNext() && getFilterTool().isValid(entry, filter)) {
-            entry = (Entry) response.next();
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("FIND RESULT", 80));
-
-            if (entry == null) {
-                log.debug(Formatter.displayLine("Entry \""+dn+"\" not found", 80));
-            } else {
-                log.debug(Formatter.displayLine(" - "+(entry == null ? null : entry.getDn()), 80));
-            }
-
-            if (!sourceValues.isEmpty()) {
-                log.debug(Formatter.displayLine("Source values:", 80));
-                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-            }
-
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-
-        return entry;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            Session session,
+            Partition partition,
+            Entry entry,
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        RDN newRdn = request.getNewRdn();
+        boolean deleteOldRdn = request.getDeleteOldRdn();
+
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+        LDAPClient client = getClient(session, partition, sourceConfig);
+
+        try {
+            DN proxyDn = entryMapping.getDn();
+            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
+
+            if (debug) log.debug("Renaming via proxy as \""+targetDn+"\"");
+
+            client.modrdn(targetDn.toString(), newRdn.toString());
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+
+        } finally {
+            closeClient(session, partition, sourceConfig, client);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             final Session session,

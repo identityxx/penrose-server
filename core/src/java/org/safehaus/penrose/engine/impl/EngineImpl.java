@@ -17,10 +17,7 @@
  */
 package org.safehaus.penrose.engine.impl;
 
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
@@ -74,15 +71,105 @@ public class EngineImpl extends Engine {
         log.debug("Default engine initialized.");
     }
 
+    public SearchEngine getSearchEngine() {
+        return searchEngine;
+    }
+
+    public void setSearchEngine(SearchEngine searchEngine) {
+        this.searchEngine = searchEngine;
+    }
+
+    public void start() throws Exception {
+        super.start();
+
+        //log.debug("Starting Engine...");
+
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+
+            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
+                EntryMapping entryMapping = (EntryMapping)j.next();
+                analyzer.analyze(partition, entryMapping);
+            }
+        }
+
+        //threadManager.execute(new RefreshThread(this));
+
+        //log.debug("Engine started.");
+    }
+
+    public void stop() throws Exception {
+        if (stopping) return;
+
+        log.debug("Stopping Engine...");
+        stopping = true;
+
+        // wait for all the worker threads to finish
+        //if (threadManager != null) threadManager.stopRequestAllWorkers();
+        log.debug("Engine stopped.");
+        super.stop();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            Session session,
+            Partition partition,
+            Entry parent,
+            EntryMapping entryMapping,
+            AddRequest request,
+            AddResponse response
+    ) throws LDAPException {
+
+        DN dn = request.getDn();
+        Attributes attributes = request.getAttributes();
+
+        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("ADD", 80));
+                log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
+
+                log.debug(Formatter.displayLine("Attribute values:", 80));
+                for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+                    String name = (String)i.next();
+                    Collection values = attributeValues.get(name);
+                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                }
+
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            addEngine.add(partition, parent, entryMapping, dn, attributeValues);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void bind(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
-            DN dn,
-            String password
+            BindRequest request,
+            BindResponse response
     ) throws LDAPException {
 
         try {
+            DN dn = request.getDn();
+            String password = request.getPassword();
+
             log.debug("Bind as user "+dn);
 
             RDN rdn = dn.getRdn();
@@ -116,7 +203,7 @@ public class EngineImpl extends Engine {
                     log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
 
                     Connector connector = getConnector(sourceConfig);
-                    connector.bind(partition, sourceConfig, entryMapping, pk, password);
+                    connector.bind(partition, sourceConfig, entryMapping, pk, request, response);
                 }
             }
 
@@ -186,46 +273,22 @@ public class EngineImpl extends Engine {
         }
     }
 
-    public void add(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
             Session session,
             Partition partition,
-            Entry parent,
+            Entry entry,
             EntryMapping entryMapping,
-            DN dn,
-            Attributes attributes
+            DeleteRequest request,
+            DeleteResponse response
     ) throws LDAPException {
 
-        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         try {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("ADD", 80));
-                log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
+            DN dn = request.getDn();
 
-                log.debug(Formatter.displayLine("Attribute values:", 80));
-                for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
-                    String name = (String)i.next();
-                    Collection values = attributeValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
-                }
-
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            addEngine.add(partition, parent, entryMapping, dn, attributeValues);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
-
-    public void delete(Session session, Partition partition, Entry entry, EntryMapping entryMapping, DN dn) throws LDAPException {
-
-        try {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("DELETE", 80));
@@ -245,47 +308,23 @@ public class EngineImpl extends Engine {
         }
     }
 
-    public void modrdn(
-            Session session,
-            Partition partition,
-            Entry entry,
-            EntryMapping entryMapping,
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws LDAPException {
-
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("MODRDN", 80));
-                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
-                log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
-                log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
             Session session,
             Partition partition,
             Entry entry,
             EntryMapping entryMapping,
-            DN dn,
-            Collection modifications
+            ModifyRequest request,
+            ModifyResponse response
     ) throws LDAPException {
 
         try {
+            DN dn = request.getDn();
+            Collection modifications = request.getModifications();
+
             AttributeValues oldValues = new AttributeValues();
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
                 Attribute attribute = (Attribute)i.next();
@@ -389,44 +428,47 @@ public class EngineImpl extends Engine {
         }
     }
 
-    public SearchEngine getSearchEngine() {
-        return searchEngine;
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void setSearchEngine(SearchEngine searchEngine) {
-        this.searchEngine = searchEngine;
-    }
+    public void modrdn(
+            Session session,
+            Partition partition,
+            Entry entry,
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws LDAPException {
 
-    public void start() throws Exception {
-        super.start();
+        try {
+            DN dn = request.getDn();
+            RDN newRdn = request.getNewRdn();
+            boolean deleteOldRdn = request.getDeleteOldRdn();
 
-        //log.debug("Starting Engine...");
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)j.next();
-                analyzer.analyze(partition, entryMapping);
+            if (log.isDebugEnabled()) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine("MODRDN", 80));
+                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+                log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
+                log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
+                log.debug(Formatter.displaySeparator(80));
             }
+
+            modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
+
+        } catch (LDAPException e) {
+            throw e;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
         }
-
-        //threadManager.execute(new RefreshThread(this));
-
-        //log.debug("Engine started.");
     }
 
-    public void stop() throws Exception {
-        if (stopping) return;
-
-        log.debug("Stopping Engine...");
-        stopping = true;
-
-        // wait for all the worker threads to finish
-        //if (threadManager != null) threadManager.stopRequestAllWorkers();
-        log.debug("Engine stopped.");
-        super.stop();
-    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public List find(
             Partition partition,
@@ -537,6 +579,10 @@ public class EngineImpl extends Engine {
 
         return path;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             final Session session,

@@ -74,6 +74,8 @@ public class BasicEngineSearchResponse extends SearchResponse {
             attributeValues.add("objectClass", objectClass);
         }
 
+        interpreter.clear();
+        
         return attributeValues;
     }
 }
