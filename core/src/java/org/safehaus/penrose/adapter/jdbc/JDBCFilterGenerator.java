@@ -23,6 +23,7 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -41,6 +42,7 @@ public class JDBCFilterGenerator {
     Collection sourceMappings;
     SourceMapping primarySourceMapping;
 
+    AttributeValues sourceValues;
     Interpreter interpreter;
 
     Collection parameterValues;
@@ -75,6 +77,7 @@ public class JDBCFilterGenerator {
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
+            AttributeValues sourceValues,
             Interpreter interpreter,
             Collection parameterValues,
             Collection parameterFieldConfigs,
@@ -86,7 +89,9 @@ public class JDBCFilterGenerator {
         this.sourceMappings = sourceMappings;
         primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
 
+        this.sourceValues = sourceValues;
         this.interpreter = interpreter;
+
         this.parameterValues = parameterValues;
         this.parameterFieldConfigs = parameterFieldConfigs;
 
@@ -272,6 +277,11 @@ public class JDBCFilterGenerator {
         if (attributeName.equalsIgnoreCase("objectClass")) return null;
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
+        if (attributeMapping == null) {
+            if (debug) log.debug("Attribute "+attributeName+" is not mapped.");
+            return null;
+        }
+
         String variable = attributeMapping.getVariable();
 
         if (variable == null) {
@@ -309,14 +319,33 @@ public class JDBCFilterGenerator {
         return sourceName == null ? alias : sourceName;
     }
 
-    public void run() throws Exception {
-
+    public void generate() throws Exception {
         sourceFilter = convert(ldapFilter);
-        if (log.isDebugEnabled()) log.debug("Source filter: "+sourceFilter);
 
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+
+            int p = name.indexOf(".");
+            String sourceName = name.substring(0, p);
+            String fieldName = name.substring(p+1);
+
+            String alias = createTableAlias(sourceName);
+
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value.toString());
+                sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
+            }
+        }
+
+        jdbcFilter = generate(sourceFilter);
+    }
+
+    public String generate(Filter filter) throws Exception {
         StringBuilder sb = new StringBuilder();
-        generate(sourceFilter, sb);
-        jdbcFilter = sb.toString();
+        generate(filter, sb);
+        return sb.toString();
     }
 
     public void generate(Filter filter, StringBuilder sb) throws Exception {

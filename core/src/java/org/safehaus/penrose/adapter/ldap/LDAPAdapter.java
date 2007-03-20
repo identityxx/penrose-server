@@ -29,9 +29,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -54,7 +52,9 @@ public class LDAPAdapter extends Adapter {
     public final static String SCOPE          = "scope";
     public final static String FILTER         = "filter";
     public final static String OBJECT_CLASSES = "objectClasses";
+
     public final static String PAGE_SIZE      = "pageSize";
+    public final static int DEFAULT_PAGE_SIZE = 1000;
 
     private LDAPClient client;
 
@@ -67,7 +67,17 @@ public class LDAPAdapter extends Adapter {
         return new LDAPClient(client, getParameters());
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String password) throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            SourceConfig sourceConfig,
+            RDN pk,
+            String password,
+            BindRequest request,
+            BindResponse response
+    ) throws LDAPException {
 
         try {
             DN dn = getDn(sourceConfig, pk);
@@ -95,6 +105,10 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void search(
             Partition partition,
             EntryMapping entryMapping,
@@ -114,7 +128,7 @@ public class LDAPAdapter extends Adapter {
         String ldapFilter = sourceConfig.getParameter(FILTER);
 
         String s = sourceConfig.getParameter(PAGE_SIZE);
-        int pageSize = s == null ? 1000 : Integer.parseInt(s);
+        int pageSize = s == null ? DEFAULT_PAGE_SIZE : Integer.parseInt(s);
 
         db.append(client.getSuffix());
         if (filter != null) {
@@ -277,7 +291,17 @@ public class LDAPAdapter extends Adapter {
         return av;
     }
 
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            SourceConfig sourceConfig,
+            RDN pk,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -383,7 +407,16 @@ public class LDAPAdapter extends Adapter {
         return LDAPException.SUCCESS;
     }
 
-    public void delete(SourceConfig sourceConfig, RDN pk) throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            SourceConfig sourceConfig,
+            RDN pk,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -408,7 +441,17 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            SourceConfig sourceConfig,
+            RDN pk,
+            Collection modifications,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws LDAPException {
 
         DirContext ctx = null;
         try {
@@ -468,7 +511,18 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
-    public void modrdn(SourceConfig sourceConfig, RDN oldEntry, RDN newRdn) throws LDAPException {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            SourceConfig sourceConfig,
+            RDN oldEntry,
+            RDN newRdn,
+            boolean deleteOldRdn,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws LDAPException {
 
         DirContext ctx = null;
         try {

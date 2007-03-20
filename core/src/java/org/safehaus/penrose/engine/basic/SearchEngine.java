@@ -13,8 +13,6 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.connector.ConnectorSearchResult;
@@ -106,7 +104,7 @@ public class SearchEngine {
                     partition,
                     entryMapping,
                     sourceMappings,
-                    null,
+                    sourceValues,
                     filter,
                     request,
                     sr

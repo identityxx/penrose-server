@@ -376,7 +376,7 @@ public class Connector {
             final Partition partition,
             final EntryMapping entryMapping,
             final Collection sourceMappings,
-            final Collection primaryKeys,
+            final AttributeValues sourceValues,
             final Filter filter,
             final SearchRequest request,
             final SearchResponse response
@@ -387,7 +387,7 @@ public class Connector {
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-        connection.search(partition, entryMapping, sourceMappings, primaryKeys, request, response);
+        connection.search(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     public RDN store(

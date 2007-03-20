@@ -8,9 +8,7 @@ import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
@@ -45,11 +43,44 @@ public class DemoAdapter extends Adapter {
         entries.put(pk, sourceValues);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            SourceConfig sourceConfig,
+            RDN pk,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws LDAPException {
+
+        String sourceName = sourceConfig.getName();
+        System.out.println("Adding entry "+pk+" into "+sourceName+":");
+
+        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection values = sourceValues.get(name);
+            System.out.println(" - "+name+": "+values);
+        }
+
+        if (entries.containsKey(pk)) {
+            int rc = LDAPException.ENTRY_ALREADY_EXISTS;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
+
+        entries.put(pk, sourceValues);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void bind(
             SourceConfig sourceConfig,
             RDN pk,
-            String password
-    ) throws LDAPException {
+            String password,
+            BindRequest request, BindResponse response) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
@@ -80,75 +111,35 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void search(
-            SourceConfig sourceConfig,
-            Filter filter,
-            SearchRequest searchRequest,
-            SearchResponse response
-    ) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
-
-        Collection attributes = searchRequest.getAttributes();
-        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-            RDN pk = (RDN)i.next();
-            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-
-            if (!FilterTool.isValid(sourceValues, filter)) {
-                System.out.println(" - "+pk+" => false");
-                continue;
-            }
-
-            System.out.println(" - "+pk+" => true");
-
-            if (attributes.size() == 0) {
-                AttributeValues av = new AttributeValues();
-                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Object value = pk.get(name);
-                    av.add("primaryKey."+name, value);
-                }
-                av.add(sourceValues);
-
-                response.add(av);
-
-            } else if (attributes.contains("dn")) {
-                response.add(pk);
-            }
-        }
-
-        response.close();
-    }
-
-    public void add(
+    public void delete(
             SourceConfig sourceConfig,
             RDN pk,
-            AttributeValues sourceValues
-    ) throws LDAPException {
+            DeleteRequest request, DeleteResponse response) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
-        System.out.println("Adding entry "+pk+" into "+sourceName+":");
+        System.out.println("Deleting entry "+pk+" from "+sourceName+".");
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sourceValues.get(name);
-            System.out.println(" - "+name+": "+values);
-        }
-
-        if (entries.containsKey(pk)) {
-            int rc = LDAPException.ENTRY_ALREADY_EXISTS;
+        if (!entries.containsKey(pk)) {
+            int rc = LDAPException.NO_SUCH_OBJECT;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        entries.put(pk, sourceValues);
+        entries.remove(pk);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
             SourceConfig sourceConfig,
             RDN pk,
-            Collection modifications
-    ) throws LDAPException {
+            Collection modifications,
+            ModifyRequest request, ModifyResponse response) throws LDAPException {
 
         String sourceName = sourceConfig.getName();
         System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
@@ -213,19 +204,45 @@ public class DemoAdapter extends Adapter {
         }
     }
 
-    public void delete(
+    public void search(
             SourceConfig sourceConfig,
-            RDN pk
-    ) throws LDAPException {
+            Filter filter,
+            SearchRequest searchRequest,
+            SearchResponse response
+    ) throws Exception {
 
         String sourceName = sourceConfig.getName();
-        System.out.println("Deleting entry "+pk+" from "+sourceName+".");
+        System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
 
-        if (!entries.containsKey(pk)) {
-            int rc = LDAPException.NO_SUCH_OBJECT;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        Collection attributes = searchRequest.getAttributes();
+        for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
+            RDN pk = (RDN)i.next();
+            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+
+            if (!FilterTool.isValid(sourceValues, filter)) {
+                System.out.println(" - "+pk+" => false");
+                continue;
+            }
+
+            System.out.println(" - "+pk+" => true");
+
+            if (attributes.size() == 0) {
+                AttributeValues av = new AttributeValues();
+                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
+                    String name = (String)j.next();
+                    Object value = pk.get(name);
+                    av.add("primaryKey."+name, value);
+                }
+                av.add(sourceValues);
+
+                response.add(av);
+
+            } else if (attributes.contains("dn")) {
+                response.add(pk);
+            }
         }
 
-        entries.remove(pk);
+        response.close();
     }
+
 }

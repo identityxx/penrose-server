@@ -2,13 +2,14 @@ package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.Relationship;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.entry.AttributeValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -34,11 +35,12 @@ public class JDBCQueryGenerator {
     protected String sql;
 
     JDBCAdapter adapter;
+
     Partition partition;
     EntryMapping entryMapping;
-
     Map sourceMappings = new HashMap();
 
+    AttributeValues sourceValues;
     Interpreter interpreter;
 
     SearchRequest request;
@@ -51,6 +53,7 @@ public class JDBCQueryGenerator {
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
+            AttributeValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
             SearchResponse response
@@ -65,6 +68,7 @@ public class JDBCQueryGenerator {
             this.sourceMappings.put(sourceMapping.getName(), sourceMapping);
         }
 
+        this.sourceValues = sourceValues;
         this.interpreter = interpreter;
 
         this.request = request;
@@ -74,12 +78,64 @@ public class JDBCQueryGenerator {
                 partition,
                 entryMapping,
                 sourceMappings,
+                sourceValues,
                 interpreter,
                 parameterValues,
                 parameterFieldCofigs,
                 request.getFilter()
         );
 
+    }
+
+    public String generateJoinType(SourceMapping sourceMapping) {
+        if (sourceMapping.isRequired()) return "join";
+        return "left join";
+    }
+
+    public String generateJoinOn(SourceMapping sourceMapping) {
+        return generateJoinOn(sourceMapping, sourceMapping.getName());
+    }
+
+    public String generateJoinOn(SourceMapping sourceMapping, String alias) {
+
+        boolean debug = log.isDebugEnabled();
+
+        StringBuffer sb = new StringBuffer();
+
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+        if (debug) log.debug(" - Foreign keys:");
+        Collection fieldMappings = sourceMapping.getFieldMappings();
+        for (Iterator j=fieldMappings.iterator(); j.hasNext(); ) {
+            FieldMapping fieldMapping = (FieldMapping)j.next();
+
+            String variable = fieldMapping.getVariable();
+            if (variable == null) continue;
+
+            int p = variable.indexOf(".");
+            if (p < 0) continue;
+
+            String fieldName = fieldMapping.getName();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+            String lhs = alias+"."+fieldConfig.getOriginalName();
+
+            String sn = variable.substring(0, p);
+            String fn = variable.substring(p+1);
+
+            SourceMapping sm = entryMapping.getSourceMapping(sn);
+            SourceConfig sc = partition.getSourceConfig(sm);
+            FieldConfig fc = sc.getFieldConfig(fn);
+            String rhs = sn+"."+fc.getOriginalName();
+
+            if (debug) log.debug("   - "+lhs+": "+rhs);
+
+            if (sb.length() > 0) sb.append(" and ");
+            sb.append(lhs);
+            sb.append("=");
+            sb.append(rhs);
+        }
+
+        return sb.toString();
     }
 
     public void run() throws Exception {
@@ -89,32 +145,40 @@ public class JDBCQueryGenerator {
         int sourceCounter = 0;
         for (Iterator i=sourceMappings.values().iterator(); i.hasNext(); sourceCounter++) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
+
+            String sourceName = sourceMapping.getName();
+            if (debug) log.debug("Processing source "+sourceName);
+
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String name = sourceMapping.getName();
-            String table = adapter.getTableName(sourceConfig);
-
-            tables.add(table+" "+name);
-
-            if (sourceCounter > 0) {
-                if (sourceMapping.isRequired()) {
-                    joinTypes.add("join");
-                } else {
-                    joinTypes.add("left join");
-                }
-            }
 
             Collection fieldConfigs = sourceConfig.getFieldConfigs();
             for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
+                fields.add(sourceName+"."+fieldConfig.getOriginalName());
+            }
 
-                fields.add(name+"."+fieldConfig.getOriginalName());
+            String table = adapter.getTableName(sourceConfig);
+            if (debug) log.debug(" - Table: "+table);
+            tables.add(table+" "+sourceName);
 
-                if (!fieldConfig.isPrimaryKey()) continue;
-                orders.add(name+"."+fieldConfig.getOriginalName());
+            // join previous table
+            if (sourceCounter > 0) {
+                String joinType = generateJoinType(sourceMapping);
+                if (debug) log.debug(" - Join type: "+joinType);
+                joinTypes.add(joinType);
+
+                String joinOn = generateJoinOn(sourceMapping);
+                if (debug) log.debug(" - Join on: "+joinOn);
+                joinOns.add(joinOn);
+            }
+
+            Collection nonPkfieldConfigs = sourceConfig.getFieldConfigs();
+            for (Iterator j=nonPkfieldConfigs.iterator(); j.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                orders.add(sourceName+"."+fieldConfig.getOriginalName());
             }
         }
-
+/*
         for (Iterator i=entryMapping.getRelationships().iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
 
@@ -124,8 +188,31 @@ public class JDBCQueryGenerator {
             if (!sourceMappings.containsKey(leftSource) || !sourceMappings.containsKey(rightSource)) continue;
             joinOns.add(relationship.getExpression());
         }
+*/
+        filterGenerator.generate();
 
-        filterGenerator.run();
+        Map tableAliases = filterGenerator.getTableAliases();
+        for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
+            String alias = (String)i.next();
+
+            String sourceName = (String)tableAliases.get(alias);
+            if (debug) log.debug("Adding source "+sourceName);
+
+            SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
+            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+            String table = adapter.getTableName(sourceConfig);
+            if (debug) log.debug(" - Table: "+table);
+            tables.add(table+" "+alias);
+
+            String joinType = generateJoinType(sourceMapping);
+            if (debug) log.debug(" - Join type: "+joinType);
+            joinTypes.add(joinType);
+
+            String joinOn = generateJoinOn(sourceMapping, alias);
+            if (debug) log.debug(" - Join on: "+joinOn);
+            joinOns.add(joinOn);
+        }
 
         String sqlFilter = filterGenerator.getJdbcFilter();
         if (sqlFilter.length() > 0) {
@@ -133,46 +220,6 @@ public class JDBCQueryGenerator {
             filters.add(sqlFilter);
         }
 
-        Map tableAliases = filterGenerator.getTableAliases();
-        for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
-            String alias = (String)i.next();
-            String sourceName = (String)tableAliases.get(alias);
-
-            SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String table = adapter.getTableName(sourceConfig);
-            tables.add(table+" "+alias);
-
-            if (sourceMapping.isRequired()) {
-                joinTypes.add("join");
-            } else {
-                joinTypes.add("left join");
-            }
-
-            for (Iterator j=entryMapping.getRelationships().iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-
-                String leftSource = relationship.getLeftSource();
-                String leftField = relationship.getLeftField();
-
-                String rightSource = relationship.getRightSource();
-                String rightField = relationship.getRightField();
-
-                String expression;
-                if (sourceName.equals(leftSource)) {
-                    expression = alias+"."+leftField+" = "+rightSource+"."+rightField;
-
-                } else if (sourceName.equals(rightSource)) {
-                    expression = leftSource+"."+leftField+" = "+alias+"."+rightField;
-
-                } else {
-                    continue;
-                }
-
-                joinOns.add(expression);
-            }
-        }
 /*
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
             SourceMapping sourceMapping = (SourceMapping)i.next();

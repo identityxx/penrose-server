@@ -118,7 +118,7 @@ public class SearchEngine {
                     partition,
                     entryMapping,
                     sourceMappings,
-                    null,
+                    sourceValues,
                     filter,
                     request,
                     sr

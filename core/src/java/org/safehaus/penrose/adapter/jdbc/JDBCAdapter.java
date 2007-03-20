@@ -20,9 +20,7 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.apache.commons.dbcp.*;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -211,9 +209,423 @@ public class JDBCAdapter extends Adapter {
         return table;
     }
 
-    public void bind(SourceConfig sourceConfig, RDN pk, String cred) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            SourceConfig sourceConfig,
+            RDN pk,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("JDBC Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine(" - DN: "+pk, 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        // convert sets into single values
+        Collection rows = TransformEngine.convert(sourceValues);
+    	RDN rdn = (RDN)rows.iterator().next();
+
+        String table = getTableName(sourceConfig);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sb2 = new StringBuilder();
+
+            Collection fieldConfigs = sourceConfig.getFieldConfigs();
+            Collection parameters = new ArrayList();
+            for (Iterator i=fieldConfigs.iterator(); i.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)i.next();
+
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                    sb2.append(", ");
+                }
+
+                sb.append(fieldConfig.getOriginalName());
+                sb2.append("?");
+
+                Object obj = rdn.get(fieldConfig.getName());
+                parameters.add(obj);
+            }
+
+            String sql = "insert into "+table+" ("+sb+") values ("+sb2+")";
+
+            if (debug) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
+
+            int c = 1;
+            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
+                Object obj = i.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                setParameter(ps, c, obj, fieldConfig);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps.executeUpdate();
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            SourceConfig sourceConfig,
+            RDN pk,
+            String cred,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            SourceConfig sourceConfig,
+            RDN pk,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        //log.debug("Deleting entry "+pk);
+
+        String table = getTableName(sourceConfig);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            StringBuilder sb = new StringBuilder();
+            for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+
+                if (sb.length() > 0) sb.append(" and ");
+
+                sb.append(name);
+                sb.append("=?");
+            }
+
+            String sql = "delete from "+table+" where "+sb;
+
+            if (debug) {
+                log.debug(Formatter.displaySeparator(80));
+                log.debug(Formatter.displayLine(sql, 80));
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
+
+            int c = 1;
+            for (Iterator i=pk.getNames().iterator(); i.hasNext(); c++) {
+                String name = (String)i.next();
+                Object value = pk.get(name);
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                setParameter(ps, c, value, fieldConfig);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
+
+            int count = ps.executeUpdate();
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            SourceConfig sourceConfig,
+            RDN pk,
+            Collection modifications,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String table = getTableName(sourceConfig);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            StringBuilder columns = new StringBuilder();
+            StringBuilder whereClause = new StringBuilder();
+            Collection parameters = new ArrayList();
+            Collection fieldConfigs = new ArrayList();
+
+            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+                Modification mi = (Modification)i.next();
+
+                int type = mi.getType();
+                Attribute attribute = mi.getAttribute();
+                String name = attribute.getName();
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+                if (fieldConfig == null) {
+                    throw new Exception("Unknown field: "+name);
+                }
+                fieldConfigs.add(fieldConfig);
+
+                switch (type) {
+                    case Modification.ADD:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+                        parameters.add(attribute.getValue());
+                        break;
+
+                    case Modification.REPLACE:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+                        parameters.add(attribute.getValue());
+                        break;
+
+                    case Modification.DELETE:
+                        if (columns.length() > 0) columns.append(", ");
+
+                        columns.append(fieldConfig.getOriginalName());
+                        columns.append("=?");
+                        parameters.add(null);
+                        break;
+                }
+            }
+
+            // if there's nothing to update, return
+            if (columns.length() == 0) throw ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
+/*
+            Collection fields = sourceConfig.getFieldConfigs();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)i.next();
+                if (fieldConfig.isPrimaryKey()) continue;
+
+                if (columns.length() > 0) columns.append(", ");
+
+                columns.append(fieldConfig.getOriginalName());
+                columns.append("=?");
+
+                Object value = sourceValues.getOne(fieldConfig.getName());
+                parameters.add(value);
+            }
+*/
+            Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)i.next();
+                fieldConfigs.add(fieldConfig);
+
+                if (whereClause.length() > 0) whereClause.append(" and ");
+
+                whereClause.append(fieldConfig.getOriginalName());
+                whereClause.append("=?");
+
+                Object value = pk.get(fieldConfig.getName());
+                parameters.add(value);
+            }
+
+            String sql = "update "+table+" set "+columns+" where "+whereClause;
+
+            if (debug) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
+
+            int c = 1;
+            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
+                Object value = i.next();
+                FieldConfig fieldConfig = (FieldConfig)j.next();
+                setParameter(ps, c, value, fieldConfig);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
+
+            int count = ps.executeUpdate();
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            SourceConfig sourceConfig,
+            RDN oldRdn,
+            RDN newRdn,
+            boolean deleteOldRdn,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
+
+        String table = getTableName(sourceConfig);
+
+        java.sql.Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            StringBuilder columns = new StringBuilder();
+            StringBuilder whereClause = new StringBuilder();
+            Collection parameters = new ArrayList();
+
+            Collection fields = sourceConfig.getFieldConfigs();
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)i.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+
+                Object value = newRdn.get(fieldConfig.getName());
+                if (value == null) continue;
+
+                if (columns.length() > 0) columns.append(", ");
+
+                columns.append(fieldConfig.getOriginalName());
+                columns.append("=?");
+
+                parameters.add(value);
+            }
+
+            for (Iterator i=fields.iterator(); i.hasNext(); ) {
+                FieldConfig fieldConfig = (FieldConfig)i.next();
+                if (!fieldConfig.isPrimaryKey()) continue;
+
+                Object value = oldRdn.get(fieldConfig.getName());
+                if (value == null) continue;
+
+                if (whereClause.length() > 0) whereClause.append(" and ");
+
+                whereClause.append(fieldConfig.getOriginalName());
+                whereClause.append("=?");
+
+                parameters.add(value);
+            }
+
+            String sql = "update "+table+" set "+columns+" where "+whereClause;
+
+            if (debug) {
+                log.debug(Formatter.displaySeparator(80));
+                Collection lines = Formatter.split(sql, 80);
+                for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                    String line = (String)i.next();
+                    log.debug(Formatter.displayLine(line, 80));
+                }
+                log.debug(Formatter.displaySeparator(80));
+            }
+
+            ps = con.prepareStatement(sql);
+
+            if (debug) {
+            	log.debug(Formatter.displayLine("Parameters:", 80));
+            }
+
+            int c = 1;
+            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
+                Object value = i.next();
+                ps.setObject(c, value);
+                if (debug) {
+                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
+                }
+            }
+
+            if (debug) {
+            	log.debug(Formatter.displaySeparator(80));
+            }
+
+            int count = ps.executeUpdate();
+            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) {}
+            if (con != null) try { con.close(); } catch (Exception e) {}
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             Partition partition,
@@ -261,7 +673,7 @@ public class JDBCAdapter extends Adapter {
                 request.getFilter()
         );
 
-        filterGenerator.run();
+        filterGenerator.generate();
 
         String sourceFilter = filterGenerator.getJdbcFilter();
         if (sourceFilter != null) {
@@ -368,16 +780,20 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void search(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
+            AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        Filter filter = request.getFilter();
 
         if (debug) {
             Collection names = new ArrayList();
@@ -388,9 +804,12 @@ public class JDBCAdapter extends Adapter {
 
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Search "+names, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+filter, 80));
+            log.debug(Formatter.displayLine(" - Filter: "+request.getFilter(), 80));
             log.debug(Formatter.displayLine(" - Scope: "+ LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Source values:");
+            sourceValues.print();
         }
 
         JDBCQueryGenerator queryGenerator = new JDBCQueryGenerator(
@@ -398,6 +817,7 @@ public class JDBCAdapter extends Adapter {
                 partition,
                 entryMapping,
                 sourceMappings,
+                sourceValues,
                 penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
@@ -619,371 +1039,6 @@ public class JDBCAdapter extends Adapter {
         //log.debug("=> values: "+record);
 
         return rb.toRdn();
-    }
-
-    public void add(SourceConfig sourceConfig, RDN pk, AttributeValues sourceValues) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-        if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("JDBC Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - DN: "+pk, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        // convert sets into single values
-        Collection rows = TransformEngine.convert(sourceValues);
-    	RDN rdn = (RDN)rows.iterator().next();
-
-        String table = getTableName(sourceConfig);
-
-        java.sql.Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = (java.sql.Connection)openConnection();
-
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sb2 = new StringBuilder();
-
-            Collection fieldConfigs = sourceConfig.getFieldConfigs();
-            Collection parameters = new ArrayList();
-            for (Iterator i=fieldConfigs.iterator(); i.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)i.next();
-
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                    sb2.append(", ");
-                }
-
-                sb.append(fieldConfig.getOriginalName());
-                sb2.append("?");
-
-                Object obj = rdn.get(fieldConfig.getName());
-                parameters.add(obj);
-            }
-
-            String sql = "insert into "+table+" ("+sb+") values ("+sb2+")";
-
-            if (debug) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-
-            if (debug) {
-            	log.debug(Formatter.displayLine("Parameters:", 80));
-            }
-
-            int c = 1;
-            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
-                Object obj = i.next();
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                setParameter(ps, c, obj, fieldConfig);
-                if (debug) {
-                	log.debug(Formatter.displayLine(" - "+c+" = "+(obj == null ? null : obj.toString()), 80));
-                }
-            }
-
-            if (debug) {
-            	log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps.executeUpdate();
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void delete(SourceConfig sourceConfig, RDN pk) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-        //log.debug("Deleting entry "+pk);
-
-        String table = getTableName(sourceConfig);
-
-        java.sql.Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = (java.sql.Connection)openConnection();
-
-            StringBuilder sb = new StringBuilder();
-            for (Iterator i=pk.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-
-                if (sb.length() > 0) sb.append(" and ");
-
-                sb.append(name);
-                sb.append("=?");
-            }
-
-            String sql = "delete from "+table+" where "+sb;
-
-            if (debug) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine(sql, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-
-            if (debug) {
-            	log.debug(Formatter.displayLine("Parameters:", 80));
-            }
-
-            int c = 1;
-            for (Iterator i=pk.getNames().iterator(); i.hasNext(); c++) {
-                String name = (String)i.next();
-                Object value = pk.get(name);
-                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                setParameter(ps, c, value, fieldConfig);
-                if (debug) {
-                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
-                }
-            }
-
-            if (debug) {
-            	log.debug(Formatter.displaySeparator(80));
-            }
-
-            int count = ps.executeUpdate();
-            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void modify(SourceConfig sourceConfig, RDN pk, Collection modifications) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-
-        String table = getTableName(sourceConfig);
-
-        java.sql.Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = (java.sql.Connection)openConnection();
-
-            StringBuilder columns = new StringBuilder();
-            StringBuilder whereClause = new StringBuilder();
-            Collection parameters = new ArrayList();
-            Collection fieldConfigs = new ArrayList();
-            
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                Modification mi = (Modification)i.next();
-
-                int type = mi.getType();
-                Attribute attribute = mi.getAttribute();
-                String name = attribute.getName();
-
-                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                if (fieldConfig == null) {
-                    throw new Exception("Unknown field: "+name);
-                }
-                fieldConfigs.add(fieldConfig);
-                
-                switch (type) {
-                    case Modification.ADD:
-                        if (columns.length() > 0) columns.append(", ");
-
-                        columns.append(fieldConfig.getOriginalName());
-                        columns.append("=?");
-                        parameters.add(attribute.getValue());
-                        break;
-
-                    case Modification.REPLACE:
-                        if (columns.length() > 0) columns.append(", ");
-
-                        columns.append(fieldConfig.getOriginalName());
-                        columns.append("=?");
-                        parameters.add(attribute.getValue());
-                        break;
-
-                    case Modification.DELETE:
-                        if (columns.length() > 0) columns.append(", ");
-
-                        columns.append(fieldConfig.getOriginalName());
-                        columns.append("=?");
-                        parameters.add(null);
-                        break;
-                }
-            }
-
-            // if there's nothing to update, return
-            if (columns.length() == 0) throw ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
-/*
-            Collection fields = sourceConfig.getFieldConfigs();
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (fieldConfig.isPrimaryKey()) continue;
-
-                if (columns.length() > 0) columns.append(", ");
-
-                columns.append(fieldConfig.getOriginalName());
-                columns.append("=?");
-
-                Object value = sourceValues.getOne(fieldConfig.getName());
-                parameters.add(value);
-            }
-*/
-            Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)i.next();
-                fieldConfigs.add(fieldConfig);
-                
-                if (whereClause.length() > 0) whereClause.append(" and ");
-
-                whereClause.append(fieldConfig.getOriginalName());
-                whereClause.append("=?");
-
-                Object value = pk.get(fieldConfig.getName());
-                parameters.add(value);
-            }
-
-            String sql = "update "+table+" set "+columns+" where "+whereClause;
-
-            if (debug) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-
-            if (debug) {
-            	log.debug(Formatter.displayLine("Parameters:", 80));
-            }
-
-            int c = 1;
-            for (Iterator i=parameters.iterator(), j=fieldConfigs.iterator(); i.hasNext() && j.hasNext(); c++) {
-                Object value = i.next();
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                setParameter(ps, c, value, fieldConfig);
-                if (debug) {
-                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
-                }
-            }
-
-            if (debug) {
-            	log.debug(Formatter.displaySeparator(80));
-            }
-
-            int count = ps.executeUpdate();
-            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
-    }
-
-    public void modrdn(
-            SourceConfig sourceConfig,
-            RDN oldRdn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-        //log.debug("Renaming source "+source.getName()+": "+oldRdn+" with "+newRdn);
-
-        String table = getTableName(sourceConfig);
-
-        java.sql.Connection con = null;
-        PreparedStatement ps = null;
-
-        try {
-            con = (java.sql.Connection)openConnection();
-
-            StringBuilder columns = new StringBuilder();
-            StringBuilder whereClause = new StringBuilder();
-            Collection parameters = new ArrayList();
-
-            Collection fields = sourceConfig.getFieldConfigs();
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-
-                Object value = newRdn.get(fieldConfig.getName());
-                if (value == null) continue;
-
-                if (columns.length() > 0) columns.append(", ");
-
-                columns.append(fieldConfig.getOriginalName());
-                columns.append("=?");
-
-                parameters.add(value);
-            }
-
-            for (Iterator i=fields.iterator(); i.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)i.next();
-                if (!fieldConfig.isPrimaryKey()) continue;
-
-                Object value = oldRdn.get(fieldConfig.getName());
-                if (value == null) continue;
-
-                if (whereClause.length() > 0) whereClause.append(" and ");
-
-                whereClause.append(fieldConfig.getOriginalName());
-                whereClause.append("=?");
-
-                parameters.add(value);
-            }
-
-            String sql = "update "+table+" set "+columns+" where "+whereClause;
-
-            if (debug) {
-                log.debug(Formatter.displaySeparator(80));
-                Collection lines = Formatter.split(sql, 80);
-                for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                    String line = (String)i.next();
-                    log.debug(Formatter.displayLine(line, 80));
-                }
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ps = con.prepareStatement(sql);
-
-            if (debug) {
-            	log.debug(Formatter.displayLine("Parameters:", 80));
-            }
-
-            int c = 1;
-            for (Iterator i=parameters.iterator(); i.hasNext(); c++) {
-                Object value = i.next();
-                ps.setObject(c, value);
-                if (debug) {
-                	log.debug(Formatter.displayLine(" - "+c+" = "+value, 80));
-                }
-            }
-
-            if (debug) {
-            	log.debug(Formatter.displaySeparator(80));
-            }
-
-            int count = ps.executeUpdate();
-            if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
-        }
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {

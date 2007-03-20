@@ -77,7 +77,11 @@ public class DefaultHandler extends Handler {
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
-        if (request.getScope() == LDAPConnection.SCOPE_BASE || request.getScope() == LDAPConnection.SCOPE_SUB) { // base or subtree
+        int scope = request.getScope();
+        if (scope == LDAPConnection.SCOPE_BASE
+                || scope == LDAPConnection.SCOPE_SUB
+                || scope == LDAPConnection.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
+                ) {
 
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
@@ -108,7 +112,8 @@ public class DefaultHandler extends Handler {
             );
         }
 
-        if (request.getScope() == LDAPConnection.SCOPE_ONE || request.getScope() == LDAPConnection.SCOPE_SUB) { // one level or subtree
+        if (scope == LDAPConnection.SCOPE_ONE && entryMapping == baseMapping
+                || scope == LDAPConnection.SCOPE_SUB) {
 
             Collection children = partition.getChildren(entryMapping);
 

@@ -24,7 +24,6 @@ import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -123,7 +122,7 @@ public class Connection implements ConnectionMBean {
             AddRequest request,
             AddResponse response
     ) throws Exception {
-        adapter.add(sourceConfig, pk, sourceValues);
+        adapter.add(sourceConfig, pk, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +137,7 @@ public class Connection implements ConnectionMBean {
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(sourceConfig, pk, password);
+        adapter.bind(sourceConfig, pk, password, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +150,7 @@ public class Connection implements ConnectionMBean {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-        adapter.delete(sourceConfig, pk);
+        adapter.delete(sourceConfig, pk, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +165,7 @@ public class Connection implements ConnectionMBean {
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(sourceConfig, pk, modifications);
+        adapter.modify(sourceConfig, pk, modifications, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,7 +180,7 @@ public class Connection implements ConnectionMBean {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn);
+        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,11 +203,11 @@ public class Connection implements ConnectionMBean {
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
-            Collection primaryKeys,
+            AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
-        adapter.search(partition, entryMapping, sourceMappings, request, response);
+        adapter.search(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
