@@ -132,7 +132,7 @@ return "uid="+username+",ou=Users,dc=JDBC,dc=Example,dc=com";
     <source name="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
-        <variable>cn</variable>
+        <variable>g.groupname</variable>
       </field>
       <field name="username">
         <expression foreach="uniqueMember" var="um">
@@ -142,9 +142,6 @@ return um.substring(i+1, j);
         </expression>
       </field>
     </source>
-    <relationship>
-      <expression>g.groupname = ug.groupname</expression>
-    </relationship>
   </entry>
 
 </mapping>

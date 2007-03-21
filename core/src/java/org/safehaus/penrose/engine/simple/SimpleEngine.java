@@ -19,18 +19,12 @@ package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.Connection;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -45,9 +39,7 @@ public class SimpleEngine extends Engine {
     public void init() throws Exception {
         super.init();
 
-        engineFilterTool = new EngineFilterTool(this);
         searchEngine     = new SearchEngine(this);
-        transformEngine  = new TransformEngine(this);
 
         log.debug("Default engine initialized.");
     }
@@ -149,28 +141,41 @@ public class SimpleEngine extends Engine {
             AddResponse response
     ) throws Exception {
 
-        DN dn = request.getDn();
-        Attributes attributes = request.getAttributes();
+        boolean debug = log.isDebugEnabled();
 
-        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
+        DN dn = request.getDn();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ADD", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        AttributeValues sourceValues = new AttributeValues();
+        extractSourceValues(partition, entryMapping, dn, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
         Collection sourceMappings = entryMapping.getSourceMappings();
 
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-            Connector connector = getConnector(sourceConfig);
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Map entries = transformEngine.split(partition, entryMapping, sourceMapping, dn, attributeValues);
+        Connector connector = getConnector(sourceConfig);
 
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                RDN pk = (RDN)j.next();
-                AttributeValues sv = (AttributeValues)entries.get(pk);
-
-                if (log.isDebugEnabled()) log.debug("Adding to "+sourceMapping.getName()+" entry "+pk+": "+sv);
-
-                connector.add(partition, sourceConfig, sv, request, response);
-            }
-        }
+        connector.add(
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,41 +190,51 @@ public class SimpleEngine extends Engine {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
-        String password = request.getPassword();
 
-        log.debug("Bind as user "+dn);
-
-        RDN rdn = dn.getRdn();
-
-        AttributeValues attributeValues = new AttributeValues();
-        attributeValues.add(rdn);
-
-        Collection sources = entryMapping.getSourceMappings();
-
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceMapping source = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(source.getSourceName());
-            Connector connector = getConnector(sourceConfig);
-
-            Map entries = transformEngine.split(partition, entryMapping, source, dn, attributeValues);
-
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                RDN pk = (RDN)j.next();
-                //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-
-                log.debug("Bind to "+source.getName()+" as "+pk+".");
-
-                try {
-                    connector.bind(partition, sourceConfig, entryMapping, pk, request, response);
-                    return;
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("BIND", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        AttributeValues sourceValues = new AttributeValues();
+        extractSourceValues(partition, entryMapping, dn, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Collection sourceMappings = entryMapping.getSourceMappings();
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
+        Connector connector = getConnector(sourceConfig);
+
+        try {
+            connector.bind(
+                    partition,
+                    entryMapping,
+                    sourceMappings,
+                    sourceValues,
+                    request,
+                    response
+            );
+
+        } catch (LDAPException e) {
+            if (e.getResultCode() == LDAPException.INVALID_CREDENTIALS) {
+                log.debug("Calling default bind operation.");
+                super.bind(session, partition, entryMapping, request, response);
+            } else {
+                throw e;
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,30 +250,41 @@ public class SimpleEngine extends Engine {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
 
-        RDN rdn = dn.getRdn();
-        AttributeValues attributeValues = new AttributeValues();
-        attributeValues.add(rdn);
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("DELETE", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        AttributeValues sourceValues = new AttributeValues();
+        extractSourceValues(partition, entryMapping, dn, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
 
         Collection sourceMappings = entryMapping.getSourceMappings();
 
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-            Connector connector = getConnector(sourceConfig);
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            Map entries = transformEngine.split(partition, entryMapping, sourceMapping, dn, attributeValues);
+        Connector connector = getConnector(sourceConfig);
 
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                RDN pk = (RDN)j.next();
-                AttributeValues sv = (AttributeValues)entries.get(pk);
-
-                log.debug("Adding to "+sourceMapping.getName()+" entry "+pk+": "+sv);
-
-                connector.delete(partition, sourceConfig, sv, request, response);
-            }
-        }
+        connector.delete(
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,98 +300,41 @@ public class SimpleEngine extends Engine {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
-        Collection modifications = request.getModifications();
 
-        AttributeValues newAttributeValues = new AttributeValues();
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODIFY", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
-        RDN rdn = dn.getRdn();
-        AttributeValues attributeValues = new AttributeValues();
-        attributeValues.add(rdn);
+        AttributeValues sourceValues = new AttributeValues();
+        extractSourceValues(partition, entryMapping, dn, sourceValues);
 
-        for (Iterator iterator=modifications.iterator(); iterator.hasNext(); ) {
-            Modification mi = (Modification)iterator.next();
-            Attribute attribute = mi.getAttribute();
-            String name = attribute.getName();
-            attributeValues.add(name, attribute.getValues());
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
         }
 
         Collection sourceMappings = entryMapping.getSourceMappings();
-        SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
-        if (log.isDebugEnabled()) log.debug("Primary source: "+primarySourceMapping.getName());
 
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            if (log.isDebugEnabled()) log.debug("Modifying source "+sourceMapping.getName());
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-            Connector connector = getConnector(sourceConfig);
+        Connector connector = getConnector(sourceConfig);
 
-            Map entries = transformEngine.split(partition, entryMapping, sourceMapping, dn, attributeValues);
-
-            RDN pk = (RDN)entries.keySet().iterator().next();
-            RDNBuilder rb = new RDNBuilder();
-            rb.set(pk);
-
-            boolean deleteExistingEntries = false;
-            // Convert modification list of attributes into modification list of fields
-            Collection mods = new ArrayList();
-            for (Iterator j=sourceMapping.getFieldMappings().iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
-                if (fieldMapping.getVariable() == null) continue;
-
-                String name = fieldMapping.getName();
-                String variable = fieldMapping.getVariable();
-
-                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-
-                for (Iterator k=modifications.iterator(); k.hasNext(); ) {
-                    Modification mi = (Modification)k.next();
-
-                    int type = mi.getType();
-                    Attribute attribute = mi.getAttribute();
-                    if (!attribute.getName().equals(variable)) continue;
-
-                    if (log.isDebugEnabled()) log.debug("Converting modification for attribute "+variable);
-
-                    Attribute newAttr = new Attribute(name, attribute.getValues());
-                    mods.add(new Modification(type, newAttr));
-
-                    if ((!sourceMapping.equals(primarySourceMapping)) && fieldConfig.isPrimaryKey()) {
-                        deleteExistingEntries = true;
-                        if (log.isDebugEnabled()) log.debug("Removing field "+name);
-                        rb.remove(name);
-                    }
-                }
-            }
-
-            RDN pk2 = rb.toRdn();
-
-            if (log.isDebugEnabled()) log.debug("PK: "+pk);
-            if (log.isDebugEnabled()) log.debug("PK2: "+pk2);
-
-            if (deleteExistingEntries) {
-                Connection connection = connector.getConnection(partition, sourceConfig.getConnectionName());
-                connection.delete(sourceConfig, pk2, null, null);
-            }
-
-            for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                pk = (RDN)j.next();
-                AttributeValues sv = (AttributeValues)entries.get(pk);
-                if (log.isDebugEnabled()) log.debug("Modifying entry "+pk+" in "+sourceConfig.getName()+": "+sv);
-
-                connector.modify(
-                        partition,
-                        sourceConfig,
-                        pk,
-                        mods,
-                        sv,
-                        newAttributeValues,
-                        request,
-                        response
-                );
-            }
-        }
+        connector.modify(
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,50 +350,41 @@ public class SimpleEngine extends Engine {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN dn = request.getDn();
-        RDN newRdn = request.getNewRdn();
-        boolean deleteOldRdn = request.getDeleteOldRdn();
 
-        RDN rdn1 = dn.getRdn();
-        AttributeValues av1 = new AttributeValues();
-        av1.add(rdn1);
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("MODRDN", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
 
-        RDN rdn2 = newRdn;
-        AttributeValues av2 = new AttributeValues();
-        av2.add(rdn2);
+        AttributeValues sourceValues = new AttributeValues();
+        extractSourceValues(partition, entryMapping, dn, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
 
         Collection sourceMappings = entryMapping.getSourceMappings();
-        SourceMapping primarySourceMapping = getPrimarySource(entryMapping);
-        log.debug("Primary source: "+primarySourceMapping.getName());
 
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            log.debug("Renaming source "+sourceMapping.getName());
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-            Connector connector = getConnector(sourceConfig);
+        Connector connector = getConnector(sourceConfig);
 
-            Map entries1 = transformEngine.split(partition, entryMapping, sourceMapping, dn, av1);
-            Map entries2 = transformEngine.split(partition, entryMapping, sourceMapping, dn, av2);
-
-            log.debug("Entries 1: "+entries1);
-            log.debug("Entries 2: "+entries2);
-
-            RDN oldPk = (RDN)entries1.keySet().iterator().next();
-            RDN newPk = (RDN)entries2.keySet().iterator().next();
-
-            log.debug("Renaming "+newPk+" into "+newPk);
-
-            connector.modrdn(
-                    partition,
-                    sourceConfig,
-                    oldPk,
-                    newPk,
-                    deleteOldRdn,
-                    request,
-                    response
-            );
-        }
+        connector.modrdn(
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -434,45 +394,29 @@ public class SimpleEngine extends Engine {
     public void search(
             Session session,
             Partition partition,
-            AttributeValues sourceValues,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
+            AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        final DN baseDn = request.getDn();
-        final Filter filter = request.getFilter();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Base DN       : "+baseDn, 80));
+            log.debug(Formatter.displayLine("Base DN       : "+request.getDn(), 80));
             log.debug(Formatter.displayLine("Base Mapping  : "+baseMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Filter        : "+filter, 80));
+            log.debug(Formatter.displayLine("Filter        : "+request.getFilter(), 80));
             log.debug(Formatter.displayLine("Scope         : "+LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
         try {
-            extractSourceValues(partition, baseMapping, baseDn, sourceValues);
-
-            List mappings = new ArrayList();
-
-            EntryMapping em = entryMapping;
-            while (em != baseMapping) {
-                mappings.add(0, em);
-                em = partition.getParent(em);
-            }
-
-            while (em != null) {
-                mappings.add(0, em);
-                em = partition.getParent(em);
-            }
-
-            EngineTool.propagate(mappings, sourceValues);
+            extractSourceValues(partition, baseMapping, request.getDn(), sourceValues);
+            //EngineTool.propagateDown(partition, entryMapping, sourceValues);
 
             if (debug) {
                 log.debug("Source values:");
@@ -483,8 +427,8 @@ public class SimpleEngine extends Engine {
 
             searchEngine.search(
                     partition,
-                    sourceValues,
                     entryMapping,
+                    sourceValues,
                     request,
                     sr
             );

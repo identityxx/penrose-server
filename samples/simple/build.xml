@@ -42,6 +42,28 @@
         </exec>
     </target>
 
+    <target name="test-modrdn1">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modrdn1.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-modrdn2">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modrdn2.ldif"/>
+        </exec>
+    </target>
+
     <target name="test-search">
         <exec executable="ldapsearch">
             <arg line="-h ${test.hostname}"/>
@@ -50,7 +72,7 @@
             <arg line="-w ${test.password}"/>
             <arg line="-x"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=JDBC,dc=Example,dc=com"/>
+            <arg line="-b dc=Simple,dc=Example,dc=com"/>
         </exec>
     </target>
 

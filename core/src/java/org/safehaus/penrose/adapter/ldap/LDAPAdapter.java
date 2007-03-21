@@ -74,13 +74,13 @@ public class LDAPAdapter extends Adapter {
     public void bind(
             SourceConfig sourceConfig,
             RDN pk,
-            String password,
             BindRequest request,
             BindResponse response
     ) throws LDAPException {
 
         try {
             DN dn = getDn(sourceConfig, pk);
+            String password = request.getPassword();
 
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -228,7 +228,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -359,7 +359,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -401,7 +401,7 @@ public class LDAPAdapter extends Adapter {
             return ExceptionUtil.getReturnCode(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         return LDAPException.SUCCESS;
@@ -437,7 +437,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -507,7 +507,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -544,7 +544,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -594,7 +594,7 @@ public class LDAPAdapter extends Adapter {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -677,7 +677,7 @@ public class LDAPAdapter extends Adapter {
 
         } finally {
             try { response.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (ctx != null) try { ctx.close(); } catch (Exception e) {}
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         return response;

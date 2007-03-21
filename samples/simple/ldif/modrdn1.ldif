@@ -1,0 +1,2 @@
+uid=test,ou=Users,dc=Simple,dc=Example,dc=com
+uid=newTest

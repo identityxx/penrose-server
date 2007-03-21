@@ -155,6 +155,23 @@ public class Connector {
         }
     }
 
+    public void add(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+        connection.add(partition, entryMapping, sourceMappings, sourceValues, request, response);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,11 +187,25 @@ public class Connector {
 
         if (log.isDebugEnabled()) log.debug("Binding as entry in "+sourceConfig.getName());
 
-        DN dn = request.getDn();
-        String password = request.getPassword();
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+        connection.bind(sourceConfig, pk, request, response);
+    }
+
+    public void bind(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
         Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        connection.bind(sourceConfig, pk, password, request, response);
+
+        connection.bind(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,6 +235,23 @@ public class Connector {
             Connection connection = getConnection(partition, sourceConfig.getConnectionName());
             connection.delete(sourceConfig, pk, request, response);
         }
+    }
+
+    public void delete(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+        connection.delete(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,6 +300,23 @@ public class Connector {
         connection.modify(sourceConfig, pk, modifications, request, response);
     }
 
+    public void modify(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
+
+        connection.modify(partition, entryMapping, sourceMappings, sourceValues, request, response);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,70 +337,21 @@ public class Connector {
         connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
     }
 
-    public Collection createModifications(
-            AttributeValues oldValues,
-            AttributeValues newValues
+    public void modrdn(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
     ) throws Exception {
 
-        Collection list = new ArrayList();
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
-        Set addAttributes = new HashSet(newValues.getNames());
-        addAttributes.removeAll(oldValues.getNames());
+        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
 
-        if (log.isDebugEnabled()) log.debug("Values to add:");
-        for (Iterator i=addAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-
-            Collection values = newValues.get(name);
-            Attribute attribute = new Attribute(name);
-
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.addValue(value);
-            }
-
-            list.add(new Modification(Modification.ADD, attribute));
-        }
-
-        Set removeAttributes = new HashSet(oldValues.getNames());
-        removeAttributes.removeAll(newValues.getNames());
-
-        if (log.isDebugEnabled()) log.debug("Values to remove:");
-        for (Iterator i=removeAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-
-            Collection values = newValues.get(name);
-            Attribute attribute = new Attribute(name);
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.addValue(value);
-            }
-
-            list.add(new Modification(Modification.DELETE, attribute));
-        }
-
-        Set replaceAttributes = new HashSet(oldValues.getNames());
-        replaceAttributes.retainAll(newValues.getNames());
-
-        if (log.isDebugEnabled()) log.debug("Values to replace:");
-        for (Iterator i=replaceAttributes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (name.startsWith("primaryKey.")) continue;
-            
-            Set set = (Set)newValues.get(name);
-            Attribute attribute = new Attribute(name);
-            for (Iterator j = set.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                if (log.isDebugEnabled()) log.debug(" - "+name+": "+value);
-                attribute.addValue(value);
-            }
-
-            list.add(new Modification(Modification.REPLACE, attribute));
-        }
-
-        return list;
+        connection.modrdn(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,7 +393,6 @@ public class Connector {
             final EntryMapping entryMapping,
             final Collection sourceMappings,
             final AttributeValues sourceValues,
-            final Filter filter,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {

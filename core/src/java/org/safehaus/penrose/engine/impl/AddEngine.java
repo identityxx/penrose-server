@@ -42,9 +42,9 @@ public class AddEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Engine engine;
+    EngineImpl engine;
 
-    public AddEngine(Engine engine) {
+    public AddEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
@@ -68,7 +68,7 @@ public class AddEngine {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
                 AttributeValues output = new AttributeValues();
-                engine.getTransformEngine().translate(
+                engine.transformEngine.translate(
                         partition,
                         entryMapping,
                         sourceMapping,

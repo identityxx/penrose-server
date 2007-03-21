@@ -24,7 +24,6 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -39,6 +38,8 @@ import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.jdbc.Statement;
+import org.safehaus.penrose.jdbc.SelectStatement;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -296,23 +297,103 @@ public class JDBCAdapter extends Adapter {
             ps.executeUpdate();
 
         } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Bind
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void bind(
-            SourceConfig sourceConfig,
-            RDN pk,
-            String cred,
-            BindRequest request,
-            BindResponse response
+    public void add(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            Collection names = new ArrayList();
+            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                names.add(sourceMapping.getName());
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Add "+names, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        AddStatementBuilder builder = new AddStatementBuilder(
+                this,
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
+
+        java.sql.Connection con = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            Collection statements = builder.generate();
+            for (Iterator i=statements.iterator(); i.hasNext(); ) {
+                Statement statement = (Statement)i.next();
+
+                String sql = statement.getSql();
+                Collection parameters = statement.getParameters();
+
+                if (debug) {
+                    log.debug(Formatter.displaySeparator(80));
+                    Collection lines = Formatter.split(sql, 80);
+                    for (Iterator j=lines.iterator(); j.hasNext(); ) {
+                        String line = (String)j.next();
+                        log.debug(Formatter.displayLine(line, 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+
+                    log.debug(Formatter.displayLine("Parameters:", 80));
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        log.debug(Formatter.displayLine(" - "+counter+" = "+value+" ("+fieldConfig.getType()+")", 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+                }
+
+                PreparedStatement ps = null;
+                try {
+                    ps = con.prepareStatement(sql);
+
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        setParameter(ps, counter, value, fieldConfig);
+                    }
+
+                    ps.executeUpdate();
+
+                } finally {
+                    if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+                }
+            }
+
+            log.debug("Add operation completed.");
+
+        } finally {
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -380,8 +461,102 @@ public class JDBCAdapter extends Adapter {
             if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    public void delete(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            Collection names = new ArrayList();
+            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                names.add(sourceMapping.getName());
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Delete "+names, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        DeleteStatementBuilder builder = new DeleteStatementBuilder(
+                this,
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
+
+        java.sql.Connection con = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            Collection statements = builder.generate();
+            for (Iterator i=statements.iterator(); i.hasNext(); ) {
+                Statement statement = (Statement)i.next();
+
+                String sql = statement.getSql();
+                Collection parameters = statement.getParameters();
+
+                if (debug) {
+                    log.debug(Formatter.displaySeparator(80));
+                    Collection lines = Formatter.split(sql, 80);
+                    for (Iterator j=lines.iterator(); j.hasNext(); ) {
+                        String line = (String)j.next();
+                        log.debug(Formatter.displayLine(line, 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+
+                    log.debug(Formatter.displayLine("Parameters:", 80));
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        log.debug(Formatter.displayLine(" - "+counter+" = "+value+" ("+fieldConfig.getType()+")", 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+                }
+
+                PreparedStatement ps = null;
+                try {
+                    ps = con.prepareStatement(sql);
+
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        setParameter(ps, counter, value, fieldConfig);
+                    }
+
+                    ps.executeUpdate();
+
+                } finally {
+                    if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+                }
+            }
+
+            log.debug("Delete operation completed.");
+
+        } finally {
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -453,7 +628,7 @@ public class JDBCAdapter extends Adapter {
             }
 
             // if there's nothing to update, return
-            if (columns.length() == 0) throw ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
+            if (columns.length() == 0) return;
 /*
             Collection fields = sourceConfig.getFieldConfigs();
             for (Iterator i=fields.iterator(); i.hasNext(); ) {
@@ -519,8 +694,102 @@ public class JDBCAdapter extends Adapter {
             if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    public void modify(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            Collection names = new ArrayList();
+            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                names.add(sourceMapping.getName());
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Modify "+names, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        ModifyStatementBuilder builder = new ModifyStatementBuilder(
+                this,
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
+
+        java.sql.Connection con = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            Collection statements = builder.generate();
+            for (Iterator i=statements.iterator(); i.hasNext(); ) {
+                Statement statement = (Statement)i.next();
+
+                String sql = statement.getSql();
+                Collection parameters = statement.getParameters();
+
+                if (debug) {
+                    log.debug(Formatter.displaySeparator(80));
+                    Collection lines = Formatter.split(sql, 80);
+                    for (Iterator j=lines.iterator(); j.hasNext(); ) {
+                        String line = (String)j.next();
+                        log.debug(Formatter.displayLine(line, 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+
+                    log.debug(Formatter.displayLine("Parameters:", 80));
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        log.debug(Formatter.displayLine(" - "+counter+" = "+value+" ("+fieldConfig.getType()+")", 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+                }
+
+                PreparedStatement ps = null;
+                try {
+                    ps = con.prepareStatement(sql);
+
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        setParameter(ps, counter, value, fieldConfig);
+                    }
+    
+                    ps.executeUpdate();
+
+                } finally {
+                    if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+                }
+            }
+
+            log.debug("Modify operation completed.");
+
+        } finally {
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -618,8 +887,102 @@ public class JDBCAdapter extends Adapter {
             if (count == 0) throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
 
         } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    public void modrdn(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            Collection names = new ArrayList();
+            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)i.next();
+                names.add(sourceMapping.getName());
+            }
+
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ModRdn "+names, 80));
+            log.debug(Formatter.displaySeparator(80));
+
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        ModRdnStatementBuilder builder = new ModRdnStatementBuilder(
+                this,
+                partition,
+                entryMapping,
+                sourceMappings,
+                sourceValues,
+                request,
+                response
+        );
+
+        java.sql.Connection con = null;
+
+        try {
+            con = (java.sql.Connection)openConnection();
+
+            Collection statements = builder.generate();
+            for (Iterator i=statements.iterator(); i.hasNext(); ) {
+                Statement statement = (Statement)i.next();
+
+                String sql = statement.getSql();
+                Collection parameters = statement.getParameters();
+
+                if (debug) {
+                    log.debug(Formatter.displaySeparator(80));
+                    Collection lines = Formatter.split(sql, 80);
+                    for (Iterator j=lines.iterator(); j.hasNext(); ) {
+                        String line = (String)j.next();
+                        log.debug(Formatter.displayLine(line, 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+
+                    log.debug(Formatter.displayLine("Parameters:", 80));
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        log.debug(Formatter.displayLine(" - "+counter+" = "+value+" ("+fieldConfig.getType()+")", 80));
+                    }
+                    log.debug(Formatter.displaySeparator(80));
+                }
+
+                PreparedStatement ps = null;
+                try {
+                    ps = con.prepareStatement(sql);
+
+                    int counter = 1;
+                    for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                        Parameter parameter = (Parameter)j.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object value = parameter.getValue();
+                        setParameter(ps, counter, value, fieldConfig);
+                    }
+
+                    ps.executeUpdate();
+
+                } finally {
+                    if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+                }
+            }
+
+            log.debug("ModRdn operation completed.");
+
+        } finally {
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -658,24 +1021,18 @@ public class JDBCAdapter extends Adapter {
         StringBuilder sqlFilter = new StringBuilder();
         if (s != null) sqlFilter.append(s);
 
-        List parameterValues = new ArrayList();
-        List parameterFieldConfigs = new ArrayList();
-
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
 
-        JDBCFilterGenerator filterGenerator = new JDBCFilterGenerator(
+        FilterBuilder filterBuilder = new FilterBuilder(
                 partition,
                 entryMapping,
                 sourceMapping,
-                interpreter,
-                parameterValues,
-                parameterFieldConfigs,
-                request.getFilter()
+                interpreter
         );
 
-        filterGenerator.generate();
+        filterBuilder.append(request.getFilter());
 
-        String sourceFilter = filterGenerator.getJdbcFilter();
+        String sourceFilter = filterBuilder.generate();
         if (sourceFilter != null) {
             if (sqlFilter.length() > 0) sqlFilter.append(" and ");
             sqlFilter.append(sourceFilter);
@@ -690,6 +1047,9 @@ public class JDBCAdapter extends Adapter {
             sb.append(" order by ");
             sb.append(getOringialPrimaryKeyFieldNamesAsString(sourceConfig));
         }
+
+        Collection parameters = new ArrayList();
+        parameters.addAll(filterBuilder.getParameters());
 
         String sql = sb.toString();
 
@@ -712,11 +1072,12 @@ public class JDBCAdapter extends Adapter {
 
             ps = con.prepareStatement(sql);
     
-            if (parameterValues.size() > 0) {
+            if (parameters.size() > 0) {
                 int counter = 0;
-                for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
-                    Object param = i.next();
-                    FieldConfig fieldConfig = (FieldConfig)j.next();
+                for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                    Parameter parameter = (Parameter)i.next();
+                    FieldConfig fieldConfig = parameter.getFieldConfig();
+                    Object param = parameter.getValue();
                     setParameter(ps, ++counter, param, fieldConfig);
                 }
 
@@ -724,11 +1085,11 @@ public class JDBCAdapter extends Adapter {
                     log.debug("Parameters:");
 
                     counter = 0;
-                    for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); ) {
-                        Object param = i.next();
-                        FieldConfig fieldConfig = (FieldConfig)j.next();
-                        String type = fieldConfig.getType();
-                        log.debug(" - "+counter+" = "+param+" ("+type+")");
+                    for (Iterator i=parameters.iterator(); i.hasNext(); ) {
+                        Parameter parameter = (Parameter)i.next();
+                        FieldConfig fieldConfig = parameter.getFieldConfig();
+                        Object param = parameter.getValue();
+                        log.debug(" - "+counter+" = "+param+" ("+fieldConfig.getType()+")");
                     }
                 }
             }
@@ -772,9 +1133,9 @@ public class JDBCAdapter extends Adapter {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
 
             response.close();
         }
@@ -804,28 +1165,26 @@ public class JDBCAdapter extends Adapter {
 
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Search "+names, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+request.getFilter(), 80));
-            log.debug(Formatter.displayLine(" - Scope: "+ LDAPUtil.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
         }
 
-        JDBCQueryGenerator queryGenerator = new JDBCQueryGenerator(
+        SearchStatementBuilder builder = new SearchStatementBuilder(
                 this,
                 partition,
                 entryMapping,
                 sourceMappings,
                 sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
 
-        queryGenerator.run();
+        SelectStatement statement = builder.generate();
 
-        String sql = queryGenerator.getSql();
+        String sql = statement.getSql();
+        Collection parameters = statement.getParameters();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -836,17 +1195,15 @@ public class JDBCAdapter extends Adapter {
             }
             log.debug(Formatter.displaySeparator(80));
 
-            log.debug("Parameters:");
-
+            log.debug(Formatter.displayLine("Parameters:", 80));
             int counter = 1;
-            Collection parameterValues = queryGenerator.getParameterValues();
-            Collection parameterFieldConfigs = queryGenerator.getParameterFieldCofigs();
-            for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
-                Object param = i.next();
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                String type = fieldConfig.getType();
-                log.debug(" - "+counter+" = "+param+" ("+type+")");
+            for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                Parameter parameter = (Parameter)j.next();
+                FieldConfig fieldConfig = parameter.getFieldConfig();
+                Object value = parameter.getValue();
+                log.debug(Formatter.displayLine(" - "+counter+" = "+value+" ("+fieldConfig.getType()+")", 80));
             }
+            log.debug(Formatter.displaySeparator(80));
         }
 
         java.sql.Connection con = null;
@@ -859,12 +1216,11 @@ public class JDBCAdapter extends Adapter {
             ps = con.prepareStatement(sql);
 
             int counter = 1;
-            Collection parameterValues = queryGenerator.getParameterValues();
-            Collection parameterFieldConfigs = queryGenerator.getParameterFieldCofigs();
-            for (Iterator i=parameterValues.iterator(), j=parameterFieldConfigs.iterator(); i.hasNext() && j.hasNext(); counter++) {
-                Object param = i.next();
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                setParameter(ps, counter, param, fieldConfig);
+            for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                Parameter parameter = (Parameter)i.next();
+                FieldConfig fieldConfig = parameter.getFieldConfig();
+                Object value = parameter.getValue();
+                setParameter(ps, counter, value, fieldConfig);
             }
 
             rs = ps.executeQuery();
@@ -910,10 +1266,12 @@ public class JDBCAdapter extends Adapter {
                 response.add(result);
             }
 
+            log.debug("Search operation completed.");
+
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
 
             response.close();
         }
@@ -1075,9 +1433,9 @@ public class JDBCAdapter extends Adapter {
             return value.intValue();
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -1172,9 +1530,9 @@ public class JDBCAdapter extends Adapter {
             }
 
         } finally {
-            if (rs != null) try { rs.close(); } catch (Exception e) {}
-            if (ps != null) try { ps.close(); } catch (Exception e) {}
-            if (con != null) try { con.close(); } catch (Exception e) {}
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (con != null) try { con.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         response.close();

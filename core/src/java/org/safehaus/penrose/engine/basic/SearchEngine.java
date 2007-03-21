@@ -30,9 +30,9 @@ public class SearchEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
+    private BasicEngine engine;
 
-    public SearchEngine(Engine engine) {
+    public SearchEngine(BasicEngine engine) {
         this.engine = engine;
     }
 
@@ -45,8 +45,9 @@ public class SearchEngine {
      */
     public void search(
             final Partition partition,
-            final AttributeValues sourceValues,
+            final EntryMapping baseMapping,
             final EntryMapping entryMapping,
+            final AttributeValues sourceValues,
             final SearchRequest request,
             final SearchResponse results
     ) throws Exception {
@@ -93,7 +94,7 @@ public class SearchEngine {
                 }
             };
 
-            Filter filter = request.getFilter();
+            DN baseDn = request.getDn();
 
             SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
@@ -105,7 +106,6 @@ public class SearchEngine {
                     entryMapping,
                     sourceMappings,
                     sourceValues,
-                    filter,
                     request,
                     sr
             );
@@ -115,11 +115,11 @@ public class SearchEngine {
         }
     }
 
-    public Engine getEngine() {
+    public BasicEngine getEngine() {
         return engine;
     }
 
-    public void setEngine(Engine engine) {
+    public void setEngine(BasicEngine engine) {
         this.engine = engine;
     }
 

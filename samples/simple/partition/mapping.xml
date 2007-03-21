@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=Simple,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Simple</constant>
+    </at>
+    <at name="o">
+      <constant>Simple</constant>
+    </at>
+    <aci subject="user">
+      <dn>cn=Manager,dc=Simple,dc=Example,dc=com</dn>
+      <permission>rwsad</permission>
+    </aci>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Manager,dc=Simple,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="cn" rdn="true">
+      <constant>Manager</constant>
+    </at>
+    <at name="sn">
+      <constant>Manager</constant>
+    </at>
+    <at name="userPassword">
+      <constant>secret</constant>
+    </at>
+  </entry>
+
+  <entry dn="ou=Users,dc=Simple,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=Simple,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>u.username</variable>
+    </at>
+    <at name="cn">
+      <variable>u.firstName</variable>
+    </at>
+    <at name="sn">
+      <variable>u.lastName</variable>
+    </at>
+    <at name="userPassword">
+      <variable>u.password</variable>
+    </at>
+    <at name="memberOf">
+      <variable>ug.groupname</variable>
+    </at>
+    <source name="u">
+      <source-name>users</source-name>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
+      <field name="firstName">
+        <variable>cn</variable>
+      </field>
+      <field name="lastName">
+        <variable>sn</variable>
+      </field>
+      <field name="password">
+        <variable>userPassword</variable>
+      </field>
+    </source>
+    <source name="ug" required="false">
+      <source-name>usergroups</source-name>
+      <field name="username">
+        <variable>u.username</variable>
+      </field>
+      <field name="groupname">
+        <variable>memberOf</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=Simple,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,dc=Simple,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <variable>g.groupname</variable>
+    </at>
+    <source name="g">
+      <source-name>groups</source-name>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

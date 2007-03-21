@@ -40,7 +40,7 @@ public class SearchPlanner extends GraphVisitor {
 
     private Partition partition;
     private Graph graph;
-    private Engine engine;
+    private EngineImpl engine;
     private EntryMapping entryMapping;
     private Filter searchFilter;
     private SourceMapping primarySourceMapping;
@@ -56,7 +56,7 @@ public class SearchPlanner extends GraphVisitor {
     private Collection connectingSources = new ArrayList();
 
     public SearchPlanner(
-            Engine engine,
+            EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
             Filter filter,
@@ -137,7 +137,7 @@ public class SearchPlanner extends GraphVisitor {
 
         Integer depth = (Integer)depthStack.peek();
 
-        Filter sourceFilter = engine.getEngineFilterTool().convert(partition, null, entryMapping, sourceMapping, searchFilter);
+        Filter sourceFilter = engine.engineFilterTool.convert(partition, null, entryMapping, sourceMapping, searchFilter);
         log.debug("Filter: "+sourceFilter+" ("+(sourceFilter == null ? "null" : "not null")+")");
         log.debug("Depth: "+depth);
 

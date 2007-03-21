@@ -162,7 +162,7 @@ public class LDAPClient {
             context = getContext();
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -208,7 +208,7 @@ public class LDAPClient {
             context.createSubcontext(dn.toString(), attrs);
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -228,7 +228,7 @@ public class LDAPClient {
             context.destroySubcontext(dn.toString());
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -278,7 +278,7 @@ public class LDAPClient {
             context.modifyAttributes(dn.toString(), mods);
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -296,7 +296,7 @@ public class LDAPClient {
             context.rename(dn.toString(), newRdn);
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -352,7 +352,7 @@ public class LDAPClient {
             rootDSE = createSearchResult(entry);
 
         } finally {
-            if (connection != null) try { connection.disconnect(); } catch (Exception e) {}
+            if (connection != null) try { connection.disconnect(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         return rootDSE;
@@ -512,7 +512,7 @@ public class LDAPClient {
             context.setRequestControls(null);
     */
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -614,7 +614,7 @@ public class LDAPClient {
     */
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -668,7 +668,7 @@ public class LDAPClient {
             results.close();
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         return schema;
@@ -839,9 +839,9 @@ public class LDAPClient {
             } while (cookie != null && cookie.length != 0);
 
         } finally {
-            if (ne != null) try { ne.close(); } catch (Exception e) {}
-            if (context != null) try { context.close(); } catch (Exception e) {}
-            //if (connection != null) try { connection.disconnect(); } catch (Exception e) {}
+            if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            //if (connection != null) try { connection.disconnect(); } catch (Exception e) { log.debug(e.getMessage(), e); }
             results.close();
         }
     }
@@ -874,7 +874,7 @@ public class LDAPClient {
             }
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -943,7 +943,7 @@ public class LDAPClient {
             }
 
         } finally {
-            if (context != null) try { context.close(); } catch (Exception e) {}
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
 
         return results;

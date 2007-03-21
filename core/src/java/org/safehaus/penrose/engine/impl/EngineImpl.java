@@ -54,6 +54,9 @@ public class EngineImpl extends Engine {
     MergeEngine mergeEngine;
     JoinEngine joinEngine;
 
+    EngineFilterTool engineFilterTool;
+    TransformEngine transformEngine;
+
     public void init() throws Exception {
         super.init();
 
@@ -144,125 +147,6 @@ public class EngineImpl extends Engine {
             }
 
             addEngine.add(partition, parent, entryMapping, dn, attributeValues);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Bind
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void bind(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            BindRequest request,
-            BindResponse response
-    ) throws LDAPException {
-
-        try {
-            DN dn = request.getDn();
-            String password = request.getPassword();
-
-            log.debug("Bind as user "+dn);
-
-            RDN rdn = dn.getRdn();
-
-            AttributeValues attributeValues = new AttributeValues();
-            attributeValues.add(rdn);
-
-            Collection sources = entryMapping.getSourceMappings();
-            if (sources.isEmpty()) {
-                staticBind(session, partition, entryMapping, dn, password);
-                return;
-            }
-
-            for (Iterator i=sources.iterator(); i.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)i.next();
-
-                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-                Map entries = transformEngine.split(
-                        partition,
-                        entryMapping,
-                        sourceMapping,
-                        dn,
-                        attributeValues
-                );
-
-                for (Iterator j=entries.keySet().iterator(); j.hasNext(); ) {
-                    RDN pk = (RDN)j.next();
-                    //AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-
-                    log.debug("Bind to "+sourceMapping.getName()+" as "+pk+".");
-
-                    Connector connector = getConnector(sourceConfig);
-                    connector.bind(partition, sourceConfig, entryMapping, pk, request, response);
-                }
-            }
-
-            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
-
-    public void staticBind(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            String password
-    ) throws LDAPException {
-
-        try {
-            SearchRequest request = new SearchRequest();
-            request.setDn(dn);
-            request.setFilter((Filter)null);
-            request.setScope(SearchRequest.SCOPE_BASE);
-
-            SearchResponse response = new SearchResponse();
-
-            search(
-                    session,
-                    partition,
-                    new AttributeValues(),
-                    entryMapping,
-                    request,
-                    response
-            );
-
-            if (!response.hasNext()) {
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            Entry entry = (Entry) response.next();
-
-            Attributes attributes = entry.getAttributes();
-            Attribute attribute = attributes.get("userPassword");
-
-            if (attribute == null) {
-                log.debug("Attribute userPassword not found");
-                throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
-            }
-
-            Collection userPasswords = attribute.getValues();
-            for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
-                Object userPassword = j.next();
-                log.debug("userPassword: "+userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) return;
-            }
 
         } catch (LDAPException e) {
             throw e;
@@ -587,9 +471,9 @@ public class EngineImpl extends Engine {
     public void search(
             final Session session,
             final Partition partition,
-            final AttributeValues sourceValues,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
+            final AttributeValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {

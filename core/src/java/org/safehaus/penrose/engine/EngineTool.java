@@ -39,30 +39,57 @@ public class EngineTool {
         propagate(mappings, sourceValues);
     }
 
+    public static void propagateDown(
+            Partition partition,
+            EntryMapping entryMapping,
+            AttributeValues sourceValues
+    ) throws Exception {
+
+        List mappings = new ArrayList();
+
+        while (entryMapping != null) {
+            mappings.add(0, entryMapping);
+            entryMapping = partition.getParent(entryMapping);
+        }
+
+        propagate(mappings, sourceValues);
+    }
+
     public static void propagate(Collection mappings, AttributeValues sourceValues) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
         for (Iterator i=mappings.iterator(); i.hasNext(); ) {
-            EntryMapping em = (EntryMapping)i.next();
+            EntryMapping entryMapping = (EntryMapping)i.next();
 
-            Collection relationships = em.getRelationships();
-            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
+            Collection sourceMappings = entryMapping.getSourceMappings();
+            for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)j.next();
 
-                String lhs = relationship.getLhs();
-                String rhs = relationship.getRhs();
+                Collection fieldMappings = sourceMapping.getFieldMappings();
+                for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
+                    FieldMapping fieldMapping = (FieldMapping)k.next();
 
-                Collection values = sourceValues.get(lhs);
-                if (values == null) {
-                    values = sourceValues.get(rhs);
-                    if (values != null) {
-                        sourceValues.set(lhs, values);
-                        if (debug) log.debug("Propagating "+lhs+": "+values);
+                    String variable = fieldMapping.getVariable();
+                    if (variable == null) continue;
+
+                    int p = variable.indexOf(".");
+                    if (p < 0) continue;
+                    
+                    String lhs = sourceMapping.getName()+"."+fieldMapping.getName();
+                    String rhs = variable;
+
+                    Collection values = sourceValues.get(lhs);
+                    if (values == null) {
+                        values = sourceValues.get(rhs);
+                        if (values != null) {
+                            sourceValues.set(lhs, values);
+                            if (debug) log.debug("Propagating "+lhs+": "+values);
+                        }
+                    } else {
+                        sourceValues.set(rhs, values);
+                        if (debug) log.debug("Propagating "+rhs+": "+values);
                     }
-                } else {
-                    sourceValues.set(rhs, values);
-                    if (debug) log.debug("Propagating "+rhs+": "+values);
                 }
             }
         }

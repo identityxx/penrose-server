@@ -34,9 +34,9 @@ public class DeleteEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Engine engine;
+    EngineImpl engine;
 
-    public DeleteEngine(Engine engine) {
+    public DeleteEngine(EngineImpl engine) {
         this.engine = engine;
     }
 

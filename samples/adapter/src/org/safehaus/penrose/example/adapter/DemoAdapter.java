@@ -79,8 +79,11 @@ public class DemoAdapter extends Adapter {
     public void bind(
             SourceConfig sourceConfig,
             RDN pk,
-            String password,
-            BindRequest request, BindResponse response) throws LDAPException {
+            BindRequest request,
+            BindResponse response
+    ) throws LDAPException {
+
+        String password = request.getPassword();
 
         String sourceName = sourceConfig.getName();
         System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");

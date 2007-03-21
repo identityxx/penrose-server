@@ -46,7 +46,7 @@ public class LoadGraphVisitor extends GraphVisitor {
 
     private Partition partition;
     private Graph graph;
-    private Engine engine;
+    private EngineImpl engine;
     private EntryMapping entryMapping;
     private AttributeValues sourceValues;
     private SourceMapping primarySourceMapping;
@@ -57,7 +57,7 @@ public class LoadGraphVisitor extends GraphVisitor {
     private int returnCode;
 
     public LoadGraphVisitor(
-            Engine engine,
+            EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
             AttributeValues sourceValues,
@@ -73,7 +73,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
 
-        filter = engine.getEngineFilterTool().convert(partition, sourceValues, entryMapping, primarySourceMapping, filter);
+        filter = engine.engineFilterTool.convert(partition, sourceValues, entryMapping, primarySourceMapping, filter);
 
         Map map = new HashMap();
         map.put("primaryKeys", primaryKeys);

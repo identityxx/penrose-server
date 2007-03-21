@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
-import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata
@@ -65,10 +64,7 @@ public abstract class Engine {
 
     public boolean stopping = false;
 
-    public EngineFilterTool engineFilterTool;
     private FilterTool      filterTool;
-
-    public TransformEngine transformEngine;
 
     protected Analyzer analyzer;
 
@@ -172,14 +168,6 @@ public abstract class Engine {
         }
 
         return attributes;
-    }
-
-    public TransformEngine getTransformEngine() {
-        return transformEngine;
-    }
-
-    public void setTransformEngine(TransformEngine transformEngine) {
-        this.transformEngine = transformEngine;
     }
 
     public Graph getGraph(EntryMapping entryMapping) throws Exception {
@@ -352,14 +340,6 @@ public abstract class Engine {
         return isStatic(partition, parentMapping);
     }
 
-    public EngineFilterTool getEngineFilterTool() {
-        return engineFilterTool;
-    }
-
-    public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
-        this.engineFilterTool = engineFilterTool;
-    }
-
     public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
         return analyzer.isUnique(partition, entryMapping);
     }
@@ -381,13 +361,39 @@ public abstract class Engine {
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public abstract void bind(
+    public void bind(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
             BindRequest request,
             BindResponse response
-    ) throws Exception;
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        String password = request.getPassword();
+
+        AttributeValues sourceValues = new AttributeValues();
+        Entry entry = find(session, partition, sourceValues, entryMapping, dn);
+
+        Attributes attributes = entry.getAttributes();
+        Attribute attribute = attributes.get("userPassword");
+
+        if (attribute == null) {
+            log.debug("Attribute userPassword not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        }
+
+        Collection userPasswords = attribute.getValues();
+        for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
+            Object userPassword = j.next();
+            if (debug) log.debug("userPassword: "+userPassword);
+            if (PasswordUtil.comparePassword(password, userPassword)) return;
+        }
+
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Compare
@@ -408,7 +414,6 @@ public abstract class Engine {
         Object attributeValue = request.getAttributeValue();
 
         AttributeValues sourceValues = new AttributeValues();
-
         Entry entry = find(session, partition, sourceValues, entryMapping, dn);
 
         List attributeNames = new ArrayList();
@@ -455,32 +460,6 @@ public abstract class Engine {
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Modify
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public abstract void modify(
-            Session session,
-            Partition partition,
-            Entry entry,
-            EntryMapping entryMapping,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // ModRDN
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public abstract void modrdn(
-            Session session,
-            Partition partition,
-            Entry entry,
-            EntryMapping entryMapping,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -518,13 +497,39 @@ public abstract class Engine {
                 response
         );
 
-        if (response.hasNext()) {
+        if (!response.hasNext()) {
             if (debug) log.debug("Entry "+dn+" not found");
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
         return (Entry)response.next();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract void modify(
+            Session session,
+            Partition partition,
+            Entry entry,
+            EntryMapping entryMapping,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public abstract void modrdn(
+            Session session,
+            Partition partition,
+            Entry entry,
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
@@ -542,9 +547,7 @@ public abstract class Engine {
         search(
                 session,
                 partition,
-                sourceValues,
-                entryMapping,
-                entryMapping,
+                entryMapping, entryMapping, sourceValues,
                 request,
                 response
         );
@@ -553,9 +556,9 @@ public abstract class Engine {
     public abstract void search(
             Session session,
             Partition partition,
-            AttributeValues sourceValues,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
+            AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception;

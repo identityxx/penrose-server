@@ -188,7 +188,9 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public Attributes normalize(Attributes attributes) throws Exception{
 
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
+        Collection names = new ArrayList(attributes.getNames());
+
+        for (Iterator i=names.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
             Collection values = attributes.getValues(name);

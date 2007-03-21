@@ -44,9 +44,9 @@ public class LoadEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Engine engine;
+    private EngineImpl engine;
 
-    public LoadEngine(Engine engine) {
+    public LoadEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
@@ -368,11 +368,11 @@ public class LoadEngine {
         return allSourceValues;
     }
 
-    public Engine getEngine() {
+    public EngineImpl getEngine() {
         return engine;
     }
 
-    public void setEngine(Engine engine) {
+    public void setEngine(EngineImpl engine) {
         this.engine = engine;
     }
 }

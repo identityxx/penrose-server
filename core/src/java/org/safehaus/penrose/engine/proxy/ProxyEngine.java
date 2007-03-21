@@ -29,7 +29,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
-import org.safehaus.penrose.engine.TransformEngine;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 
@@ -49,9 +48,6 @@ public class ProxyEngine extends Engine {
 
     public void init() throws Exception {
         super.init();
-
-        engineFilterTool = new EngineFilterTool(this);
-        transformEngine  = new TransformEngine(this);
 
         log.debug("Proxy engine initialized.");
     }
@@ -114,7 +110,7 @@ public class ProxyEngine extends Engine {
 
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
         } else {
-            try { if (client != null) client.close(); } catch (Exception e) {}
+            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -126,7 +122,7 @@ public class ProxyEngine extends Engine {
         if (debug) log.debug("Authentication: "+authentication);
 
         if (!PROXY_AUTHENTICATON_FULL.equals(authentication)) {
-            try { if (client != null) client.close(); } catch (Exception e) {}
+            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
@@ -399,9 +395,9 @@ public class ProxyEngine extends Engine {
     public void search(
             final Session session,
             final Partition partition,
-            final AttributeValues sourceValues,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
+            final AttributeValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {

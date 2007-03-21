@@ -37,9 +37,9 @@ public class JoinEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Engine engine;
+    EngineImpl engine;
 
-    public JoinEngine(Engine engine) {
+    public JoinEngine(EngineImpl engine) {
         this.engine = engine;
     }
 

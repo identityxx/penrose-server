@@ -74,6 +74,17 @@ public abstract class Adapter {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
+    public void add(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +92,17 @@ public abstract class Adapter {
     public void bind(
             SourceConfig sourceConfig,
             RDN pk,
-            String password,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+    }
+
+    public void bind(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -95,6 +116,17 @@ public abstract class Adapter {
     public void delete(
             SourceConfig sourceConfig,
             RDN pk,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void delete(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -115,6 +147,17 @@ public abstract class Adapter {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
+    public void modify(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +167,17 @@ public abstract class Adapter {
             RDN oldPk,
             RDN newPk,
             boolean deleteOldRdn,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void modrdn(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {

@@ -125,6 +125,17 @@ public class Connection implements ConnectionMBean {
         adapter.add(sourceConfig, pk, sourceValues, request, response);
     }
 
+    public void add(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        adapter.add(partition, entryMapping, sourceMappings, sourceValues, request, response);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,12 +143,23 @@ public class Connection implements ConnectionMBean {
     public void bind(
             SourceConfig sourceConfig,
             RDN pk,
-            String password,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(sourceConfig, pk, password, request, response);
+        adapter.bind(sourceConfig, pk, request, response);
+    }
+
+    public void bind(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        adapter.bind(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,6 +173,17 @@ public class Connection implements ConnectionMBean {
             DeleteResponse response
     ) throws Exception {
         adapter.delete(sourceConfig, pk, request, response);
+    }
+
+    public void delete(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        adapter.delete(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,6 +201,18 @@ public class Connection implements ConnectionMBean {
         adapter.modify(sourceConfig, pk, modifications, request, response);
     }
 
+    public void modify(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        adapter.modify(partition, entryMapping, sourceMappings, sourceValues, request, response);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,6 +226,18 @@ public class Connection implements ConnectionMBean {
             ModRdnResponse response
     ) throws Exception {
         adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
+    }
+
+    public void modrdn(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        adapter.modrdn(partition, entryMapping, sourceMappings, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

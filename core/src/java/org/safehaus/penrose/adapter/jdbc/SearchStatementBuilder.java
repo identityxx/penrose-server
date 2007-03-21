@@ -10,6 +10,8 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.jdbc.SelectStatement;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -18,27 +20,15 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCQueryGenerator {
+public class SearchStatementBuilder {
 
     Logger log = LoggerFactory.getLogger(getClass());
-
-    protected Collection fields = new ArrayList();
-    protected Collection tables = new ArrayList();
-    protected Collection joinTypes = new ArrayList();
-    protected Collection joinOns = new ArrayList();
-    protected Collection filters = new ArrayList();
-    protected Collection orders = new ArrayList();
-
-    protected List parameterValues = new ArrayList();
-    protected List parameterFieldCofigs = new ArrayList();
-
-    protected String sql;
 
     JDBCAdapter adapter;
 
     Partition partition;
     EntryMapping entryMapping;
-    Map sourceMappings = new HashMap();
+    Map sourceMappings = new LinkedHashMap(); // need to maintain order
 
     AttributeValues sourceValues;
     Interpreter interpreter;
@@ -46,18 +36,18 @@ public class JDBCQueryGenerator {
     SearchRequest request;
     SearchResponse response;
 
-    JDBCFilterGenerator filterGenerator;
+    FilterBuilder filterBuilder;
 
-    public JDBCQueryGenerator(
+    public SearchStatementBuilder(
             JDBCAdapter adapter,
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
             AttributeValues sourceValues,
-            Interpreter interpreter,
             SearchRequest request,
             SearchResponse response
-    ) {
+    ) throws Exception {
+        
         this.adapter = adapter;
 
         this.partition = partition;
@@ -69,22 +59,25 @@ public class JDBCQueryGenerator {
         }
 
         this.sourceValues = sourceValues;
-        this.interpreter = interpreter;
 
         this.request = request;
         this.response = response;
 
-        filterGenerator = new JDBCFilterGenerator(
+        PenroseContext penroseContext = adapter.getPenroseContext();
+        interpreter = penroseContext.getInterpreterManager().newInstance();
+
+        filterBuilder = new FilterBuilder(
                 partition,
                 entryMapping,
                 sourceMappings,
-                sourceValues,
-                interpreter,
-                parameterValues,
-                parameterFieldCofigs,
-                request.getFilter()
+                interpreter
         );
 
+        filterBuilder.init(sourceValues);
+    }
+
+    public String generateTableAlias(SourceConfig sourceConfig, String alias) {
+        return adapter.getTableName(sourceConfig)+" "+alias;
     }
 
     public String generateJoinType(SourceMapping sourceMapping) {
@@ -138,9 +131,19 @@ public class JDBCQueryGenerator {
         return sb.toString();
     }
 
-    public void run() throws Exception {
+    public SelectStatement generate() throws Exception {
 
         boolean debug = log.isDebugEnabled();
+
+        SelectStatement statement = new SelectStatement();
+
+        Collection fields = statement.getFields();
+        Collection tables = statement.getTables();
+        Collection joinTypes = statement.getJoinTypes();
+        Collection joinOns = statement.getJoinOns();
+        Collection orders = statement.getOrders();
+        Collection filters = statement.getFilters();
+        Collection parameters = statement.getParameters();
 
         int sourceCounter = 0;
         for (Iterator i=sourceMappings.values().iterator(); i.hasNext(); sourceCounter++) {
@@ -157,9 +160,9 @@ public class JDBCQueryGenerator {
                 fields.add(sourceName+"."+fieldConfig.getOriginalName());
             }
 
-            String table = adapter.getTableName(sourceConfig);
+            String table = generateTableAlias(sourceConfig, sourceName);
             if (debug) log.debug(" - Table: "+table);
-            tables.add(table+" "+sourceName);
+            tables.add(table);
 
             // join previous table
             if (sourceCounter > 0) {
@@ -172,8 +175,8 @@ public class JDBCQueryGenerator {
                 joinOns.add(joinOn);
             }
 
-            Collection nonPkfieldConfigs = sourceConfig.getFieldConfigs();
-            for (Iterator j=nonPkfieldConfigs.iterator(); j.hasNext(); ) {
+            Collection nonPkFieldConfigs = sourceConfig.getFieldConfigs();
+            for (Iterator j=nonPkFieldConfigs.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
                 orders.add(sourceName+"."+fieldConfig.getOriginalName());
             }
@@ -189,9 +192,9 @@ public class JDBCQueryGenerator {
             joinOns.add(relationship.getExpression());
         }
 */
-        filterGenerator.generate();
+        filterBuilder.append(request.getFilter());
 
-        Map tableAliases = filterGenerator.getTableAliases();
+        Map tableAliases = filterBuilder.getTableAliases();
         for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
             String alias = (String)i.next();
 
@@ -201,9 +204,9 @@ public class JDBCQueryGenerator {
             SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
-            String table = adapter.getTableName(sourceConfig);
+            String table = generateTableAlias(sourceConfig, alias);
             if (debug) log.debug(" - Table: "+table);
-            tables.add(table+" "+alias);
+            tables.add(table);
 
             String joinType = generateJoinType(sourceMapping);
             if (debug) log.debug(" - Join type: "+joinType);
@@ -214,11 +217,13 @@ public class JDBCQueryGenerator {
             joinOns.add(joinOn);
         }
 
-        String sqlFilter = filterGenerator.getJdbcFilter();
+        String sqlFilter = filterBuilder.generate();
         if (sqlFilter.length() > 0) {
             if (debug) log.debug("SQL filter: "+sqlFilter);
             filters.add(sqlFilter);
         }
+
+        parameters.addAll(filterBuilder.getParameters());
 
 /*
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
@@ -233,150 +238,7 @@ public class JDBCQueryGenerator {
             }
         }
 */
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("select distinct ");
-        sb.append(toList(fields));
-
-        sb.append(" from ");
-
-        Iterator i=tables.iterator();
-        sb.append(i.next());
-
-        for (Iterator j= joinTypes.iterator(), k= joinOns.iterator(); i.hasNext() && j.hasNext() && k.hasNext(); ) {
-            String table = (String)i.next();
-            String joinType = (String)j.next();
-            String joinOn = (String)k.next();
-            sb.append(" ");
-            sb.append(joinType);
-            sb.append(" ");
-            sb.append(table);
-            sb.append(" on ");
-            sb.append(joinOn);
-        }
-
-        if (filters.size() > 0) {
-            sb.append(" where ");
-            sb.append(toFilter(filters));
-        }
-
-        sb.append(" order by ");
-        sb.append(toList(orders));
-
-/*
-        int totalCount = response.getTotalCount();
-        long sizeLimit = request.getSizeLimit();
-
-        if (sizeLimit == 0) {
-            log.debug("Retrieving all entries.");
-
-        } else {
-            int size = sizeLimit - totalCount + 1;
-            if (debug) log.debug("Retrieving "+size+" entries.");
-
-            sb.append(" limit ");
-            sb.append(size);
-        }
-*/
-
-        sql = sb.toString();
+        return statement;
     }
 
-    public String toList(Collection list) throws Exception {
-        StringBuilder sb = new StringBuilder();
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(object.toString());
-        }
-
-        return sb.toString();
-    }
-
-    public String toFilter(Collection list) throws Exception {
-        StringBuilder sb = new StringBuilder();
-
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-
-            if (sb.length() > 0) sb.append(" and ");
-            sb.append(object.toString());
-        }
-
-        return sb.toString();
-    }
-
-    public Collection getFields() {
-        return fields;
-    }
-
-    public void setFields(Collection fields) {
-        this.fields = fields;
-    }
-
-    public Collection getTables() {
-        return tables;
-    }
-
-    public void setTables(Collection tables) {
-        this.tables = tables;
-    }
-
-    public Collection getJoinTypes() {
-        return joinTypes;
-    }
-
-    public void setJoinTypes(Collection joinTypes) {
-        this.joinTypes = joinTypes;
-    }
-
-    public Collection getJoinOns() {
-        return joinOns;
-    }
-
-    public void setJoinOns(Collection joinOns) {
-        this.joinOns = joinOns;
-    }
-
-    public Collection getFilters() {
-        return filters;
-    }
-
-    public void setFilters(Collection filters) {
-        this.filters = filters;
-    }
-
-    public List getParameterValues() {
-        return parameterValues;
-    }
-
-    public void setParameterValues(List parameterValues) {
-        this.parameterValues = parameterValues;
-    }
-
-    public List getParameterFieldCofigs() {
-        return parameterFieldCofigs;
-    }
-
-    public void setParameterFieldCofigs(List parameterFieldCofigs) {
-        this.parameterFieldCofigs = parameterFieldCofigs;
-    }
-
-    public String getSql() {
-        return sql;
-    }
-
-    public void setSql(String sql) {
-        this.sql = sql;
-    }
-
-    public Collection getOrders() {
-        return orders;
-    }
-
-    public void setOrders(Collection orders) {
-        this.orders = orders;
-    }
 }

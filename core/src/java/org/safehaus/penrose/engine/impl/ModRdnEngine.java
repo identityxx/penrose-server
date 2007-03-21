@@ -40,9 +40,9 @@ public class ModRdnEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Engine engine;
+    EngineImpl engine;
 
-    public ModRdnEngine(Engine engine) {
+    public ModRdnEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
@@ -100,7 +100,7 @@ public class ModRdnEngine {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
                 AttributeValues output = new AttributeValues();
-                engine.getTransformEngine().translate(partition, entryMapping, sourceMapping, entry.getDn(), newAttributeValues, output);
+                engine.transformEngine.translate(partition, entryMapping, sourceMapping, entry.getDn(), newAttributeValues, output);
                 newSourceValues.set(sourceMapping.getName(), output);
             }
 

@@ -37,7 +37,7 @@ public class PenroseModifyRequest
             PenroseModification modification = (PenroseModification)i.next();
             list.add(modification.getModification());
         }
-        modifyRequest.setModifications(modifications);
+        modifyRequest.setModifications(list);
     }
 
     public Collection getModifications() throws Exception {

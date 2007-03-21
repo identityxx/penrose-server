@@ -37,9 +37,9 @@ public class ModifyEngine {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    Engine engine;
+    EngineImpl engine;
 
-    public ModifyEngine(Engine engine) {
+    public ModifyEngine(EngineImpl engine) {
         this.engine = engine;
     }
 
@@ -59,7 +59,7 @@ public class ModifyEngine {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
                 AttributeValues output = new AttributeValues();
-                engine.getTransformEngine().translate(
+                engine.transformEngine.translate(
                         partition,
                         entryMapping,
                         sourceMapping,

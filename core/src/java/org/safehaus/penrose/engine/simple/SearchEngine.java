@@ -59,8 +59,8 @@ public class SearchEngine {
      */
     public void search(
             final Partition partition,
-            final AttributeValues sourceValues,
             final EntryMapping entryMapping,
+            final AttributeValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -107,8 +107,6 @@ public class SearchEngine {
                 }
             };
 
-            Filter filter = request.getFilter();
-
             SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
@@ -119,7 +117,6 @@ public class SearchEngine {
                     entryMapping,
                     sourceMappings,
                     sourceValues,
-                    filter,
                     request,
                     sr
             );

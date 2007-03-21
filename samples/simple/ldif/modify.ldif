@@ -1,0 +1,10 @@
+dn: uid=test,ou=Users,dc=Simple,dc=Example,dc=com
+changetype: modify
+replace: userPassword
+userPassword: test
+-
+replace: memberOf
+memberOf: user
+memberOf: manager
+memberOf: administrator
+-
