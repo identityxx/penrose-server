@@ -65,6 +65,7 @@ public class FilterBuilder {
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
+            AttributeValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
@@ -76,17 +77,8 @@ public class FilterBuilder {
 
         this.interpreter = interpreter;
 
-        this.setParameters(parameters);
-    }
-
-    public void init(AttributeValues sourceValues) throws Exception {
-
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
-
-        tableAliases.clear();
-        sourceFilter = null;
-        parameters.clear();
 
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

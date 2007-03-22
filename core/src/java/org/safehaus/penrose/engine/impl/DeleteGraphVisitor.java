@@ -117,7 +117,7 @@ public class DeleteGraphVisitor extends GraphVisitor {
 
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
-        connector.delete(partition, sourceConfig, newSourceValues, null, null);
+        //connector.delete(partition, sourceConfig, newSourceValues, null, null);
 
         graphIterator.traverseEdges(node);
     }

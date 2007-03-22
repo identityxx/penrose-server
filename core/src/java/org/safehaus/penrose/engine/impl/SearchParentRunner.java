@@ -142,6 +142,7 @@ public class SearchParentRunner extends GraphVisitor {
             SearchResponse response = new SearchResponse();
             
             Connector connector = engine.getConnector(sourceConfig);
+/*
             connector.search(
                     partition,
                     entryMapping,
@@ -152,7 +153,7 @@ public class SearchParentRunner extends GraphVisitor {
                     request,
                     response
             );
-
+*/
             Collection list = new ArrayList();
             while (response.hasNext()) {
                 AttributeValues av = (AttributeValues)response.next();

@@ -18,6 +18,11 @@ public class DNBuilder {
         append(dn);
     }
 
+    public void set(DN dn) {
+        rdns.clear();
+        append(dn);
+    }
+
     public void set(RDN rdn) {
         rdns.clear();
         rdns.add(rdn);

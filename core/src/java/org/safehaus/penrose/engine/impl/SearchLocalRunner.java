@@ -119,6 +119,7 @@ public class SearchLocalRunner extends GraphVisitor {
         SearchResponse response = new SearchResponse();
         
         Connector connector = engine.getConnector(sourceConfig);
+/*
         connector.search(
                 partition,
                 entryMapping,
@@ -129,7 +130,7 @@ public class SearchLocalRunner extends GraphVisitor {
                 request,
                 response
         );
-
+*/
         Collection list = new ArrayList();
         while (response.hasNext()) {
             ConnectorSearchResult result = (ConnectorSearchResult)response.next();

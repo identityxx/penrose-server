@@ -70,10 +70,9 @@ public class SearchStatementBuilder {
                 partition,
                 entryMapping,
                 sourceMappings,
+                sourceValues,
                 interpreter
         );
-
-        filterBuilder.init(sourceValues);
     }
 
     public String generateTableAlias(SourceConfig sourceConfig, String alias) {

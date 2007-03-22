@@ -19,6 +19,6 @@ public class PenroseFilter implements com.identyx.javabackend.Filter {
     }
 
     public String toString() {
-        return filter.toString();
+        return filter == null ? "(objectClass=*)" : filter.toString();
     }
 }

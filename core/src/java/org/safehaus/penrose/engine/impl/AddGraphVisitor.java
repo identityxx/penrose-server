@@ -120,7 +120,7 @@ public class AddGraphVisitor extends GraphVisitor {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
 
-        connector.add(partition, sourceConfig, newSourceValues, null, null);
+        //connector.add(partition, sourceConfig, newSourceValues, null, null);
 
         //addedSourceValues.remove(source.getName());
         //addedSourceValues.set(source.getName(), newSourceValues);

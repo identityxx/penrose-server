@@ -68,6 +68,8 @@ public class SearchEngine {
                 return;
             }
 
+            final Interpreter interpreter = engine.getInterpreterManager().newInstance();
+
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     ConnectorSearchResult result = (ConnectorSearchResult)object;
@@ -83,18 +85,19 @@ public class SearchEngine {
                         sv.print();
                     }
 
-                    DN dn = computeDn(partition, em, sv);
+                    //DN dn = computeDn(partition, em, sv);
+                    Collection dns = engine.computeDns(partition, interpreter, em, sv);
+                    for (Iterator i=dns.iterator(); i.hasNext(); ) {
+                        DN dn = (DN)i.next();
+                        EntryData data = new EntryData();
+                        data.setDn(dn);
+                        data.setEntryMapping(em);
+                        data.setMergedValues(sv);
 
-                    EntryData data = new EntryData();
-                    data.setDn(dn);
-                    data.setEntryMapping(em);
-                    data.setMergedValues(sv);
-
-                    results.add(data);
+                        results.add(data);
+                    }
                 }
             };
-
-            DN baseDn = request.getDn();
 
             SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
             SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());

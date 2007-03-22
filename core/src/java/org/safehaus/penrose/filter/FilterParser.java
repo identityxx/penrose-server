@@ -236,7 +236,7 @@ public class FilterParser implements FilterParserConstants {
             filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
-            filter = new PresentFilter(attr);
+            filter = attr.equalsIgnoreCase("objectClass") ? null : new PresentFilter(attr);
 
         } else if (value.indexOf('*') < 0) {
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));

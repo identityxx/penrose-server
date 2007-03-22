@@ -45,7 +45,7 @@ public class JDBCFormatter {
         return width;
     }
 
-    public static void printRecord(AttributeValues record, RDN pk) throws Exception {
+    public static void printRecord(RDN pk, AttributeValues record) throws Exception {
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Record: "+pk, 80));
         for (Iterator i=record.getNames().iterator(); i.hasNext(); ) {

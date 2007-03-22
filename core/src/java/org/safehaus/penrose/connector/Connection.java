@@ -22,7 +22,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
@@ -116,16 +115,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            SourceConfig sourceConfig,
-            RDN pk,
-            AttributeValues sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-        adapter.add(sourceConfig, pk, sourceValues, request, response);
-    }
-
-    public void add(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -139,16 +128,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void bind(
-            SourceConfig sourceConfig,
-            RDN pk,
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-
-        adapter.bind(sourceConfig, pk, request, response);
-    }
 
     public void bind(
             Partition partition,
@@ -167,15 +146,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            SourceConfig sourceConfig,
-            RDN pk,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-        adapter.delete(sourceConfig, pk, request, response);
-    }
-
-    public void delete(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -189,17 +159,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void modify(
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-
-        adapter.modify(sourceConfig, pk, modifications, request, response);
-    }
 
     public void modify(
             Partition partition,
@@ -218,17 +177,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            SourceConfig sourceConfig,
-            RDN oldPk,
-            RDN newPk,
-            boolean deleteOldRdn,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-        adapter.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
-    }
-
-    public void modrdn(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -243,18 +191,6 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void search(
-            Partition partition,
-            EntryMapping entryMapping,
-            SourceMapping sourceMapping,
-            SourceConfig sourceConfig,
-            Collection primaryKeys,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-        adapter.search(partition, entryMapping, sourceMapping, sourceConfig, request, response);
-    }
 
     public void search(
             Partition partition,

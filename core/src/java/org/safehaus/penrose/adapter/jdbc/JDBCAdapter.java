@@ -1114,7 +1114,7 @@ public class JDBCAdapter extends Adapter {
                 RDN pk = getRecord(sourceConfig, rs, record);
 
                 if (debug) {
-                    JDBCFormatter.printRecord(record, pk);
+                    JDBCFormatter.printRecord(pk, record);
                 }
 
                 ConnectorSearchResult result = new ConnectorSearchResult(record);
@@ -1252,7 +1252,7 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 if (debug) {
-                    JDBCFormatter.printRecord(record, pk);
+                    JDBCFormatter.printRecord(pk, record);
                 }
 
                 hasMore = rs.next();
@@ -1349,11 +1349,12 @@ public class JDBCAdapter extends Adapter {
 
                 String fieldName = fieldConfig.getName();
                 String name = sourceName+"."+fieldName;
-
                 record.add(name, value);
 
-                if (source != 1 || !fieldConfig.isPrimaryKey()) continue;
-                rb.set(name, value);
+                if (source == 1 && fieldConfig.isPrimaryKey()) {
+                    rb.set(name, value);
+                    record.add(sourceName+".primaryKey."+fieldName, value);
+                }
             }
         }
 
@@ -1389,8 +1390,9 @@ public class JDBCAdapter extends Adapter {
             value = formatAttributeValue(rsmd, c, value, fieldConfig);
             record.add(name, value);
 
-            if (!fieldConfig.isPrimaryKey()) continue;
-            rb.set(name, value);
+            if (fieldConfig.isPrimaryKey()) {
+                rb.set(name, value);
+            }
         }
 
         //record.set("primaryKey", rb.toRdn());

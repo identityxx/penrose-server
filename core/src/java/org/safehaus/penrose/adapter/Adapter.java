@@ -24,7 +24,6 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.connector.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -65,16 +64,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            SourceConfig sourceConfig,
-            RDN pk,
-            AttributeValues sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
-
-    public void add(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -88,15 +77,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void bind(
-            SourceConfig sourceConfig,
-            RDN pk,
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
-    }
 
     public void bind(
             Partition partition,
@@ -114,15 +94,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            SourceConfig sourceConfig,
-            RDN pk,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
-
-    public void delete(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -136,16 +107,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void modify(
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
 
     public void modify(
             Partition partition,
@@ -163,17 +124,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            SourceConfig sourceConfig,
-            RDN oldPk,
-            RDN newPk,
-            boolean deleteOldRdn,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
-
-    public void modrdn(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -187,17 +137,6 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void search(
-            Partition partition,
-            EntryMapping entryMapping,
-            SourceMapping sourceMapping,
-            SourceConfig sourceConfig,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
 
     public void search(
             Partition partition,

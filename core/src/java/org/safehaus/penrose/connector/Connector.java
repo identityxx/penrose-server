@@ -125,38 +125,6 @@ public class Connector {
 
     public void add(
             Partition partition,
-            SourceConfig sourceConfig,
-            AttributeValues sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-
-    	if (log.isDebugEnabled()) {
-    		log.debug("----------------------------------------------------------------");
-    		log.debug("Adding entry into "+sourceConfig.getName());
-    		log.debug("Values: "+sourceValues);
-    	}
-
-        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
-
-        // Add rows
-        for (Iterator i = pks.iterator(); i.hasNext();) {
-            RDN pk = (RDN) i.next();
-            AttributeValues newEntry = (AttributeValues)sourceValues.clone();
-            newEntry.set("primaryKey", pk);
-            if (log.isDebugEnabled()) {
-            	log.debug("Adding entry: "+pk);
-            	log.debug(" - "+newEntry);
-            }
-
-            // Add row to source table in the source database/directory
-            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            connection.add(sourceConfig, pk, newEntry, request, response);
-        }
-    }
-
-    public void add(
-            Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
             AttributeValues sourceValues,
@@ -175,21 +143,6 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void bind(
-            Partition partition,
-            SourceConfig sourceConfig,
-            EntryMapping entry,
-            RDN pk,
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-
-        if (log.isDebugEnabled()) log.debug("Binding as entry in "+sourceConfig.getName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        connection.bind(sourceConfig, pk, request, response);
-    }
 
     public void bind(
             Partition partition,
@@ -214,31 +167,6 @@ public class Connector {
 
     public void delete(
             Partition partition,
-            SourceConfig sourceConfig,
-            AttributeValues sourceValues,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-
-    	if (log.isDebugEnabled()) log.debug("Deleting entry in "+sourceConfig.getName()+": "+sourceValues);
-
-        Collection pks = TransformEngine.getPrimaryKeys(sourceConfig, sourceValues);
-
-        // Remove rows
-        for (Iterator i = pks.iterator(); i.hasNext();) {
-            RDN pk = (RDN)i.next();
-            AttributeValues oldEntry = (AttributeValues)sourceValues.clone();
-            oldEntry.set(pk);
-            if (log.isDebugEnabled()) log.debug("DELETE ("+pk+"): "+oldEntry);
-
-            // Delete row from source table in the source database/directory
-            Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-            connection.delete(sourceConfig, pk, request, response);
-        }
-    }
-
-    public void delete(
-            Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
             AttributeValues sourceValues,
@@ -257,48 +185,6 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void modify(
-            Partition partition,
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications,
-            AttributeValues oldSourceValues,
-            AttributeValues newSourceValues,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-
-    	if (log.isDebugEnabled()) log.debug("Modifying entry in " + sourceConfig.getName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification mi = (Modification)i.next();
-
-            int type = mi.getType();
-            Attribute attribute = mi.getAttribute();
-            String name = attribute.getName();
-
-            if (!pk.contains(name)) continue;
-
-            AttributeValues av = new AttributeValues();
-            av.add(pk);
-
-            switch (type) {
-                case Modification.ADD:
-                    connection.add(sourceConfig, pk, av, null, null);
-
-                case Modification.REPLACE:
-                    connection.add(sourceConfig, pk, av, null, null);
-
-                case Modification.DELETE:
-                    connection.delete(sourceConfig, pk, null, null);
-            }
-        }
-
-        connection.modify(sourceConfig, pk, modifications, request, response);
-    }
 
     public void modify(
             Partition partition,
@@ -323,22 +209,6 @@ public class Connector {
 
     public void modrdn(
             Partition partition,
-            SourceConfig sourceConfig,
-            RDN oldPk,
-            RDN newPk,
-            boolean deleteOldRdn,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-
-    	if (log.isDebugEnabled()) log.debug("Renaming entry in " + sourceConfig.getName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-        connection.modrdn(sourceConfig, oldPk, newPk, deleteOldRdn, request, response);
-    }
-
-    public void modrdn(
-            Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
             AttributeValues sourceValues,
@@ -357,36 +227,6 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void search(
-            final Partition partition,
-            final EntryMapping entryMapping,
-            final SourceMapping sourceMapping,
-            final SourceConfig sourceConfig,
-            final Collection primaryKeys,
-            final Filter filter,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        long sizeLimit = request.getSizeLimit();
-        String s = sourceConfig.getParameter(SourceConfig.SIZE_LIMIT);
-        long maxSizeLimit = s == null ? SourceConfig.DEFAULT_SIZE_LIMIT : Integer.parseInt(s);
-
-        long timeLimit = request.getTimeLimit();
-        s = sourceConfig.getParameter(SourceConfig.TIME_LIMIT);
-        long maxTimeLimit = s == null ? SourceConfig.DEFAULT_TIME_LIMIT : Integer.parseInt(s);
-
-        SearchRequest newRequest = new SearchRequest(request);
-        newRequest.setFilter(filter);
-        newRequest.setSizeLimit((sizeLimit > 0 && maxSizeLimit > 0) ? Math.min(sizeLimit, maxSizeLimit) : Math.max(sizeLimit, maxSizeLimit));
-       	newRequest.setTimeLimit((timeLimit > 0 && maxTimeLimit > 0) ? Math.min(timeLimit, maxTimeLimit) : Math.max(timeLimit, maxTimeLimit));
-        newRequest.setScope(request.getScope());
-
-        connection.search(partition, entryMapping, sourceMapping, sourceConfig, primaryKeys, newRequest, response);
-    }
 
     public void search(
             final Partition partition,

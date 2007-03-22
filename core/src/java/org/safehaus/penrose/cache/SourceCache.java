@@ -202,7 +202,7 @@ public class SourceCache {
         SearchRequest request = new SearchRequest();
         request.setSizeLimit(sizeLimit);
 
-        connection.search(partition, null, null, sourceConfig, null, request, response);
+        //connection.search(partition, null, null, sourceConfig, null, request, response);
 
         response.close();
     }

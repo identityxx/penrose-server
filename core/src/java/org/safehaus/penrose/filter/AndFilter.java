@@ -33,7 +33,8 @@ public class AndFilter extends Filter {
 	}
 
 	public void addFilter(Filter filter) {
-		this.filters.add(filter);
+        if (filter == null) return;
+        this.filters.add(filter);
 	}
 
     public boolean containsFilter(Filter filter) {

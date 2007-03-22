@@ -141,7 +141,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
 
         RDN pk = new RDN();
         Collection modifications = new ArrayList();
-
+/*
         try {
             connector.modify(
                     partition,
@@ -158,7 +158,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             returnCode = e.getResultCode();
             return;
         }
-
+*/
         modifiedSourceValues.remove(sourceMapping.getName());
         modifiedSourceValues.set(sourceMapping.getName(), newValues);
 

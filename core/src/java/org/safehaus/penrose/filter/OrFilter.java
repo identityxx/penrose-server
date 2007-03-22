@@ -33,6 +33,7 @@ public class OrFilter extends Filter {
 	}
 
 	public void addFilter(Filter filter) {
+        if (filter == null) return;
 		this.filters.add(filter);
 	}
 

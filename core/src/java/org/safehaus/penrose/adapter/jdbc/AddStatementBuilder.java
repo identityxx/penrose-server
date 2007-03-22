@@ -39,8 +39,6 @@ public class AddStatementBuilder {
     AddRequest request;
     AddResponse response;
 
-    FilterBuilder filterBuilder;
-
     Collection statements = new ArrayList();
 
     public AddStatementBuilder(
@@ -68,29 +66,18 @@ public class AddStatementBuilder {
 
         PenroseContext penroseContext = adapter.getPenroseContext();
         interpreter = penroseContext.getInterpreterManager().newInstance();
-
-        filterBuilder = new FilterBuilder(
-                partition,
-                entryMapping,
-                sourceMappings,
-                interpreter
-        );
-
-        filterBuilder.init(sourceValues);
     }
 
     public Collection generate() throws Exception {
-
-        Collection statements = new ArrayList();
 
         int sourceCounter = 0;
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); sourceCounter++) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
 
             if (sourceCounter == 0) {
-                generatePrimaryStatement(statements, sourceMapping);
+                generatePrimaryStatement(sourceMapping);
             } else {
-                generateSecondaryStatements(statements, sourceMapping);
+                generateSecondaryStatements(sourceMapping);
             }
         }
 
@@ -98,7 +85,6 @@ public class AddStatementBuilder {
     }
 
     public void generatePrimaryStatement(
-            Collection statements,
             SourceMapping sourceMapping
     ) throws Exception {
 
@@ -148,7 +134,6 @@ public class AddStatementBuilder {
     }
 
     public void generateSecondaryStatements(
-            Collection statements,
             SourceMapping sourceMapping
     ) throws Exception {
 
@@ -190,7 +175,6 @@ public class AddStatementBuilder {
 
                 if (!values.isEmpty()) {
                     generateInsertStatement(
-                            statements,
                             sourceMapping,
                             values
                     );
@@ -203,7 +187,6 @@ public class AddStatementBuilder {
     }
 
     public void generateInsertStatement(
-            Collection statements,
             SourceMapping sourceMapping,
             Map values
     ) throws Exception {

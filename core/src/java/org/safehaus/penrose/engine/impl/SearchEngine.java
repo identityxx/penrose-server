@@ -302,6 +302,7 @@ public class SearchEngine {
         };
 
         Connector connector = engine.getConnector(sourceConfig);
+/*
         connector.search(
                 partition,
                 entryMapping,
@@ -312,6 +313,7 @@ public class SearchEngine {
                 request,
                 sr
         );
+*/
     }
 
     public void searchSources(

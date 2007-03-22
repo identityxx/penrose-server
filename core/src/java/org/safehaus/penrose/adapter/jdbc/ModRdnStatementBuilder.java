@@ -77,10 +77,9 @@ public class ModRdnStatementBuilder {
                 partition,
                 entryMapping,
                 sourceMappings,
+                sourceValues,
                 interpreter
         );
-
-        filterBuilder.init(sourceValues);
     }
 
     public Collection generate() throws Exception {
