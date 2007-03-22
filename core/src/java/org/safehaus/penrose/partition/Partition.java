@@ -354,16 +354,6 @@ public class Partition {
         return null;
     }
 
-    public Collection getEffectiveRelationships(EntryMapping entryMapping) {
-        Collection relationships = new ArrayList();
-        relationships.addAll(entryMapping.getRelationships());
-
-        EntryMapping parent = getParent(entryMapping);
-        if (parent != null) relationships.addAll(getEffectiveRelationships(parent));
-
-        return relationships;
-    }
-
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
         moduleConfigs.put(moduleConfig.getName(), moduleConfig);
     }

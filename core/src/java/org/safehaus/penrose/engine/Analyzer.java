@@ -87,7 +87,7 @@ public class Analyzer {
             SourceMapping source = (SourceMapping)i.next();
             graph.addNode(source);
         }
-
+/*
         Collection relationships = partition.getEffectiveRelationships(entryMapping);
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
@@ -128,7 +128,7 @@ public class Analyzer {
             //GraphEdge edge = (GraphEdge)i.next();
             //log.debug(" - "+edge);
         //}
-
+*/
         return graph;
     }
 

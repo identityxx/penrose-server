@@ -142,7 +142,6 @@ public class SearchStatementBuilder {
         Collection joinOns = statement.getJoinOns();
         Collection orders = statement.getOrders();
         Collection filters = statement.getFilters();
-        Collection parameters = statement.getParameters();
 
         int sourceCounter = 0;
         for (Iterator i=sourceMappings.values().iterator(); i.hasNext(); sourceCounter++) {
@@ -222,7 +221,7 @@ public class SearchStatementBuilder {
             filters.add(sqlFilter);
         }
 
-        parameters.addAll(filterBuilder.getParameters());
+        statement.addParameters(filterBuilder.getParameters());
 
 /*
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {

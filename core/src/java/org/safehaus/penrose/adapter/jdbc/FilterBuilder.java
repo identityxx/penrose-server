@@ -257,8 +257,16 @@ public class FilterBuilder {
             }
         }
 
-        SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "like", sb.toString());
+        String value = sb.toString();
+
+        SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "like", "?");
         if (debug) log.debug(" - Filter "+f);
+
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
+        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+
+        FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+        parameters.add(new Parameter(fieldConfig, value));
 
         return f;
     }

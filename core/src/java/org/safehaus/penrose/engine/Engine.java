@@ -184,7 +184,7 @@ public abstract class Engine {
     public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
-
+/*
         Collection relationships = entryMapping.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
@@ -206,7 +206,7 @@ public abstract class Engine {
 
             }
         }
-
+*/
         Iterator i = entryMapping.getSourceMappings().iterator();
         if (!i.hasNext()) return null;
 
@@ -562,38 +562,6 @@ public abstract class Engine {
             SearchRequest request,
             SearchResponse response
     ) throws Exception;
-
-    public Relationship getConnectingRelationship(
-            Partition partition,
-            EntryMapping entryMapping
-    ) throws Exception {
-
-        // log.debug("Searching the connecting relationship for "+entryMapping;
-
-        Collection relationships = partition.getEffectiveRelationships(entryMapping);
-
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            // log.debug(" - checking "+relationship);
-
-            String lhs = relationship.getLhs();
-            String rhs = relationship.getRhs();
-
-            int lindex = lhs.indexOf(".");
-            String lsourceName = lindex < 0 ? lhs : lhs.substring(0, lindex);
-            SourceMapping lsource = entryMapping.getSourceMapping(lsourceName);
-
-            int rindex = rhs.indexOf(".");
-            String rsourceName = rindex < 0 ? rhs : rhs.substring(0, rindex);
-            SourceMapping rsource = entryMapping.getSourceMapping(rsourceName);
-
-            if (lsource == null && rsource != null || lsource != null && rsource == null) {
-                return relationship;
-            }
-        }
-
-        return null;
-    }
 
     public Filter createFilter(
             SourceMapping sourceMapping,

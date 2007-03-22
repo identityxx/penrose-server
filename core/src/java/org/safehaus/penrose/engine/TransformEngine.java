@@ -134,7 +134,7 @@ public class TransformEngine {
 
         boolean debug = log.isDebugEnabled();
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
+/*
         Collection relationships = entryMapping.getRelationships();
         if (relationships.size() > 0) {
             Relationship relationship = (Relationship)relationships.iterator().next();
@@ -191,7 +191,7 @@ public class TransformEngine {
                 output.set(fieldName, value);
             }
         }
-
+*/
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(input);
 
