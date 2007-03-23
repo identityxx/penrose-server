@@ -128,7 +128,11 @@ public class SearchEngine {
             Object value = interpreter.eval(entryMapping, attributeMapping);
             if (value == null) continue;
 
-            attributes.addValue(attributeMapping.getName(), value);
+            if (value instanceof Collection) {
+                attributes.addValues(attributeMapping.getName(), (Collection)value);
+            } else {
+                attributes.addValue(attributeMapping.getName(), value);
+            }
         }
 
         Collection objectClasses = entryMapping.getObjectClasses();

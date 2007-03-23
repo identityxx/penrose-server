@@ -108,7 +108,11 @@ public class LDAPAdapter extends Adapter {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
         RDN rdn = dn.getRdn();
-        record.addValue(sourceName+".primaryKey", rdn);
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+            record.addValue(sourceName+".primaryKey."+name, value);
+        }
 
         javax.naming.directory.Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getFieldConfigs();
