@@ -3,6 +3,14 @@ package org.safehaus.penrose.backend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.filter.Filter;
+
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class PenroseSession implements com.identyx.javabackend.Session {
 
@@ -26,15 +34,35 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.close();
     }
 
+    public com.identyx.javabackend.DN getBindDn() {
+        return session.getBindDn() == null ? null : new PenroseDN(session.getBindDn());
+    }
+
+    public boolean isAnonymous() {
+        return session.getBindDn() == null;
+    }
+
     public boolean isRoot() {
         return session.isRootUser();
     }
 
-    /**
-     * Performs add operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.Attributes attributes
+    ) throws Exception {
+
+        log.debug("add("+dn+")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        Attributes penroseAttributes = ((PenroseAttributes)attributes).getAttributes();
+
+        session.add(penroseDn, penroseAttributes);
+    }
+
     public void add(
             com.identyx.javabackend.AddRequest request,
             com.identyx.javabackend.AddResponse response
@@ -48,11 +76,22 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.add(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs bind operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            com.identyx.javabackend.DN dn,
+            String password
+    ) throws Exception {
+
+        log.debug("bind(\""+dn+", \""+password+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.bind(penroseDn, password);
+    }
+
     public void bind(
             com.identyx.javabackend.BindRequest request,
             com.identyx.javabackend.BindResponse response
@@ -66,11 +105,23 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.bind(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs compare operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            com.identyx.javabackend.DN dn,
+            String attributeName,
+            Object attributeValue
+    ) throws Exception {
+
+        log.debug("compare(\""+dn+", \""+attributeName+"\", \""+attributeValue+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        return session.compare(penroseDn, attributeName, attributeValue);
+    }
+
     public boolean compare(
             com.identyx.javabackend.CompareRequest request,
             com.identyx.javabackend.CompareResponse response
@@ -84,11 +135,21 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         return session.compare(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs delete operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            com.identyx.javabackend.DN dn
+    ) throws Exception {
+
+        log.debug("delete(\""+dn+")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.delete(penroseDn);
+    }
+
     public void delete(
             com.identyx.javabackend.DeleteRequest request,
             com.identyx.javabackend.DeleteResponse response
@@ -102,11 +163,28 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.delete(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs modify operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            com.identyx.javabackend.DN dn,
+            Collection modifications
+    ) throws Exception {
+
+        log.debug("modify("+dn+")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        Collection penroseModifications = new ArrayList();
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            PenroseModification modification = (PenroseModification)i.next();
+            penroseModifications.add(modification.getModification());
+        }
+
+        session.modify(penroseDn, penroseModifications);
+    }
+
     public void modify(
             com.identyx.javabackend.ModifyRequest request,
             com.identyx.javabackend.ModifyResponse response
@@ -120,11 +198,24 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.modify(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs modrdn operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRdn
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+
+        log.debug("modrdn(\""+dn+"\", \""+newRdn+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        RDN penroseNewRdn = ((PenroseRDN)newRdn).getRdn();
+
+        session.modrdn(penroseDn, penroseNewRdn, deleteOldRdn);
+    }
+
     public void modrdn(
             com.identyx.javabackend.ModRdnRequest request,
             com.identyx.javabackend.ModRdnResponse response
@@ -138,11 +229,24 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.modrdn(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs search operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public com.identyx.javabackend.SearchResponse search(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.Filter filter,
+            int scope
+    ) throws Exception {
+
+        log.debug("search(\""+dn+"\", \""+filter+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        Filter penroseFilter = ((PenroseFilter)filter).getFilter();
+
+        return new PenroseSearchResponse(session.search(penroseDn, penroseFilter, scope));
+    }
+
     public void search(
             com.identyx.javabackend.SearchRequest request,
             com.identyx.javabackend.SearchResponse response
@@ -156,11 +260,18 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         session.search(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs unbind operation.
-     *
-     * @throws Exception
-     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unbind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void unbind(
+    ) throws Exception {
+
+        log.debug("unbind()");
+
+        session.unbind();
+    }
+
     public void unbind(
             com.identyx.javabackend.UnbindRequest request,
             com.identyx.javabackend.UnbindResponse response

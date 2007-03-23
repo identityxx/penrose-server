@@ -10,7 +10,7 @@
   </bean>
 
   <bean id="penroseInterceptor" class="org.safehaus.penrose.apacheds.PenroseInterceptor">
-    <property name="penroseServer"><ref bean="penroseServer"/></property>
+    <property name="backend"><ref bean="penroseServer"/></property>
   </bean>
 
   <bean id="environment" class="org.springframework.beans.factory.config.PropertiesFactoryBean">

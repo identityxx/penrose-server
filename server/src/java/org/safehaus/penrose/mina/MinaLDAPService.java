@@ -1,6 +1,8 @@
 package org.safehaus.penrose.mina;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.backend.PenroseBackend;
+import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
@@ -17,6 +19,7 @@ import java.util.*;
 import edu.emory.mathcs.backport.java.util.concurrent.TimeUnit;
 import edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue;
 import edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor;
+import com.identyx.javabackend.Backend;
 
 /**
  * @author Endi S. Dewata
@@ -35,8 +38,11 @@ public class MinaLDAPService extends LDAPService {
     public void init() throws Exception {
         super.init();
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseServer penroseServer = getPenroseServer();
+        Penrose penrose = penroseServer.getPenrose();
         PenroseContext penroseContext = penrose.getPenroseContext();
+
+        Backend backend = new PenroseBackend(penroseServer);
 
         SchemaManager schemaManager = penroseContext.getSchemaManager();
         Collection attributeTypes = schemaManager.getAttributeTypes();
@@ -86,7 +92,7 @@ public class MinaLDAPService extends LDAPService {
         env.put("java.naming.ldap.attributes.binary", binaryAttributes);
 
         codecFactory = new PenroseProtocolCodecFactory(env);
-        handler = new PenroseHandler(penrose, codecFactory);
+        handler = new PenroseHandler(backend, codecFactory);
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 maxThreads,

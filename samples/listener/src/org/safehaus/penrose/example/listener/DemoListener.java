@@ -55,9 +55,7 @@ public class DemoListener implements SearchListener {
 
         session.bind("uid=admin,ou=system", "secret");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(DemoListener.SUFFIX, "(objectClass=*)", response);
+        SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
 
         while (response.hasNext()) {
             SearchResult entry = (SearchResult) response.next();

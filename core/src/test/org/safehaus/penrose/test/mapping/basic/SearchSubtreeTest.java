@@ -32,9 +32,7 @@ public class SearchSubtreeTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search("cn=def,"+baseDn, "(objectClass=*)", response);
+        SearchResponse response = session.search("cn=def,"+baseDn, "(objectClass=*)");
 
         boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
@@ -76,9 +74,7 @@ public class SearchSubtreeTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-        
-        session.search("cn=jkl,"+baseDn, "(objectClass=*)", response);
+        SearchResponse response = session.search("cn=jkl,"+baseDn, "(objectClass=*)");
 
         try {
             boolean hasNext = response.hasNext();

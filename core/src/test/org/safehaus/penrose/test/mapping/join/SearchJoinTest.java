@@ -26,13 +26,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertFalse(response.hasNext());
@@ -68,13 +65,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         System.out.println("Results:");
@@ -111,13 +105,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=def,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         assertTrue(response.hasNext());
@@ -152,13 +143,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=jkl,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         assertFalse(response.hasNext());
@@ -180,13 +168,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*b*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertTrue(response.hasNext());
@@ -234,13 +219,10 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*f*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertFalse(response.hasNext());

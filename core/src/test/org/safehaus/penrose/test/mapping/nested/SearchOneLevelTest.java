@@ -32,13 +32,10 @@ public class SearchOneLevelTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         while (response.hasNext()) {
@@ -85,13 +82,10 @@ public class SearchOneLevelTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=group2,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         while (response.hasNext()) {

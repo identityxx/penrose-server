@@ -25,13 +25,10 @@ public class SearchAttributesTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=group,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         boolean hasNext = response.hasNext();
@@ -227,13 +224,10 @@ public class SearchAttributesTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         boolean hasNext = response.hasNext();

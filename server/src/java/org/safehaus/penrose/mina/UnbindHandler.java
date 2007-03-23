@@ -5,7 +5,7 @@ import org.apache.mina.common.IoSession;
 import org.apache.directory.shared.ldap.message.UnbindRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.Session;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -27,10 +27,10 @@ public class UnbindHandler implements MessageHandler {
 
         Session session = handler.getPenroseSession(ioSession);
 
-        org.safehaus.penrose.session.UnbindRequest penroseRequest = new org.safehaus.penrose.session.UnbindRequest();
+        com.identyx.javabackend.UnbindRequest penroseRequest = handler.backend.createUnbindRequest();
         handler.getControls(request, penroseRequest);
 
-        org.safehaus.penrose.session.UnbindResponse penroseResponse = new org.safehaus.penrose.session.UnbindResponse();
+        com.identyx.javabackend.UnbindResponse penroseResponse = handler.backend.createUnbindResponse();
 
         session.unbind(penroseRequest, penroseResponse);
 

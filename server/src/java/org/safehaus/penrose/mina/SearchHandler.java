@@ -5,15 +5,13 @@ import org.apache.mina.handler.demux.MessageHandler;
 import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.apacheds.FilterTool;
-import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.backend.PenroseFilter;
 import org.ietf.ldap.LDAPException;
-
-import java.util.Collection;
-import java.util.Iterator;
+import com.identyx.javabackend.Session;
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Filter;
+import com.identyx.javabackend.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -32,46 +30,45 @@ public class SearchHandler implements MessageHandler {
 
         SearchRequest request = (SearchRequest)message;
         SearchResponseDone response = (SearchResponseDone)request.getResultResponse();
-        LdapResult ldapResult = response.getLdapResult();
+        LdapResult result = response.getLdapResult();
 
         try {
-            DN baseDn = new DN(request.getBase().toString());
-            Filter filter = FilterTool.convert(request.getFilter());
+            DN baseDn = handler.backend.createDn(request.getBase().toString());
+            Filter filter = new PenroseFilter(FilterTool.convert(request.getFilter()));
 
-            org.safehaus.penrose.session.Session session = handler.getPenroseSession(ioSession);
+            Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.SearchRequest penroseRequest = new org.safehaus.penrose.session.SearchRequest();
+            com.identyx.javabackend.SearchRequest penroseRequest = handler.backend.createSearchRequest();
             penroseRequest.setDn(baseDn);
             penroseRequest.setFilter(filter);
             penroseRequest.setSizeLimit(request.getSizeLimit() );
             penroseRequest.setTimeLimit(request.getTimeLimit());
             penroseRequest.setScope(request.getScope().getValue() );
-            penroseRequest.setTypesOnly(request.getTypesOnly());
+            //penroseRequest.setTypesOnly(request.getTypesOnly());
             penroseRequest.setAttributes(request.getAttributes());
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.SearchResponse penroseResponse = new org.safehaus.penrose.session.SearchResponse();
+            com.identyx.javabackend.SearchResponse penroseResponse = handler.backend.createSearchResponse();
 
             session.search(penroseRequest, penroseResponse);
 
             while (penroseResponse.hasNext()) {
-                org.safehaus.penrose.session.SearchResult result = (org.safehaus.penrose.session.SearchResult)penroseResponse.next();
-                sendSearchResult(ioSession, request, result);
+                com.identyx.javabackend.SearchResult searchResult = (com.identyx.javabackend.SearchResult)penroseResponse.next();
+                sendSearchResult(ioSession, request, searchResult);
             }
 
             handler.setControls(penroseResponse, response);
 
         } catch (LDAPException e) {
             ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(e.getResultCode());
-            ldapResult.setResultCode(rce);
-            ldapResult.setErrorMessage(e.getMessage());
+            result.setResultCode(rce);
+            result.setErrorMessage(e.getMessage());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
-            ldapResult.setResultCode(rce);
-            ldapResult.setErrorMessage(le.getMessage());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
+            result.setResultCode(rce);
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(response);
@@ -81,7 +78,7 @@ public class SearchHandler implements MessageHandler {
     public void sendSearchResult(
             IoSession ioSession,
             org.apache.directory.shared.ldap.message.SearchRequest request,
-            org.safehaus.penrose.session.SearchResult result
+            com.identyx.javabackend.SearchResult result
     ) throws Exception {
 
         Entry entry = result.getEntry();

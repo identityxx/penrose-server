@@ -20,6 +20,8 @@ package org.safehaus.penrose.apacheds;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.backend.PenroseBackend;
+import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.ldap.LDAPService;
 import org.apache.directory.server.core.configuration.*;
 import org.apache.directory.server.jndi.ServerContextFactory;
@@ -32,6 +34,8 @@ import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
 import java.io.File;
 import java.util.*;
+
+import com.identyx.javabackend.Backend;
 
 /**
  * @author Endi S. Dewata
@@ -46,9 +50,12 @@ public class ApacheDSLDAPService extends LDAPService {
 
         setStatus(STARTING);
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        PenroseServer penroseServer = getPenroseServer();
+        Penrose penrose = penroseServer.getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
         String home = penroseConfig.getHome();
+
+        Backend backend = new PenroseBackend(penroseServer);
 
         MutableServerStartupConfiguration configuration = new MutableServerStartupConfiguration();
 
@@ -97,7 +104,7 @@ public class ApacheDSLDAPService extends LDAPService {
         // Register Penrose authenticator
 
         PenroseAuthenticator authenticator = new PenroseAuthenticator();
-        authenticator.setPenroseServer(getPenroseServer());
+        authenticator.setBackend(backend);
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
         authenticatorConfig.setName("Penrose");
@@ -118,7 +125,7 @@ public class ApacheDSLDAPService extends LDAPService {
 
         // Register Penrose interceptor
         PenroseInterceptor interceptor = new PenroseInterceptor();
-        interceptor.setPenroseServer(getPenroseServer());
+        interceptor.setBackend(backend);
 
         MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();
         interceptorConfig.setName("penroseService");
@@ -139,8 +146,8 @@ public class ApacheDSLDAPService extends LDAPService {
         final Properties env = new Properties();
         env.setProperty(Context.PROVIDER_URL, "ou=system");
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn().toString());
-        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
+        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());
+        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
         env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         env.setProperty(Context.REFERRAL, "throw");
 /*
@@ -166,12 +173,7 @@ public class ApacheDSLDAPService extends LDAPService {
         log.warn("Listening to port "+ldapPort+" (LDAP).");
 
         if (enableLdaps) {
-            double javaSpecVersion = Double.parseDouble(System.getProperty("java.specification.version"));
-            if (javaSpecVersion < 1.5) {
-                log.warn("SSL is not supported with Java "+javaSpecVersion);
-            } else {
-                log.warn("Listening to port "+ldapsPort+" (Secure LDAP).");
-            }
+            log.warn("Listening to port "+ldapsPort+" (Secure LDAP).");
         }
 
         // Start ApacheDS synchronization thread
@@ -212,8 +214,8 @@ public class ApacheDSLDAPService extends LDAPService {
         Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
         env.put(Context.PROVIDER_URL, "ou=system");
-        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootUserConfig().getDn().toString());
-        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootUserConfig().getPassword());
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());
+        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
         new InitialDirContext(env);

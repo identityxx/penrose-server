@@ -1,10 +1,8 @@
 package org.safehaus.penrose.apacheds;
 
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.mapping.EntryMapping;
+import com.identyx.javabackend.Entry;
+import com.identyx.javabackend.Attributes;
+import com.identyx.javabackend.Attribute;
 
 import javax.naming.directory.SearchResult;
 import java.util.Iterator;
@@ -47,6 +45,6 @@ public class EntryTool {
             attrs.put(attr);
         }
 
-        return new javax.naming.directory.SearchResult(entry.getDn().toString(), entry, attrs);
+        return new SearchResult(entry.getDn().toString(), entry, attrs);
     }
 }

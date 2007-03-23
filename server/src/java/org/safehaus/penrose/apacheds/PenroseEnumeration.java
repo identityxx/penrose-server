@@ -17,15 +17,15 @@
  */
 package org.safehaus.penrose.apacheds;
 
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchResult;
-import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import java.util.List;
+
+import com.identyx.javabackend.SearchResponse;
+import com.identyx.javabackend.SearchResult;
+import com.identyx.javabackend.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -42,7 +42,7 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public void close() throws NamingException {
         try {
-            searchResponse.close();
+            //searchResponse.close();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionTool.createNamingException(e);
@@ -53,19 +53,19 @@ public class PenroseEnumeration implements NamingEnumeration {
         try {
             boolean hasNext = searchResponse.hasNext();
             if (hasNext) return true;
-
+/*
             List referrals = searchResponse.getReferrals();
             //log.debug("Search operation returned "+referrals.size()+" referral(s).");
 
             if (!referrals.isEmpty()) {
                 PenroseReferralException lre = new PenroseReferralException(referrals);
                 throw lre;
-                /*
+
                 String referral = (String)referrals.remove(0);
                 log.debug("Referral: "+referral);
                 throw new PenroseReferralException(referral, !referrals.isEmpty());
-                */
             }
+*/
 
             //log.warn("Search operation returned "+searchResponse.getTotalCount()+" entries.");
 

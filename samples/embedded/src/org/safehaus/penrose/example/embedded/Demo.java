@@ -121,9 +121,7 @@ public class Demo {
 
         log.warn("Searching all entries.");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search("dc=Example,dc=com", "(objectClass=*)", response);
+        SearchResponse response = session.search("dc=Example,dc=com", "(objectClass=*)");
 
         while (response.hasNext()) {
             Entry entry = (Entry) response.next();

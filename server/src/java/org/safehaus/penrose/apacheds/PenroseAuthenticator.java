@@ -23,11 +23,6 @@ import org.apache.directory.server.core.jndi.ServerContext;
 import org.apache.directory.shared.ldap.exception.LdapAuthenticationException;
 import org.apache.directory.shared.ldap.aci.AuthenticationLevel;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.session.Session;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -36,6 +31,8 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.ServiceUnavailableException;
 
+import com.identyx.javabackend.*;
+
 /**
  * @author Endi S. Dewata
  */
@@ -43,25 +40,18 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseServer penroseServer;
-
-    boolean allowAnonymousAccess;
+    Backend backend;
 
     public PenroseAuthenticator() {
         super("simple");
     }
 
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
+    public Backend getBackend() {
+        return backend;
     }
 
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
-
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
+    public void setBackend(Backend backend) {
+        this.backend = backend;
     }
 
     public void init() throws NamingException {
@@ -70,23 +60,24 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public LdapPrincipal authenticate(LdapDN name, ServerContext ctx) throws NamingException {
 
         String dn = name.getUpName();
-        Object credentials = ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
-        String password = new String((byte[])credentials);
+        byte[] credentials = (byte[])ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
+        String password = new String(credentials);
 
         if (dn == null || "".equals(dn)) {
             throw new LdapAuthenticationException();
         }
 
         try {
-            Penrose penrose = penroseServer.getPenrose();
-            Session session = penrose.getSession(dn);
+            Session session = backend.getSession(dn);
 
             if (session == null) {
-                session = penrose.createSession(dn);
+                session = backend.createSession(dn);
                 if (session == null) throw new ServiceUnavailableException();
             }
 
-            session.bind(dn, password);
+            DN bindDn = backend.createDn(dn);
+
+            session.bind(bindDn, password);
             log.warn("Bind operation succeeded.");
 
             return createLdapPrincipal(dn, AuthenticationLevel.SIMPLE);

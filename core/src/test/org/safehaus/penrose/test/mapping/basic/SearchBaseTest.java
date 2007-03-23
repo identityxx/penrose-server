@@ -33,13 +33,10 @@ public class SearchBaseTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=def,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         boolean hasNext = response.hasNext();
@@ -82,13 +79,10 @@ public class SearchBaseTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=jkl,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         try {

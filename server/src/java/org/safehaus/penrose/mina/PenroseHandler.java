@@ -6,20 +6,23 @@ import org.apache.mina.handler.demux.DemuxingIoHandler;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.ProtocolCodecFactory;
 import org.apache.directory.shared.ldap.message.*;
+import org.apache.directory.shared.ldap.message.AddRequest;
+import org.apache.directory.shared.ldap.message.BindRequest;
+import org.apache.directory.shared.ldap.message.CompareRequest;
+import org.apache.directory.shared.ldap.message.Control;
+import org.apache.directory.shared.ldap.message.DeleteRequest;
+import org.apache.directory.shared.ldap.message.ModifyRequest;
+import org.apache.directory.shared.ldap.message.SearchRequest;
+import org.apache.directory.shared.ldap.message.UnbindRequest;
 import org.apache.directory.shared.ldap.message.extended.NoticeOfDisconnect;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
-import org.safehaus.penrose.session.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingEnumeration;
 import java.util.*;
+
+import com.identyx.javabackend.*;
+import com.identyx.javabackend.Request;
 
 /**
  * @author Endi S. Dewata
@@ -28,15 +31,15 @@ public class PenroseHandler extends DemuxingIoHandler {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public Penrose penrose;
+    public Backend backend;
     public ProtocolCodecFactory codecFactory;
 
     public Map sessions = new HashMap();
-    int counter;
+    long counter;
 
-    public PenroseHandler(Penrose penrose, ProtocolCodecFactory codecFactory) throws Exception {
-        this.setPenrose(penrose);
-        this.setCodecFactory(codecFactory);
+    public PenroseHandler(Backend penrose, ProtocolCodecFactory codecFactory) throws Exception {
+        this.backend = penrose;
+        this.codecFactory = codecFactory;
 
         BindHandler bindHandler = new BindHandler(this);
         addMessageHandler(BindRequest.class, bindHandler);
@@ -75,9 +78,9 @@ public class PenroseHandler extends DemuxingIoHandler {
         IoFilterChain filters = session.getFilterChain();
         filters.addLast("codec", new ProtocolCodecFilter(getCodecFactory()));
 
-        sessions.put(session, penrose.createSession(""+counter));
+        sessions.put(session, backend.createSession(counter));
         
-        if (counter == Integer.MAX_VALUE) {
+        if (counter == Long.MAX_VALUE) {
             counter = 0;
         } else {
             counter++;
@@ -112,12 +115,12 @@ public class PenroseHandler extends DemuxingIoHandler {
         super.exceptionCaught(session, cause);
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public Backend getBackend() {
+        return backend;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setBackend(Backend backend) {
+        this.backend = backend;
     }
 
     public ProtocolCodecFactory getCodecFactory() {
@@ -134,8 +137,8 @@ public class PenroseHandler extends DemuxingIoHandler {
 
     public void getControls(
             Message message,
-            org.safehaus.penrose.session.Request request
-    ) {
+            Request request
+    ) throws Exception {
         Map controls = message.getControls();
         Collection list = new ArrayList();
         for (Iterator i=controls.values().iterator(); i.hasNext(); ) {
@@ -145,7 +148,7 @@ public class PenroseHandler extends DemuxingIoHandler {
             byte[] value = control.getValue();
             boolean critical = control.isCritical();
 
-            org.safehaus.penrose.control.Control ctrl = new org.safehaus.penrose.control.Control(oid, value, critical);
+            com.identyx.javabackend.Control ctrl = backend.createControl(oid, value, critical);
             list.add(ctrl);
 
         }
@@ -158,25 +161,25 @@ public class PenroseHandler extends DemuxingIoHandler {
     ) throws Exception {
         Collection controls = result.getControls();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            com.identyx.javabackend.Control control = (com.identyx.javabackend.Control)i.next();
             Control ctrl = createControl(control);
             response.add(ctrl);
         }
     }
 
     public void setControls(
-            org.safehaus.penrose.session.Response penroseResponse,
+            com.identyx.javabackend.Response penroseResponse,
             ResultResponse response
     ) throws Exception {
         Collection controls = penroseResponse.getControls();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            com.identyx.javabackend.Control control = (com.identyx.javabackend.Control)i.next();
             Control ctrl = createControl(control);
             response.add(ctrl);
         }
     }
 
-    public Control createControl(org.safehaus.penrose.control.Control control) {
+    public Control createControl(com.identyx.javabackend.Control control) throws Exception {
         Control ctrl = new ControlImpl() {
             public byte[] getEncodedValue() {
                 return getValue();
@@ -205,12 +208,12 @@ public class PenroseHandler extends DemuxingIoHandler {
     public Modification createModification(javax.naming.directory.ModificationItem modificationItem) throws Exception {
         int type = modificationItem.getModificationOp();
         Attribute attribute = createAttribute(modificationItem.getAttribute());
-        return new Modification(type, attribute);
+        return backend.createModification(type, attribute);
     }
 
     public Attributes createAttributes(javax.naming.directory.Attributes attrs) throws Exception {
 
-        Attributes attributes = new Attributes();
+        Attributes attributes = backend.createAttributes();
 
         for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
             javax.naming.directory.Attribute attr = (javax.naming.directory.Attribute)ne.next();
@@ -224,7 +227,7 @@ public class PenroseHandler extends DemuxingIoHandler {
     public Attribute createAttribute(javax.naming.directory.Attribute attr) throws Exception {
 
         String name = attr.getID();
-        Attribute attribute = new Attribute(name);
+        Attribute attribute = backend.createAttribute(name);
 
         for (NamingEnumeration ne2 = attr.getAll(); ne2.hasMore(); ) {
             Object value = ne2.next();
@@ -234,7 +237,7 @@ public class PenroseHandler extends DemuxingIoHandler {
         return attribute;
     }
     
-    public javax.naming.directory.Attributes createAttributes(Attributes attributes) {
+    public javax.naming.directory.Attributes createAttributes(Attributes attributes) throws Exception {
 
         javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
 

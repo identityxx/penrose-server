@@ -8,13 +8,10 @@ import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 import org.apache.directory.shared.ldap.message.AddResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
-
-import javax.naming.NamingEnumeration;
+import com.identyx.javabackend.Attributes;
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -36,17 +33,17 @@ public class AddHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = new DN(request.getEntry().toString());
+            DN dn = handler.backend.createDn(request.getEntry().toString());
             Attributes attributes = handler.createAttributes(request.getAttributes());
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.AddRequest penroseRequest = new org.safehaus.penrose.session.AddRequest();
+            com.identyx.javabackend.AddRequest penroseRequest = handler.backend.createAddRequest();
             penroseRequest.setDn(dn);
             penroseRequest.setAttributes(attributes);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.AddResponse penroseResponse = new org.safehaus.penrose.session.AddResponse();
+            com.identyx.javabackend.AddResponse penroseResponse = handler.backend.createAddResponse();
 
             session.add(penroseRequest, penroseResponse);
 
@@ -59,10 +56,9 @@ public class AddHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

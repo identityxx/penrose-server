@@ -32,13 +32,10 @@ public class SearchFilterTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(cn=*b*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertTrue(response.hasNext());
@@ -88,13 +85,10 @@ public class SearchFilterTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(cn=*f*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertFalse(response.hasNext());

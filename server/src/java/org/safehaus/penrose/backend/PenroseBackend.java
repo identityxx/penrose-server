@@ -24,7 +24,6 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.Attributes;
@@ -103,35 +102,35 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
     /**
      * Get session.
      *
-     * @param connectionId
+     * @param id
      * @return session
      */
-    public com.identyx.javabackend.Session getSession(long connectionId) throws Exception {
-        return (PenroseSession)sessions.get(new Long(connectionId));
+    public com.identyx.javabackend.Session getSession(Object id) throws Exception {
+        return (PenroseSession)sessions.get(id);
     }
 
     /**
      * Create session.
      *
-     * @param connectionId
+     * @param id
      */
-    public com.identyx.javabackend.Session createSession(long connectionId) throws Exception {
-        log.debug("openConnection("+connectionId+")");
+    public com.identyx.javabackend.Session createSession(Object id) throws Exception {
+        log.debug("openConnection("+id+")");
         Penrose penrose = penroseServer.getPenrose();
         PenroseSession session = new PenroseSession(penrose.newSession());
         if (session == null) throw new Exception("Unable to create session.");
-        sessions.put(new Long(connectionId), session);
+        sessions.put(id, session);
         return session;
     }
 
     /**
      * Close session.
      *
-     * @param connectionId
+     * @param id
      */
-    public void closeSession(long connectionId) throws Exception {
-        log.debug("closeConnection("+connectionId+")");
-        PenroseSession session = (PenroseSession)sessions.remove(new Long(connectionId));
+    public void closeSession(Object id) throws Exception {
+        log.debug("closeConnection("+id+")");
+        PenroseSession session = (PenroseSession)sessions.remove(id);
         if (session != null) session.close();
     }
 

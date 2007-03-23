@@ -31,13 +31,10 @@ public class SearchBaseTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "cn=parent1,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         boolean hasNext = response.hasNext();
@@ -79,13 +76,10 @@ public class SearchBaseTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "uid=child,cn=parent1,"+baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         boolean hasNext = response.hasNext();

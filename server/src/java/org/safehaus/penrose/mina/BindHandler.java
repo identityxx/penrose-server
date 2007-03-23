@@ -5,10 +5,9 @@ import org.apache.mina.common.IoSession;
 import org.apache.directory.shared.ldap.message.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -30,17 +29,17 @@ public class BindHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN bindDn = new DN(request.getName().toString());
+            DN bindDn = handler.backend.createDn(request.getName().toString());
             String password = new String(request.getCredentials());
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.BindRequest penroseRequest = new org.safehaus.penrose.session.BindRequest();
+            com.identyx.javabackend.BindRequest penroseRequest = handler.backend.createBindRequest();
             penroseRequest.setDn(bindDn);
             penroseRequest.setPassword(password);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.BindResponse penroseResponse = new org.safehaus.penrose.session.BindResponse();
+            com.identyx.javabackend.BindResponse penroseResponse = handler.backend.createBindResponse();
 
             session.bind(penroseRequest, penroseResponse);
 
@@ -53,10 +52,9 @@ public class BindHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

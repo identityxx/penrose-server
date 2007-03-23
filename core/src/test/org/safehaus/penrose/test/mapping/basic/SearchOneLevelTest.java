@@ -23,13 +23,10 @@ public class SearchOneLevelTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         assertFalse(response.hasNext());
@@ -51,13 +48,10 @@ public class SearchOneLevelTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(objectClass=*)",
-                SearchRequest.SCOPE_ONE,
-                response
+                SearchRequest.SCOPE_ONE
         );
 
         //System.out.println("Results:");

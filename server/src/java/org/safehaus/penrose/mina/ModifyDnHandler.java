@@ -8,11 +8,10 @@ import org.apache.directory.shared.ldap.message.ModifyDnRequest;
 import org.apache.directory.shared.ldap.message.ModifyDnResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
 import org.ietf.ldap.LDAPException;
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.RDN;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -34,19 +33,19 @@ public class ModifyDnHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = new DN(request.getName().toString());
-            RDN newRdn = new RDN(request.getNewRdn().toString());
+            DN dn = handler.backend.createDn(request.getName().toString());
+            RDN newRdn = handler.backend.createRdn(request.getNewRdn().toString());
             boolean deleteOldRdn = request.getDeleteOldRdn();
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.ModRdnRequest penroseRequest = new org.safehaus.penrose.session.ModRdnRequest();
+            com.identyx.javabackend.ModRdnRequest penroseRequest = handler.backend.createModRdnRequest();
             penroseRequest.setDn(dn);
             penroseRequest.setNewRdn(newRdn);
             penroseRequest.setDeleteOldRdn(deleteOldRdn);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.ModRdnResponse penroseResponse = new org.safehaus.penrose.session.ModRdnResponse();
+            com.identyx.javabackend.ModRdnResponse penroseResponse = handler.backend.createModRdnResponse();
 
             session.modrdn(penroseRequest, penroseResponse);
 
@@ -59,10 +58,9 @@ public class ModifyDnHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

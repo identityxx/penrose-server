@@ -8,10 +8,9 @@ import org.apache.directory.shared.ldap.message.LdapResult;
 import org.apache.directory.shared.ldap.message.DeleteResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -33,15 +32,15 @@ public class DeleteHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = new DN(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().toString());
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.DeleteRequest penroseRequest = new org.safehaus.penrose.session.DeleteRequest();
+            com.identyx.javabackend.DeleteRequest penroseRequest = handler.backend.createDeleteRequest();
             penroseRequest.setDn(dn);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.DeleteResponse penroseResponse = new org.safehaus.penrose.session.DeleteResponse();
+            com.identyx.javabackend.DeleteResponse penroseResponse = handler.backend.createDeleteResponse();
 
             session.delete(penroseRequest, penroseResponse);
 
@@ -54,10 +53,9 @@ public class DeleteHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

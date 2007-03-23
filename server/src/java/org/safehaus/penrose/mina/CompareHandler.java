@@ -8,10 +8,9 @@ import org.apache.directory.shared.ldap.message.ResultCodeEnum;
 import org.apache.directory.shared.ldap.message.CompareResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
+import com.identyx.javabackend.Session;
+import com.identyx.javabackend.DN;
 
 /**
  * @author Endi S. Dewata
@@ -33,19 +32,19 @@ public class CompareHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = new DN(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().toString());
             String name = request.getAttributeId();
             Object value = request.getAssertionValue();
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.CompareRequest penroseRequest = new org.safehaus.penrose.session.CompareRequest();
+            com.identyx.javabackend.CompareRequest penroseRequest = handler.backend.createCompareRequest();
             penroseRequest.setDn(dn);
             penroseRequest.setAttributeName(name);
             penroseRequest.setAttributeValue(value);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.CompareResponse penroseResponse = new org.safehaus.penrose.session.CompareResponse();
+            com.identyx.javabackend.CompareResponse penroseResponse = handler.backend.createCompareResponse();
 
             boolean b = session.compare(penroseRequest, penroseResponse);
             result.setResultCode(b ? ResultCodeEnum.COMPARETRUE : ResultCodeEnum.COMPAREFALSE);
@@ -59,10 +58,9 @@ public class CompareHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

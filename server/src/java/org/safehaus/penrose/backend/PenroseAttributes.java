@@ -4,6 +4,8 @@ import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -18,6 +20,15 @@ public class PenroseAttributes implements com.identyx.javabackend.Attributes {
 
     public Collection getNames() throws Exception {
         return attributes.getNames();
+    }
+
+    public Collection getAll() throws Exception {
+        Collection list = new ArrayList();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+            list.add(new PenroseAttribute(attribute));
+        }
+        return list;
     }
 
     public void add(com.identyx.javabackend.Attribute attribute) throws Exception {

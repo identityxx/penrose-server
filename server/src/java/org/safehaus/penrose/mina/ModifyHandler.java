@@ -8,18 +8,12 @@ import org.apache.directory.shared.ldap.message.ModifyRequest;
 import org.apache.directory.shared.ldap.message.ModifyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.LDAPUtil;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.entry.DN;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.NamingEnumeration;
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Iterator;
+
+import com.identyx.javabackend.DN;
+import com.identyx.javabackend.Session;
 
 /**
  * @author Endi S. Dewata
@@ -41,17 +35,17 @@ public class ModifyHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = new DN(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().toString());
             Collection modifications = handler.createModifications(request.getModificationItems());
 
             Session session = handler.getPenroseSession(ioSession);
 
-            org.safehaus.penrose.session.ModifyRequest penroseRequest = new org.safehaus.penrose.session.ModifyRequest();
+            com.identyx.javabackend.ModifyRequest penroseRequest = handler.backend.createModifyRequest();
             penroseRequest.setDn(dn);
             penroseRequest.setModifications(modifications);
             handler.getControls(request, penroseRequest);
 
-            org.safehaus.penrose.session.ModifyResponse penroseResponse = new org.safehaus.penrose.session.ModifyResponse();
+            com.identyx.javabackend.ModifyResponse penroseResponse = handler.backend.createModifyResponse();
 
             session.modify(penroseRequest, penroseResponse);
 
@@ -64,10 +58,9 @@ public class ModifyHandler implements MessageHandler {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            LDAPException le = ExceptionUtil.createLDAPException(e);
-            ResultCodeEnum rce = ResultCodeEnum.getResultCodeEnum(le.getResultCode());
+            ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
             result.setResultCode(rce);
-            result.setErrorMessage(le.getMessage());
+            result.setErrorMessage(e.getMessage());
 
         } finally {
             ioSession.write(request.getResultResponse());

@@ -99,13 +99,10 @@ public class PartitionManagerTest extends TestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = new SearchResponse();
-
-        session.search(
+        SearchResponse response = session.search(
                 "ou=Test,dc=Example,dc=com",
                 "(objectClass=*)",
-                SearchRequest.SCOPE_BASE,
-                response
+                SearchRequest.SCOPE_BASE
         );
 
         assertTrue(response.hasNext());

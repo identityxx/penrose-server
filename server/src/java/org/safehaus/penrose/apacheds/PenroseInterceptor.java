@@ -23,26 +23,20 @@ import org.apache.directory.server.core.configuration.InterceptorConfiguration;
 import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.session.SearchResult;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.apache.directory.shared.ldap.message.ModificationItemImpl;
+import org.safehaus.penrose.backend.PenroseFilter;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.naming.*;
 import javax.naming.directory.*;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 import java.util.*;
+
+import com.identyx.javabackend.*;
+import com.identyx.javabackend.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -51,28 +45,14 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseServer penroseServer;
-    PartitionManager partitionManager;
+    Backend backend;
 
-    DirectoryServiceConfiguration factoryCfg;
-
-    boolean allowAnonymousAccess;
-
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
+    public Backend getBackend() {
+        return backend;
     }
 
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
-
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        ServiceConfig serviceConfig = penroseConfig.getServiceConfig("LDAP");
-        String s = serviceConfig == null ? null : serviceConfig.getParameter("allowAnonymousAccess");
-        allowAnonymousAccess = s == null ? true : new Boolean(s).booleanValue();
-
-        Penrose penrose = penroseServer.getPenrose();
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        partitionManager = penroseContext.getPartitionManager();
+    public void setBackend(Backend backend) {
+        this.backend = backend;
     }
 
     public void init(
@@ -81,22 +61,16 @@ public class PenroseInterceptor extends BaseInterceptor {
     ) throws NamingException {
 
         super.init(factoryCfg, cfg);
-        this.factoryCfg = factoryCfg;
     }
 
     public Session getSession() throws Exception {
 
-        Penrose penrose = penroseServer.getPenrose();
-        if (penrose == null) {
-            throw new Exception("Penrose is not initialized.");
-        }
-
         String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().getUpName();
 
-        Session session = penrose.getSession(bindDn);
+        Session session = backend.getSession(bindDn);
 
         if (session == null) {
-            session = penrose.createSession(bindDn);
+            session = backend.createSession(bindDn);
             if (session == null) throw new ServiceUnavailableException();
         }
 
@@ -105,14 +79,9 @@ public class PenroseInterceptor extends BaseInterceptor {
 
     public void removeSession() throws Exception {
 
-        Penrose penrose = penroseServer.getPenrose();
-        if (penrose == null) {
-            throw new Exception("Penrose is not initialized.");
-        }
-
         String bindDn = getPrincipal() == null ? null : getPrincipal().getJndiName().getUpName();
 
-        penrose.removeSession(bindDn);
+        backend.closeSession(bindDn);
     }
 
     public void bind(
@@ -124,17 +93,19 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         log.debug("===============================================================================");
         try {
-            DN dn = new DN(bindDn.getUpName());
-            log.debug("bind(\""+dn+"\")");
+            log.debug("bind(\""+bindDn+"\")");
             //log.debug(" - mechanisms: "+mechanisms);
             //log.debug(" - sslAuthId: "+saslAuthId);
 
-            String password = new String((byte[])credentials);
+            String password = new String(credentials);
             //log.debug(" - password: "+password);
 
             next.bind(bindDn, credentials, mechanisms, saslAuthId);
 
             Session session = getSession();
+
+            DN dn = backend.createDn(bindDn.getUpName());
+
             session.bind(dn, password);
 
             //log.debug("Bind successful.");
@@ -154,8 +125,22 @@ public class PenroseInterceptor extends BaseInterceptor {
     ) throws NamingException {
 
         log.debug("===============================================================================");
-        log.debug("unbind(\""+bindDn+"\")");
-        nextInterceptor.unbind(bindDn);
+        try {
+            log.debug("unbind(\""+bindDn+"\")");
+
+            Session session = getSession();
+
+            session.unbind();
+
+            nextInterceptor.unbind(bindDn);
+
+        } catch (LDAPException e) {
+            throw ExceptionTool.createNamingException(e);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new NamingException(e.getMessage());
+        }
     }
 
     public void add(
@@ -164,15 +149,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             Attributes attrs
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
 
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("add(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 next.add(name, attrs);
                 return;
@@ -180,28 +165,21 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
-            org.safehaus.penrose.entry.Attributes attributes = new org.safehaus.penrose.entry.Attributes();
+            com.identyx.javabackend.Attributes attributes = backend.createAttributes();
             for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
-                javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)ne.next();
-                String attributeName = attribute.getID();
+                javax.naming.directory.Attribute attr = (javax.naming.directory.Attribute)ne.next();
+                String attributeName = attr.getID();
 
-                for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
+                com.identyx.javabackend.Attribute attribute = backend.createAttribute(attributeName);
+                for (NamingEnumeration ne2 = attr.getAll(); ne2.hasMore(); ) {
                     Object value = ne2.next();
-                    attributes.addValue(attributeName, value);
+                    attribute.addValue(value);
                 }
+
+                attributes.add(attribute);
             }
 
-            AddRequest request = new AddRequest();
-            request.setDn(dn);
-            request.setAttributes(attributes);
-
-            AddResponse response = new AddResponse();
-
-            session.add(request, response);
+            session.add(dn, attributes);
 
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
@@ -219,25 +197,23 @@ public class PenroseInterceptor extends BaseInterceptor {
             Object value
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("compare(\""+dn+"\", \""+attributeName+"\", "+value+")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 return next.compare(name, attributeName, value);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
             return session.compare(dn, attributeName, value);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -252,14 +228,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("delete(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 next.delete(name);
                 return;
@@ -267,11 +244,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
             session.delete(dn);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -282,8 +256,8 @@ public class PenroseInterceptor extends BaseInterceptor {
     }
 
     public LdapDN getMatchedName(NextInterceptor next, LdapDN dn) throws NamingException {
-        log.debug("===============================================================================");
         boolean debug = log.isDebugEnabled();
+        log.debug("===============================================================================");
         if (debug) log.debug("getMatchedName(\""+dn+"\")");
         return next.getMatchedName(dn);
     }
@@ -295,15 +269,15 @@ public class PenroseInterceptor extends BaseInterceptor {
     }
 
     public LdapDN getSuffix(NextInterceptor next, LdapDN dn) throws NamingException {
-        log.debug("===============================================================================");
         boolean debug = log.isDebugEnabled();
+        log.debug("===============================================================================");
         if (debug) log.debug("getSuffix(\""+dn+"\")");
         return next.getSuffix(dn);
     }
 
     public boolean isSuffix(NextInterceptor next, LdapDN name) throws NamingException {
-        log.debug("===============================================================================");
         boolean debug = log.isDebugEnabled();
+        log.debug("===============================================================================");
         if (debug) log.debug("isSuffix(\""+name+"\")");
         return next.isSuffix(name);
     }
@@ -319,33 +293,28 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("list(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 return next.list(name);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
+            Filter filter = backend.createFilter("(objectClass=*)");
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(dn);
-            request.setFilter("(objectClass=*)");
-            request.setScope(SearchRequest.SCOPE_ONE);
-            request.setDereference(SearchRequest.DEREF_ALWAYS);
-
-            SearchResponse response = new SearchResponse();
-
-            session.search(request, response);
+            SearchResponse response = session.search(
+                    dn,
+                    filter,
+                    SearchRequest.SCOPE_ONE
+            );
 
             return new PenroseEnumeration(response);
 
@@ -363,14 +332,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("hasEntry(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
                 //log.debug(dn+" is a static entry");
                 return next.hasEntry(name);
             }
@@ -379,19 +349,13 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
+            Filter filter = backend.createFilter("(objectClass=*)");
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(dn);
-            request.setFilter("(objectClass=*)");
-            request.setScope(SearchRequest.SCOPE_BASE);
-            request.setDereference(SearchRequest.DEREF_ALWAYS);
-
-            SearchResponse response = new SearchResponse();
-
-            session.search(request, response);
+            SearchResponse response = session.search(
+                    dn,
+                    filter,
+                    SearchRequest.SCOPE_BASE
+            );
 
             return response.hasNext();
         } catch (LDAPException e) {
@@ -411,33 +375,26 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         log.debug("===============================================================================");
         try {
-            DN dn = new DN(name.getUpName());
+            DN dn = backend.createDn(name.getUpName());
             log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
             boolean debug = log.isDebugEnabled();
             if (debug) log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 return next.lookup(name, attrIds);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
+            Filter filter = backend.createFilter("(objectClass=*)");
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(dn);
-            request.setFilter("(objectClass=*)");
-            request.setScope(SearchRequest.SCOPE_BASE);
-            request.setDereference(SearchRequest.DEREF_ALWAYS);
-
-            SearchResponse response = new SearchResponse();
-
-            session.search(request, response);
+            SearchResponse response = session.search(
+                    dn,
+                    filter,
+                    SearchRequest.SCOPE_BASE
+            );
 
             SearchResult result = (SearchResult)response.next();
             Entry entry = result.getEntry();
@@ -459,33 +416,28 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
+            DN dn = backend.createDn(name.getUpName());
             log.debug("lookup(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            boolean debug = log.isDebugEnabled();
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 return next.lookup(name);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
+            Filter filter = backend.createFilter("(objectClass=*)");
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(dn);
-            request.setFilter("(objectClass=*)");
-            request.setScope(SearchRequest.SCOPE_BASE);
-            request.setDereference(SearchRequest.DEREF_ALWAYS);
-
-            SearchResponse response = new SearchResponse();
-
-            session.search(request, response);
+            SearchResponse response = session.search(
+                    dn,
+                    filter,
+                    SearchRequest.SCOPE_BASE
+            );
 
             SearchResult result = (SearchResult)response.next();
             Entry entry = result.getEntry();
@@ -510,75 +462,23 @@ public class PenroseInterceptor extends BaseInterceptor {
             SearchControls searchControls
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
 
         try {
-            DN baseDn = new DN(base.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(base.getUpName());
             if (debug) {
                 StringBuffer sb = new StringBuffer();
                 filter.printToBuffer(sb);
-            	log.debug("search(\""+baseDn+"\")");
+            	log.debug("search(\""+base+"\")");
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
-            Partition partition = partitionManager.getPartition(baseDn);
-            if (debug) log.debug("Partition: "+partition);
-            
-            if ((partition == null) && !baseDn.isEmpty()) {
-            	if (debug) log.debug(baseDn+" is a static entry");
+            if (!backend.contains(dn)) {
+            	if (debug) log.debug(dn+" is a static entry");
                 return next.search(base, env, filter, searchControls);
-            }
-
-            if (searchControls != null && searchControls.getReturningAttributes() != null) {
-
-                if (baseDn.isEmpty() && searchControls.getSearchScope() == SearchControls.OBJECT_SCOPE) {
-
-                    NamingEnumeration ne = next.search(base, env, filter, searchControls);
-                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                    javax.naming.directory.Attributes attrs = sr.getAttributes();
-
-                    SearchRequest request = new SearchRequest();
-                    request.setDn(baseDn);
-                    request.setFilter("(objectClass=*)");
-                    request.setScope(SearchRequest.SCOPE_BASE);
-                    request.setDereference(SearchRequest.DEREF_ALWAYS);
-                    request.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
-
-                    SearchResponse response = new SearchResponse();
-
-                    session.search(request, response);
-
-                    org.safehaus.penrose.session.SearchResult result = (org.safehaus.penrose.session.SearchResult)response.next();
-                    org.safehaus.penrose.entry.Entry entry = result.getEntry();
-
-                    org.safehaus.penrose.entry.Attributes attributes = entry.getAttributes();
-
-                    for (NamingEnumeration ne2=attrs.getAll(); ne2.hasMore(); ) {
-                        Attribute attr = (Attribute)ne2.next();
-                        String name = attr.getID();
-                        if (name.equals("vendorName") || name.equals("vendorVersion")) continue;
-
-                        org.safehaus.penrose.entry.Attribute attribute = new org.safehaus.penrose.entry.Attribute(name);
-                        for (NamingEnumeration ne3=attr.getAll(); ne3.hasMore(); ) {
-                            Object value = ne3.next();
-                            attribute.addValue(value);
-                        }
-
-                        attributes.add(attribute);
-                    }
-
-                    SearchResponse results2 = new SearchResponse();
-                    results2.add(entry);
-                    results2.close();
-
-                    return new PenroseEnumeration(results2);
-                }
             }
 
             String deref = (String)env.get("java.naming.ldap.derefAliases");
@@ -586,7 +486,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            Filter newFilter = FilterTool.convert(filter);
+            Filter newFilter = new PenroseFilter(FilterTool.convert(filter));
             if (debug) {
 	            log.debug("Searching \""+base+"\"");
 	            log.debug(" - deref: "+deref);
@@ -595,16 +495,18 @@ public class PenroseInterceptor extends BaseInterceptor {
 	            log.debug(" - attributeNames: "+attributeNames);
             }
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(baseDn);
+            SearchRequest request = backend.createSearchRequest();
+            request.setDn(dn);
             request.setFilter(newFilter);
             request.setScope(searchControls.getSearchScope());
             request.setSizeLimit(searchControls.getCountLimit());
             request.setTimeLimit(searchControls.getTimeLimit());
-            request.setDereference(SearchRequest.DEREF_ALWAYS);
-            request.setAttributes(searchControls == null ? null : searchControls.getReturningAttributes());
 
-            SearchResponse response = new SearchResponse();
+            if (searchControls != null && searchControls.getReturningAttributes() != null) {
+                request.setAttributes(Arrays.asList(searchControls.getReturningAttributes()));
+            }
+
+            SearchResponse response = backend.createSearchResponse();
 
             session.search(request, response);
 
@@ -626,14 +528,15 @@ public class PenroseInterceptor extends BaseInterceptor {
             Attributes attributes
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("modify(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 next.modify(name, modOp, attributes);
                 return;
@@ -642,19 +545,22 @@ public class PenroseInterceptor extends BaseInterceptor {
             Collection modifications = new ArrayList();
 
             for (Enumeration e=attributes.getAll(); e.hasMoreElements(); ) {
-                Attribute attribute = (Attribute)e.nextElement();
+                Attribute attr = (Attribute)e.nextElement();
 
-                ModificationItem modification = new ModificationItem(modOp, attribute);
+                com.identyx.javabackend.Attribute attribute = backend.createAttribute(attr.getID());
+                for (NamingEnumeration ne2 = attr.getAll(); ne2.hasMore(); ) {
+                    Object value = ne2.next();
+                    attribute.addValue(value);
+                }
+
+                Modification modification = backend.createModification(modOp, attribute);
                 modifications.add(modification);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
             session.modify(dn, modifications);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -670,27 +576,41 @@ public class PenroseInterceptor extends BaseInterceptor {
             ModificationItem[] modificationItems
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
+
         log.debug("===============================================================================");
+
         try {
-            DN dn = new DN(name.getUpName());
-            boolean debug = log.isDebugEnabled();
+            DN dn = backend.createDn(name.getUpName());
             if (debug) log.debug("modify(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
-                next.modify(name, modificationItems);
+                next.modify(name, (ModificationItemImpl[])modificationItems);
                 return;
+            }
+
+            Collection modifications = new ArrayList();
+
+            for (int i=0; i<modificationItems.length; i++) {
+                ModificationItem mi = modificationItems[i];
+                int modOp = mi.getModificationOp();
+                Attribute attr = mi.getAttribute();
+
+                com.identyx.javabackend.Attribute attribute = backend.createAttribute(attr.getID());
+                for (NamingEnumeration ne2 = attr.getAll(); ne2.hasMore(); ) {
+                    Object value = ne2.next();
+                    attribute.addValue(value);
+                }
+
+                Modification modification = backend.createModification(modOp, attribute);
+                modifications.add(modification);
             }
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
-            Collection modifications = new ArrayList(Arrays.asList(modificationItems));
             session.modify(dn, modifications);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -707,16 +627,17 @@ public class PenroseInterceptor extends BaseInterceptor {
             boolean deleteOldDn
     ) throws NamingException {
 
-        log.debug("===============================================================================");
-        try {
-            DN dn = new DN(name.getUpName());
-            RDN newRdn = new RDN(newDn);
+        boolean debug = log.isDebugEnabled();
 
-            boolean debug = log.isDebugEnabled();
+        log.debug("===============================================================================");
+
+        try {
+            DN dn = backend.createDn(name.getUpName());
+            RDN newRdn = backend.createRdn(newDn);
+
             if (debug) log.debug("modifyDn(\""+dn+"\")");
 
-            Partition partition = partitionManager.getPartition(dn);
-            if (partition == null) {
+            if (!backend.contains(dn)) {
             	if (debug) log.debug(dn+" is a static entry");
                 next.modifyRn(name, newDn, deleteOldDn);
                 return;
@@ -724,11 +645,8 @@ public class PenroseInterceptor extends BaseInterceptor {
 
             Session session = getSession();
 
-            if (session.getBindDn() == null && !allowAnonymousAccess) {
-                throw ExceptionTool.createNamingException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
-            }
-
             session.modrdn(dn, newRdn, deleteOldDn);
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 
@@ -746,9 +664,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             boolean deleteOldRn
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("move(\""+dn+"\")");
         next.move(oriChildName, newParentName, newRn, deleteOldRn);
     }
@@ -759,10 +677,10 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN newParentName
     ) throws NamingException {
 
+        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("move(\""+dn+"\")");
-        next.move( oriChildName, newParentName );
+        next.move(oriChildName, newParentName );
     }
 }
