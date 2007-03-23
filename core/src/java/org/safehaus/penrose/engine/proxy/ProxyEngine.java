@@ -405,6 +405,8 @@ public class ProxyEngine extends Engine {
         final boolean debug = log.isDebugEnabled();
         final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
+        int scope = request.getScope();
+        Collection attributes = request.getAttributes();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -412,7 +414,7 @@ public class ProxyEngine extends Engine {
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(request.getScope()), 80));
+            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(scope), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -432,26 +434,29 @@ public class ProxyEngine extends Engine {
             if (debug) log.debug("Result: "+found);
 
             SearchRequest newRequest = new SearchRequest();
-            newRequest.setAttributes(newRequest.getAttributes());
-            newRequest.setScope(newRequest.getScope());
-            newRequest.setSizeLimit(newRequest.getSizeLimit());
-            newRequest.setTimeLimit(newRequest.getTimeLimit());
+            newRequest.setFilter(filter);
+            newRequest.setAttributes(request.getAttributes());
+            newRequest.setScope(scope);
+            newRequest.setSizeLimit(request.getSizeLimit());
+            newRequest.setTimeLimit(request.getTimeLimit());
 
             DN targetDn = null;
             if (found) {
                 targetDn = convertDn(baseDn, proxyDn, proxyBaseDn);
 
             } else {
-                if (newRequest.getScope() == LDAPConnection.SCOPE_BASE) {
+                if (scope == LDAPConnection.SCOPE_BASE) {
                     return;
 
-                } else if (newRequest.getScope() == LDAPConnection.SCOPE_ONE) {
+                } else if (scope == LDAPConnection.SCOPE_ONE) {
                     newRequest.setScope(LDAPConnection.SCOPE_BASE);
                 }
                 targetDn = proxyBaseDn;
             }
 
-            if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+ newRequest.getAttributes());
+            newRequest.setDn(targetDn);
+
+            if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+attributes);
 
             final LDAPClient client = getClient(session, partition, sourceConfig);
 
@@ -491,7 +496,12 @@ public class ProxyEngine extends Engine {
             };
 
             //connector.search(partition, sourceConfig, null, filter, newRequest, sr);
-            client.search(targetDn.toString(), filter.toString(), newRequest, sr);
+            client.search(
+                    targetDn.toString(),
+                    filter == null ? "(objectClass=*)" : filter.toString(),
+                    newRequest,
+                    sr
+            );
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

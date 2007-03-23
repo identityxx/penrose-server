@@ -707,9 +707,9 @@ public class LDAPClient {
     public void search(
             String baseDn,
             String filter,
-            SearchRequest searchRequest,
+            SearchRequest request,
             SearchResponse results
-            ) throws Exception {
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -718,22 +718,22 @@ public class LDAPClient {
         db.append(suffix);
         DN ldapBase = db.toDn();
 
-        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+ searchRequest.getScope()+" attrs="+ searchRequest.getAttributes()+":");
+        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+ request.getScope()+" attrs="+ request.getAttributes()+":");
 
-        String attributes[] = (String[]) searchRequest.getAttributes().toArray(new String[searchRequest.getAttributes().size()]);
+        String attributes[] = (String[]) request.getAttributes().toArray(new String[request.getAttributes().size()]);
 
         SearchControls sc = new SearchControls();
-        sc.setSearchScope(searchRequest.getScope());
-        sc.setReturningAttributes(searchRequest.getAttributes().isEmpty() ? null : attributes);
-        sc.setCountLimit(searchRequest.getSizeLimit());
-        sc.setTimeLimit((int) searchRequest.getTimeLimit());
+        sc.setSearchScope(request.getScope());
+        sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributes);
+        sc.setCountLimit(request.getSizeLimit());
+        sc.setTimeLimit((int) request.getTimeLimit());
 
         LdapContext context = null;
         NamingEnumeration ne = null;
 
         try {
 /*
-            LDAPSearchResults searchResults = connection.search(ldapBase, searchRequest.getScope(), filter, attributes, searchRequest.isTypesOnly());
+            LDAPSearchResults searchResults = connection.search(ldapBase, request.getScope(), filter, attributes, request.isTypesOnly());
             while (searchResults.hasMore()) {
                 try {
                     LDAPEntry entry = searchResults.next();
