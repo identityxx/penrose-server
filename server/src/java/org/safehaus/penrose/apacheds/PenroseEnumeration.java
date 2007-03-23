@@ -18,6 +18,7 @@
 package org.safehaus.penrose.apacheds;
 
 import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.session.SearchResult;
 import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -78,7 +79,8 @@ public class PenroseEnumeration implements NamingEnumeration {
 
     public Object next() throws NamingException {
         try {
-            Entry entry = (Entry) searchResponse.next();
+            SearchResult result = (SearchResult)searchResponse.next();
+            Entry entry = result.getEntry();
             return EntryTool.createSearchResult(entry);
 
         } catch (Exception e) {
