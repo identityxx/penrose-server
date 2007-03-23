@@ -28,9 +28,9 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -115,14 +115,13 @@ public class SearchEngine {
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
-        Collection list = engine.computeDns(partition, interpreter, entryMapping, parentSourceValues);
+        Collection list = null; // engine.computeDns(partition, interpreter, entryMapping, parentSourceValues);
         for (Iterator j=list.iterator(); j.hasNext(); ) {
             DN dn = (DN)j.next();
             log.debug("Static entry "+dn);
 
-            EntryData map = new EntryData();
-            map.setDn(dn);
-            map.setMergedValues(parentSourceValues);
+            Entry map = new Entry(dn);
+            //map.setAttributes(parentSourceValues);
             response.add(map);
         }
         response.close();
@@ -156,7 +155,7 @@ public class SearchEngine {
             AttributeValues sv = (AttributeValues)values.next();
             //log.debug("==> "+sv);
 
-            Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
+            Collection list = null; // engine.computeDns(partition, interpreter, entryMapping, sv);
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 DN dn = (DN)j.next();
                 //log.debug("     - "+dn);
@@ -218,10 +217,9 @@ public class SearchEngine {
                 //log.debug("    - "+row);
             }
 
-            EntryData map = new EntryData();
-            map.setDn(dn);
-            map.setMergedValues(sv);
-            map.setRows(r);
+            Entry map = new Entry(dn);
+            //map.setAttributes(sv);
+            //map.setRows(r);
             response.add(map);
         }
 
@@ -279,15 +277,14 @@ public class SearchEngine {
                     sv.add(parentSourceValues);
                     sv.add(sourceMapping.getName(), av);
 
-                    Collection list = engine.computeDns(partition, interpreter, entryMapping, sv);
+                    Collection list = null; // engine.computeDns(partition, interpreter, entryMapping, sv);
                     for (Iterator j=list.iterator(); j.hasNext(); ) {
                         DN dn = (DN)j.next();
                         log.debug("Generated DN: "+dn);
 
-                        EntryData data = new EntryData();
-                        data.setDn(dn);
-                        data.setMergedValues(sv);
-                        data.setComplete(true);
+                        Entry data = new Entry(dn);
+                        //data.setAttributes(sv);
+                        //data.setComplete(true);
                         response.add(data);
                     }
                     

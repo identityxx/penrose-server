@@ -60,7 +60,7 @@ public class AddEngine {
             RDN rdn = dn.getRdn();
             attributeValues.set("rdn", rdn);
 
-            AttributeValues parentSourceValues = parent.getSourceValues();
+            AttributeValues parentSourceValues = null; // parent.getSourceValues();
             AttributeValues sourceValues = new AttributeValues();
 
             Collection sources = entryMapping.getSourceMappings();

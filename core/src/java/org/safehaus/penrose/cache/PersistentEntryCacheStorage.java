@@ -1083,7 +1083,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            AttributeValues sourceValues = entry.getSourceValues();
+            AttributeValues sourceValues = null; // entry.getSourceValues();
             Collection sources = getPartition().getEffectiveSourceMappings(entryMapping);
 
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -1693,7 +1693,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
             }
         }
 
-        AttributeValues sourceValues = entry.getSourceValues();
+        AttributeValues sourceValues = null; // entry.getSourceValues();
         Collection sources = getPartition().getEffectiveSourceMappings(getEntryMapping());
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {

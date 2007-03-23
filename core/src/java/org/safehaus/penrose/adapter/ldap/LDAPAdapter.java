@@ -35,7 +35,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.Attributes;
@@ -100,7 +99,7 @@ public class LDAPAdapter extends Adapter {
             Partition partition,
             SourceMapping sourceMapping,
             javax.naming.directory.SearchResult sr,
-            AttributeValues record
+            Attributes record
     ) throws Exception {
 
         DN dn = new DN(sr.getName());
@@ -109,7 +108,7 @@ public class LDAPAdapter extends Adapter {
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
         RDN rdn = dn.getRdn();
-        record.add(sourceName+".primaryKey", rdn);
+        record.addValue(sourceName+".primaryKey", rdn);
 
         javax.naming.directory.Attributes attrs = sr.getAttributes();
         Collection fields = sourceConfig.getFieldConfigs();
@@ -127,7 +126,7 @@ public class LDAPAdapter extends Adapter {
 
             for (NamingEnumeration ne = attr.getAll(); ne.hasMore(); ) {
                 Object value = ne.next();
-                record.add(name, value);
+                record.addValue(name, value);
             }
         }
 
@@ -424,40 +423,6 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            SourceConfig sourceConfig,
-            RDN pk,
-            BindRequest request,
-            BindResponse response
-    ) throws LDAPException {
-
-        try {
-            DN dn = getDn(sourceConfig, pk);
-            String password = request.getPassword();
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Bind", 80));
-                log.debug(Formatter.displayLine(" - Bind DN : "+dn, 80));
-                log.debug(Formatter.displayLine(" - Password: "+password, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            Hashtable env = new Hashtable();
-            env.put(Context.INITIAL_CONTEXT_FACTORY, getParameter(Context.INITIAL_CONTEXT_FACTORY));
-            env.put(Context.PROVIDER_URL, client.getUrl());
-            env.put(Context.SECURITY_PRINCIPAL, dn);
-            env.put(Context.SECURITY_CREDENTIALS, password);
-
-            DirContext c = new InitialDirContext(env);
-            c.close();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
-
-    public void bind(
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceMappings,
@@ -476,7 +441,7 @@ public class LDAPAdapter extends Adapter {
             }
 
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+names, 80));
+            log.debug(Formatter.displayLine("Bind "+names, 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
@@ -903,19 +868,15 @@ public class LDAPAdapter extends Adapter {
                 while (ne.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
 
-                    AttributeValues record = new AttributeValues();
+                    Attributes record = new Attributes();
                     DN dn = getRecord(partition, sourceMapping, sr, record);
 
                     if (debug) {
                         LDAPFormatter.printRecord(dn, record);
                     }
 
-                    ConnectorSearchResult result = new ConnectorSearchResult(record);
-                    result.setEntryMapping(entryMapping);
-                    //result.setSourceMapping(sourceMapping);
-                    //result.setSourceConfig(sourceConfig);
-
-                    response.add(result);
+                    Entry entry = new Entry(dn, entryMapping, record);
+                    response.add(entry);
                 }
 
                 // get cookie returned by server
@@ -1027,7 +988,7 @@ public class LDAPAdapter extends Adapter {
                 while (ne.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
 
-                    AttributeValues record = new AttributeValues();
+                    Attributes record = new Attributes();
                     DN dn = getRecord(partition, sourceMapping, sr, record);
                     if (dn == null) continue;
                     
@@ -1035,12 +996,9 @@ public class LDAPAdapter extends Adapter {
                         LDAPFormatter.printRecord(dn, record);
                     }
 
-                    ConnectorSearchResult result = new ConnectorSearchResult(record);
-                    result.setEntryMapping(entryMapping);
-                    //result.setSourceMapping(sourceMapping);
-                    //result.setSourceConfig(sourceConfig);
+                    Entry entry = new Entry(dn, entryMapping, record);
 
-                    response.add(result);
+                    response.add(entry);
                 }
 
                 // get cookie returned by server

@@ -25,6 +25,11 @@ public class DN implements Cloneable {
         originalDn = dn;
     }
 
+    public DN(RDN rdn) {
+        rdns = new ArrayList();
+        rdns.add(rdn);
+    }
+
     public void parse() {
         if (rdns != null) return;
         rdns = new ArrayList();

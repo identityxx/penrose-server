@@ -529,7 +529,7 @@ public class HandlerManager {
 
     public Entry createRootDSE() throws Exception {
 
-        Entry entry = new Entry("", null);
+        Entry entry = new Entry("");
 
         Attributes attributes = entry.getAttributes();
         attributes.addValue("objectClass", "top");

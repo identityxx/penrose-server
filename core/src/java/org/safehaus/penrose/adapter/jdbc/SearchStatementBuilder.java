@@ -136,13 +136,6 @@ public class SearchStatementBuilder {
 
         SelectStatement statement = new SelectStatement();
 
-        Collection fields = statement.getFields();
-        Collection tables = statement.getTables();
-        Collection joinTypes = statement.getJoinTypes();
-        Collection joinOns = statement.getJoinOns();
-        Collection orders = statement.getOrders();
-        Collection filters = statement.getFilters();
-
         int sourceCounter = 0;
         for (Iterator i=sourceMappings.values().iterator(); i.hasNext(); sourceCounter++) {
             SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -155,28 +148,30 @@ public class SearchStatementBuilder {
             Collection fieldConfigs = sourceConfig.getFieldConfigs();
             for (Iterator j=fieldConfigs.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                fields.add(sourceName+"."+fieldConfig.getOriginalName());
+                statement.addField(sourceName+"."+fieldConfig.getOriginalName());
             }
 
             String table = generateTableAlias(sourceConfig, sourceName);
             if (debug) log.debug(" - Table: "+table);
-            tables.add(table);
+            statement.addTable(table);
 
             // join previous table
             if (sourceCounter > 0) {
                 String joinType = generateJoinType(sourceMapping);
-                if (debug) log.debug(" - Join type: "+joinType);
-                joinTypes.add(joinType);
-
                 String joinOn = generateJoinOn(sourceMapping);
-                if (debug) log.debug(" - Join on: "+joinOn);
-                joinOns.add(joinOn);
+
+                if (debug) {
+                    log.debug(" - Join type: "+joinType);
+                    log.debug(" - Join on: "+joinOn);
+                }
+
+                statement.addJoin(joinType, joinOn);
             }
 
-            Collection nonPkFieldConfigs = sourceConfig.getFieldConfigs();
-            for (Iterator j=nonPkFieldConfigs.iterator(); j.hasNext(); ) {
+            Collection pkFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
+            for (Iterator j=pkFieldConfigs.iterator(); j.hasNext(); ) {
                 FieldConfig fieldConfig = (FieldConfig)j.next();
-                orders.add(sourceName+"."+fieldConfig.getOriginalName());
+                statement.addOrder(sourceName+"."+fieldConfig.getOriginalName());
             }
         }
 /*
@@ -204,21 +199,23 @@ public class SearchStatementBuilder {
 
             String table = generateTableAlias(sourceConfig, alias);
             if (debug) log.debug(" - Table: "+table);
-            tables.add(table);
+            statement.addTable(table);
 
             String joinType = generateJoinType(sourceMapping);
-            if (debug) log.debug(" - Join type: "+joinType);
-            joinTypes.add(joinType);
-
             String joinOn = generateJoinOn(sourceMapping, alias);
-            if (debug) log.debug(" - Join on: "+joinOn);
-            joinOns.add(joinOn);
+
+            if (debug) {
+                log.debug(" - Join type: "+joinType);
+                log.debug(" - Join on: "+joinOn);
+            }
+
+            statement.addJoin(joinType, joinOn);
         }
 
         String sqlFilter = filterBuilder.generate();
         if (sqlFilter.length() > 0) {
             if (debug) log.debug("SQL filter: "+sqlFilter);
-            filters.add(sqlFilter);
+            statement.setWhereClause(sqlFilter);
         }
 
         statement.addParameters(filterBuilder.getParameters());

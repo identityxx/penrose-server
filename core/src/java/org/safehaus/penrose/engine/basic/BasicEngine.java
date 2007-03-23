@@ -418,15 +418,13 @@ public class BasicEngine extends Engine {
                 sourceValues.print();
             }
 
-            SearchResponse sr = new BasicEngineSearchResponse(response, interpreterManager.newInstance());
-
             searchEngine.search(
                     partition,
                     baseMapping,
                     entryMapping,
                     sourceValues,
                     request,
-                    sr
+                    response
             );
 
         } finally {

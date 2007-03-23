@@ -31,11 +31,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.connector.*;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.Statement;
@@ -1110,19 +1106,16 @@ public class JDBCAdapter extends Adapter {
             boolean hasMore = rs.next();
 
             while (hasMore && (sizeLimit == 0 || totalCount<sizeLimit)) {
-                AttributeValues record = new AttributeValues();
-                RDN pk = getRecord(sourceConfig, rs, record);
+                Attributes record = new Attributes();
+                RDN rdn = getRecord(sourceConfig, rs, record);
 
                 if (debug) {
-                    JDBCFormatter.printRecord(pk, record);
+                    JDBCFormatter.printRecord(rdn, record);
                 }
 
-                ConnectorSearchResult result = new ConnectorSearchResult(record);
-                result.setEntryMapping(entryMapping);
-                result.setSourceMapping(sourceMapping);
-                result.setSourceConfig(sourceConfig);
+                Entry entry = new Entry(rdn, entryMapping, record);
+                response.add(entry);
 
-                response.add(result);
                 totalCount++;
                 hasMore = rs.next();
             }
@@ -1225,45 +1218,43 @@ public class JDBCAdapter extends Adapter {
 
             rs = ps.executeQuery();
 
-            RDN lastPk = null;
-            AttributeValues lastRecord = null;
+            RDN lastRdn = null;
+            Attributes lastRecord = null;
 
             boolean hasMore = rs.next();
             while (hasMore) {
-                AttributeValues record = new AttributeValues();
-                RDN pk = getRecord(partition, sourceMappings, rs, record);
+                Attributes record = new Attributes();
+                RDN rdn = getRecord(partition, sourceMappings, rs, record);
 
-                if (lastPk == null) {
-                    lastPk = pk;
+                if (lastRdn == null) {
+                    lastRdn = rdn;
                     lastRecord = record;
 
-                } else if (pk.equals(lastPk)) {
-                    lastRecord.add(record);
+                } else if (rdn.equals(lastRdn)) {
+                    for (Iterator i=record.getNames().iterator(); i.hasNext(); ) {
+                        String name = (String)i.next();
+                        Attribute attribute = record.get(name);
+                        lastRecord.add(attribute);
+                    }
 
                 } else {
-                    ConnectorSearchResult result = new ConnectorSearchResult(lastRecord);
-                    result.setEntryMapping(entryMapping);
-                    //result.setSourceMapping(sourceMapping);
-                    //result.setSourceConfig(sourceConfig);
-                    response.add(result);
+                    Entry entry = new Entry(lastRdn, entryMapping, lastRecord);
+                    response.add(entry);
 
-                    lastPk = pk;
+                    lastRdn = rdn;
                     lastRecord = record;
                 }
 
                 if (debug) {
-                    JDBCFormatter.printRecord(pk, record);
+                    JDBCFormatter.printRecord(rdn, record);
                 }
 
                 hasMore = rs.next();
             }
 
-            if (lastPk != null) {
-                ConnectorSearchResult result = new ConnectorSearchResult(lastRecord);
-                result.setEntryMapping(entryMapping);
-                //result.setSourceMapping(sourceMapping);
-                //result.setSourceConfig(sourceConfig);
-                response.add(result);
+            if (lastRdn != null) {
+                Entry entry = new Entry(lastRdn, entryMapping, lastRecord);
+                response.add(entry);
             }
 
             log.debug("Search operation completed.");
@@ -1326,7 +1317,7 @@ public class JDBCAdapter extends Adapter {
             Partition partition,
             Collection sourceMappings,
             ResultSet rs,
-            AttributeValues record
+            Attributes record
     ) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
@@ -1349,11 +1340,11 @@ public class JDBCAdapter extends Adapter {
 
                 String fieldName = fieldConfig.getName();
                 String name = sourceName+"."+fieldName;
-                record.add(name, value);
+                record.addValue(name, value);
 
                 if (source == 1 && fieldConfig.isPrimaryKey()) {
                     rb.set(name, value);
-                    record.add(sourceName+".primaryKey."+fieldName, value);
+                    record.addValue(sourceName+".primaryKey."+fieldName, value);
                 }
             }
         }
@@ -1367,7 +1358,7 @@ public class JDBCAdapter extends Adapter {
     public RDN getRecord(
             SourceConfig sourceConfig,
             ResultSet rs,
-            AttributeValues record
+            Attributes record
     ) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
@@ -1388,7 +1379,7 @@ public class JDBCAdapter extends Adapter {
 
             String name = fieldConfig.getName();
             value = formatAttributeValue(rsmd, c, value, fieldConfig);
-            record.add(name, value);
+            record.addValue(name, value);
 
             if (fieldConfig.isPrimaryKey()) {
                 rb.set(name, value);

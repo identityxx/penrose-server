@@ -754,7 +754,7 @@ public class LDAPClient {
                         attrs.put("ref", referral);
                         attrs.put("objectClass", "referral");
 
-                        SearchResult sr = new ConnectorSearchResult(url.getDN(), null, attrs);
+                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
                         results.add(sr);
                         //results.addReferral(referral);
                     }
@@ -903,7 +903,7 @@ public class LDAPClient {
 
                 context = getContext();
                 NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
-                SearchResult rootDse = (ConnectorSearchResult)entries.next();
+                SearchResult rootDse = (SearchResult)entries.next();
 */
                 Attributes attributes = rootDse.getAttributes();
                 Attribute attribute = attributes.get("namingContexts");

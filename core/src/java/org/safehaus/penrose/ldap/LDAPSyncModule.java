@@ -67,9 +67,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     public void cacheAdded(EntryCacheEvent event) throws Exception {
 
         Entry entry = (Entry)event.getSource();
-        EntryMapping entryMapping = entry.getEntryMapping();
 
-        if (!partition.contains(entryMapping)) return;
+        if (!partition.contains(entry.getDn())) return;
 
         DirContext ctx = null;
 

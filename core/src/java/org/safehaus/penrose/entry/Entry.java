@@ -19,55 +19,69 @@ package org.safehaus.penrose.entry;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 
+import java.util.Iterator;
+import java.util.Collection;
+
 /**
  * @author Endi S. Dewata
  */
 public class Entry {
 
     protected DN dn;
-    private Attributes attributes;
-
     protected EntryMapping entryMapping;
-    protected AttributeValues sourceValues;
+    protected Attributes attributes = new Attributes();
+
+    public Entry(String dn) {
+        this.dn = new DN(dn);
+    }
+
+    public Entry(RDN rdn) {
+        dn = new DN(rdn);
+    }
+
+    public Entry(DN dn) {
+        this.dn = dn;
+    }
 
     public Entry(String dn, EntryMapping entryMapping) {
-        this(new DN(dn), entryMapping);
+        this.dn = new DN(dn);
+        this.entryMapping = entryMapping;
+    }
+
+    public Entry(RDN rdn, EntryMapping entryMapping) {
+        this.dn = new DN(rdn);
+        this.entryMapping = entryMapping;
     }
 
     public Entry(DN dn, EntryMapping entryMapping) {
         this.dn = dn;
-        this.attributes = new Attributes();
-
         this.entryMapping = entryMapping;
-        this.sourceValues = new AttributeValues();
     }
 
     public Entry(String dn, EntryMapping entryMapping, Attributes attributes) {
-        this(new DN(dn), entryMapping, attributes);
+        this.dn = new DN(dn);
+        this.entryMapping = entryMapping;
+        setAttributes(attributes);
+    }
+
+    public Entry(RDN rdn, EntryMapping entryMapping, Attributes attributes) {
+        this.dn = new DN(rdn);
+        this.entryMapping = entryMapping;
+        setAttributes(attributes);
     }
 
     public Entry(DN dn, EntryMapping entryMapping, Attributes attributes) {
         this.dn = dn;
-        this.attributes = attributes;
-
         this.entryMapping = entryMapping;
-        this.sourceValues = new AttributeValues();
-    }
-
-    public Entry(String dn, EntryMapping entryMapping, Attributes attributes, AttributeValues sourceValues) {
-        this(new DN(dn), entryMapping, attributes, sourceValues);
-    }
-
-    public Entry(DN dn, EntryMapping entryMapping, Attributes attributes, AttributeValues sourceValues) {
-        this.dn = dn;
-        this.attributes = attributes;
-
-        this.entryMapping = entryMapping;
-        this.sourceValues = sourceValues;
+        setAttributes(attributes);
     }
 
     public DN getDn() {
         return dn;
+    }
+
+    public void setDn(DN dn) {
+        this.dn = dn;
     }
 
     public EntryMapping getEntryMapping() {
@@ -78,19 +92,26 @@ public class Entry {
         this.entryMapping = entryMapping;
     }
 
-    public AttributeValues getSourceValues() {
-        return sourceValues;
-    }
-
-    public void setSourceValues(AttributeValues sourceValues) {
-        this.sourceValues = sourceValues;
-    }
-
     public Attributes getAttributes() {
         return attributes;
     }
 
     public void setAttributes(Attributes attributes) {
-        this.attributes = attributes;
+        setAttributes(null, attributes);
+    }
+
+    public void setAttributes(String prefix, Attributes attributes) {
+
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+
+            String name = attribute.getName();
+            name = prefix == null ? name : prefix+"."+name;
+
+            Collection values = attribute.getValues();
+
+            Attribute newAttribute = new Attribute(name, values);
+            this.attributes.add(newAttribute);
+        }
     }
 }

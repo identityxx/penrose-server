@@ -1,16 +1,14 @@
 package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -25,22 +23,28 @@ import java.util.HashMap;
 public class DemoAdapter extends Adapter {
 
     Map entries = new HashMap();
+    FilterTool filterTool;
 
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
 
+        SchemaManager schemaManager = penroseContext.getSchemaManager();
+
+        filterTool = new FilterTool();
+        filterTool.setSchemaManager(schemaManager);
+
         RDNBuilder rb = new RDNBuilder();
         rb.set("cn", "Test User");
         rb.set("sn", "User");
-        RDN pk = rb.toRdn();
+        RDN rdn = rb.toRdn();
 
-        AttributeValues sourceValues = new AttributeValues();
-        sourceValues.add("uid", "test");
-        sourceValues.add("cn", "Penrose User");
-        sourceValues.add("cn", "Test User");
-        sourceValues.add("sn", "User");
+        Attributes attributes = new Attributes();
+        attributes.addValue("uid", "test");
+        attributes.addValue("cn", "Penrose User");
+        attributes.addValue("cn", "Test User");
+        attributes.addValue("sn", "User");
 
-        entries.put(pk, sourceValues);
+        entries.put(rdn, attributes);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,28 +52,27 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            SourceConfig sourceConfig,
-            RDN pk,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
-    ) throws LDAPException {
+    ) throws Exception {
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Adding entry "+pk+" into "+sourceName+":");
+        DN dn = request.getDn();
+        Attributes attributes = request.getAttributes();
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sourceValues.get(name);
-            System.out.println(" - "+name+": "+values);
-        }
+        System.out.println("Adding entry "+dn);
 
-        if (entries.containsKey(pk)) {
+        RDN rdn = dn.getRdn();
+
+        if (entries.containsKey(rdn)) {
             int rc = LDAPException.ENTRY_ALREADY_EXISTS;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        entries.put(pk, sourceValues);
+        entries.put(rdn, attributes);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,40 +80,36 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            SourceConfig sourceConfig,
-            RDN pk,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
-    ) throws LDAPException {
+    ) throws Exception {
 
+        DN dn = request.getDn();
         String password = request.getPassword();
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Binding to "+sourceName+" as "+pk+" with password "+password+".");
+        System.out.println("Binding as "+dn+" with password "+password+".");
 
-        AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-        if (sourceValues == null) {
-            int rc = LDAPException.INVALID_CREDENTIALS;
+        RDN rdn = dn.getRdn();
+
+        Attributes attributes = (Attributes)entries.get(rdn);
+        if (attributes == null) {
+            int rc = LDAPException.NO_SUCH_OBJECT;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        Object userPassword = sourceValues.getOne("userPassword");
+        Object userPassword = attributes.getValue("userPassword");
         if (userPassword == null) {
-            int rc = LDAPException.INVALID_CREDENTIALS;
+            int rc = LDAPException.NO_SUCH_ATTRIBUTE;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        try {
-            if (!PasswordUtil.comparePassword(password, userPassword)) {
-                int rc = LDAPException.INVALID_CREDENTIALS;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-            }
-
-        } catch (Exception e) {
+        if (!userPassword.equals(password)) {
             int rc = LDAPException.INVALID_CREDENTIALS;
-            String message = e.getMessage();
-            log.debug("Error: "+message);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
     }
 
@@ -119,19 +118,25 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            SourceConfig sourceConfig,
-            RDN pk,
-            DeleteRequest request, DeleteResponse response) throws LDAPException {
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Deleting entry "+pk+" from "+sourceName+".");
+        DN dn = request.getDn();
+        System.out.println("Deleting entry "+dn);
 
-        if (!entries.containsKey(pk)) {
+        RDN rdn = dn.getRdn();
+
+        if (!entries.containsKey(rdn)) {
             int rc = LDAPException.NO_SUCH_OBJECT;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        entries.remove(pk);
+        entries.remove(rdn);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,110 +144,134 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications,
-            ModifyRequest request, ModifyResponse response) throws LDAPException {
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Modifying entry "+pk+" in "+sourceName+" with:");
+        DN dn = request.getDn();
+        Collection modifications = request.getModifications();
+        System.out.println("Modifying entry "+dn);
 
-        try {
-            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
-            if (sourceValues == null) {
-                int rc = LDAPException.NO_SUCH_OBJECT;
-                throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        RDN rdn = dn.getRdn();
+
+        Attributes attributes = (Attributes)entries.get(rdn);
+        if (attributes == null) {
+            int rc = LDAPException.NO_SUCH_OBJECT;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
+
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            Modification modification = (Modification)i.next();
+
+            int type = modification.getType();
+            Attribute attribute = modification.getAttribute();
+
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
+
+            switch (type) {
+                case Modification.ADD:
+                    attributes.addValues(name, values);
+                    break;
+
+                case Modification.REPLACE:
+                    attributes.setValues(name, values);
+                    break;
+
+                case Modification.DELETE:
+                    if (values.size() == 0) {
+                        attributes.remove(name);
+
+                    } else {
+                        attributes.removeValues(name, values);
+                    }
+                    break;
             }
-
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                Modification mi = (Modification)i.next();
-
-                int type = mi.getType();
-                Attribute attribute = mi.getAttribute();
-                String name = attribute.getName();
-                Collection values = attribute.getValues();
-
-                switch (type) {
-                    case Modification.ADD:
-                        for (Iterator j=values.iterator(); j.hasNext(); ) {
-                            Object value = j.next();
-                            System.out.println(" - add "+name+": "+value);
-                            sourceValues.add(name, value);
-                        }
-                        break;
-
-                    case Modification.REPLACE:
-                        sourceValues.remove(name);
-                        for (Iterator j=values.iterator(); j.hasNext(); ) {
-                            Object value = j.next();
-                            System.out.println(" - replace "+name+": "+value);
-                            sourceValues.add(name, value);
-                        }
-                        break;
-
-                    case Modification.DELETE:
-                        if (values.size() == 0) {
-                            System.out.println(" - remove "+name);
-                            sourceValues.remove(name);
-
-                        } else {
-                            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                                Object value = j.next();
-                                System.out.println(" - remove "+name+": "+value);
-                                sourceValues.remove(name, value);
-                            }
-                        }
-                        break;
-                }
-            }
-
-        } catch (LDAPException e) {
-            throw e;
-
-        } catch (Exception e) {
-            int rc = ExceptionUtil.getReturnCode(e);
-            String message = e.getMessage();
-            log.error(message, e);
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, message);
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        DN dn = request.getDn();
+        RDN newRdn = request.getNewRdn();
+        boolean deleteOldRdn = request.getDeleteOldRdn();
+
+        System.out.println("Renaming entry "+dn+" to "+newRdn);
+
+        RDN rdn = dn.getRdn();
+
+        Attributes attributes = (Attributes)entries.remove(rdn);
+        if (attributes == null) {
+            int rc = LDAPException.NO_SUCH_OBJECT;
+            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+        }
+
+        if (deleteOldRdn) {
+            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Object value = newRdn.get(name);
+                attributes.removeValue(name, value);
+            }
+        }
+
+        for (Iterator i=newRdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = newRdn.get(name);
+            attributes.addValue(name, value);
+        }
+
+        entries.put(rdn, attributes);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void search(
-            SourceConfig sourceConfig,
-            Filter filter,
-            SearchRequest searchRequest,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection sourceMappings,
+            AttributeValues sourceValues,
+            SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
-        String sourceName = sourceConfig.getName();
-        System.out.println("Loading entries from source "+sourceName+" with filter "+filter+".");
+        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
 
-        Collection attributes = searchRequest.getAttributes();
+        DN dn = request.getDn();
+        Filter filter = request.getFilter();
+
+        System.out.println("Searching "+dn+" with filter "+filter+".");
+
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
-            RDN pk = (RDN)i.next();
-            AttributeValues sourceValues = (AttributeValues)entries.get(pk);
+            RDN rdn = (RDN)i.next();
+            Attributes attributes = (Attributes)entries.get(rdn);
 
-            if (!FilterTool.isValid(sourceValues, filter)) {
-                System.out.println(" - "+pk+" => false");
+            if (!filterTool.isValid(attributes, filter)) {
+                System.out.println(" - "+rdn+" => false");
                 continue;
             }
 
-            System.out.println(" - "+pk+" => true");
+            System.out.println(" - "+rdn+" => true");
 
-            if (attributes.size() == 0) {
-                AttributeValues av = new AttributeValues();
-                for (Iterator j=pk.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    Object value = pk.get(name);
-                    av.add("primaryKey."+name, value);
-                }
-                av.add(sourceValues);
-
-                response.add(av);
-
-            } else if (attributes.contains("dn")) {
-                response.add(pk);
-            }
+            Entry result = new Entry(rdn, entryMapping);
+            result.setAttributes(sourceMapping.getName(), attributes);
+            response.add(result);
         }
 
         response.close();

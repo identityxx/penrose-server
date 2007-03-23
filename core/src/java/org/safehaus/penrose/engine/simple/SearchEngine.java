@@ -18,20 +18,18 @@
 package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.engine.EntryData;
+import org.safehaus.penrose.util.EntryUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -50,13 +48,6 @@ public class SearchEngine {
         this.engine = engine;
     }
 
-    /**
-     * @param partition
-     * @param sourceValues
-     * @param entryMapping
-     * @param response Collection of EntryData.
-     * @throws Exception
-     */
     public void search(
             final Partition partition,
             final EntryMapping entryMapping,
@@ -72,22 +63,22 @@ public class SearchEngine {
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
                 
-                EntryData data = new EntryData();
-                data.setDn(entryMapping.getDn());
-                data.setEntryMapping(entryMapping);
-                data.setMergedValues(new AttributeValues());
+                Attributes attributes = computeAttributes(entryMapping, new Attributes());
 
-                response.add(data);
+                Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
+                response.add(entry);
+
                 return;
             }
 
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    ConnectorSearchResult result = (ConnectorSearchResult)object;
+                    Entry result = (Entry)object;
+
                     EntryMapping em = result.getEntryMapping();
 
-                    AttributeValues sv = new AttributeValues(sourceValues);
-                    sv.set(result.getSourceValues());
+                    Attributes sv = EntryUtil.computeAttributes(sourceValues);
+                    sv.add(result.getAttributes());
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -97,13 +88,15 @@ public class SearchEngine {
                     }
 
                     DN dn = computeDn(partition, em, sv);
+                    Attributes attributes = computeAttributes(em, sv);
 
-                    EntryData data = new EntryData();
-                    data.setDn(dn);
-                    data.setEntryMapping(em);
-                    data.setMergedValues(sv);
+                    if (debug) {
+                        log.debug("Attributes:");
+                        attributes.print();
+                    }
 
-                    response.add(data);
+                    Entry entry = new Entry(dn, em, attributes);
+                    response.add(entry);
                 }
             };
 
@@ -137,28 +130,14 @@ public class SearchEngine {
     public DN computeDn(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues)
+            Attributes sourceValues)
             throws Exception {
-
-        //boolean debug = log.isDebugEnabled();
 
         Collection args = new ArrayList();
         computeArguments(partition, entryMapping, sourceValues, args);
 
         DN dn = entryMapping.getDn();
-/*
-        if (debug) {
-            log.debug("Mapping DN: "+dn);
-            log.debug("Pattern: "+dn.getPattern());
-            log.debug("Arguments:");
-            for (Iterator i=args.iterator(); i.hasNext(); ) {
-                log.debug(" - "+i.next());
-            }
-        }
-*/
         DN newDn = new DN(dn.format(args));
-
-        //if (debug) log.debug("New DN: "+newDn);
 
         return newDn;
     }
@@ -166,7 +145,7 @@ public class SearchEngine {
     public void computeArguments(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            Attributes sourceValues,
             Collection args
     ) throws Exception {
 
@@ -182,7 +161,7 @@ public class SearchEngine {
 
                 Object value = null;
 
-                Collection values = sourceValues.get(variable);
+                Collection values = sourceValues.getValues(variable);
                 if (values != null) {
                     if (values.size() >= 1) {
                         value = values.iterator().next();
@@ -194,5 +173,37 @@ public class SearchEngine {
 
             em = partition.getParent(em);
         }
+    }
+
+    public Attributes computeAttributes(EntryMapping entryMapping, Attributes sourceValues) {
+
+        Attributes attributes = new Attributes();
+
+        Collection attributeMappings = entryMapping.getAttributeMappings();
+        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            String name = attributeMapping.getName();
+
+            String constant = (String)attributeMapping.getConstant();
+            if (constant != null) {
+                attributes.addValue(name, constant);
+                continue;
+            }
+
+            String variable = attributeMapping.getVariable();
+            if (variable != null) {
+                Collection values = sourceValues.getValues(variable);
+                attributes.addValues(name, values);
+                continue;
+            }
+        }
+
+        Collection objectClasses = entryMapping.getObjectClasses();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            String objectClass = (String)i.next();
+            attributes.addValue("objectClass", objectClass);
+        }
+
+        return attributes;
     }
 }

@@ -29,8 +29,8 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -133,11 +133,11 @@ public class SearchLocalRunner extends GraphVisitor {
 */
         Collection list = new ArrayList();
         while (response.hasNext()) {
-            ConnectorSearchResult result = (ConnectorSearchResult)response.next();
+            Entry result = (Entry)response.next();
 
             AttributeValues sv = new AttributeValues();
             sv.add(sourceValues);
-            sv.add(sourceMapping.getName(), result.getSourceValues());
+            //sv.add(sourceMapping.getName(), result.getSourceValues());
             list.add(sv);
         }
 

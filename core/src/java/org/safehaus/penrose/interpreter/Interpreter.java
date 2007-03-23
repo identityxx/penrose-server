@@ -20,6 +20,7 @@ package org.safehaus.penrose.interpreter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.Attributes;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -61,9 +62,20 @@ public abstract class Interpreter {
         }
     }
 
-    public void set(AttributeValues av, Collection rows) throws Exception {
-        set(av);
-        this.rows = rows;
+    public void set(Attributes attributes) throws Exception {
+        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Collection list = attributes.getValues(name);
+            //set(name, list);
+
+            Object value;
+            if (list.size() == 1) {
+                value = list.iterator().next();
+            } else {
+                value = list;
+            }
+            set(name, value);
+        }
     }
 
     public abstract Collection parseVariables(String script) throws Exception;

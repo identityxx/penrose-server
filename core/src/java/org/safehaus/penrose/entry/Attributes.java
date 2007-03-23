@@ -43,6 +43,17 @@ public class Attributes {
         attribute.addValue(value);
     }
 
+    public void removeValue(String name, Object value) {
+        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        if (attribute == null) return;
+
+        attribute.removeValue(value);
+        if (!attribute.isEmpty()) return;
+
+        attributes.remove(name.toLowerCase());
+        names.remove(name);
+    }
+
     public void setValues(String name, Collection values) {
         names.add(name);
         Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
@@ -63,6 +74,24 @@ public class Attributes {
         attribute.addValues(values);
     }
 
+    public void removeValues(String name, Collection values) {
+        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        if (attribute == null) return;
+
+        attribute.removeValues(values);
+        if (!attribute.isEmpty()) return;
+
+        attributes.remove(name.toLowerCase());
+        names.remove(name);
+    }
+
+    public void add(Attributes attributes) {
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+            add(attribute);
+        }
+    }
+    
     public void add(Attribute attribute) {
         String name = attribute.getName();
         names.add(name);
@@ -102,6 +131,10 @@ public class Attributes {
     public void clear() {
         names.clear();
         attributes.clear();
+    }
+
+    public boolean isEmpty() {
+        return names.isEmpty();
     }
 
     public void print() throws Exception {

@@ -423,14 +423,12 @@ public class SimpleEngine extends Engine {
                 sourceValues.print();
             }
 
-            SearchResponse sr = new SimpleEngineSearchResponse(response);
-
             searchEngine.search(
                     partition,
                     entryMapping,
                     sourceValues,
                     request,
-                    sr
+                    response
             );
 
         } finally {

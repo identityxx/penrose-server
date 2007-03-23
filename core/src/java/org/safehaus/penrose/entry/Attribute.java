@@ -64,4 +64,12 @@ public class Attribute {
         this.values.clear();
         if (values != null) this.values.addAll(values);
     }
+
+    public void removeValues(Collection values) {
+        if (values != null) this.values.removeAll(values);
+    }
+
+    public boolean isEmpty() {
+        return values.isEmpty();
+    }
 }

@@ -2,26 +2,24 @@ package org.safehaus.penrose.engine.basic;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.connector.ConnectorSearchResult;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.util.EntryUtil;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -36,13 +34,6 @@ public class SearchEngine {
         this.engine = engine;
     }
 
-    /**
-     * @param partition
-     * @param sourceValues
-     * @param entryMapping
-     * @param results Collection of EntryData.
-     * @throws Exception
-     */
     public void search(
             final Partition partition,
             final EntryMapping baseMapping,
@@ -55,28 +46,26 @@ public class SearchEngine {
         try {
             final boolean debug = log.isDebugEnabled();
             Collection sourceMappings = entryMapping.getSourceMappings();
+            final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
 
-                EntryData data = new EntryData();
-                data.setDn(entryMapping.getDn());
-                data.setEntryMapping(entryMapping);
-                data.setMergedValues(new AttributeValues());
+                Attributes attributes = computeAttributes(interpreter, entryMapping, new Attributes());
 
-                results.add(data);
+                Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
+                results.add(entry);
+
                 return;
             }
 
-            final Interpreter interpreter = engine.getInterpreterManager().newInstance();
-
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    ConnectorSearchResult result = (ConnectorSearchResult)object;
+                    Entry result = (Entry)object;
                     EntryMapping em = result.getEntryMapping();
 
-                    AttributeValues sv = new AttributeValues(sourceValues);
-                    sv.set(result.getSourceValues());
+                    Attributes sv = EntryUtil.computeAttributes(sourceValues);
+                    sv.add(result.getAttributes());
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -85,15 +74,18 @@ public class SearchEngine {
                         sv.print();
                     }
 
-                    //DN dn = computeDn(partition, em, sv);
                     Collection dns = engine.computeDns(partition, interpreter, em, sv);
+                    Attributes attributes = computeAttributes(interpreter, em, sv);
+
+                    if (debug) {
+                        log.debug("Attributes:");
+                        attributes.print();
+                    }
+
                     for (Iterator i=dns.iterator(); i.hasNext(); ) {
                         DN dn = (DN)i.next();
-                        EntryData data = new EntryData();
-                        data.setDn(dn);
-                        data.setEntryMapping(em);
-                        data.setMergedValues(sv);
 
+                        Entry data = new Entry(dn, em, attributes);
                         results.add(data);
                     }
                 }
@@ -118,71 +110,35 @@ public class SearchEngine {
         }
     }
 
-    public BasicEngine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(BasicEngine engine) {
-        this.engine = engine;
-    }
-
-    public DN computeDn(
-            Partition partition,
+    public Attributes computeAttributes(
+            Interpreter interpreter,
             EntryMapping entryMapping,
-            AttributeValues sourceValues
+            Attributes sourceValues
     ) throws Exception {
 
-        //boolean debug = log.isDebugEnabled();
-
-        Collection args = new ArrayList();
-        computeArguments(partition, entryMapping, sourceValues, args);
-
-        DN dn = entryMapping.getDn();
-/*
-        if (debug) {
-            log.debug("Mapping DN: "+dn);
-            log.debug("Pattern: "+dn.getPattern());
-            log.debug("Arguments:");
-            for (Iterator i=args.iterator(); i.hasNext(); ) {
-                log.debug(" - "+i.next());
-            }
-        }
-*/
-        DN newDn = new DN(dn.format(args));
-
-        //if (debug) log.debug("New DN: "+newDn);
-
-        return newDn;
-    }
-
-    public void computeArguments(
-            Partition partition,
-            EntryMapping entryMapping,
-            AttributeValues sourceValues,
-            Collection args
-    ) throws Exception {
-
-        EntryMapping em = entryMapping;
-
-        Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(sourceValues);
 
-        while (em != null) {
-            Collection rdnAttributes = em.getRdnAttributeMappings();
+        Attributes attributes = new Attributes();
 
-            for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection attributeMappings = entryMapping.getAttributeMappings();
 
-                Object value = interpreter.eval(em, attributeMapping);
-                if (value instanceof Collection) {
-                    Collection c = (Collection)value;
-                    value = c.iterator().next();
-                }
-                
-                args.add(value);
-            }
+        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
+            AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            em = partition.getParent(em);
+            Object value = interpreter.eval(entryMapping, attributeMapping);
+            if (value == null) continue;
+
+            attributes.addValue(attributeMapping.getName(), value);
         }
+
+        Collection objectClasses = entryMapping.getObjectClasses();
+        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
+            String objectClass = (String)i.next();
+            attributes.addValue("objectClass", objectClass);
+        }
+
+        interpreter.clear();
+
+        return attributes;
     }
 }

@@ -120,7 +120,7 @@ public class SearchParentRunner extends GraphVisitor {
                 AttributeValues av = (AttributeValues)i.next();
 
                 if (relationships == null) {
-                    if (!FilterTool.isValid(av, filter)) continue;
+                    //if (!FilterTool.isValid(av, filter)) continue;
 
                 } else {
                     if (!engine.joinEngine.evaluate(partition, entryMapping, relationships, av, av)) continue;

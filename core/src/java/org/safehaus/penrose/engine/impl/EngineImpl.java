@@ -27,11 +27,9 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
-import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Attribute;
@@ -274,7 +272,8 @@ public class EngineImpl extends Engine {
             }
 
             Attributes attributes = EntryUtil.computeAttributes(newValues);
-            Entry newEntry = new Entry(entry.getDn(), entryMapping, attributes, entry.getSourceValues());
+            AttributeValues sourceValues = null; // entry.getSourceValues()
+            Entry newEntry = null; // new Entry(entry.getDn(), entryMapping, attributes, sourceValues);
 
             log.debug("New entry:");
             newEntry.getAttributes().print();
@@ -390,9 +389,8 @@ public class EngineImpl extends Engine {
 
         RDN rdn = dn.getRdn();
 
-        EntryData data = new EntryData();
-        data.setDn(dn);
-        data.setFilter(rdn);
+        Entry data = new Entry(dn);
+        //data.setFilter(rdn);
 
         Collection list = new ArrayList();
         list.add(data);
@@ -433,7 +431,7 @@ public class EngineImpl extends Engine {
             );
 
             path.add(entry);
-            if (entry != null) sourceValues.add(entry.getSourceValues());
+            //if (entry != null) sourceValues.add(entry.getSourceValues());
         }
 
         if (log.isDebugEnabled()) {
@@ -559,23 +557,23 @@ public class EngineImpl extends Engine {
 
             final SearchResponse dns = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    EntryData data = (EntryData)object;
+                    Entry data = (Entry)object;
                     DN dn = data.getDn();
 
                     if (dnOnly) {
                         log.debug("Returning DN only.");
 
-                        AttributeValues sv = data.getMergedValues();
-                        Entry entry = new Entry(dn, entryMapping, null, sv);
+                        AttributeValues sv = null; // data.getAttributes();
+                        Entry entry = null; // new Entry(dn, entryMapping, null, sv);
 
                         response.add(entry);
                         return;
                     }
-
-                    if (unique && effectiveSources.size() == 1 && !data.getMergedValues().isEmpty()) {
+/*
+                    if (unique && effectiveSources.size() == 1 && !data.getAttributes().isEmpty()) {
                         log.debug("Entry data is complete, returning entry.");
 
-                        AttributeValues sv = data.getMergedValues();
+                        AttributeValues sv = data.getAttributes();
                         Attributes attributes = createAttributes(entryMapping, sv, interpreter);
                         Entry entry = new Entry(dn, entryMapping, attributes, sv);
 
@@ -588,7 +586,7 @@ public class EngineImpl extends Engine {
 
                         return;
                     }
-
+*/
                     log.debug("Entry data is incomplete, loading full entry data.");
                     entriesToLoad.add(data);
                 }

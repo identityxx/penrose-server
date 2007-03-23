@@ -10,14 +10,21 @@ import java.util.Iterator;
 public class SelectStatement extends Statement {
 
     protected Collection fields = new ArrayList();
+
     protected Collection tables = new ArrayList();
     protected Collection joinTypes = new ArrayList();
     protected Collection joinOns = new ArrayList();
-    protected Collection filters = new ArrayList();
+
+    protected String whereClause;
+
     protected Collection orders = new ArrayList();
 
     public Collection getFields() {
         return fields;
+    }
+
+    public void addField(String field) {
+        fields.add(field);
     }
 
     public void setFields(Collection fields) {
@@ -28,10 +35,19 @@ public class SelectStatement extends Statement {
         return tables;
     }
 
+    public void addTable(String table) {
+        tables.add(table);
+    }
+    
     public void setTables(Collection tables) {
         this.tables = tables;
     }
 
+    public void addJoin(String joinType, String joinOn) {
+        joinTypes.add(joinType);
+        joinOns.add(joinOn);
+    }
+    
     public Collection getJoinTypes() {
         return joinTypes;
     }
@@ -48,16 +64,20 @@ public class SelectStatement extends Statement {
         this.joinOns = joinOns;
     }
 
-    public Collection getFilters() {
-        return filters;
+    public String getWhereClause() {
+        return whereClause;
     }
 
-    public void setFilters(Collection filters) {
-        this.filters = filters;
+    public void setWhereClause(String whereClause) {
+        this.whereClause = whereClause;
     }
 
     public Collection getOrders() {
         return orders;
+    }
+
+    public void addOrder(String order) {
+        orders.add(order);
     }
 
     public void setOrders(Collection orders) {
@@ -115,9 +135,9 @@ public class SelectStatement extends Statement {
             sb.append(joinOn);
         }
 
-        if (filters.size() > 0) {
+        if (whereClause != null) {
             sb.append(" where ");
-            sb.append(toFilter(filters));
+            sb.append(whereClause);
         }
 
         sb.append(" order by ");

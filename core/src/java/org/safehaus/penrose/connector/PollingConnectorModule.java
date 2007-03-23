@@ -233,7 +233,7 @@ public class PollingConnectorModule extends Module {
         }
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
-        Collection dns = engine.computeDns(partition, interpreter, entryMapping, sourceValues);
+        Collection dns = null; // engine.computeDns(partition, interpreter, entryMapping, sourceValues);
 
         SessionManager sessionManager = penroseContext.getSessionManager();
         Session session = sessionManager.newSession();
@@ -278,7 +278,7 @@ public class PollingConnectorModule extends Module {
         }
 
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
-        Collection dns = engine.computeDns(partition, interpreter, entryMapping, sourceValues);
+        Collection dns = null; // engine.computeDns(partition, interpreter, entryMapping, sourceValues);
 
         HandlerManager handlerManager = penroseContext.getHandlerManager();
         Handler handler = handlerManager.getHandler("DEFAULT");

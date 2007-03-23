@@ -162,7 +162,7 @@ public class InMemoryEntryCacheStorage extends EntryCacheStorage {
             if (date == null || date.getTime() <= System.currentTimeMillis()) continue;
 
             Entry entry = (Entry)dataMap.get(dn);
-            AttributeValues sv = entry.getSourceValues();
+            AttributeValues sv = null; // entry.getSourceValues();
             if (!sv.contains(filter)) continue;
 
             log.debug("search("+sourceConfig.getName()+", "+filter+") => "+dn);

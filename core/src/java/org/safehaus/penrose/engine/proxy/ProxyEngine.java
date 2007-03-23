@@ -469,22 +469,18 @@ public class ProxyEngine extends Engine {
                     dn = convertDn(dn, proxyBaseDn, proxyDn);
                     if (debug) log.debug("into "+dn);
 
-                    AttributeValues attributeValues = new AttributeValues();
-
-                    //log.debug("Entry "+dn+":");
+                    Attributes attributes = new Attributes();
                     for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
                         javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)i.next();
                         String name = attribute.getID();
 
                         for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
                             Object value = j.next();
-                            attributeValues.add(name, value);
-                            //log.debug(" - "+name+": "+value);
+                            attributes.addValue(name, value);
                         }
                     }
 
-                    Attributes attributes = EntryUtil.computeAttributes(attributeValues);
-                    Entry entry = new Entry(dn.toString(), entryMapping, attributes);
+                    Entry entry = new Entry(dn, entryMapping, attributes);
                     response.add(entry);
                 }
 

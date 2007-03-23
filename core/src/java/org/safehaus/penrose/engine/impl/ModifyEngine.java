@@ -50,8 +50,8 @@ public class ModifyEngine {
     ) throws LDAPException {
 
         try {
-            EntryMapping entryMapping = entry.getEntryMapping();
-            AttributeValues oldSourceValues = entry.getSourceValues();
+            EntryMapping entryMapping = null; // entry.getEntryMapping();
+            AttributeValues oldSourceValues = null; // entry.getSourceValues();
 
             AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
             Collection sources = entryMapping.getSourceMappings();

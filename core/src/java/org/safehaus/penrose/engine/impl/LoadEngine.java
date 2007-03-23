@@ -26,11 +26,10 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EntryData;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -115,7 +114,7 @@ public class LoadEngine {
 
     public void checkCache(EntryMapping entryMapping, SearchResponse entries, SearchResponse loadedEntries) throws Exception {
         while (entries.hasNext()) {
-            EntryData map = (EntryData)entries.next();
+            Entry map = (Entry)entries.next();
 /*
             String dn = (String)map.get("dn");
 
@@ -155,7 +154,7 @@ public class LoadEngine {
             int batchSize = s == null ? EntryMapping.DEFAULT_BATCH_SIZE : Integer.parseInt(s);
 
             while (entries.hasNext()) {
-                EntryData map = (EntryData)entries.next();
+                Entry map = (Entry)entries.next();
                 DN dn = map.getDn();
                 //AttributeValues sv = (AttributeValues)map.get("sourceValues");
 
@@ -180,7 +179,7 @@ public class LoadEngine {
                 //if (filter.isEmpty()) filter.add(rdn);
 
                 //log.info("Scheduling "+rdn+" for loading");
-                map.setFilter(filter);
+                //map.setFilter(filter);
                 batch.add(map);
 
                 if (batch.size() < batchSize) continue;
@@ -211,8 +210,8 @@ public class LoadEngine {
 
                 AttributeValues sourceValues = new AttributeValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                    EntryData data = (EntryData)i.next();
-                    AttributeValues sv = data.getMergedValues();
+                    Entry data = (Entry)i.next();
+                    AttributeValues sv = null; // data.getAttributes();
 
                     if (sv == null) continue;
 
@@ -223,9 +222,8 @@ public class LoadEngine {
 
                 if (sv != null) {
                     for (Iterator i=entries.iterator(); i.hasNext(); ) {
-                        EntryData map = (EntryData)i.next();
-
-                        map.setLoadedSourceValues(sv);
+                        Entry map = (Entry)i.next();
+                        //map.setLoadedSourceValues(sv);
 
                         loadedBatches.add(map);
                     }
@@ -251,8 +249,8 @@ public class LoadEngine {
 
             log.debug(Formatter.displayLine("Primary Keys:", 80));
             for (Iterator i=list.iterator(); i.hasNext(); ) {
-                EntryData data = (EntryData)i.next();
-                RDN pk = data.getFilter();
+                Entry data = (Entry)i.next();
+                RDN pk = null; //data.getFilter();
                 log.debug(Formatter.displayLine(" - "+pk, 80));
             }
 
@@ -312,7 +310,7 @@ public class LoadEngine {
         Collection pks = new TreeSet();
         if (pkDefined) {
             for (Iterator i=list.iterator(); i.hasNext(); ) {
-                EntryData data = (EntryData)i.next();
+                Entry data = (Entry)i.next();
                 RDN pk = data.getDn().getRdn();
                 pks.add(pk);
             }
@@ -320,8 +318,8 @@ public class LoadEngine {
 
         Collection filters = new ArrayList();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
-            EntryData data = (EntryData)i.next();
-            RDN filter = data.getFilter();
+            Entry data = (Entry)i.next();
+            RDN filter = null; // data.getFilter();
             filters.add(filter);
         }
         Filter filter  = FilterTool.createFilter(filters, true);

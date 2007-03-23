@@ -43,9 +43,9 @@ public class DeleteEngine {
     public void delete(Partition partition, Entry entry) throws LDAPException {
 
         try {
-            EntryMapping entryMapping = entry.getEntryMapping();
+            EntryMapping entryMapping = null; // entry.getEntryMapping();
 
-            AttributeValues sourceValues = entry.getSourceValues();
+            AttributeValues sourceValues = null; // entry.getSourceValues();
             //getFieldValues(entry.getDn(), sourceValues);
 
             log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");

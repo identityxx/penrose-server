@@ -117,7 +117,7 @@ public class MergeGraphVisitor extends GraphVisitor {
                     //log.debug(" - "+av);
 
                     if (relationships == null) {
-                        if (!FilterTool.isValid(av, filter)) continue;
+                        //if (!FilterTool.isValid(av, filter)) continue;
 
                     } else {
                         if (!engine.joinEngine.evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;

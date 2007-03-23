@@ -54,7 +54,7 @@ public class ModRdnEngine {
     ) throws Exception {
 
         try {
-            EntryMapping entryMapping = entry.getEntryMapping();
+            EntryMapping entryMapping = null; // entry.getEntryMapping();
 
             AttributeValues oldAttributeValues = new AttributeValues();
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
@@ -93,14 +93,22 @@ public class ModRdnEngine {
                 newAttributeValues.add(name, newValue);
             }
 */
-            AttributeValues oldSourceValues = entry.getSourceValues();
+            AttributeValues oldSourceValues = null; // entry.getSourceValues();
             AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
             Collection sources = entryMapping.getSourceMappings();
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
                 AttributeValues output = new AttributeValues();
-                engine.transformEngine.translate(partition, entryMapping, sourceMapping, entry.getDn(), newAttributeValues, output);
+                engine.transformEngine.translate(
+                        partition,
+                        entryMapping,
+                        sourceMapping,
+                        entry.getDn(),
+                        newAttributeValues,
+                        output
+                );
+
                 newSourceValues.set(sourceMapping.getName(), output);
             }
 

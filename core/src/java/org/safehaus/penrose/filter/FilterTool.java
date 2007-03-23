@@ -40,8 +40,6 @@ public class FilterTool {
 
     private SchemaManager schemaManager;
 
-    public int debug = 0;
-
     public FilterTool() throws Exception {
     }
 
@@ -51,12 +49,12 @@ public class FilterTool {
         return parser.parse();
     }
 
-    public boolean checkFilter(Entry sr, Filter filter) throws Exception {
-        log.debug("Checking filter on "+sr.getDn());
-        return isValid(sr, filter);
+    public boolean isValid(Entry entry, Filter filter) throws Exception {
+        return isValid(entry.getAttributes(), filter);
     }
 
-    public boolean isValid(Entry entry, Filter filter) throws Exception {
+    public boolean isValid(Attributes attributes, Filter filter) throws Exception {
+
         //log.debug("Checking filter "+filter);
         boolean result = false;
 
@@ -64,22 +62,22 @@ public class FilterTool {
             result = true;
 
         } else if (filter instanceof NotFilter) {
-            result = isValid(entry, (NotFilter)filter);
+            result = isValid(attributes, (NotFilter)filter);
 
         } else if (filter instanceof AndFilter) {
-            result = isValid(entry, (AndFilter)filter);
+            result = isValid(attributes, (AndFilter)filter);
 
         } else if (filter instanceof OrFilter) {
-            result = isValid(entry, (OrFilter)filter);
+            result = isValid(attributes, (OrFilter)filter);
 
         } else if (filter instanceof SubstringFilter) {
-            result = isValid(entry, (SubstringFilter)filter);
+            result = isValid(attributes, (SubstringFilter)filter);
 
         } else if (filter instanceof PresentFilter) {
-            result = isValid(entry, (PresentFilter)filter);
+            result = isValid(attributes, (PresentFilter)filter);
 
         } else if (filter instanceof SimpleFilter) {
-            result = isValid(entry, (SimpleFilter)filter);
+            result = isValid(attributes, (SimpleFilter)filter);
         }
 
         //log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
@@ -87,11 +85,10 @@ public class FilterTool {
         return result;
     }
 
-    public boolean isValid(Entry entry, SubstringFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         Collection substrings = filter.getSubstrings();
 
-        Attributes attributes = entry.getAttributes();
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) return false;
 
@@ -115,26 +112,20 @@ public class FilterTool {
     }
 
 
-    public boolean isValid(Entry entry, PresentFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, PresentFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         if (attributeName.equalsIgnoreCase("objectclass")) {
             return true;
         } else {
-            Attributes attributes = entry.getAttributes();
             return attributes.get(attributeName) != null;
         }
     }
 
-    public boolean isValid(Entry entry, SimpleFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
         String attributeValue = filter.getValue();
 
-        if (attributeName.equalsIgnoreCase("objectclass")) {
-            return entry.getEntryMapping().containsObjectClass(attributeValue);
-        }
-
-        Attributes attributes = entry.getAttributes();
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) return false;
 
@@ -175,25 +166,25 @@ public class FilterTool {
         return false;
     }
 
-    public boolean isValid(Entry entry, NotFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, NotFilter filter) throws Exception {
         Filter f = filter.getFilter();
-        boolean result = isValid(entry, f);
+        boolean result = isValid(attributes, f);
         return !result;
     }
 
-    public boolean isValid(Entry entry, AndFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, AndFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(entry, f);
+            boolean result = isValid(attributes, f);
             if (!result) return false;
         }
         return true;
     }
 
-    public boolean isValid(Entry entry, OrFilter filter) throws Exception {
+    public boolean isValid(Attributes attributes, OrFilter filter) throws Exception {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
-            boolean result = isValid(entry, f);
+            boolean result = isValid(attributes, f);
             if (result) return true;
         }
         return false;
@@ -456,128 +447,6 @@ public class FilterTool {
         for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
             Filter f = (Filter)i.next();
             boolean result = isValid(entryMapping, f);
-            if (result) return true;
-        }
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, Filter filter) throws Exception {
-        //log.debug("Checking filter "+filter);
-
-        boolean result = false;
-
-        if (filter == null) {
-            result = true;
-
-        } else if (filter instanceof NotFilter) {
-            result = isValid(attributeValues, (NotFilter)filter);
-
-        } else if (filter instanceof AndFilter) {
-            result = isValid(attributeValues, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValid(attributeValues, (OrFilter)filter);
-
-        } else if (filter instanceof SimpleFilter) {
-            result = isValid(attributeValues, (SimpleFilter)filter);
-
-        } else if (filter instanceof PresentFilter) {
-            result = isValid(attributeValues, (PresentFilter)filter);
-
-        } else if (filter instanceof SubstringFilter) {
-            result = isValid(attributeValues, (SubstringFilter)filter);
-        }
-
-        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
-
-        return result;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, SubstringFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
-
-        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(null);
-
-        Collection values = attributeValues.get(attributeName);
-
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            String value = i.next().toString().toLowerCase();
-            log.debug("Comparing "+substrings+" with "+value);
-
-            boolean b = substringsMatchingRule.compare(value, substrings);
-            log.debug(" - ["+value+"] => "+b);
-
-            if (b) return true;
-        }
-
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue().toLowerCase();
-        log.debug("Checking "+attributeName+" "+operator+" "+attributeValue);
-
-        Collection values = attributeValues.get(attributeName);
-        if (values == null) return false;
-
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            String value = i.next().toString().toLowerCase();
-            log.debug("Comparing "+attributeValue+" with "+value);
-
-            int c = attributeValue.compareTo(value);
-
-            if ("=".equals(operator)) {
-                if (c == 0) return true;
-
-            } else if ("<".equals(operator)) {
-                if (c < 0) return true;
-
-            } else if ("<=".equals(operator)) {
-                if (c <= 0) return true;
-
-            } else if (">".equals(operator)) {
-                if (c > 0) return true;
-
-            } else if (">=".equals(operator)) {
-                if (c >= 0) return true;
-
-            } else {
-                throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-
-        if (attributeName.equalsIgnoreCase("objectclass")) return true;
-
-        return attributeValues.contains(attributeName);
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, NotFilter filter) throws Exception {
-        Filter f = filter.getFilter();
-        return isValid(attributeValues, f);
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(attributeValues, f);
-            if (!result) return false;
-        }
-        return true;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(attributeValues, f);
             if (result) return true;
         }
         return false;
