@@ -5,7 +5,7 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.handler.HandlerManager;
@@ -22,6 +22,8 @@ import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.acl.ACLManager;
+import org.safehaus.penrose.source.SourceManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ public class PenroseContext {
 
     public final static String PARTITION_MANAGER   = "java:comp/org/safehaus/penrose/partition/PartitionManager";
     public final static String CONNECTION_MANAGER  = "java:comp/org/safehaus/penrose/connection/ConnectionManager";
+    public final static String SOURCE_MANAGER      = "java:comp/org/safehaus/penrose/source/SourceManager";
     public final static String MODULE_MANAGER      = "java:comp/org/safehaus/penrose/module/ModuleManager";
 
     private PenroseConfig      penroseConfig;
@@ -67,6 +70,7 @@ public class PenroseContext {
 
     private PartitionManager   partitionManager;
     private ConnectionManager  connectionManager;
+    private SourceManager      sourceManager;
     private ModuleManager      moduleManager;
 
     public ThreadManager getThreadManager() {
@@ -157,6 +161,22 @@ public class PenroseContext {
         this.connectorManager = connectorManager;
     }
 
+    public ACLManager getAclManager() {
+        return aclManager;
+    }
+
+    public void setAclManager(ACLManager aclManager) {
+        this.aclManager = aclManager;
+    }
+
+    public SourceManager getSourceManager() {
+        return sourceManager;
+    }
+
+    public void setSourceManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
+    }
+
     public void init(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
 
@@ -223,6 +243,10 @@ public class PenroseContext {
         connectionManager = new ConnectionManager();
         connectionManager.setPenroseConfig(penroseConfig);
         connectionManager.setPenroseContext(this);
+
+        sourceManager = new SourceManager();
+        sourceManager.setPenroseConfig(penroseConfig);
+        sourceManager.setPenroseContext(this);
 
         moduleManager = new ModuleManager();
         moduleManager.setPenroseConfig(penroseConfig);
@@ -315,13 +339,5 @@ public class PenroseContext {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-    }
-
-    public ACLManager getAclManager() {
-        return aclManager;
-    }
-
-    public void setAclManager(ACLManager aclManager) {
-        this.aclManager = aclManager;
     }
 }

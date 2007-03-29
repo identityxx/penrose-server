@@ -809,6 +809,9 @@ public class Session {
                     public void add(Object value) throws Exception {
                         response.add(value);
                     }
+                    public void setException(LDAPException exception) {
+                        response.setException(exception);
+                    }
                     public void close() throws Exception {
                         response.close();
     

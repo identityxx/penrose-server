@@ -1,26 +1,18 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.source.Field;
 
 /**
  * @author Endi S. Dewata
  */
 public class Parameter {
 
-    FieldConfig fieldConfig;
-    Object value;
+    protected Field field;
+    protected Object value;
 
-    public Parameter(FieldConfig fieldConfig, Object value) {
-        this.fieldConfig = fieldConfig;
+    public Parameter(Field field, Object value) {
+        this.field = field;
         this.value = value;
-    }
-
-    public void setFieldConfig(FieldConfig fieldConfig) {
-        this.fieldConfig = fieldConfig;
-    }
-
-    public FieldConfig getFieldConfig() {
-        return fieldConfig;
     }
 
     public void setValue(Object value) {
@@ -29,5 +21,13 @@ public class Parameter {
 
     public Object getValue() {
         return value;
+    }
+
+    public Field getField() {
+        return field;
+    }
+
+    public void setField(Field field) {
+        this.field = field;
     }
 }

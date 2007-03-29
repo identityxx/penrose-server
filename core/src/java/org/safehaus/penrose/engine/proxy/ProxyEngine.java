@@ -20,7 +20,7 @@ package org.safehaus.penrose.engine.proxy;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
@@ -28,7 +28,6 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineFilterTool;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 

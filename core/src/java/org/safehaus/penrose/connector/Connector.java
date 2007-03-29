@@ -20,12 +20,15 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
-import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -126,18 +129,16 @@ public class Connector {
     public void add(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.add(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.add(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,18 +148,16 @@ public class Connector {
     public void bind(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.bind(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.bind(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,18 +167,16 @@ public class Connector {
     public void delete(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.delete(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.delete(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,18 +186,16 @@ public class Connector {
     public void modify(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.modify(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.modify(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,18 +205,16 @@ public class Connector {
     public void modrdn(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.modrdn(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.modrdn(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,18 +224,16 @@ public class Connector {
     public void search(
             final Partition partition,
             final EntryMapping entryMapping,
-            final Collection sourceMappings,
+            final Collection sources,
             final AttributeValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Connection connection = getConnection(partition, sourceConfig.getConnectionName());
-
-        connection.search(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.search(entryMapping, sources, sourceValues, request, response);
     }
 
     public RDN store(

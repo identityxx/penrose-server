@@ -43,21 +43,29 @@ public class JDBCFormatter {
         return width;
     }
 
-    public static void printRecord(RDN pk, Attributes record) throws Exception {
+    public static void printEntry(Entry entry) throws Exception {
+
         log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Record: "+pk, 80));
-        for (Iterator i=record.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getName();
+        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
 
-            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
+        for (Iterator i=entry.getSourceNames().iterator(); i.hasNext(); ) {
+            String sourceName = (String)i.next();
+            Attributes sourceValues = entry.getSourceValues(sourceName);
 
-                log.debug(Formatter.displayLine(" - "+name+": "+value+" ("+className+")", 80));
+            for (Iterator j=sourceValues.getAll().iterator(); j.hasNext(); ) {
+                Attribute attribute = (Attribute)j.next();
+                String fieldName = sourceName+"."+attribute.getName();
+
+                for (Iterator k=attribute.getValues().iterator(); k.hasNext(); ) {
+                    Object value = k.next();
+                    String className = value.getClass().getName();
+                    className = className.substring(className.lastIndexOf(".")+1);
+
+                    log.debug(Formatter.displayLine(" - "+fieldName+": "+value+" ("+className+")", 80));
+                }
             }
         }
+
         log.debug(Formatter.displaySeparator(80));
     }
 

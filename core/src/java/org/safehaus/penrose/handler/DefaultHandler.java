@@ -85,16 +85,16 @@ public class DefaultHandler extends Handler {
 
             SearchResponse sr = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    Entry child = (Entry)object;
+                    Entry entry = (Entry)object;
 
                     if (debug) log.debug("Checking filter "+filter);
 
-                    if (!filterTool.isValid(child, filter)) { // Check LDAP filter
-                        if (debug) log.debug("Entry \""+child.getDn()+"\" doesn't match search filter.");
+                    if (!filterTool.isValid(entry, filter)) { // Check LDAP filter
+                        if (debug) log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
                         return;
                     }
 
-                    response.add(child);
+                    response.add(entry);
                 }
             };
 

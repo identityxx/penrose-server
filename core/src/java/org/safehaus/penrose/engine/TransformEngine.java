@@ -201,7 +201,7 @@ public class TransformEngine {
             String fieldName = fieldMapping.getName();
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            Object newValues = interpreter.eval(entryMapping, fieldMapping);
+            Object newValues = interpreter.eval(fieldMapping);
             if (newValues == null) {
                 if (debug) log.debug("Field "+fieldName+" is empty.");
                 continue;

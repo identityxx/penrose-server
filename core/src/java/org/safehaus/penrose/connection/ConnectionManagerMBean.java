@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.connection;
 
 import java.util.Collection;
 
@@ -24,7 +24,7 @@ import java.util.Collection;
  */
 public interface ConnectionManagerMBean {
 
-    public Collection getConnectionNames() throws Exception;
+    public Collection getConnectionNames(String partitionName) throws Exception;
 
     public void start() throws Exception;
     public void stop() throws Exception;

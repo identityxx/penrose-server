@@ -1,0 +1,14 @@
+dn: cn=test,ou=Groups,dc=JDBC,dc=Example,dc=com
+changetype: modify
+replace: uniqueMember
+uniqueMember: uid=swhite,ou=Users,dc=JDBC,dc=Example,dc=com
+uniqueMember: uid=lwalker,ou=Users,dc=JDBC,dc=Example,dc=com
+-
+add: uniqueMember
+uniqueMember: uid=test,ou=Users,dc=JDBC,dc=Example,dc=com
+-
+delete: uniqueMember
+uniqueMember: uid=swhite,ou=Users,dc=JDBC,dc=Example,dc=com
+-
+delete: uniqueMember
+-

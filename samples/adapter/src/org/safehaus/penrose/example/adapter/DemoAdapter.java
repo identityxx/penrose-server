@@ -1,14 +1,13 @@
 package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.source.SourceRef;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -52,9 +51,8 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -80,9 +78,8 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -118,9 +115,8 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -144,9 +140,8 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -199,9 +194,8 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -243,15 +237,14 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
 
         DN dn = request.getDn();
         Filter filter = request.getFilter();
@@ -269,9 +262,10 @@ public class DemoAdapter extends Adapter {
 
             System.out.println(" - "+rdn+" => true");
 
-            Entry result = new Entry(rdn, entryMapping);
-            result.setAttributes(sourceMapping.getName(), attributes);
-            response.add(result);
+            Entry entry = new Entry(rdn, entryMapping);
+            entry.setSourceValues(sourceRef.getAlias(), attributes);
+
+            response.add(entry);
         }
 
         response.close();

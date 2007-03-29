@@ -63,7 +63,8 @@ public class SearchEngine {
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
                 
-                Attributes attributes = computeAttributes(entryMapping, new Attributes());
+                Attributes sv = EntryUtil.computeAttributes(sourceValues);
+                Attributes attributes = computeAttributes(entryMapping, sv);
 
                 Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
                 response.add(entry);
@@ -78,7 +79,12 @@ public class SearchEngine {
                     EntryMapping em = result.getEntryMapping();
 
                     Attributes sv = EntryUtil.computeAttributes(sourceValues);
-                    sv.add(result.getAttributes());
+
+                    for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
+                        String sourceName = (String)i.next();
+                        Attributes esv = result.getSourceValues(sourceName);
+                        sv.add(sourceName, esv);
+                    }
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -95,6 +101,7 @@ public class SearchEngine {
                         attributes.print();
                     }
 
+                    if (debug) log.debug("Generating entry "+dn);
                     Entry entry = new Entry(dn, em, attributes);
                     response.add(entry);
                 }

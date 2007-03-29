@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/core/dist" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/core/target/javadoc" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/tests" />
       <excludeFolder url="file://$MODULE_DIR$/server/dist" />
       <excludeFolder url="file://$MODULE_DIR$/server/target" />

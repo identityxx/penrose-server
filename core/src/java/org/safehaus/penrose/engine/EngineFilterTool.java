@@ -20,8 +20,8 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connector.ConnectionManager;
-import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
@@ -105,7 +105,7 @@ public class EngineFilterTool {
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
 
-            String v = (String)interpreter.eval(entryMapping, fieldMapping);
+            String v = (String)interpreter.eval(fieldMapping);
             if (v == null) continue;
 
             //System.out.println("Adding filter "+field.getName()+"="+v);

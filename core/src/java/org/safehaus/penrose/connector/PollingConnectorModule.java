@@ -36,6 +36,7 @@ import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.connection.Connection;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,10 +49,9 @@ import java.util.Map;
 public class PollingConnectorModule extends Module {
 
     public final static String INTERVAL   = "interval";
-
     public final static int DEFAULT_INTERVAL = 5; // seconds
 
-    public int interval; // 1 second
+    public int interval; // second
 
     public Connector connector;
     public SourceCacheManager sourceCacheManager;

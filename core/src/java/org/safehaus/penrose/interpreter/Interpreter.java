@@ -88,7 +88,7 @@ public abstract class Interpreter {
 
     public abstract void clear() throws Exception;
 
-    public Object eval(EntryMapping entryMapping, AttributeMapping attributeMapping) throws Exception {
+    public Object eval(AttributeMapping attributeMapping) throws Exception {
         try {
             Object constant = attributeMapping.getConstant();
             if (constant != null) {
@@ -107,7 +107,7 @@ public abstract class Interpreter {
 
             Expression expression = attributeMapping.getExpression();
             if (expression != null) {
-                return eval(entryMapping, expression);
+                return eval(expression);
 
             }
 
@@ -119,7 +119,7 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(EntryMapping entryMapping, FieldMapping fieldMapping) throws Exception {
+    public Object eval(FieldMapping fieldMapping) throws Exception {
         try {
             if (fieldMapping.getConstant() != null) {
                 return fieldMapping.getConstant();
@@ -133,7 +133,7 @@ public abstract class Interpreter {
                 return value;
 
             } else if (fieldMapping.getExpression() != null) {
-                return eval(entryMapping, fieldMapping.getExpression());
+                return eval(fieldMapping.getExpression());
 
             } else {
                 return null;
@@ -143,7 +143,7 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(EntryMapping entryMapping, Expression expression) throws Exception {
+    public Object eval(Expression expression) throws Exception {
 
         String foreach = expression.getForeach();
         String var = expression.getVar();
@@ -162,43 +162,7 @@ public abstract class Interpreter {
 
             Collection newValues = new HashSet();
 
-            if (entryMapping.getSourceMapping(foreach) != null) { // process each row in source
-
-                //log.debug("Rows:");
-                for (Iterator i=rows.iterator(); i.hasNext(); ) {
-                    AttributeValues row = (AttributeValues)i.next();
-                    //log.debug(" - "+row);
-
-                    for (Iterator j=row.getNames().iterator(); j.hasNext(); ) {
-                        String name = (String)j.next();
-                        Collection values = row.get(name);
-
-                        if (values.size() == 1) {
-                            value = values.iterator().next();
-
-                        } else if (values.size() > 1) {
-                            value = values;
-                        }
-
-                        int k = name.indexOf(".");
-                        if (k < 0) {
-                            //log.debug("setting "+var+"."+name+" = "+value);
-                            set(var+"."+name, value);
-
-                        } else if (foreach.equals(name.substring(0, k))) {
-                            //log.debug("setting "+var+"."+name.substring(k+1)+" = "+value);
-                            set(var+"."+name.substring(k+1), value);
-                        }
-                    }
-
-                    value = eval(script);
-                    if (value == null) continue;
-
-                    //log.debug(" - "+value);
-                    newValues.add(value);
-                }
-
-            } else if (v != null) {
+            if (v != null) {
 
                 Collection values;
                 if (v instanceof Collection) {

@@ -1,43 +1,29 @@
 package org.safehaus.penrose.jdbc;
 
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.filter.Filter;
+
 /**
  * @author Endi S. Dewata
  */
 public class DeleteStatement extends Statement {
 
-    protected String table;
-    protected String whereClause;
+    protected Source source;
+    protected Filter filter;
 
-    public String getTable() {
-        return table;
+    public Source getSource() {
+        return source;
     }
 
-    public void setTable(String table) {
-        this.table = table;
+    public void setSource(Source source) {
+        this.source = source;
     }
 
-    public String getWhereClause() {
-        return whereClause;
+    public Filter getFilter() {
+        return filter;
     }
 
-    public void setWhereClause(String whereClause) {
-        this.whereClause = whereClause;
-    }
-
-    public String getSql() {
-
-        log.debug("Generating delete statement.");
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("delete from ");
-
-        sb.append(table);
-
-        if (whereClause != null) {
-            sb.append(" where ");
-            sb.append(whereClause);
-        }
-
-        return sb.toString();
+    public void setFilter(Filter filter) {
+        this.filter = filter;
     }
 }

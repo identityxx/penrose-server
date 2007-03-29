@@ -18,21 +18,18 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.entry.*;
 
 import javax.naming.directory.*;
 import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -60,7 +57,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
 
-        LDAPClient client = (LDAPClient)connectionManager.openConnection(connectionName);
+        LDAPClient client = (LDAPClient)connectionManager.openConnection(partition, connectionName);
         return client.getContext();
     }
 

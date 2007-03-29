@@ -91,8 +91,10 @@ public class HandlerSearchResponse extends SearchResponse {
             attributesToRemove.put(entryMapping.getId(), list);
         }
 
-        if (debug) log.debug("Removing attributes: "+list);
-        handlerManager.removeAttributes(entry, list);
+        if (!list.isEmpty()) {
+            if (debug) log.debug("Removing attributes: "+list);
+            handlerManager.removeAttributes(entry, list);
+        }
 
         if (debug) {
             log.debug("Returning "+dn+":");

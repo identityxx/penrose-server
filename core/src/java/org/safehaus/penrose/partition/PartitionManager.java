@@ -22,10 +22,10 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.source.SourceManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -75,20 +75,28 @@ public class PartitionManager implements PartitionManagerMBean {
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
         for (Iterator i=partition.getConnectionConfigs().iterator(); i.hasNext(); ) {
             ConnectionConfig connectionConfig = (ConnectionConfig)i.next();
+            connectionManager.init(partition, connectionConfig);
+        }
 
-            String adapterName = connectionConfig.getAdapterName();
-            if (adapterName == null) throw new Exception("Missing adapter name");
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        for (Iterator i=partition.getSourceConfigs().iterator(); i.hasNext(); ) {
+            SourceConfig sourceConfig = (SourceConfig)i.next();
+            sourceManager.init(partition, sourceConfig);
+        }
 
-            AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-            if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+        for (Iterator i=partition.getEntryMappings().iterator(); i.hasNext(); ) {
+            EntryMapping entryMapping = (EntryMapping)i.next();
 
-            connectionManager.init(partition, connectionConfig, adapterConfig);
+            for (Iterator j=entryMapping.getSourceMappings().iterator(); j.hasNext(); ) {
+                SourceMapping sourceMapping = (SourceMapping)j.next();
+                sourceManager.init(partition, entryMapping, sourceMapping);
+            }
         }
 
         ModuleManager moduleManager = penroseContext.getModuleManager();
         for (Iterator i=partition.getModuleConfigs().iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
-            moduleManager.load(partition, moduleConfig);
+            moduleManager.init(partition, moduleConfig);
         }
 
         partitions.put(partition.getName(), partition);

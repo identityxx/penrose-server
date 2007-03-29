@@ -2,36 +2,28 @@ package org.safehaus.penrose.adapter.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.jdbc.InsertStatement;
+import org.safehaus.penrose.jdbc.UpdateRequest;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Field;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class AddStatementBuilder {
+public class AddRequestBuilder {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    JDBCAdapter adapter;
-
-    Partition partition;
-    EntryMapping entryMapping;
-
-    Collection sourceMappings;
-    SourceMapping primarySourceMapping;
+    Collection sources;
 
     AttributeValues sourceValues;
     Interpreter interpreter;
@@ -39,67 +31,56 @@ public class AddStatementBuilder {
     AddRequest request;
     AddResponse response;
 
-    Collection statements = new ArrayList();
+    Collection requests = new ArrayList();
 
-    public AddStatementBuilder(
-            JDBCAdapter adapter,
-            Partition partition,
-            EntryMapping entryMapping,
-            Collection sourceMappings,
+    public AddRequestBuilder(
+            Collection sources,
             AttributeValues sourceValues,
+            Interpreter interpreter,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        this.adapter = adapter;
-
-        this.partition = partition;
-        this.entryMapping = entryMapping;
-
-        this.sourceMappings = sourceMappings;
-        primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
-
+        this.sources = sources;
         this.sourceValues = sourceValues;
+
+        this.interpreter = interpreter;
 
         this.request = request;
         this.response = response;
-
-        PenroseContext penroseContext = adapter.getPenroseContext();
-        interpreter = penroseContext.getInterpreterManager().newInstance();
     }
 
     public Collection generate() throws Exception {
 
-        int sourceCounter = 0;
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); sourceCounter++) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        boolean first = true;
+        for (Iterator i= sources.iterator(); i.hasNext(); ) {
+            SourceRef sourceRef = (SourceRef)i.next();
 
-            if (sourceCounter == 0) {
-                generatePrimaryStatement(sourceMapping);
+            if (first) {
+                generatePrimaryRequest(sourceRef);
+                first = false;
+
             } else {
-                generateSecondaryStatements(sourceMapping);
+                generateSecondaryRequests(sourceRef);
             }
         }
 
-        return statements;
+        return requests;
     }
 
-    public void generatePrimaryStatement(
-            SourceMapping sourceMapping
+    public void generatePrimaryRequest(
+            SourceRef sourceRef
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
+        String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
         InsertStatement statement = new InsertStatement();
+        Collection parameters = new ArrayList();
 
-        String table = adapter.getTableName(sourceConfig);
-        if (debug) log.debug(" - Table: "+table);
-        statement.setTable(table);
+        statement.setSource(sourceRef.getSource());
 
         interpreter.set(sourceValues);
 
@@ -113,33 +94,36 @@ public class AddStatementBuilder {
             interpreter.set(attributeName, attributeValue);
         }
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
+            Field field = fieldRef.getField();
+            String fieldName = field.getName();
 
-            String fieldName = fieldMapping.getName();
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addColumn(fieldConfig.getOriginalName());
-            statement.addParameter(new Parameter(fieldConfig, value));
+            statement.addField(field);
+            parameters.add(new Parameter(field, value));
         }
 
         interpreter.clear();
 
-        statements.add(statement);
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.setStatement(statement);
+        updateRequest.setParameters(parameters);
+
+        requests.add(updateRequest);
     }
 
-    public void generateSecondaryStatements(
-            SourceMapping sourceMapping
+    public void generateSecondaryRequests(
+            SourceRef sourceRef
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
+        String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
 
         Attributes attributes = request.getAttributes();
@@ -157,17 +141,17 @@ public class AddStatementBuilder {
 
                 Map values = new HashMap();
 
-                Collection fieldMappings = sourceMapping.getFieldMappings();
-                for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-                    FieldMapping fieldMapping = (FieldMapping)k.next();
+                for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+                    FieldRef fieldRef = (FieldRef)k.next();
+                    FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
                     String variable = fieldMapping.getVariable();
                     if (variable != null) {
                         if (variable.indexOf(".") >= 0) continue; // skip foreign key
                     }
 
-                    String fieldName = fieldMapping.getName();
-                    Object value = interpreter.eval(entryMapping, fieldMapping);
+                    String fieldName = fieldRef.getName();
+                    Object value = interpreter.eval(fieldMapping);
                     if (value == null) continue;
 
                     values.put(fieldName, value);
@@ -175,7 +159,7 @@ public class AddStatementBuilder {
 
                 if (!values.isEmpty()) {
                     generateInsertStatement(
-                            sourceMapping,
+                            sourceRef,
                             values
                     );
                 }
@@ -187,26 +171,26 @@ public class AddStatementBuilder {
     }
 
     public void generateInsertStatement(
-            SourceMapping sourceMapping,
+            SourceRef sourceRef,
             Map values
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
+        String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Inserting values into "+sourceName);
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
         InsertStatement statement = new InsertStatement();
+        Collection parameters = new ArrayList();
 
-        String table = adapter.getTableName(sourceConfig);
-        if (debug) log.debug(" - Table: "+table);
-        statement.setTable(table);
+        statement.setSource(sourceRef.getSource());
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
+            Field field = fieldRef.getField();
+            String fieldName = field.getName();
+
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
@@ -214,24 +198,27 @@ public class AddStatementBuilder {
             Object value = sourceValues.getOne(variable);
             if (value == null) continue;
 
-            String fieldName = fieldMapping.getName();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addColumn(fieldConfig.getOriginalName());
-            statement.addParameter(new Parameter(fieldConfig, value));
+            statement.addField(field);
+            parameters.add(new Parameter(field, value));
         }
 
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String fieldName = (String)i.next();
             Object value = values.get(fieldName);
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+
+            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+            Field field = fieldRef.getField();
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addColumn(fieldConfig.getOriginalName());
-            statement.addParameter(new Parameter(fieldConfig, value));
+            statement.addField(field);
+            parameters.add(new Parameter(field, value));
         }
 
-        statements.add(statement);
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.setStatement(statement);
+        updateRequest.setParameters(parameters);
+
+        requests.add(updateRequest);
     }
 }

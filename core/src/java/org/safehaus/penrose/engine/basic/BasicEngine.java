@@ -9,9 +9,15 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.Source;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -112,7 +118,7 @@ public class BasicEngine extends Engine {
         for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)k.next();
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
@@ -156,17 +162,18 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
+        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Iterator iterator = groupsOfSources.iterator();
+        Collection primarySources = (Collection)iterator.next();
 
-        Connector connector = getConnector(sourceConfig);
+        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        Connector connector = getConnector(sourceRef);
 
         connector.add(
                 partition,
                 entryMapping,
-                sourceMappings,
+                primarySources,
                 sourceValues,
                 request,
                 response
@@ -205,18 +212,19 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
+        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Iterator iterator = groupsOfSources.iterator();
+        Collection primarySources = (Collection)iterator.next();
 
-        Connector connector = getConnector(sourceConfig);
+        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        Connector connector = getConnector(sourceRef);
 
         try {
             connector.bind(
                     partition,
                     entryMapping,
-                    sourceMappings,
+                    primarySources,
                     sourceValues,
                     request,
                     response
@@ -265,17 +273,18 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
+        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Iterator iterator = groupsOfSources.iterator();
+        Collection primarySources = (Collection)iterator.next();
 
-        Connector connector = getConnector(sourceConfig);
+        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        Connector connector = getConnector(sourceRef);
 
         connector.delete(
                 partition,
                 entryMapping,
-                sourceMappings,
+                primarySources,
                 sourceValues,
                 request,
                 response
@@ -315,17 +324,18 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
+        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Iterator iterator = groupsOfSources.iterator();
+        Collection primarySources = (Collection)iterator.next();
 
-        Connector connector = getConnector(sourceConfig);
+        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        Connector connector = getConnector(sourceRef);
 
         connector.modify(
                 partition,
                 entryMapping,
-                sourceMappings,
+                primarySources,
                 sourceValues,
                 request,
                 response
@@ -365,17 +375,18 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection sourceMappings = entryMapping.getSourceMappings();
+        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        Iterator iterator = groupsOfSources.iterator();
+        Collection primarySources = (Collection)iterator.next();
 
-        Connector connector = getConnector(sourceConfig);
+        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        Connector connector = getConnector(sourceRef);
 
         connector.modrdn(
                 partition,
                 entryMapping,
-                sourceMappings,
+                primarySources,
                 sourceValues,
                 request,
                 response
@@ -430,5 +441,39 @@ public class BasicEngine extends Engine {
         } finally {
             response.close();
         }
+    }
+
+    public Collection createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        Collection groupsOfSources = new ArrayList();
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection sourceRefs = sourceManager.getSourceRefs(partition, entryMapping);
+
+        Collection sources = new ArrayList();
+        Connection lastConnection = null;
+
+        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
+            SourceRef sourceRef = (SourceRef)i.next();
+
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
+            Adapter adapter = connection.getAdapter();
+
+            if (lastConnection == null) {
+                lastConnection = connection;
+
+            } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                groupsOfSources.add(sources);
+                sources = new ArrayList();
+                lastConnection = connection;
+            }
+
+            sources.add(sourceRef);
+        }
+
+        groupsOfSources.add(sources);
+
+        return groupsOfSources;
     }
 }

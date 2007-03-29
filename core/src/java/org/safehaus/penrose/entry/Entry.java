@@ -19,7 +19,8 @@ package org.safehaus.penrose.entry;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 
-import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Collection;
 
 /**
@@ -29,7 +30,12 @@ public class Entry {
 
     protected DN dn;
     protected EntryMapping entryMapping;
-    protected Attributes attributes = new Attributes();
+    protected Attributes attributes;
+
+    protected Map sourceValues = new HashMap();
+
+    public Entry() {
+    }
 
     public Entry(String dn) {
         this.dn = new DN(dn);
@@ -61,23 +67,31 @@ public class Entry {
     public Entry(String dn, EntryMapping entryMapping, Attributes attributes) {
         this.dn = new DN(dn);
         this.entryMapping = entryMapping;
-        setAttributes(attributes);
+        this.attributes = attributes;
     }
 
     public Entry(RDN rdn, EntryMapping entryMapping, Attributes attributes) {
         this.dn = new DN(rdn);
         this.entryMapping = entryMapping;
-        setAttributes(attributes);
+        this.attributes = attributes;
     }
 
     public Entry(DN dn, EntryMapping entryMapping, Attributes attributes) {
         this.dn = dn;
         this.entryMapping = entryMapping;
-        setAttributes(attributes);
+        this.attributes = attributes;
     }
 
     public DN getDn() {
         return dn;
+    }
+
+    public void setDn(String dn) {
+        this.dn = new DN(dn);
+    }
+
+    public void setDn(RDN rdn) {
+        this.dn = new DN(rdn);
     }
 
     public void setDn(DN dn) {
@@ -97,21 +111,18 @@ public class Entry {
     }
 
     public void setAttributes(Attributes attributes) {
-        setAttributes(null, attributes);
+        this.attributes = attributes;
     }
 
-    public void setAttributes(String prefix, Attributes attributes) {
+    public Collection getSourceNames() {
+        return sourceValues.keySet();
+    }
+    
+    public Attributes getSourceValues(String sourceName) {
+        return (Attributes)sourceValues.get(sourceName);
+    }
 
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
-
-            String name = attribute.getName();
-            name = prefix == null ? name : prefix+"."+name;
-
-            Collection values = attribute.getValues();
-
-            Attribute newAttribute = new Attribute(name, values);
-            this.attributes.add(newAttribute);
-        }
+    public void setSourceValues(String sourceName, Attributes attributes) {
+        sourceValues.put(sourceName, attributes);
     }
 }

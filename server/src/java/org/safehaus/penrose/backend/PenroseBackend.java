@@ -61,12 +61,6 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         home = penroseServer.getPenroseConfig().getHome();
     }
 
-    /**
-     * Initialize Penrose engine.
-     *
-     * @return return code
-     * @throws Exception
-     */
     public void init() throws Exception {
         if (penroseServer != null) return;
 
@@ -99,21 +93,10 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return partitionManager.getPartition(dn) != null;
     }
 
-    /**
-     * Get session.
-     *
-     * @param id
-     * @return session
-     */
     public com.identyx.javabackend.Session getSession(Object id) throws Exception {
         return (PenroseSession)sessions.get(id);
     }
 
-    /**
-     * Create session.
-     *
-     * @param id
-     */
     public com.identyx.javabackend.Session createSession(Object id) throws Exception {
         log.debug("openConnection("+id+")");
         Penrose penrose = penroseServer.getPenrose();
@@ -123,11 +106,6 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return session;
     }
 
-    /**
-     * Close session.
-     *
-     * @param id
-     */
     public void closeSession(Object id) throws Exception {
         log.debug("closeConnection("+id+")");
         PenroseSession session = (PenroseSession)sessions.remove(id);

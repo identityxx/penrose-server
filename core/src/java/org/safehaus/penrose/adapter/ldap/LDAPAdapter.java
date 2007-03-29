@@ -26,7 +26,6 @@ import javax.naming.ldap.PagedResultsResponseControl;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.FieldConfig;
@@ -40,6 +39,9 @@ import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.ldap.LDAPClient;
 import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Source;
 
 import java.util.*;
 
@@ -95,46 +97,47 @@ public class LDAPAdapter extends Adapter {
         return rb.toRdn();
     }
 
-    public DN getRecord(
+    public Entry createEntry(
             Partition partition,
-            SourceMapping sourceMapping,
-            javax.naming.directory.SearchResult sr,
-            Attributes record
+            SourceRef sourceRef,
+            javax.naming.directory.SearchResult sr
     ) throws Exception {
 
-        DN dn = new DN(sr.getName());
+        String sourceName = sourceRef.getAlias();
 
-        String sourceName = sourceMapping.getName();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        DN dn = new DN(sr.getName());
+        Entry entry = new Entry(dn);
+
+        Attributes sourceValues = new Attributes();
+        entry.setSourceValues(sourceName, sourceValues);
 
         RDN rdn = dn.getRdn();
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = rdn.get(name);
-            record.addValue(sourceName+".primaryKey."+name, value);
+            sourceValues.addValue("primaryKey."+name, value);
         }
 
         javax.naming.directory.Attributes attrs = sr.getAttributes();
-        Collection fields = sourceConfig.getFieldConfigs();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
+        for (Iterator i= sourceRef.getFieldRefs().iterator(); i.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)i.next();
 
-            String name = sourceName+"."+fieldConfig.getName();
-            //if (name.equals("objectClass")) continue;
-
-            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(fieldRef.getOriginalName());
             if (attr == null) {
-                if (fieldConfig.isPrimaryKey()) return null;
+                if (fieldRef.isPrimaryKey()) return null;
                 continue;
             }
 
+            String fieldName = fieldRef.getName();
+            //if (fieldName.equals("objectClass")) continue;
+
             for (NamingEnumeration ne = attr.getAll(); ne.hasMore(); ) {
                 Object value = ne.next();
-                record.addValue(name, value);
+                sourceValues.addValue(fieldName, value);
             }
         }
 
-        return dn;
+        return entry;
     }
 
     public void modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws LDAPException {
@@ -241,7 +244,11 @@ public class LDAPAdapter extends Adapter {
             javax.naming.directory.Attribute ldapAttribute = new BasicAttribute(name);
             for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                 Object value = j.next();
-                ldapAttribute.add(value);
+                if ("unicodePwd".equals(name)) {
+                    ldapAttribute.add(PasswordUtil.toUnicodePassword(value));
+                } else {
+                    ldapAttribute.add(value);
+                }
             }
 
             ldapAttributes.put(ldapAttribute);
@@ -299,77 +306,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            SourceConfig sourceConfig,
-            RDN pk,
-            AttributeValues sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws LDAPException {
-
-        DirContext ctx = null;
-        try {
-            DN dn = getDn(sourceConfig, pk);
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Add "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            javax.naming.directory.Attributes attributes = new BasicAttributes();
-
-            String objectClasses = sourceConfig.getParameter(OBJECT_CLASSES);
-
-            javax.naming.directory.Attribute ocAttribute = new BasicAttribute("objectClass");
-            for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
-                String objectClass = st.nextToken().trim();
-                ocAttribute.add(objectClass);
-            }
-            attributes.put(ocAttribute);
-
-            log.debug("Adding attributes:");
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                if (name.startsWith("primaryKey.")) continue;
-
-                Collection values = sourceValues.get(name);
-                if (values.isEmpty()) continue;
-
-                javax.naming.directory.Attribute attribute = new BasicAttribute(name);
-                for (Iterator j=values.iterator(); j.hasNext(); ) {
-                    Object value = j.next();
-
-                    if ("unicodePwd".equals(name)) {
-                        attribute.add(PasswordUtil.toUnicodePassword(value));
-                    } else {
-                        attribute.add(value);
-                    }
-                    log.debug(" - "+name+": "+value);
-                }
-                attributes.put(attribute);
-            }
-
-            log.debug("Adding "+dn);
-            ctx = ((LDAPClient)openConnection()).getContext();
-            ctx.createSubcontext(dn.toString(), attributes);
-
-        } catch (NameAlreadyBoundException e) {
-            modifyAdd(sourceConfig, sourceValues);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    public void add(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -378,14 +316,8 @@ public class LDAPAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)i.next();
-                names.add(sourceMapping.getName());
-            }
-
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+names, 80));
+            log.debug(Formatter.displayLine("Add "+ sourceRefs, 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
@@ -393,11 +325,10 @@ public class LDAPAdapter extends Adapter {
         }
 
         AddRequestBuilder builder = new AddRequestBuilder(
-                this,
-                partition,
-                entryMapping,
-                sourceMappings,
+                client.getSuffix(),
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -427,9 +358,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -438,14 +368,8 @@ public class LDAPAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)i.next();
-                names.add(sourceMapping.getName());
-            }
-
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Bind "+names, 80));
+            log.debug(Formatter.displayLine("Bind "+ sourceRefs, 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
@@ -453,11 +377,10 @@ public class LDAPAdapter extends Adapter {
         }
 
         BindRequestBuilder builder = new BindRequestBuilder(
-                this,
-                partition,
-                entryMapping,
-                sourceMappings,
+                client.getSuffix(),
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -489,39 +412,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            SourceConfig sourceConfig,
-            RDN pk,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws LDAPException {
-
-        DirContext ctx = null;
-        try {
-            DN dn = getDn(sourceConfig, pk);
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Delete "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ctx = ((LDAPClient)openConnection()).getContext();
-            ctx.destroySubcontext(dn.toString());
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    public void delete(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -530,14 +422,8 @@ public class LDAPAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)i.next();
-                names.add(sourceMapping.getName());
-            }
-
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+names, 80));
+            log.debug(Formatter.displayLine("Delete "+ sourceRefs, 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
@@ -545,11 +431,10 @@ public class LDAPAdapter extends Adapter {
         }
 
         DeleteRequestBuilder builder = new DeleteRequestBuilder(
-                this,
-                partition,
-                entryMapping,
-                sourceMappings,
+                client.getSuffix(),
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -578,75 +463,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            SourceConfig sourceConfig,
-            RDN pk,
-            Collection modifications,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws LDAPException {
-
-        DirContext ctx = null;
-        try {
-            DN dn = getDn(sourceConfig, pk);
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("Modify "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            List list = new ArrayList();
-
-            for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                Modification modification = (Modification)i.next();
-
-                int type = modification.getType();
-                Attribute attribute = modification.getAttribute();
-                String name = attribute.getName();
-
-                FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
-                if (fieldConfig == null) continue;
-
-                ModificationItem mi = null;
-                if ("unicodePwd".equals(name) && type == Modification.ADD) { // need to encode unicodePwd
-                    javax.naming.directory.Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                    for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                        Object value = j.next();
-                        newAttribute.add(PasswordUtil.toUnicodePassword(value));
-                    }
-
-                    mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, newAttribute);
-
-                } else {
-                    javax.naming.directory.Attribute newAttribute = new BasicAttribute(fieldConfig.getOriginalName());
-                    for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                        Object value = j.next();
-                        newAttribute.add(value);
-                    }
-                    mi = new ModificationItem(type, newAttribute);
-                }
-
-                list.add(mi);
-            }
-
-            ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
-            ctx = ((LDAPClient)openConnection()).getContext();
-            ctx.modifyAttributes(dn.toString(), mods);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    public void modify(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -656,7 +474,7 @@ public class LDAPAdapter extends Adapter {
 
         if (debug) {
             Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
                 names.add(sourceMapping.getName());
             }
@@ -670,11 +488,10 @@ public class LDAPAdapter extends Adapter {
         }
 
         ModifyRequestBuilder builder = new ModifyRequestBuilder(
-                this,
-                partition,
-                entryMapping,
-                sourceMappings,
+                client.getSuffix(),
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -706,42 +523,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            SourceConfig sourceConfig,
-            RDN oldEntry,
-            RDN newRdn,
-            boolean deleteOldRdn,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws LDAPException {
-
-        DirContext ctx = null;
-        try {
-            DN dn = getDn(sourceConfig, oldEntry);
-
-            if (log.isDebugEnabled()) {
-                log.debug(Formatter.displaySeparator(80));
-                log.debug(Formatter.displayLine("ModRDN "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-                log.debug(Formatter.displayLine(" - DN: "+dn, 80));
-                log.debug(Formatter.displayLine(" - New RDN: "+newRdn, 80));
-                log.debug(Formatter.displaySeparator(80));
-            }
-
-            ctx = ((LDAPClient)openConnection()).getContext();
-            ctx.rename(dn.toString(), newRdn.toString());
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    public void modrdn(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -751,7 +534,7 @@ public class LDAPAdapter extends Adapter {
 
         if (debug) {
             Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
+            for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
                 names.add(sourceMapping.getName());
             }
@@ -765,11 +548,10 @@ public class LDAPAdapter extends Adapter {
         }
 
         ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
-                this,
-                partition,
-                entryMapping,
-                sourceMappings,
+                client.getSuffix(),
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -801,124 +583,8 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Partition partition,
             EntryMapping entryMapping,
-            SourceMapping sourceMapping,
-            SourceConfig sourceConfig,
-            SearchRequest request,
-            SearchResponse response
-    ) throws LDAPException {
-
-        boolean debug = log.isDebugEnabled();
-        Filter filter = request.getFilter();
-
-        DNBuilder db = new DNBuilder();
-        db.set(sourceConfig.getParameter(BASE_DN));
-
-        String ldapScope = sourceConfig.getParameter(SCOPE);
-        String ldapFilter = sourceConfig.getParameter(FILTER);
-
-        String s = sourceConfig.getParameter(PAGE_SIZE);
-        int pageSize = s == null ? DEFAULT_PAGE_SIZE : Integer.parseInt(s);
-
-        db.append(client.getSuffix());
-        if (filter != null) {
-            ldapFilter = "(&"+ldapFilter+filter+")";
-
-            if (filter instanceof SimpleFilter) {
-                db.prepend(filter.toString());
-                ldapScope = "OBJECT";
-            }
-        }
-
-        DN ldapBase = db.toDn();
-        if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
-            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-            log.debug(Formatter.displayLine(" - Scope: "+ldapScope, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        SearchControls sc = new SearchControls();
-        if ("OBJECT".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.OBJECT_SCOPE);
-
-        } else if ("ONELEVEL".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-        } else if ("SUBTREE".equals(ldapScope)) {
-            sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        }
-        sc.setCountLimit(request.getSizeLimit());
-        sc.setTimeLimit((int) request.getTimeLimit());
-
-        LdapContext ctx = null;
-        try {
-            ctx = ((LDAPClient)openConnection()).getContext();
-
-            javax.naming.ldap.Control[] controls = new javax.naming.ldap.Control[] { new PagedResultsControl(pageSize, javax.naming.ldap.Control.NONCRITICAL) };
-            ctx.setRequestControls(controls);
-
-            int page = 0;
-            byte[] cookie = null;
-
-            do {
-                if (debug) log.debug("Searching page #"+page);
-                NamingEnumeration ne = ctx.search(ldapBase.toString(), ldapFilter, sc);
-
-                if (debug) log.debug("Results from page #"+page+":");
-                while (ne.hasMore()) {
-                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-
-                    Attributes record = new Attributes();
-                    DN dn = getRecord(partition, sourceMapping, sr, record);
-
-                    if (debug) {
-                        LDAPFormatter.printRecord(dn, record);
-                    }
-
-                    Entry entry = new Entry(dn, entryMapping, record);
-                    response.add(entry);
-                }
-
-                // get cookie returned by server
-                controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (int i = 0; i < controls.length; i++) {
-                        if (controls[i] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
-                            cookie = prrc.getCookie();
-                        }
-                    }
-                }
-
-                // pass cookie back to server for the next page
-                controls = new javax.naming.ldap.Control[] { new PagedResultsControl(pageSize, cookie, javax.naming.ldap.Control.CRITICAL) };
-                ctx.setRequestControls(controls);
-
-                page++;
-
-            } while (cookie != null && cookie.length != 0);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Search
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void search(
-            Partition partition,
-            EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
@@ -927,14 +593,8 @@ public class LDAPAdapter extends Adapter {
         boolean debug = log.isDebugEnabled();
 
         if (debug) {
-            Collection names = new ArrayList();
-            for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)i.next();
-                names.add(sourceMapping.getName());
-            }
-
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+names, 80));
+            log.debug(Formatter.displayLine("Search "+ sourceRefs, 80));
             log.debug(Formatter.displaySeparator(80));
 
             log.debug("Source values:");
@@ -942,19 +602,18 @@ public class LDAPAdapter extends Adapter {
         }
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
-                this,
                 partition,
                 entryMapping,
-                sourceMappings,
+                sourceRefs,
                 sourceValues,
+                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
 
         LdapContext ctx = null;
         try {
-            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+            SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
 
             SearchRequest newRequest = builder.generate();
 
@@ -972,7 +631,8 @@ public class LDAPAdapter extends Adapter {
 
             ctx = ((LDAPClient)openConnection()).getContext();
 
-            String s = sourceConfig.getParameter(LDAPAdapter.PAGE_SIZE);
+            Source source = sourceRef.getSource();
+            String s = source.getParameter(LDAPAdapter.PAGE_SIZE);
             int pageSize = s == null ? LDAPAdapter.DEFAULT_PAGE_SIZE : Integer.parseInt(s);
 
             Collection list = convertControls(newRequest.getControls());
@@ -992,15 +652,12 @@ public class LDAPAdapter extends Adapter {
                 while (ne.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
 
-                    Attributes record = new Attributes();
-                    DN dn = getRecord(partition, sourceMapping, sr, record);
-                    if (dn == null) continue;
+                    Entry entry = createEntry(partition, sourceRef, sr);
+                    if (entry == null) continue;
                     
                     if (debug) {
-                        LDAPFormatter.printRecord(dn, record);
+                        LDAPFormatter.printEntry(entry);
                     }
-
-                    Entry entry = new Entry(dn, entryMapping, record);
 
                     response.add(entry);
                 }
@@ -1034,35 +691,28 @@ public class LDAPAdapter extends Adapter {
     }
 
     public DN getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
-        //log.debug("Computing DN for "+source.getName()+" with "+sourceValues);
 
         RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-        //RDN pk = sourceValues.getRdn();
 
         String baseDn = sourceConfig.getParameter(BASE_DN);
-        //log.debug("Base DN: "+baseDn);
 
         DNBuilder db = new DNBuilder();
         db.append(pk);
         db.append(baseDn);
         db.append(client.getSuffix());
 
-        //log.debug("DN: "+sb);
-
         return db.toDn();
     }
 
     public DN getDn(SourceConfig sourceConfig, RDN rdn) throws Exception {
+
         String baseDn = sourceConfig.getParameter(BASE_DN);
-        //log.debug("Base DN: "+baseDn);
 
         DNBuilder db = new DNBuilder();
         db.append(rdn);
         db.append(baseDn);
         db.append(client.getSuffix());
         DN dn = db.toDn();
-
-        //log.debug("DN: "+dn);
 
         return dn;
     }

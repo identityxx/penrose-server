@@ -39,7 +39,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
     private Map modules = new LinkedHashMap();
 
-    public void load(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public void init(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
         Module module = getModule(partition.getName(), moduleConfig.getName());
         if (module != null) return;

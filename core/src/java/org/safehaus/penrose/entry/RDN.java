@@ -129,44 +129,37 @@ public class RDN implements Comparable {
 
     public int compareTo(Object object) {
 
-        int c = 0;
+        if (object == null) return 0;
+        if (!(object instanceof RDN)) return 0;
 
-        try {
-            if (object == null) return 0;
-            if (!(object instanceof RDN)) return 0;
+        RDN rdn = (RDN)object;
 
-            RDN rdn = (RDN)object;
+        Iterator i = values.keySet().iterator();
+        Iterator j = rdn.values.keySet().iterator();
 
-            Iterator i = values.keySet().iterator();
-            Iterator j = rdn.values.keySet().iterator();
+        while (i.hasNext() && j.hasNext()) {
+            String name1 = (String)i.next();
+            String name2 = (String)j.next();
 
-            while (i.hasNext() && j.hasNext()) {
-                String name1 = (String)i.next();
-                String name2 = (String)j.next();
+            int c = name1.compareTo(name2);
+            if (c != 0) return c;
 
-                c = name1.compareTo(name2);
+            Object value1 = values.get(name1);
+            Object value2 = rdn.values.get(name2);
+
+            if (value1 instanceof Comparable && value2 instanceof Comparable) {
+                Comparable v1 = (Comparable)value1.toString();
+                Comparable v2 = (Comparable)value2.toString();
+
+                c = v1.compareTo(v2);
                 if (c != 0) return c;
-
-                Object value1 = values.get(name1);
-                Object value2 = rdn.values.get(name2);
-
-                if (value1 instanceof Comparable && value2 instanceof Comparable) {
-                    Comparable v1 = (Comparable)value1.toString();
-                    Comparable v2 = (Comparable)value2.toString();
-
-                    c = v1.compareTo(v2);
-                    if (c != 0) return c;
-                }
             }
-
-            if (i.hasNext()) return 1;
-            if (j.hasNext()) return -1;
-
-        } finally {
-            //System.out.println("Comparing "+this+" with "+object+": "+c);
         }
 
-        return c;
+        if (i.hasNext()) return 1;
+        if (j.hasNext()) return -1;
+
+        return 0;
     }
 
     public String toString() {

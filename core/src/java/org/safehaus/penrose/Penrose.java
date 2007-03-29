@@ -42,7 +42,7 @@ public class Penrose {
     public static String SPECIFICATION_VERSION = "1.2";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "12/15/2006";
+    public final static String RELEASE_DATE      = "03/01/2007";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";

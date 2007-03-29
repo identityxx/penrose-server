@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.connector;
+package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.*;
@@ -27,6 +27,7 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +44,13 @@ public class Connection implements ConnectionMBean {
     protected PenroseConfig penroseConfig;
     protected PenroseContext penroseContext;
 
+    protected Partition partition;
     protected ConnectionConfig connectionConfig;
     protected AdapterConfig adapterConfig;
     protected Adapter adapter;
 
-    public Connection(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
+    public Connection(Partition partition, ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
+        this.partition = partition;
         this.connectionConfig = connectionConfig;
         this.adapterConfig = adapterConfig;
     }
@@ -65,6 +68,7 @@ public class Connection implements ConnectionMBean {
         adapter.setPenroseConfig(penroseConfig);
         adapter.setPenroseContext(penroseContext);
         adapter.setAdapterConfig(adapterConfig);
+        adapter.setPartition(partition);
         adapter.setConnection(this);
 
         adapter.init();
@@ -115,14 +119,23 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            Partition partition,
+            Source source,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+
+        adapter.add(source, request, response);
+    }
+
+    public void add(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
-        adapter.add(partition, entryMapping, sourceMappings, sourceValues, request, response);
+
+        adapter.add(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,15 +143,14 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        adapter.bind(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,14 +158,23 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            Partition partition,
+            Source source,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        adapter.delete(source, request, response);
+    }
+
+    public void delete(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-        adapter.delete(partition, entryMapping, sourceMappings, sourceValues, request, response);
+
+        adapter.delete(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,15 +182,14 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        adapter.modify(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,15 +197,14 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        adapter.modrdn(partition, entryMapping, sourceMappings, sourceValues, request, response);
+        adapter.modrdn(entryMapping, sources, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,14 +212,23 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Partition partition,
+            Source source,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        adapter.search(source, request, response);
+    }
+
+    public void search(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sources,
             AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
-        adapter.search(partition, entryMapping, sourceMappings, sourceValues, request, response);
+
+        adapter.search(entryMapping, sources, sourceValues, request, response);
     }
 
     public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
@@ -237,5 +265,13 @@ public class Connection implements ConnectionMBean {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

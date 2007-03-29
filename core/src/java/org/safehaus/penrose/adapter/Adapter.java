@@ -25,9 +25,10 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.connector.Connection;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.Source;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public abstract class Adapter {
     protected PenroseConfig penroseConfig;
     protected PenroseContext penroseContext;
 
+    protected Partition partition;
     protected AdapterConfig adapterConfig;
     protected Connection connection;
 
@@ -59,14 +61,25 @@ public abstract class Adapter {
     public void dispose() throws Exception {
     }
 
+    public boolean isJoinSupported() {
+        return false;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            Partition partition,
+            Source source,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void add(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -79,9 +92,8 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -94,9 +106,16 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            Partition partition,
+            Source source,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void delete(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -109,9 +128,8 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -124,9 +142,8 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -139,9 +156,16 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Partition partition,
+            Source source,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void search(
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             SearchRequest request,
             SearchResponse response
@@ -197,15 +221,6 @@ public abstract class Adapter {
         return connection.getConnectionName();
     }
 
-    public Filter convert(EntryMapping entryMapping, Filter filter) throws Exception {
-
-        if (filter instanceof SubstringFilter) {
-            return convert(entryMapping, (SubstringFilter)filter);
-        } else {
-            return filter;
-        }
-    }
-
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
         return filter;
     }
@@ -224,5 +239,13 @@ public abstract class Adapter {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

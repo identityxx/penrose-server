@@ -4,22 +4,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.session.SearchRequest;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.source.SourceRef;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -51,7 +49,11 @@ public class SearchEngine {
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
 
-                Attributes attributes = computeAttributes(interpreter, entryMapping, new Attributes());
+                Attributes sv = EntryUtil.computeAttributes(sourceValues);
+
+                interpreter.set(sv);
+                Attributes attributes = computeAttributes(interpreter, entryMapping, sv);
+                interpreter.clear();
 
                 Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
                 results.add(entry);
@@ -65,7 +67,12 @@ public class SearchEngine {
                     EntryMapping em = result.getEntryMapping();
 
                     Attributes sv = EntryUtil.computeAttributes(sourceValues);
-                    sv.add(result.getAttributes());
+
+                    for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
+                        String sourceName = (String)i.next();
+                        Attributes esv = result.getSourceValues(sourceName);
+                        sv.add(sourceName, esv);
+                    }
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -74,8 +81,12 @@ public class SearchEngine {
                         sv.print();
                     }
 
+                    interpreter.set(sv);
+
                     Collection dns = engine.computeDns(partition, interpreter, em, sv);
                     Attributes attributes = computeAttributes(interpreter, em, sv);
+
+                    interpreter.clear();
 
                     if (debug) {
                         log.debug("Attributes:");
@@ -85,21 +96,25 @@ public class SearchEngine {
                     for (Iterator i=dns.iterator(); i.hasNext(); ) {
                         DN dn = (DN)i.next();
 
+                        if (debug) log.debug("Generating entry "+dn);
                         Entry data = new Entry(dn, em, attributes);
                         results.add(data);
                     }
                 }
             };
 
-            SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            Collection groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
 
-            Connector connector = engine.getConnector(sourceConfig);
+            Iterator iterator = groupsOfSources.iterator();
+            Collection primarySources = (Collection)iterator.next();
+
+            SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+            Connector connector = engine.getConnector(sourceRef);
 
             connector.search(
                     partition,
                     entryMapping,
-                    sourceMappings,
+                    primarySources,
                     sourceValues,
                     request,
                     sr
@@ -116,8 +131,6 @@ public class SearchEngine {
             Attributes sourceValues
     ) throws Exception {
 
-        interpreter.set(sourceValues);
-
         Attributes attributes = new Attributes();
 
         Collection attributeMappings = entryMapping.getAttributeMappings();
@@ -125,7 +138,7 @@ public class SearchEngine {
         for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            Object value = interpreter.eval(entryMapping, attributeMapping);
+            Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
             if (value instanceof Collection) {
@@ -140,8 +153,6 @@ public class SearchEngine {
             String objectClass = (String)i.next();
             attributes.addValue("objectClass", objectClass);
         }
-
-        interpreter.clear();
 
         return attributes;
     }

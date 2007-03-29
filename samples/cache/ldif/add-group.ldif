@@ -1,0 +1,6 @@
+dn: cn=test,ou=Groups,dc=Cache,dc=Example,dc=com
+cn: test
+objectClass: groupOfUniqueNames
+uniqueMember: uid=test,ou=Users,dc=Cache,dc=Example,dc=com
+uniqueMember: uid=swhite,ou=Users,dc=Cache,dc=Example,dc=com
+uniqueMember: uid=lwalker,ou=Users,dc=Cache,dc=Example,dc=com

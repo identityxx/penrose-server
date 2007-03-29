@@ -23,6 +23,7 @@ import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
+import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.handler.Handler;
@@ -161,10 +162,10 @@ public class CacheManager {
 
                 if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
 
-                String catalog = sourceConfig.getParameter(JDBCAdapter.CATALOG);
-                String schema = sourceConfig.getParameter(JDBCAdapter.SCHEMA);
-                String tableName = sourceConfig.getParameter(JDBCAdapter.TABLE);
-                if (tableName == null) tableName = sourceConfig.getParameter(JDBCAdapter.TABLE_NAME);
+                String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+                String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+                String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
+                if (tableName == null) tableName = sourceConfig.getParameter(JDBCClient.TABLE_NAME);
                 if (catalog != null) tableName = catalog +"."+tableName;
                 if (schema != null) tableName = schema +"."+tableName;
 

@@ -385,7 +385,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public String getHandlerName() {
-        return handlerMapping == null ? "DEFAULT" : handlerMapping.getHandlerName();
+        return handlerMapping == null ? null : handlerMapping.getHandlerName();
     }
 
     public String getEngineName() {

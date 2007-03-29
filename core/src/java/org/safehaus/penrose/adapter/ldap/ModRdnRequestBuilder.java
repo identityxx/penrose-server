@@ -2,20 +2,14 @@ package org.safehaus.penrose.adapter.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.ModRdnRequest;
 import org.safehaus.penrose.session.ModRdnResponse;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -28,15 +22,11 @@ public class ModRdnRequestBuilder {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    LDAPAdapter adapter;
+    String suffix;
 
-    Partition partition;
-    EntryMapping entryMapping;
-
-    Collection sourceMappings;
-    SourceMapping primarySourceMapping;
-
+    Collection sources;
     AttributeValues sourceValues;
+
     Interpreter interpreter;
 
     ModRdnRequest request;
@@ -45,48 +35,39 @@ public class ModRdnRequestBuilder {
     Collection requests = new ArrayList();
 
     public ModRdnRequestBuilder(
-            LDAPAdapter adapter,
-            Partition partition,
-            EntryMapping entryMapping,
-            Collection sourceMappings,
+            String suffix,
+            Collection sources,
             AttributeValues sourceValues,
+            Interpreter interpreter,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        this.adapter = adapter;
+        this.suffix = suffix;
 
-        this.partition = partition;
-        this.entryMapping = entryMapping;
-
-        this.sourceMappings = sourceMappings;
-        primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
-
+        this.sources = sources;
         this.sourceValues = sourceValues;
+
+        this.interpreter = interpreter;
 
         this.request = request;
         this.response = response;
-
-        PenroseContext penroseContext = adapter.getPenroseContext();
-        interpreter = penroseContext.getInterpreterManager().newInstance();
     }
 
     public Collection generate() throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        generatePrimaryRequest(sourceMapping);
+        SourceRef sourceRef = (SourceRef) sources.iterator().next();
+        generatePrimaryRequest(sourceRef);
 
         return requests;
     }
 
-    public void generatePrimaryRequest(SourceMapping sourceMapping) throws Exception {
+    public void generatePrimaryRequest(SourceRef sourceRef) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
+        String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
         ModRdnRequest newRequest = new ModRdnRequest();
 
@@ -102,22 +83,22 @@ public class ModRdnRequestBuilder {
 
         RDNBuilder rb = new RDNBuilder();
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-            String fieldName = fieldMapping.getName();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-            if (!fieldConfig.isPrimaryKey()) continue;
+            String fieldName = fieldRef.getName();
+            if (!fieldRef.isPrimaryKey()) continue;
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            rb.set(fieldConfig.getOriginalName(), value);
+            rb.set(fieldRef.getOriginalName(), value);
         }
 
-        newRequest.setDn(adapter.getDn(sourceConfig, rb.toRdn()));
+        Source source = sourceRef.getSource();
+        newRequest.setDn(getDn(source, rb.toRdn()));
 
         interpreter.clear();
         interpreter.set(sourceValues);
@@ -132,22 +113,34 @@ public class ModRdnRequestBuilder {
 
         rb.clear();
 
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-            String fieldName = fieldMapping.getName();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-            if (!fieldConfig.isPrimaryKey()) continue;
+            String fieldName = fieldRef.getName();
+            if (!fieldRef.isPrimaryKey()) continue;
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            rb.set(fieldConfig.getOriginalName(), value);
+            rb.set(fieldRef.getOriginalName(), value);
         }
 
         newRequest.setNewRdn(rb.toRdn());
 
         requests.add(newRequest);
+    }
+
+    public DN getDn(Source source, RDN rdn) throws Exception {
+        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+
+        DNBuilder db = new DNBuilder();
+        db.append(rdn);
+        db.append(baseDn);
+        db.append(suffix);
+        DN dn = db.toDn();
+
+        return dn;
     }
 }

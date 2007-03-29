@@ -56,8 +56,7 @@
         </condition>
     </target>
 
-    <target name="compile" depends="init">
-        <echo message="Compiling Penrose Core."/>
+    <target name="javacc" depends="init">
         <attrib file="src/java/org/safehaus/penrose/schema/*.java" readonly="false"/>
         <javacc
             target="src/java/org/safehaus/penrose/schema/LDAPv3Schema.jj"
@@ -82,6 +81,10 @@
             javacchome="../lib/javacc"
             outputdirectory="src/java/org/safehaus/penrose/sql"
         />
+    </target>
+
+    <target name="compile" depends="init">
+        <echo message="Compiling Penrose Core."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"

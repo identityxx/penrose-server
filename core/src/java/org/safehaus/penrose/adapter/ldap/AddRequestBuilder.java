@@ -1,17 +1,14 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.session.AddRequest;
 import org.safehaus.penrose.session.AddResponse;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,15 +24,11 @@ public class AddRequestBuilder {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    LDAPAdapter adapter;
+    String suffix;
 
-    Partition partition;
-    EntryMapping entryMapping;
-
-    Collection sourceMappings;
-    SourceMapping primarySourceMapping;
-
+    Collection sources;
     AttributeValues sourceValues;
+
     Interpreter interpreter;
 
     AddRequest request;
@@ -44,48 +37,40 @@ public class AddRequestBuilder {
     Collection requests = new ArrayList();
 
     public AddRequestBuilder(
-            LDAPAdapter adapter,
-            Partition partition,
-            EntryMapping entryMapping,
-            Collection sourceMappings,
+            String suffix,
+            Collection sources,
             AttributeValues sourceValues,
+            Interpreter interpreter,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        this.adapter = adapter;
+        this.suffix = suffix;
 
-        this.partition = partition;
-        this.entryMapping = entryMapping;
-
-        this.sourceMappings = sourceMappings;
-        primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
-
+        this.sources = sources;
         this.sourceValues = sourceValues;
+
+        this.interpreter = interpreter;
 
         this.request = request;
         this.response = response;
-
-        PenroseContext penroseContext = adapter.getPenroseContext();
-        interpreter = penroseContext.getInterpreterManager().newInstance();
     }
 
     public Collection generate() throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        generatePrimaryRequest(sourceMapping);
+        SourceRef sourceRef = (SourceRef) sources.iterator().next();
+        generatePrimaryRequest(sourceRef);
 
         return requests;
     }
 
-    public void generatePrimaryRequest(SourceMapping sourceMapping) throws Exception {
+    public void generatePrimaryRequest(SourceRef sourceRef) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
-        if (debug) log.debug("Processing source "+sourceName);
+        String sourceName = sourceRef.getAlias();
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        if (debug) log.debug("Processing source "+sourceName);
 
         AddRequest newRequest = new AddRequest();
 
@@ -104,21 +89,21 @@ public class AddRequestBuilder {
         Attributes ldapAttributes = new Attributes();
         RDNBuilder rb = new RDNBuilder();
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
+
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            String fieldName = fieldMapping.getName();
+            String fieldName = fieldRef.getName();
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
 
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            Attribute ldapAttribute = new Attribute(fieldConfig.getOriginalName());
+            Attribute ldapAttribute = new Attribute(fieldRef.getOriginalName());
 
-            if ("unicodePwd".equals(fieldConfig.getOriginalName())) {
+            if ("unicodePwd".equals(fieldRef.getOriginalName())) {
                 ldapAttribute.addValue(PasswordUtil.toUnicodePassword(value));
             } else {
                 ldapAttribute.addValue(value);
@@ -126,14 +111,15 @@ public class AddRequestBuilder {
             
             ldapAttributes.add(ldapAttribute);
 
-            if (fieldConfig.isPrimaryKey()) {
-                rb.set(fieldConfig.getOriginalName(), value);
+            if (fieldRef.isPrimaryKey()) {
+                rb.set(fieldRef.getOriginalName(), value);
             }
         }
 
-        newRequest.setDn(adapter.getDn(sourceConfig, rb.toRdn()));
+        Source source = sourceRef.getSource();
+        newRequest.setDn(getDn(source, rb.toRdn()));
 
-        String objectClasses = sourceConfig.getParameter(LDAPAdapter.OBJECT_CLASSES);
+        String objectClasses = source.getParameter(LDAPAdapter.OBJECT_CLASSES);
         Attribute ocAttribute = new Attribute("objectClass");
         for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
             String objectClass = st.nextToken().trim();
@@ -145,5 +131,17 @@ public class AddRequestBuilder {
         newRequest.setAttributes(ldapAttributes);
 
         requests.add(newRequest);
+    }
+
+    public DN getDn(Source source, RDN rdn) throws Exception {
+        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+
+        DNBuilder db = new DNBuilder();
+        db.append(rdn);
+        db.append(baseDn);
+        db.append(suffix);
+        DN dn = db.toDn();
+
+        return dn;
     }
 }

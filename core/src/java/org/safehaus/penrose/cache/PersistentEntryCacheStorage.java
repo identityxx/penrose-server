@@ -23,9 +23,10 @@ import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.entry.*;
 
 import javax.naming.NamingException;
@@ -57,7 +58,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
     public Connection getConnection() throws Exception {
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
-        return (Connection)connectionManager.openConnection(connectionName);
+        return (Connection)connectionManager.openConnection((Partition)null, connectionName);
     }
 
     public void create() throws Exception {

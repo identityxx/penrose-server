@@ -19,60 +19,164 @@ package org.safehaus.penrose.jdbc;
 
 import java.sql.*;
 import java.util.*;
-import java.lang.reflect.Field;
+
+import javax.sql.DataSource;
 
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
-import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
+import org.safehaus.penrose.adapter.jdbc.Parameter;
+import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Field;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.dbcp.ConnectionFactory;
+import org.apache.commons.dbcp.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp.PoolableConnectionFactory;
+import org.apache.commons.dbcp.PoolingDataSource;
 
 public class JDBCClient {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    String driver;
-    String url;
-    String username;
-    String password;
+    public final static String DRIVER       = "driver";
+    public final static String URL          = "url";
+    public final static String USER         = "user";
+    public final static String PASSWORD     = "password";
 
-    DatabaseMetaData dmd;
+    public final static String CATALOG      = "catalog";
+    public final static String SCHEMA       = "schema";
+    public final static String TABLE        = "table";
+    public final static String TABLE_NAME   = "tableName";
+    public final static String FILTER       = "filter";
 
-    Connection connection;
+    public final static String INITIAL_SIZE                         = "initialSize";
+    public final static String MAX_ACTIVE                           = "maxActive";
+    public final static String MAX_IDLE                             = "maxIdle";
+    public final static String MIN_IDLE                             = "minIdle";
+    public final static String MAX_WAIT                             = "maxWait";
 
-    public JDBCClient(Map parameters) throws Exception {
-        this.driver = (String)parameters.get(JDBCAdapter.DRIVER);
-        this.url = (String)parameters.get(JDBCAdapter.URL);
-        this.username = (String)parameters.get(JDBCAdapter.USER);
-        this.password = (String)parameters.get(JDBCAdapter.PASSWORD);
+    public final static String VALIDATION_QUERY                     = "validationQuery";
+    public final static String TEST_ON_BORROW                       = "testOnBorrow";
+    public final static String TEST_ON_RETURN                       = "testOnReturn";
+    public final static String TEST_WHILE_IDLE                      = "testWhileIdle";
+    public final static String TIME_BETWEEN_EVICTION_RUNS_MILLIS    = "timeBetweenEvictionRunsMillis";
+    public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
+    public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
+
+    public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
+    public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
+
+    public Properties properties = new Properties();
+
+    public GenericObjectPool.Config config = new GenericObjectPool.Config();
+    public GenericObjectPool connectionPool;
+    public DataSource ds;
+
+    public JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
+
+    public JDBCClient(Map properties) throws Exception {
+        this.properties.putAll(properties);
     }
 
     public JDBCClient(
             String driver,
             String url,
             String username,
-            String password) throws Exception {
+            String password
+    ) throws Exception {
 
-        this.driver = driver;
-        this.url = url;
-        this.username = username;
-        this.password = password;
+        properties.put(DRIVER, driver);
+        properties.put(URL, url);
+        properties.put(USER, username);
+        properties.put(PASSWORD, password);
     }
 
     public void connect() throws Exception {
+
+        String driver = (String)properties.remove(DRIVER);
+        String url = (String)properties.remove(URL);
+
         Class.forName(driver);
-        connection = DriverManager.getConnection(url, username, password);
-        dmd = connection.getMetaData();
+
+        String s = (String)properties.remove(INITIAL_SIZE);
+        int initialSize = s == null ? 1 : Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_ACTIVE);
+        if (s != null) config.maxActive = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_IDLE);
+        if (s != null) config.maxIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_WAIT);
+        if (s != null) config.maxWait = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_IDLE);
+        if (s != null) config.minIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(NUM_TESTS_PER_EVICTION_RUN);
+        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
+
+        s = (String)properties.remove(TEST_ON_BORROW);
+        if (s != null) config.testOnBorrow = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TEST_ON_RETURN);
+        if (s != null) config.testOnReturn = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TEST_WHILE_IDLE);
+        if (s != null) config.testWhileIdle = new Boolean(s).booleanValue();
+
+        s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
+        if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
+        //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
+
+        connectionPool = new GenericObjectPool(null, config);
+
+        String validationQuery = (String)properties.remove(VALIDATION_QUERY);
+
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
+
+        //PoolableConnectionFactory poolableConnectionFactory =
+                new PoolableConnectionFactory(
+                        connectionFactory,
+                        connectionPool,
+                        null, // statement pool factory
+                        validationQuery, // test query
+                        false, // read only
+                        true // auto commit
+                );
+
+        log.debug("Initializing "+initialSize+" connections.");
+        for (int i = 0; i < initialSize; i++) {
+             connectionPool.addObject();
+         }
+
+        ds = new PoolingDataSource(connectionPool);
     }
 
-    public void close() throws Exception{
-        connection.close();
+    public Connection getConnection() throws Exception {
+        return ds.getConnection();
+    }
+
+    public void close() throws Exception {
+        connectionPool.close();
     }
 
     public String getTypeName(int type) throws Exception {
-        Field fields[] = Types.class.getFields();
+        java.lang.reflect.Field fields[] = Types.class.getFields();
         for (int i=0; i<fields.length; i++) {
-            Field field = fields[i];
+            java.lang.reflect.Field field = fields[i];
             if (field.getInt(null) != type) continue;
             return field.getName();
         }
@@ -89,106 +193,296 @@ public class JDBCClient {
 
         Map columns = new HashMap();
 
-        ResultSet rs = dmd.getColumns(catalog, schema, tableName, "%");
+        Connection connection = null;
 
-        while (rs.next()) {
-            //String tableCatalog = rs.getString(1);
-            //String tableSchema = rs.getString(2);
-            //String tableNm = rs.getString(3);
-            String columnName = rs.getString(4);
-            String columnType = getTypeName(rs.getInt(5));
-            int length = rs.getInt(7);
-            int precision = rs.getInt(9);
+        try {
+            connection = getConnection();
+            DatabaseMetaData dmd = connection.getMetaData();
 
-            log.debug(" - "+columnName+" "+columnType+" ("+length+","+precision+")");
+            ResultSet rs = null;
 
-            FieldConfig field = new FieldConfig(columnName);
-            field.setOriginalName(columnName);
-            field.setType(columnType);
-            field.setLength(length);
-            field.setPrecision(precision);
+            try {
+                rs = dmd.getColumns(catalog, schema, tableName, "%");
 
-            columns.put(columnName, field);
+                while (rs.next()) {
+                    //String tableCatalog = rs.getString(1);
+                    //String tableSchema = rs.getString(2);
+                    //String tableNm = rs.getString(3);
+                    String columnName = rs.getString(4);
+                    String columnType = getTypeName(rs.getInt(5));
+                    int length = rs.getInt(7);
+                    int precision = rs.getInt(9);
+
+                    log.debug(" - "+columnName+" "+columnType+" ("+length+","+precision+")");
+
+                    FieldConfig field = new FieldConfig(columnName);
+                    field.setOriginalName(columnName);
+                    field.setType(columnType);
+                    field.setLength(length);
+                    field.setPrecision(precision);
+
+                    columns.put(columnName, field);
+                }
+
+            } finally {
+                if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            }
+
+            rs = null;
+            try {
+                rs = dmd.getPrimaryKeys(catalog, schema, tableName);
+
+                while (rs.next()) {
+                    String name = rs.getString(4);
+
+                    FieldConfig field = (FieldConfig)columns.get(name);
+                    field.setPrimaryKey(true);
+                }
+
+            } finally {
+                if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            }
+
+        } finally {
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
-
-        rs.close();
-
-        rs = dmd.getPrimaryKeys(catalog, schema, tableName);
-
-        while (rs.next()) {
-            String name = rs.getString(4);
-
-            FieldConfig field = (FieldConfig)columns.get(name);
-            field.setPrimaryKey(true);
-        }
-
-        rs.close();
 
         return columns.values();
     }
 
     public Collection getCatalogs() throws Exception {
+
         log.debug("Getting catalogs");
-        ResultSet rs = dmd.getCatalogs();
 
         Collection catalogs = new ArrayList();
-        while (rs.next()) {
-            String catalogName = rs.getString(1);
-            log.debug(" - "+catalogName);
-            catalogs.add(catalogName);
-        }
 
-        rs.close();
+        Connection connection = null;
+        ResultSet rs = null;
+
+        try {
+            connection = getConnection();
+            DatabaseMetaData dmd = connection.getMetaData();
+
+            rs = dmd.getCatalogs();
+
+            while (rs.next()) {
+                String catalogName = rs.getString(1);
+                log.debug(" - "+catalogName);
+                catalogs.add(catalogName);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
 
         return catalogs;
     }
 
     public Collection getSchemas() throws Exception {
+
         log.debug("Getting schemas");
-        ResultSet rs = dmd.getSchemas();
 
         Collection schemas = new ArrayList();
-        while (rs.next()) {
-            String schemaName = rs.getString(1);
-            log.debug(" - "+schemaName);
-            schemas.add(schemaName);
-        }
 
-        rs.close();
+        Connection connection = null;
+        ResultSet rs = null;
+
+        try {
+            connection = getConnection();
+            DatabaseMetaData dmd = connection.getMetaData();
+
+            rs = dmd.getSchemas();
+
+            while (rs.next()) {
+                String schemaName = rs.getString(1);
+                log.debug(" - "+schemaName);
+                schemas.add(schemaName);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
 
         return schemas;
     }
 
-    public Collection getTables() throws SQLException {
+    public Collection getTables() throws Exception {
         return getTables(null, null);
     }
 
-    public Collection getTables(String catalog, String schema) throws SQLException {
+    public Collection getTables(String catalog, String schema) throws Exception {
 
         log.debug("Getting table names for "+catalog+" "+schema);
+
         Collection tables = new TreeSet();
 
-        /*
-           * String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL
-           * TEMPORARY", "LOCAL TEMPORARY", "SYSTEM TABLE" };
-           */
-        String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM" };
-        ResultSet rs = dmd.getTables(catalog, schema, "%", tableTypes);
+        Connection connection = null;
+        ResultSet rs = null;
 
-        while (rs.next()) {
-            String tableCatalog = rs.getString(1);
-            String tableSchema = rs.getString(2);
-            String tableName = rs.getString(3);
-            String tableType = rs.getString(4);
-            //String remarks = rs.getString(5);
+        try {
+            connection = getConnection();
+            DatabaseMetaData dmd = connection.getMetaData();
 
-            //log.debug(" - "+tableSchema+" "+tableName);
-            TableConfig tableConfig = new TableConfig(tableName, tableType, tableCatalog, tableSchema);
-            tables.add(tableConfig);
+            // String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL
+            // TEMPORARY", "LOCAL TEMPORARY", "SYSTEM TABLE" };
+            String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM" };
+            rs = dmd.getTables(catalog, schema, "%", tableTypes);
+
+            while (rs.next()) {
+                String tableCatalog = rs.getString(1);
+                String tableSchema = rs.getString(2);
+                String tableName = rs.getString(3);
+                String tableType = rs.getString(4);
+                //String remarks = rs.getString(5);
+
+                //log.debug(" - "+tableSchema+" "+tableName);
+                TableConfig tableConfig = new TableConfig(tableName, tableType, tableCatalog, tableSchema);
+                tables.add(tableConfig);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
-        rs.close();
-
         return tables;
+    }
+
+    public void executeUpdate(UpdateRequest request, UpdateResponse response) throws Exception {
+        String sql = statementBuilder.generate(request.getStatement());
+        Collection parameters = request.getParameters();
+        executeUpdate(sql, parameters, response);
+    }
+
+    public void executeUpdate(String sql, UpdateResponse response) throws Exception {
+        executeUpdate(sql, null, response);
+    }
+
+    public void executeUpdate(String sql, Collection parameters, UpdateResponse response) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            Collection lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            for (Iterator j=lines.iterator(); j.hasNext(); ) {
+                String line = (String)j.next();
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
+            }
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+
+            if (parameters != null && !parameters.isEmpty()) {
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
+                int counter = 1;
+                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                    Parameter parameter = (Parameter)j.next();
+                    Field field = parameter.getField();
+                    Object value = parameter.getValue();
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value+" ("+ field.getType()+")", 80));
+                }
+                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            }
+        }
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+
+            if (parameters != null) {
+                int counter = 1;
+                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                    Parameter parameter = (Parameter)j.next();
+                    Field field = parameter.getField();
+                    Object value = parameter.getValue();
+                    setParameter(ps, counter, value, field);
+                }
+            }
+
+            int count = ps.executeUpdate();
+            response.setRowCount(count);
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
+    }
+
+    public void executeQuery(QueryRequest request, QueryResponse response) throws Exception {
+        String sql = statementBuilder.generate(request.getStatement());
+        Collection parameters = request.getParameters();
+        executeQuery(sql, parameters, response);
+    }
+
+    public void executeQuery(String sql, QueryResponse response) throws Exception {
+        executeQuery(sql, null, response);
+    }
+
+    public void executeQuery(String sql, Collection parameters, QueryResponse response) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+       if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            Collection lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            for (Iterator i=lines.iterator(); i.hasNext(); ) {
+                String line = (String)i.next();
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
+            }
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+
+           if (parameters != null && !parameters.isEmpty()) {
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
+                int counter = 1;
+                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                    Parameter parameter = (Parameter)j.next();
+                    Field field = parameter.getField();
+                    Object value = parameter.getValue();
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value+" ("+ field.getType()+")", 80));
+                }
+                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+           }
+        }
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            connection = getConnection();
+
+            ps = connection.prepareStatement(sql);
+
+            if (parameters != null) {
+                int counter = 1;
+                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
+                    Parameter parameter = (Parameter)i.next();
+                    Field field = parameter.getField();
+                    Object value = parameter.getValue();
+                    setParameter(ps, counter, value, field);
+                }
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                response.add(rs);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+
+            response.close();
+        }
+    }
+
+    public void setParameter(PreparedStatement ps, int paramIndex, Object value, Field field) throws Exception {
+    	ps.setObject(paramIndex, value);
     }
 }

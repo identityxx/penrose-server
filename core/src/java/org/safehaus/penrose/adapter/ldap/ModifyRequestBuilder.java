@@ -2,18 +2,15 @@ package org.safehaus.penrose.adapter.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.ModifyRequest;
 import org.safehaus.penrose.session.ModifyResponse;
 import org.safehaus.penrose.session.Modification;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -26,15 +23,11 @@ public class ModifyRequestBuilder {
     
     Logger log = LoggerFactory.getLogger(getClass());
 
-    LDAPAdapter adapter;
+    String suffix;
 
-    Partition partition;
-    EntryMapping entryMapping;
-
-    Collection sourceMappings;
-    SourceMapping primarySourceMapping;
-
+    Collection sources;
     AttributeValues sourceValues;
+
     Interpreter interpreter;
 
     ModifyRequest request;
@@ -43,48 +36,39 @@ public class ModifyRequestBuilder {
     Collection requests = new ArrayList();
 
     public ModifyRequestBuilder(
-            LDAPAdapter adapter,
-            Partition partition,
-            EntryMapping entryMapping,
-            Collection sourceMappings,
+            String suffix,
+            Collection sources,
             AttributeValues sourceValues,
+            Interpreter interpreter,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        this.adapter = adapter;
+        this.suffix = suffix;
 
-        this.partition = partition;
-        this.entryMapping = entryMapping;
-
-        this.sourceMappings = sourceMappings;
-        primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
-
+        this.sources = sources;
         this.sourceValues = sourceValues;
+
+        this.interpreter = interpreter;
 
         this.request = request;
         this.response = response;
-
-        PenroseContext penroseContext = adapter.getPenroseContext();
-        interpreter = penroseContext.getInterpreterManager().newInstance();
     }
 
     public Collection generate() throws Exception {
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        generatePrimaryRequest(sourceMapping);
+        SourceRef sourceRef = (SourceRef) sources.iterator().next();
+        generatePrimaryRequest(sourceRef);
 
         return requests;
     }
 
-    public void generatePrimaryRequest(SourceMapping sourceMapping) throws Exception {
+    public void generatePrimaryRequest(SourceRef sourceRef) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceMapping.getName();
+        String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
 
         ModifyRequest newRequest = new ModifyRequest();
 
@@ -100,22 +84,22 @@ public class ModifyRequestBuilder {
 
         RDNBuilder rb = new RDNBuilder();
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
+            FieldRef fieldRef = (FieldRef)k.next();
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-            String fieldName = fieldMapping.getName();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-            if (!fieldConfig.isPrimaryKey()) continue;
+            String fieldName = fieldRef.getName();
+            if (!fieldRef.isPrimaryKey()) continue;
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            rb.set(fieldConfig.getOriginalName(), value);
+            rb.set(fieldRef.getOriginalName(), value);
         }
 
-        newRequest.setDn(adapter.getDn(sourceConfig, rb.toRdn()));
+        Source source = sourceRef.getSource();
+        newRequest.setDn(getDn(source, rb.toRdn()));
 
         Collection newModifications = new ArrayList();
 
@@ -149,18 +133,18 @@ public class ModifyRequestBuilder {
             switch (type) {
                 case Modification.ADD:
                 case Modification.REPLACE:
-                    for (Iterator j=fieldMappings.iterator(); j.hasNext(); ) {
-                        FieldMapping fieldMapping = (FieldMapping)j.next();
-                        String fieldName = fieldMapping.getName();
-                        FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
-                        if (fieldConfig.isPrimaryKey()) continue;
+                    for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                        FieldRef fieldRef = (FieldRef)j.next();
+                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
+                        String fieldName = fieldRef.getName();
+                        if (fieldRef.isPrimaryKey()) continue;
 
-                        Object value = interpreter.eval(entryMapping, fieldMapping);
+                        Object value = interpreter.eval(fieldMapping);
                         if (value == null) continue;
 
                         if (debug) log.debug("Setting field "+fieldName+" to "+value);
 
-                        Attribute newAttribute = new Attribute(fieldConfig.getOriginalName());
+                        Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                         if (value instanceof Collection) {
                             for (Iterator k=((Collection)value).iterator(); k.hasNext(); ) {
                                 Object v = k.next();
@@ -174,26 +158,27 @@ public class ModifyRequestBuilder {
                     break;
 
                 case Modification.DELETE:
-                    for (Iterator j=fieldMappings.iterator(); j.hasNext(); ) {
-                        FieldMapping fieldMapping = (FieldMapping)j.next();
-                        String fieldName = fieldMapping.getName();
-                        FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+                    for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                        FieldRef fieldRef = (FieldRef)j.next();
+                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
+                        
+                        String fieldName = fieldRef.getName();
 
                         String variable = fieldMapping.getVariable();
                         if (variable == null) {
-                            Object value = interpreter.eval(entryMapping, fieldMapping);
+                            Object value = interpreter.eval(fieldMapping);
                             if (value == null) continue;
 
                             if (debug) log.debug("Setting field "+fieldName+" to null");
 
-                            Attribute newAttribute = new Attribute(fieldConfig.getOriginalName());
+                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                             newAttribute.addValue(value);
                             newModifications.add(new Modification(type, newAttribute));
 
                         } else {
                             if (!variable.equals(attributeName)) continue;
 
-                            Attribute newAttribute = new Attribute(fieldConfig.getOriginalName());
+                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                             for (Iterator k=attributeValues.iterator(); k.hasNext(); ) {
                                 Object value = k.next();
                                 newAttribute.addValue(value);
@@ -211,5 +196,17 @@ public class ModifyRequestBuilder {
         newRequest.setModifications(newModifications);
 
         requests.add(newRequest);
+    }
+
+    public DN getDn(Source source, RDN rdn) throws Exception {
+        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+
+        DNBuilder db = new DNBuilder();
+        db.append(rdn);
+        db.append(baseDn);
+        db.append(suffix);
+        DN dn = db.toDn();
+
+        return dn;
     }
 }

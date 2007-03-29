@@ -18,7 +18,6 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.graph.GraphEdge;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;

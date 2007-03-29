@@ -1,81 +1,44 @@
 package org.safehaus.penrose.jdbc;
 
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.Field;
+
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class InsertStatement extends Statement {
 
-    protected String table;
-    protected Collection columns = new ArrayList();
+    protected Source source;
+    protected Collection fields = new ArrayList();
 
-    public String getTable() {
-        return table;
+    public Source getSource() {
+        return source;
     }
 
-    public void setTable(String table) {
-        this.table = table;
+    public void setSource(Source source) {
+        this.source = source;
     }
 
-    public Collection getColumns() {
-        return columns;
+    public Collection getFields() {
+        return fields;
     }
 
-    public void addColumn(String column) {
-        columns.add(column);
+    public void addField(Field field) {
+        fields.add(field);
+    }
+
+    public void addFields(Collection fields) {
+        this.fields.addAll(fields);
     }
     
-    public void setColumns(Collection columns) {
-        this.columns = columns;
+    public void setFields(Collection fields) {
+        this.fields = fields;
     }
 
     public boolean isEmpty() {
-        return columns.isEmpty();
+        return fields.isEmpty();
     }
-
-    public String getSql() {
-
-        log.debug("Generating insert statement.");
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("insert into ");
-        sb.append(table);
-        sb.append(" (");
-
-        boolean first = true;
-        for (Iterator i=columns.iterator(); i.hasNext(); ) {
-            String column = (String)i.next();
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append(column);
-        }
-
-        sb.append(") values (");
-
-        first = true;
-        for (Iterator i=parameters.iterator(); i.hasNext(); ) {
-            i.next();
-            
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append("?");
-        }
-
-        sb.append(")");
-
-        return sb.toString();
-    }
-
 }

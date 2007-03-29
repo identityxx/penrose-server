@@ -19,9 +19,10 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
@@ -62,7 +63,7 @@ public class JDBCCache {
     }
 
     public Connection getConnection() throws Exception {
-        return (Connection)connectionManager.openConnection(connectionName);
+        return (Connection)connectionManager.openConnection((Partition)null, connectionName);
     }
 
     public String getTableName() {

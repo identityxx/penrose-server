@@ -86,21 +86,32 @@ public class Attributes {
     }
 
     public void add(Attributes attributes) {
+        add(null, attributes);
+    }
+
+    public void add(String prefix, Attributes attributes) {
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
-            add(attribute);
+            add(prefix, attribute);
         }
     }
     
     public void add(Attribute attribute) {
-        String name = attribute.getName();
+        add(null, attribute);
+    }
+
+    public void add(String prefix, Attribute attribute) {
+        String name = prefix == null ? attribute.getName() : prefix+"."+attribute.getName();
+        String normalizedName = name.toLowerCase();
+
         names.add(name);
-        Attribute attr = (Attribute)attributes.get(name.toLowerCase());
+
+        Attribute attr = (Attribute)attributes.get(normalizedName);
         if (attr == null) {
-            attributes.put(name.toLowerCase(), attribute);
-        } else {
-            attr.addValues(attribute.getValues());
+            attr = new Attribute(name);
+            attributes.put(normalizedName, attr);
         }
+        attr.addValues(attribute.getValues());
     }
 
     public Attribute get(String name) {

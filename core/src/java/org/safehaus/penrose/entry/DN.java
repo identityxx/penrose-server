@@ -6,7 +6,7 @@ import java.text.MessageFormat;
 /**
  * @author Endi S. Dewata
  */
-public class DN implements Cloneable {
+public class DN implements Comparable {
 
     public List rdns;
 
@@ -214,33 +214,29 @@ public class DN implements Cloneable {
         return true;
     }
 
-    void copy(DN dn) {
+    public int compareTo(Object object) {
 
-        if (dn == null) return;
+        if (object == null) return 0;
+        if (!(object instanceof DN)) return 0;
 
-        if (dn.rdns == null) {
-            rdns = null;
+        DN dn = (DN)object;
 
-        } else {
-            rdns = new ArrayList();
-            for (Iterator i=dn.rdns.iterator(); i.hasNext(); ) {
-                RDN rdn = (RDN)i.next();
-                rdns.add(rdn);
-            }
+        if (rdns.size() < dn.rdns.size()) return -1;
+        if (rdns.size() > dn.rdns.size()) return 1;
+
+        int i = rdns.size();
+
+        while (i > 0) {
+            RDN rdn1 = (RDN)rdns.get(i-1);
+            RDN rdn2 = (RDN)dn.rdns.get(i-1);
+
+            int c = rdn1.compareTo(rdn2);
+            if (c != 0) return c;
+
+            i--;
         }
 
-        originalDn = dn.originalDn;
-        normalizedDn = dn.normalizedDn;
-        parentDn = dn.parentDn;
-
-        pattern = dn.pattern;
-        formatter = dn.formatter;
-    }
-
-    public Object clone() {
-        DN dn = new DN();
-        dn.copy(this);
-        return dn;
+        return 0;
     }
 
     public String toString() {

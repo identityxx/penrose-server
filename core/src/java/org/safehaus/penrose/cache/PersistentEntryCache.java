@@ -20,7 +20,7 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.session.SearchResponse;
 import org.safehaus.penrose.session.SearchRequest;
@@ -63,7 +63,7 @@ public class PersistentEntryCache extends EntryCache {
 
     public Connection getConnection() throws Exception {
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
-        return (Connection)connectionManager.openConnection(connectionName);
+        return (Connection)connectionManager.openConnection((Partition)null, connectionName);
     }
 
     public void create(Partition partition) throws Exception {

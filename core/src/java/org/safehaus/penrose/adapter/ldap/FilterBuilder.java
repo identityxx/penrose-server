@@ -151,7 +151,7 @@ public class FilterBuilder {
                 FieldMapping fieldMapping = (FieldMapping)j.next();
                 String fieldName = fieldMapping.getName();
 
-                Object value = interpreter.eval(entryMapping, fieldMapping);
+                Object value = interpreter.eval(fieldMapping);
                 if (value == null) {
                     //if (debug) log.debug("Field "+fieldName+" is null.");
                     continue;

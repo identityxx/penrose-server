@@ -24,7 +24,7 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -38,6 +38,8 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -105,6 +107,11 @@ public abstract class Engine {
         this.interpreterManager = interpreterManager;
     }
 
+    public Connector getConnector(SourceRef sourceRef) {
+        Source source = sourceRef.getSource();
+        return getConnector(source.getSourceConfig());
+    }
+
     public Connector getConnector(SourceConfig sourceConfig) {
         String connectorName = sourceConfig.getParameter("connectorName");
         return connectorManager.getConnector(connectorName);
@@ -152,7 +159,7 @@ public abstract class Engine {
         for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
 
-            Object value = interpreter.eval(entryMapping, attributeMapping);
+            Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
             String name = attributeMapping.getName();
@@ -563,41 +570,6 @@ public abstract class Engine {
             SearchResponse response
     ) throws Exception;
 
-    public Filter createFilter(
-            SourceMapping sourceMapping,
-            Collection pks
-    ) throws Exception {
-
-        String prefix = sourceMapping.getName()+".";
-        int length = prefix.length();
-
-        if (pks == null) return null;
-
-        Collection normalizedFilters = new TreeSet();
-        RDNBuilder rb = new RDNBuilder();
-
-        for (Iterator i=pks.iterator(); i.hasNext(); ) {
-            RDN filter = (RDN)i.next();
-
-            rb.clear();
-            for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                if (!name.startsWith(prefix)) continue;
-
-                String newName = name.substring(length);
-                rb.set(newName, filter.get(name));
-            }
-
-            if (rb.isEmpty()) continue;
-
-            rb.normalize();
-            RDN normalizedFilter = rb.toRdn();
-            normalizedFilters.add(normalizedFilter);
-        }
-
-        return FilterTool.createFilter(normalizedFilters);
-    }
-
     public RDN createFilter(
             Partition partition,
             Interpreter interpreter,
@@ -619,7 +591,7 @@ public abstract class Engine {
             FieldMapping fieldMapping = (FieldMapping)j.next();
             String name = fieldMapping.getName();
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             //log.debug("   ==> "+field.getName()+"="+value);
@@ -641,14 +613,8 @@ public abstract class Engine {
             Attributes sourceValues
     ) throws Exception {
 
-        interpreter.set(sourceValues);
-
-        log.debug("Generating DNs:");
         Collection dns = new ArrayList();
         computeDns(partition, interpreter, entryMapping, dns);
-
-        interpreter.clear();
-
         return dns;
     }
 
@@ -671,7 +637,7 @@ public abstract class Engine {
 
         if (parentDns.isEmpty()) {
             DN dn = entryMapping.getDn();
-            log.debug(" - "+dn);
+            log.debug("DN: "+dn);
             dns.add(dn);
 
         } else {
@@ -691,7 +657,7 @@ public abstract class Engine {
                     db.append(parentDn);
                     DN dn = db.toDn();
 
-                    log.debug(" - "+dn);
+                    log.debug("DN: "+dn);
                     dns.add(dn);
                 }
             }
@@ -711,7 +677,7 @@ public abstract class Engine {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             String name = attributeMapping.getName();
 
-            Object value = interpreter.eval(entryMapping, attributeMapping);
+            Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
             rdns.add(name, value);
