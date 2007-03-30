@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.BindRequest;
+import org.safehaus.penrose.ldap.BindRequest;
 import com.identyx.javabackend.DN;
 
 /**

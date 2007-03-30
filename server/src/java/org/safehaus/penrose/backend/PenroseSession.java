@@ -7,6 +7,7 @@ import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.ldap.*;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -176,7 +177,7 @@ public class PenroseSession implements com.identyx.javabackend.Session {
 
         DN penroseDn = ((PenroseDN)dn).getDn();
 
-        Collection penroseModifications = new ArrayList();
+        Collection<Modification> penroseModifications = new ArrayList<Modification>();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             PenroseModification modification = (PenroseModification)i.next();
             penroseModifications.add(modification.getModification());

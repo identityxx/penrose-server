@@ -1,9 +1,8 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attributes;
 import org.ietf.ldap.LDAPException;
 

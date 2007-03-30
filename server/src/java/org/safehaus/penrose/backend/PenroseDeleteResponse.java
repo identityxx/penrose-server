@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.DeleteResponse;
+import org.safehaus.penrose.ldap.DeleteResponse;
 
 /**
  * @author Endi S. Dewata

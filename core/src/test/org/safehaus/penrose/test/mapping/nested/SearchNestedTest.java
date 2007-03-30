@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping.nested;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.apache.log4j.Logger;
 
 /**

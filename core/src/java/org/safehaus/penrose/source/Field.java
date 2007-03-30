@@ -12,6 +12,8 @@ public class Field {
     private String originalName;
     private boolean primaryKey;
     private boolean caseSensitive;
+
+    private int length;
     private String type;
 
     public Field(FieldConfig fieldConfig) {
@@ -21,6 +23,8 @@ public class Field {
         originalName = fieldConfig.getOriginalName();
         primaryKey = fieldConfig.isPrimaryKey();
         caseSensitive = fieldConfig.isCaseSensitive();
+
+        length = fieldConfig.getLength();
         type = fieldConfig.getType();
     }
     
@@ -70,5 +74,13 @@ public class Field {
 
     public void setCaseSensitive(boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
     }
 }

@@ -7,11 +7,13 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 

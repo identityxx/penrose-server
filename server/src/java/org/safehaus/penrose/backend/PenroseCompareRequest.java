@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.CompareRequest;
+import org.safehaus.penrose.ldap.CompareRequest;
 import com.identyx.javabackend.DN;
 
 /**

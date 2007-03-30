@@ -23,7 +23,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.Modification;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -203,8 +203,8 @@ public class SchemaManager implements SchemaManagerMBean {
         return attributes;
     }
 
-    public Collection normalizeModifications(Collection modifications) throws Exception {
-        Collection normalizedModifications = new ArrayList();
+    public Collection<Modification> normalizeModifications(Collection<Modification> modifications) throws Exception {
+        Collection<Modification> normalizedModifications = new ArrayList<Modification>();
 
         for (Iterator i = modifications.iterator(); i.hasNext();) {
             Modification modification = (Modification) i.next();

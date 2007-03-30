@@ -18,8 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 
 /**
  * @author Endi S. Dewata

@@ -25,7 +25,7 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.entry.*;
 
@@ -1136,7 +1136,7 @@ public class PersistentEntryCacheStorage extends EntryCacheStorage {
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
-        String value = filter.getValue();
+        Object value = filter.getValue();
 
         log.debug("Converting "+name+" "+operator+" "+value);
 

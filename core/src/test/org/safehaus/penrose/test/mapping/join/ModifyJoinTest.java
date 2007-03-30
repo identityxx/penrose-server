@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.Modification;
 import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
@@ -24,7 +24,7 @@ public class ModifyJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
 
         Attribute attribute = new Attribute("description");
         attribute.addValue("newdesc1");

@@ -1,13 +1,11 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.ModifyRequest;
-import org.safehaus.penrose.session.ModifyResponse;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.ModifyResponse;
+import org.safehaus.penrose.ldap.Modification;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
@@ -19,10 +17,8 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class ModifyRequestBuilder {
+public class ModifyRequestBuilder extends RequestBuilder {
     
-    Logger log = LoggerFactory.getLogger(getClass());
-
     String suffix;
 
     Collection sources;
@@ -32,8 +28,6 @@ public class ModifyRequestBuilder {
 
     ModifyRequest request;
     ModifyResponse response;
-
-    Collection requests = new ArrayList();
 
     public ModifyRequestBuilder(
             String suffix,
@@ -101,9 +95,9 @@ public class ModifyRequestBuilder {
         Source source = sourceRef.getSource();
         newRequest.setDn(getDn(source, rb.toRdn()));
 
-        Collection newModifications = new ArrayList();
+        Collection<Modification> newModifications = new ArrayList<Modification>();
 
-        Collection modifications = request.getModifications();
+        Collection<Modification> modifications = request.getModifications();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             Modification modification = (Modification)i.next();
 
@@ -196,17 +190,5 @@ public class ModifyRequestBuilder {
         newRequest.setModifications(newModifications);
 
         requests.add(newRequest);
-    }
-
-    public DN getDn(Source source, RDN rdn) throws Exception {
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
-
-        DNBuilder db = new DNBuilder();
-        db.append(rdn);
-        db.append(baseDn);
-        db.append(suffix);
-        DN dn = db.toDn();
-
-        return dn;
     }
 }

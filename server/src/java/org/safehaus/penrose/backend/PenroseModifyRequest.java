@@ -1,7 +1,7 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.ModifyRequest;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.Modification;
 import com.identyx.javabackend.DN;
 
 import java.util.Collection;
@@ -32,7 +32,7 @@ public class PenroseModifyRequest
     }
 
     public void setModifications(Collection modifications) throws Exception {
-        Collection list = new ArrayList();
+        Collection<Modification> list = new ArrayList<Modification>();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             PenroseModification modification = (PenroseModification)i.next();
             list.add(modification.getModification());

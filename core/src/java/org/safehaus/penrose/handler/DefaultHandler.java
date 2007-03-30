@@ -10,6 +10,10 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.AddResponse;
 import org.ietf.ldap.LDAPException;
 import org.ietf.ldap.LDAPConnection;
 

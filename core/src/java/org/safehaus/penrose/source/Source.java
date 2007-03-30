@@ -4,10 +4,10 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
 
@@ -20,6 +20,7 @@ public class Source {
     private SourceConfig sourceConfig;
     private Connection connection;
 
+    private Collection primaryKeyNames;
     Collection primaryKeyFields = new ArrayList();
     Map fields = new LinkedHashMap();
 
@@ -37,6 +38,8 @@ public class Source {
 
             if (fieldConfig.isPrimaryKey()) primaryKeyFields.add(field);
         }
+
+        primaryKeyNames = sourceConfig.getPrimaryKeyNames();
     }
 
     public String getName() {
@@ -69,6 +72,10 @@ public class Source {
 
     public String getParameter(String name) {
         return sourceConfig.getParameter(name);
+    }
+
+    public Collection getPrimaryKeyNames() {
+        return primaryKeyNames;
     }
 
     public Collection getPrimaryKeyFields() {
@@ -134,8 +141,64 @@ public class Source {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            DN dn,
+            Collection<Modification> modifications
+    ) throws Exception {
+
+        ModifyRequest request = new ModifyRequest();
+        request.setDn(dn);
+        request.setModifications(modifications);
+
+        ModifyResponse response = new ModifyResponse();
+
+        connection.modify(this, request, response);
+    }
+
+    public void modify(
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        connection.modify(this, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        connection.modrdn(this, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SearchResponse search(
+            DN dn,
+            Filter filter,
+            int scope
+    ) throws Exception {
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter(filter);
+        request.setScope(scope);
+
+        SearchResponse response = new SearchResponse();
+
+        connection.search(this, request, response);
+
+        return response;
+    }
 
     public void search(
             SearchRequest request,
@@ -145,4 +208,15 @@ public class Source {
         connection.search(this, request, response);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Change Log
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Long getLastChangeNumber() throws Exception {
+        return connection.getLastChangeNumber(this);
+    }
+
+    public void setPrimaryKeyNames(Collection primaryKeyNames) {
+        this.primaryKeyNames = primaryKeyNames;
+    }
 }

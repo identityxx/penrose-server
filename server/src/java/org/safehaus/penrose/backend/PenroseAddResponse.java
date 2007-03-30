@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.AddResponse;
+import org.safehaus.penrose.ldap.AddResponse;
 
 /**
  * @author Endi S. Dewata

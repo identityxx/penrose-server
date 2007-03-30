@@ -18,8 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.DeleteRequest;
-import org.safehaus.penrose.session.DeleteResponse;
+import org.safehaus.penrose.ldap.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteResponse;
 
 /**
  * @author Endi S. Dewata

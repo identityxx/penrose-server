@@ -24,8 +24,8 @@ import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,7 +191,7 @@ public class SourceCache {
             }
 
             public void close() throws Exception {
-                int lastChangeNumber = connection.getLastChangeNumber(sourceConfig);
+                int lastChangeNumber = 0; // connection.getLastChangeNumber(sourceConfig);
                 log.info("Last change number for "+sourceConfig.getName()+": "+lastChangeNumber);
                 setLastChangeNumber(lastChangeNumber);
 

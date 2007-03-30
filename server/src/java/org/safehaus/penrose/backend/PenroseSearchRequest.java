@@ -1,12 +1,9 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.ldap.SearchRequest;
 
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Iterator;
 
-import com.identyx.javabackend.Control;
 import com.identyx.javabackend.DN;
 import com.identyx.javabackend.Filter;
 

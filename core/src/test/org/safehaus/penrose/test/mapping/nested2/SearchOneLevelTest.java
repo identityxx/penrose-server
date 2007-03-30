@@ -2,10 +2,9 @@ package org.safehaus.penrose.test.mapping.nested2;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attributes;
 
 /**

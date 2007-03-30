@@ -5,6 +5,7 @@ import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -120,7 +121,7 @@ public class SambaGroupModule extends Module {
         Entry entry = result.getEntry();
         Attributes values = entry.getAttributes();
 
-        Collection modifications = modifyRequest.getModifications();
+        Collection<Modification> modifications = modifyRequest.getModifications();
 
         if (values.get("sambaSID") == null || values.get("gidNumber") == null) {
 

@@ -39,7 +39,7 @@ public class FilterTest extends TestCase {
         String operator = sf.getOperator();
         assertTrue("=".equals(operator));
 
-        String value = sf.getValue();
+        Object value = sf.getValue();
         assertTrue("C:\\MyFile".equals(value));
     }
 

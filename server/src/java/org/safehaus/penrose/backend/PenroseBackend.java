@@ -21,8 +21,8 @@ import java.util.*;
 import java.io.File;
 
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;

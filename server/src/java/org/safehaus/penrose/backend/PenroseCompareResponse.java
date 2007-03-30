@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.CompareResponse;
+import org.safehaus.penrose.ldap.CompareResponse;
 
 /**
  * @author Endi S. Dewata

@@ -2,11 +2,11 @@ package org.safehaus.penrose.example.module;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -104,7 +104,7 @@ public class DemoModule extends Module {
         ModifyRequest request = event.getRequest();
         System.out.println("#### Modifying "+request.getDn()+":");
 
-        Collection modifications = request.getModifications();
+        Collection<Modification> modifications = request.getModifications();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             Modification mi = (Modification)i.next();
 

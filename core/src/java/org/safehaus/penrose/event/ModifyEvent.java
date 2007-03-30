@@ -18,8 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.ModifyRequest;
-import org.safehaus.penrose.session.ModifyResponse;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.ModifyResponse;
 
 /**
  * @author Endi S. Dewata

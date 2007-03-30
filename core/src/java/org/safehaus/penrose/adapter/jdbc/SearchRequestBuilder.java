@@ -4,25 +4,21 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.filter.Filter;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SearchRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class SearchRequestBuilder extends RequestBuilder {
 
     Map sources = new LinkedHashMap(); // need to maintain order
 
@@ -116,7 +112,6 @@ public class SearchRequestBuilder {
         boolean debug = log.isDebugEnabled();
 
         SelectStatement statement = new SelectStatement();
-        Collection parameters = new ArrayList();
 
         int sourceCounter = 0;
         for (Iterator i= sources.values().iterator(); i.hasNext(); sourceCounter++) {
@@ -183,7 +178,6 @@ public class SearchRequestBuilder {
         if (debug) log.debug("Source filter: "+sourceFilter);
 
         statement.setFilter(sourceFilter);
-        parameters.addAll(filterBuilder.getParameters());
 
 /*
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
@@ -201,7 +195,8 @@ public class SearchRequestBuilder {
 
         QueryRequest queryRequest = new QueryRequest();
         queryRequest.setStatement(statement);
-        queryRequest.setParameters(parameters);
+
+        requests.add(queryRequest);
 
         return queryRequest;
     }

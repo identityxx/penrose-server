@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteRequest;
 import com.identyx.javabackend.DN;
 
 /**

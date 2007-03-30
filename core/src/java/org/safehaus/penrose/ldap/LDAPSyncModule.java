@@ -75,7 +75,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             DN baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            SearchResult searchResult = createSearchResult(entry);
+            javax.naming.directory.SearchResult searchResult = createSearchResult(entry);
             Attributes attributes = searchResult.getAttributes();
             ctx.createSubcontext(searchResult.getName(), attributes);
 

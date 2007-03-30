@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.UnbindRequest;
+import org.safehaus.penrose.ldap.UnbindRequest;
 import com.identyx.javabackend.DN;
 
 /**

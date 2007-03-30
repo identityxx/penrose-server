@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.UnbindResponse;
+import org.safehaus.penrose.ldap.UnbindResponse;
 
 /**
  * @author Endi S. Dewata

@@ -1,33 +1,29 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.ModRdnRequest;
-import org.safehaus.penrose.session.ModRdnResponse;
+import org.safehaus.penrose.ldap.ModRdnRequest;
+import org.safehaus.penrose.ldap.ModRdnResponse;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
+import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author Endi S. Dewata
  */
-public class ModRdnRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class ModRdnRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
@@ -38,8 +34,6 @@ public class ModRdnRequestBuilder {
     ModRdnResponse response;
 
     AttributeValues newSourceValues = new AttributeValues();
-
-    List requests = new ArrayList();
 
     public ModRdnRequestBuilder(
             Collection sources,
@@ -84,9 +78,9 @@ public class ModRdnRequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         UpdateStatement statement = new UpdateStatement();
-        Collection parameters = new ArrayList();
 
-        statement.setSource(sourceRef);
+        Source source = sourceRef.getSource();
+        statement.setSource(source);
 
         interpreter.set(sourceValues);
 
@@ -111,8 +105,7 @@ public class ModRdnRequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addField(fieldRef);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(fieldRef, value));
 
             newSourceValues.set(sourceName+"."+fieldName, value);
         }
@@ -130,12 +123,9 @@ public class ModRdnRequestBuilder {
             if (!sourceName.equals(sn)) continue;
 
             FieldRef fieldRef = sourceRef.getFieldRef(fn);
-            Field field = fieldRef.getField();
 
-            SimpleFilter sf = new SimpleFilter(fn, "=", "?");
+            SimpleFilter sf = new SimpleFilter(fn, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
-
-            parameters.add(new Parameter(field, value));
         }
 
         statement.setFilter(filter);
@@ -144,7 +134,6 @@ public class ModRdnRequestBuilder {
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(updateRequest);
     }
@@ -159,9 +148,9 @@ public class ModRdnRequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         UpdateStatement statement = new UpdateStatement();
-        Collection parameters = new ArrayList();
 
-        statement.setSource(sourceRef);
+        Source source = sourceRef.getSource();
+        statement.setSource(source);
 
         interpreter.set(newSourceValues);
 
@@ -184,8 +173,7 @@ public class ModRdnRequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addField(fieldRef);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(fieldRef, value));
         }
 
         Filter filter = null;
@@ -203,11 +191,10 @@ public class ModRdnRequestBuilder {
             Object value = sourceValues.getOne(variable);
             if (value == null) continue;
 
-            SimpleFilter sf = new SimpleFilter(fieldName, "=", "?");
+            SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            parameters.add(new Parameter(field, value));
         }
 
         statement.setFilter(filter);
@@ -216,7 +203,6 @@ public class ModRdnRequestBuilder {
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(0, updateRequest);
     }

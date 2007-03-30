@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.ModRdnRequest;
+import org.safehaus.penrose.ldap.ModRdnRequest;
 import com.identyx.javabackend.DN;
 import com.identyx.javabackend.RDN;
 

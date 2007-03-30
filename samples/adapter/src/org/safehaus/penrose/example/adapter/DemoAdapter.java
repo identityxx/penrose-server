@@ -4,10 +4,10 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -148,7 +148,7 @@ public class DemoAdapter extends Adapter {
     ) throws Exception {
 
         DN dn = request.getDn();
-        Collection modifications = request.getModifications();
+        Collection<Modification> modifications = request.getModifications();
         System.out.println("Modifying entry "+dn);
 
         RDN rdn = dn.getRdn();

@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.nested2;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.Modification;
 import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
@@ -30,7 +30,7 @@ public class ModifyNestedTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
 
         Attribute attribute = new Attribute("description");
         attribute.addValue("newchild1");

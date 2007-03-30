@@ -1,6 +1,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.UnbindResponse;
+import org.safehaus.penrose.ldap.UnbindRequest;
 
 /**
  * @author Endi S. Dewata

@@ -30,9 +30,6 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.Modification;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.DNBuilder;
@@ -60,7 +57,7 @@ public class LDAPClient {
 
     LDAPConnection connection = null;
 
-    private SearchResult rootDSE;
+    private javax.naming.directory.SearchResult rootDSE;
     private Schema schema;
 
     private int pageSize = 1000;
@@ -325,7 +322,7 @@ public class LDAPClient {
         //return binaryAttributes.contains(name.toLowerCase());
     }
 
-    public SearchResult getRootDSE() throws Exception {
+    public javax.naming.directory.SearchResult getRootDSE() throws Exception {
 
         if (rootDSE != null) return rootDSE;
 
@@ -468,7 +465,7 @@ public class LDAPClient {
                 NamingEnumeration results = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
 
                 while (results.hasMore()) {
-                    SearchResult sr = (SearchResult)results.next();
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
                     Attributes attributes = sr.getAttributes();
 
                     Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
@@ -539,7 +536,7 @@ public class LDAPClient {
                 NamingEnumeration results = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
 
                 while (results.hasMore()) {
-                    SearchResult sr = (SearchResult)results.next();
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
                     Attributes attributes = sr.getAttributes();
 
                     Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
@@ -633,7 +630,7 @@ public class LDAPClient {
 
             context = getContext();
             NamingEnumeration results = context.search(schemaDn, "(objectClass=*)", ctls);
-            SearchResult sr = (SearchResult)results.next();
+            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
 
             Attributes attributes = sr.getAttributes();
 
@@ -778,7 +775,7 @@ public class LDAPClient {
                         ne = context.search(ldapBase.toString(), filter, sc);
 
                         while (ne.hasMore()) {
-                            SearchResult sr = (SearchResult)ne.next();
+                            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                             String s = sr.getName();
                             log.debug("SearchResult: ["+s+"]");
 
@@ -807,7 +804,7 @@ public class LDAPClient {
                         attrs.put("ref", referral);
                         attrs.put("objectClass", "referral");
 
-                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
+                        javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(url.getDN(), null, attrs);
                         results.add(sr);
                         //results.addReferral(referral);
 
@@ -846,7 +843,7 @@ public class LDAPClient {
         }
     }
 
-    public SearchResult getEntry(String dn) throws Exception {
+    public javax.naming.directory.SearchResult getEntry(String dn) throws Exception {
 
         DNBuilder db = new DNBuilder();
         db.set(dn);
@@ -867,7 +864,7 @@ public class LDAPClient {
                 NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
                 if (!entries.hasMore()) return null;
 
-                SearchResult sr = (SearchResult)entries.next();
+                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)entries.next();
                 sr.setName(dn);
 
                 return sr;
@@ -894,7 +891,7 @@ public class LDAPClient {
             DN searchBase = db.toDn();
 
             if ("".equals(searchBase)) {
-                SearchResult rootDse = getRootDSE();
+                javax.naming.directory.SearchResult rootDse = getRootDSE();
 /*
                 log.debug("Searching Root DSE:");
 
@@ -914,7 +911,7 @@ public class LDAPClient {
                     String dn = (String)values.next();
                     log.debug(" - "+dn);
 
-                    SearchResult entry = getEntry(dn);
+                    javax.naming.directory.SearchResult entry = getEntry(dn);
                     results.add(entry);
                 }
 
@@ -928,7 +925,7 @@ public class LDAPClient {
                 NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
                 try {
                     while (entries.hasMore()) {
-                        SearchResult sr = (SearchResult)entries.next();
+                        javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)entries.next();
                         db.set(sr.getName());
                         db.append(baseDn);
                         DN dn = db.toDn();
@@ -1014,7 +1011,7 @@ public class LDAPClient {
         return values;
     }
 
-    public void setRootDSE(SearchResult rootDSE) {
+    public void setRootDSE(javax.naming.directory.SearchResult rootDSE) {
         this.rootDSE = rootDSE;
     }
 

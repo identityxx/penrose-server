@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.pipeline;
 
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.ietf.ldap.LDAPException;
 
 /**

@@ -3,13 +3,11 @@ package org.safehaus.penrose.engine.basic;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
@@ -18,6 +16,7 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -32,7 +31,7 @@ public class BasicEngine extends Engine {
     public void init() throws Exception {
         super.init();
 
-        searchEngine     = new SearchEngine(this);
+        searchEngine = new SearchEngine(this);
 
         log.debug("Default engine initialized.");
     }

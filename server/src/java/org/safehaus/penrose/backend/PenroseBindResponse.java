@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.BindResponse;
+import org.safehaus.penrose.ldap.BindResponse;
 
 /**
  * @author Endi S. Dewata

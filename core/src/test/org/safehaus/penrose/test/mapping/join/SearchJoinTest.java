@@ -1,9 +1,9 @@
 package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchResult;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Attributes;

@@ -2,10 +2,11 @@ package org.safehaus.penrose.adapter.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.jdbc.Assignment;
 
 import java.util.*;
 
@@ -19,6 +20,9 @@ public class JDBCFilterBuilder {
     protected Source source;
     protected Map sourceRefs = new LinkedHashMap(); // need to maintain order
 
+    private String sql;
+    private Collection<Assignment> assignments = new ArrayList<Assignment>();
+
     public JDBCFilterBuilder() throws Exception {
     }
 
@@ -28,10 +32,10 @@ public class JDBCFilterBuilder {
         this.source = source;
     }
 
-    public String generate(Filter filter) throws Exception {
+    public void generate(Filter filter) throws Exception {
         StringBuilder sb = new StringBuilder();
         generate(filter, sb);
-        return sb.toString();
+        sql = sb.toString();
     }
 
     public void generate(Filter filter, StringBuilder sb) throws Exception {
@@ -60,12 +64,14 @@ public class JDBCFilterBuilder {
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
+        Object value = filter.getValue();
 
-        int i = name.indexOf('.');
-
+        log.debug("Simple Filter: "+name+" "+operator+" "+value);
+        
         Field field;
 
-        if (i >= 0) {
+        if (source == null) {
+            int i = name.indexOf('.');
             String sourceName = name.substring(0, i);
             String fieldName = name.substring(i+1);
 
@@ -86,6 +92,8 @@ public class JDBCFilterBuilder {
                 "?",
                 sb
         );
+
+        assignments.add(new Assignment(field, value));
     }
 
     public void generate(
@@ -224,5 +232,21 @@ public class JDBCFilterBuilder {
 
     public void addSourceRef(String alias, SourceRef sourceRef) {
         sourceRefs.put(alias, sourceRef);
+    }
+
+    public Collection<Assignment> getAssignments() {
+        return assignments;
+    }
+
+    public void setAssignments(Collection<Assignment> assignments) {
+        this.assignments = assignments;
+    }
+
+    public String getSql() {
+        return sql;
+    }
+
+    public void setSql(String sql) {
+        this.sql = sql;
     }
 }

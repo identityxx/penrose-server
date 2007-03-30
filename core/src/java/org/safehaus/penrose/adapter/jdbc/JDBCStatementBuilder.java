@@ -11,6 +11,7 @@ import org.safehaus.penrose.filter.Filter;
 
 import java.util.Iterator;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -18,6 +19,9 @@ import java.util.Collection;
 public class JDBCStatementBuilder {
 
     Logger log = LoggerFactory.getLogger(getClass());
+
+    protected String sql;
+    protected Collection<Assignment> assigments = new ArrayList<Assignment>();
 
     public JDBCStatementBuilder() {
     }
@@ -47,15 +51,24 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("select distinct ");
 
+        int count = statement.getSourceAliases().size();
+
         boolean first = true;
         for (Iterator i=statement.getFieldRefs().iterator(); i.hasNext(); ) {
             FieldRef fieldRef = (FieldRef)i.next();
+
             if (first) {
                 first = false;
             } else {
                 sb.append(", ");
             }
-            sb.append(fieldRef.getSourceName()+"."+ fieldRef.getOriginalName());
+
+            if (count > 1) {
+                sb.append(fieldRef.getSourceName());
+                sb.append('.');
+            }
+
+            sb.append(fieldRef.getOriginalName());
         }
 
         sb.append(" from ");
@@ -70,8 +83,11 @@ public class JDBCStatementBuilder {
         String table = getTableName(source);
 
         sb.append(table);
-        sb.append(" ");
-        sb.append(alias);
+
+        if (count > 1) {
+            sb.append(" ");
+            sb.append(alias);
+        }
 
         while (i.hasNext() && j.hasNext() && k.hasNext()) {
             alias = (String)i.next();
@@ -93,20 +109,30 @@ public class JDBCStatementBuilder {
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        JDBCFilterBuilder filterBuilder;
 
-        for (Iterator iterator=statement.getSourceAliases().iterator(); iterator.hasNext(); ) {
-            alias = (String)iterator.next();
-            sourceRef = statement.getSourceRef(alias);
-            filterBuilder.addSourceRef(alias, sourceRef);
+        if (count > 1) {
+            filterBuilder = new JDBCFilterBuilder();
+
+            for (Iterator iterator=statement.getSourceAliases().iterator(); iterator.hasNext(); ) {
+                alias = (String)iterator.next();
+                sourceRef = statement.getSourceRef(alias);
+                filterBuilder.addSourceRef(alias, sourceRef);
+            }
+
+        } else {
+            filterBuilder = new JDBCFilterBuilder(source);
         }
 
-        String whereClause = filterBuilder.generate(filter);
+        filterBuilder.generate(filter);
+        String whereClause = filterBuilder.getSql();
 
         if (whereClause.length() > 0) {
             sb.append(" where ");
             sb.append(whereClause);
         }
+
+        assigments.addAll(filterBuilder.getAssignments());
 
         Collection orders = statement.getOrders();
         first = true;
@@ -120,8 +146,11 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            sb.append(fieldRef.getSourceName());
-            sb.append('.');
+            if (count > 1) {
+                sb.append(fieldRef.getSourceName());
+                sb.append('.');
+            }
+            
             sb.append(fieldRef.getOriginalName());
         }
 
@@ -157,8 +186,9 @@ public class JDBCStatementBuilder {
         sb.append(" (");
 
         boolean first = true;
-        for (Iterator i=statement.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+        for (Iterator i=statement.getAssignments().iterator(); i.hasNext(); ) {
+            Assignment assignment = (Assignment)i.next();
+            Field field = assignment.getField();
 
             if (first) {
                 first = false;
@@ -167,12 +197,13 @@ public class JDBCStatementBuilder {
             }
 
             sb.append(field.getOriginalName());
+            assigments.add(assignment);
         }
 
         sb.append(") values (");
 
         first = true;
-        for (Iterator i=statement.getFields().iterator(); i.hasNext(); ) {
+        for (Iterator i=statement.getAssignments().iterator(); i.hasNext(); ) {
             i.next();
 
             if (first) {
@@ -196,16 +227,16 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("update ");
 
-        SourceRef sourceRef = statement.getSource();
-        Source source = sourceRef.getSource();
+        Source source = statement.getSource();
         String table = getTableName(source);
         sb.append(table);
 
         sb.append(" set ");
 
         boolean first = true;
-        for (Iterator j=statement.getFields().iterator(); j.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)j.next();
+        for (Iterator j=statement.getAssignments().iterator(); j.hasNext(); ) {
+            Assignment assignment = (Assignment)j.next();
+            Field field = assignment.getField();
 
             if (first) {
                 first = false;
@@ -213,19 +244,23 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            sb.append(fieldRef.getOriginalName());
+            sb.append(field.getOriginalName());
             sb.append("=?");
+            assigments.add(assignment);
         }
 
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
-        String whereClause = filterBuilder.generate(filter);
+        filterBuilder.generate(filter);
 
+        String whereClause = filterBuilder.getSql();
         if (whereClause.length() > 0) {
             sb.append(" where ");
             sb.append(whereClause);
         }
+
+        assigments.addAll(filterBuilder.getAssignments());
 
         return sb.toString();
     }
@@ -244,12 +279,15 @@ public class JDBCStatementBuilder {
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
-        String whereClause = filterBuilder.generate(filter);
+        filterBuilder.generate(filter);
 
+        String whereClause = filterBuilder.getSql();
         if (whereClause.length() > 0) {
             sb.append(" where ");
             sb.append(whereClause);
         }
+
+        assigments.addAll(filterBuilder.getAssignments());
 
         return sb.toString();
     }
@@ -265,5 +303,21 @@ public class JDBCStatementBuilder {
         if (schema != null) table = schema +"."+table;
 
         return table;
+    }
+
+    public String getSql() {
+        return sql;
+    }
+
+    public void setSql(String sql) {
+        this.sql = sql;
+    }
+
+    public Collection<Assignment> getAssigments() {
+        return assigments;
+    }
+
+    public void setAssigments(Collection<Assignment> assigments) {
+        this.assigments = assigments;
     }
 }

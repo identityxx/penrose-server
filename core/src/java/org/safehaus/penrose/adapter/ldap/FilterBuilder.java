@@ -134,11 +134,7 @@ public class FilterBuilder {
 
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
-
-        if (attributeValue.startsWith("'") && attributeValue.endsWith("'")) {
-            attributeValue = attributeValue.substring(1, attributeValue.length()-1);
-        }
+        Object attributeValue = filter.getValue();
 
         interpreter.set(attributeName, attributeValue);
 

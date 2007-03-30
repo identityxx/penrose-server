@@ -69,14 +69,10 @@ public class JDBCCacheTool {
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
-        String value = filter.getValue();
+        Object value = filter.getValue();
 
         int i = name.indexOf(".");
         if (i >= 0) name = name.substring(i+1);
-
-        if (value.startsWith("'") && value.endsWith("'")) {
-            value = value.substring(1, value.length()-1);
-        }
 
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
         String fieldName = fieldConfig.getName();

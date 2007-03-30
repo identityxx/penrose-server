@@ -2,7 +2,6 @@ package org.safehaus.penrose.jdbc;
 
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
@@ -39,6 +38,11 @@ public class SelectStatement extends Statement {
 
     public Collection getSourceAliases() {
         return sourceRefs.keySet();
+    }
+
+    public SourceRef getSourceRef() {
+        if (sourceRefs.isEmpty()) return null;
+        return (SourceRef)sourceRefs.values().iterator().next();
     }
 
     public SourceRef getSourceRef(String alias) {

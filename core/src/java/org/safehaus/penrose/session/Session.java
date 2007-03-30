@@ -33,6 +33,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -493,11 +494,11 @@ public class Session {
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void modify(String dn, Collection modifications) throws LDAPException {
+    public void modify(String dn, Collection<Modification> modifications) throws LDAPException {
         modify(new DN(dn), modifications);
     }
 
-    public void modify(DN dn, Collection modifications) throws LDAPException {
+    public void modify(DN dn, Collection<Modification> modifications) throws LDAPException {
         ModifyRequest request = new ModifyRequest();
         request.setDn(dn);
         request.setModifications(modifications);
@@ -534,7 +535,7 @@ public class Session {
             lastActivityDate.setTime(System.currentTimeMillis());
 
             DN dn = request.getDn();
-            Collection modifications = request.getModifications();
+            Collection<Modification> modifications = request.getModifications();
 
             if (log.isWarnEnabled()) {
                 log.warn("Modify entry \""+dn+"\".");

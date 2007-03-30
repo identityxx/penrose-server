@@ -1,9 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.Modification;
-import org.safehaus.penrose.entry.Attribute;
-
-import java.util.Iterator;
+import org.safehaus.penrose.ldap.Modification;
 
 /**
  * @author Endi S. Dewata

@@ -21,7 +21,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.ldap.LDAPClient;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.*;
@@ -320,7 +320,7 @@ public class ProxyEngine extends Engine {
         boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
-        Collection modifications = request.getModifications();
+        Collection<Modification> modifications = request.getModifications();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);

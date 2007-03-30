@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.Modification;
+import org.safehaus.penrose.ldap.Modification;
 import org.safehaus.penrose.entry.Attribute;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ public class ModifyBasicTest extends BasicTestCase {
         attribute.addValue("newdesc");
 
         Modification mi = new Modification(Modification.REPLACE, attribute);
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
         modifications.add(mi);
 
         session.modify("cn=group,"+baseDn, modifications);

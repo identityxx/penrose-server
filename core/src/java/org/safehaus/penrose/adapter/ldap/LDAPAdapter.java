@@ -27,7 +27,6 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -37,11 +36,12 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.ldap.LDAPClient;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.Field;
 
 import java.util.*;
 
@@ -69,19 +69,19 @@ public class LDAPAdapter extends Adapter {
         return new LDAPClient(client, getParameters());
     }
 
-    public RDN getPkValues(SourceConfig sourceConfig, javax.naming.directory.SearchResult sr) throws Exception {
+    public RDN getPkValues(Source source, javax.naming.directory.SearchResult sr) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
 
         javax.naming.directory.Attributes attrs = sr.getAttributes();
-        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
+        Collection fields = source.getPrimaryKeyFields();
         for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
+            Field field = (Field)i.next();
 
-            String name = fieldConfig.getName();
+            String name = field.getName();
             if (name.equals("objectClass")) continue;
 
-            javax.naming.directory.Attribute attr = attrs.get(fieldConfig.getOriginalName());
+            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
             if (attr == null) continue;
 
             Collection values = new ArrayList();
@@ -257,7 +257,7 @@ public class LDAPAdapter extends Adapter {
         return ldapAttributes;
     }
 
-    public Collection convertModifications(Collection modifications) throws Exception {
+    public Collection convertModifications(Collection<Modification> modifications) throws Exception {
         Collection list = new ArrayList();
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             Modification modification = (Modification)i.next();
@@ -286,7 +286,7 @@ public class LDAPAdapter extends Adapter {
         return list;
     }
 
-    public Collection convertControls(Collection controls) throws Exception {
+    public Collection convertControls(Collection<Control> controls) throws Exception {
         Collection list = new ArrayList();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
             Control control = (Control)i.next();
@@ -717,11 +717,11 @@ public class LDAPAdapter extends Adapter {
         return dn;
     }
 
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws LDAPException {
-        return 0;
+    public Long getLastChangeNumber(Source source) throws LDAPException {
+        return new Long(0);
     }
 
-    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws LDAPException {
+    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws LDAPException {
 
         SearchResponse response = new SearchResponse();
 
@@ -732,7 +732,7 @@ public class LDAPAdapter extends Adapter {
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName(), 80));
+            log.debug(Formatter.displayLine("Search "+source.getName(), 80));
             log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
             log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
             log.debug(Formatter.displaySeparator(80));
@@ -752,7 +752,7 @@ public class LDAPAdapter extends Adapter {
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                 log.debug(" - "+sr.getName()+","+ldapBase);
 
-                RDN rdn = getPkValues(sourceConfig, sr);
+                RDN rdn = getPkValues(source, sr);
                 response.add(rdn);
             }
 

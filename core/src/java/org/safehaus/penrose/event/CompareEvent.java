@@ -18,8 +18,8 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.CompareResponse;
-import org.safehaus.penrose.session.CompareRequest;
+import org.safehaus.penrose.ldap.CompareResponse;
+import org.safehaus.penrose.ldap.CompareRequest;
 
 /**
  * @author Endi S. Dewata

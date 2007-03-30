@@ -24,10 +24,8 @@ import javax.sql.DataSource;
 
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
-import org.safehaus.penrose.adapter.jdbc.Parameter;
+import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
-import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.source.Field;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -75,8 +73,6 @@ public class JDBCClient {
     public GenericObjectPool.Config config = new GenericObjectPool.Config();
     public GenericObjectPool connectionPool;
     public DataSource ds;
-
-    public JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
 
     public JDBCClient(Map properties) throws Exception {
         this.properties.putAll(properties);
@@ -351,16 +347,21 @@ public class JDBCClient {
     }
 
     public void executeUpdate(UpdateRequest request, UpdateResponse response) throws Exception {
+        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
         String sql = statementBuilder.generate(request.getStatement());
-        Collection parameters = request.getParameters();
-        executeUpdate(sql, parameters, response);
+        Collection<Assignment> assignments = statementBuilder.getAssigments();
+        executeUpdate(sql, assignments, response);
     }
 
     public void executeUpdate(String sql, UpdateResponse response) throws Exception {
         executeUpdate(sql, null, response);
     }
 
-    public void executeUpdate(String sql, Collection parameters, UpdateResponse response) throws Exception {
+    public void executeUpdate(
+            String sql,
+            Collection<Assignment> assignments,
+            UpdateResponse response
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -373,14 +374,13 @@ public class JDBCClient {
             }
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
 
-            if (parameters != null && !parameters.isEmpty()) {
+            if (assignments != null && !assignments.isEmpty()) {
                 log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
                 int counter = 1;
-                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Parameter parameter = (Parameter)j.next();
-                    Field field = parameter.getField();
-                    Object value = parameter.getValue();
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value+" ("+ field.getType()+")", 80));
+                for (Iterator j=assignments.iterator(); j.hasNext(); counter++) {
+                    Assignment assignment = (Assignment)j.next();
+                    Object value = assignment.getValue();
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
                 }
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
             }
@@ -393,13 +393,11 @@ public class JDBCClient {
             connection = getConnection();
             ps = connection.prepareStatement(sql);
 
-            if (parameters != null) {
+            if (assignments != null) {
                 int counter = 1;
-                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Parameter parameter = (Parameter)j.next();
-                    Field field = parameter.getField();
-                    Object value = parameter.getValue();
-                    setParameter(ps, counter, value, field);
+                for (Iterator j=assignments.iterator(); j.hasNext(); counter++) {
+                    Assignment assignment = (Assignment)j.next();
+                    setParameter(ps, counter, assignment);
                 }
             }
 
@@ -413,16 +411,21 @@ public class JDBCClient {
     }
 
     public void executeQuery(QueryRequest request, QueryResponse response) throws Exception {
+        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
         String sql = statementBuilder.generate(request.getStatement());
-        Collection parameters = request.getParameters();
-        executeQuery(sql, parameters, response);
+        Collection<Assignment> assignments = statementBuilder.getAssigments();
+        executeQuery(sql, assignments, response);
     }
 
     public void executeQuery(String sql, QueryResponse response) throws Exception {
         executeQuery(sql, null, response);
     }
 
-    public void executeQuery(String sql, Collection parameters, QueryResponse response) throws Exception {
+    public void executeQuery(
+            String sql,
+            Collection<Assignment> parameters,
+            QueryResponse response
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -439,10 +442,9 @@ public class JDBCClient {
                 log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
                 int counter = 1;
                 for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Parameter parameter = (Parameter)j.next();
-                    Field field = parameter.getField();
-                    Object value = parameter.getValue();
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value+" ("+ field.getType()+")", 80));
+                    Assignment assignment = (Assignment)j.next();
+                    Object value = assignment.getValue();
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
                 }
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
            }
@@ -460,10 +462,8 @@ public class JDBCClient {
             if (parameters != null) {
                 int counter = 1;
                 for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
-                    Parameter parameter = (Parameter)i.next();
-                    Field field = parameter.getField();
-                    Object value = parameter.getValue();
-                    setParameter(ps, counter, value, field);
+                    Assignment assignment = (Assignment)i.next();
+                    setParameter(ps, counter, assignment);
                 }
             }
 
@@ -482,7 +482,7 @@ public class JDBCClient {
         }
     }
 
-    public void setParameter(PreparedStatement ps, int paramIndex, Object value, Field field) throws Exception {
-    	ps.setObject(paramIndex, value);
+    public void setParameter(PreparedStatement ps, int paramIndex, Assignment assignment) throws Exception {
+    	ps.setObject(paramIndex, assignment.getValue());
     }
 }

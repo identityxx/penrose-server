@@ -1,26 +1,21 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.DeleteRequest;
-import org.safehaus.penrose.session.DeleteResponse;
+import org.safehaus.penrose.ldap.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteResponse;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class DeleteRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class DeleteRequestBuilder extends RequestBuilder {
 
     String suffix;
 
@@ -31,8 +26,6 @@ public class DeleteRequestBuilder {
 
     DeleteRequest request;
     DeleteResponse response;
-
-    Collection requests = new ArrayList();
 
     public DeleteRequestBuilder(
             String suffix,
@@ -101,17 +94,5 @@ public class DeleteRequestBuilder {
         newRequest.setDn(getDn(source, rb.toRdn()));
 
         requests.add(newRequest);
-    }
-
-    public DN getDn(Source source, RDN rdn) throws Exception {
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
-
-        DNBuilder db = new DNBuilder();
-        db.append(rdn);
-        db.append(baseDn);
-        db.append(suffix);
-        DN dn = db.toDn();
-
-        return dn;
     }
 }

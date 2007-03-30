@@ -21,9 +21,9 @@ public class SimpleFilter extends ItemFilter {
 
 	String attribute;
 	String operator;
-	String value;
+	Object value;
 
-	public SimpleFilter(String attribute, String operator, String value) {
+	public SimpleFilter(String attribute, String operator, Object value) {
 		this.attribute = attribute;
 		this.operator = operator;
 		this.value = value;
@@ -45,11 +45,11 @@ public class SimpleFilter extends ItemFilter {
 		this.operator = operator;
 	}
 
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 
@@ -78,6 +78,6 @@ public class SimpleFilter extends ItemFilter {
     }
 
 	public String toString() {
-		return "(" + attribute + operator + FilterTool.escape(value) + ")";
+		return "(" + attribute + operator + FilterTool.escape(value.toString()) + ")";
 	}
 }

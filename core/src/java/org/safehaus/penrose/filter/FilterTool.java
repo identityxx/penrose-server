@@ -124,7 +124,7 @@ public class FilterTool {
     public boolean isValid(Attributes attributes, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
+        Object attributeValue = filter.getValue();
 
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) return false;
@@ -359,9 +359,11 @@ public class FilterTool {
     public boolean isValid(EntryMapping entryMapping, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
+        Object attributeValue = filter.getValue();
 
-        if (attributeName.equalsIgnoreCase("objectclass") && entryMapping.containsObjectClass(attributeValue)) return true;
+        if (attributeName.equalsIgnoreCase("objectclass")) {
+            return entryMapping.containsObjectClass(attributeValue.toString());
+        }
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         if (attributeMapping == null) return false;
@@ -463,7 +465,7 @@ public class FilterTool {
     public static boolean isValid(RDN rdn, SimpleFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
+        Object attributeValue = filter.getValue();
 
         Object value = rdn.get(attributeName);
         if (value == null) return false;

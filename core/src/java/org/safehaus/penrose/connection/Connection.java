@@ -17,9 +17,7 @@
  */
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.AttributeValues;
@@ -28,6 +26,7 @@ import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,6 +181,15 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Source source,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        adapter.modify(source, request, response);
+    }
+
+    public void modify(
             EntryMapping entryMapping,
             Collection sources,
             AttributeValues sourceValues,
@@ -195,6 +203,15 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            Source source,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        adapter.modrdn(source, request, response);
+    }
 
     public void modrdn(
             EntryMapping entryMapping,
@@ -231,12 +248,12 @@ public class Connection implements ConnectionMBean {
         adapter.search(entryMapping, sources, sourceValues, request, response);
     }
 
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        return adapter.getLastChangeNumber(sourceConfig);
+    public Long getLastChangeNumber(Source source) throws Exception {
+        return adapter.getLastChangeNumber(source);
     }
 
-    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        return adapter.getChanges(sourceConfig, lastChangeNumber);
+    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws Exception {
+        return adapter.getChanges(source, lastChangeNumber);
     }
 
     public Object openConnection() throws Exception {

@@ -20,8 +20,6 @@ package org.safehaus.penrose.adapter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
-import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.AttributeValues;
@@ -29,6 +27,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -128,6 +127,14 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Source source,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
             AttributeValues sourceValues,
@@ -140,6 +147,14 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            Source source,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
 
     public void modrdn(
             EntryMapping entryMapping,
@@ -173,11 +188,11 @@ public abstract class Adapter {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        return 0;
+    public Long getLastChangeNumber(Source source) throws Exception {
+        return null;
     }
 
-    public SearchResponse getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
+    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws Exception {
         return null;
     }
 

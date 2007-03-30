@@ -46,7 +46,6 @@ public class FilterBuilder {
 
     Map sourceAliases = new LinkedHashMap(); // need to maintain order
     Filter sourceFilter;
-    Collection parameters = new ArrayList();
 
     public FilterBuilder(
             EntryMapping entryMapping,
@@ -77,22 +76,16 @@ public class FilterBuilder {
             String sourceName = name.substring(0, p);
             String fieldName = name.substring(p+1);
 
-            SourceRef sourceRef = (SourceRef)this.sourceRefs.get(sourceName);
-            Source source = sourceRef.getSource();
-
             String alias = createTableAlias(sourceName);
             setTableAlias(sourceName, alias);
 
             for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
 
-                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", "?");
+                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
                 if (debug) log.debug(" - Filter "+f);
 
                 sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
-
-                Field field = source.getField(fieldName);
-                parameters.add(new Parameter(field, value));
             }
         }
     }
@@ -167,11 +160,7 @@ public class FilterBuilder {
 
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
-
-        if (attributeValue.startsWith("'") && attributeValue.endsWith("'")) {
-            attributeValue = attributeValue.substring(1, attributeValue.length()-1);
-        }
+        Object attributeValue = filter.getValue();
 
         interpreter.set(attributeName, attributeValue);
 
@@ -197,12 +186,10 @@ public class FilterBuilder {
 
                 setTableAlias(sourceName, alias);
 
-                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, operator, "?");
+                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, operator, value);
                 if (debug) log.debug(" - Filter "+f+" => "+value);
                 
                 newFilter = FilterTool.appendAndFilter(newFilter, f);
-
-                parameters.add(new Parameter(field, value));
             }
         }
 
@@ -247,14 +234,8 @@ public class FilterBuilder {
 
         String value = sb.toString();
 
-        SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "like", "?");
+        SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "like", value);
         if (debug) log.debug(" - Filter "+f);
-
-        SourceRef sourceRef = (SourceRef) sourceRefs.get(sourceName);
-        Source source = sourceRef.getSource();
-
-        Field field = source.getField(fieldName);
-        parameters.add(new Parameter(field, value));
 
         return f;
     }
@@ -347,13 +328,5 @@ public class FilterBuilder {
 
     public void setSourceAliases(Map sourceAliases) {
         this.sourceAliases = sourceAliases;
-    }
-
-    public Collection getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Collection parameters) {
-        this.parameters = parameters;
     }
 }

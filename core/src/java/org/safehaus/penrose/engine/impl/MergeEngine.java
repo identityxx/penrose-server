@@ -18,7 +18,7 @@
 package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;

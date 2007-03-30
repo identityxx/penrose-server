@@ -1,26 +1,21 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.BindRequest;
-import org.safehaus.penrose.session.BindResponse;
+import org.safehaus.penrose.ldap.BindRequest;
+import org.safehaus.penrose.ldap.BindResponse;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class BindRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class BindRequestBuilder extends RequestBuilder {
 
     String suffix;
 
@@ -31,8 +26,6 @@ public class BindRequestBuilder {
 
     BindRequest request;
     BindResponse response;
-
-    Collection requests = new ArrayList();
 
     public BindRequestBuilder(
             String suffix,
@@ -52,8 +45,6 @@ public class BindRequestBuilder {
 
         this.request = request;
         this.response = response;
-
-        ;
     }
 
     public BindRequest generate() throws Exception {
@@ -104,17 +95,5 @@ public class BindRequestBuilder {
         newRequest.setPassword(request.getPassword());
 
         requests.add(newRequest);
-    }
-
-    public DN getDn(Source source, RDN rdn) throws Exception {
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
-
-        DNBuilder db = new DNBuilder();
-        db.append(rdn);
-        db.append(baseDn);
-        db.append(suffix);
-        DN dn = db.toDn();
-
-        return dn;
     }
 }

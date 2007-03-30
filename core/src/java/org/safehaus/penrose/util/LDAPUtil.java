@@ -19,7 +19,7 @@ package org.safehaus.penrose.util;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.session.SearchRequest;
+import org.safehaus.penrose.ldap.SearchRequest;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;

@@ -5,20 +5,4 @@
 
 <modules>
 
-  <module name="Polling Connector" enabled="false">
-    <module-class>org.safehaus.penrose.connector.PollingConnectorModule</module-class>
-    <parameter>
-      <param-name>interval</param-name>
-      <param-value>5</param-value>
-    </parameter>
-  </module>
-
-  <module name="LDAP Sync" enabled="false">
-    <module-class>org.safehaus.penrose.ldap.LDAPSyncModule</module-class>
-    <parameter>
-      <param-name>connection</param-name>
-      <param-value></param-value>
-    </parameter>
-  </module>
-    
 </modules>

@@ -1,28 +1,26 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.jdbc.DeleteStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.ldap.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteResponse;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class DeleteRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class DeleteRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
@@ -31,8 +29,6 @@ public class DeleteRequestBuilder {
 
     DeleteRequest request;
     DeleteResponse response;
-
-    List requests = new ArrayList();
 
     public DeleteRequestBuilder(
             Collection sources,
@@ -79,9 +75,9 @@ public class DeleteRequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         DeleteStatement statement = new DeleteStatement();
-        Collection parameters = new ArrayList();
 
-        statement.setSource(sourceRef.getSource());
+        Source source = sourceRef.getSource();
+        statement.setSource(source);
 
         Filter filter = null;
 
@@ -98,17 +94,14 @@ public class DeleteRequestBuilder {
             FieldRef fieldRef = sourceRef.getFieldRef(fn);
             Field field = fieldRef.getField();
 
-            SimpleFilter sf = new SimpleFilter(fn, "=", "?");
+            SimpleFilter sf = new SimpleFilter(fn, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
-
-            parameters.add(new Parameter(field, value));
         }
 
         statement.setFilter(filter);
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(updateRequest);
     }
@@ -123,9 +116,9 @@ public class DeleteRequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         DeleteStatement statement = new DeleteStatement();
-        Collection parameters = new ArrayList();
 
-        statement.setSource(sourceRef.getSource());
+        Source source = sourceRef.getSource();
+        statement.setSource(source);
 
         Filter filter = null;
 
@@ -146,14 +139,12 @@ public class DeleteRequestBuilder {
             filter = FilterTool.appendAndFilter(filter, sf);
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            parameters.add(new Parameter(field, value));
         }
 
         statement.setFilter(filter);
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(0, updateRequest);
     }

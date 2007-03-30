@@ -6,6 +6,7 @@ import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -61,7 +62,7 @@ public class SambaUserModule extends Module {
 
             log.debug("Adding NT Password and LM Password.");
 
-            Collection modifications = new ArrayList();
+            Collection<Modification> modifications = new ArrayList<Modification>();
 
             Attribute attribute = new Attribute("userPassword", bindRequest.getPassword());
             Modification modification = new Modification(Modification.REPLACE, attribute);
@@ -231,7 +232,7 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Collection modifications = modifyRequest.getModifications();
+            Collection<Modification> modifications = modifyRequest.getModifications();
 
             Attribute attribute = new Attribute("uidNumber", uid);
             Modification modification = new Modification(Modification.ADD, attribute);

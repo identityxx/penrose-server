@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.ModRdnResponse;
+import org.safehaus.penrose.ldap.ModRdnResponse;
 
 /**
  * @author Endi S. Dewata

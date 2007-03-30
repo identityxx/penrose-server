@@ -1,7 +1,7 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.Request;
-import com.identyx.javabackend.Control;
+import org.safehaus.penrose.ldap.Request;
+import org.safehaus.penrose.control.Control;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -26,18 +26,18 @@ public class PenroseRequest implements com.identyx.javabackend.Request {
         this.request = request;
     }
 
-    public void addControl(Control control) throws Exception {
+    public void addControl(com.identyx.javabackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         request.addControl(penroseControl.getControl());
     }
 
-    public void removeControl(Control control) throws Exception {
+    public void removeControl(com.identyx.javabackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         request.removeControl(penroseControl.getControl());
     }
 
     public void setControls(Collection controls) throws Exception {
-        Collection list = new ArrayList();
+        Collection<Control> list = new ArrayList<Control>();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
             PenroseControl control = (PenroseControl)i.next();
             list.add(control.getControl());

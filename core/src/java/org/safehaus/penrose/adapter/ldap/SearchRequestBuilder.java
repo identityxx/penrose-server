@@ -1,7 +1,5 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -9,8 +7,8 @@ import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.DNBuilder;
 import org.safehaus.penrose.entry.RDNBuilder;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.SearchRequest;
-import org.safehaus.penrose.session.SearchResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -19,15 +17,11 @@ import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
  */
-public class SearchRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
-
+public class SearchRequestBuilder extends RequestBuilder {
 
     Partition partition;
     EntryMapping entryMapping;
@@ -41,8 +35,6 @@ public class SearchRequestBuilder {
     SearchResponse response;
 
     FilterBuilder filterBuilder;
-
-    Collection requests = new ArrayList();
 
     public SearchRequestBuilder(
             Partition partition,

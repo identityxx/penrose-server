@@ -8,7 +8,6 @@ import java.util.Collection;
 public class Request {
 
     protected Statement statement;
-    protected Collection parameters;
 
     public Statement getStatement() {
         return statement;
@@ -16,13 +15,5 @@ public class Request {
 
     public void setStatement(Statement statement) {
         this.statement = statement;
-    }
-
-    public Collection getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(Collection parameters) {
-        this.parameters = parameters;
     }
 }

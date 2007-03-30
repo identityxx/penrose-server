@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
@@ -33,6 +32,7 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.ldap.*;
 
 import java.sql.ResultSet;
 import java.util.*;
@@ -122,22 +122,19 @@ public class JDBCAdapter extends Adapter {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.addFields(source.getFields());
         statement.setSource(source);
 
-        Collection parameters = new ArrayList();
         Attributes attributes = request.getAttributes();
         for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = attributes.getValue(name);
 
             Field field = source.getField(name);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(field, value));
         }
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         UpdateResponse updateResponse = new UpdateResponse();
 
@@ -198,7 +195,7 @@ public class JDBCAdapter extends Adapter {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+source.getName(), 80));
+            log.debug(Formatter.displayLine("Delete "+source.getName(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -206,31 +203,26 @@ public class JDBCAdapter extends Adapter {
 
         statement.setSource(source);
 
-        Collection parameters = new ArrayList();
         RDN rdn = request.getDn().getRdn();
         Filter filter = null;
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = rdn.get(name);
 
-            SimpleFilter sf = new SimpleFilter(name, "=", "?");
+            SimpleFilter sf = new SimpleFilter(name, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
-
-            Field field = source.getField(name);
-            parameters.add(new Parameter(field, value));
         }
 
         statement.setFilter(filter);
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         UpdateResponse updateResponse = new UpdateResponse();
 
         client.executeUpdate(updateRequest, updateResponse);
 
-        log.debug("Add operation completed.");
+        log.debug("Delete operation completed.");
     }
 
     public void delete(
@@ -276,6 +268,66 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            final Source source,
+            final ModifyRequest request,
+            final ModifyResponse response
+    ) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Modify "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        UpdateStatement statement = new UpdateStatement();
+
+        statement.setSource(source);
+
+        Collection<Modification> modifications = request.getModifications();
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            Modification modification = (Modification)i.next();
+
+            int type = modification.getType();
+            Attribute attribute = modification.getAttribute();
+            Field field = source.getField(attribute.getName());
+
+            switch (type) {
+                case Modification.ADD:
+                case Modification.REPLACE:
+                    statement.addAssignment(new Assignment(field, attribute.getValue()));
+                    break;
+
+                case Modification.DELETE:
+                    statement.addAssignment(new Assignment(field, null));
+                    break;
+            }
+        }
+
+        RDN rdn = request.getDn().getRdn();
+        Filter filter = null;
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+
+            SimpleFilter sf = new SimpleFilter(name, "=", value);
+            filter = FilterTool.appendAndFilter(filter, sf);
+        }
+
+        statement.setFilter(filter);
+
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.setStatement(statement);
+
+        UpdateResponse updateResponse = new UpdateResponse();
+
+        client.executeUpdate(updateRequest, updateResponse);
+
+        log.debug("Modify operation completed.");
+    }
+
+    public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
             AttributeValues sourceValues,
@@ -294,7 +346,7 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        ModifyRequesttBuilder builder = new ModifyRequesttBuilder(
+        ModifyRequestBuilder builder = new ModifyRequestBuilder(
                 sourceRefs,
                 sourceValues,
                 penroseContext.getInterpreterManager().newInstance(),
@@ -377,8 +429,25 @@ public class JDBCAdapter extends Adapter {
 
         SourceRef sourceRef = new SourceRef(source);
 
+        Filter filter = null;
+
+        DN dn = request.getDn();
+        if (dn != null) {
+            RDN rdn = dn.getRdn();
+            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Object value = rdn.get(name);
+
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+        }
+
+        filter = FilterTool.appendAndFilter(filter, request.getFilter());
+
         statement.addFieldRefs(sourceRef.getFieldRefs());
         statement.addSourceRef(sourceRef);
+        statement.setFilter(filter);
         statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
 
         QueryRequest queryRequest = new QueryRequest();
@@ -557,11 +626,15 @@ public class JDBCAdapter extends Adapter {
         }
     }
 
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Change Log
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        String table = getTableName(sourceConfig);
+    public Long getLastChangeNumber(Source source) throws Exception {
 
-        String sql = "select max(changeNumber) from "+table+"_changes";
+        String table = getTableName(source.getSourceConfig());
+
+        String sql = "select max(changeNumber) from "+table+"_changelog";
         Collection parameters = new ArrayList();
 
         QueryResponse queryResponse = new QueryResponse() {
@@ -574,25 +647,26 @@ public class JDBCAdapter extends Adapter {
 
         client.executeQuery(sql, parameters, queryResponse);
 
-        if (!queryResponse.hasNext()) return 0;
+        if (!queryResponse.hasNext()) return null;
 
-        Integer changeNumber = (Integer)queryResponse.next();
+        Number changeNumber = (Number)queryResponse.next();
+        if (changeNumber == null) return null;
+
         log.debug("Last change number: "+changeNumber);
-
-        return changeNumber;
+        return new Long(changeNumber.longValue());
     }
 
     public SearchResponse getChanges(
-            final SourceConfig sourceConfig,
-            final int lastChangeNumber
+            final Source source,
+            final Long lastChangeNumber
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
+        final boolean debug = log.isDebugEnabled();
         //log.debug("Searching JDBC source "+sourceConfig.getConnectionName()+"/"+sourceConfig.getName());
 
         final SearchResponse response = new SearchResponse();
 
-        String table = getTableName(sourceConfig);
+        String table = getTableName(source.getSourceConfig());
 
         int sizeLimit = 100;
 
@@ -602,29 +676,29 @@ public class JDBCAdapter extends Adapter {
         StringBuilder sb = new StringBuilder();
         sb.append("from ");
         sb.append(table);
-        sb.append("_changes");
+        sb.append("_changelog");
 
-        for (Iterator i=sourceConfig.getPrimaryKeyFieldConfigs().iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
+        for (Iterator i= source.getPrimaryKeyFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
 
             columns.append(", ");
-            columns.append(fieldConfig.getOriginalName());
+            columns.append(field.getOriginalName());
         }
 
         StringBuilder whereClause = new StringBuilder();
         whereClause.append("where changeNumber > ? order by changeNumber");
 
         Collection parameters = new ArrayList();
-        parameters.add(new Integer(lastChangeNumber));
+        parameters.add(lastChangeNumber);
 
         String sql = columns+" "+sb+" "+whereClause;
 
         QueryResponse queryResponse = new QueryResponse() {
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
-                RDN rdn = getChanges(sourceConfig, rs);
+                RDN rdn = getChanges(source, rs);
 
-                printChanges(sourceConfig, rdn);
+                if (debug) printChanges(source, rdn);
 
                 response.add(rdn);
             }
@@ -639,7 +713,7 @@ public class JDBCAdapter extends Adapter {
         return response;
     }
 
-    public RDN getChanges(SourceConfig sourceConfig, ResultSet rs) throws Exception {
+    public RDN getChanges(Source source, ResultSet rs) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("changeNumber", rs.getObject("changeNumber"));
@@ -648,7 +722,7 @@ public class JDBCAdapter extends Adapter {
         rb.set("changeUser", rs.getObject("changeUser"));
 
         int counter = 5;
-        for (Iterator i=sourceConfig.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
+        for (Iterator i=source.getPrimaryKeyNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
             Object value = rs.getObject(counter++);
@@ -695,7 +769,7 @@ public class JDBCAdapter extends Adapter {
         return width;
     }
 
-    public void printChanges(SourceConfig sourceConfig, RDN rdn) throws Exception {
+    public void printChanges(Source source, RDN rdn) throws Exception {
         StringBuilder resultFields = new StringBuilder();
         resultFields.append("| ");
         resultFields.append(Formatter.rightPad(rdn.get("changeNumber").toString(), 5));
@@ -707,12 +781,12 @@ public class JDBCAdapter extends Adapter {
         resultFields.append(Formatter.rightPad(rdn.get("changeUser").toString(), 10));
         resultFields.append(" |");
 
-        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
+        Collection fields = source.getPrimaryKeyFields();
         for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)j.next();
+            Field field = (Field)j.next();
 
-            Object value = rdn.get(fieldConfig.getName());
-            int length = fieldConfig.getLength() > 15 ? 15 : fieldConfig.getLength();
+            Object value = rdn.get(field.getName());
+            int length = field.getLength() > 15 ? 15 : field.getLength();
 
             resultFields.append(" ");
             resultFields.append(Formatter.rightPad(value == null ? "null" : value.toString(), length));

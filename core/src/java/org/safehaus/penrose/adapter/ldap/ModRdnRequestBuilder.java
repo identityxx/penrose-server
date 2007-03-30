@@ -1,26 +1,21 @@
 package org.safehaus.penrose.adapter.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.ModRdnRequest;
-import org.safehaus.penrose.session.ModRdnResponse;
+import org.safehaus.penrose.ldap.ModRdnRequest;
+import org.safehaus.penrose.ldap.ModRdnResponse;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class ModRdnRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class ModRdnRequestBuilder extends RequestBuilder {
 
     String suffix;
 
@@ -31,8 +26,6 @@ public class ModRdnRequestBuilder {
 
     ModRdnRequest request;
     ModRdnResponse response;
-
-    Collection requests = new ArrayList();
 
     public ModRdnRequestBuilder(
             String suffix,
@@ -130,17 +123,5 @@ public class ModRdnRequestBuilder {
         newRequest.setNewRdn(rb.toRdn());
 
         requests.add(newRequest);
-    }
-
-    public DN getDn(Source source, RDN rdn) throws Exception {
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
-
-        DNBuilder db = new DNBuilder();
-        db.append(rdn);
-        db.append(baseDn);
-        db.append(suffix);
-        DN dn = db.toDn();
-
-        return dn;
     }
 }

@@ -33,6 +33,7 @@ import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -205,7 +206,7 @@ public class EngineImpl extends Engine {
 
         try {
             DN dn = request.getDn();
-            Collection modifications = request.getModifications();
+            Collection<Modification> modifications = request.getModifications();
 
             AttributeValues oldValues = new AttributeValues();
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {

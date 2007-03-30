@@ -25,6 +25,7 @@ import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;

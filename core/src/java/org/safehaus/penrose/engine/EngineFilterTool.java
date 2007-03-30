@@ -85,7 +85,7 @@ public class EngineFilterTool {
 
         String attributeName = filter.getAttribute();
         String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
+        Object attributeValue = filter.getValue();
 
         if (attributeName.equalsIgnoreCase("objectClass")) {
             if (attributeValue.equals("*"))

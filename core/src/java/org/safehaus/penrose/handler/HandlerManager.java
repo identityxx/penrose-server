@@ -28,6 +28,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.acl.ACLManager;
 import org.slf4j.Logger;
@@ -315,7 +316,7 @@ public class HandlerManager {
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
-        Collection modifications = schemaManager.normalizeModifications(request.getModifications());
+        Collection<Modification> modifications = schemaManager.normalizeModifications(request.getModifications());
         request.setModifications(modifications);
 
         Collection entryMappings = partition.findEntryMappings(dn);

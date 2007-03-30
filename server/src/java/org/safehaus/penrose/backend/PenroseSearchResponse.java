@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.session.SearchResponse;
-import org.safehaus.penrose.session.SearchResult;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.control.Control;
 
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class PenroseSearchResponse
 
         Collection controls = new ArrayList();
         for (Iterator i= result.getControls().iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+            Control control = (Control)i.next();
             controls.add(new PenroseControl(control));
         }
 

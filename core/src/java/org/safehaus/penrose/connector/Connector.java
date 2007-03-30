@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.config.*;
@@ -29,6 +28,7 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

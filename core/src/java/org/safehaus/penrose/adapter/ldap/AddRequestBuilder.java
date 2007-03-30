@@ -2,29 +2,22 @@ package org.safehaus.penrose.adapter.ldap;
 
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.session.AddRequest;
-import org.safehaus.penrose.session.AddResponse;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.AddResponse;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
 /**
  * @author Endi S. Dewata
  */
-public class AddRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
-
-    String suffix;
+public class AddRequestBuilder extends RequestBuilder {
 
     Collection sources;
     AttributeValues sourceValues;
@@ -33,8 +26,6 @@ public class AddRequestBuilder {
 
     AddRequest request;
     AddResponse response;
-
-    Collection requests = new ArrayList();
 
     public AddRequestBuilder(
             String suffix,
@@ -61,7 +52,7 @@ public class AddRequestBuilder {
         SourceRef sourceRef = (SourceRef) sources.iterator().next();
         generatePrimaryRequest(sourceRef);
 
-        return requests;
+        return getRequests();
     }
 
     public void generatePrimaryRequest(SourceRef sourceRef) throws Exception {
@@ -131,17 +122,5 @@ public class AddRequestBuilder {
         newRequest.setAttributes(ldapAttributes);
 
         requests.add(newRequest);
-    }
-
-    public DN getDn(Source source, RDN rdn) throws Exception {
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
-
-        DNBuilder db = new DNBuilder();
-        db.append(rdn);
-        db.append(baseDn);
-        db.append(suffix);
-        DN dn = db.toDn();
-
-        return dn;
     }
 }

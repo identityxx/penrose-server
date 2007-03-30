@@ -23,6 +23,10 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.ModRdnRequest;
+import org.safehaus.penrose.ldap.Modification;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -76,7 +80,7 @@ public class OperationalAttributeModule extends Module {
         Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
-        Collection modifications = request.getModifications();
+        Collection<Modification> modifications = request.getModifications();
 
         if (bindDn != null) {
             Attribute modifiersName = new Attribute("modifiersName", bindDn.toString());
@@ -102,7 +106,7 @@ public class OperationalAttributeModule extends Module {
         Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
 
         if (bindDn != null) {
             Attribute modifiersName = new Attribute("modifiersName", bindDn.toString());

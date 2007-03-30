@@ -1,27 +1,25 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.Attribute;
 import org.safehaus.penrose.entry.Attributes;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.jdbc.InsertStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
+import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.AddResponse;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class AddRequestBuilder {
-
-    Logger log = LoggerFactory.getLogger(getClass());
+public class AddRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
@@ -30,8 +28,6 @@ public class AddRequestBuilder {
 
     AddRequest request;
     AddResponse response;
-
-    Collection requests = new ArrayList();
 
     public AddRequestBuilder(
             Collection sources,
@@ -78,7 +74,6 @@ public class AddRequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         InsertStatement statement = new InsertStatement();
-        Collection parameters = new ArrayList();
 
         statement.setSource(sourceRef.getSource());
 
@@ -104,15 +99,13 @@ public class AddRequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addField(field);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(fieldRef, value));
         }
 
         interpreter.clear();
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(updateRequest);
     }
@@ -181,7 +174,6 @@ public class AddRequestBuilder {
         if (debug) log.debug("Inserting values into "+sourceName);
 
         InsertStatement statement = new InsertStatement();
-        Collection parameters = new ArrayList();
 
         statement.setSource(sourceRef.getSource());
 
@@ -199,8 +191,7 @@ public class AddRequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addField(field);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(fieldRef, value));
         }
 
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
@@ -211,13 +202,11 @@ public class AddRequestBuilder {
             Field field = fieldRef.getField();
 
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
-            statement.addField(field);
-            parameters.add(new Parameter(field, value));
+            statement.addAssignment(new Assignment(fieldRef, value));
         }
 
         UpdateRequest updateRequest = new UpdateRequest();
         updateRequest.setStatement(statement);
-        updateRequest.setParameters(parameters);
 
         requests.add(updateRequest);
     }
