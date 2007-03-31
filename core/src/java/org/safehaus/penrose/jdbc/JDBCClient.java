@@ -24,8 +24,9 @@ import javax.sql.DataSource;
 
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.TableConfig;
-import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
+import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.Source;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -484,5 +485,76 @@ public class JDBCClient {
 
     public void setParameter(PreparedStatement ps, int paramIndex, Assignment assignment) throws Exception {
     	ps.setObject(paramIndex, assignment.getValue());
+    }
+
+    public void createTable(Source source) throws Exception {
+
+        String tableName = source.getParameter(JDBCClient.TABLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("create table ");
+        sb.append(tableName);
+        sb.append(" (");
+
+        boolean first = true;
+        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append(field.getName());
+            sb.append(" ");
+            sb.append(field.getType());
+
+            if ("VARCHAR".equals(field.getType()) && field.getLength() > 0) {
+                sb.append("(");
+                sb.append(field.getLength());
+                sb.append(")");
+            }
+        }
+
+        sb.append(", primary key (");
+
+        first = true;
+        for (Iterator i=source.getPrimaryKeyFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append(field.getName());
+        }
+
+        sb.append("))");
+
+        String sql = sb.toString();
+
+        UpdateResponse response = new UpdateResponse();
+
+        executeUpdate(sql, null, response);
+    }
+
+    public void dropTable(Source source) throws Exception {
+
+        String tableName = source.getParameter(JDBCClient.TABLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("drop table ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        UpdateResponse response = new UpdateResponse();
+
+        executeUpdate(sql, null, response);
     }
 }

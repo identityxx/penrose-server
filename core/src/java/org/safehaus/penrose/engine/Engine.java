@@ -25,6 +25,7 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -40,7 +41,9 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -719,6 +722,40 @@ public abstract class Engine {
         connectorManager = penroseContext.getConnectorManager();
         connectionManager =penroseContext.getConnectionManager();
         partitionManager = penroseContext.getPartitionManager();
+    }
+
+    public Collection createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        Collection groupsOfSources = new ArrayList();
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection sourceRefs = sourceManager.getSourceRefs(partition, entryMapping);
+
+        Collection sources = new ArrayList();
+        Connection lastConnection = null;
+
+        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
+            SourceRef sourceRef = (SourceRef)i.next();
+
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
+            Adapter adapter = connection.getAdapter();
+
+            if (lastConnection == null) {
+                lastConnection = connection;
+
+            } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                groupsOfSources.add(sources);
+                sources = new ArrayList();
+                lastConnection = connection;
+            }
+
+            sources.add(sourceRef);
+        }
+
+        groupsOfSources.add(sources);
+
+        return groupsOfSources;
     }
 }
 

@@ -1,4 +1,4 @@
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.changelog;
 
 import org.safehaus.penrose.ldap.Request;
 

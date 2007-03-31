@@ -441,38 +441,4 @@ public class BasicEngine extends Engine {
             response.close();
         }
     }
-
-    public Collection createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
-
-        Collection groupsOfSources = new ArrayList();
-
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Collection sourceRefs = sourceManager.getSourceRefs(partition, entryMapping);
-
-        Collection sources = new ArrayList();
-        Connection lastConnection = null;
-
-        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
-
-            Source source = sourceRef.getSource();
-            Connection connection = source.getConnection();
-            Adapter adapter = connection.getAdapter();
-
-            if (lastConnection == null) {
-                lastConnection = connection;
-
-            } else if (lastConnection != connection || !adapter.isJoinSupported()) {
-                groupsOfSources.add(sources);
-                sources = new ArrayList();
-                lastConnection = connection;
-            }
-
-            sources.add(sourceRef);
-        }
-
-        groupsOfSources.add(sources);
-
-        return groupsOfSources;
-    }
 }

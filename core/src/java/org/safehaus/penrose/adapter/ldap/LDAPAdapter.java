@@ -717,57 +717,6 @@ public class LDAPAdapter extends Adapter {
         return dn;
     }
 
-    public Long getLastChangeNumber(Source source) throws LDAPException {
-        return new Long(0);
-    }
-
-    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws LDAPException {
-
-        SearchResponse response = new SearchResponse();
-
-        //int sizeLimit = 100;
-
-        String ldapBase = "cn=changelog";
-        String ldapFilter = "(&(changeNumber>="+lastChangeNumber+")(!(changeNumber="+lastChangeNumber+")))";
-
-        if (log.isDebugEnabled()) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+source.getName(), 80));
-            log.debug(Formatter.displayLine(" - Base DN: "+ldapBase, 80));
-            log.debug(Formatter.displayLine(" - Filter: "+ldapFilter, 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-
-        DirContext ctx = null;
-        try {
-            ctx = ((LDAPClient)openConnection()).getContext();
-            NamingEnumeration ne = ctx.search(ldapBase, ldapFilter, ctls);
-
-            log.debug("Result:");
-
-            while (ne.hasMore()) {
-                javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                log.debug(" - "+sr.getName()+","+ldapBase);
-
-                RDN rdn = getPkValues(source, sr);
-                response.add(rdn);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-
-        } finally {
-            try { response.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-
-        return response;
-    }
-
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
 
         String attributeName = filter.getAttribute();

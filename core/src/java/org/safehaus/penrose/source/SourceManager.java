@@ -33,7 +33,7 @@ public class SourceManager {
 
     public void init(Partition partition, SourceConfig sourceConfig) throws Exception {
 
-        Source source = getSource(partition.getName(), sourceConfig.getName());
+        Source source = getSource(partition, sourceConfig.getName());
         if (source != null) return;
 
         log.debug("Initializing source "+sourceConfig.getName()+".");
@@ -54,7 +54,7 @@ public class SourceManager {
 
         log.debug("Initializing source "+sourceMapping.getName()+".");
 
-        Source source = getSource(partition.getName(), sourceMapping.getSourceName());
+        Source source = getSource(partition, sourceMapping.getSourceName());
         sourceRef = new SourceRef(source, sourceMapping);
 
         addSourceRef(partition.getName(), entryMapping, sourceRef);
@@ -125,6 +125,10 @@ public class SourceManager {
         Map map = (Map)sources.get(partitionName);
         if (map == null) return EMPTY;
         return map.values();
+    }
+
+    public Source getSource(Partition partition, String sourceName) {
+        return getSource(partition.getName(), sourceName);
     }
 
     public Source getSource(String partitionName, String sourceName) {

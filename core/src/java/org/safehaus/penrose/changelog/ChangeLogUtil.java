@@ -1,51 +1,26 @@
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.changelog;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.Source;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public abstract class ChangeLogCacheModule extends CacheModule {
+public abstract class ChangeLogUtil {
 
-    public final static String CHANGELOG        = "changelog";
+    public Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static String TRACKER          = "tracker";
-    public final static String DEFAULT_TRACKER  = "tracker";
-
-    public final static String USER             = "user";
-
-    protected String changeLogName;
-    protected String trackerName;
-
+    protected Source source;
+    protected Source cache;
     protected Source changeLog;
     protected Source tracker;
+
     protected String user;
 
-    public void init() throws Exception {
-
-        super.init();
-
-        changeLogName = getParameter(CHANGELOG);
-        if (changeLogName == null) changeLogName = sourceName +"_changelog";
-        log.debug("Change Log: "+changeLogName);
-
-        trackerName = getParameter(TRACKER);
-        if (trackerName == null) trackerName = DEFAULT_TRACKER;
-        log.debug("Tracker: "+trackerName);
-
-        user = getParameter(USER);
-        if (user == null) user = getUser();
-        log.debug("User: "+user);
-
-        changeLog = sourceManager.getSource(partition.getName(), changeLogName);
-        tracker = sourceManager.getSource(partition.getName(), trackerName);
-    }
-
-    public abstract String getUser() throws Exception;
-
-    public void process() throws Exception {
+    public void synchronize() throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -95,7 +70,7 @@ public abstract class ChangeLogCacheModule extends CacheModule {
         boolean debug = log.isDebugEnabled();
 
         RDNBuilder rb = new RDNBuilder();
-        rb.set("sourceName", sourceName);
+        rb.set("sourceName", source.getName());
 
         DN dn = new DN(rb.toRdn());
 
@@ -117,12 +92,12 @@ public abstract class ChangeLogCacheModule extends CacheModule {
     public void setLastChangeNumber(Number changeNumber) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
-        rb.set("sourceName", sourceName);
+        rb.set("sourceName", source.getName());
 
         DN dn = new DN(rb.toRdn());
 
         Attributes attributes = new Attributes();
-        attributes.setValue("sourceName", sourceName);
+        attributes.setValue("sourceName", source.getName());
         attributes.setValue("changeNumber", changeNumber);
 
         tracker.add(dn, attributes);
@@ -131,7 +106,7 @@ public abstract class ChangeLogCacheModule extends CacheModule {
     public void updateLastChangeNumber(Number changeNumber) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
-        rb.set("sourceName", sourceName);
+        rb.set("sourceName", source.getName());
 
         Attribute attributes = new Attribute("changeNumber");
         attributes.setValue(changeNumber);
@@ -181,5 +156,45 @@ public abstract class ChangeLogCacheModule extends CacheModule {
                 cache.delete(deleteRequest, deleteResponse);
                 break;
         }
+    }
+
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
+    }
+
+    public Source getCache() {
+        return cache;
+    }
+
+    public void setCache(Source cache) {
+        this.cache = cache;
+    }
+
+    public Source getChangeLog() {
+        return changeLog;
+    }
+
+    public void setChangeLog(Source changeLog) {
+        this.changeLog = changeLog;
+    }
+
+    public Source getTracker() {
+        return tracker;
+    }
+
+    public void setTracker(Source tracker) {
+        this.tracker = tracker;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 }

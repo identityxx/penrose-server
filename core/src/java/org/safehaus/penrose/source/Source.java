@@ -78,6 +78,10 @@ public class Source {
         return primaryKeyNames;
     }
 
+    public void setPrimaryKeyNames(Collection primaryKeyNames) {
+        this.primaryKeyNames = primaryKeyNames;
+    }
+
     public Collection getPrimaryKeyFields() {
         return primaryKeyFields;
     }
@@ -167,7 +171,7 @@ public class Source {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Modify
+    // ModRdn
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
@@ -209,14 +213,14 @@ public class Source {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Change Log
+    // Table
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Long getLastChangeNumber() throws Exception {
-        return connection.getLastChangeNumber(this);
+    public void create() throws Exception {
+        connection.create(this);
     }
 
-    public void setPrimaryKeyNames(Collection primaryKeyNames) {
-        this.primaryKeyNames = primaryKeyNames;
+    public void drop() throws Exception {
+        connection.drop(this);
     }
 }

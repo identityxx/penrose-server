@@ -1,34 +1,44 @@
-package org.safehaus.penrose.cache.jdbc;
+package org.safehaus.penrose.cache.ldap;
 
-import org.safehaus.penrose.cache.ChangeLog;
-import org.safehaus.penrose.cache.ChangeLogCacheModule;
-import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.changelog.ChangeLogUtil;
+import org.safehaus.penrose.changelog.ChangeLog;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.NotFilter;
+import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.source.Field;
 
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class JDBCChangeLogCacheModule extends ChangeLogCacheModule {
-
-    public String getUser() {
-        Connection connection = source.getConnection();
-        return connection.getParameter("user");
-    }
+public class LDAPChangeLogUtil extends ChangeLogUtil {
 
     public SearchRequest createSearchRequest(Number changeNumber) throws Exception {
 
-        SearchRequest request = new SearchRequest();
+        Filter changeLogFilter = null;
 
         if (changeNumber != null) {
-            Filter filter = new SimpleFilter("changeNumber", ">", changeNumber);
-            request.setFilter(filter);
+
+            // "(&(changeNumber>="+changeNumber+")(!(changeNumber="+changeNumber+")))";
+
+            SimpleFilter sf1 = new SimpleFilter("changeNumber", ">=", changeNumber);
+            SimpleFilter sf2 = new SimpleFilter("changeNumber", "=", changeNumber);
+
+            AndFilter af = new AndFilter();
+            af.addFilter(sf1);
+            af.addFilter(new NotFilter(sf2));
+
+            changeLogFilter = af;
         }
+
+        SearchRequest request = new SearchRequest();
+        request.setFilter(changeLogFilter);
+        request.setScope(SearchRequest.SCOPE_ONE);
 
         return request;
     }
@@ -86,6 +96,16 @@ public class JDBCChangeLogCacheModule extends ChangeLogCacheModule {
 
             changeLog.setRequest(request);
             changeLog.setChangeAction(ChangeLog.MODIFY);
+
+        } else if ("MODRDN".equals(changeAction)) {
+
+            ModRdnRequest request = new ModRdnRequest();
+            request.setDn(dn);
+            // request.setNewRdn(newRdn);
+            // request.setDeleteOldRdn(deleteOldRdn);
+
+            changeLog.setRequest(request);
+            changeLog.setChangeAction(ChangeLog.MODRDN);
 
         } else if ("DELETE".equals(changeAction)) {
 

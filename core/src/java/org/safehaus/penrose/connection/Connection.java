@@ -248,12 +248,18 @@ public class Connection implements ConnectionMBean {
         adapter.search(entryMapping, sources, sourceValues, request, response);
     }
 
-    public Long getLastChangeNumber(Source source) throws Exception {
-        return adapter.getLastChangeNumber(source);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Table
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void create(Source source) throws Exception {
+
+        adapter.create(source);
     }
 
-    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws Exception {
-        return adapter.getChanges(source, lastChangeNumber);
+    public void drop(Source source) throws Exception {
+
+        adapter.drop(source);
     }
 
     public Object openConnection() throws Exception {
