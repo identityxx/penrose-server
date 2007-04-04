@@ -532,7 +532,7 @@ public class HandlerManager {
 
         Entry entry = new Entry("");
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = new Attributes();
         attributes.addValue("objectClass", "top");
         attributes.addValue("objectClass", "extensibleObject");
         attributes.addValue("vendorName", Penrose.VENDOR_NAME);
@@ -548,6 +548,8 @@ public class HandlerManager {
             }
         }
 
+        entry.setAttributes(attributes);
+        
         return entry;
     }
 

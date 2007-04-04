@@ -9,7 +9,7 @@ import java.util.Iterator;
  */
 public class RDNBuilder {
 
-    public Map values = new TreeMap();
+    public Map<String,Object> values = new TreeMap<String,Object>();
 
     public RDNBuilder() {
     }

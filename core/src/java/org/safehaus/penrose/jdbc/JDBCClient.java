@@ -542,6 +542,25 @@ public class JDBCClient {
         executeUpdate(sql, null, response);
     }
 
+    public void renameTable(Source oldSource, Source newSource) throws Exception {
+
+        String oldTableName = oldSource.getParameter(JDBCClient.TABLE);
+        String newTableName = newSource.getParameter(JDBCClient.TABLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("rename table ");
+        sb.append(oldTableName);
+        sb.append(" to ");
+        sb.append(newTableName);
+
+        String sql = sb.toString();
+
+        UpdateResponse response = new UpdateResponse();
+
+        executeUpdate(sql, null, response);
+    }
+
     public void dropTable(Source source) throws Exception {
 
         String tableName = source.getParameter(JDBCClient.TABLE);
@@ -549,6 +568,22 @@ public class JDBCClient {
         StringBuilder sb = new StringBuilder();
 
         sb.append("drop table ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        UpdateResponse response = new UpdateResponse();
+
+        executeUpdate(sql, null, response);
+    }
+
+    public void cleanTable(Source source) throws Exception {
+
+        String tableName = source.getParameter(JDBCClient.TABLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("delete from ");
         sb.append(tableName);
 
         String sql = sb.toString();

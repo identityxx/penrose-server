@@ -8,7 +8,7 @@ import java.text.MessageFormat;
  */
 public class DN implements Comparable {
 
-    public List rdns;
+    public List<RDN> rdns;
 
     public String originalDn;
     public String normalizedDn;
@@ -18,7 +18,7 @@ public class DN implements Comparable {
     public MessageFormat formatter;
     
     public DN() {
-        rdns = new ArrayList();
+        rdns = new ArrayList<RDN>();
     }
 
     public DN(String dn) {
@@ -26,14 +26,14 @@ public class DN implements Comparable {
     }
 
     public DN(RDN rdn) {
-        rdns = new ArrayList();
+        rdns = new ArrayList<RDN>();
         rdns.add(rdn);
     }
 
     public void parse() {
         if (rdns != null) return;
-        rdns = new ArrayList();
-        Collection list = DNBuilder.parse(originalDn);
+        rdns = new ArrayList<RDN>();
+        Collection<RDN> list = DNBuilder.parse(originalDn);
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
             rdns.add(rdn);
@@ -93,7 +93,7 @@ public class DN implements Comparable {
         return (RDN)rdns.get(i);
     }
 
-    public Collection getRdns() {
+    public Collection<RDN> getRdns() {
         parse();
         return rdns;
     }

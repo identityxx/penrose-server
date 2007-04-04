@@ -187,7 +187,6 @@ public class ProxyEngine extends Engine {
 
         EntryMapping proxyMapping = parent.getEntryMapping();
 
-        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
         SourceMapping sourceMapping = proxyMapping.getSourceMapping(0);
         SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
 
@@ -200,20 +199,11 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
 
-            javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
+            AddRequest newRequest = new AddRequest();
+            newRequest.setDn(targetDn);
+            newRequest.setAttributes(attributes);
 
-            for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                javax.naming.directory.Attribute attribute = new javax.naming.directory.BasicAttribute(name);
-
-                Collection values = attributeValues.get(name);
-                for (Iterator j=values.iterator(); j.hasNext(); ) {
-                    Object value = j.next();
-                    attribute.add(value);
-                }
-            }
-            
-            client.add(targetDn.toString(), attrs);
+            client.add(newRequest, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -253,7 +243,11 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Binding via proxy as \""+bindDn +"\" with "+password);
 
-            client.bind(bindDn.toString(), password);
+            BindRequest newRequest = new BindRequest();
+            newRequest.setDn(bindDn);
+            newRequest.setPassword(password);
+
+            client.bind(newRequest, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -293,7 +287,10 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Deleting via proxy as \""+targetDn+"\"");
 
-            client.delete(targetDn.toString());
+            DeleteRequest newRequest = new DeleteRequest();
+            newRequest.setDn(targetDn);
+
+            client.delete(newRequest, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -334,7 +331,11 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
 
-            client.modify(targetDn.toString(), modifications);
+            ModifyRequest newRequest = new ModifyRequest();
+            newRequest.setDn(targetDn);
+            newRequest.setModifications(modifications);
+
+            client.modify(newRequest, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -376,7 +377,12 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Renaming via proxy as \""+targetDn+"\"");
 
-            client.modrdn(targetDn.toString(), newRdn.toString());
+            ModRdnRequest newRequest = new ModRdnRequest();
+            newRequest.setDn(targetDn);
+            newRequest.setNewRdn(newRdn);
+            newRequest.setDeleteOldRdn(deleteOldRdn);
+
+            client.modrdn(newRequest, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -495,12 +501,7 @@ public class ProxyEngine extends Engine {
             };
 
             //connector.search(partition, sourceConfig, null, filter, newRequest, sr);
-            client.search(
-                    targetDn.toString(),
-                    filter == null ? "(objectClass=*)" : filter.toString(),
-                    newRequest,
-                    sr
-            );
+            client.search(newRequest, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

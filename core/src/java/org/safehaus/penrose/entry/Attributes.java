@@ -13,8 +13,8 @@ public class Attributes {
 
     public final static Collection EMPTY = new ArrayList();
 
-    protected Collection names = new LinkedHashSet();
-    protected Map attributes = new LinkedHashMap();
+    protected Collection<String> names = new LinkedHashSet<String>();
+    protected Map<String,Attribute> attributes = new LinkedHashMap<String,Attribute>();
 
     public Attributes() {
     }
@@ -25,7 +25,7 @@ public class Attributes {
 
     public void setValue(String name, Object value) {
         names.add(name);
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
             attributes.put(name.toLowerCase(), attribute);
@@ -35,7 +35,7 @@ public class Attributes {
 
     public void addValue(String name, Object value) {
         names.add(name);
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
             attributes.put(name.toLowerCase(), attribute);
@@ -44,7 +44,7 @@ public class Attributes {
     }
 
     public void removeValue(String name, Object value) {
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return;
 
         attribute.removeValue(value);
@@ -56,7 +56,7 @@ public class Attributes {
 
     public void setValues(String name, Collection values) {
         names.add(name);
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
             attributes.put(name.toLowerCase(), attribute);
@@ -66,7 +66,7 @@ public class Attributes {
 
     public void addValues(String name, Collection values) {
         names.add(name);
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
             attributes.put(name.toLowerCase(), attribute);
@@ -75,7 +75,7 @@ public class Attributes {
     }
 
     public void removeValues(String name, Collection values) {
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return;
 
         attribute.removeValues(values);
@@ -106,7 +106,7 @@ public class Attributes {
 
         names.add(name);
 
-        Attribute attr = (Attribute)attributes.get(normalizedName);
+        Attribute attr = attributes.get(normalizedName);
         if (attr == null) {
             attr = new Attribute(name);
             attributes.put(normalizedName, attr);
@@ -119,23 +119,23 @@ public class Attributes {
     }
 
     public Object getValue(String name) {
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return null;
         return attribute.getValue();
     }
 
     public Collection getValues(String name) {
-        Attribute attribute = (Attribute)attributes.get(name.toLowerCase());
+        Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return EMPTY;
         return attribute.getValues();
     }
 
     public Attribute remove(String name) {
         names.remove(name);
-        return (Attribute)attributes.remove(name.toLowerCase());
+        return attributes.remove(name.toLowerCase());
     }
 
-    public Collection getAll() {
+    public Collection<Attribute> getAll() {
         return attributes.values();
     }
     

@@ -38,6 +38,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
                 <object-create-rule classname="org.safehaus.penrose.partition.FieldConfig" />
                 <set-properties-rule />
+
+                <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />
+                <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />
+                <call-method-rule pattern="variable" methodname="setVariable" paramcount="0" />
+
+                <pattern value="expression">
+                    <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
+                    <set-properties-rule />
+
+                    <call-method-rule methodname="setScript" paramcount="0" />
+
+                    <set-next-rule methodname="setExpression" />
+                </pattern>
+
                 <set-next-rule methodname="addFieldConfig" />
 
             </pattern>

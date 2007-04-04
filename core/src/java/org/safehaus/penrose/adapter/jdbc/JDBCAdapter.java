@@ -103,7 +103,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Table
+    // Storage
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void create(Source source) throws Exception {
@@ -119,6 +119,19 @@ public class JDBCAdapter extends Adapter {
         client.createTable(source);
     }
 
+    public void rename(Source oldSource, Source newSource) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Rename "+oldSource.getName()+" to "+newSource.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        client.renameTable(oldSource, newSource);
+    }
+
     public void drop(Source source) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -130,6 +143,19 @@ public class JDBCAdapter extends Adapter {
         }
 
         client.dropTable(source);
+    }
+
+    public void clean(Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Drop "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        client.cleanTable(source);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -569,7 +595,7 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 if (debug) {
-                    JDBCFormatter.printEntry(entry);
+                    Formatter.printEntry(entry);
                 }
             }
 

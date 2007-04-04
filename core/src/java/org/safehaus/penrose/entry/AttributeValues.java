@@ -32,7 +32,7 @@ public class AttributeValues implements Cloneable, Comparable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map values = new TreeMap();
+    public Map<String,Collection> values = new TreeMap<String,Collection>();
 
     public AttributeValues() {
     }
@@ -290,7 +290,7 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
     
-    public Map getValues() {
+    public Map<String,Collection> getValues() {
         return values;
     }
 

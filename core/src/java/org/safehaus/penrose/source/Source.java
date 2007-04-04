@@ -14,19 +14,25 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Source {
+public class Source implements Cloneable {
 
-    private Partition partition;
-    private SourceConfig sourceConfig;
-    private Connection connection;
+    protected String name;
+    protected Map parameters = new LinkedHashMap();
 
-    private Collection primaryKeyNames;
-    Collection primaryKeyFields = new ArrayList();
-    Map fields = new LinkedHashMap();
+    protected Partition partition;
+    protected SourceConfig sourceConfig;
+    protected Connection connection;
+
+    protected Collection<String> primaryKeyNames;
+    protected Collection<Field> primaryKeyFields = new ArrayList<Field>();
+    protected Map<String,Field> fields = new LinkedHashMap<String,Field>();
 
     public Source(Partition partition, SourceConfig sourceConfig) {
         this.partition = partition;
         this.sourceConfig = sourceConfig;
+
+        this.name = sourceConfig.getName();
+        this.parameters.putAll(sourceConfig.getParameters());
 
         Collection fieldConfigs = sourceConfig.getFieldConfigs();
         for (Iterator i=fieldConfigs.iterator(); i.hasNext(); ) {
@@ -43,7 +49,11 @@ public class Source {
     }
 
     public String getName() {
-        return sourceConfig.getName();
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public SourceConfig getSourceConfig() {
@@ -71,22 +81,26 @@ public class Source {
     }
 
     public String getParameter(String name) {
-        return sourceConfig.getParameter(name);
+        return (String)parameters.get(name);
     }
 
-    public Collection getPrimaryKeyNames() {
+    public void setParameter(String name, String value) {
+        parameters.put(name, value);
+    }
+
+    public Collection<String> getPrimaryKeyNames() {
         return primaryKeyNames;
     }
 
-    public void setPrimaryKeyNames(Collection primaryKeyNames) {
+    public void setPrimaryKeyNames(Collection<String> primaryKeyNames) {
         this.primaryKeyNames = primaryKeyNames;
     }
 
-    public Collection getPrimaryKeyFields() {
+    public Collection<Field> getPrimaryKeyFields() {
         return primaryKeyFields;
     }
 
-    public Collection getFields() {
+    public Collection<Field> getFields() {
         return fields.values();
     }
 
@@ -220,7 +234,21 @@ public class Source {
         connection.create(this);
     }
 
+    public void rename(Source newSource) throws Exception {
+        connection.rename(this, newSource);
+    }
+
     public void drop() throws Exception {
         connection.drop(this);
+    }
+
+    public void clean() throws Exception {
+        connection.clean(this);
+    }
+
+    public Object clone() {
+        Source source = new Source(partition, sourceConfig);
+        source.setConnection(connection);
+        return source;
     }
 }

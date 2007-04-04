@@ -19,7 +19,7 @@ import java.util.StringTokenizer;
  */
 public class AddRequestBuilder extends RequestBuilder {
 
-    Collection sources;
+    Collection sourceRefs;
     AttributeValues sourceValues;
 
     Interpreter interpreter;
@@ -38,7 +38,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         this.suffix = suffix;
 
-        this.sources = sources;
+        this.sourceRefs = sources;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -49,7 +49,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
     public Collection generate() throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sources.iterator().next();
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
         generatePrimaryRequest(sourceRef);
 
         return getRequests();

@@ -7,6 +7,8 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.FieldRef;
 
 import java.util.*;
 
@@ -20,8 +22,7 @@ public class FilterBuilder {
     Partition partition;
     EntryMapping entryMapping;
 
-    Collection sourceMappings;
-    SourceMapping primarySourceMapping;
+    Collection sourceRefs;
 
     Interpreter interpreter;
 
@@ -30,7 +31,7 @@ public class FilterBuilder {
     public FilterBuilder(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceMappings,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
@@ -38,8 +39,7 @@ public class FilterBuilder {
         this.partition = partition;
         this.entryMapping = entryMapping;
 
-        this.sourceMappings = sourceMappings;
-        primarySourceMapping = (SourceMapping)sourceMappings.iterator().next();
+        this.sourceRefs = sourceRefs;
 
         this.interpreter = interpreter;
 
@@ -139,12 +139,12 @@ public class FilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
+            SourceRef sourceRef = (SourceRef)i.next();
 
-            Collection fields = sourceMapping.getFieldMappings();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
+            for (Iterator j=sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                FieldRef fieldRef = (FieldRef)j.next();
+                FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 
                 Object value = interpreter.eval(fieldMapping);
@@ -203,13 +203,12 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            String sourceName = sourceMapping.getName();
+        for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
+            SourceRef sourceRef = (SourceRef)i.next();
 
-            Collection fields = sourceMapping.getFieldMappings();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
+            for (Iterator j=sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                FieldRef fieldRef = (FieldRef)j.next();
+                FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 
                 String variable = fieldMapping.getVariable();

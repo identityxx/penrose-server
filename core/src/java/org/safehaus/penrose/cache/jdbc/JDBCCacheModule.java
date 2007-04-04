@@ -1,7 +1,6 @@
 package org.safehaus.penrose.cache.jdbc;
 
 import org.safehaus.penrose.changelog.ChangeLogUtil;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.cache.CacheModule;
 
 /**

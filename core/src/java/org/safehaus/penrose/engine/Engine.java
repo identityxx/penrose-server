@@ -674,7 +674,7 @@ public abstract class Engine {
     ) throws Exception {
 
         //log.debug("Computing RDNs:");
-        AttributeValues rdns = new AttributeValues();
+        Attributes rdns = new Attributes();
 
         Collection rdnAttributes = entryMapping.getRdnAttributeMappings();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
@@ -684,7 +684,7 @@ public abstract class Engine {
             Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
-            rdns.add(name, value);
+            rdns.addValue(name, value);
         }
 
         return TransformEngine.convert(rdns);

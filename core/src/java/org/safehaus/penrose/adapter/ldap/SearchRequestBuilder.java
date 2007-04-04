@@ -26,7 +26,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     Partition partition;
     EntryMapping entryMapping;
 
-    Collection sources;
+    Collection sourceRefs;
     AttributeValues sourceValues;
 
     Interpreter interpreter;
@@ -49,7 +49,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         this.partition = partition;
         this.entryMapping = entryMapping;
 
-        this.sources = sources;
+        this.sourceRefs = sources;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -68,7 +68,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public SearchRequest generate() throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
         generatePrimaryRequest(sourceRef);
 
         return (SearchRequest)requests.iterator().next();

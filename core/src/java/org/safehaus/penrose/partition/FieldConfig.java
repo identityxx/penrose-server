@@ -17,6 +17,11 @@
  */
 package org.safehaus.penrose.partition;
 
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.util.BinaryUtil;
+
+import java.util.Arrays;
+
 /**
  * @author Endi S. Dewata
  */
@@ -48,15 +53,9 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     private boolean index;
     private boolean caseSensitive;
 
-    /**
-     * Encryption method used to encrypt the value
-     */
-    private String encryption;
-
-    /**
-     * Encoding method used to encode the value
-     */
-    private String encoding;
+    private Object constant;
+    private String variable;
+	private Expression expression;
 
 	public FieldConfig() {
 	}
@@ -98,22 +97,6 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
 
     public void setOriginalName(String originalName) {
         this.originalName = originalName;
-    }
-
-    public String getEncryption() {
-        return encryption;
-    }
-
-    public void setEncryption(String encryption) {
-        this.encryption = encryption;
-    }
-
-    public String getEncoding() {
-        return encoding;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
     }
 
     public String getType() {
@@ -172,6 +155,42 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         this.caseSensitive = caseSensitive;
     }
 
+    public Expression getExpression() {
+        return expression;
+    }
+
+    public void setExpression(Expression expression) {
+        this.expression = expression;
+    }
+
+    public byte[] getBinary() {
+        return (byte[])constant;
+    }
+
+    public void setBinary(byte[] bytes) {
+        constant = bytes;
+    }
+
+    public void setBinary(String encodedData) throws Exception {
+        constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
+    }
+
+    public Object getConstant() {
+        return constant;
+    }
+
+    public void setConstant(Object constant) {
+        this.constant = constant;
+    }
+
+    public String getVariable() {
+        return variable;
+    }
+
+    public void setVariable(String variable) {
+        this.variable = variable;
+    }
+
     public int hashCode() {
         return name == null ? 0 : name.hashCode();
     }
@@ -194,11 +213,18 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;
         if (caseSensitive != fieldConfig.caseSensitive) return false;
-        if (!equals(encryption, fieldConfig.encryption)) return false;
-        if (!equals(encoding, fieldConfig.encoding)) return false;
         if (!equals(type, fieldConfig.type)) return false;
         if (length != fieldConfig.length) return false;
         if (precision != fieldConfig.precision) return false;
+
+        if (constant instanceof byte[] && fieldConfig.constant instanceof byte[]) {
+            if (!Arrays.equals((byte[])constant, (byte[])fieldConfig.constant)) return false;
+        } else {
+            if (!equals(constant, fieldConfig.constant)) return false;
+        }
+
+        if (!equals(variable, fieldConfig.variable)) return false;
+        if (!equals(expression, fieldConfig.expression)) return false;
 
         return true;
     }
@@ -219,11 +245,18 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         unique = fieldConfig.unique;
         index = fieldConfig.index;
         caseSensitive = fieldConfig.caseSensitive;
-        encryption = fieldConfig.encryption;
-        encoding = fieldConfig.encoding;
         type = fieldConfig.type;
         length = fieldConfig.length;
         precision = fieldConfig.precision;
+
+        if (fieldConfig.constant instanceof byte[]) {
+            constant = ((byte[])fieldConfig.constant).clone();
+        } else {
+            constant = fieldConfig.constant;
+        }
+
+        variable = fieldConfig.variable;
+        expression = fieldConfig.expression == null ? null : (Expression)fieldConfig.expression.clone();
     }
 
     public Object clone() {

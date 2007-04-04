@@ -21,6 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.source.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -116,6 +117,30 @@ public abstract class Interpreter {
         } catch (Exception e) {
             log.error("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage());
             throw e;
+        }
+    }
+
+    public Object eval(Field field) throws Exception {
+        try {
+            if (field.getConstant() != null) {
+                return field.getConstant();
+
+            } else if (field.getVariable() != null) {
+                String name = field.getVariable();
+                Object value = get(name);
+                if (value == null && name.startsWith("rdn.")) {
+                    value = get(name.substring(4));
+                }
+                return value;
+
+            } else if (field.getExpression() != null) {
+                return eval(field.getExpression());
+
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new Exception("Error evaluating field "+field.getName(), e);
         }
     }
 

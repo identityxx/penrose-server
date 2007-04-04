@@ -72,10 +72,18 @@ public abstract class Adapter {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
+    public void rename(Source oldSource, Source newSource) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
     public void drop(Source source) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
+
+    public void clean(Source source) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

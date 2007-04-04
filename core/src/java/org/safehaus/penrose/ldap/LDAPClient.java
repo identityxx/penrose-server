@@ -25,6 +25,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.ReferralException;
 import javax.naming.directory.*;
 import javax.naming.ldap.*;
+import javax.naming.ldap.Control;
 
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -33,6 +34,7 @@ import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.DNBuilder;
+import org.safehaus.penrose.entry.RDN;
 
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -144,26 +146,17 @@ public class LDAPClient {
         if (connection != null) connection.disconnect();
     }
 
-    public void bind(String bindDn, String password) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        DNBuilder db = new DNBuilder();
-        db.set(bindDn);
-        db.append(suffix);
+    public void add(
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
 
-        parameters.put(Context.SECURITY_PRINCIPAL, db.toString());
-        parameters.put(Context.SECURITY_CREDENTIALS, password);
-
-        LdapContext context = null;
-
-        try {
-            context = getContext();
-
-        } finally {
-            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
-    public void add(String targetDn, Attributes attributes) throws Exception {
+        DN targetDn = request.getDn();
+        Attributes attributes = convertAttributes(request.getAttributes());
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -209,7 +202,45 @@ public class LDAPClient {
         }
     }
 
-    public void delete(String targetDn) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        DN bindDn = request.getDn();
+        String password = request.getPassword();
+
+        DNBuilder db = new DNBuilder();
+        db.set(bindDn);
+        db.append(suffix);
+
+        parameters.put(Context.SECURITY_PRINCIPAL, db.toString());
+        parameters.put(Context.SECURITY_CREDENTIALS, password);
+
+        LdapContext context = null;
+
+        try {
+            context = getContext();
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        DN targetDn = request.getDn();
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -229,7 +260,17 @@ public class LDAPClient {
         }
     }
 
-    public void modify(String targetDn, Collection modifications) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        DN targetDn = request.getDn();
+        Collection<Modification> modifications = request.getModifications();
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -279,7 +320,17 @@ public class LDAPClient {
         }
     }
 
-    public void modrdn(String targetDn, String newRdn) throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRdn
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        DN targetDn = request.getDn();
+        RDN newRdn = request.getNewRdn();
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -290,10 +341,166 @@ public class LDAPClient {
 
         try {
             context = getContext();
-            context.rename(dn.toString(), newRdn);
+            context.rename(dn.toString(), newRdn.toString());
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void search(
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DNBuilder db = new DNBuilder();
+        db.set(request.getDn());
+        db.append(suffix);
+        DN baseDn = db.toDn();
+
+        String filter = request.getFilter() == null ? "(objectClass=*)" : request.getFilter().toString();
+
+        log.debug("Search \""+ baseDn +"\" with filter="+filter+" scope="+ request.getScope()+" attrs="+ request.getAttributes()+":");
+
+        String attributes[] = (String[]) request.getAttributes().toArray(new String[request.getAttributes().size()]);
+
+        SearchControls sc = new SearchControls();
+        sc.setSearchScope(request.getScope());
+        sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributes);
+        sc.setCountLimit(request.getSizeLimit());
+        sc.setTimeLimit((int) request.getTimeLimit());
+
+        LdapContext context = null;
+        NamingEnumeration ne = null;
+
+        try {
+/*
+            LDAPSearchResults searchResults = connection.search(baseDn, request.getScope(), filter, attributes, request.isTypesOnly());
+            while (searchResults.hasMore()) {
+                try {
+                    LDAPEntry entry = searchResults.next();
+                    log.debug("Received entry "+entry.getDN());
+                    SearchResult sr = EntryUtil.toSearchResult(entry);
+                    response.add(sr);
+
+                } catch (LDAPReferralException e) {
+                    log.debug("Referrals:");
+                    String referrals[] = e.getReferrals();
+                    for (int i=0; i<referrals.length; i++) {
+                        String referral = referrals[i];
+                        log.debug(" - "+referral);
+
+                        LDAPUrl url = new LDAPUrl(referral);
+
+                        Attributes attrs = new BasicAttributes();
+                        attrs.put("ref", referral);
+                        attrs.put("objectClass", "referral");
+
+                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
+                        response.add(sr);
+                        //response.addReferral(referral);
+                    }
+                }
+            }
+*/
+            context = getContext();
+
+            Collection<Control> origControls = convertControls(request.getControls());
+
+            Collection<Control> list = new ArrayList<Control>();
+            list.addAll(origControls);
+            list.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+
+            Control[] controls = (Control[])list.toArray(new Control[list.size()]);
+            context.setRequestControls(controls);
+
+            int page = 0;
+            byte[] cookie = null;
+
+            do {
+                boolean moreReferrals = true;
+
+                while (moreReferrals) {
+                    try {
+                        if (debug) log.debug("Searching page #"+page);
+                        ne = context.search(baseDn.toString(), filter, sc);
+
+                        while (ne.hasMore()) {
+                            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+                            String s = sr.getName();
+                            log.debug("SearchResult: ["+s+"]");
+
+                            if (s.startsWith("ldap://")) {
+                                LDAPUrl url = new LDAPUrl(s);
+                                db.set(LDAPUrl.decode(url.getDN()));
+                            } else {
+                                db.set(s);
+                                db.append(request.getDn());
+                            }
+
+                            sr.setName(db.toString());
+
+                            response.add(sr);
+                        }
+
+                        moreReferrals = false;
+
+                    } catch (ReferralException e) {
+                        String referral = e.getReferralInfo().toString();
+                        log.debug("Referral: "+referral);
+
+                        LDAPUrl url = new LDAPUrl(referral);
+
+                        Attributes attrs = new BasicAttributes();
+                        attrs.put("ref", referral);
+                        attrs.put("objectClass", "referral");
+
+                        javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(url.getDN(), null, attrs);
+                        response.add(sr);
+                        //response.addReferral(referral);
+
+                        moreReferrals = e.skipReferral();
+
+                        if (moreReferrals) {
+                            context = (LdapContext)e.getReferralContext();
+                        }
+                    }
+                }
+
+                // get cookie returned by server
+                controls = context.getResponseControls();
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
+                    }
+                }
+
+                // pass cookie back to server for the next page
+                list = new ArrayList<Control>();
+                list.addAll(origControls);
+                list.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+
+                controls = (Control[])list.toArray(new Control[list.size()]);
+                context.setRequestControls(controls);
+
+                page++;
+
+            } while (cookie != null && cookie.length != 0);
+
+        } finally {
+            if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            //if (connection != null) try { connection.disconnect(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            response.close();
         }
     }
 
@@ -701,146 +908,19 @@ public class LDAPClient {
         }
     }
 
-    public void search(
-            String baseDn,
-            String filter,
-            SearchRequest request,
-            SearchResponse results
-    ) throws Exception {
+    public Collection<Control> convertControls(Collection<org.safehaus.penrose.control.Control> controls) throws Exception {
+        Collection<Control> list = new ArrayList<Control>();
+        for (Iterator i=controls.iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
 
-        boolean debug = log.isDebugEnabled();
+            String oid = control.getOid();
+            boolean critical = control.isCritical();
+            byte[] value = control.getValue();
 
-        DNBuilder db = new DNBuilder();
-        db.set(baseDn);
-        db.append(suffix);
-        DN ldapBase = db.toDn();
-
-        log.debug("Search \""+ldapBase+"\" with filter="+filter+" scope="+ request.getScope()+" attrs="+ request.getAttributes()+":");
-
-        String attributes[] = (String[]) request.getAttributes().toArray(new String[request.getAttributes().size()]);
-
-        SearchControls sc = new SearchControls();
-        sc.setSearchScope(request.getScope());
-        sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributes);
-        sc.setCountLimit(request.getSizeLimit());
-        sc.setTimeLimit((int) request.getTimeLimit());
-
-        LdapContext context = null;
-        NamingEnumeration ne = null;
-
-        try {
-/*
-            LDAPSearchResults searchResults = connection.search(ldapBase, request.getScope(), filter, attributes, request.isTypesOnly());
-            while (searchResults.hasMore()) {
-                try {
-                    LDAPEntry entry = searchResults.next();
-                    log.debug("Received entry "+entry.getDN());
-                    SearchResult sr = EntryUtil.toSearchResult(entry);
-                    results.add(sr);
-
-                } catch (LDAPReferralException e) {
-                    log.debug("Referrals:");
-                    String referrals[] = e.getReferrals();
-                    for (int i=0; i<referrals.length; i++) {
-                        String referral = referrals[i];
-                        log.debug(" - "+referral);
-
-                        LDAPUrl url = new LDAPUrl(referral);
-
-                        Attributes attrs = new BasicAttributes();
-                        attrs.put("ref", referral);
-                        attrs.put("objectClass", "referral");
-
-                        SearchResult sr = new SearchResult(url.getDN(), null, attrs);
-                        results.add(sr);
-                        //results.addReferral(referral);
-                    }
-                }
-            }
-*/
-            context = getContext();
-
-            Control[] controls = new Control[] { new PagedResultsControl(pageSize, Control.NONCRITICAL) };
-            context.setRequestControls(controls);
-
-            int page = 0;
-            byte[] cookie = null;
-
-            do {
-                if (debug) log.debug("Searching page #"+page);
-                boolean moreReferrals = true;
-
-                while (moreReferrals) {
-                    try {
-                        ne = context.search(ldapBase.toString(), filter, sc);
-
-                        while (ne.hasMore()) {
-                            javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
-                            String s = sr.getName();
-                            log.debug("SearchResult: ["+s+"]");
-
-                            if (s.startsWith("ldap://")) {
-                                LDAPUrl url = new LDAPUrl(s);
-                                db.set(LDAPUrl.decode(url.getDN()));
-                            } else {
-                                db.set(s);
-                                db.append(baseDn);
-                            }
-
-                            sr.setName(db.toString());
-
-                            results.add(sr);
-                        }
-
-                        moreReferrals = false;
-
-                    } catch (ReferralException e) {
-                        String referral = e.getReferralInfo().toString();
-                        log.debug("Referral: "+referral);
-
-                        LDAPUrl url = new LDAPUrl(referral);
-
-                        Attributes attrs = new BasicAttributes();
-                        attrs.put("ref", referral);
-                        attrs.put("objectClass", "referral");
-
-                        javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(url.getDN(), null, attrs);
-                        results.add(sr);
-                        //results.addReferral(referral);
-
-                        moreReferrals = e.skipReferral();
-
-                        if (moreReferrals) {
-                            context = (LdapContext)e.getReferralContext();
-                        }
-                    }
-                }
-
-                // get cookie returned by server
-                controls = context.getResponseControls();
-                if (controls != null) {
-                    for (int i = 0; i < controls.length; i++) {
-                        if (controls[i] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
-                            cookie = prrc.getCookie();
-                        }
-                    }
-                }
-
-                // pass cookie back to server for the next page
-                controls = new Control[] { new PagedResultsControl(pageSize, cookie, Control.CRITICAL) };
-                context.setRequestControls(controls);
-
-                page++;
-
-            } while (cookie != null && cookie.length != 0);
-
-        } finally {
-            if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-            //if (connection != null) try { connection.disconnect(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-            results.close();
+            list.add(new BasicControl(oid, critical, value));
         }
+
+        return list;
     }
 
     public javax.naming.directory.SearchResult getEntry(String dn) throws Exception {
@@ -1017,5 +1097,21 @@ public class LDAPClient {
 
     public void setSchema(Schema schema) {
         this.schema = schema;
+    }
+
+    public Attributes convertAttributes(org.safehaus.penrose.entry.Attributes attributes) throws Exception {
+
+        Attributes attrs = new javax.naming.directory.BasicAttributes();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            org.safehaus.penrose.entry.Attribute attribute = (org.safehaus.penrose.entry.Attribute)i.next();
+
+            Attribute attr = new BasicAttribute(attribute.getName());
+            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
+                Object value = j.next();
+                attr.add(value);
+            }
+        }
+
+        return attrs;
     }
 }

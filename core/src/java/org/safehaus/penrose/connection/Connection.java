@@ -257,9 +257,19 @@ public class Connection implements ConnectionMBean {
         adapter.create(source);
     }
 
+    public void rename(Source oldSource, Source newSource) throws Exception {
+
+        adapter.rename(oldSource, newSource);
+    }
+
     public void drop(Source source) throws Exception {
 
         adapter.drop(source);
+    }
+
+    public void clean(Source source) throws Exception {
+
+        adapter.clean(source);
     }
 
     public Object openConnection() throws Exception {

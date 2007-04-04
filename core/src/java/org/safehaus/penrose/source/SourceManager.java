@@ -121,8 +121,8 @@ public class SourceManager {
         return new ArrayList(map.keySet()); // return Serializable list
     }
 
-    public Collection getSources(String partitionName) {
-        Map map = (Map)sources.get(partitionName);
+    public Collection getSources(Partition partition) {
+        Map map = (Map)sources.get(partition.getName());
         if (map == null) return EMPTY;
         return map.values();
     }

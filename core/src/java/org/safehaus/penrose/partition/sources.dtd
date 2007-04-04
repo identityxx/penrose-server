@@ -6,7 +6,7 @@
 <!ATTLIST source name CDATA #REQUIRED>
 <!ELEMENT connection-name (#PCDATA)>
 
-<!ELEMENT field EMPTY>
+<!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
 <!ATTLIST field originalName CDATA #IMPLIED>
 <!ATTLIST field primaryKey (true|first|false) "false">
@@ -17,6 +17,13 @@
 <!ATTLIST field unique CDATA #IMPLIED>
 <!ATTLIST field index CDATA #IMPLIED>
 <!ATTLIST field caseSensitive CDATA #IMPLIED>
+
+<!ELEMENT binary (#PCDATA)>
+<!ELEMENT constant (#PCDATA)>
+<!ELEMENT variable (#PCDATA)>
+<!ELEMENT expression (#PCDATA)>
+<!ATTLIST expression foreach CDATA #IMPLIED>
+<!ATTLIST expression var CDATA #IMPLIED>
 
 <!ELEMENT description (#PCDATA)>
 

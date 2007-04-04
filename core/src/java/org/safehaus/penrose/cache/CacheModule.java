@@ -3,14 +3,16 @@ package org.safehaus.penrose.cache;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.Modification;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.changelog.ChangeLogUtil;
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.jdbc.JDBCClient;
+import org.safehaus.penrose.engine.TransformEngine;
 
 import java.util.*;
 
@@ -49,15 +51,20 @@ public class CacheModule extends Module {
 
     protected SourceManager sourceManager;
     protected Source source;
-    protected Source cache;
+    //protected Source cache;
     protected Source changeLog;
     protected Source tracker;
     protected String user;
+
+    protected Map<String,Source> caches = new LinkedHashMap<String,Source>();
+    protected Map<String,Source> snapshots = new LinkedHashMap<String,Source>();
 
     protected ChangeLogUtil changeLogUtil;
     protected CacheRunnable runnable;
 
     public void init() throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         sourceName = getParameter(SOURCE);
         log.debug("Source: "+ sourceName);
@@ -92,7 +99,42 @@ public class CacheModule extends Module {
         sourceManager = penroseContext.getSourceManager();
 
         source = sourceManager.getSource(partition, sourceName);
-        cache = sourceManager.getSource(partition, cacheName);
+        //cache = sourceManager.getSource(partition, cacheName);
+
+        if (debug) log.debug("Caches for "+sourceName+":");
+
+        Collection sources = sourceManager.getSources(partition);
+        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+            Source src = (Source)i.next();
+
+            Source cache = null;
+            for (Iterator j=src.getFields().iterator(); j.hasNext(); ) {
+                Field field = (Field)j.next();
+
+                String variable = field.getVariable();
+                if (variable != null && variable.startsWith(sourceName+".")) {
+                    log.debug(" - "+src.getName());
+                    cache = src;
+                    break;
+                }
+
+                Expression expression = field.getExpression();
+                if (expression != null) {
+                    String foreach = expression.getForeach();
+                    if (foreach != null && foreach.startsWith(sourceName+".")) {
+                        log.debug(" - "+src.getName());
+                        cache = src;
+                        break;
+                    }
+                }
+            }
+
+            if (cache == null) continue;
+
+            caches.put(src.getName(), cache);
+            Source snapshot = createSnapshotSource(cache);
+            snapshots.put(src.getName(), snapshot);
+        }
 
         if (changeLogName != null) {
             changeLog = sourceManager.getSource(partition, changeLogName);
@@ -100,11 +142,20 @@ public class CacheModule extends Module {
 
             changeLogUtil = createChangeLogUtil();
             changeLogUtil.setSource(source);
-            changeLogUtil.setCache(cache);
+            //changeLogUtil.setCache(cache);
             changeLogUtil.setChangeLog(changeLog);
             changeLogUtil.setTracker(tracker);
             changeLogUtil.setUser(user);
         }
+    }
+
+    public Source createSnapshotSource(Source cache) {
+        String tableName = cache.getParameter(JDBCClient.TABLE);
+
+        Source snapshot = (Source)cache.clone();
+        snapshot.setName(cache.getName()+"_snapshot");
+        snapshot.setParameter(JDBCClient.TABLE, tableName+"_snapshot");
+        return snapshot;
     }
 
     public ChangeLogUtil createChangeLogUtil() throws Exception {
@@ -115,7 +166,7 @@ public class CacheModule extends Module {
 
         if (initialize) {
             try {
-                cache.create();
+                //cache.create();
             } catch (Exception e) {
                 log.debug(e.getMessage(), e);
             }
@@ -167,7 +218,7 @@ public class CacheModule extends Module {
         SearchRequest cacheRequest = new SearchRequest();
         SearchResponse cacheResponse = new SearchResponse();
 
-        cache.search(cacheRequest, cacheResponse);
+        //cache.search(cacheRequest, cacheResponse);
 
         Entry sourceEntry = sourceResponse.hasNext() ? (Entry)sourceResponse.next() : null;
         Entry cacheEntry = cacheResponse.hasNext() ? (Entry)cacheResponse.next() : null;
@@ -205,17 +256,106 @@ public class CacheModule extends Module {
 
     public void synchronizeUnsorted() throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SearchRequest sourceRequest = new SearchRequest();
         SearchResponse sourceResponse = new SearchResponse();
 
         source.search(sourceRequest, sourceResponse);
 
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Source snapshot = (Source)snapshots.get(name);
+            try {
+                snapshot.create();
+            } catch (Exception e) {
+                snapshot.clean();
+            }
+        }
+
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        RDNBuilder rb = new RDNBuilder();
+
         Map sourceEntries = new LinkedHashMap();
         while (sourceResponse.hasNext()) {
             Entry sourceEntry = (Entry)sourceResponse.next();
-            sourceEntries.put(sourceEntry.getDn(), sourceEntry);
+
+            DN dn = sourceEntry.getDn();
+            Attributes attributes = sourceEntry.getAttributes();
+
+            if (debug) {
+                log.debug("Synchronizing "+dn);
+            }
+
+            sourceEntries.put(dn, sourceEntry);
+
+            AttributeValues sourceValues = new AttributeValues();
+            for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+                Attribute attribute = (Attribute)i.next();
+                sourceValues.set(sourceName+"."+attribute.getName(), attribute.getValues());
+            }
+
+            interpreter.set(sourceValues);
+
+            for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Source snapshot = (Source)snapshots.get(name);
+
+                Attributes newAttributes = new Attributes();
+                Attributes newRdns = new Attributes();
+
+                for (Iterator j=snapshot.getFields().iterator(); j.hasNext(); ) {
+                    Field field = (Field)j.next();
+                    String fieldName = field.getName();
+
+                    Object value = interpreter.eval(field);
+                    if (value == null) continue;
+
+                    if (value instanceof Collection) {
+                        Collection list = (Collection)value;
+                        newAttributes.addValues(fieldName, list);
+                        if (field.isPrimaryKey()) newRdns.addValues(fieldName, list);
+                    } else {
+                        newAttributes.addValue(fieldName, value);
+                        if (field.isPrimaryKey()) newRdns.addValue(fieldName, value);
+                    }
+                }
+
+                Collection rdns = TransformEngine.convert(newRdns);
+
+                for (Iterator j=rdns.iterator(); j.hasNext(); ) {
+                    RDN rdn = (RDN)j.next();
+                    DN newDn = new DN(rdn);
+
+                    if (debug) {
+                        log.debug("Adding "+snapshot.getName()+": "+newDn);
+                        newAttributes.print();
+                    }
+
+                    snapshot.add(newDn, newAttributes);
+                }
+
+                rb.clear();
+            }
+
+            interpreter.clear();
         }
 
+        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+
+            Source cache = (Source)caches.get(name);
+            Source snapshot = (Source)snapshots.get(name);
+
+            try {
+                cache.drop();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+
+            snapshot.rename(cache);
+        }
+/*
         SearchRequest cacheRequest = new SearchRequest();
         SearchResponse cacheResponse = new SearchResponse();
 
@@ -248,18 +388,18 @@ public class CacheModule extends Module {
                 delete(cacheEntry);
             }
         }
-
+*/
         log.debug("Cache synchronization completed.");
     }
 
     public void add(Entry entry) throws Exception {
         if (log.isDebugEnabled()) log.debug("Adding "+entry.getDn()+" to cache.");
-        cache.add(entry.getDn(), entry.getAttributes());
+        //cache.add(entry.getDn(), entry.getAttributes());
     }
 
     public void delete(Entry entry) throws Exception {
         if (log.isDebugEnabled()) log.debug("Deleting "+entry.getDn()+" from cache.");
-        cache.delete(entry.getDn());
+        //cache.delete(entry.getDn());
     }
 
     public void update(Entry sourceEntry, Entry cacheEntry) throws Exception {
@@ -281,7 +421,7 @@ public class CacheModule extends Module {
             modifications.add(new Modification(Modification.DELETE, attribute));
         }
 
-        cache.modify(cacheEntry.getDn(), modifications);
+        //cache.modify(cacheEntry.getDn(), modifications);
     }
 
     public boolean isSorted() {

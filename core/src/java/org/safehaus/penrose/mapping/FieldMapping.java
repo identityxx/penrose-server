@@ -30,14 +30,14 @@ public class FieldMapping implements Cloneable {
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";
 
-    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static String DEFAULT_TYPE   = VARIABLE;
 
 	/**
 	 * Name.
 	 */
 	private String name;
 
-    private String type   = DEFAULT_TYPE;
+    private String type = DEFAULT_TYPE;
 
 	/**
 	 * Expression.
@@ -118,11 +118,7 @@ public class FieldMapping implements Cloneable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
-                (constant == null ? 0 : constant.hashCode()) +
-                (variable == null ? 0 : variable.hashCode()) +
-                (expression == null ? 0 : expression.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {

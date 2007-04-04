@@ -19,9 +19,7 @@ package org.safehaus.penrose.adapter.ldap;
 
 import javax.naming.directory.*;
 import javax.naming.*;
-import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.PagedResultsResponseControl;
 
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.filter.Filter;
@@ -98,7 +96,49 @@ public class LDAPAdapter extends Adapter {
     }
 
     public Entry createEntry(
+            Source source,
+            javax.naming.directory.SearchResult sr
+    ) throws Exception {
+
+        Attributes attributes = new Attributes();
+
+        DN dn = new DN(sr.getName());
+        RDN rdn = dn.getRdn();
+
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+            attributes.addValue("primaryKey."+name, value);
+        }
+
+        javax.naming.directory.Attributes attrs = sr.getAttributes();
+        for (Iterator i= source.getFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+
+            javax.naming.directory.Attribute attr = attrs.get(field.getOriginalName());
+            if (attr == null) {
+                if (field.isPrimaryKey()) return null;
+                continue;
+            }
+
+            String fieldName = field.getName();
+            //if (fieldName.equals("objectClass")) continue;
+
+            for (NamingEnumeration ne = attr.getAll(); ne.hasMore(); ) {
+                Object value = ne.next();
+                attributes.addValue(fieldName, value);
+            }
+        }
+
+        Entry entry = new Entry(dn);
+        entry.setAttributes(attributes);
+
+        return entry;
+    }
+
+    public Entry createEntry(
             Partition partition,
+            EntryMapping entryMapping,
             SourceRef sourceRef,
             javax.naming.directory.SearchResult sr
     ) throws Exception {
@@ -107,6 +147,7 @@ public class LDAPAdapter extends Adapter {
 
         DN dn = new DN(sr.getName());
         Entry entry = new Entry(dn);
+        entry.setEntryMapping(entryMapping);
 
         Attributes sourceValues = new Attributes();
         entry.setSourceValues(sourceName, sourceValues);
@@ -286,7 +327,7 @@ public class LDAPAdapter extends Adapter {
         return list;
     }
 
-    public Collection convertControls(Collection<Control> controls) throws Exception {
+    public Collection<javax.naming.ldap.Control> convertControls(Collection<Control> controls) throws Exception {
         Collection list = new ArrayList();
         for (Iterator i=controls.iterator(); i.hasNext(); ) {
             Control control = (Control)i.next();
@@ -299,6 +340,49 @@ public class LDAPAdapter extends Adapter {
         }
 
         return list;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Storage
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void create(Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Create "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        //client.createTable(source);
+    }
+
+    public void rename(Source source, String name) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Create "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        //client.renameTable(source, name);
+    }
+
+    public void drop(Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Drop "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        //client.dropTable(source);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -339,13 +423,15 @@ public class LDAPAdapter extends Adapter {
             Collection requests = builder.generate();
             for (Iterator i=requests.iterator(); i.hasNext(); ) {
                 AddRequest newRequest = (AddRequest)i.next();
-
+/*
                 String dn = newRequest.getDn().toString();
                 javax.naming.directory.Attributes ldapAttributes = convertAttributes(newRequest.getAttributes());
 
                 log.debug("Adding "+dn);
                 ctx = ((LDAPClient)openConnection()).getContext();
                 ctx.createSubcontext(dn.toString(), ldapAttributes);
+*/
+                client.add(newRequest, response);
             }
 
         } finally {
@@ -389,7 +475,7 @@ public class LDAPAdapter extends Adapter {
         try {
 
             BindRequest newRequest = builder.generate();
-
+/*
             String dn = newRequest.getDn().toString();
             String password = newRequest.getPassword();
 
@@ -401,6 +487,8 @@ public class LDAPAdapter extends Adapter {
 
             log.debug("Binding as "+dn);
             ctx = new InitialDirContext(env);
+*/
+            client.bind(newRequest, response);
 
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -445,12 +533,14 @@ public class LDAPAdapter extends Adapter {
             Collection requests = builder.generate();
             for (Iterator i=requests.iterator(); i.hasNext(); ) {
                 DeleteRequest newRequest = (DeleteRequest)i.next();
-
+/*
                 String dn = newRequest.getDn().toString();
-
                 log.debug("Deleting "+dn);
+
                 ctx = ((LDAPClient)openConnection()).getContext();
                 ctx.destroySubcontext(dn.toString());
+*/
+                client.delete(newRequest, response);
             }
 
         } finally {
@@ -502,15 +592,17 @@ public class LDAPAdapter extends Adapter {
             Collection requests = builder.generate();
             for (Iterator i=requests.iterator(); i.hasNext(); ) {
                 ModifyRequest newRequest = (ModifyRequest)i.next();
-
-                String dn = newRequest.getDn().toString();
+/*
+                DN dn = newRequest.getDn();
+                log.debug("Modifying "+dn);
 
                 Collection list = convertModifications(newRequest.getModifications());
                 ModificationItem modifications[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
 
-                log.debug("Modifying "+dn);
                 ctx = ((LDAPClient)openConnection()).getContext();
                 ctx.modifyAttributes(dn.toString(), modifications);
+*/
+                client.modify(newRequest, response);
             }
 
         } finally {
@@ -561,12 +653,14 @@ public class LDAPAdapter extends Adapter {
             Collection requests = builder.generate();
             for (Iterator i=requests.iterator(); i.hasNext(); ) {
                 ModRdnRequest newRequest = (ModRdnRequest)i.next();
-
+/*
                 String dn = newRequest.getDn().toString();
                 String newRdn = newRequest.getNewRdn().toString();
 
                 ctx = ((LDAPClient)openConnection()).getContext();
                 ctx.rename(dn, newRdn);
+*/
+                client.modrdn(newRequest, response);
             }
 
         } catch (Exception e) {
@@ -583,14 +677,154 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            AttributeValues sourceValues,
-            SearchRequest request,
-            SearchResponse response
+            final Source source,
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
+        final boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Search "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        LdapContext ctx = null;
+        try {
+
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(source.getParameter(LDAPAdapter.BASE_DN));
+
+            SearchRequest newRequest = new SearchRequest();
+            newRequest.setDn(db.toDn());
+            newRequest.setFilter(request.getFilter());
+            newRequest.setAttributes(request.getAttributes());
+            newRequest.setSizeLimit(request.getSizeLimit());
+            newRequest.setTimeLimit(request.getTimeLimit());
+
+            String scope = source.getParameter(LDAPAdapter.SCOPE);
+
+            if ("OBJECT".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_BASE);
+
+            } else if ("ONELEVEL".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_ONE);
+
+            } else if ("SUBTREE".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_SUB);
+            }
+
+            SearchResponse newResponse = new SearchResponse() {
+                public void add(Object object) throws Exception {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)object;
+
+                    Entry entry = createEntry(source, sr);
+                    if (entry == null) return;
+
+                    if (debug) {
+                        Formatter.printEntry(entry);
+                    }
+
+                    response.add(entry);
+                }
+                public void close() throws Exception {
+                    response.close();
+                }
+            };
+
+            client.search(newRequest, newResponse);
+/*
+            SearchControls sc = new SearchControls();
+
+            if ("OBJECT".equals(scope)) {
+                sc.setSearchScope(SearchControls.OBJECT_SCOPE);
+
+            } else if ("ONELEVEL".equals(scope)) {
+                sc.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+            } else if ("SUBTREE".equals(scope)) {
+                sc.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+
+            String baseDn = db.toString();
+            String filter = request.getFilter() == null ? "(objectClass=*)" : request.getFilter().toString();
+
+            sc.setCountLimit(request.getSizeLimit());
+            sc.setTimeLimit((int)request.getTimeLimit());
+
+            ctx = ((LDAPClient)openConnection()).getContext();
+
+            String s = source.getParameter(LDAPAdapter.PAGE_SIZE);
+            int pageSize = s == null ? LDAPAdapter.DEFAULT_PAGE_SIZE : Integer.parseInt(s);
+
+            Collection list = convertControls(request.getControls());
+            list.add(new PagedResultsControl(pageSize, javax.naming.ldap.Control.NONCRITICAL));
+
+            javax.naming.ldap.Control controls[] = (javax.naming.ldap.Control[])list.toArray(new javax.naming.ldap.Control[list.size()]);
+            ctx.setRequestControls(controls);
+
+            int page = 0;
+            byte[] cookie = null;
+
+            do {
+                if (debug) log.debug("Searching page #"+page+": "+baseDn+" "+filter+" "+LDAPUtil.getScope(request.getScope()));
+                NamingEnumeration ne = ctx.search(baseDn, filter, sc);
+
+                if (debug) log.debug("Results from page #"+page+":");
+                while (ne.hasMore()) {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
+
+                    Entry entry = createEntry(source, sr);
+                    if (entry == null) continue;
+
+                    if (debug) {
+                        Formatter.printEntry(entry);
+                    }
+
+                    response.add(entry);
+                }
+
+                // get cookie returned by server
+                controls = ctx.getResponseControls();
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
+                    }
+                }
+
+                // pass cookie back to server for the next page
+                controls = new javax.naming.ldap.Control[] { new PagedResultsControl(pageSize, cookie, javax.naming.ldap.Control.CRITICAL) };
+                ctx.setRequestControls(controls);
+
+                page++;
+
+            } while (cookie != null && cookie.length != 0);
+*/
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+
+        } finally {
+            if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+
+        log.debug("Search operation completed.");
+    }
+
+    public void search(
+            final EntryMapping entryMapping,
+            final Collection sourceRefs,
+            final AttributeValues sourceValues,
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+
+        final boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -613,10 +847,30 @@ public class LDAPAdapter extends Adapter {
 
         LdapContext ctx = null;
         try {
-            SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+            final SourceRef sourceRef = (SourceRef)sourceRefs.iterator().next();
 
             SearchRequest newRequest = builder.generate();
 
+            SearchResponse newResponse = new SearchResponse() {
+                public void add(Object object) throws Exception {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)object;
+
+                    Entry entry = createEntry(partition, entryMapping, sourceRef, sr);
+                    if (entry == null) return;
+
+                    if (debug) {
+                        Formatter.printEntry(entry);
+                    }
+
+                    response.add(entry);
+                }
+                public void close() throws Exception {
+                    response.close();
+                }
+            };
+
+            client.search(newRequest, newResponse);
+/*
             DNBuilder db = new DNBuilder();
             db.set(newRequest.getDn());
             db.append(client.getSuffix());
@@ -652,11 +906,11 @@ public class LDAPAdapter extends Adapter {
                 while (ne.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
 
-                    Entry entry = createEntry(partition, sourceRef, sr);
+                    Entry entry = createEntry(partition, entryMapping, sourceRef, sr);
                     if (entry == null) continue;
                     
                     if (debug) {
-                        LDAPFormatter.printEntry(entry);
+                        Formatter.printEntry(entry);
                     }
 
                     response.add(entry);
@@ -680,7 +934,7 @@ public class LDAPAdapter extends Adapter {
                 page++;
 
             } while (cookie != null && cookie.length != 0);
-
+*/
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw ExceptionUtil.createLDAPException(e);
@@ -688,6 +942,8 @@ public class LDAPAdapter extends Adapter {
         } finally {
             if (ctx != null) try { ctx.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
+
+        log.debug("Search operation completed.");
     }
 
     public DN getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {

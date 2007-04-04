@@ -255,23 +255,23 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(SourceConfig source) {
+    public Element toElement(SourceConfig sourceConfig) {
         Element element = new DefaultElement("source");
-        element.addAttribute("name", source.getName());
+        element.addAttribute("name", sourceConfig.getName());
 
         Element adapterName = new DefaultElement("connection-name");
-        adapterName.add(new DefaultText(source.getConnectionName()));
+        adapterName.add(new DefaultText(sourceConfig.getConnectionName()));
         element.add(adapterName);
 
-        for (Iterator i = source.getFieldConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i = sourceConfig.getFieldConfigs().iterator(); i.hasNext(); ) {
             FieldConfig field = (FieldConfig)i.next();
             Element fieldElement = toElement(field);
             element.add(fieldElement);
         }
 
-        for (Iterator i = source.getParameterNames().iterator(); i.hasNext(); ) {
+        for (Iterator i = sourceConfig.getParameterNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            String value = source.getParameter(name);
+            String value = sourceConfig.getParameter(name);
             if ("".equals(value)) continue;
 
             Element parameterElement = createParameterElement(name, value);

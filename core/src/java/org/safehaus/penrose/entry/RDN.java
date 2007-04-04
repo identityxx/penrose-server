@@ -29,7 +29,7 @@ import java.util.Iterator;
  */
 public class RDN implements Comparable {
 
-    public Map values = new TreeMap();
+    public Map<String,Object> values = new TreeMap<String,Object>();
 
     protected String original;
     protected String normalized;
@@ -42,7 +42,7 @@ public class RDN implements Comparable {
         values = new DN(rdn).getRdn().values;
     }
 
-    public RDN(Map values) {
+    public RDN(Map<String,Object> values) {
         this.values.putAll(values);
     }
 
@@ -58,7 +58,7 @@ public class RDN implements Comparable {
         return values.get(name);
     }
 
-    public Collection getNames() {
+    public Collection<String> getNames() {
         return values.keySet();
     }
 
@@ -66,7 +66,7 @@ public class RDN implements Comparable {
         return values.containsKey(name);
     }
 
-    public Map getValues() {
+    public Map<String,Object> getValues() {
         return values;
     }
 

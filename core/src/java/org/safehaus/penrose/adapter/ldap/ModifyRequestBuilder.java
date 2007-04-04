@@ -21,7 +21,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     
     String suffix;
 
-    Collection sources;
+    Collection sourceRefs;
     AttributeValues sourceValues;
 
     Interpreter interpreter;
@@ -40,7 +40,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         this.suffix = suffix;
 
-        this.sources = sources;
+        this.sourceRefs = sources;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -51,7 +51,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
     public Collection generate() throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sources.iterator().next();
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
         generatePrimaryRequest(sourceRef);
 
         return requests;

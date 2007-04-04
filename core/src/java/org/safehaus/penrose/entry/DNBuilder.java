@@ -11,7 +11,7 @@ public class DNBuilder {
 
     Logger log = Logger.getLogger(getClass());
     
-    public List rdns = new ArrayList();
+    public List<RDN> rdns = new ArrayList<RDN>();
 
     public void set(String dn) {
         rdns.clear();
@@ -29,6 +29,7 @@ public class DNBuilder {
     }
 
     public void append(String dn) {
+        if (dn == null) return;
         Collection list = parse(dn);
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
@@ -37,10 +38,12 @@ public class DNBuilder {
     }
 
     public void append(RDN rdn) {
+        if (rdn == null) return;
         rdns.add(rdn);
     }
 
     public void append(DN dn) {
+        if (dn == null) return;
         Collection list = dn.getRdns();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
@@ -49,6 +52,7 @@ public class DNBuilder {
     }
 
     public void prepend(String dn) {
+        if (dn == null) return;
         Collection list = parse(dn);
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
@@ -57,10 +61,12 @@ public class DNBuilder {
     }
 
     public void prepend(RDN rdn) {
+        if (rdn == null) return;
         rdns.add(0, rdn);
     }
 
     public void prepend(DN dn) {
+        if (dn == null) return;
         Collection list = dn.getRdns();
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
@@ -102,9 +108,9 @@ public class DNBuilder {
      * @param dn
      * @return a Collection of RDN objects
      */
-    public static Collection parse(String dn) {
+    public static Collection<RDN> parse(String dn) {
 
-        Collection list =  new ArrayList();
+        Collection<RDN> list = new ArrayList<RDN>();
 
         if (dn == null || "".equals(dn)) return list;
 

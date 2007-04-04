@@ -1,6 +1,7 @@
 package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.mapping.Expression;
 
 /**
  * @author Endi S. Dewata
@@ -82,5 +83,17 @@ public class Field {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    public Object getConstant() {
+        return fieldConfig.getConstant();
+    }
+    
+    public String getVariable() {
+        return fieldConfig.getVariable();
+    }
+
+    public Expression getExpression() {
+        return fieldConfig.getExpression();
     }
 }

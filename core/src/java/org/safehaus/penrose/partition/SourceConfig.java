@@ -112,8 +112,8 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return (FieldConfig)fieldConfigsByOriginalName.get(originalName);
     }
 
-    public Collection getPrimaryKeyNames() {
-        Collection results = new TreeSet();
+    public Collection<String> getPrimaryKeyNames() {
+        Collection<String> results = new TreeSet<String>();
         for (Iterator i=pkFieldConfigs.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             results.add(fieldConfig.getName());

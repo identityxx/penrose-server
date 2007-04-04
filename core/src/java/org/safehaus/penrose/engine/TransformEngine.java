@@ -48,16 +48,21 @@ public class TransformEngine {
     /**
      * Convert attribute values into rows.
      *
-     * Input: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     * Output: List(RDN(value1=a, value2=1), RDN(value1=a, value2=2), ... )
+     * Input: Attributes(attr1=[a, b, c], attr2=[1, 2, 3])
+     * Output: List(RDN(attr1=a, attr2=1), RDN(attr1=a, attr2=2), ... )
      *
      * @param attributes
      * @return collection of Rows
      */
-    public static Collection convert(AttributeValues attributes) {
-        return convert(attributes.getValues());
+    public static Collection convert(Attributes attributes) {
+        Map<String,Collection> map = new HashMap<String,Collection>();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+            map.put(attribute.getName(), attribute.getValues());
+        }
+        return convert(map);
     }
-
+    
     /**
      * Convert map of values into rows.
      *
@@ -67,10 +72,10 @@ public class TransformEngine {
      * @param values Map of collections.
      * @return collection of Rows
      */
-    public static Collection convert(Map values) {
-        List names = new ArrayList(values.keySet());
-        List results = new ArrayList();
-        Map temp = new HashMap();
+    public static Collection convert(Map<String,Collection> values) {
+        List<String> names = new ArrayList<String>(values.keySet());
+        List<RDN> results = new ArrayList<RDN>();
+        Map<String,Object> temp = new HashMap<String,Object>();
 
         if (crossProductDebug >= 65535) {
             log.debug("Generating cross product:");
@@ -82,7 +87,13 @@ public class TransformEngine {
         return results;
     }
 
-    public static void convert(Map values, List names, int pos, Map temp, Collection results) {
+    public static void convert(
+            Map<String,Collection> values,
+            List names,
+            int pos,
+            Map<String,Object> temp,
+            Collection<RDN> results
+    ) {
 
         if (pos < names.size()) {
 
@@ -109,11 +120,11 @@ public class TransformEngine {
 
         } else if (!temp.isEmpty()) {
 
-            RDN map = new RDN(temp);
-            results.add(map);
+            RDN rdn = new RDN(temp);
+            results.add(rdn);
 
             //if (crossProductDebug >= 65535) {
-                //log.debug("Generated: "+map);
+                //log.debug("Generated: "+rdn);
             //}
 
         } else {
@@ -216,38 +227,4 @@ public class TransformEngine {
 
         interpreter.clear();
     }
-
-    public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
-
-        AttributeValues pkValues = new AttributeValues();
-
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (!name.startsWith("primaryKey.")) continue;
-
-            Collection values = sourceValues.get(name);
-            if (values == null || values.isEmpty()) return new ArrayList();
-
-            String targetName = name.substring("primaryKey.".length());
-            pkValues.set(targetName, values);
-        }
-
-/*
-        RDN pk = new RDN();
-        AttributeValues pkValues = new AttributeValues();
-        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator i =pkFields.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-
-            Collection values = sourceValues.get(fieldConfig.getName());
-            if (values == null) {
-                return new ArrayList();
-            }
-
-            pkValues.set(fieldConfig.getName(), values);
-        }
-*/
-        return convert(pkValues);
-    }
-
 }
