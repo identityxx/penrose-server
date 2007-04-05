@@ -516,6 +516,10 @@ public class JDBCClient {
                 sb.append(field.getLength());
                 sb.append(")");
             }
+
+            if (field.isCaseSensitive()) {
+                sb.append(" binary");
+            }
         }
 
         sb.append(", primary key (");

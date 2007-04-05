@@ -3,6 +3,7 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -20,7 +21,10 @@ import java.util.*;
  */
 public class SearchRequestBuilder extends RequestBuilder {
 
-    Map sources = new LinkedHashMap(); // need to maintain order
+    EntryMapping entryMapping;
+
+    Map sourceRefs = new LinkedHashMap(); // need to maintain order
+    SourceRef primarySourceRef;
 
     AttributeValues sourceValues;
     Interpreter interpreter;
@@ -33,17 +37,21 @@ public class SearchRequestBuilder extends RequestBuilder {
     public SearchRequestBuilder(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection sourceRefs,
             AttributeValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
-        
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
+
+        this.entryMapping = entryMapping;
+
+        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
             SourceRef sourceRef = (SourceRef)i.next();
-            this.sources.put(sourceRef.getAlias(), sourceRef);
+            this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
         }
+
+        primarySourceRef = (SourceRef)sourceRefs.iterator().next();
 
         this.sourceValues = sourceValues;
 
@@ -54,15 +62,16 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         filterBuilder = new FilterBuilder(
                 entryMapping,
-                sources,
+                sourceRefs,
                 sourceValues,
                 interpreter
         );
     }
 
     public String generateJoinType(SourceRef sourceRef) {
-        if (sourceRef.isRequired()) return "join";
-        return "left join";
+        String joinType = sourceRef.isRequired() ? "join" : "left join";
+        log.debug(" - Join type: "+joinType);
+        return joinType;
     }
 
     public String generateJoinOn(SourceRef sourceRef) {
@@ -73,35 +82,69 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         boolean debug = log.isDebugEnabled();
 
+        if (debug) log.debug(" - Join on:");
+
         StringBuffer sb = new StringBuffer();
 
-        if (debug) log.debug(" - Foreign keys:");
-        for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)j.next();
+        if (primarySourceRef == sourceRef) {
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
+            for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                FieldRef fieldRef = (FieldRef)j.next();
 
-            String variable = fieldMapping.getVariable();
-            if (variable == null) continue;
+                FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-            int p = variable.indexOf(".");
-            if (p < 0) continue;
+                String variable = fieldMapping.getVariable();
+                if (variable == null) continue;
 
-            String lhs = alias+"."+ fieldRef.getOriginalName();
+                AttributeMapping attributeMapping = entryMapping.getAttributeMapping(variable);
+                if (!attributeMapping.isRdn()) continue;
 
-            String sn = variable.substring(0, p);
-            String fn = variable.substring(p+1);
+                String sn = primarySourceRef.getAlias();
+                String fn = fieldRef.getName();
 
-            SourceRef s = (SourceRef)sources.get(sn);
-            FieldRef f = s.getFieldRef(fn);
-            String rhs = sn+"."+f.getOriginalName();
+                SourceRef s = (SourceRef)sourceRefs.get(sn);
+                FieldRef f = s.getFieldRef(fn);
 
-            if (debug) log.debug("   - "+lhs+": "+rhs);
+                String lhs = alias+"."+ fieldRef.getOriginalName();
+                String rhs = sn+"."+f.getOriginalName();
 
-            if (sb.length() > 0) sb.append(" and ");
-            sb.append(lhs);
-            sb.append("=");
-            sb.append(rhs);
+                if (debug) log.debug("   - "+lhs+": "+rhs);
+
+                if (sb.length() > 0) sb.append(" and ");
+                sb.append(lhs);
+                sb.append("=");
+                sb.append(rhs);
+            }
+
+        } else {
+
+            for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
+                FieldRef fieldRef = (FieldRef)j.next();
+
+                FieldMapping fieldMapping = fieldRef.getFieldMapping();
+
+                String variable = fieldMapping.getVariable();
+                if (variable == null) continue;
+
+                int p = variable.indexOf(".");
+                if (p < 0) continue;
+
+                String sn = variable.substring(0, p);
+                String fn = variable.substring(p+1);
+
+                SourceRef s = (SourceRef)sourceRefs.get(sn);
+                FieldRef f = s.getFieldRef(fn);
+
+                String lhs = alias+"."+ fieldRef.getOriginalName();
+                String rhs = sn+"."+f.getOriginalName();
+
+                if (debug) log.debug("   - "+lhs+": "+rhs);
+
+                if (sb.length() > 0) sb.append(" and ");
+                sb.append(lhs);
+                sb.append("=");
+                sb.append(rhs);
+            }
         }
 
         return sb.toString();
@@ -114,7 +157,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         SelectStatement statement = new SelectStatement();
 
         int sourceCounter = 0;
-        for (Iterator i= sources.values().iterator(); i.hasNext(); sourceCounter++) {
+        for (Iterator i= sourceRefs.values().iterator(); i.hasNext(); sourceCounter++) {
             SourceRef sourceRef = (SourceRef)i.next();
 
             String sourceName = sourceRef.getAlias();
@@ -132,15 +175,10 @@ public class SearchRequestBuilder extends RequestBuilder {
                 String joinType = generateJoinType(sourceRef);
                 String joinOn = generateJoinOn(sourceRef);
 
-                if (debug) {
-                    log.debug(" - Join type: "+joinType);
-                    log.debug(" - Join on: "+joinOn);
-                }
-
                 statement.addJoin(joinType, joinOn);
             }
 
-            statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
+            statement.addOrders(sourceRef.getPrimaryKeyFieldRefs());
         }
 /*
         for (Iterator i=entryMapping.getRelationships().iterator(); i.hasNext(); ) {
@@ -165,11 +203,6 @@ public class SearchRequestBuilder extends RequestBuilder {
 
             String joinType = generateJoinType(sourceRef);
             String joinOn = generateJoinOn(sourceRef, alias);
-
-            if (debug) {
-                log.debug(" - Join type: "+joinType);
-                log.debug(" - Join on: "+joinOn);
-            }
 
             statement.addJoin(joinType, joinOn);
         }

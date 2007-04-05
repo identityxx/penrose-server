@@ -83,10 +83,11 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     /**
      * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
      */
-    private Map fieldConfigs = new TreeMap();
-    private Map fieldConfigsByOriginalName = new HashMap();
-    private Collection pkFieldConfigs = new ArrayList();
-    private Collection nonPkFieldConfigs = new ArrayList();
+    private Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+    private Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
+
+    private Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();
+    private Collection<FieldConfig> nonPkFieldConfigs = new ArrayList<FieldConfig>();
 
     public SourceConfig() {
 	}
@@ -113,7 +114,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public Collection<String> getPrimaryKeyNames() {
-        Collection<String> results = new TreeSet<String>();
+        Collection<String> results = new LinkedHashSet<String>();
         for (Iterator i=pkFieldConfigs.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             results.add(fieldConfig.getName());
@@ -122,7 +123,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public Collection getOriginalPrimaryKeyNames() {
-        Collection results = new TreeSet();
+        Collection<String> results = new LinkedHashSet<String>();
         for (Iterator i=pkFieldConfigs.iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             results.add(fieldConfig.getOriginalName());
@@ -139,7 +140,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public Collection getUniqueFieldConfigs() {
-        Collection results = new ArrayList();
+        Collection<FieldConfig> results = new ArrayList<FieldConfig>();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             if (!fieldConfig.isUnique()) continue;
@@ -149,7 +150,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public Collection getIndexedFieldConfigs() {
-        Collection results = new ArrayList();
+        Collection<FieldConfig> results = new ArrayList<FieldConfig>();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
             FieldConfig fieldConfig = (FieldConfig)i.next();
             if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;

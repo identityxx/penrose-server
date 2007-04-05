@@ -23,8 +23,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.entry.AttributeValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -40,7 +38,6 @@ public class FilterBuilder {
     EntryMapping entryMapping;
 
     Map sourceRefs = new LinkedHashMap(); // need to maintain order
-    SourceRef primarySourceRef;
 
     Interpreter interpreter;
 
@@ -60,8 +57,6 @@ public class FilterBuilder {
             SourceRef sourceRef = (SourceRef)i.next();
             this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
         }
-
-        primarySourceRef = (SourceRef)sourceRefs.iterator().next();
 
         this.interpreter = interpreter;
 
@@ -171,10 +166,10 @@ public class FilterBuilder {
 
             String alias = createTableAlias(sourceName);
 
+            Filter f = null;
             for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
                 FieldRef fieldRef = (FieldRef)j.next();
-                Field field = fieldRef.getField();
-                String fieldName = field.getName();
+                String fieldName = fieldRef.getName();
 
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
@@ -185,12 +180,13 @@ public class FilterBuilder {
                 }
 
                 setTableAlias(sourceName, alias);
+                SimpleFilter sf = new SimpleFilter(alias+"."+fieldName, operator, value);
 
-                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, operator, value);
-                if (debug) log.debug(" - Filter "+f+" => "+value);
-                
-                newFilter = FilterTool.appendAndFilter(newFilter, f);
+                f = FilterTool.appendAndFilter(f, sf);
+                if (debug) log.debug(" - Filter "+sf);
             }
+
+            newFilter = FilterTool.appendOrFilter(newFilter, f);
         }
 
         return newFilter;
@@ -303,8 +299,6 @@ public class FilterBuilder {
     }
 
     public String createTableAlias(String sourceName) {
-        if (sourceName.equals(primarySourceRef.getAlias())) return sourceName;
-
         int counter = 2;
         String alias = sourceName+counter;
 
@@ -317,7 +311,6 @@ public class FilterBuilder {
     }
 
     public void setTableAlias(String sourceName, String alias) {
-        if (sourceName.equals(primarySourceRef.getAlias())) return;
         SourceRef sourceRef = (SourceRef) sourceRefs.get(sourceName);
         sourceAliases.put(alias, sourceRef);
     }

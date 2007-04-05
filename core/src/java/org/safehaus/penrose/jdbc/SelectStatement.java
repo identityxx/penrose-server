@@ -11,16 +11,16 @@ import java.util.*;
  */
 public class SelectStatement extends Statement {
 
-    protected Collection fieldRefs = new ArrayList();
+    protected Collection<FieldRef> fieldRefs = new ArrayList<FieldRef>();
 
-    protected Map sourceRefs = new LinkedHashMap(); // maintain source order
-    protected Collection joinTypes = new ArrayList();
-    protected Collection joinOns = new ArrayList();
+    protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // maintain source order
+    protected Collection<String> joinTypes = new ArrayList<String>();
+    protected Collection<String> joinOns = new ArrayList<String>();
 
     protected Filter filter;
-    protected Collection orders = new ArrayList();
+    protected Collection<FieldRef> orders = new ArrayList<FieldRef>();
 
-    public Collection getFieldRefs() {
+    public Collection<FieldRef> getFieldRefs() {
         return fieldRefs;
     }
 
@@ -28,15 +28,17 @@ public class SelectStatement extends Statement {
         fieldRefs.add(fieldRef);
     }
 
-    public void addFieldRefs(Collection fieldRefs) {
+    public void addFieldRefs(Collection<FieldRef> fieldRefs) {
         this.fieldRefs.addAll(fieldRefs);
     }
 
-    public void setFieldRefs(Collection fieldRefs) {
-        this.fieldRefs = fieldRefs;
+    public void setFieldRefs(Collection<FieldRef> fieldRefs) {
+        if (this.fieldRefs == fieldRefs) return;
+        this.fieldRefs.clear();
+        this.fieldRefs.addAll(fieldRefs);
     }
 
-    public Collection getSourceAliases() {
+    public Collection<String> getSourceAliases() {
         return sourceRefs.keySet();
     }
 
@@ -66,16 +68,20 @@ public class SelectStatement extends Statement {
         return joinTypes;
     }
 
-    public void setJoinTypes(Collection joinTypes) {
-        this.joinTypes = joinTypes;
+    public void setJoinTypes(Collection<String> joinTypes) {
+        if (this.joinTypes == joinTypes) return;
+        this.joinTypes.clear();
+        this.joinTypes.addAll(joinTypes);
     }
 
     public Collection getJoinOns() {
         return joinOns;
     }
 
-    public void setJoinOns(Collection joinOns) {
-        this.joinOns = joinOns;
+    public void setJoinOns(Collection<String> joinOns) {
+        if (this.joinOns == joinOns) return;
+        this.joinOns.clear();
+        this.joinOns.addAll(joinOns);
     }
 
     public Filter getFilter() {
@@ -94,7 +100,12 @@ public class SelectStatement extends Statement {
         orders.add(fieldRef);
     }
 
-    public void setOrders(Collection orders) {
-        this.orders = orders;
+    public void addOrders(Collection<FieldRef> orders) {
+        this.orders.addAll(orders);
+    }
+    public void setOrders(Collection<FieldRef> orders) {
+        if (this.orders == orders) return;
+        this.orders.clear();
+        this.orders.addAll(orders);
     }
 }

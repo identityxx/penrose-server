@@ -15,8 +15,8 @@ public class SourceRef {
     private String alias;
     private boolean required;
 
-    Collection primaryKeyFieldRefs = new ArrayList();
-    Map fieldRefs = new LinkedHashMap();
+    Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
+    Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
 
     public SourceRef(Source source) {
         this.source = source;
@@ -54,11 +54,11 @@ public class SourceRef {
         }
     }
 
-    public Collection getPrimaryKeyFieldRefs() {
+    public Collection<FieldRef> getPrimaryKeyFieldRefs() {
         return primaryKeyFieldRefs;
     }
 
-    public Collection getFieldRefs() {
+    public Collection<FieldRef> getFieldRefs() {
         return fieldRefs.values();
     }
 

@@ -156,11 +156,11 @@ public class EngineTool {
                     if (values == null) {
                         values = sourceValues.getValues(rhs);
                         if (values != null) {
-                            sourceValues.setValues(lhs, values);
+                            sourceValues.addValues(lhs, values);
                             if (debug) log.debug("Propagating "+lhs+": "+values);
                         }
                     } else {
-                        sourceValues.setValues(rhs, values);
+                        sourceValues.addValues(rhs, values);
                         if (debug) log.debug("Propagating "+rhs+": "+values);
                     }
                 }

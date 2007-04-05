@@ -42,9 +42,9 @@ public class SourceMapping implements Cloneable {
     private String sourceName;
 
 	/**
-	 * Fields. Each element is of type org.safehaus.penrose.mapping.Field.
+	 * Fields.
 	 */
-	private Map fieldMappings = new TreeMap();
+	private Map<String,Collection<FieldMapping>> fieldMappings = new LinkedHashMap<String,Collection<FieldMapping>>();
 
     /**
      * Parameters.
@@ -75,14 +75,14 @@ public class SourceMapping implements Cloneable {
 		this.name = name;
 	}
 
-    public Collection getFieldMappings(String name) {
-        return (Collection)fieldMappings.get(name.toLowerCase());
+    public Collection<FieldMapping> getFieldMappings(String name) {
+        return (Collection<FieldMapping>)fieldMappings.get(name.toLowerCase());
     }
 
 	public Collection getFieldMappings() {
-        Collection results = new ArrayList();
+        Collection<FieldMapping> results = new ArrayList<FieldMapping>();
         for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
+            Collection<FieldMapping> list = (Collection<FieldMapping>)i.next();
             results.addAll(list);
         }
 		return results;
@@ -90,9 +90,9 @@ public class SourceMapping implements Cloneable {
 
 	public void addFieldMapping(FieldMapping fieldMapping) {
         String name = fieldMapping.getName().toLowerCase();
-        Collection list = (Collection)fieldMappings.get(name);
+        Collection<FieldMapping> list = (Collection<FieldMapping>)fieldMappings.get(name);
         if (list == null) {
-            list = new ArrayList();
+            list = new ArrayList<FieldMapping>();
             fieldMappings.put(name, list);
         }
         list.add(fieldMapping);
@@ -103,7 +103,7 @@ public class SourceMapping implements Cloneable {
     }
 
     public void removeFieldMapping(FieldMapping fieldMapping) {
-        Collection list = getFieldMappings(fieldMapping.getName());
+        Collection<FieldMapping> list = getFieldMappings(fieldMapping.getName());
         if (list == null) return;
 
         list.remove(fieldMapping);
@@ -234,7 +234,7 @@ public class SourceMapping implements Cloneable {
 
         removeFieldMappings();
         for (Iterator i=sourceMapping.fieldMappings.values().iterator(); i.hasNext(); ) {
-            Collection list = (Collection)i.next();
+            Collection<FieldMapping> list = (Collection<FieldMapping>)i.next();
             for (Iterator j=list.iterator(); j.hasNext(); ) {
                 FieldMapping fieldMapping = (FieldMapping)j.next();
                 addFieldMapping((FieldMapping)fieldMapping.clone());

@@ -11,10 +11,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Collection;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -28,8 +25,8 @@ public class SourceManager {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    public Map sources = new TreeMap();
-    public Map sourceRefs = new TreeMap();
+    public Map sources = new LinkedHashMap();
+    public Map sourceRefs = new LinkedHashMap();
 
     public void init(Partition partition, SourceConfig sourceConfig) throws Exception {
 
@@ -52,7 +49,7 @@ public class SourceManager {
         SourceRef sourceRef = getSourceRef(partition.getName(), entryMapping, sourceMapping.getName());
         if (sourceRef != null) return;
 
-        log.debug("Initializing source "+sourceMapping.getName()+".");
+        log.debug("Initializing source mapping "+sourceMapping.getName()+".");
 
         Source source = getSource(partition, sourceMapping.getSourceName());
         sourceRef = new SourceRef(source, sourceMapping);
@@ -63,13 +60,13 @@ public class SourceManager {
     public void addSourceRef(String partitionName, EntryMapping entryMapping, SourceRef sourceRef) {
         Map entryMappings = (Map)sourceRefs.get(partitionName);
         if (entryMappings == null) {
-            entryMappings = new TreeMap();
+            entryMappings = new LinkedHashMap();
             sourceRefs.put(partitionName, entryMappings);
         }
 
         Map map = (Map)entryMappings.get(entryMapping.getId());
         if (map == null) {
-            map = new TreeMap();
+            map = new LinkedHashMap();
             entryMappings.put(entryMapping.getId(), map);
         }
 
@@ -109,7 +106,7 @@ public class SourceManager {
     public void addSource(String partitionName, Source source) {
         Map map = (Map)sources.get(partitionName);
         if (map == null) {
-            map = new TreeMap();
+            map = new LinkedHashMap();
             sources.put(partitionName, map);
         }
         map.put(source.getName(), source);
