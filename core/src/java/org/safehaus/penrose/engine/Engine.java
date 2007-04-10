@@ -59,6 +59,7 @@ public abstract class Engine {
 
     public PenroseConfig penroseConfig;
     public PenroseContext penroseContext;
+    public SessionContext sessionContext;
 
     public EngineConfig engineConfig;
 
@@ -756,6 +757,14 @@ public abstract class Engine {
         groupsOfSources.add(sources);
 
         return groupsOfSources;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }
 

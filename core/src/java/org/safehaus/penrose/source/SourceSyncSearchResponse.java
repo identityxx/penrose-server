@@ -1,39 +1,33 @@
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
 
 import java.util.Iterator;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class CacheSearchResponse extends SearchResponse {
+public class SourceSyncSearchResponse extends SearchResponse {
 
     protected Source source;
-    protected Map<String,Source> caches;
-    protected Map<String,Source> snapshots;
+    protected Collection<Source> destinations;
 
     protected Interpreter interpreter;
 
-    public CacheSearchResponse(
+    public SourceSyncSearchResponse(
             Source source,
-            Map<String,Source> caches,
-            Map<String,Source> snapshots,
+            Collection<Source> snapshots,
             Interpreter interpreter
     ) throws Exception {
 
         this.source = source;
-        this.caches = caches;
-        this.snapshots = snapshots;
-
+        this.destinations = snapshots;
         this.interpreter = interpreter;
+
     }
 
     public void add(Object object) throws Exception {
@@ -57,14 +51,13 @@ public class CacheSearchResponse extends SearchResponse {
 
         interpreter.set(sourceValues);
 
-        for (Iterator i=caches.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Source snapshot = (Source)snapshots.get(name);
+        for (Iterator i= destinations.iterator(); i.hasNext(); ) {
+            Source destination = (Source)i.next();
 
             Attributes newAttributes = new Attributes();
             Attributes newRdns = new Attributes();
 
-            for (Iterator j=snapshot.getFields().iterator(); j.hasNext(); ) {
+            for (Iterator j=destination.getFields().iterator(); j.hasNext(); ) {
                 Field field = (Field)j.next();
                 String fieldName = field.getName();
 
@@ -93,11 +86,11 @@ public class CacheSearchResponse extends SearchResponse {
                 DN newDn = new DN(rdn);
 
                 if (debug) {
-                    log.debug("Adding "+snapshot.getName()+": "+newDn);
+                    log.debug("Adding "+destination.getName()+": "+newDn);
                     newAttributes.print();
                 }
 
-                snapshot.add(newDn, newAttributes);
+                destination.add(newDn, newAttributes);
             }
         }
 

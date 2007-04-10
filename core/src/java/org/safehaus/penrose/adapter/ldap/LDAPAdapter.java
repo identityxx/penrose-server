@@ -697,12 +697,8 @@ public class LDAPAdapter extends Adapter {
             db.append(request.getDn());
             db.append(source.getParameter(LDAPAdapter.BASE_DN));
 
-            SearchRequest newRequest = new SearchRequest();
+            SearchRequest newRequest = new SearchRequest(request);
             newRequest.setDn(db.toDn());
-            newRequest.setFilter(request.getFilter());
-            newRequest.setAttributes(request.getAttributes());
-            newRequest.setSizeLimit(request.getSizeLimit());
-            newRequest.setTimeLimit(request.getTimeLimit());
 
             String scope = source.getParameter(LDAPAdapter.SCOPE);
 

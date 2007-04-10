@@ -18,10 +18,7 @@
 package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.cache.SourceCacheManager;
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.SourceRef;
@@ -41,14 +38,11 @@ public class Connector {
 
     static Logger log = LoggerFactory.getLogger(Connector.class);
 
-    public final static String DEFAULT_CACHE_CLASS = SourceCacheManager.class.getName();
-
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
 
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
-    private SourceCacheManager sourceCacheManager;
 
     private boolean stopping = false;
 
@@ -56,9 +50,6 @@ public class Connector {
     }
 
     public void init() throws Exception {
-        sourceCacheManager = new SourceCacheManager();
-        sourceCacheManager.setCacheConfig(penroseConfig.getSourceCacheConfig());
-        sourceCacheManager.setConnector(this);
     }
 
     public void start() throws Exception {
@@ -92,8 +83,6 @@ public class Connector {
             connectorName = connectorName == null ? "DEFAULT" : connectorName;
 
             if (!connectorConfig.getName().equals(connectorName)) continue;
-
-            sourceCacheManager.create(partition, sourceConfig);
         }
     }
 
@@ -236,72 +225,6 @@ public class Connector {
         connection.search(entryMapping, sources, sourceValues, request, response);
     }
 
-    public RDN store(
-            Partition partition,
-            SourceConfig sourceConfig,
-            AttributeValues sourceValues
-    ) throws Exception {
-
-        RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
-        //RDN pk = sourceValues.getRdn();
-        RDN npk = normalize(pk);
-
-        if (log.isDebugEnabled()) log.debug("Storing source cache: "+pk);
-        getSourceCacheManager().put(partition, sourceConfig, pk, sourceValues);
-
-        Filter f = FilterTool.createFilter(npk);
-        Collection c = new TreeSet();
-        c.add(npk);
-
-        if (log.isDebugEnabled()) log.debug("Storing filter cache "+f+": "+c);
-        getSourceCacheManager().put(partition, sourceConfig, f, c);
-
-        return npk;
-    }
-
-    public void store(
-            Partition partition,
-            SourceConfig sourceConfig,
-            Collection values
-    ) throws Exception {
-
-        Collection pks = new TreeSet();
-
-        Collection uniqueFieldDefinitions = sourceConfig.getUniqueFieldConfigs();
-        Collection uniqueKeys = new TreeSet();
-
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            AttributeValues sourceValues = (AttributeValues)i.next();
-            RDN npk = store(partition, sourceConfig, sourceValues);
-            pks.add(npk);
-
-            RDNBuilder rb = new RDNBuilder();
-            for (Iterator j=uniqueFieldDefinitions.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                String fieldName = fieldConfig.getName();
-
-                Object value = sourceValues.getOne(fieldName);
-
-                rb.clear();
-                rb.set(fieldName, value);
-
-                uniqueKeys.add(rb.toRdn());
-            }
-        }
-
-        if (!uniqueKeys.isEmpty()) {
-            Filter f = FilterTool.createFilter(uniqueKeys);
-            if (log.isDebugEnabled()) log.debug("Storing query cache "+f+": "+pks);
-            getSourceCacheManager().put(partition, sourceConfig, f, pks);
-        }
-
-        if (pks.size() <= 10) {
-            Filter filter = FilterTool.createFilter(pks);
-            if (log.isDebugEnabled()) log.debug("Storing query cache "+filter+": "+pks);
-            getSourceCacheManager().put(partition, sourceConfig, filter, pks);
-        }
-    }
-
     public ConnectorConfig getConnectorConfig() {
         return connectorConfig;
     }
@@ -324,13 +247,5 @@ public class Connector {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-    }
-
-    public SourceCacheManager getSourceCacheManager() {
-        return sourceCacheManager;
-    }
-
-    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
-        this.sourceCacheManager = sourceCacheManager;
     }
 }

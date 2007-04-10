@@ -14,13 +14,13 @@ public abstract class ChangeLogUtil {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     protected Source source;
-    protected Source cache;
+    protected Source destination;
     protected Source changeLog;
     protected Source tracker;
 
     protected String user;
 
-    public void synchronize() throws Exception {
+    public void update() throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -135,25 +135,25 @@ public abstract class ChangeLogUtil {
             case ChangeLog.ADD:
                 AddRequest addRequest = (AddRequest)changeLog.getRequest();
                 AddResponse addResponse = new AddResponse();
-                cache.add(addRequest, addResponse);
+                destination.add(addRequest, addResponse);
                 break;
 
             case ChangeLog.MODIFY:
                 ModifyRequest modifyRequest = (ModifyRequest)changeLog.getRequest();
                 ModifyResponse modifyResponse = new ModifyResponse();
-                cache.modify(modifyRequest, modifyResponse);
+                destination.modify(modifyRequest, modifyResponse);
                 break;
 
             case ChangeLog.MODRDN:
                 ModRdnRequest modRdnRequest = (ModRdnRequest)changeLog.getRequest();
                 ModRdnResponse modRdnResponse = new ModRdnResponse();
-                cache.modrdn(modRdnRequest, modRdnResponse);
+                destination.modrdn(modRdnRequest, modRdnResponse);
                 break;
 
             case ChangeLog.DELETE:
                 DeleteRequest deleteRequest = (DeleteRequest)changeLog.getRequest();
                 DeleteResponse deleteResponse = new DeleteResponse();
-                cache.delete(deleteRequest, deleteResponse);
+                destination.delete(deleteRequest, deleteResponse);
                 break;
         }
     }
@@ -166,12 +166,12 @@ public abstract class ChangeLogUtil {
         this.source = source;
     }
 
-    public Source getCache() {
-        return cache;
+    public Source getDestination() {
+        return destination;
     }
 
-    public void setCache(Source cache) {
-        this.cache = cache;
+    public void setDestination(Source destination) {
+        this.destination = destination;
     }
 
     public Source getChangeLog() {

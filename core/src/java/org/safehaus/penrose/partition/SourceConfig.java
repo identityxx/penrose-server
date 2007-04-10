@@ -149,6 +149,16 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
+    public Collection<String> getIndexFieldNames() {
+        Collection<String> results = new LinkedHashSet<String>();
+        for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
+            results.add(fieldConfig.getName());
+        }
+        return results;
+    }
+
     public Collection getIndexedFieldConfigs() {
         Collection<FieldConfig> results = new ArrayList<FieldConfig>();
         for (Iterator i=fieldConfigs.values().iterator(); i.hasNext(); ) {
@@ -165,7 +175,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
 	public void addFieldConfig(FieldConfig fieldConfig) {
         String name = fieldConfig.getName();
-        log.debug("Adding field "+name+" ("+fieldConfig.isPrimaryKey()+")");
+        //log.debug("Adding field "+name+" ("+fieldConfig.isPrimaryKey()+")");
 
         fieldConfigs.put(name, fieldConfig);
         fieldConfigsByOriginalName.put(fieldConfig.getOriginalName(), fieldConfig);

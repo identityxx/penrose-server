@@ -59,7 +59,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private Map interpreterConfigs = new LinkedHashMap();
 
     private CacheConfig entryCacheConfig;
-    private CacheConfig sourceCacheConfig;
 
     private SessionConfig sessionConfig;
     private ConnectorConfig connectorConfig;
@@ -68,10 +67,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public PenroseConfig() {
 
-        sourceCacheConfig = new CacheConfig();
-        sourceCacheConfig.setName(ConnectorConfig.DEFAULT_CACHE_NAME);
-        sourceCacheConfig.setCacheClass(ConnectorConfig.DEFAULT_CACHE_CLASS);
-
         entryCacheConfig = new CacheConfig();
         entryCacheConfig.setName(EntryCache.DEFAULT_CACHE_NAME);
         entryCacheConfig.setCacheClass(EntryCache.DEFAULT_CACHE_CLASS);
@@ -79,11 +74,15 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         connectorConfig = new ConnectorConfig();
         sessionConfig = new SessionConfig();
 
+        rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
+
+        init();
+    }
+
+    public void init() {
         addInterpreterConfig(new InterpreterConfig("DEFAULT", DefaultInterpreter.class.getName()));
         addHandlerConfig(new HandlerConfig("DEFAULT", DefaultHandler.class.getName()));
         addEngineConfig(new EngineConfig("DEFAULT", SimpleEngine.class.getName()));
-
-        rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
     }
 
     public String getSystemProperty(String name) {
@@ -206,14 +205,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         this.entryCacheConfig = entryCacheConfig;
     }
 
-    public CacheConfig getSourceCacheConfig() {
-        return sourceCacheConfig;
-    }
-
-    public void setSourceCacheConfig(CacheConfig sourceCacheConfig) {
-        this.sourceCacheConfig = sourceCacheConfig;
-    }
-
     public String getHome() {
         return home;
     }
@@ -275,7 +266,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void addHandlerConfig(HandlerConfig handlerConfig) {
-        log.debug("Adding handler "+handlerConfig.getName()+": "+handlerConfig.getHandlerClass());
+        //log.debug("Adding handler "+handlerConfig.getName()+": "+handlerConfig.getHandlerClass());
         handlerConfigs.put(handlerConfig.getName(), handlerConfig);
     }
 
@@ -330,7 +321,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
                 (interpreterConfigs == null ? 0 : interpreterConfigs.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
-                (sourceCacheConfig == null ? 0 : sourceCacheConfig.hashCode()) +
                 (sessionConfig == null ? 0 : sessionConfig.hashCode()) +
                 (engineConfigs == null ? 0 : engineConfigs.hashCode()) +
                 (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
@@ -362,7 +352,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         if (!equals(interpreterConfigs, penroseConfig.interpreterConfigs)) return false;
 
         if (!equals(entryCacheConfig, penroseConfig.entryCacheConfig)) return false;
-        if (!equals(sourceCacheConfig, penroseConfig.sourceCacheConfig)) return false;
 
         if (!equals(sessionConfig, penroseConfig.sessionConfig)) return false;
         if (!equals(engineConfigs, penroseConfig.engineConfigs)) return false;
@@ -417,7 +406,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         }
 
         entryCacheConfig.copy(entryCacheConfig);
-        sourceCacheConfig.copy(sourceCacheConfig);
 
         sessionConfig.copy(sessionConfig);
         connectorConfig.copy(connectorConfig);
@@ -435,6 +423,8 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         engineConfigs.clear();
         handlerConfigs.clear();
         interpreterConfigs.clear();
+
+        init();
     }
 
     public Object clone() {

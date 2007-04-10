@@ -5,55 +5,15 @@
 
 <modules>
 
-  <module name="Users Cache" enabled="false">
-    <module-class>org.safehaus.penrose.cache.jdbc.JDBCCacheModule</module-class>
+  <module name="Source Sync" enabled="true">
+    <module-class>org.safehaus.penrose.source.SourceSyncModule</module-class>
     <parameter>
       <param-name>source</param-name>
-      <param-value>users</param-value>
-    </parameter>
-    <parameter>
-      <param-name>changelog</param-name>
-      <param-value>users_changelog</param-value>
-    </parameter>
-    <parameter>
-      <param-name>tracker</param-name>
-      <param-value>tracker</param-value>
-    </parameter>
-    <parameter>
-      <param-name>interval</param-name>
-      <param-value>10</param-value>
-    </parameter>
-  </module>
-
-  <module name="Groups Cache" enabled="false">
-    <module-class>org.safehaus.penrose.cache.jdbc.JDBCCacheModule</module-class>
-    <parameter>
-      <param-name>source</param-name>
-      <param-value>groups</param-value>
+      <param-value>users,groups,usergroups</param-value>
     </parameter>
     <parameter>
       <param-name>interval</param-name>
       <param-value>30</param-value>
-    </parameter>
-    <parameter>
-      <param-name>initialize</param-name>
-      <param-value>true</param-value>
-    </parameter>
-  </module>
-
-  <module name="User-Groups Cache" enabled="false">
-    <module-class>org.safehaus.penrose.cache.jdbc.JDBCCacheModule</module-class>
-    <parameter>
-      <param-name>source</param-name>
-      <param-value>usergroups</param-value>
-    </parameter>
-    <parameter>
-      <param-name>interval</param-name>
-      <param-value>30</param-value>
-    </parameter>
-    <parameter>
-      <param-name>initialize</param-name>
-      <param-value>true</param-value>
     </parameter>
   </module>
 

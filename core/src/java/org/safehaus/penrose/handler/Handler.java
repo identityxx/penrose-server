@@ -53,6 +53,7 @@ public abstract class Handler {
 
     protected PenroseConfig      penroseConfig;
     protected PenroseContext     penroseContext;
+    protected SessionContext     sessionContext;
 
     protected HandlerConfig      handlerConfig;
 
@@ -81,12 +82,11 @@ public abstract class Handler {
         schemaManager      = penroseContext.getSchemaManager();
         interpreterManager = penroseContext.getInterpreterManager();
 
-        sessionManager     = penroseContext.getSessionManager();
-        handlerManager     = penroseContext.getHandlerManager();
+        engineManager      = sessionContext.getEngineManager();
+        aclManager         = sessionContext.getAclManager();
 
-        engineManager      = penroseContext.getEngineManager();
-        aclManager         = penroseContext.getAclManager();
-
+        handlerManager     = sessionContext.getHandlerManager();
+        sessionManager     = sessionContext.getSessionManager();
 
         CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
         String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
@@ -383,6 +383,14 @@ public abstract class Handler {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }
 

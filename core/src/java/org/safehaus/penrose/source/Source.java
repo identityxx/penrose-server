@@ -23,9 +23,13 @@ public class Source implements Cloneable {
     protected SourceConfig sourceConfig;
     protected Connection connection;
 
-    protected Collection<String> primaryKeyNames;
-    protected Collection<Field> primaryKeyFields = new ArrayList<Field>();
     protected Map<String,Field> fields = new LinkedHashMap<String,Field>();
+
+    protected Collection<String> primaryKeyNames = new ArrayList<String>();
+    protected Collection<Field> primaryKeyFields = new ArrayList<Field>();
+
+    protected Collection<String> indexFieldNames = new ArrayList<String>();
+    protected Collection<Field> indexFields = new ArrayList<Field>();
 
     public Source(Partition partition, SourceConfig sourceConfig) {
         this.partition = partition;
@@ -43,9 +47,11 @@ public class Source implements Cloneable {
             fields.put(fieldName, field);
 
             if (fieldConfig.isPrimaryKey()) primaryKeyFields.add(field);
+            if (fieldConfig.isIndex()) indexFields.add(field);
         }
 
-        primaryKeyNames = sourceConfig.getPrimaryKeyNames();
+        primaryKeyNames.addAll(sourceConfig.getPrimaryKeyNames());
+        indexFieldNames.addAll(sourceConfig.getIndexFieldNames());
     }
 
     public String getName() {
@@ -93,11 +99,33 @@ public class Source implements Cloneable {
     }
 
     public void setPrimaryKeyNames(Collection<String> primaryKeyNames) {
-        this.primaryKeyNames = primaryKeyNames;
+        if (this.primaryKeyNames == primaryKeyNames) return;
+        this.primaryKeyNames.clear();
+        this.primaryKeyNames.addAll(primaryKeyNames);
     }
 
     public Collection<Field> getPrimaryKeyFields() {
         return primaryKeyFields;
+    }
+
+    public Collection<String> getIndexFieldNames() {
+        return indexFieldNames;
+    }
+
+    public void setIndexFieldNames(Collection<String> indexFieldNames) {
+        if (this.indexFieldNames == indexFieldNames) return;
+        this.indexFieldNames.clear();
+        this.indexFieldNames.addAll(indexFieldNames);
+    }
+
+    public Collection<Field> getIndexFields() {
+        return indexFields;
+    }
+
+    public void setIndexFields(Collection<Field> indexFields) {
+        if (this.indexFields == indexFields) return;
+        this.indexFields.clear();
+        this.indexFields.addAll(indexFields);
     }
 
     public Collection<Field> getFields() {

@@ -113,8 +113,7 @@ public class Demo {
 
         log.warn("Connecting to Penrose.");
 
-        SessionManager sessionManager = penroseContext.getSessionManager();
-        Session session = sessionManager.newSession();
+        Session session = penrose.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
         log.warn("Searching all entries.");

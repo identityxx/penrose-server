@@ -47,11 +47,11 @@ public class Log4jConfigReader implements EntityResolver {
 
         ClassLoader cl = getClass().getClassLoader();
         log4jDtdUrl = cl.getResource("org/apache/log4j/xml/log4j.dtd");
-        log.debug("Log4j DTD URL: "+log4jDtdUrl);
+        //log.debug("Log4j DTD URL: "+log4jDtdUrl);
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
-        log.debug("Resolving "+publicId+" "+systemId);
+        //log.debug("Resolving "+publicId+" "+systemId);
 
         int i = systemId.lastIndexOf("/");
         String file = systemId.substring(i+1);

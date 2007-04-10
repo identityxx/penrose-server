@@ -22,6 +22,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -36,6 +37,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     private Map modules = new LinkedHashMap();
 
@@ -55,6 +57,7 @@ public class ModuleManager implements ModuleManagerMBean {
         module.setPartition(partition);
         module.setPenroseConfig(penroseConfig);
         module.setPenroseContext(penroseContext);
+        module.setSessionContext(sessionContext);
         module.init();
 
         addModule(partition.getName(), module);
@@ -230,5 +233,13 @@ public class ModuleManager implements ModuleManagerMBean {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

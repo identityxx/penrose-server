@@ -15,7 +15,6 @@ import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.AddResponse;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -81,9 +80,9 @@ public class SimpleHandler extends Handler {
         }
 
         int scope = request.getScope();
-        if (scope == LDAPConnection.SCOPE_BASE
-                || scope == LDAPConnection.SCOPE_SUB
-                || scope == LDAPConnection.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
+        if (scope == SearchRequest.SCOPE_BASE
+                || scope == SearchRequest.SCOPE_SUB
+                || scope == SearchRequest.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
                 ) {
 
             Engine engine = getEngine(partition, entryMapping);
@@ -100,8 +99,8 @@ public class SimpleHandler extends Handler {
             );
         }
 
-        if (scope == LDAPConnection.SCOPE_ONE && entryMapping == baseMapping
-                || scope == LDAPConnection.SCOPE_SUB) {
+        if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
+                || scope == SearchRequest.SCOPE_SUB) {
 
             Collection children = partition.getChildren(entryMapping);
 

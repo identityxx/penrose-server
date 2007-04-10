@@ -45,7 +45,7 @@ public class ConnectorManager {
 
     public void init(ConnectorConfig connectorConfig) throws Exception {
 
-        log.debug("Initializing connector "+connectorConfig.getName());
+        log.debug("Initializing connector "+connectorConfig.getName()+".");
 
         Class clazz = Class.forName(connectorConfig.getConnectorClass());
         Connector connector = (Connector)clazz.newInstance();

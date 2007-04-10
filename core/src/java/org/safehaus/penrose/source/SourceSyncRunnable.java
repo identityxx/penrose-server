@@ -1,4 +1,4 @@
-package org.safehaus.penrose.cache;
+package org.safehaus.penrose.source;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,26 +6,24 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Endi S. Dewata
  */
-public class CacheRunnable implements Runnable {
+public class SourceSyncRunnable implements Runnable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    protected CacheModule module;
+    protected SourceSyncModule module;
 
     protected boolean running = true;
 
-    public CacheRunnable(CacheModule module) {
+    public SourceSyncRunnable(SourceSyncModule module) {
         this.module = module;
     }
 
     public void run() {
 
-        while (true) {
-
-            if (!running) break;
+        while (running) {
 
             try {
-                module.process();
+                Thread.sleep(module.getInterval() * 1000);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -33,7 +31,7 @@ public class CacheRunnable implements Runnable {
             if (!running) break;
 
             try {
-                Thread.sleep(module.getInterval() * 1000);
+                module.process();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

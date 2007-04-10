@@ -151,7 +151,7 @@ public class JDBCAdapter extends Adapter {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Drop "+source.getName(), 80));
+            log.debug(Formatter.displayLine("Clean "+source.getName(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 

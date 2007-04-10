@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!ELEMENT sources (source*)>
+<!ELEMENT sources (source*,source-sync*)>
 
 <!ELEMENT source (connection-name, description?, field*, parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
@@ -24,6 +24,11 @@
 <!ELEMENT expression (#PCDATA)>
 <!ATTLIST expression foreach CDATA #IMPLIED>
 <!ATTLIST expression var CDATA #IMPLIED>
+
+<!ELEMENT source-sync (class-name?, description?, parameter*)>
+<!ATTLIST source-sync name CDATA #IMPLIED>
+
+<!ELEMENT class-name (#PCDATA)>
 
 <!ELEMENT description (#PCDATA)>
 

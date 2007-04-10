@@ -17,18 +17,12 @@
  */
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorConfig;
-import org.safehaus.penrose.connector.ConnectorManager;
-import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
-import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.jdbc.JDBCClient;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.handler.HandlerManager;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.source.SourceSyncManager;
+import org.safehaus.penrose.source.SourceSync;
 import org.apache.log4j.*;
 
 import java.util.Collection;
@@ -44,262 +38,149 @@ import gnu.getopt.Getopt;
  */
 public class CacheManager {
 
-    public static Logger log = Logger.getLogger(CacheManager.class);
+    public Logger log = Logger.getLogger(getClass());
 
-    public CacheManager() throws Exception {
+    PartitionManager partitionManager;
+    SourceSyncManager sourceSyncManager;
+
+    public CacheManager(
+            PartitionManager partitionManager,
+            SourceSyncManager sourceSyncManager
+    ) throws Exception {
+
+        this.partitionManager = partitionManager;
+        this.sourceSyncManager = sourceSyncManager;
     }
 
-    public static void create(Penrose penrose) throws Exception {
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        PenroseContext penroseContext = penrose.getPenroseContext();
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        ConnectorManager connectorManager = penroseContext.getConnectorManager();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
-
-        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
-        sourceCacheManager.create();
-
-        HandlerManager handlerManager = penroseContext.getHandlerManager();
-        Handler handler = handlerManager.getHandler("DEFAULT");
-        EntryCache entryCache = handler.getEntryCache();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-
+    public void create() throws Exception {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-
-            entryCache.create(partition);
+            create(partition);
         }
     }
 
-    public static void load(Penrose penrose) throws Exception {
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        PenroseContext penroseContext = penrose.getPenroseContext();
+    public void create(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            create(sourceSync);
+        }
+    }
 
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        ConnectorManager connectorManager = penroseContext.getConnectorManager();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
+    public void create(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Creating cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.create();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
 
-        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
-        sourceCacheManager.load();
-
-        HandlerManager handlerManager = penroseContext.getHandlerManager();
-        Handler handler = handlerManager.getHandler("DEFAULT");
-        EntryCache entryCache = handler.getEntryCache();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-
+    public void load() throws Exception {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.load(penrose, partition);
+            load(partition);
         }
     }
 
-    public static void clean(Penrose penrose) throws Exception {
+    public void load(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            load(sourceSync);
+        }
+    }
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        PenroseContext penroseContext = penrose.getPenroseContext();
+    public void load(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Loading cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.load();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
 
-        HandlerManager handlerManager = penroseContext.getHandlerManager();
-        Handler handler = handlerManager.getHandler("DEFAULT");
-        EntryCache entryCache = handler.getEntryCache();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-
+    public void sync() throws Exception {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.clean(partition);
+            sync(partition);
         }
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        ConnectorManager connectorManager = penroseContext.getConnectorManager();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
-
-        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
-        sourceCacheManager.clean();
     }
 
-    public static void drop(Penrose penrose) throws Exception {
+    public void sync(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            sync(sourceSync);
+        }
+    }
 
-        PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        PenroseContext penroseContext = penrose.getPenroseContext();
+    public void sync(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Synchronizing cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.synchronize();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
 
-        HandlerManager handlerManager = penroseContext.getHandlerManager();
-        Handler handler = handlerManager.getHandler("DEFAULT");
-        EntryCache entryCache = handler.getEntryCache();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-
+    public void clean() throws Exception {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            entryCache.drop(partition);
+            clean(partition);
         }
-
-        ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-        ConnectorManager connectorManager = penroseContext.getConnectorManager();
-        Connector connector = connectorManager.getConnector(connectorConfig.getName());
-
-        SourceCacheManager sourceCacheManager = connector.getSourceCacheManager();
-        sourceCacheManager.drop();
     }
 
-    public static void changeTable(Penrose penrose) throws Exception {
+    public void clean(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            clean(sourceSync);
+        }
+    }
 
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+    public void clean(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Cleaning cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.clean();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
 
-        Collection partitions = partitionManager.getPartitions();
-        for (Iterator i=partitions.iterator(); i.hasNext(); ) {
+    public void drop() throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-
-            Collection sourceConfigs = partition.getSourceConfigs();
-            for (Iterator j=sourceConfigs.iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
-
-                String connectionName = sourceConfig.getConnectionName();
-                ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
-
-                if (!"JDBC".equals(connectionConfig.getAdapterName())) continue;
-
-                String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-                String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-                String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
-                if (tableName == null) tableName = sourceConfig.getParameter(JDBCClient.TABLE_NAME);
-                if (catalog != null) tableName = catalog +"."+tableName;
-                if (schema != null) tableName = schema +"."+tableName;
-
-                Collection primaryKeyFieldConfigs = sourceConfig.getPrimaryKeyFieldConfigs();
-
-                generateCreateTable(tableName, primaryKeyFieldConfigs);
-                generateAddTrigger(tableName, primaryKeyFieldConfigs);
-                generateModifyTrigger(tableName, primaryKeyFieldConfigs);
-                generateDeleteTrigger(tableName, primaryKeyFieldConfigs);
-            }
+            drop(partition);
         }
     }
 
-    public static void generateCreateTable(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
-        System.out.println("create table "+tableName+"_changes (");
-        System.out.println("    changeNumber integer auto_increment,");
-        System.out.println("    changeTime datetime,");
-        System.out.println("    changeAction varchar(10),");
-        System.out.println("    changeUser varchar(10),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.println("    "+fieldConfig.getName()+" "+fieldConfig.getType()+",");
+    public void drop(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            drop(sourceSync);
         }
-
-        System.out.println("    primary key (changeNumber)");
-        System.out.println(");");
     }
 
-    public static void generateAddTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
-        System.out.println("create trigger "+tableName+"_add after insert on "+tableName);
-        System.out.println("for each row insert into "+tableName+"_changes values (");
-        System.out.println("    null,");
-        System.out.println("    now(),");
-        System.out.println("    'ADD',");
-        System.out.println("    substring_index(user(),_utf8'@',1),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("    new."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(",");
-            System.out.println();
+    public void drop(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Dropping cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.drop();
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
-
-        System.out.println(");");
-    }
-
-    public static void generateModifyTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
-        System.out.println("delimiter |");
-        System.out.println("create trigger "+tableName+"_modify after update on "+tableName);
-        System.out.println("for each row begin");
-
-        System.out.print("    if ");
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("new."+fieldConfig.getName()+" = old."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(" and ");
-        }
-        System.out.println(" then");
-
-        System.out.println("        insert into "+tableName+"_changes values (");
-        System.out.println("            null,");
-        System.out.println("            now(),");
-        System.out.println("            'MODIFY',");
-        System.out.println("            substring_index(user(),_utf8'@',1),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("            new."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(",");
-            System.out.println();
-        }
-
-        System.out.println("        );");
-        System.out.println("    else");
-        System.out.println("        insert into "+tableName+"_changes values (");
-        System.out.println("            null,");
-        System.out.println("            now(),");
-        System.out.println("            'DELETE',");
-        System.out.println("            substring_index(user(),_utf8'@',1),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("            old."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(",");
-            System.out.println();
-        }
-
-        System.out.println("        );");
-        System.out.println("        insert into "+tableName+"_changes values (");
-        System.out.println("            null,");
-        System.out.println("            now(),");
-        System.out.println("            'ADD',");
-        System.out.println("            substring_index(user(),_utf8'@',1),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("            new."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(",");
-            System.out.println();
-        }
-
-        System.out.println("        );");
-        System.out.println("    end if;");
-        System.out.println("end;|");
-        System.out.println("delimiter ;");
-    }
-
-    public static void generateDeleteTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
-        System.out.println("create trigger "+tableName+"_delete after delete on "+tableName);
-        System.out.println("for each row insert into "+tableName+"_changes values (");
-        System.out.println("    null,");
-        System.out.println("    now(),");
-        System.out.println("    'DELETE',");
-        System.out.println("    substring_index(user(),_utf8'@',1),");
-
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.print("    old."+fieldConfig.getName());
-            if (i.hasNext()) System.out.print(",");
-            System.out.println();
-        }
-
-        System.out.println(");");
     }
 
     public static void showUsage() {
         System.out.println("Usage: org.safehaus.penrose.cache.CacheManager [OPTION]... <COMMAND>");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  create             create cache tables");
-        System.out.println("  load               load data into cache tables");
-        System.out.println("  clean              clean data from cache tables");
-        System.out.println("  drop               drop cache tables");
+        System.out.println("  create [partition [source]]   create cache tables");
+        System.out.println("  load   [partition [source]]   load data into cache tables");
+        System.out.println("  sync   [partition [source]]   sync data in cache tables");
+        System.out.println("  clean  [partition [source]]   clean data from cache tables");
+        System.out.println("  drop   [partition [source]]   drop cache tables");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -342,13 +223,13 @@ public class CacheManager {
             System.exit(0);
         }
 
-        String homeDirectory = System.getProperty("penrose.home");
+        String home = System.getProperty("penrose.home");
 
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
+        File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
 
         if (log4jProperties.exists()) {
             PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
@@ -369,30 +250,95 @@ public class CacheManager {
             BasicConfigurator.configure(appender);
         }
 
+        PenroseConfig penroseConfig = new PenroseConfig();
+        penroseConfig.setHome(home);
+
+        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        reader.read(penroseConfig);
+
+        PenroseContext penroseContext = new PenroseContext();
+        penroseContext.init(penroseConfig);
+        penroseContext.load();
+        penroseContext.start();
+
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        SourceSyncManager sourceSyncManager = penroseContext.getSourceSyncManager();
+
+        CacheManager cacheManager = new CacheManager(partitionManager, sourceSyncManager);
+
+        Partition partition = null;
+        SourceSync sourceSync = null;
+
         Iterator iterator = parameters.iterator();
         String command = (String)iterator.next();
 
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        Penrose penrose = penroseFactory.createPenrose(homeDirectory);
-        penrose.start();
+        if (iterator.hasNext()) {
+            String partitionName = (String)iterator.next();
+            partition = partitionManager.getPartition(partitionName);
+            if (partition == null) throw new Exception("Partition "+partitionName+" not found.");
 
-        if ("create".equals(command)) {
-            create(penrose);
-
-        } else if ("load".equals(command)) {
-            load(penrose);
-
-        } else if ("clean".equals(command)) {
-            clean(penrose);
-
-        } else if ("drop".equals(command)) {
-            drop(penrose);
-
-        } else if ("changeTable".equals(command)) {
-            changeTable(penrose);
+            if (iterator.hasNext()) {
+                String sourceName = (String)iterator.next();
+                sourceSync = sourceSyncManager.getSourceSync(partition, sourceName);
+                if (sourceSync == null) throw new Exception("Source sync "+sourceName+" not found.");
+            }
         }
 
-        penrose.stop();
+        if (sourceSync != null) {
+
+            if ("create".equals(command)) {
+                cacheManager.create(sourceSync);
+
+            } else if ("load".equals(command)) {
+                cacheManager.load(sourceSync);
+
+            } else if ("sync".equals(command)) {
+                cacheManager.sync(sourceSync);
+
+            } else if ("clean".equals(command)) {
+                cacheManager.clean(sourceSync);
+
+            } else if ("drop".equals(command)) {
+                cacheManager.drop(sourceSync);
+            }
+
+        } else if (partition != null) {
+
+            if ("create".equals(command)) {
+                cacheManager.create(partition);
+
+            } else if ("load".equals(command)) {
+                cacheManager.load(partition);
+
+            } else if ("sync".equals(command)) {
+                cacheManager.sync(partition);
+
+            } else if ("clean".equals(command)) {
+                cacheManager.clean(partition);
+
+            } else if ("drop".equals(command)) {
+                cacheManager.drop(partition);
+            }
+
+        } else {
+            if ("create".equals(command)) {
+                cacheManager.create();
+
+            } else if ("load".equals(command)) {
+                cacheManager.load();
+
+            } else if ("sync".equals(command)) {
+                cacheManager.sync();
+
+            } else if ("clean".equals(command)) {
+                cacheManager.clean();
+
+            } else if ("drop".equals(command)) {
+                cacheManager.drop();
+            }
+        }
+
+        penroseContext.stop();
 
         System.exit(0);
     }

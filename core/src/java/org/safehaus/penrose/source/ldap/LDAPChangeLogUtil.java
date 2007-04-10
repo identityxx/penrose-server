@@ -1,8 +1,7 @@
-package org.safehaus.penrose.cache.ldap;
+package org.safehaus.penrose.source.ldap;
 
 import org.safehaus.penrose.changelog.ChangeLogUtil;
 import org.safehaus.penrose.changelog.ChangeLog;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;

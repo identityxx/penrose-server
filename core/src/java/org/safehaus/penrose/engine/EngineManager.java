@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.session.SessionContext;
 import org.apache.log4j.Logger;
 
 import java.util.TreeMap;
@@ -34,6 +35,7 @@ public class EngineManager {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     Map engines = new TreeMap();
 
@@ -45,7 +47,6 @@ public class EngineManager {
         log.debug("Initializing engine "+engineConfig.getName()+".");
 
         Class clazz = Class.forName(engineConfig.getEngineClass());
-
         Engine engine = (Engine)clazz.newInstance();
 
         engine.setEngineConfig(engineConfig);
@@ -92,5 +93,13 @@ public class EngineManager {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

@@ -21,6 +21,7 @@ import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -49,6 +50,7 @@ public class Module implements
 
     public PenroseConfig penroseConfig;
     public PenroseContext penroseContext;
+    public SessionContext sessionContext;
 
     public Partition partition;
     public ModuleConfig moduleConfig;
@@ -172,5 +174,13 @@ public class Module implements
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

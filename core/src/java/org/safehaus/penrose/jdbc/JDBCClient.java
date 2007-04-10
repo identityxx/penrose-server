@@ -154,7 +154,7 @@ public class JDBCClient {
                         true // auto commit
                 );
 
-        log.debug("Initializing "+initialSize+" connections.");
+        //log.debug("Initializing "+initialSize+" connections.");
         for (int i = 0; i < initialSize; i++) {
              connectionPool.addObject();
          }
@@ -522,22 +522,36 @@ public class JDBCClient {
             }
         }
 
-        sb.append(", primary key (");
+        Collection<String> indexFieldNames = source.getIndexFieldNames();
+        for (Iterator i=indexFieldNames.iterator(); i.hasNext(); ) {
+            String fieldName = (String)i.next();
 
-        first = true;
-        for (Iterator i=source.getPrimaryKeyFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append(field.getName());
+            sb.append(", index (");
+            sb.append(fieldName);
+            sb.append(")");
         }
 
-        sb.append("))");
+        Collection<String> primaryKeyNames = source.getPrimaryKeyNames();
+        if (!primaryKeyNames.isEmpty()) {
+            sb.append(", primary key (");
+
+            first = true;
+            for (Iterator i=primaryKeyNames.iterator(); i.hasNext(); ) {
+                String fieldName = (String)i.next();
+
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+
+                sb.append(fieldName);
+            }
+
+            sb.append(")");
+        }
+
+        sb.append(")");
 
         String sql = sb.toString();
 

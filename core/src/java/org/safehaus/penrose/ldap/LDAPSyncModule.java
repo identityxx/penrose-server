@@ -46,7 +46,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         connectionName = getParameter(CONNECTION);
 
-        HandlerManager handlerManager = penroseContext.getHandlerManager();
+        HandlerManager handlerManager = sessionContext.getHandlerManager();
         Handler handler = handlerManager.getHandler(partition);
         EntryCache entryCache = handler.getEntryCache();
 

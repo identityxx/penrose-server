@@ -49,9 +49,7 @@ public class DemoListener implements SearchListener {
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();
 
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        SessionManager sessionManager = penroseContext.getSessionManager();
-        Session session = sessionManager.newSession();
+        Session session = penrose.newSession();
         session.addSearchListener(this);
 
         session.bind("uid=admin,ou=system", "secret");

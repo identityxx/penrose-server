@@ -71,6 +71,7 @@ return "{SHA}"+BinaryUtil.encode("Base64", bytes);
         <expression>
 if (cn == void || cn == null) return null;
 int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return null;
 return cn.substring(0, i);
         </expression>
       </field>
@@ -79,6 +80,7 @@ return cn.substring(0, i);
 if (sn != void &amp;&amp; sn != null) return sn;
 if (cn == void || cn == null) return null;
 int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return cn;
 return cn.substring(i+1);
         </expression>
       </field>

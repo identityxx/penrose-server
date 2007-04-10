@@ -24,7 +24,9 @@ import java.text.SimpleDateFormat;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.connector.ConnectorContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -51,6 +53,8 @@ public class Penrose {
 
     private PenroseConfig      penroseConfig;
     private PenroseContext     penroseContext;
+    private ConnectorContext   connectorContext;
+    private SessionContext sessionContext;
 
     private String status = STOPPED;
 
@@ -121,10 +125,21 @@ public class Penrose {
     void init() throws Exception {
         penroseContext = new PenroseContext();
         penroseContext.init(penroseConfig);
+
+        connectorContext = new ConnectorContext();
+        connectorContext.setPenroseConfig(penroseConfig);
+        connectorContext.setPenroseContext(penroseContext);
+        connectorContext.init();
+
+        sessionContext = new SessionContext();
+        sessionContext.setPenroseConfig(penroseConfig);
+        sessionContext.setPenroseContext(penroseContext);
+        sessionContext.init();
     }
 
     public void load() throws Exception {
         penroseContext.load();
+        sessionContext.load();
     }
 
     public void clear() throws Exception {
@@ -153,6 +168,7 @@ public class Penrose {
         status = STARTING;
 
         penroseContext.start();
+        sessionContext.start();
 
         status = STARTED;
     }
@@ -167,6 +183,7 @@ public class Penrose {
 
         status = STOPPING;
 
+        sessionContext.stop();
         penroseContext.stop();
 
         status = STOPPED;
@@ -177,22 +194,22 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Session newSession() throws Exception {
-        SessionManager sessionManager = penroseContext.getSessionManager();
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.newSession();
     }
 
     public Session createSession(Object sessionId) throws Exception {
-        SessionManager sessionManager = penroseContext.getSessionManager();
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.createSession(sessionId);
     }
 
     public Session getSession(String sessionId) throws Exception {
-        SessionManager sessionManager = penroseContext.getSessionManager();
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.getSession(sessionId);
     }
 
     public Session removeSession(String sessionId) throws Exception {
-        SessionManager sessionManager = penroseContext.getSessionManager();
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.removeSession(sessionId);
     }
 
@@ -210,5 +227,21 @@ public class Penrose {
 
     public String getStatus() {
         return status;
+    }
+
+    public ConnectorContext getConnectorContext() {
+        return connectorContext;
+    }
+
+    public void setConnectorContext(ConnectorContext connectorContext) {
+        this.connectorContext = connectorContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

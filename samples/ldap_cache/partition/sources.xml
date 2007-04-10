@@ -59,7 +59,7 @@ return users.cn.substring(i+1);
       <param-value>users_cache</param-value>
     </parameter>
   </source>
-    
+
   <source name="groups">
     <connection-name>OpenLDAP</connection-name>
     <field name="cn" primaryKey="true"/>
@@ -110,5 +110,21 @@ return um.substring(i+1, j);
       <param-value>usergroups_cache</param-value>
     </parameter>
   </source>
+
+  <source-sync name="users">
+    <class-name>org.safehaus.penrose.source.ldap.LDAPSourceSync</class-name>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source-sync>
+
+  <source-sync name="groups">
+    <class-name>org.safehaus.penrose.source.ldap.LDAPSourceSync</class-name>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source-sync>
 
 </sources>

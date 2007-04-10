@@ -49,6 +49,7 @@ public class Session {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     private SessionManager sessionManager;
     private EventManager eventManager;
@@ -223,6 +224,10 @@ public class Session {
 
             DN dn = request.getDn();
             String password = request.getPassword();
+
+            if (log.isWarnEnabled()) {
+                log.warn("Bind \""+dn+"\".");
+            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -1055,9 +1060,17 @@ public class Session {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
 
-        handlerManager = penroseContext.getHandlerManager();
-        eventManager = penroseContext.getEventManager();
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
+
+        handlerManager = sessionContext.getHandlerManager();
+        eventManager = sessionContext.getEventManager();
     }
 
     public PenroseConfig getPenroseConfig() {

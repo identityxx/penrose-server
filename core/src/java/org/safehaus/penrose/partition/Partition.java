@@ -23,6 +23,8 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.source.SourceSyncConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,10 +45,11 @@ public class Partition {
     private Collection suffixes = new ArrayList();
     private Collection rootEntryMappings = new ArrayList();
 
-    private Map connectionConfigs = new LinkedHashMap();
-    private Map sourceConfigs = new LinkedHashMap();
+    private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+    private Map<String,SourceConfig> sourceConfigs = new LinkedHashMap<String,SourceConfig>();
+    private Map<String,SourceSyncConfig> sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
 
-    private Map moduleConfigs = new LinkedHashMap();
+    private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
     private Map moduleMappings = new LinkedHashMap();
 
     public Partition(PartitionConfig partitionConfig) {
@@ -106,14 +109,14 @@ public class Partition {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn().getNormalizedDn();
-        if (log.isDebugEnabled()) log.debug("Adding entry "+dn);
+        //if (log.isDebugEnabled()) log.debug("Adding entry "+dn);
 
         String id = entryMapping.getId();
         if (id == null) {
             id = ""+ entryMappingsById.size();
             entryMapping.setId(id);
         }
-        if (log.isDebugEnabled()) log.debug("ID: "+id);
+        //if (log.isDebugEnabled()) log.debug("ID: "+id);
 
         // lookup by id
         entryMappingsById.put(id, entryMapping);
@@ -158,11 +161,11 @@ public class Partition {
         }
 
         if (parent == null) {
-        	if (log.isDebugEnabled()) log.debug("Suffix: "+dn);
+        	//if (log.isDebugEnabled()) log.debug("Suffix: "+dn);
             rootEntryMappings.add(entryMapping);
             suffixes.add(entryMapping.getDn());
         } else {
-        	if (log.isDebugEnabled()) log.debug("Parent ID: "+parentId);
+        	//if (log.isDebugEnabled()) log.debug("Parent ID: "+parentId);
             addChildren(parent, entryMapping);
         }
     }
@@ -321,7 +324,7 @@ public class Partition {
     }
 
     public void addChildren(EntryMapping parentMapping, EntryMapping entryMapping) {
-    	if (log.isDebugEnabled()) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
+    	//if (log.isDebugEnabled()) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
         Collection children = (Collection) entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
             children = new ArrayList();
@@ -409,7 +412,6 @@ public class Partition {
     }
 
     public void addSourceConfig(SourceConfig sourceConfig) {
-    	if (log.isDebugEnabled()) log.debug("Adding source "+sourceConfig.getName());
         sourceConfigs.put(sourceConfig.getName(), sourceConfig);
     }
 
@@ -440,6 +442,22 @@ public class Partition {
     public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
         SourceConfig sourceConfig = (SourceConfig)sourceConfigs.get(name);
         sourceConfig.copy(newSourceConfig);
+    }
+
+    public void addSourceSyncConfig(SourceSyncConfig sourceSyncConfig) {
+        sourceSyncConfigs.put(sourceSyncConfig.getName(), sourceSyncConfig);
+    }
+
+    public SourceSyncConfig removeSourceSyncConfig(String name) {
+        return (SourceSyncConfig) sourceSyncConfigs.remove(name);
+    }
+
+    public SourceSyncConfig getSourceSyncConfig(String name) {
+        return (SourceSyncConfig) sourceSyncConfigs.get(name);
+    }
+
+    public Collection<SourceSyncConfig> getSourceSyncConfigs() {
+        return sourceSyncConfigs.values();
     }
 
     public Collection getEntryMappings() {

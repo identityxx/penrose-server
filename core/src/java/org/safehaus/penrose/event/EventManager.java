@@ -22,6 +22,7 @@ import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ public class EventManager {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     public Collection addListeners = new ArrayList();
     public Collection bindListeners = new ArrayList();
@@ -56,7 +58,7 @@ public class EventManager {
         AddRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(addListeners);
 
@@ -86,7 +88,7 @@ public class EventManager {
         BindRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(bindListeners);
 
@@ -116,7 +118,7 @@ public class EventManager {
         CompareRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(compareListeners);
 
@@ -146,7 +148,7 @@ public class EventManager {
         DeleteRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(deleteListeners);
 
@@ -176,7 +178,7 @@ public class EventManager {
         ModifyRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modifyListeners);
 
@@ -206,7 +208,7 @@ public class EventManager {
         ModRdnRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(modrdnListeners);
 
@@ -236,7 +238,7 @@ public class EventManager {
         SearchRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(searchListeners);
 
@@ -266,7 +268,7 @@ public class EventManager {
         UnbindRequest request = event.getRequest();
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
+        ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection listeners = moduleManager.getModules(dn);
         listeners.addAll(unbindListeners);
 
@@ -366,5 +368,13 @@ public class EventManager {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

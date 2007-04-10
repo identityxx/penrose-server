@@ -130,12 +130,6 @@ public class PenroseConfigWriter {
             element.add(entryCache);
         }
 
-        if (penroseConfig.getSourceCacheConfig() != null) {
-            Element sourceCache = new DefaultElement("source-cache");
-            addElements(sourceCache, penroseConfig.getSourceCacheConfig());
-            element.add(sourceCache);
-        }
-
         if (penroseConfig.getSessionConfig() != null) {
             SessionConfig sessionConfig = penroseConfig.getSessionConfig();
             element.add(toElement(sessionConfig));

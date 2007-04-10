@@ -22,11 +22,11 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionContext;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -62,8 +62,8 @@ public class SessionManagerTest extends TestCase {
 
     public void testMaxSessions() throws Exception {
 
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        SessionManager sessionManager = penroseContext.getSessionManager();
+        SessionContext sessionContext = penrose.getSessionContext();
+        SessionManager sessionManager = sessionContext.getSessionManager();
         assertEquals(0, sessionManager.getSessions().size());
 
         Collection sessions = new ArrayList();

@@ -40,29 +40,43 @@
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">
-      <variable>u.uid</variable>
+      <variable>u.username</variable>
     </at>
     <at name="cn">
-      <variable>u.cn</variable>
+      <expression>
+if (u == void || u == null) return null;
+return u.firstName+" "+u.lastName;
+      </expression>
     </at>
     <at name="sn">
-      <variable>u.sn</variable>
+      <variable>u.lastName</variable>
     </at>
     <at name="userPassword">
-      <variable>u.userPassword</variable>
+      <variable>u.password</variable>
     </at>
     <source name="u">
-      <source-name>users</source-name>
-      <field name="uid">
+      <source-name>users_cache</source-name>
+      <field name="username">
         <variable>uid</variable>
       </field>
-      <field name="cn">
-        <variable>cn</variable>
+      <field name="firstName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(0, i);
+        </expression>
       </field>
-      <field name="sn">
-        <variable>sn</variable>
+      <field name="lastName">
+        <expression>
+if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return cn;
+return cn.substring(i+1);
+        </expression>
       </field>
-      <field name="userPassword">
+      <field name="password">
         <variable>userPassword</variable>
       </field>
     </source>

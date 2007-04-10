@@ -35,6 +35,7 @@ import java.util.Iterator;
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.module.ModuleConfig;
@@ -307,8 +308,11 @@ public class PenroseJMXService extends Service {
         register("Penrose:service=SchemaManager", penroseContext.getSchemaManager());
         register("Penrose:service=ConnectionManager", penroseContext.getConnectionManager());
         register("Penrose:service=PartitionManager", penroseContext.getPartitionManager());
-        register("Penrose:service=ModuleManager", penroseContext.getModuleManager());
-        register("Penrose:service=SessionManager", penroseContext.getSessionManager());
+
+        SessionContext sessionContext = penrose.getSessionContext();
+        register("Penrose:service=ModuleManager", sessionContext.getModuleManager());
+
+        register("Penrose:service=SessionManager", sessionContext.getSessionManager());
         register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
     }
 

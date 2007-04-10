@@ -541,7 +541,7 @@ public class EngineImpl extends Engine {
             final SearchResponse entriesToLoad = new SearchResponse();
             final SearchResponse loadedEntries = new SearchResponse();
 
-            HandlerManager handlerManager = penroseContext.getHandlerManager();
+            HandlerManager handlerManager = sessionContext.getHandlerManager();
             final Handler handler = handlerManager.getHandler("DEFAULT");
 
             final Interpreter interpreter = getInterpreterManager().newInstance();

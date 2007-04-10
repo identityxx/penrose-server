@@ -51,8 +51,8 @@ public class LDAPClient {
         "crossCertificatePair", "x500UniqueIdentifier"
     };
 
-    public Hashtable parameters;
-    public Collection binaryAttributes;
+    public Hashtable<String,Object> parameters;
+    public Collection<String> binaryAttributes;
 
     private String suffix;
     private String url;
@@ -64,23 +64,23 @@ public class LDAPClient {
 
     private int pageSize = 1000;
 
-    public LDAPClient(LDAPClient client, Map parameters) throws Exception {
+    public LDAPClient(LDAPClient client, Map<String,Object> parameters) throws Exception {
         init(parameters);
 
         this.rootDSE = client.rootDSE;
         this.schema = client.schema;
     }
 
-    public LDAPClient(Map parameters) throws Exception {
+    public LDAPClient(Map<String,Object> parameters) throws Exception {
         init(parameters);
 
         //getRootDSE();
         //getSchema();
     }
 
-    public void init(Map parameters) throws Exception {
+    public void init(Map<String,Object> parameters) throws Exception {
 
-        this.parameters = new Hashtable();
+        this.parameters = new Hashtable<String,Object>();
         this.parameters.putAll(parameters);
 
         String providerUrl = (String)parameters.get(Context.PROVIDER_URL);
@@ -98,7 +98,7 @@ public class LDAPClient {
 
         this.parameters.put(Context.PROVIDER_URL, url);
 
-        binaryAttributes = new HashSet();
+        binaryAttributes = new HashSet<String>();
         for (int i=0; i<BINARY_ATTRIBUTES.length; i++) {
             binaryAttributes.add(BINARY_ATTRIBUTES[i].toLowerCase());
         }
@@ -279,7 +279,7 @@ public class LDAPClient {
 
         log.debug("Modifying "+dn);
 
-        Collection list = new ArrayList();
+        Collection<ModificationItem> list = new ArrayList<ModificationItem>();
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             Modification modification = (Modification)i.next();
@@ -590,7 +590,7 @@ public class LDAPClient {
         getRootDSE();
         Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
 
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
         for (NamingEnumeration i=namingContexts.getAll(); i.hasMore(); ) {
             String namingContext = (String)i.next();
             list.add(namingContext);
@@ -955,12 +955,9 @@ public class LDAPClient {
         }
     }
 
-    /**
-     * @return Collection of LDAPEntry
-     */
-    public Collection getChildren(String baseDn) throws Exception {
+    public Collection<javax.naming.directory.SearchResult> getChildren(String baseDn) throws Exception {
 
-        Collection results = new ArrayList();
+        Collection<javax.naming.directory.SearchResult> results = new ArrayList<javax.naming.directory.SearchResult>();
 
         LdapContext context = null;
 
@@ -1079,9 +1076,9 @@ public class LDAPClient {
         this.url = url;
     }
 
-    public Collection getAttributeValues(Attribute attribute) throws Exception {
+    public Collection<Object> getAttributeValues(Attribute attribute) throws Exception {
 
-        Collection values = new ArrayList();
+        Collection<Object> values = new ArrayList<Object>();
 
         for (NamingEnumeration ne = attribute.getAll(); ne.hasMore(); ) {
             Object value = ne.next();

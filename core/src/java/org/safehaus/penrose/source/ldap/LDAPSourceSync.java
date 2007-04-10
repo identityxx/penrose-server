@@ -1,12 +1,11 @@
-package org.safehaus.penrose.cache.ldap;
+package org.safehaus.penrose.source.ldap;
 
 import org.safehaus.penrose.changelog.ChangeLogUtil;
-import org.safehaus.penrose.cache.CacheModule;
 
 /**
  * @author Endi S. Dewata
  */
-public class LDAPCacheModule extends CacheModule {
+public class LDAPSourceSync extends org.safehaus.penrose.source.SourceSync {
 
     public ChangeLogUtil createChangeLogUtil() throws Exception {
         return new LDAPChangeLogUtil();

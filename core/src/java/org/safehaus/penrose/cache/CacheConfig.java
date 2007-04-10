@@ -26,20 +26,15 @@ import java.util.TreeMap;
  */
 public class CacheConfig implements Cloneable {
 	
-    public final static String DRIVER                  = "driver";
-    public final static String URL                     = "url";
-    public final static String USER                    = "user";
-    public final static String PASSWORD                = "password";
+    private String name;
+    private String cacheClass;
+    private String description;
 
     public final static String CACHE_SIZE              = "cacheSize";
     public final static String CACHE_EXPIRATION        = "cacheExpiration";
 
     public final static int DEFAULT_CACHE_SIZE         = 100;
     public final static int DEFAULT_CACHE_EXPIRATION   = 5;
-
-    private String name;
-    private String cacheClass;
-    private String description;
 
 	/**
 	 * Parameters.
@@ -87,10 +82,7 @@ public class CacheConfig implements Cloneable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (cacheClass == null ? 0 : cacheClass.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {

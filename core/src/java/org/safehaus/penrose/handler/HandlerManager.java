@@ -33,7 +33,6 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.acl.ACLManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -47,8 +46,9 @@ public class HandlerManager {
     
     Map handlers = new TreeMap();
 
-    private PenroseConfig penroseConfig;
-    private PenroseContext penroseContext;
+    PenroseConfig penroseConfig;
+    PenroseContext penroseContext;
+    SessionContext sessionContext;
 
     ThreadManager threadManager;
     SchemaManager schemaManager;
@@ -74,7 +74,16 @@ public class HandlerManager {
 
         threadManager = penroseContext.getThreadManager();
         schemaManager = penroseContext.getSchemaManager();
-        aclManager = penroseContext.getAclManager();
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
+
+        aclManager = sessionContext.getAclManager();
     }
 
     public void init(HandlerConfig handlerConfig) throws Exception {
@@ -92,6 +101,7 @@ public class HandlerManager {
 
         handler.setPenroseConfig(penroseConfig);
         handler.setPenroseContext(penroseContext);
+        handler.setSessionContext(sessionContext);
         handler.init(handlerConfig);
 
         handlers.put(handlerConfig.getName(), handler);
@@ -420,7 +430,7 @@ public class HandlerManager {
         if (debug) log.debug("Requested: "+request.getAttributes());
 
         if (baseDn.isEmpty()) {
-            if (request.getScope() == LDAPConnection.SCOPE_BASE) {
+            if (request.getScope() == SearchRequest.SCOPE_BASE) {
                 Entry entry = createRootDSE();
 
                 if (debug) {

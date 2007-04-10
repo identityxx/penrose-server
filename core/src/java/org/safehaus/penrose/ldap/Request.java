@@ -12,6 +12,13 @@ public class Request {
 
     protected Collection<Control> controls = new ArrayList<Control>();
 
+    public Request() {
+    }
+
+    public Request(Request request) {
+        controls.addAll(request.controls);
+    }
+    
     public void addControl(Control control) {
         controls.add(control);
     }

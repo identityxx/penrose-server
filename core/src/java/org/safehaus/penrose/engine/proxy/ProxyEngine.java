@@ -29,7 +29,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPConnection;
 
 import javax.naming.NamingEnumeration;
 import java.util.*;
@@ -438,23 +437,20 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Result: "+found);
 
-            SearchRequest newRequest = new SearchRequest();
+            SearchRequest newRequest = new SearchRequest(request);
             newRequest.setFilter(filter);
-            newRequest.setAttributes(request.getAttributes());
             newRequest.setScope(scope);
-            newRequest.setSizeLimit(request.getSizeLimit());
-            newRequest.setTimeLimit(request.getTimeLimit());
 
             DN targetDn = null;
             if (found) {
                 targetDn = convertDn(baseDn, proxyDn, proxyBaseDn);
 
             } else {
-                if (scope == LDAPConnection.SCOPE_BASE) {
+                if (scope == SearchRequest.SCOPE_BASE) {
                     return;
 
-                } else if (scope == LDAPConnection.SCOPE_ONE) {
-                    newRequest.setScope(LDAPConnection.SCOPE_BASE);
+                } else if (scope == SearchRequest.SCOPE_ONE) {
+                    newRequest.setScope(SearchRequest.SCOPE_BASE);
                 }
                 targetDn = proxyBaseDn;
             }

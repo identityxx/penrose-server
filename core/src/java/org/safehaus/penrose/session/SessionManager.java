@@ -32,6 +32,7 @@ public class SessionManager implements SessionManagerMBean {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     private SessionConfig sessionConfig;
 
@@ -77,6 +78,7 @@ public class SessionManager implements SessionManagerMBean {
         session.setSessionId(sessionId);
         session.setPenroseConfig(penroseConfig);
         session.setPenroseContext(penroseContext);
+        session.setSessionContext(sessionContext);
 
         sessions.put(sessionId, session);
 
@@ -202,5 +204,13 @@ public class SessionManager implements SessionManagerMBean {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

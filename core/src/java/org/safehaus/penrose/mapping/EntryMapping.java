@@ -64,42 +64,43 @@ public class EntryMapping implements Cloneable {
 	/**
 	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
 	 */
-    private Collection childMappings = new ArrayList();
+    private Collection<MappingRule> childMappings = new ArrayList<MappingRule>();
 
     /**
      * Object classes. Each element is of type String.
      */
-    private Collection objectClasses = new TreeSet();
+    private Collection<String> objectClasses = new TreeSet<String>();
     
     private String description;
 
     /**
      * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
      */
-    public Collection attributeMappings = new ArrayList();
-    private Map attributeMappingsByName = new TreeMap();
+    public Collection<AttributeMapping> attributeMappings = new ArrayList<AttributeMapping>();
+    private Map<String,Collection<AttributeMapping>> attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
     private boolean staticRdn = true;
-    private Collection rdnAttributeMappings = new ArrayList();
+    private Collection<AttributeMapping> rdnAttributeMappings = new ArrayList<AttributeMapping>();
 
     /**
      * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
      */
-    private List sourceMappings = new ArrayList();
+    private List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
     
     /**
      * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
      */
-    private Collection relationships = new ArrayList();
+    private Collection<Relationship> relationships = new ArrayList<Relationship>();
 
+    private String partition;
     private HandlerMapping handlerMapping;
     private EngineMapping engineMapping;
 
     /**
      * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
      */
-    private Collection acl = new ArrayList();
+    private Collection<ACI> acl = new ArrayList<ACI>();
 
-    private Map parameters = new TreeMap();
+    private Map<String,String> parameters = new TreeMap<String,String>();
 
 	public EntryMapping() {
 	}
@@ -168,7 +169,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public Collection getNonRdnAttributeMappings() {
-        Collection results = new ArrayList();
+        Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
         for (Iterator i= attributeMappings.iterator(); i.hasNext(); ) {
             AttributeMapping attributeMapping = (AttributeMapping)i.next();
             if (attributeMapping.isRdn()) continue;
@@ -238,7 +239,7 @@ public class EntryMapping implements Cloneable {
 		objectClasses.add(oc);
 	}
 
-    public void addObjectClasses(Collection list) {
+    public void addObjectClasses(Collection<String> list) {
         objectClasses.addAll(list);
     }
 
@@ -300,13 +301,13 @@ public class EntryMapping implements Cloneable {
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName();
-        log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
+        //log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
 
         attributeMappings.add(attributeMapping);
 
-        Collection list = (Collection) attributeMappingsByName.get(name);
+        Collection<AttributeMapping> list = (Collection<AttributeMapping>) attributeMappingsByName.get(name);
         if (list == null) {
-            list = new ArrayList();
+            list = new ArrayList<AttributeMapping>();
             attributeMappingsByName.put(name, list);
         }
         list.add(attributeMapping);
@@ -326,17 +327,17 @@ public class EntryMapping implements Cloneable {
         return (AttributeMapping)i.next();
     }
 
-    public Collection getAttributeMappings(String name) {
-        return (Collection)attributeMappingsByName.get(name);
+    public Collection<AttributeMapping> getAttributeMappings(String name) {
+        return (Collection<AttributeMapping>)attributeMappingsByName.get(name);
     }
 
     public Collection getAttributeMappings(Collection names) {
         if (names == null) return getAttributeMappings();
 
-        Collection results = new ArrayList();
+        Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
         for (Iterator i=names.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection list = getAttributeMappings(name);
+            Collection<AttributeMapping> list = getAttributeMappings(name);
             if (list == null) continue;
             results.addAll(list);
         }
@@ -376,11 +377,11 @@ public class EntryMapping implements Cloneable {
         this.description = description;
     }
 
-    public Collection getChildMappings() {
+    public Collection<MappingRule> getChildMappings() {
         return childMappings;
     }
 
-    public void setChildMappings(List childMappings) {
+    public void setChildMappings(Collection<MappingRule> childMappings) {
         this.childMappings = childMappings;
     }
 
@@ -448,6 +449,7 @@ public class EntryMapping implements Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(partition, entryMapping.partition)) return false;
         if (!equals(handlerMapping, entryMapping.handlerMapping)) return false;
         if (!equals(engineMapping, entryMapping.engineMapping)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
@@ -487,6 +489,7 @@ public class EntryMapping implements Cloneable {
             addRelationship((Relationship)relationship.clone());
         }
 
+        partition = entryMapping.partition;
         handlerMapping = (HandlerMapping)entryMapping.handlerMapping.clone();
         engineMapping = (EngineMapping)entryMapping.engineMapping.clone();
 
@@ -536,5 +539,13 @@ public class EntryMapping implements Cloneable {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
+    }
+
+    public String getPartition() {
+        return partition;
+    }
+
+    public void setPartition(String partition) {
+        this.partition = partition;
     }
 }

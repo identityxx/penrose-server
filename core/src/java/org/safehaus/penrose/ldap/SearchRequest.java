@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.ietf.ldap.LDAPSearchConstraints;
-import org.ietf.ldap.LDAPConnection;
 import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.entry.RDN;
 import org.safehaus.penrose.filter.Filter;
@@ -33,14 +31,14 @@ import java.util.ArrayList;
  */
 public class SearchRequest extends Request {
 
-    public final static int SCOPE_BASE      = LDAPConnection.SCOPE_BASE;
-    public final static int SCOPE_ONE       = LDAPConnection.SCOPE_ONE;
-    public final static int SCOPE_SUB       = LDAPConnection.SCOPE_SUB;
+    public final static int SCOPE_BASE      = 0;
+    public final static int SCOPE_ONE       = 1;
+    public final static int SCOPE_SUB       = 2;
 
-    public final static int DEREF_ALWAYS    = LDAPSearchConstraints.DEREF_ALWAYS;
-    public final static int DEREF_FINDING   = LDAPSearchConstraints.DEREF_FINDING;
-    public final static int DEREF_NEVER     = LDAPSearchConstraints.DEREF_NEVER;
-    public final static int DEREF_SEARCHING = LDAPSearchConstraints.DEREF_SEARCHING;
+    public final static int DEREF_NEVER     = 0;
+    public final static int DEREF_SEARCHING = 1;
+    public final static int DEREF_FINDING   = 2;
+    public final static int DEREF_ALWAYS    = 3;
 
     protected DN dn;
     protected Filter filter;
@@ -52,22 +50,23 @@ public class SearchRequest extends Request {
     protected long sizeLimit    = 0;
     protected long timeLimit    = 0;
 
-    protected Collection attributes = new ArrayList();
+    protected Collection<String> attributes = new ArrayList<String>();
 
     public SearchRequest() {
     }
 
     public SearchRequest(SearchRequest request) throws Exception {
-        dn          = request.getDn();
-        filter      = request.getFilter();
-        scope       = request.getScope();
-    	dereference = request.getDereference();
-    	typesOnly   = request.isTypesOnly();
-    	sizeLimit   = request.getSizeLimit();
-    	timeLimit   = request.getTimeLimit();
+        super(request);
 
-        attributes.addAll(request.getAttributes());
-        controls.addAll(request.getControls());
+        dn          = request.dn;
+        filter      = request.filter;
+        scope       = request.scope;
+    	dereference = request.dereference;
+    	typesOnly   = request.typesOnly;
+    	sizeLimit   = request.sizeLimit;
+    	timeLimit   = request.timeLimit;
+
+        attributes.addAll(request.attributes);
     }
     
     public int getDereference() {
@@ -94,11 +93,11 @@ public class SearchRequest extends Request {
         this.scope = scope;
     }
 
-    public Collection getAttributes() {
+    public Collection<String> getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(Collection attributes) {
+    public void setAttributes(Collection<String> attributes) {
         if (this.attributes == attributes) return;
         this.attributes.clear();
         if (attributes == null) return;
