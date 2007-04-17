@@ -8,14 +8,10 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -79,7 +75,7 @@ public class BasicEngine extends Engine {
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues sourceValues
+            SourceValues sourceValues
     ) throws Exception {
 
         Interpreter interpreter = interpreterManager.newInstance();
@@ -105,7 +101,7 @@ public class BasicEngine extends Engine {
             RDN rdn,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
-            AttributeValues sourceValues
+            SourceValues sourceValues
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -135,7 +131,6 @@ public class BasicEngine extends Engine {
     public void add(
             Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
             AddRequest request,
             AddResponse response
@@ -153,7 +148,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -203,7 +198,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -246,7 +241,6 @@ public class BasicEngine extends Engine {
     public void delete(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DeleteRequest request,
             DeleteResponse response
@@ -264,7 +258,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -297,7 +291,6 @@ public class BasicEngine extends Engine {
     public void modify(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModifyRequest request,
             ModifyResponse response
@@ -315,7 +308,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -348,7 +341,6 @@ public class BasicEngine extends Engine {
     public void modrdn(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModRdnRequest request,
             ModRdnResponse response
@@ -366,7 +358,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -401,9 +393,9 @@ public class BasicEngine extends Engine {
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();

@@ -33,7 +33,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     public final static String TYPE_DATETIME  = "DATETIME";
 
     public final static String DEFAULT_TYPE   = TYPE_VARCHAR;
-    public final static int DEFAULT_LENGTH    = 50;
+    public final static int DEFAULT_LENGTH    = 0;
     public final static int DEFAULT_PRECISION = 0;
 
 	/**
@@ -108,7 +108,12 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     }
 
     public int getLength() {
-        return length;
+        return length == DEFAULT_LENGTH ? getDefaultLength() : length;
+    }
+
+    public int getDefaultLength() {
+        if ("VARCHAR".equals(type)) return 50;
+        return 0;
     }
 
     public void setLength(int length) {

@@ -3,8 +3,8 @@ package org.safehaus.penrose.test.mapping.basic;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class SearchFilterTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(cn=*b*)",
                 SearchRequest.SCOPE_ONE
@@ -39,11 +39,11 @@ public class SearchFilterTest extends BasicTestCase {
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         assertEquals("cn=aabb,"+baseDn, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("cn");
         assertEquals("aabb", value);
@@ -53,11 +53,11 @@ public class SearchFilterTest extends BasicTestCase {
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         assertEquals("cn=bbcc,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("cn");
         assertEquals("bbcc", value);
@@ -84,7 +84,7 @@ public class SearchFilterTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(cn=*f*)",
                 SearchRequest.SCOPE_ONE

@@ -18,7 +18,7 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.*;

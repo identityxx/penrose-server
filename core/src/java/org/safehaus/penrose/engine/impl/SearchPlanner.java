@@ -24,8 +24,7 @@ import org.safehaus.penrose.graph.GraphVisitor;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -44,7 +43,7 @@ public class SearchPlanner extends GraphVisitor {
     private EntryMapping entryMapping;
     private Filter searchFilter;
     private SourceMapping primarySourceMapping;
-    private AttributeValues sourceValues;
+    private SourceValues sourceValues;
 
     private Stack depthStack = new Stack();
     private Stack sourceStack = new Stack();
@@ -60,7 +59,7 @@ public class SearchPlanner extends GraphVisitor {
             Partition partition,
             EntryMapping entryMapping,
             Filter filter,
-            AttributeValues sourceValues) throws Exception {
+            SourceValues sourceValues) throws Exception {
 
         this.engine = engine;
         this.partition = partition;

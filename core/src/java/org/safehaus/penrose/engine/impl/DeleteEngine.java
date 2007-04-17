@@ -20,9 +20,8 @@ package org.safehaus.penrose.engine.impl;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public class DeleteEngine {
         try {
             EntryMapping entryMapping = null; // entry.getEntryMapping();
 
-            AttributeValues sourceValues = null; // entry.getSourceValues();
+            SourceValues sourceValues = null; // entry.getSourceValues();
             //getFieldValues(entry.getDn(), sourceValues);
 
             log.debug("Deleting entry "+entry.getDn()+" ["+sourceValues+"]");

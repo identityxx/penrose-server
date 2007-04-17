@@ -52,6 +52,30 @@ public class CacheManager {
         this.sourceSyncManager = sourceSyncManager;
     }
 
+    public void status() throws Exception {
+        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
+            Partition partition = (Partition)i.next();
+            status(partition);
+        }
+    }
+
+    public void status(Partition partition) throws Exception {
+        Collection caches = sourceSyncManager.getSourceSyncs(partition);
+        for (Iterator j=caches.iterator(); j.hasNext(); ) {
+            SourceSync sourceSync = (SourceSync)j.next();
+            status(sourceSync);
+        }
+    }
+
+    public void status(SourceSync sourceSync) throws Exception {
+        try {
+            log.warn("Cache status for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
+            sourceSync.status();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
     public void create() throws Exception {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
@@ -72,7 +96,7 @@ public class CacheManager {
             log.warn("Creating cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
             sourceSync.create();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -96,7 +120,7 @@ public class CacheManager {
             log.warn("Loading cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
             sourceSync.load();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -120,7 +144,7 @@ public class CacheManager {
             log.warn("Synchronizing cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
             sourceSync.synchronize();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -144,7 +168,7 @@ public class CacheManager {
             log.warn("Cleaning cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
             sourceSync.clean();
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -181,6 +205,7 @@ public class CacheManager {
         System.out.println("  sync   [partition [source]]   sync data in cache tables");
         System.out.println("  clean  [partition [source]]   clean data from cache tables");
         System.out.println("  drop   [partition [source]]   drop cache tables");
+        System.out.println("  status [partition [source]]   show cache status");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -197,7 +222,7 @@ public class CacheManager {
 
         Getopt getopt = new Getopt("CacheManager", args, "-:?dv", longopts);
 
-        Collection parameters = new ArrayList();
+        Collection<String> parameters = new ArrayList<String>();
         int c;
         while ((c = getopt.getopt()) != -1) {
             switch (c) {
@@ -300,6 +325,9 @@ public class CacheManager {
 
             } else if ("drop".equals(command)) {
                 cacheManager.drop(sourceSync);
+
+            } else if ("status".equals(command)) {
+                cacheManager.status(sourceSync);
             }
 
         } else if (partition != null) {
@@ -318,6 +346,9 @@ public class CacheManager {
 
             } else if ("drop".equals(command)) {
                 cacheManager.drop(partition);
+
+            } else if ("status".equals(command)) {
+                cacheManager.status(partition);
             }
 
         } else {
@@ -335,6 +366,9 @@ public class CacheManager {
 
             } else if ("drop".equals(command)) {
                 cacheManager.drop();
+
+            } else if ("status".equals(command)) {
+                cacheManager.status();
             }
         }
 

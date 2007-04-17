@@ -1,7 +1,7 @@
 package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.DeleteStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
@@ -24,7 +24,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
     Interpreter interpreter;
 
     DeleteRequest request;
@@ -32,7 +32,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
     public DeleteRequestBuilder(
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             DeleteRequest request,
             DeleteResponse response

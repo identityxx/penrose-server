@@ -1,7 +1,7 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.Collection;
 import java.util.ArrayList;

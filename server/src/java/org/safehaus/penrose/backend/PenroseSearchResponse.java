@@ -32,9 +32,9 @@ public class PenroseSearchResponse
         extends PenroseResponse
         implements com.identyx.javabackend.SearchResponse {
 
-    SearchResponse searchResponse;
+    SearchResponse<SearchResult> searchResponse;
 
-    public PenroseSearchResponse(SearchResponse searchResponse) {
+    public PenroseSearchResponse(SearchResponse<SearchResult> searchResponse) {
         super(searchResponse);
         this.searchResponse = searchResponse;
     }
@@ -42,9 +42,9 @@ public class PenroseSearchResponse
     public Object next() throws Exception {
         SearchResult result = (SearchResult)searchResponse.next();
 
-        PenroseEntry entry = new PenroseEntry(result.getEntry());
+        PenroseEntry entry = new PenroseEntry(result.getDn(), result.getAttributes());
 
-        Collection controls = new ArrayList();
+        Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
         for (Iterator i= result.getControls().iterator(); i.hasNext(); ) {
             Control control = (Control)i.next();
             controls.add(new PenroseControl(control));
@@ -57,7 +57,7 @@ public class PenroseSearchResponse
         return searchResponse.hasNext();
     }
 
-    public SearchResponse getSearchResponse() {
+    public SearchResponse<SearchResult> getSearchResponse() {
         return searchResponse;
     }
 }

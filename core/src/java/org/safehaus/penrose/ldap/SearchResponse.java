@@ -31,11 +31,11 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SearchResponse extends Response {
+public class SearchResponse<E> extends Response {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    LinkedList list = new LinkedList();
+    LinkedList<E> list = new LinkedList<E>();
     long sizeLimit;
     int totalCount;
     boolean closed = false;
@@ -166,7 +166,7 @@ public class SearchResponse extends Response {
         this.exception = exception;
     }
 
-    public synchronized void add(Object object) throws Exception {
+    public synchronized void add(E object) throws Exception {
 
         if (sizeLimit > 0 && totalCount >= sizeLimit) {
             exception = ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
@@ -177,7 +177,7 @@ public class SearchResponse extends Response {
         if (enableEventListeners) {
             event = new SearchResponseEvent(SearchResponseEvent.ADD_EVENT, object);
             if (!firePreAddEvent(event)) return;
-            object = event.getObject();
+            object = (E)event.getObject();
         }
 
         list.add(object);
@@ -190,9 +190,9 @@ public class SearchResponse extends Response {
         notifyAll();
     }
 
-    public void addAll(Collection collection) throws Exception {
+    public void addAll(Collection<E> collection) throws Exception {
         for (Iterator i=collection.iterator(); i.hasNext(); ) {
-            Object object = i.next();
+            E object = (E)i.next();
             add(object);
         }
     }
@@ -210,7 +210,7 @@ public class SearchResponse extends Response {
         return list.size() > 0;
     }
 
-    public synchronized Object next() throws Exception {
+    public synchronized E next() throws Exception {
         while (!closed && list.size() == 0) {
             try {
                 wait();
@@ -222,13 +222,13 @@ public class SearchResponse extends Response {
 
         if (list.size() == 0) return null;
 
-        Object object = list.getFirst();
+        E object = list.getFirst();
 
         SearchResponseEvent event = null;
         if (enableEventListeners) {
             event = new SearchResponseEvent(SearchResponseEvent.REMOVE_EVENT, object);
             if (!firePreRemoveEvent(event)) return null;
-            object = event.getObject();
+            object = (E)event.getObject();
         }
 
         list.removeFirst();

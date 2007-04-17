@@ -5,15 +5,12 @@ import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.AddResponse;
-import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -67,7 +64,7 @@ public class SimpleHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -87,7 +84,14 @@ public class SimpleHandler extends Handler {
 
             Engine engine = getEngine(partition, entryMapping);
 
-            AttributeValues sourceValues = new AttributeValues();
+            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                 public void add(SearchResult object) throws Exception {
+                     SearchResult searchResult = (SearchResult)object;
+                     response.add(searchResult);
+                 }
+             };
+
+            SourceValues sourceValues = new SourceValues();
 
             engine.search(
                     session,
@@ -95,7 +99,7 @@ public class SimpleHandler extends Handler {
                     sourceValues,
                     entryMapping,
                     request,
-                    response
+                    sr
             );
         }
 

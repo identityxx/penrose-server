@@ -3,6 +3,7 @@ package org.safehaus.penrose.test.mapping.nested;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.apache.log4j.Logger;
 
 /**
@@ -20,7 +21,7 @@ public class SearchNestedTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE

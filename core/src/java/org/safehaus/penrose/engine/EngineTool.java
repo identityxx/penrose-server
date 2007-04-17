@@ -1,13 +1,10 @@
 package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Relationship;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +24,7 @@ public class EngineTool {
     public static void propagateUp(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues
+            SourceValues sourceValues
     ) throws Exception {
 
         List mappings = new ArrayList();
@@ -43,7 +40,7 @@ public class EngineTool {
     public static void propagateDown(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues
+            SourceValues sourceValues
     ) throws Exception {
 
         List mappings = new ArrayList();
@@ -56,7 +53,7 @@ public class EngineTool {
         propagate(mappings, sourceValues);
     }
 
-    public static void propagate(Collection mappings, AttributeValues sourceValues) throws Exception {
+    public static void propagate(Collection mappings, SourceValues sourceValues) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 

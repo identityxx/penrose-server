@@ -4,8 +4,8 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 
@@ -272,6 +272,10 @@ public class Source implements Cloneable {
 
     public void clean() throws Exception {
         connection.clean(this);
+    }
+
+    public void status() throws Exception {
+        connection.status(this);
     }
 
     public Object clone() {

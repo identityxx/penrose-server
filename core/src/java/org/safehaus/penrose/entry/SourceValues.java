@@ -20,38 +20,37 @@ package org.safehaus.penrose.entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.ldap.RDN;
 
 import java.util.*;
 
 /**
- * This class holds entry's attribute values. Each attribute value is a collection.
- *
  * @author Endi S. Dewata
  */
-public class AttributeValues implements Cloneable, Comparable {
+public class SourceValues implements Cloneable, Comparable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
     public Map<String,Collection> values = new TreeMap<String,Collection>();
 
-    public AttributeValues() {
+    public SourceValues() {
     }
 
-    public AttributeValues(AttributeValues attributeValues) {
-        add(attributeValues);
+    public SourceValues(SourceValues sourceValues) {
+        add(sourceValues);
     }
 
     public boolean isEmpty() {
         return values.isEmpty();
     }
     
-    public void add(AttributeValues attributeValues) {
-        add(null, attributeValues);
+    public void add(SourceValues sourceValues) {
+        add(null, sourceValues);
     }
 
-    public void add(String prefix, AttributeValues attributeValues) {
-        if (attributeValues == null) return;
-        Map v = attributeValues.getValues();
+    public void add(String prefix, SourceValues sourceValues) {
+        if (sourceValues == null) return;
+        Map v = sourceValues.getValues();
         for (Iterator i = v.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
 
@@ -104,19 +103,19 @@ public class AttributeValues implements Cloneable, Comparable {
         }
     }
 
-    public void set(AttributeValues attributeValues) {
-        set(null, attributeValues);
+    public void set(SourceValues sourceValues) {
+        set(null, sourceValues);
     }
 
-    public void set(String prefix, AttributeValues attributeValues) {
-        if (attributeValues == null) {
+    public void set(String prefix, SourceValues sourceValues) {
+        if (sourceValues == null) {
             remove(prefix);
             return;
         }
 
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i= sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection c = attributeValues.get(name);
+            Collection c = sourceValues.get(name);
             set(prefix == null ? name : prefix+"."+name, c);
         }
     }
@@ -305,21 +304,21 @@ public class AttributeValues implements Cloneable, Comparable {
 
     public boolean equals(Object object) {
         if (object == null) return false;
-        if (!(object instanceof AttributeValues)) return false;
-        AttributeValues av = (AttributeValues)object;
+        if (!(object instanceof SourceValues)) return false;
+        SourceValues av = (SourceValues)object;
         return values.equals(av.values);
     }
 
     public Object clone() {
-        AttributeValues attributeValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection c = (Collection)values.get(name);
             Collection s = new LinkedHashSet();
             s.addAll(c);
-            attributeValues.values.put(name, s);
+            sourceValues.values.put(name, s);
         }
-        return attributeValues;
+        return sourceValues;
     }
 
     public int compareTo(Object object) {
@@ -328,12 +327,12 @@ public class AttributeValues implements Cloneable, Comparable {
 
         try {
             if (object == null) return 0;
-            if (!(object instanceof AttributeValues)) return 0;
+            if (!(object instanceof SourceValues)) return 0;
 
-            AttributeValues attributeValues = (AttributeValues)object;
+            SourceValues sourceValues = (SourceValues)object;
 
             Iterator i = values.keySet().iterator();
-            Iterator j = attributeValues.values.keySet().iterator();
+            Iterator j = sourceValues.values.keySet().iterator();
 
             while (i.hasNext() && j.hasNext()) {
                 String name1 = (String)i.next();
@@ -343,7 +342,7 @@ public class AttributeValues implements Cloneable, Comparable {
                 if (c != 0) return c;
 
                 Collection values1 = (Collection)values.get(name1);
-                Collection values2 = (Collection)attributeValues.values.get(name2);
+                Collection values2 = (Collection) sourceValues.values.get(name2);
 
                 Iterator k = values1.iterator();
                 Iterator l = values2.iterator();

@@ -22,7 +22,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -410,7 +409,7 @@ public class HandlerManager {
             final Session session,
             final Partition partition,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -418,10 +417,10 @@ public class HandlerManager {
         DN baseDn = schemaManager.normalize(request.getDn());
         request.setDn(baseDn);
 
-        Collection attributes = schemaManager.normalize(request.getAttributes());
-        request.setAttributes(attributes);
+        Collection<String> attributeNames = schemaManager.normalize(request.getAttributes());
+        request.setAttributes(attributeNames);
 
-        final Set requestedAttributes = new HashSet();
+        final Set<String> requestedAttributes = new HashSet<String>();
         if (request.getAttributes() != null) requestedAttributes.addAll(request.getAttributes());
 
         final boolean allRegularAttributes = request.getAttributes() == null || request.getAttributes().isEmpty() || request.getAttributes().contains("*");
@@ -431,22 +430,22 @@ public class HandlerManager {
 
         if (baseDn.isEmpty()) {
             if (request.getScope() == SearchRequest.SCOPE_BASE) {
-                Entry entry = createRootDSE();
-
+                SearchResult result = createRootDSE();
+                Attributes attrs = result.getAttributes();
                 if (debug) {
-                    log.debug("Before: "+entry.getDn());
-                    entry.getAttributes().print();
+                    log.debug("Before: "+result.getDn());
+                    attrs.print();
                 }
 
-                Collection list = filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
-                removeAttributes(entry, list);
+                Collection list = filterAttributes(session, partition, attrs, requestedAttributes, allRegularAttributes, allOpAttributes);
+                removeAttributes(attrs, list);
 
                 if (debug) {
-                    log.debug("After: "+entry.getDn());
-                    entry.getAttributes().print();
+                    log.debug("After: "+result.getDn());
+                    attrs.print();
                 }
 
-                response.add(new SearchResult(entry));
+                response.add(result);
             }
             response.close();
             return;
@@ -538,9 +537,7 @@ public class HandlerManager {
         }
     }
 
-    public Entry createRootDSE() throws Exception {
-
-        Entry entry = new Entry("");
+    public SearchResult createRootDSE() throws Exception {
 
         Attributes attributes = new Attributes();
         attributes.addValue("objectClass", "top");
@@ -558,13 +555,10 @@ public class HandlerManager {
             }
         }
 
-        entry.setAttributes(attributes);
-        
-        return entry;
+        return new SearchResult("", attributes);
     }
 
-    public void removeAttributes(Entry entry, Collection list) throws Exception {
-        Attributes attributes = entry.getAttributes();
+    public void removeAttributes(Attributes attributes, Collection list) throws Exception {
         for (Iterator i=list.iterator(); i.hasNext(); ) {
             String attributeName = (String)i.next();
             attributes.remove(attributeName);
@@ -574,7 +568,7 @@ public class HandlerManager {
     public Collection filterAttributes(
             Session session,
             Partition partition,
-            Entry entry,
+            Attributes attributes,
             Collection requestedAttributeNames,
             boolean allRegularAttributes,
             boolean allOpAttributes
@@ -584,7 +578,6 @@ public class HandlerManager {
 
         if (session == null) return list;
 
-        Attributes attributes = entry.getAttributes();
         Collection attributeNames = attributes.getNames();
 
         boolean debug = log.isDebugEnabled();
@@ -662,13 +655,12 @@ public class HandlerManager {
     public void filterAttributes(
             Session session,
             Partition partition,
-            Entry entry
+            DN dn,
+            EntryMapping entryMapping,
+            Attributes attributes
     ) throws Exception {
 
         if (session == null) return;
-
-        EntryMapping entryMapping = entry.getEntryMapping();
-        Attributes attributes = entry.getAttributes();
 
         Collection attributeNames = new ArrayList();
         for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
@@ -681,8 +673,7 @@ public class HandlerManager {
         denies.addAll(attributeNames);
 
         DN bindDn = session.getBindDn();
-        DN targetDn = entry.getDn();
-        aclManager.getReadableAttributes(bindDn, partition, entryMapping, targetDn, null, attributeNames, grants, denies);
+        aclManager.getReadableAttributes(bindDn, partition, entryMapping, dn, null, attributeNames, grants, denies);
 
         boolean debug = log.isDebugEnabled();
         if (debug) {
@@ -706,6 +697,6 @@ public class HandlerManager {
             list.add(attributeName);
         }
 
-        removeAttributes(entry, list);
+        removeAttributes(attributes, list);
     }
 }

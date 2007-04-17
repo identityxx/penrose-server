@@ -319,7 +319,7 @@ public class PartitionReader implements EntityResolver {
         digester.setEntityResolver(this);
         digester.setValidating(true);
         digester.setClassLoader(cl);
-        digester.push(partition);
+        digester.push(partition.getSources());
         digester.parse(file);
 	}
 

@@ -1,7 +1,7 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
 
 import java.util.Collection;
 import java.util.ArrayList;

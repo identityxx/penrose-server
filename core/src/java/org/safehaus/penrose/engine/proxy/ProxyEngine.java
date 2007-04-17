@@ -173,7 +173,6 @@ public class ProxyEngine extends Engine {
     public void add(
             Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
             AddRequest request,
             AddResponse response
@@ -184,15 +183,13 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
         Attributes attributes = request.getAttributes();
 
-        EntryMapping proxyMapping = parent.getEntryMapping();
-
-        SourceMapping sourceMapping = proxyMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, sourceConfig);
 
         try {
-            DN proxyDn = proxyMapping.getDn();
+            DN proxyDn = entryMapping.getDn();
             DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -231,7 +228,7 @@ public class ProxyEngine extends Engine {
         String password = request.getPassword();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
         LDAPClient client = createClient(session, partition, sourceConfig);
 
@@ -264,7 +261,6 @@ public class ProxyEngine extends Engine {
     public void delete(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DeleteRequest request,
             DeleteResponse response
@@ -275,7 +271,7 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
         LDAPClient client = getClient(session, partition, sourceConfig);
 
@@ -307,7 +303,6 @@ public class ProxyEngine extends Engine {
     public void modify(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModifyRequest request,
             ModifyResponse response
@@ -319,7 +314,7 @@ public class ProxyEngine extends Engine {
         Collection<Modification> modifications = request.getModifications();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
         LDAPClient client = getClient(session, partition, sourceConfig);
 
@@ -352,7 +347,6 @@ public class ProxyEngine extends Engine {
     public void modrdn(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModRdnRequest request,
             ModRdnResponse response
@@ -365,7 +359,7 @@ public class ProxyEngine extends Engine {
         boolean deleteOldRdn = request.getDeleteOldRdn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
         LDAPClient client = getClient(session, partition, sourceConfig);
 
@@ -401,9 +395,9 @@ public class ProxyEngine extends Engine {
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -423,7 +417,7 @@ public class ProxyEngine extends Engine {
         }
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        final SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
+        final SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
         try {
             final DN proxyDn = entryMapping.getDn();
@@ -486,8 +480,9 @@ public class ProxyEngine extends Engine {
                         }
                     }
 
-                    Entry entry = new Entry(dn, entryMapping, attributes);
-                    response.add(entry);
+                    SearchResult searchResult = new SearchResult(dn, attributes);
+                    searchResult.setEntryMapping(entryMapping);
+                    response.add(searchResult);
                 }
 
                 public void close() throws Exception {

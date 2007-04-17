@@ -32,14 +32,15 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.ldap.LDAPSourceSync;
 
 import java.util.*;
 
@@ -181,7 +182,7 @@ public class LDAPAdapter extends Adapter {
         return entry;
     }
 
-    public void modifyAdd(SourceConfig sourceConfig, AttributeValues entry) throws LDAPException {
+    public void modifyAdd(SourceConfig sourceConfig, SourceValues entry) throws LDAPException {
         DirContext ctx = null;
         try {
             log.debug("Modify Add:");
@@ -231,7 +232,7 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
-    public int modifyDelete(SourceConfig sourceConfig, AttributeValues entry) throws Exception {
+    public int modifyDelete(SourceConfig sourceConfig, SourceValues entry) throws Exception {
 
         log.debug("Modify Delete:");
 
@@ -342,6 +343,10 @@ public class LDAPAdapter extends Adapter {
         return list;
     }
 
+    public String getSyncClassName() {
+        return LDAPSourceSync.class.getName();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Storage
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -392,7 +397,7 @@ public class LDAPAdapter extends Adapter {
     public void add(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -446,7 +451,7 @@ public class LDAPAdapter extends Adapter {
     public void bind(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -502,7 +507,7 @@ public class LDAPAdapter extends Adapter {
     public void delete(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -555,7 +560,7 @@ public class LDAPAdapter extends Adapter {
     public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -617,7 +622,7 @@ public class LDAPAdapter extends Adapter {
     public void modrdn(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -815,9 +820,9 @@ public class LDAPAdapter extends Adapter {
     public void search(
             final EntryMapping entryMapping,
             final Collection sourceRefs,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<Entry> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -942,7 +947,7 @@ public class LDAPAdapter extends Adapter {
         log.debug("Search operation completed.");
     }
 
-    public DN getDn(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
+    public DN getDn(SourceConfig sourceConfig, SourceValues sourceValues) throws Exception {
 
         RDN pk = sourceConfig.getPrimaryKeyValues(sourceValues);
 

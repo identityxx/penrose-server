@@ -19,7 +19,7 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
@@ -115,7 +115,7 @@ public class PartitionManager implements PartitionManagerMBean {
         String sourceName = sourceMapping.getSourceName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            if (partition.getSourceConfig(sourceName) != null) return partition;
+            if (partition.getSources().getSourceConfig(sourceName) != null) return partition;
         }
         return null;
     }

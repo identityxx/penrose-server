@@ -2,8 +2,7 @@ package org.safehaus.penrose.adapter.ldap;
 
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.source.SourceRef;
@@ -20,7 +19,7 @@ import java.util.StringTokenizer;
 public class AddRequestBuilder extends RequestBuilder {
 
     Collection sourceRefs;
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
 
     Interpreter interpreter;
 
@@ -30,7 +29,7 @@ public class AddRequestBuilder extends RequestBuilder {
     public AddRequestBuilder(
             String suffix,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             AddRequest request,
             AddResponse response

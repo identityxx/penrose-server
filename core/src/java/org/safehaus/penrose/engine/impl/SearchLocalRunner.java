@@ -29,7 +29,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class SearchLocalRunner extends GraphVisitor {
     private Graph graph;
     private EngineImpl engine;
     private EntryMapping entryMapping;
-    private AttributeValues sourceValues;
+    private SourceValues sourceValues;
     private Map filters;
     private SourceMapping startingSourceMapping;
 
@@ -61,7 +61,7 @@ public class SearchLocalRunner extends GraphVisitor {
             EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchPlanner planner,
             SourceMapping startingSourceMapping,
             Collection relationships) throws Exception {
@@ -113,7 +113,7 @@ public class SearchLocalRunner extends GraphVisitor {
 
         log.debug("Searching source "+sourceMapping.getName()+" with filter "+filter);
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
         SearchRequest request = new SearchRequest();
         SearchResponse response = new SearchResponse();
@@ -135,7 +135,7 @@ public class SearchLocalRunner extends GraphVisitor {
         while (response.hasNext()) {
             Entry result = (Entry)response.next();
 
-            AttributeValues sv = new AttributeValues();
+            SourceValues sv = new SourceValues();
             sv.add(sourceValues);
             //sv.add(sourceMapping.getName(), result.getSourceValues());
             list.add(sv);
@@ -202,7 +202,7 @@ public class SearchLocalRunner extends GraphVisitor {
 
         log.debug("Generating filters:");
         for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+            SourceValues av = (SourceValues)i.next();
 
             Filter f = engine.generateFilter(toSourceMapping, relationships, av);
             log.debug(" - "+f);

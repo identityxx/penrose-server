@@ -19,15 +19,13 @@ package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.DN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -53,36 +51,36 @@ public class AddEngine {
             Entry parent,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues attributeValues
+            SourceValues sourceValues
     ) throws Exception {
 
         try {
             RDN rdn = dn.getRdn();
-            attributeValues.set("rdn", rdn);
+            sourceValues.set("rdn", rdn);
 
-            AttributeValues parentSourceValues = null; // parent.getSourceValues();
-            AttributeValues sourceValues = new AttributeValues();
+            SourceValues parentSourceValues = null; // parent.getSourceValues();
+            SourceValues sv = new SourceValues();
 
             Collection sources = entryMapping.getSourceMappings();
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                AttributeValues output = new AttributeValues();
+                SourceValues output = new SourceValues();
                 engine.transformEngine.translate(
                         partition,
                         entryMapping,
                         sourceMapping,
                         dn,
-                        attributeValues,
+                        sourceValues,
                         output
                 );
 
-                //sourceValues.set(sourceMapping.getName()+".primaryKey", pk);
+                //sv.set(sourceMapping.getName()+".primaryKey", pk);
 
                 for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
                     Collection values = output.get(name);
-                    sourceValues.add(sourceMapping.getName()+"."+name, values);
+                    sv.add(sourceMapping.getName()+"."+name, values);
                 }
             }
 
@@ -97,16 +95,16 @@ public class AddEngine {
                 }
 
                 log.debug(Formatter.displayLine("Local source values:", 80));
-                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
+                for (Iterator i = sv.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
+                    Collection values = sv.get(name);
                     log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            sourceValues.add(parentSourceValues);
+            sv.add(parentSourceValues);
 
             Graph graph = engine.getGraph(entryMapping);
             String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
@@ -132,13 +130,13 @@ public class AddEngine {
                         rhs = exp;
                     }
 
-                    Collection lhsValues = sourceValues.get(lhs);
+                    Collection lhsValues = sv.get(lhs);
                     log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-                    sourceValues.set(rhs, lhsValues);
+                    sv.set(rhs, lhsValues);
                 }
             }
 
-            AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sourceValues);
+            AddGraphVisitor visitor = new AddGraphVisitor(engine, partition, entryMapping, sv);
             visitor.run();
 
         } catch (LDAPException e) {

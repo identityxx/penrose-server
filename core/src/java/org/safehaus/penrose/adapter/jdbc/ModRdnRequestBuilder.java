@@ -1,8 +1,8 @@
 package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.ModRdnRequest;
 import org.safehaus.penrose.ldap.ModRdnResponse;
@@ -27,17 +27,17 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
     Interpreter interpreter;
 
     ModRdnRequest request;
     ModRdnResponse response;
 
-    AttributeValues newSourceValues = new AttributeValues();
+    SourceValues newSourceValues = new SourceValues();
 
     public ModRdnRequestBuilder(
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             ModRdnRequest request,
             ModRdnResponse response

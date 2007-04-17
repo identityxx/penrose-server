@@ -5,9 +5,8 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
@@ -16,7 +15,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.ldap.SearchResult;
 
 import java.util.Iterator;
 import java.util.Collection;
@@ -118,22 +117,22 @@ public class Demo {
 
         log.warn("Searching all entries.");
 
-        SearchResponse response = session.search("dc=Example,dc=com", "(objectClass=*)");
+        SearchResponse<SearchResult> response = session.search("dc=Example,dc=com", "(objectClass=*)");
 
         while (response.hasNext()) {
-            Entry entry = (Entry) response.next();
-            log.warn("Entry:\n"+toString(entry));
+            SearchResult searchResult = (SearchResult) response.next();
+            log.warn("Entry:\n"+toString(searchResult));
         }
 
         penrose.stop();
     }
 
-    public String toString(Entry entry) throws Exception {
+    public String toString(SearchResult searchResult) throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getDn()+"\n");
+        sb.append("dn: "+searchResult.getDn()+"\n");
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
 

@@ -387,7 +387,7 @@ public class PenroseJMXService extends Service {
 
     public void registerSources(Partition partition) throws Exception {
 
-        Collection sourceConfigs = partition.getSourceConfigs();
+        Collection sourceConfigs = partition.getSources().getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
 
@@ -400,7 +400,7 @@ public class PenroseJMXService extends Service {
 
     public void unregisterSources(Partition partition) throws Exception {
 
-        Collection sourceConfigs = partition.getSourceConfigs();
+        Collection sourceConfigs = partition.getSources().getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
 

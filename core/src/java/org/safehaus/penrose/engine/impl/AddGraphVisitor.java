@@ -27,7 +27,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -44,8 +44,8 @@ public class AddGraphVisitor extends GraphVisitor {
     public Engine engine;
     public Partition partition;
     public EntryMapping entryMapping;
-    public AttributeValues sourceValues;
-    private AttributeValues addedSourceValues = new AttributeValues();
+    public SourceValues sourceValues;
+    private SourceValues addedSourceValues = new SourceValues();
 
     public Graph graph;
     public SourceMapping primarySourceMapping;
@@ -54,7 +54,7 @@ public class AddGraphVisitor extends GraphVisitor {
             Engine engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues
+            SourceValues sourceValues
             ) throws Exception {
 
         this.engine = engine;
@@ -105,7 +105,7 @@ public class AddGraphVisitor extends GraphVisitor {
         }
 
         log.debug("Adding values:");
-        AttributeValues newSourceValues = new AttributeValues();
+        SourceValues newSourceValues = new SourceValues();
         for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
@@ -117,7 +117,7 @@ public class AddGraphVisitor extends GraphVisitor {
             newSourceValues.set(name, values);
         }
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
 
         //connector.add(partition, sourceConfig, newSourceValues, null, null);
@@ -128,11 +128,11 @@ public class AddGraphVisitor extends GraphVisitor {
         graphIterator.traverseEdges(node);
     }
 
-    public AttributeValues getAddedSourceValues() {
+    public SourceValues getAddedSourceValues() {
         return addedSourceValues;
     }
 
-    public void setAddedSourceValues(AttributeValues addedSourceValues) {
+    public void setAddedSourceValues(SourceValues addedSourceValues) {
         this.addedSourceValues = addedSourceValues;
     }
 }

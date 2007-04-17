@@ -18,8 +18,8 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -302,7 +302,7 @@ public class Schema implements Cloneable {
     /**
      * Check if row is a subset of av.
      */
-    public boolean partialMatch(AttributeValues av, RDN rdn) throws Exception {
+    public boolean partialMatch(SourceValues av, RDN rdn) throws Exception {
 
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();

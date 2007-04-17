@@ -18,13 +18,10 @@
 package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
@@ -51,9 +48,9 @@ public class SearchEngine {
     public void search(
             final Partition partition,
             final EntryMapping entryMapping,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         try {
@@ -66,14 +63,15 @@ public class SearchEngine {
                 Attributes sv = EntryUtil.computeAttributes(sourceValues);
                 Attributes attributes = computeAttributes(entryMapping, sv);
 
-                Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
-                response.add(entry);
+                SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
+                searchResult.setEntryMapping(entryMapping);
+                response.add(searchResult);
 
                 return;
             }
 
-            SearchResponse sr = new SearchResponse() {
-                public void add(Object object) throws Exception {
+            SearchResponse<Entry> sr = new SearchResponse<Entry>() {
+                public void add(Entry object) throws Exception {
                     Entry result = (Entry)object;
 
                     EntryMapping em = result.getEntryMapping();
@@ -102,8 +100,9 @@ public class SearchEngine {
                     }
 
                     if (debug) log.debug("Generating entry "+dn);
-                    Entry entry = new Entry(dn, em, attributes);
-                    response.add(entry);
+                    SearchResult searchResult = new SearchResult(dn, attributes);
+                    searchResult.setEntryMapping(em);
+                    response.add(searchResult);
                 }
             };
 

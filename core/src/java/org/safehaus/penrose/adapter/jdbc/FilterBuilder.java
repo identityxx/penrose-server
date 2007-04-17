@@ -20,7 +20,7 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class FilterBuilder {
     public FilterBuilder(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 

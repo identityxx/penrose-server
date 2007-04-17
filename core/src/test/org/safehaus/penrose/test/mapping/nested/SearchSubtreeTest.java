@@ -4,8 +4,8 @@ import org.apache.log4j.Logger;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -31,7 +31,7 @@ public class SearchSubtreeTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_SUB
@@ -41,9 +41,9 @@ public class SearchSubtreeTest extends NestedTestCase {
         log.debug("hasNext: "+hasNext);
 
         while (hasNext) {
-            Entry entry = (Entry) response.next();
-            String dn = entry.getDn().toString();
-            Attributes attributes = entry.getAttributes();
+            SearchResult searchResult = (SearchResult) response.next();
+            String dn = searchResult.getDn().toString();
+            Attributes attributes = searchResult.getAttributes();
 
             if (dn.equals(baseDn)) {
                 // ignore

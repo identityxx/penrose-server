@@ -55,6 +55,7 @@ public class ConnectionManager implements ConnectionManagerMBean {
         connection = new Connection(partition, connectionConfig, adapterConfig);
         connection.setPenroseConfig(penroseConfig);
         connection.setPenroseContext(penroseContext);
+        connection.init();
 
         addConnection(partition.getName(), connection);
     }
@@ -70,7 +71,7 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
                 log.debug("Starting "+name+" connection.");
                 try {
-                    connection.init();
+                    connection.start();
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -88,9 +89,29 @@ public class ConnectionManager implements ConnectionManagerMBean {
                 String name = (String)j.next();
                 Connection connection = (Connection)map.get(name);
 
-                log.debug("Closing "+name+" connection.");
+                log.debug("Stopping "+name+" connection.");
                 try {
-                    connection.close();
+                    connection.stop();
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    public void dispose() throws Exception {
+        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
+            String partitionName = (String)i.next();
+            Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+
+            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
+                String name = (String)j.next();
+                Connection connection = (Connection)map.get(name);
+
+                log.debug("Removing "+name+" connection.");
+                try {
+                    connection.dispose();
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

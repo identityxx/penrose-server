@@ -24,7 +24,7 @@ import org.safehaus.penrose.graph.GraphIterator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -73,7 +73,7 @@ public class SearchCleaner extends GraphVisitor {
     public void clean(Collection list) throws Exception {
 
         for (Iterator i=list.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+            SourceValues av = (SourceValues)i.next();
             //log.debug(" - "+av);
 
             for (Iterator j=entryMapping.getSourceMappings().iterator(); j.hasNext(); ) {

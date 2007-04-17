@@ -152,7 +152,7 @@ public abstract class Engine {
      */
     public Attributes createAttributes(
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter
             ) throws Exception {
 
@@ -272,7 +272,7 @@ public abstract class Engine {
     public Filter generateFilter(
             SourceMapping toSource,
             Collection relationships,
-            AttributeValues sv
+            SourceValues sv
     ) throws Exception {
 /*
         log.debug("Generating filters using source values:");
@@ -363,7 +363,6 @@ public abstract class Engine {
     public abstract void add(
             Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
             AddRequest request,
             AddResponse response
@@ -386,10 +385,10 @@ public abstract class Engine {
         DN dn = request.getDn();
         String password = request.getPassword();
 
-        AttributeValues sourceValues = new AttributeValues();
-        Entry entry = find(session, partition, sourceValues, entryMapping, dn);
+        SourceValues sourceValues = new SourceValues();
+        SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get("userPassword");
 
         if (attribute == null) {
@@ -425,13 +424,13 @@ public abstract class Engine {
         String attributeName = request.getAttributeName();
         Object attributeValue = request.getAttributeValue();
 
-        AttributeValues sourceValues = new AttributeValues();
-        Entry entry = find(session, partition, sourceValues, entryMapping, dn);
+        SourceValues sourceValues = new SourceValues();
+        SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
 
         List attributeNames = new ArrayList();
         attributeNames.add(attributeName);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) {
             if (debug) log.debug("Attribute "+attributeName+" not found.");
@@ -465,7 +464,6 @@ public abstract class Engine {
     public abstract void delete(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DeleteRequest request,
             DeleteResponse response
@@ -475,10 +473,10 @@ public abstract class Engine {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Entry find(
+    public SearchResult find(
             Session session,
             Partition partition,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             EntryMapping entryMapping,
             DN dn
     ) throws Exception {
@@ -498,7 +496,7 @@ public abstract class Engine {
         request.setFilter((Filter)null);
         request.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         search(
                 session,
@@ -514,7 +512,7 @@ public abstract class Engine {
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
-        return (Entry)response.next();
+        return (SearchResult)response.next();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -524,7 +522,6 @@ public abstract class Engine {
     public abstract void modify(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModifyRequest request,
             ModifyResponse response
@@ -537,7 +534,6 @@ public abstract class Engine {
     public abstract void modrdn(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModRdnRequest request,
             ModRdnResponse response
@@ -550,16 +546,18 @@ public abstract class Engine {
     public void search(
             Session session,
             Partition partition,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         search(
                 session,
                 partition,
-                entryMapping, entryMapping, sourceValues,
+                entryMapping,
+                entryMapping,
+                sourceValues,
                 request,
                 response
         );
@@ -570,9 +568,9 @@ public abstract class Engine {
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception;
 
     public RDN createFilter(

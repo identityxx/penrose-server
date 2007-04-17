@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping.nested;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.Attributes;
 
 import junit.framework.Assert;
 

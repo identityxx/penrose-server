@@ -3,18 +3,12 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -68,7 +62,7 @@ public class DefaultHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -87,33 +81,39 @@ public class DefaultHandler extends Handler {
                 || scope == SearchRequest.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
                 ) {
 
-            SearchResponse sr = new SearchResponse() {
-                public void add(Object object) throws Exception {
-                    Entry entry = (Entry)object;
+            if (filterTool.isValid(entryMapping, filter)) { // Check LDAP filter
 
-                    if (debug) log.debug("Checking filter "+filter);
+                SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                    public void add(SearchResult object) throws Exception {
+                        SearchResult searchResult = (SearchResult)object;
 
-                    if (!filterTool.isValid(entry, filter)) { // Check LDAP filter
-                        if (debug) log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
-                        return;
+                        if (debug) log.debug("Checking filter "+filter);
+
+                        if (!filterTool.isValid(searchResult.getAttributes(), filter)) { // Check LDAP filter
+                            if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
+                            return;
+                        }
+
+                        response.add(searchResult);
                     }
+                };
 
-                    response.add(entry);
-                }
-            };
+                Engine engine = getEngine(partition, entryMapping);
 
-            Engine engine = getEngine(partition, entryMapping);
+                SourceValues sourceValues = new SourceValues();
 
-            AttributeValues sourceValues = new AttributeValues();
+                engine.search(
+                        session,
+                        partition,
+                        sourceValues,
+                        entryMapping,
+                        request,
+                        sr
+                );
 
-            engine.search(
-                    session,
-                    partition,
-                    sourceValues,
-                    entryMapping,
-                    request,
-                    sr
-            );
+            } else {
+                if (debug) log.debug("Entry \""+entryMapping.getDn()+"\" doesn't match search filter.");
+            }
         }
 
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping

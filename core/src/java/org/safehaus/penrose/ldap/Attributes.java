@@ -1,4 +1,4 @@
-package org.safehaus.penrose.entry;
+package org.safehaus.penrose.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

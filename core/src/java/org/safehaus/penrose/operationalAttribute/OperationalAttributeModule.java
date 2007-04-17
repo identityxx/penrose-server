@@ -20,13 +20,10 @@ package org.safehaus.penrose.operationalAttribute;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.ldap.ModifyRequest;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.ModRdnRequest;
-import org.safehaus.penrose.ldap.Modification;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 
 import java.util.Collection;
 import java.util.ArrayList;

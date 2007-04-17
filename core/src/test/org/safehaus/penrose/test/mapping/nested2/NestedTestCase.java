@@ -61,7 +61,7 @@ public class NestedTestCase extends JDBCTestCase {
         parentsSource.setParameter("table", "parents");
         parentsSource.addFieldConfig(new FieldConfig("parentname", "PARENTNAME", true));
         parentsSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.addSourceConfig(parentsSource);
+        partition.getSources().addSourceConfig(parentsSource);
 
         SourceConfig childrenSource = new SourceConfig();
         childrenSource.setName("children");
@@ -69,7 +69,7 @@ public class NestedTestCase extends JDBCTestCase {
         childrenSource.setParameter("table", "children");
         childrenSource.addFieldConfig(new FieldConfig("parentname", "PARENTNAME", true));
         childrenSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.addSourceConfig(childrenSource);
+        partition.getSources().addSourceConfig(childrenSource);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");

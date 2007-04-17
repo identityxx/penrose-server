@@ -3,8 +3,8 @@ package org.safehaus.penrose.test.mapping.basic;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -28,16 +28,16 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(1);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
         session.search(request, response);
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         assertEquals(baseDn, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
@@ -65,27 +65,27 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(2);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
         session.search(request, response);
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         assertEquals(baseDn, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         assertEquals("cn=group1,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("cn");
         assertEquals("group1", value);
@@ -116,29 +116,29 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(3);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
         session.search(request, response);
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals(baseDn, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("ou");
         assertEquals("Groups", value);
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("cn=group1,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("cn");
         assertEquals("group1", value);
@@ -148,12 +148,12 @@ public class SearchSizeLimitTest extends BasicTestCase {
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("cn=group2,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("cn");
         assertEquals("group2", value);

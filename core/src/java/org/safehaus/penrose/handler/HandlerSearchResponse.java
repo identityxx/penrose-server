@@ -1,7 +1,7 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -18,11 +18,11 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class HandlerSearchResponse extends SearchResponse {
+public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    SearchResponse parent;
+    SearchResponse<SearchResult> parent;
 
     Session session;
     Partition partition;
@@ -40,7 +40,7 @@ public class HandlerSearchResponse extends SearchResponse {
     Map results = new HashMap();
 
     public HandlerSearchResponse(
-            SearchResponse parent,
+            SearchResponse<SearchResult> parent,
             Session session,
             Partition partition,
             HandlerManager handlerManager,
@@ -66,13 +66,14 @@ public class HandlerSearchResponse extends SearchResponse {
         this.entryMappings = entryMappings;
     }
 
-    public void add(Object object) throws Exception {
-        Entry entry = (Entry)object;
+    public void add(SearchResult object) throws Exception {
+        SearchResult entry = (SearchResult)object;
 
         boolean debug = log.isDebugEnabled();
 
         DN dn = entry.getDn();
         EntryMapping entryMapping = entry.getEntryMapping();
+        Attributes attributes = entry.getAttributes();
 
         if (!session.isRootUser()) {
             if (debug) log.debug("Checking read permission.");
@@ -82,26 +83,28 @@ public class HandlerSearchResponse extends SearchResponse {
                 if (debug) log.debug("Entry \""+entry.getDn()+"\" is not readable.");
                 return;
             }
-            handlerManager.filterAttributes(session, partition, entry);
+            handlerManager.filterAttributes(session, partition, dn, entryMapping, attributes);
         }
 
         Collection list = (Collection) attributesToRemove.get(entryMapping.getId());
         if (list == null) {
-            list = handlerManager.filterAttributes(session, partition, entry, requestedAttributes, allRegularAttributes, allOpAttributes);
+            list = handlerManager.filterAttributes(session, partition, attributes, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entryMapping.getId(), list);
         }
 
         if (!list.isEmpty()) {
             if (debug) log.debug("Removing attributes: "+list);
-            handlerManager.removeAttributes(entry, list);
+            handlerManager.removeAttributes(attributes, list);
         }
 
         if (debug) {
             log.debug("Returning "+dn+":");
-            entry.getAttributes().print();
+            attributes.print();
         }
 
-        parent.add(new SearchResult(entry));
+        SearchResult result = new SearchResult(dn, attributes);
+
+        parent.add(result);
     }
 
     public void setResult(EntryMapping entryMapping, LDAPException exception) {

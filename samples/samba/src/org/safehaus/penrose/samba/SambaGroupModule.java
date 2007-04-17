@@ -4,7 +4,6 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -113,13 +112,12 @@ public class SambaGroupModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         session.search(searchRequest, response);
 
         SearchResult result = (SearchResult) response.next();
-        Entry entry = result.getEntry();
-        Attributes values = entry.getAttributes();
+        Attributes values = result.getAttributes();
 
         Collection<Modification> modifications = modifyRequest.getModifications();
 

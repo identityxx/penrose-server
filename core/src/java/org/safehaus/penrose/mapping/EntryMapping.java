@@ -19,6 +19,10 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDNBuilder;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.DNBuilder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -133,14 +137,14 @@ public class EntryMapping implements Cloneable {
         return dn.getRdn();
     }
     
-    public RDN getRdn(AttributeValues attributeValues) {
+    public RDN getRdn(SourceValues sourceValues) {
         Collection rdnAttributes = getRdnAttributeMappings();
 
         RDNBuilder rb = new RDNBuilder();
         for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
             AttributeMapping rdnAttribute = (AttributeMapping)i.next();
             String name = rdnAttribute.getName();
-            Object value = attributeValues.getOne(name);
+            Object value = sourceValues.getOne(name);
             rb.set(name, value);
         }
 

@@ -89,7 +89,7 @@ public class SimpleEngine extends Engine {
             Partition partition,
             EntryMapping entryMapping,
             DN dn,
-            AttributeValues sourceValues
+            SourceValues sourceValues
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -108,7 +108,7 @@ public class SimpleEngine extends Engine {
         }
     }
 
-    public void extractSourceValues(RDN rdn, SourceMapping sourceMapping, AttributeValues sourceValues) throws Exception {
+    public void extractSourceValues(RDN rdn, SourceMapping sourceMapping, SourceValues sourceValues) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
@@ -137,7 +137,6 @@ public class SimpleEngine extends Engine {
     public void add(
             Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
             AddRequest request,
             AddResponse response
@@ -155,7 +154,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -205,7 +204,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -248,7 +247,6 @@ public class SimpleEngine extends Engine {
     public void delete(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DeleteRequest request,
             DeleteResponse response
@@ -266,7 +264,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -299,7 +297,6 @@ public class SimpleEngine extends Engine {
     public void modify(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModifyRequest request,
             ModifyResponse response
@@ -317,7 +314,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -350,7 +347,6 @@ public class SimpleEngine extends Engine {
     public void modrdn(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModRdnRequest request,
             ModRdnResponse response
@@ -368,7 +364,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
         if (debug) {
@@ -403,9 +399,9 @@ public class SimpleEngine extends Engine {
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();

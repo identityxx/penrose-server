@@ -3,8 +3,8 @@ package org.safehaus.penrose.test.mapping.basic;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public class SearchOneLevelTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -47,7 +47,7 @@ public class SearchOneLevelTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -57,12 +57,12 @@ public class SearchOneLevelTest extends BasicTestCase {
         for (int i=0; i<groupnames.length; i++) {
             assertTrue(response.hasNext());
 
-            Entry entry = (Entry) response.next();
-            String dn = entry.getDn().toString();
+            SearchResult searchResult = (SearchResult) response.next();
+            String dn = searchResult.getDn().toString();
             //System.out.println(" - "+dn);
             assertEquals("cn="+groupnames[i]+","+baseDn, dn);
 
-            Attributes attributes = entry.getAttributes();
+            Attributes attributes = searchResult.getAttributes();
 
             Object value = attributes.getValue("cn");
             assertEquals(groupnames[i], value);

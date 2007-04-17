@@ -66,7 +66,7 @@ public class BasicTestCase extends JDBCTestCase {
         sourceConfig.setParameter("table", "groups");
         sourceConfig.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         sourceConfig.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.addSourceConfig(sourceConfig);
+        partition.getSources().addSourceConfig(sourceConfig);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");

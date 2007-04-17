@@ -19,8 +19,8 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.DN;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;

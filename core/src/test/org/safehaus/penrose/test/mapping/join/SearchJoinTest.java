@@ -1,13 +1,9 @@
 package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -26,7 +22,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -65,7 +61,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -75,13 +71,12 @@ public class SearchJoinTest extends JoinTestCase {
         for (int i=0; i<groups.length; i++) {
             assertTrue(response.hasNext());
 
-            SearchResult sr = (SearchResult) response.next();
-            Entry entry = sr.getEntry();
-            DN dn = entry.getDn();
+            SearchResult result = (SearchResult) response.next();
+            DN dn = result.getDn();
             System.out.println(" - "+dn);
             assertTrue(dn.matches("cn="+groups[i][0]+",ou=Groups,dc=Example,dc=com"));
 
-            Attributes attributes = entry.getAttributes();
+            Attributes attributes = result.getAttributes();
             Attribute attribute = attributes.get("cn");
             assertEquals(attribute.getValue(), groups[i][0]);
             attribute = attributes.get("description");
@@ -105,7 +100,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "cn=def,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -113,12 +108,11 @@ public class SearchJoinTest extends JoinTestCase {
 
         assertTrue(response.hasNext());
 
-        SearchResult sr = (SearchResult) response.next();
-        Entry entry = sr.getEntry();
-        DN dn = entry.getDn();
+        SearchResult result = (SearchResult) response.next();
+        DN dn = result.getDn();
         assertTrue(dn.matches("cn=def,ou=Groups,dc=Example,dc=com"));
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = result.getAttributes();
         Attribute attribute = attributes.get("cn");
         assertEquals(attribute.getValue(), "def");
         attribute = attributes.get("description");
@@ -143,7 +137,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "cn=jkl,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -168,7 +162,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*b*)",
                 SearchRequest.SCOPE_ONE
@@ -176,12 +170,11 @@ public class SearchJoinTest extends JoinTestCase {
 
         assertTrue(response.hasNext());
 
-        SearchResult sr = (SearchResult) response.next();
-        Entry entry = sr.getEntry();
-        DN dn = entry.getDn();
+        SearchResult result = (SearchResult) response.next();
+        DN dn = result.getDn();
         assertTrue(dn.matches("cn=aabb,ou=Groups,dc=Example,dc=com"));
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = result.getAttributes();
         Attribute attribute = attributes.get("cn");
         assertEquals(attribute.getValue(), "aabb");
         attribute = attributes.get("description");
@@ -189,12 +182,11 @@ public class SearchJoinTest extends JoinTestCase {
 
         assertTrue(response.hasNext());
 
-        sr = (SearchResult) response.next();
-        entry = sr.getEntry();
-        dn = entry.getDn();
+        result = (SearchResult) response.next();
+        dn = result.getDn();
         assertTrue(dn.matches("cn=bbcc,ou=Groups,dc=Example,dc=com"));
 
-        attributes = entry.getAttributes();
+        attributes = result.getAttributes();
         attribute = attributes.get("cn");
         assertEquals(attribute.getValue(), "bbcc");
         attribute = attributes.get("description");
@@ -219,7 +211,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*f*)",
                 SearchRequest.SCOPE_ONE

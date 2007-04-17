@@ -166,7 +166,7 @@ public class PartitionWriter {
     public Element toSourcesXmlElement(Partition partition) {
         Element element = new DefaultElement("sources");
 
-        for (Iterator i = partition.getSourceConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i = partition.getSources().getSourceConfigs().iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
             element.add(toElement(sourceConfig));
         }
@@ -683,7 +683,7 @@ public class PartitionWriter {
         if (field.isIndex()) element.addAttribute("index", "true");
         if (field.isCaseSensitive()) element.addAttribute("caseSensitive", "true");
         if (!FieldConfig.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
-        if (field.getLength() != FieldConfig.DEFAULT_LENGTH) element.addAttribute("length", ""+field.getLength());
+        if (field.getLength() != field.getDefaultLength()) element.addAttribute("length", ""+field.getLength());
         if (field.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
         return element;
     }

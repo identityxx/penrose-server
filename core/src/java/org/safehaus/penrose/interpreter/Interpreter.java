@@ -18,9 +18,9 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.source.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public abstract class Interpreter {
         }
     }
 
-    public void set(AttributeValues av) throws Exception {
+    public void set(SourceValues av) throws Exception {
         for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection list = av.get(name);

@@ -1,5 +1,7 @@
 package org.safehaus.penrose.source;
 
+import org.safehaus.penrose.partition.SourceConfig;
+
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Collection;
@@ -10,10 +12,10 @@ import java.util.Collection;
 public class SourceSyncConfig implements Cloneable {
 
     private String name;
-    private String className;
-    private String description;
+    private String destinations;
+    private SourceConfig sourceConfig;
 
-	/**
+    /**
 	 * Parameters.
 	 */
 	public Map parameters = new TreeMap();
@@ -26,28 +28,17 @@ public class SourceSyncConfig implements Cloneable {
         parameters.put(name, value);
     }
 
+    public void setParameters(Map parameters) {
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
+    }
+
     public void removeParameter(String name) {
         parameters.remove(name);
     }
 
     public String getParameter(String name) {
         return (String)parameters.get(name);
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getName() {
@@ -73,8 +64,7 @@ public class SourceSyncConfig implements Cloneable {
 
         SourceSyncConfig sourceSyncConfig = (SourceSyncConfig)object;
         if (!equals(name, sourceSyncConfig.name)) return false;
-        if (!equals(className, sourceSyncConfig.className)) return false;
-        if (!equals(description, sourceSyncConfig.description)) return false;
+        if (!equals(destinations, sourceSyncConfig.destinations)) return false;
         if (!equals(parameters, sourceSyncConfig.parameters)) return false;
 
         return true;
@@ -82,8 +72,7 @@ public class SourceSyncConfig implements Cloneable {
 
     public void copy(SourceSyncConfig sourceSyncConfig) {
         name = sourceSyncConfig.name;
-        className = sourceSyncConfig.className;
-        description = sourceSyncConfig.description;
+        destinations = sourceSyncConfig.destinations;
 
         parameters.clear();
         parameters.putAll(sourceSyncConfig.parameters);
@@ -93,5 +82,21 @@ public class SourceSyncConfig implements Cloneable {
         SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
         sourceSyncConfig.copy(this);
         return sourceSyncConfig;
+    }
+
+    public SourceConfig getSourceConfig() {
+        return sourceConfig;
+    }
+
+    public void setSourceConfig(SourceConfig sourceConfig) {
+        this.sourceConfig = sourceConfig;
+    }
+
+    public String getDestinations() {
+        return destinations;
+    }
+
+    public void setDestinations(String destinations) {
+        this.destinations = destinations;
     }
 }

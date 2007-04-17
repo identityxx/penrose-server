@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.config;
 
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 
 import java.util.Collection;
 import java.util.Map;

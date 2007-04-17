@@ -5,7 +5,6 @@ import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -48,14 +47,13 @@ public class SambaUserModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse searchResponse = new SearchResponse();
+        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
 
         Session session = event.getSession();
         session.search(searchRequest, searchResponse);
 
         SearchResult result = (SearchResult) searchResponse.next();
-        Entry entry = result.getEntry();
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = result.getAttributes();
 
         if (attributes.get("sambaNTPassword") == null ||
                 attributes.get("sambaLMPassword") == null) {
@@ -168,13 +166,12 @@ public class SambaUserModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse searchResponse = new SearchResponse();
+        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
 
         session.search(searchRequest, searchResponse);
 
         SearchResult result = (SearchResult) searchResponse.next();
-        Entry entry = result.getEntry();
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = result.getAttributes();
 
         if (attributes.get("uidNumber") == null ||
                 attributes.get("gidNumber") == null ||

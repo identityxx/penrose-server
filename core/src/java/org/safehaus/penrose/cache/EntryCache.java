@@ -19,8 +19,8 @@ package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.Penrose;

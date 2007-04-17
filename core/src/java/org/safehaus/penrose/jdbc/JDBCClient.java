@@ -511,7 +511,7 @@ public class JDBCClient {
             sb.append(" ");
             sb.append(field.getType());
 
-            if ("VARCHAR".equals(field.getType()) && field.getLength() > 0) {
+            if (field.getLength() > 0) {
                 sb.append("(");
                 sb.append(field.getLength());
                 sb.append(")");
@@ -609,5 +609,66 @@ public class JDBCClient {
         UpdateResponse response = new UpdateResponse();
 
         executeUpdate(sql, null, response);
+    }
+
+    public void showStatus(final Source source) throws Exception {
+
+        final String tableName = source.getParameter(JDBCClient.TABLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("select count(*) from ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        QueryResponse response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+                log.error("Table "+tableName+": "+rs.getObject(1));
+            }
+        };
+
+        executeQuery(sql, null, response);
+
+        sb = new StringBuilder();
+
+        sb.append("select ");
+
+        boolean first = true;
+        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
+            Field field = (Field)i.next();
+            
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append("max(length(");
+            sb.append(field.getOriginalName());
+            sb.append("))");
+        }
+
+        sb.append(" from ");
+        sb.append(tableName);
+
+        sql = sb.toString();
+
+        response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+
+                int index = 1;
+                for (Iterator i=source.getFields().iterator(); i.hasNext(); index++) {
+                    Field field = (Field)i.next();
+                    Object length = rs.getObject(index);
+                    int maxLength = field.getLength();
+                    log.error(" - Field "+field.getName()+": "+length+(maxLength > 0 ? "/"+maxLength : ""));
+                }
+            }
+        };
+
+        executeQuery(sql, null, response);
     }
 }

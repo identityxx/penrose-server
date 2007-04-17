@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.RDNBuilder;
 
 /**
  * @author Endi S. Dewata

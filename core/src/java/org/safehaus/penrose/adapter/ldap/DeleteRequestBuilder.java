@@ -5,6 +5,8 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.DeleteRequest;
 import org.safehaus.penrose.ldap.DeleteResponse;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.RDNBuilder;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
@@ -20,7 +22,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
     String suffix;
 
     Collection sourceRefs;
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
 
     Interpreter interpreter;
 
@@ -30,7 +32,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
     public DeleteRequestBuilder(
             String suffix,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             DeleteRequest request,
             DeleteResponse response

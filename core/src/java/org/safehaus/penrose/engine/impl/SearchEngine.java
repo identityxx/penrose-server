@@ -24,12 +24,12 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.entry.Entry;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class SearchEngine {
 
     public void search(
             Partition partition,
-            final AttributeValues parentSourceValues,
+            final SourceValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
             final SearchResponse response
@@ -107,7 +107,7 @@ public class SearchEngine {
 
     public void searchStatic(
             final Partition partition,
-            final AttributeValues parentSourceValues,
+            final SourceValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
             final SearchResponse response
@@ -129,7 +129,7 @@ public class SearchEngine {
 
     public void searchDynamic(
             Partition partition,
-            final AttributeValues parentSourceValues,
+            final SourceValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
             final SearchResponse response)
@@ -152,7 +152,7 @@ public class SearchEngine {
 
         //log.debug("Search response for "+entryMapping.getDn()+":");
         while (values.hasNext()) {
-            AttributeValues sv = (AttributeValues)values.next();
+            SourceValues sv = (SourceValues)values.next();
             //log.debug("==> "+sv);
 
             Collection list = null; // engine.computeDns(partition, interpreter, entryMapping, sv);
@@ -164,9 +164,9 @@ public class SearchEngine {
 
                 DN parentDn = dn.getParentDn();
 
-                AttributeValues av = (AttributeValues)sourceValues.get(dn);
+                SourceValues av = (SourceValues)sourceValues.get(dn);
                 if (av == null) {
-                    av = new AttributeValues();
+                    av = new SourceValues();
                     sourceValues.put(dn, av);
                 }
                 av.add(sv);
@@ -205,7 +205,7 @@ public class SearchEngine {
         log.debug("Results:");
         for (Iterator i=sourceValues.keySet().iterator(); i.hasNext(); ) {
             DN dn = (DN)i.next();
-            AttributeValues sv = (AttributeValues)sourceValues.get(dn);
+            SourceValues sv = (SourceValues)sourceValues.get(dn);
             Collection r = (Collection)rows.get(dn);
 
             log.debug(" - "+dn);
@@ -213,7 +213,7 @@ public class SearchEngine {
             //log.debug("   rows:");
 
             for (Iterator j=r.iterator(); j.hasNext(); ) {
-                AttributeValues row = (AttributeValues)j.next();
+                SourceValues row = (SourceValues)j.next();
                 //log.debug("    - "+row);
             }
 
@@ -232,7 +232,7 @@ public class SearchEngine {
 
     public void simpleSearch(
             final Partition partition,
-            final AttributeValues parentSourceValues,
+            final SourceValues parentSourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
             final SearchResponse response) throws Exception {
@@ -263,17 +263,17 @@ public class SearchEngine {
             newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
         }
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
         final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
         SearchRequest request = new SearchRequest();
         final SearchResponse sr = new SearchResponse() {
             public void add(Object object) {
-                AttributeValues av = (AttributeValues)object;
+                SourceValues av = (SourceValues)object;
 
                 try {
-                    AttributeValues sv = new AttributeValues();
+                    SourceValues sv = new SourceValues();
                     sv.add(parentSourceValues);
                     sv.add(sourceMapping.getName(), av);
 
@@ -315,7 +315,7 @@ public class SearchEngine {
 
     public void searchSources(
             Partition partition,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final EntryMapping entryMapping,
             final Filter filter,
             final SearchResponse response)
@@ -326,7 +326,7 @@ public class SearchEngine {
 
     public void searchSourcesInBackground(
             Partition partition,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             EntryMapping entryMapping,
             Filter filter,
             SearchResponse response)
@@ -400,7 +400,7 @@ public class SearchEngine {
     public SearchResponse searchLocal(
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchPlanner planner,
             Collection connectingSources) throws Exception {
 
@@ -549,9 +549,9 @@ public class SearchEngine {
             results.add(localResponse.next());
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues sv = (AttributeValues)i.next();
+            SourceValues sv = (SourceValues)i.next();
             sourceValues.add(sv);
         }
 
@@ -563,7 +563,7 @@ public class SearchEngine {
 
             int counter = 1;
             for (Iterator i=results.iterator(); i.hasNext() && counter<=20; counter++) {
-                AttributeValues sv = (AttributeValues)i.next();
+                SourceValues sv = (SourceValues)i.next();
 
                 log.debug(Formatter.displayLine("Record #"+counter, 80));
                 for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
@@ -617,7 +617,7 @@ public class SearchEngine {
             }
 
             if (parentMapping == null && results.size() == 0) {
-                results.add(new AttributeValues());
+                results.add(new SourceValues());
             }
         }
 
@@ -658,7 +658,7 @@ public class SearchEngine {
 
             int counter = 1;
             for (Iterator j=results.iterator(); j.hasNext() && counter<=20; counter++) {
-                AttributeValues av = (AttributeValues)j.next();
+                SourceValues av = (SourceValues)j.next();
                 log.debug(Formatter.displayLine("Result #"+counter, 80));
                 for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();

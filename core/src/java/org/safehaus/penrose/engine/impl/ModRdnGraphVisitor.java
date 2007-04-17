@@ -27,8 +27,8 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -49,9 +49,9 @@ public class ModRdnGraphVisitor extends GraphVisitor {
     public Graph graph;
     public SourceMapping primarySourceMapping;
 
-    public AttributeValues oldSourceValues;
-    public AttributeValues newSourceValues;
-    private AttributeValues modifiedSourceValues = new AttributeValues();
+    public SourceValues oldSourceValues;
+    public SourceValues newSourceValues;
+    private SourceValues modifiedSourceValues = new SourceValues();
 
     private int returnCode = LDAPException.SUCCESS;
 
@@ -59,8 +59,8 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             Engine engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues oldSourceValues,
-            AttributeValues newSourceValues
+            SourceValues oldSourceValues,
+            SourceValues newSourceValues
             ) throws Exception {
 
         this.engine = engine;
@@ -111,7 +111,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         }
 
         log.debug("Old values:");
-        AttributeValues oldValues = new AttributeValues();
+        SourceValues oldValues = new SourceValues();
         for (Iterator i=oldSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
@@ -124,7 +124,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         }
 
         log.debug("New values:");
-        AttributeValues newValues = new AttributeValues(oldValues);
+        SourceValues newValues = new SourceValues(oldValues);
         for (Iterator i=newSourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
@@ -136,7 +136,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             newValues.set(name, values);
         }
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
         Connector connector = engine.getConnector(sourceConfig);
 
         RDN pk = new RDN();
@@ -215,11 +215,11 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         this.returnCode = returnCode;
     }
 
-    public AttributeValues getModifiedSourceValues() {
+    public SourceValues getModifiedSourceValues() {
         return modifiedSourceValues;
     }
 
-    public void setModifiedSourceValues(AttributeValues modifiedSourceValues) {
+    public void setModifiedSourceValues(SourceValues modifiedSourceValues) {
         this.modifiedSourceValues = modifiedSourceValues;
     }
 }

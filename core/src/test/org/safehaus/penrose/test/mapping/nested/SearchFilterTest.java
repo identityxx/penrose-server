@@ -3,8 +3,8 @@ package org.safehaus.penrose.test.mapping.nested;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -30,14 +30,14 @@ public class SearchFilterTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(baseDn, "(description=desc2)");
+        SearchResponse<SearchResult> response = session.search(baseDn, "(description=desc2)");
 
         boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
         assertTrue(hasNext);
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         log.debug("DN: "+dn);
         assertEquals("cn=group2,"+baseDn, dn);
 
@@ -62,14 +62,14 @@ public class SearchFilterTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(baseDn, "(memberOf=group2)");
+        SearchResponse<SearchResult> response = session.search(baseDn, "(memberOf=group2)");
 
         while (response.hasNext()) {
-            Entry entry = (Entry) response.next();
-            String dn = entry.getDn().toString();
+            SearchResult searchResult = (SearchResult) response.next();
+            String dn = searchResult.getDn().toString();
             log.info("Checking "+dn+":");
 
-            Attributes attributes = entry.getAttributes();
+            Attributes attributes = searchResult.getAttributes();
             attributes.print();
 
             if (dn.equals("uid=member3,cn=group2,"+baseDn)) {

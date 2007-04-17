@@ -53,7 +53,7 @@ public class DemoAdapter extends Adapter {
     public void add(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -80,7 +80,7 @@ public class DemoAdapter extends Adapter {
     public void bind(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -117,7 +117,7 @@ public class DemoAdapter extends Adapter {
     public void delete(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -142,7 +142,7 @@ public class DemoAdapter extends Adapter {
     public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -196,7 +196,7 @@ public class DemoAdapter extends Adapter {
     public void modrdn(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -239,9 +239,9 @@ public class DemoAdapter extends Adapter {
     public void search(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<Entry> response
     ) throws Exception {
 
         SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();

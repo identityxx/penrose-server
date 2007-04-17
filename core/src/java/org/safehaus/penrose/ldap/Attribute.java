@@ -1,4 +1,4 @@
-package org.safehaus.penrose.entry;
+package org.safehaus.penrose.ldap;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;

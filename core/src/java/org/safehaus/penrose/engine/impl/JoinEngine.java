@@ -21,8 +21,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -54,14 +53,14 @@ public class JoinEngine {
         Collection results = new ArrayList();
 
         for (Iterator i=list1.iterator(); i.hasNext(); ) {
-            AttributeValues av1 = (AttributeValues)i.next();
+            SourceValues av1 = (SourceValues)i.next();
 
             for (Iterator j=list2.iterator(); j.hasNext(); ) {
-                AttributeValues av2 = (AttributeValues)j.next();
+                SourceValues av2 = (SourceValues)j.next();
 
                 if (!evaluate(partition, entryMapping, relationships, av1, av2)) continue;
 
-                AttributeValues sv = new AttributeValues();
+                SourceValues sv = new SourceValues();
                 sv.add(av1);
                 sv.add(av2);
 
@@ -90,18 +89,18 @@ public class JoinEngine {
 
         //log.debug("Left join:");
         for (Iterator i=list1.iterator(); i.hasNext(); ) {
-            AttributeValues av1 = (AttributeValues)i.next();
+            SourceValues av1 = (SourceValues)i.next();
             //log.debug(" - "+av1);
 
             boolean found = false;
 
             for (Iterator j=list2.iterator(); j.hasNext(); ) {
-                AttributeValues av2 = (AttributeValues)j.next();
+                SourceValues av2 = (SourceValues)j.next();
                 //log.debug("    - "+av2);
 
                 if (evaluate(partition, entryMapping, relationships, av1, av2)) {
 
-                    AttributeValues sv = new AttributeValues();
+                    SourceValues sv = new SourceValues();
                     sv.add(av1);
                     sv.add(av2);
 
@@ -127,8 +126,8 @@ public class JoinEngine {
             Partition partition,
             EntryMapping entryMapping,
             Collection relationships,
-            AttributeValues sv1,
-            AttributeValues sv2)
+            SourceValues sv1,
+            SourceValues sv2)
             throws Exception {
 
         if (relationships == null) return true;
@@ -143,7 +142,7 @@ public class JoinEngine {
             String lsourceName = lhs.substring(0, lindex);
             String lfieldName = lhs.substring(lindex+1);
             SourceMapping lsource = partition.getEffectiveSourceMapping(entryMapping, lsourceName);
-            SourceConfig lsourceConfig = partition.getSourceConfig(lsource.getSourceName());
+            SourceConfig lsourceConfig = partition.getSources().getSourceConfig(lsource.getSourceName());
             FieldConfig lfieldConfig = lsourceConfig.getFieldConfig(lfieldName);
 
             String rhs = relationship.getRhs();
@@ -151,7 +150,7 @@ public class JoinEngine {
             String rsourceName = rhs.substring(0, rindex);
             String rfieldName = rhs.substring(rindex+1);
             SourceMapping rsource = partition.getEffectiveSourceMapping(entryMapping, rsourceName);
-            SourceConfig rsourceConfig = partition.getSourceConfig(rsource.getSourceName());
+            SourceConfig rsourceConfig = partition.getSources().getSourceConfig(rsource.getSourceName());
             FieldConfig rfieldConfig = rsourceConfig.getFieldConfig(rfieldName);
 
             Collection values1 = sv1.get(lhs);

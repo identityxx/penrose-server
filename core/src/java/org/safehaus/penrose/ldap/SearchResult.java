@@ -1,7 +1,8 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.entry.SourceValues;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,24 +12,45 @@ import java.util.Collection;
  */
 public class SearchResult {
 
-    private Entry entry;
+    private EntryMapping entryMapping;
+
+    private DN dn;
+    private Attributes attributes = new Attributes();
+
+    private SourceValues sourceValues = new SourceValues();
+
     private Collection<Control> controls = new ArrayList<Control>();
 
-    public SearchResult(Entry entry) {
-        this.entry = entry;
+    public SearchResult(String dn, Attributes attributes) {
+        this.dn = new DN(dn);
+        this.attributes.add(attributes);
     }
 
-    public SearchResult(Entry entry, Collection<Control> controls) {
-        this.entry = entry;
+    public SearchResult(DN dn, Attributes attributes) {
+        this.dn = dn;
+        this.attributes.add(attributes);
+    }
+
+    public SearchResult(DN dn, Attributes attributes, Collection<Control> controls) {
+        this.dn = dn;
+        this.attributes.add(attributes);
         this.controls.addAll(controls);
     }
-    
-    public Entry getEntry() {
-        return entry;
+
+    public DN getDn() {
+        return dn;
     }
 
-    public void setEntry(Entry entry) {
-        this.entry = entry;
+    public void setDn(DN dn) {
+        this.dn = dn;
+    }
+
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Attributes attributes) {
+        this.attributes = attributes;
     }
 
     public Collection<Control> getControls() {
@@ -39,5 +61,21 @@ public class SearchResult {
         if (this.controls == controls) return;
         this.controls.clear();
         if (controls != null) this.controls.addAll(controls);
+    }
+
+    public EntryMapping getEntryMapping() {
+        return entryMapping;
+    }
+
+    public void setEntryMapping(EntryMapping entryMapping) {
+        this.entryMapping = entryMapping;
+    }
+
+    public SourceValues getSourceValues() {
+        return sourceValues;
+    }
+
+    public void setSourceValues(SourceValues sourceValues) {
+        this.sourceValues = sourceValues;
     }
 }

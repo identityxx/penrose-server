@@ -1,6 +1,6 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -43,7 +43,7 @@ public class SourceSyncSearchResponse extends SearchResponse {
             log.debug("Synchronizing "+dn);
         }
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
             sourceValues.set(source.getName()+"."+attribute.getName(), attribute.getValues());

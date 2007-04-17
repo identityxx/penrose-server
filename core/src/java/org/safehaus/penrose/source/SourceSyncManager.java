@@ -20,6 +20,9 @@ package org.safehaus.penrose.source;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.adapter.Adapter;
 import org.apache.log4j.*;
 
 import java.util.*;
@@ -47,7 +50,15 @@ public class SourceSyncManager {
 
         log.debug("Initializing source sync "+sourceSyncConfig.getName()+".");
 
-        Class clazz = Class.forName(sourceSyncConfig.getClassName());
+        SourceConfig sourceConfig = sourceSyncConfig.getSourceConfig();
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+        Adapter adapter = connection.getAdapter();
+        String syncClassName = adapter.getSyncClassName();
+        Class clazz = Class.forName(syncClassName);
+
+        //Class clazz = Class.forName(sourceSyncConfig.getClassName());
         sourceSync = (SourceSync)clazz.newInstance();
 
         sourceSync.setSourceSyncConfig(sourceSyncConfig);

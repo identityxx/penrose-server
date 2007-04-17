@@ -6,10 +6,8 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.session.*;
@@ -54,11 +52,11 @@ public class DemoListener implements SearchListener {
 
         session.bind("uid=admin,ou=system", "secret");
 
-        SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
+        SearchResponse<SearchResult> response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
 
         while (response.hasNext()) {
-            SearchResult entry = (SearchResult) response.next();
-            System.out.println(toString(entry));
+            SearchResult searchResult = (SearchResult) response.next();
+            System.out.println(toString(searchResult));
         }
 
         session.unbind();
@@ -70,12 +68,10 @@ public class DemoListener implements SearchListener {
 
     public String toString(SearchResult result) throws Exception {
 
-        Entry entry = result.getEntry();
-
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getDn()+"\n");
+        sb.append("dn: "+result.getDn()+"\n");
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = result.getAttributes();
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
             String name = attribute.getName();
@@ -101,13 +97,12 @@ public class DemoListener implements SearchListener {
             throw new NoPermissionException();
         }
 
-        SearchResponse response = event.getResponse();
+        SearchResponse<SearchResult> response = event.getResponse();
 
         response.addListener(new SearchResponseAdapter() {
             public void postAdd(SearchResponseEvent event) {
                 SearchResult result = (SearchResult)event.getObject();
-                Entry entry = result.getEntry();
-                System.out.println("#### Returning "+entry.getDn());
+                System.out.println("#### Returning "+result.getDn());
             }
         });
 

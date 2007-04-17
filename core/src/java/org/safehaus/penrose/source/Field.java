@@ -15,6 +15,7 @@ public class Field {
     private boolean caseSensitive;
 
     private int length;
+    private int defaultLength;
     private String type;
 
     public Field(FieldConfig fieldConfig) {
@@ -26,6 +27,7 @@ public class Field {
         caseSensitive = fieldConfig.isCaseSensitive();
 
         length = fieldConfig.getLength();
+        defaultLength = fieldConfig.getDefaultLength();
         type = fieldConfig.getType();
     }
     
@@ -81,6 +83,14 @@ public class Field {
         return length;
     }
 
+    public int getDefaultLength() {
+        return defaultLength;
+    }
+
+    public void setDefaultLength(int defaultLength) {
+        this.defaultLength = defaultLength;
+    }
+    
     public void setLength(int length) {
         this.length = length;
     }

@@ -23,7 +23,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -88,7 +88,7 @@ public class PartitionValidator {
     public Collection validateSourceConfigs(Partition partition) throws Exception {
         Collection results = new ArrayList();
 
-        for (Iterator i=partition.getSourceConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i=partition.getSources().getSourceConfigs().iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
 
             String sourceName = sourceConfig.getName();
@@ -225,7 +225,7 @@ public class PartitionValidator {
                     continue;
                 }
 
-                SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+                SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
                 if (sourceConfig == null) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: "+sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
                     continue;
@@ -279,7 +279,7 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", entryMapping.getDn()+"/"+alias, entryMapping));
             }
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceName);
+            SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceName);
             if (sourceConfig == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: "+sourceName, entryMapping.getDn()+"/"+alias, entryMapping));
                 continue;

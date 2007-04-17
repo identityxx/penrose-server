@@ -4,10 +4,11 @@ import org.safehaus.penrose.handler.DefaultHandler;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 
 /**
@@ -28,7 +29,7 @@ public class ProxyHandler extends DefaultHandler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -42,13 +43,14 @@ public class ProxyHandler extends DefaultHandler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        SearchResponse sr = new SearchResponse() {
-            public void add(Object object) throws Exception {
-                response.add(object);
+        SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+            public void add(SearchResult object) throws Exception {
+                SearchResult searchResult = (SearchResult)object;
+                response.add(searchResult);
             }
         };
 
-        AttributeValues sourceValues = new AttributeValues();
+        SourceValues sourceValues = new SourceValues();
 
         engine.search(
                 session,

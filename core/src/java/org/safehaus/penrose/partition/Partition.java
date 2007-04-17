@@ -22,9 +22,8 @@ import java.util.*;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.source.SourceSyncConfig;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.source.Sources;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -46,8 +45,7 @@ public class Partition {
     private Collection rootEntryMappings = new ArrayList();
 
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
-    private Map<String,SourceConfig> sourceConfigs = new LinkedHashMap<String,SourceConfig>();
-    private Map<String,SourceSyncConfig> sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
+    private Sources sources = new Sources();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
     private Map moduleMappings = new LinkedHashMap();
@@ -411,55 +409,6 @@ public class Partition {
         return (ConnectionConfig)connectionConfigs.get(name);
     }
 
-    public void addSourceConfig(SourceConfig sourceConfig) {
-        sourceConfigs.put(sourceConfig.getName(), sourceConfig);
-    }
-
-    public SourceConfig removeSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.remove(name);
-    }
-
-    public SourceConfig getSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.get(name);
-    }
-
-    public SourceConfig getSourceConfig(SourceMapping sourceMapping) {
-        return getSourceConfig(sourceMapping.getSourceName());
-    }
-    
-    public Collection getSourceConfigs() {
-        return sourceConfigs.values();
-    }
-
-    public void renameSourceConfig(SourceConfig sourceConfig, String newName) {
-        if (sourceConfig == null) return;
-        if (sourceConfig.getName().equals(newName)) return;
-
-        sourceConfigs.remove(sourceConfig.getName());
-        sourceConfigs.put(newName, sourceConfig);
-    }
-
-    public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
-        SourceConfig sourceConfig = (SourceConfig)sourceConfigs.get(name);
-        sourceConfig.copy(newSourceConfig);
-    }
-
-    public void addSourceSyncConfig(SourceSyncConfig sourceSyncConfig) {
-        sourceSyncConfigs.put(sourceSyncConfig.getName(), sourceSyncConfig);
-    }
-
-    public SourceSyncConfig removeSourceSyncConfig(String name) {
-        return (SourceSyncConfig) sourceSyncConfigs.remove(name);
-    }
-
-    public SourceSyncConfig getSourceSyncConfig(String name) {
-        return (SourceSyncConfig) sourceSyncConfigs.get(name);
-    }
-
-    public Collection<SourceSyncConfig> getSourceSyncConfigs() {
-        return sourceSyncConfigs.values();
-    }
-
     public Collection getEntryMappings() {
         Collection list = new ArrayList();
         for (Iterator i=entryMappingsByDn.values().iterator(); i.hasNext(); ) {
@@ -596,7 +545,7 @@ public class Partition {
     }
 
     public Collection getSearchableFields(SourceMapping sourceMapping) {
-        SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection results = new ArrayList();
         for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
@@ -633,5 +582,13 @@ public class Partition {
 
     public String toString() {
         return partitionConfig.getName();
+    }
+
+    public Sources getSources() {
+        return sources;
+    }
+
+    public void setSources(Sources sources) {
+        this.sources = sources;
     }
 }

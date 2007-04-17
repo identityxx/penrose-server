@@ -26,6 +26,7 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -67,7 +68,7 @@ public class BuiltInEntriesTest extends TestCase {
         String baseDn = "ou=system";
         System.out.println("Searching "+baseDn+":");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE

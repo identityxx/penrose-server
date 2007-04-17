@@ -1,9 +1,9 @@
 package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.InsertStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
@@ -23,7 +23,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
     Interpreter interpreter;
 
     AddRequest request;
@@ -31,7 +31,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
     public AddRequestBuilder(
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             AddRequest request,
             AddResponse response

@@ -22,11 +22,13 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceSync;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -57,11 +59,21 @@ public abstract class Adapter {
     public void init() throws Exception {
     }
 
+    public void start() throws Exception {
+    }
+
+    public void stop() throws Exception {
+    }
+
     public void dispose() throws Exception {
     }
 
     public boolean isJoinSupported() {
         return false;
+    }
+
+    public String getSyncClassName() {
+        return SourceSync.class.getName();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,10 +92,14 @@ public abstract class Adapter {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
 
-
     public void clean(Source source) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
+
+    public void status(Source source) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +115,7 @@ public abstract class Adapter {
     public void add(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -113,7 +129,7 @@ public abstract class Adapter {
     public void bind(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -135,7 +151,7 @@ public abstract class Adapter {
     public void delete(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -157,7 +173,7 @@ public abstract class Adapter {
     public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -179,7 +195,7 @@ public abstract class Adapter {
     public void modrdn(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -201,9 +217,9 @@ public abstract class Adapter {
     public void search(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<Entry> response
     ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }

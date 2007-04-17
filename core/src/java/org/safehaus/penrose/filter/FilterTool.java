@@ -28,6 +28,9 @@ import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attribute;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -325,7 +328,7 @@ public class FilterTool {
     }
 
     public boolean isValid(EntryMapping entryMapping, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
+        //log.debug("Checking filter "+filter);
 
         boolean result = false;
 

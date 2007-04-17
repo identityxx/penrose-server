@@ -1,8 +1,8 @@
 package org.safehaus.penrose.test.entry;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;

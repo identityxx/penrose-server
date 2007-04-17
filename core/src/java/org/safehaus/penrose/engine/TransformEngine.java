@@ -26,6 +26,10 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -139,12 +143,12 @@ public class TransformEngine {
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             DN dn,
-            AttributeValues input,
-            AttributeValues output
+            SourceValues input,
+            SourceValues output
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 /*
         Collection relationships = entryMapping.getRelationships();
         if (relationships.size() > 0) {

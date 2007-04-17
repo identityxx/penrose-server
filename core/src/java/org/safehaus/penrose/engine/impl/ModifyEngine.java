@@ -20,9 +20,8 @@ package org.safehaus.penrose.engine.impl;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -46,19 +45,19 @@ public class ModifyEngine {
     public void modify(
             Partition partition,
             Entry entry,
-            AttributeValues newValues
+            SourceValues newValues
     ) throws LDAPException {
 
         try {
             EntryMapping entryMapping = null; // entry.getEntryMapping();
-            AttributeValues oldSourceValues = null; // entry.getSourceValues();
+            SourceValues oldSourceValues = null; // entry.getSourceValues();
 
-            AttributeValues newSourceValues = (AttributeValues)oldSourceValues.clone();
+            SourceValues newSourceValues = (SourceValues)oldSourceValues.clone();
             Collection sources = entryMapping.getSourceMappings();
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                AttributeValues output = new AttributeValues();
+                SourceValues output = new SourceValues();
                 engine.transformEngine.translate(
                         partition,
                         entryMapping,

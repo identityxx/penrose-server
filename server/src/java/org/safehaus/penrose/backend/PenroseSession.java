@@ -3,9 +3,9 @@ package org.safehaus.penrose.backend;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
 
@@ -256,7 +256,7 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         log.debug("search(\""+request.getDn()+"\", \""+request.getFilter()+"\")");
 
         SearchRequest penroseRequest = ((PenroseSearchRequest)request).getSearchRequest();
-        SearchResponse penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
+        SearchResponse<SearchResult> penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
 
         session.search(penroseRequest, penroseResponse);
     }

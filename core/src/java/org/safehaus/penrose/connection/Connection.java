@@ -20,7 +20,8 @@ package org.safehaus.penrose.connection;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -73,7 +74,15 @@ public class Connection implements ConnectionMBean {
         adapter.init();
     }
 
-    public void close() throws Exception {
+    public void start() throws Exception {
+        if (adapter != null) adapter.start();
+    }
+
+    public void stop() throws Exception {
+        if (adapter != null) adapter.stop();
+    }
+
+    public void dispose() throws Exception {
         if (adapter != null) adapter.dispose();
     }
 
@@ -129,7 +138,7 @@ public class Connection implements ConnectionMBean {
     public void add(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -144,7 +153,7 @@ public class Connection implements ConnectionMBean {
     public void bind(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -168,7 +177,7 @@ public class Connection implements ConnectionMBean {
     public void delete(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -192,7 +201,7 @@ public class Connection implements ConnectionMBean {
     public void modify(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -216,7 +225,7 @@ public class Connection implements ConnectionMBean {
     public void modrdn(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -240,9 +249,9 @@ public class Connection implements ConnectionMBean {
     public void search(
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<Entry> response
     ) throws Exception {
 
         adapter.search(entryMapping, sources, sourceValues, request, response);
@@ -253,23 +262,23 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void create(Source source) throws Exception {
-
         adapter.create(source);
     }
 
     public void rename(Source oldSource, Source newSource) throws Exception {
-
         adapter.rename(oldSource, newSource);
     }
 
     public void drop(Source source) throws Exception {
-
         adapter.drop(source);
     }
 
     public void clean(Source source) throws Exception {
-
         adapter.clean(source);
+    }
+
+    public void status(Source source) throws Exception {
+        adapter.status(source);
     }
 
     public Object openConnection() throws Exception {

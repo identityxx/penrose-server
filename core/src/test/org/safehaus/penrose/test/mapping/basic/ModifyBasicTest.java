@@ -2,7 +2,7 @@ package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.Modification;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.Collection;
 import java.util.ArrayList;

@@ -1,8 +1,8 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
 
 /**
  * @author Endi S. Dewata

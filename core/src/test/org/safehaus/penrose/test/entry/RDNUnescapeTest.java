@@ -2,7 +2,7 @@ package org.safehaus.penrose.test.entry;
 
 import junit.framework.TestCase;
 
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.ldap.RDN;
 
 /**
  * @author Endi S. Dewata

@@ -75,7 +75,7 @@ public class Connector {
 
     public void addPartition(Partition partition) throws Exception {
 
-        Collection sourceConfigs = partition.getSourceConfigs();
+        Collection sourceConfigs = partition.getSources().getSourceConfigs();
         for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
             SourceConfig sourceConfig = (SourceConfig)i.next();
 
@@ -119,7 +119,7 @@ public class Connector {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -138,7 +138,7 @@ public class Connector {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -157,7 +157,7 @@ public class Connector {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -176,7 +176,7 @@ public class Connector {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -195,7 +195,7 @@ public class Connector {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -214,9 +214,9 @@ public class Connector {
             final Partition partition,
             final EntryMapping entryMapping,
             final Collection sources,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<Entry> response
     ) throws Exception {
 
         SourceRef sourceRef = (SourceRef)sources.iterator().next();

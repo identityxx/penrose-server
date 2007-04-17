@@ -2,8 +2,8 @@ package org.safehaus.penrose.test.mapping;
 
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,15 +21,15 @@ public class SearchSubtreeTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search("cn=group,"+baseDn, "(objectClass=*)");
+        SearchResponse<SearchResult> response = session.search("cn=group,"+baseDn, "(objectClass=*)");
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         assertEquals("cn=group,"+baseDn, dn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("cn");
         assertEquals("group", value);
@@ -48,11 +48,11 @@ public class SearchSubtreeTest extends StaticTestCase {
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         assertEquals("uid=member1,cn=group,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("uid");
         assertEquals("member1", value);
@@ -62,11 +62,11 @@ public class SearchSubtreeTest extends StaticTestCase {
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         assertEquals("uid=member2,cn=group,"+baseDn, dn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("uid");
         assertEquals("member2", value);

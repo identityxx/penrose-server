@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDNBuilder;
-import org.safehaus.penrose.entry.RDN;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDNBuilder;
+import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -246,7 +246,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
 
-    public RDN getPrimaryKeyValues(AttributeValues sourceValues) throws Exception {
+    public RDN getPrimaryKeyValues(SourceValues sourceValues) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
 

@@ -24,8 +24,7 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
@@ -99,7 +98,7 @@ public class PartitionManagerTest extends TestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "ou=Test,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -107,9 +106,8 @@ public class PartitionManagerTest extends TestCase {
 
         assertTrue(response.hasNext());
 
-        SearchResult sr = (SearchResult) response.next();
-        Entry entry = sr.getEntry();
-        DN dn = entry.getDn();
+        SearchResult searchResult = (SearchResult) response.next();
+        DN dn = searchResult.getDn();
         assertTrue(dn.matches("ou=Test,dc=Example,dc=com"));
 
         penrose.stop();

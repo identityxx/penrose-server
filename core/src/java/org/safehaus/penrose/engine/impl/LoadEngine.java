@@ -26,9 +26,9 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -208,17 +208,17 @@ public class LoadEngine {
             while (batches.hasNext()) {
                 Collection entries = (Collection)batches.next();
 
-                AttributeValues sourceValues = new AttributeValues();
+                SourceValues sourceValues = new SourceValues();
                 for (Iterator i=entries.iterator(); i.hasNext(); ) {
                     Entry data = (Entry)i.next();
-                    AttributeValues sv = null; // data.getAttributes();
+                    SourceValues sv = null; // data.getAttributes();
 
                     if (sv == null) continue;
 
                     sourceValues.add(sv);
                 }
 
-                AttributeValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
+                SourceValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
 
                 if (sv != null) {
                     for (Iterator i=entries.iterator(); i.hasNext(); ) {
@@ -235,9 +235,9 @@ public class LoadEngine {
         }
     }
 
-    public AttributeValues loadEntries(
+    public SourceValues loadEntries(
             Partition partition,
-            AttributeValues parentSourceValues,
+            SourceValues parentSourceValues,
             EntryMapping entryMapping,
             Collection list)
             throws Exception {
@@ -269,7 +269,7 @@ public class LoadEngine {
                 sourceNames.add(sourceName);
             }
 
-            AttributeValues newSourceValues = new AttributeValues();
+            SourceValues newSourceValues = new SourceValues();
 /*
             for (Iterator i=sourceNames.iterator(); i.hasNext(); ) {
                 String sourceName = (String)i.next();
@@ -285,7 +285,7 @@ public class LoadEngine {
         }
 
         boolean pkDefined = false;
-        SourceConfig sourceConfig = partition.getSourceConfig(primarySourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(primarySourceMapping.getSourceName());
         Collection fieldMappings = primarySourceMapping.getFieldMappings();
         for (Iterator i=fieldMappings.iterator(); !pkDefined && i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
@@ -336,7 +336,7 @@ public class LoadEngine {
         loadVisitor.run();
 
         int rc = loadVisitor.getReturnCode();
-        AttributeValues allSourceValues = loadVisitor.getLoadedSourceValues();
+        SourceValues allSourceValues = loadVisitor.getLoadedSourceValues();
 
         if (log.isDebugEnabled()) {
             log.debug(Formatter.displaySeparator(80));
@@ -348,7 +348,7 @@ public class LoadEngine {
 
                 Collection rows = allSourceValues.get(sourceName);
                 for (Iterator j=rows.iterator(); j.hasNext(); ) {
-                    AttributeValues av = (AttributeValues)j.next();
+                    SourceValues av = (SourceValues)j.next();
 
                     for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
                         String name = (String)k.next();

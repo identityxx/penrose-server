@@ -9,13 +9,13 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.jdbc.JDBCClient;
-import org.safehaus.penrose.source.SourceSyncSearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
  * @author Endi S. Dewata
@@ -53,7 +53,9 @@ public class SourceSync {
 
     public void init() throws Exception {
 
-        String sourceName = sourceSyncConfig.getParameter(SOURCE);
+        String sourceName = sourceSyncConfig.getName();
+        String destinationNames = sourceSyncConfig.getDestinations();
+        //String sourceName = sourceSyncConfig.getParameter(SOURCE);
         //log.debug("Source: "+ sourceName);
 
         String changeLogName = sourceSyncConfig.getParameter(CHANGELOG);
@@ -78,40 +80,19 @@ public class SourceSync {
             if (tracker == null) throw new Exception("Tracker "+trackerName+" not found.");
         }
 
-        Collection sources = sourceManager.getSources(partition);
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            Source src = (Source)i.next();
+        StringTokenizer st = new StringTokenizer(destinationNames, ", ");
+        while (st.hasMoreTokens()) {
+            String destinationName = st.nextToken();
 
-            Source dest = null;
-            for (Iterator j=src.getFields().iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
+            Source destination = sourceManager.getSource(partition, destinationName);
+            if (destination == null) throw new Exception("Source "+destinationName+" not found.");
 
-                String variable = field.getVariable();
-                if (variable != null && variable.startsWith(sourceName+".")) {
-                    //log.debug(" - "+src.getName());
-                    dest = src;
-                    break;
-                }
-
-                Expression expression = field.getExpression();
-                if (expression != null) {
-                    String foreach = expression.getForeach();
-                    if (foreach != null && foreach.startsWith(sourceName+".")) {
-                        //log.debug(" - "+src.getName());
-                        dest = src;
-                        break;
-                    }
-                }
-            }
-
-            if (dest == null) continue;
-
-            destinations.add(dest);
+            destinations.add(destination);
 
             if (changeLogName != null) {
                 ChangeLogUtil changeLogUtil = createChangeLogUtil();
                 changeLogUtil.setSource(source);
-                changeLogUtil.setDestination(dest);
+                changeLogUtil.setDestination(destination);
                 changeLogUtil.setChangeLog(changeLog);
                 changeLogUtil.setTracker(tracker);
                 changeLogUtil.setUser(user);
@@ -208,6 +189,7 @@ public class SourceSync {
             try {
                 tmp.create();
             } catch (Exception e) {
+                log.error("Failed to create "+tmp.getName()+": "+e.getMessage());
                 tmp.drop();
                 tmp.create();
             }
@@ -318,6 +300,13 @@ public class SourceSync {
         for (Iterator i=destinations.iterator(); i.hasNext(); ) {
             Source destination = (Source)i.next();
             destination.drop();
+        }
+    }
+
+    public void status() throws Exception {
+        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
+            Source destination = (Source)i.next();
+            destination.status();
         }
     }
 }

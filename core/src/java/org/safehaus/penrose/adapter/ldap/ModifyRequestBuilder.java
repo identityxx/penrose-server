@@ -3,9 +3,7 @@ package org.safehaus.penrose.adapter.ldap;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.ldap.ModifyRequest;
-import org.safehaus.penrose.ldap.ModifyResponse;
-import org.safehaus.penrose.ldap.Modification;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
@@ -22,7 +20,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     String suffix;
 
     Collection sourceRefs;
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
 
     Interpreter interpreter;
 
@@ -32,7 +30,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     public ModifyRequestBuilder(
             String suffix,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             ModifyRequest request,
             ModifyResponse response

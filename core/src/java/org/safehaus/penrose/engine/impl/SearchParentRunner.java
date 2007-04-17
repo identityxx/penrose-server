@@ -29,7 +29,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -46,7 +46,7 @@ public class SearchParentRunner extends GraphVisitor {
     private Graph graph;
     private EngineImpl engine;
     private EntryMapping entryMapping;
-    private AttributeValues sourceValues;
+    private SourceValues sourceValues;
     private Map filters;
     private SourceMapping startingSourceMapping;
 
@@ -59,7 +59,7 @@ public class SearchParentRunner extends GraphVisitor {
             Partition partition,
             EntryMapping entryMapping,
             Collection results,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             SearchPlanner planner,
             SourceMapping startingSourceMapping,
             Collection relationships) throws Exception {
@@ -117,7 +117,7 @@ public class SearchParentRunner extends GraphVisitor {
 
             Collection list = new ArrayList();
             for (Iterator i=results.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
+                SourceValues av = (SourceValues)i.next();
 
                 if (relationships == null) {
                     //if (!FilterTool.isValid(av, filter)) continue;
@@ -136,7 +136,7 @@ public class SearchParentRunner extends GraphVisitor {
 
             log.debug("Searching source "+sourceMapping.getName()+" with filter "+filter);
 
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+            SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
             SearchRequest request = new SearchRequest();
             SearchResponse response = new SearchResponse();
@@ -156,9 +156,9 @@ public class SearchParentRunner extends GraphVisitor {
 */
             Collection list = new ArrayList();
             while (response.hasNext()) {
-                AttributeValues av = (AttributeValues)response.next();
+                SourceValues av = (SourceValues)response.next();
 
-                AttributeValues sv = new AttributeValues();
+                SourceValues sv = new SourceValues();
                 sv.add(sourceMapping.getName(), av);
                 list.add(sv);
             }
@@ -218,7 +218,7 @@ public class SearchParentRunner extends GraphVisitor {
 
         //log.debug("Generating filters:");
         for (Iterator i=results.iterator(); i.hasNext(); ) {
-            AttributeValues av = (AttributeValues)i.next();
+            SourceValues av = (SourceValues)i.next();
 
             Filter f = engine.generateFilter(toSourceMapping, relationships, av);
             //log.debug(" - "+f);

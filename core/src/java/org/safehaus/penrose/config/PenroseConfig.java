@@ -34,7 +34,7 @@ import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.handler.DefaultHandler;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

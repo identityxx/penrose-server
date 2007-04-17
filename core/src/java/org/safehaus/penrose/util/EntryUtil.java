@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.util;
 
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -32,24 +32,24 @@ public class EntryUtil {
 
     Logger log = LoggerFactory.getLogger(EntryUtil.class);
 
-    public static Attributes computeAttributes(AttributeValues attributeValues) {
+    public static Attributes computeAttributes(SourceValues sourceValues) {
         Attributes attributes = new Attributes();
-        for (Iterator i=attributeValues.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i= sourceValues.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Collection values = attributeValues.get(name);
+            Collection values = sourceValues.get(name);
             attributes.add(new Attribute(name, values));
         }
         return attributes;
     }
 
-    public static AttributeValues computeAttributeValues(Attributes attributes) {
-        AttributeValues attributeValues = new AttributeValues();
+    public static SourceValues computeAttributeValues(Attributes attributes) {
+        SourceValues sourceValues = new SourceValues();
         for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Collection values = attributes.getValues(name);
-            attributeValues.set(name, values);
+            sourceValues.set(name, values);
         }
-        return attributeValues;
+        return sourceValues;
     }
 
 

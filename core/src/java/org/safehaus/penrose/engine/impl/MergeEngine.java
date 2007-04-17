@@ -18,7 +18,7 @@
 package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -58,10 +58,10 @@ public class MergeEngine {
                 Entry map = (Entry)entries.next();
 
                 DN dn = map.getDn();
-                AttributeValues primarySourceValues = null; // map.getAttributes();
+                SourceValues primarySourceValues = null; // map.getAttributes();
                 Collection rows = null;// map.getRows();
                 RDN filter = null;// map.getFilter();
-                AttributeValues loadedSourceValues = null;// map.getLoadedSourceValues();
+                SourceValues loadedSourceValues = null;// map.getLoadedSourceValues();
 
                 Entry entry = mergeEntries(
                         partition,
@@ -89,8 +89,8 @@ public class MergeEngine {
             Partition partition,
             DN dn,
             EntryMapping entryMapping,
-            AttributeValues primarySourceValues,
-            AttributeValues loadedSourceValues,
+            SourceValues primarySourceValues,
+            SourceValues loadedSourceValues,
             Collection rows,
             Interpreter interpreter,
             RDN pk)
@@ -117,7 +117,7 @@ public class MergeEngine {
                     log.debug(Formatter.displayLine("Source "+sourceName+":", 80));
                     Collection avs = loadedSourceValues.get(sourceName);
                     for (Iterator j=avs.iterator(); j.hasNext(); ) {
-                        AttributeValues av = (AttributeValues)j.next();
+                        SourceValues av = (SourceValues)j.next();
 
                         for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
                             String name = (String)k.next();
@@ -132,7 +132,7 @@ public class MergeEngine {
             if (rows != null) {
                 int counter = 0;
                 for (Iterator j=rows.iterator(); j.hasNext() && counter <= 20; counter++) {
-                    AttributeValues rdn = (AttributeValues)j.next();
+                    SourceValues rdn = (SourceValues)j.next();
                     log.debug(Formatter.displayLine(" - "+rdn, 80));
                 }
             }
@@ -140,7 +140,7 @@ public class MergeEngine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        AttributeValues sourceValues;
+        SourceValues sourceValues;
         SourceMapping primarySourceMapping = engine.getPrimarySource(entryMapping);
 
         if (primarySourceMapping != null && loadedSourceValues != null) {

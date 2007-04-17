@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -33,7 +34,7 @@ public class SearchEvent extends Event {
     protected int returnCode;
 
     protected SearchRequest request;
-    protected SearchResponse response;
+    protected SearchResponse<SearchResult> response;
 
     public SearchEvent(
             Object source,
@@ -72,11 +73,11 @@ public class SearchEvent extends Event {
         this.request = request;
     }
 
-    public SearchResponse getResponse() {
+    public SearchResponse<SearchResult> getResponse() {
         return response;
     }
 
-    public void setResponse(SearchResponse response) {
+    public void setResponse(SearchResponse<SearchResult> response) {
         this.response = response;
     }
 

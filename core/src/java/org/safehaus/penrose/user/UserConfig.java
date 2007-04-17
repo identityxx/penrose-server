@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.user;
 
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 
 /**
  * @author Endi S. Dewata

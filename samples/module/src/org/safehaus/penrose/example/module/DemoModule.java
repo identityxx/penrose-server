@@ -2,10 +2,9 @@ package org.safehaus.penrose.example.module;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -45,14 +44,13 @@ public class DemoModule extends Module {
             return false;
         }
 
-        SearchResponse response = event.getResponse();
+        SearchResponse<SearchResult> response = event.getResponse();
 
         // register result listener
         response.addListener(new SearchResponseAdapter() {
             public void postAdd(SearchResponseEvent event) {
-                SearchResult sr = (SearchResult)event.getObject();
-                Entry entry = sr.getEntry();
-                DN dn = entry.getDn();
+                SearchResult result = (SearchResult)event.getObject();
+                DN dn = result.getDn();
                 System.out.println("Returning "+dn+".");
             }
         });

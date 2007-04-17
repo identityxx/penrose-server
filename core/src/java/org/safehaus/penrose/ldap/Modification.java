@@ -1,6 +1,6 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attribute;
 
 /**
  * @author Endi S. Dewata

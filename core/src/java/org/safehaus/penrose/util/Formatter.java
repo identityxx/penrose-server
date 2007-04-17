@@ -18,8 +18,8 @@
 package org.safehaus.penrose.util;
 
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

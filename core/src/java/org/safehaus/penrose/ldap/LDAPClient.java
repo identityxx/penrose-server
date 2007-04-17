@@ -23,8 +23,6 @@ import java.util.*;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.ReferralException;
-import javax.naming.directory.*;
-import javax.naming.ldap.*;
 import javax.naming.ldap.Control;
 
 import org.safehaus.penrose.schema.AttributeType;
@@ -32,9 +30,6 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.DNBuilder;
-import org.safehaus.penrose.entry.RDN;
 
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -132,14 +127,14 @@ public class LDAPClient {
 */
     }
 
-    public LdapContext getContext() throws Exception {
+    public javax.naming.ldap.LdapContext getContext() throws Exception {
         log.debug("Creating InitialLdapContext:");
         for (Iterator i=parameters.keySet().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             Object value = parameters.get(name);
             log.debug(" - "+name+": "+value);
         }
-        return new InitialLdapContext(parameters, null);
+        return new javax.naming.ldap.InitialLdapContext(parameters, null);
     }
 
     public void close() throws Exception {
@@ -156,7 +151,7 @@ public class LDAPClient {
     ) throws Exception {
 
         DN targetDn = request.getDn();
-        Attributes attributes = convertAttributes(request.getAttributes());
+        javax.naming.directory.Attributes attributes = convertAttributes(request.getAttributes());
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -165,13 +160,13 @@ public class LDAPClient {
 
         log.debug("Adding "+dn);
 
-        Attributes attrs = new BasicAttributes();
+        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
 
         for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
+            javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)i.next();
             String name = attribute.getID();
 
-            Attribute attr = new BasicAttribute(name);
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
                 for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
@@ -191,7 +186,7 @@ public class LDAPClient {
             attrs.put(attr);
         }
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             context = getContext();
@@ -221,7 +216,7 @@ public class LDAPClient {
         parameters.put(Context.SECURITY_PRINCIPAL, db.toString());
         parameters.put(Context.SECURITY_CREDENTIALS, password);
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             context = getContext();
@@ -249,7 +244,7 @@ public class LDAPClient {
 
         log.debug("Deleting "+dn);
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             context = getContext();
@@ -279,17 +274,17 @@ public class LDAPClient {
 
         log.debug("Modifying "+dn);
 
-        Collection<ModificationItem> list = new ArrayList<ModificationItem>();
+        Collection<javax.naming.directory.ModificationItem> list = new ArrayList<javax.naming.directory.ModificationItem>();
 
         for (Iterator i=modifications.iterator(); i.hasNext(); ) {
             Modification modification = (Modification)i.next();
 
             int type = modification.getType();
-            org.safehaus.penrose.entry.Attribute attribute = modification.getAttribute();
+            Attribute attribute = modification.getAttribute();
             String name = attribute.getName();
 
             javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
-            list.add(new ModificationItem(type, attr));
+            list.add(new javax.naming.directory.ModificationItem(type, attr));
 
             if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
                 for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
@@ -307,9 +302,9 @@ public class LDAPClient {
             }
         }
 
-        ModificationItem mods[] = (ModificationItem[])list.toArray(new ModificationItem[list.size()]);
+        javax.naming.directory.ModificationItem mods[] = (javax.naming.directory.ModificationItem[])list.toArray(new javax.naming.directory.ModificationItem[list.size()]);
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             context = getContext();
@@ -337,7 +332,7 @@ public class LDAPClient {
         db.append(suffix);
         DN dn = db.toDn();
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             context = getContext();
@@ -370,13 +365,13 @@ public class LDAPClient {
 
         String attributes[] = (String[]) request.getAttributes().toArray(new String[request.getAttributes().size()]);
 
-        SearchControls sc = new SearchControls();
+        javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
         sc.setSearchScope(request.getScope());
         sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributes);
         sc.setCountLimit(request.getSizeLimit());
         sc.setTimeLimit((int) request.getTimeLimit());
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
         NamingEnumeration ne = null;
 
         try {
@@ -415,7 +410,7 @@ public class LDAPClient {
 
             Collection<Control> list = new ArrayList<Control>();
             list.addAll(origControls);
-            list.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
+            list.add(new javax.naming.ldap.PagedResultsControl(pageSize, Control.NONCRITICAL));
 
             Control[] controls = (Control[])list.toArray(new Control[list.size()]);
             context.setRequestControls(controls);
@@ -457,7 +452,7 @@ public class LDAPClient {
 
                         LDAPUrl url = new LDAPUrl(referral);
 
-                        Attributes attrs = new BasicAttributes();
+                        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
                         attrs.put("ref", referral);
                         attrs.put("objectClass", "referral");
 
@@ -468,7 +463,7 @@ public class LDAPClient {
                         moreReferrals = e.skipReferral();
 
                         if (moreReferrals) {
-                            context = (LdapContext)e.getReferralContext();
+                            context = (javax.naming.ldap.LdapContext)e.getReferralContext();
                         }
                     }
                 }
@@ -477,8 +472,8 @@ public class LDAPClient {
                 controls = context.getResponseControls();
                 if (controls != null) {
                     for (int i = 0; i < controls.length; i++) {
-                        if (controls[i] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc = (PagedResultsResponseControl)controls[i];
+                        if (controls[i] instanceof javax.naming.ldap.PagedResultsResponseControl) {
+                            javax.naming.ldap.PagedResultsResponseControl prrc = (javax.naming.ldap.PagedResultsResponseControl)controls[i];
                             cookie = prrc.getCookie();
                         }
                     }
@@ -487,7 +482,7 @@ public class LDAPClient {
                 // pass cookie back to server for the next page
                 list = new ArrayList<Control>();
                 list.addAll(origControls);
-                list.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                list.add(new javax.naming.ldap.PagedResultsControl(pageSize, cookie, Control.CRITICAL));
 
                 controls = (Control[])list.toArray(new Control[list.size()]);
                 context.setRequestControls(controls);
@@ -588,7 +583,7 @@ public class LDAPClient {
 
     public Collection getNamingContexts() throws Exception {
         getRootDSE();
-        Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
+        javax.naming.directory.Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
 
         Collection<String> list = new ArrayList<String>();
         for (NamingEnumeration i=namingContexts.getAll(); i.hasMore(); ) {
@@ -608,8 +603,8 @@ public class LDAPClient {
         log.debug("Searching Schema ...");
 
         try {
-            Attribute schemaNamingContext = rootDSE.getAttributes().get("schemaNamingContext");
-            Attribute subschemaSubentry = rootDSE.getAttributes().get("subschemaSubentry");
+            javax.naming.directory.Attribute schemaNamingContext = rootDSE.getAttributes().get("schemaNamingContext");
+            javax.naming.directory.Attribute subschemaSubentry = rootDSE.getAttributes().get("subschemaSubentry");
 
             String schemaDn;
 
@@ -651,13 +646,13 @@ public class LDAPClient {
 
     public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             //log.debug("Attribute Types:");
 
-            SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
+            searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
     /*
             byte[] cookie = null;
 
@@ -673,25 +668,25 @@ public class LDAPClient {
 
                 while (results.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
-                    Attributes attributes = sr.getAttributes();
+                    javax.naming.directory.Attributes attributes = sr.getAttributes();
 
-                    Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
+                    javax.naming.directory.Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
                     String atName = (String)lDAPDisplayName.get();
                     //log.debug(" - "+atName);
 
                     AttributeType at = new AttributeType();
                     at.setName(atName);
 
-                    Attribute attributeID = attributes.get("attributeID");
+                    javax.naming.directory.Attribute attributeID = attributes.get("attributeID");
                     if (attributeID != null) at.setOid(attributeID.get().toString());
 
-                    Attribute adminDescription = attributes.get("adminDescription");
+                    javax.naming.directory.Attribute adminDescription = attributes.get("adminDescription");
                     if (adminDescription != null) at.setDescription(adminDescription.get().toString());
 
-                    Attribute attributeSyntax = attributes.get("attributeSyntax");
+                    javax.naming.directory.Attribute attributeSyntax = attributes.get("attributeSyntax");
                     if (attributeSyntax != null) at.setSyntax(attributeSyntax.get().toString());
 
-                    Attribute isSingleValued = attributes.get("isSingleValued");
+                    javax.naming.directory.Attribute isSingleValued = attributes.get("isSingleValued");
                     if (isSingleValued != null) at.setSingleValued(Boolean.valueOf(isSingleValued.get().toString()).booleanValue());
 
                     schema.addAttributeType(at);
@@ -724,11 +719,11 @@ public class LDAPClient {
 
         //log.debug("Object Classes:");
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
-            SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
+            searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
     /*
             byte[] cookie = null;
 
@@ -744,22 +739,22 @@ public class LDAPClient {
 
                 while (results.hasMore()) {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
-                    Attributes attributes = sr.getAttributes();
+                    javax.naming.directory.Attributes attributes = sr.getAttributes();
 
-                    Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
+                    javax.naming.directory.Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
                     String ocName = (String)lDAPDisplayName.get();
                     //log.debug(" - "+ocName);
 
                     ObjectClass oc = new ObjectClass();
                     oc.setName(ocName);
 
-                    Attribute governsID = attributes.get("governsID");
+                    javax.naming.directory.Attribute governsID = attributes.get("governsID");
                     if (governsID != null) oc.setOid(governsID.get().toString());
 
-                    Attribute adminDescription = attributes.get("adminDescription");
+                    javax.naming.directory.Attribute adminDescription = attributes.get("adminDescription");
                     if (adminDescription != null) oc.setDescription(adminDescription.get().toString());
 
-                    Attribute mustContain = attributes.get("mustContain");
+                    javax.naming.directory.Attribute mustContain = attributes.get("mustContain");
                     if (mustContain != null) {
                         NamingEnumeration ne = mustContain.getAll();
                         while (ne.hasMore()) {
@@ -768,7 +763,7 @@ public class LDAPClient {
                         }
                     }
 
-                    Attribute systemMustContain = attributes.get("systemMustContain");
+                    javax.naming.directory.Attribute systemMustContain = attributes.get("systemMustContain");
                     if (systemMustContain != null) {
                         NamingEnumeration ne = systemMustContain.getAll();
                         while (ne.hasMore()) {
@@ -777,7 +772,7 @@ public class LDAPClient {
                         }
                     }
 
-                    Attribute mayContain = attributes.get("mayContain");
+                    javax.naming.directory.Attribute mayContain = attributes.get("mayContain");
                     if (mayContain != null) {
                         NamingEnumeration ne = mayContain.getAll();
                         while (ne.hasMore()) {
@@ -786,7 +781,7 @@ public class LDAPClient {
                         }
                     }
 
-                    Attribute systemMayContain = attributes.get("systemMayContain");
+                    javax.naming.directory.Attribute systemMayContain = attributes.get("systemMayContain");
                     if (systemMayContain != null) {
                         NamingEnumeration ne = systemMayContain.getAll();
                         while (ne.hasMore()) {
@@ -828,21 +823,21 @@ public class LDAPClient {
 
         log.debug("Searching "+schemaDn+" ...");
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
-            SearchControls ctls = new SearchControls();
-            ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+            javax.naming.directory.SearchControls ctls = new javax.naming.directory.SearchControls();
+            ctls.setSearchScope(javax.naming.directory.SearchControls.OBJECT_SCOPE);
             ctls.setReturningAttributes(new String[] { "attributeTypes", "objectClasses" });
 
             context = getContext();
             NamingEnumeration results = context.search(schemaDn, "(objectClass=*)", ctls);
             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
 
-            Attributes attributes = sr.getAttributes();
+            javax.naming.directory.Attributes attributes = sr.getAttributes();
 
             //log.debug("Object Classes:");
-            Attribute objectClasses = attributes.get("objectClasses");
+            javax.naming.directory.Attribute objectClasses = attributes.get("objectClasses");
 
             NamingEnumeration values = objectClasses.getAll();
             while (values.hasMore()) {
@@ -856,7 +851,7 @@ public class LDAPClient {
             }
 
             //log.debug("Attribute Types:");
-            Attribute attributeTypes = attributes.get("attributeTypes");
+            javax.naming.directory.Attribute attributeTypes = attributes.get("attributeTypes");
 
             values = attributeTypes.getAll();
             while (values.hasMore()) {
@@ -917,7 +912,7 @@ public class LDAPClient {
             boolean critical = control.isCritical();
             byte[] value = control.getValue();
 
-            list.add(new BasicControl(oid, critical, value));
+            list.add(new javax.naming.ldap.BasicControl(oid, critical, value));
         }
 
         return list;
@@ -930,10 +925,10 @@ public class LDAPClient {
         db.append(suffix);
         DN searchBase = db.toDn();
 
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.OBJECT_SCOPE);
+        javax.naming.directory.SearchControls ctls = new javax.naming.directory.SearchControls();
+        ctls.setSearchScope(javax.naming.directory.SearchControls.OBJECT_SCOPE);
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             if ("".equals(searchBase)) {
@@ -959,7 +954,7 @@ public class LDAPClient {
 
         Collection<javax.naming.directory.SearchResult> results = new ArrayList<javax.naming.directory.SearchResult>();
 
-        LdapContext context = null;
+        javax.naming.ldap.LdapContext context = null;
 
         try {
             DNBuilder db = new DNBuilder();
@@ -979,8 +974,8 @@ public class LDAPClient {
                 NamingEnumeration entries = context.search(searchBase, "(objectClass=*)", ctls);
                 SearchResult rootDse = (SearchResult)entries.next();
 */
-                Attributes attributes = rootDse.getAttributes();
-                Attribute attribute = attributes.get("namingContexts");
+                javax.naming.directory.Attributes attributes = rootDse.getAttributes();
+                javax.naming.directory.Attribute attribute = attributes.get("namingContexts");
 
                 NamingEnumeration values = attribute.getAll();
 
@@ -995,8 +990,8 @@ public class LDAPClient {
             } else {
                 log.debug("Searching "+searchBase+":");
 
-                SearchControls ctls = new SearchControls();
-                ctls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+                javax.naming.directory.SearchControls ctls = new javax.naming.directory.SearchControls();
+                ctls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
 
                 context = getContext();
                 NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
@@ -1076,7 +1071,7 @@ public class LDAPClient {
         this.url = url;
     }
 
-    public Collection<Object> getAttributeValues(Attribute attribute) throws Exception {
+    public Collection<Object> getAttributeValues(javax.naming.directory.Attribute attribute) throws Exception {
 
         Collection<Object> values = new ArrayList<Object>();
 
@@ -1096,13 +1091,13 @@ public class LDAPClient {
         this.schema = schema;
     }
 
-    public Attributes convertAttributes(org.safehaus.penrose.entry.Attributes attributes) throws Exception {
+    public javax.naming.directory.Attributes convertAttributes(Attributes attributes) throws Exception {
 
-        Attributes attrs = new javax.naming.directory.BasicAttributes();
+        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.entry.Attribute attribute = (org.safehaus.penrose.entry.Attribute)i.next();
+            Attribute attribute = (Attribute)i.next();
 
-            Attribute attr = new BasicAttribute(attribute.getName());
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(attribute.getName());
             for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 attr.add(value);

@@ -18,14 +18,12 @@
 package org.safehaus.penrose.engine.impl;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attribute;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -56,13 +54,13 @@ public class ModRdnEngine {
         try {
             EntryMapping entryMapping = null; // entry.getEntryMapping();
 
-            AttributeValues oldAttributeValues = new AttributeValues();
+            SourceValues oldAttributeValues = new SourceValues();
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
                 Attribute attribute = (Attribute)i.next();
                 oldAttributeValues.set(attribute.getName(), attribute.getValues());
             }
             
-            AttributeValues newAttributeValues = new AttributeValues(oldAttributeValues);
+            SourceValues newAttributeValues = new SourceValues(oldAttributeValues);
 
             RDN rdn1 = entry.getDn().getRdn();
             oldAttributeValues.set("rdn", rdn1);
@@ -93,13 +91,13 @@ public class ModRdnEngine {
                 newAttributeValues.add(name, newValue);
             }
 */
-            AttributeValues oldSourceValues = null; // entry.getSourceValues();
-            AttributeValues newSourceValues = new AttributeValues(oldSourceValues);
+            SourceValues oldSv = null; // entry.getSourceValues();
+            SourceValues newSv = new SourceValues(oldSv);
             Collection sources = entryMapping.getSourceMappings();
             for (Iterator i=sources.iterator(); i.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)i.next();
 
-                AttributeValues output = new AttributeValues();
+                SourceValues output = new SourceValues();
                 engine.transformEngine.translate(
                         partition,
                         entryMapping,
@@ -109,7 +107,7 @@ public class ModRdnEngine {
                         output
                 );
 
-                newSourceValues.set(sourceMapping.getName(), output);
+                newSv.set(sourceMapping.getName(), output);
             }
 
             if (log.isDebugEnabled()) {
@@ -128,21 +126,21 @@ public class ModRdnEngine {
                 }
 
                 log.debug("Old source values:");
-                for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                for (Iterator iterator = oldSv.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = oldSourceValues.get(name);
+                    Collection values = oldSv.get(name);
                     log.debug(" - "+name+": "+values);
                 }
 
                 log.debug("New source values:");
-                for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
+                for (Iterator iterator = newSv.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = newSourceValues.get(name);
+                    Collection values = newSv.get(name);
                     log.debug(" - "+name+": "+values);
                 }
             }
 
-            ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSourceValues, newSourceValues);
+            ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSv, newSv);
             visitor.run();
 
         } catch (LDAPException e) {

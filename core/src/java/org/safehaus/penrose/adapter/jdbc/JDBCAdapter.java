@@ -32,6 +32,7 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 
 import java.sql.ResultSet;
@@ -45,12 +46,14 @@ public class JDBCAdapter extends Adapter {
     public JDBCClient client;
 
     public void init() throws Exception {
-
         client = new JDBCClient(getParameters());
+    }
+
+    public void start() throws Exception {
         client.connect();
     }
 
-    public void dispose() throws Exception {
+    public void stop() throws Exception {
         client.close();
     }
 
@@ -100,6 +103,10 @@ public class JDBCAdapter extends Adapter {
 
     public boolean isJoinSupported() {
         return true;
+    }
+
+    public String getSyncClassName() {
+        return JDBCSourceSync.class.getName();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,6 +163,19 @@ public class JDBCAdapter extends Adapter {
         }
 
         client.cleanTable(source);
+    }
+
+    public void status(Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Clean "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        client.showStatus(source);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,7 +236,7 @@ public class JDBCAdapter extends Adapter {
     public void add(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -298,7 +318,7 @@ public class JDBCAdapter extends Adapter {
     public void delete(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -406,7 +426,7 @@ public class JDBCAdapter extends Adapter {
     public void modify(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -448,7 +468,7 @@ public class JDBCAdapter extends Adapter {
     public void modrdn(
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -548,9 +568,9 @@ public class JDBCAdapter extends Adapter {
     public void search(
             final EntryMapping entryMapping,
             final Collection sourceRefs,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<Entry> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();

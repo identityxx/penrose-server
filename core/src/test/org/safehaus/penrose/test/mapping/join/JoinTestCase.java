@@ -58,7 +58,7 @@ public class JoinTestCase extends JDBCTestCase {
         groupsSource.setParameter("table", "groups");
         groupsSource.addFieldConfig(new FieldConfig("groupname", true));
         groupsSource.addFieldConfig(new FieldConfig("description"));
-        partition.addSourceConfig(groupsSource);
+        partition.getSources().addSourceConfig(groupsSource);
 
         SourceConfig usergroupsSource = new SourceConfig();
         usergroupsSource.setName("usergroups");
@@ -66,7 +66,7 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsSource.setParameter("table", "usergroups");
         usergroupsSource.addFieldConfig(new FieldConfig("groupname", true));
         usergroupsSource.addFieldConfig(new FieldConfig("username", true));
-        partition.addSourceConfig(usergroupsSource);
+        partition.getSources().addSourceConfig(usergroupsSource);
 
         EntryMapping ou = new EntryMapping("ou=Groups,dc=Example,dc=com");
         ou.addObjectClass("organizationalUnit");

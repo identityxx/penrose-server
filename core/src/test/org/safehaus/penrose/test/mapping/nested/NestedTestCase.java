@@ -62,7 +62,7 @@ public class NestedTestCase extends JDBCTestCase {
         groupsSource.setParameter("table", "groups");
         groupsSource.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         groupsSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.addSourceConfig(groupsSource);
+        partition.getSources().addSourceConfig(groupsSource);
 
         SourceConfig usergroupsSource = new SourceConfig();
         usergroupsSource.setName("members");
@@ -71,7 +71,7 @@ public class NestedTestCase extends JDBCTestCase {
         usergroupsSource.addFieldConfig(new FieldConfig("username", "USERNAME", true));
         usergroupsSource.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         usergroupsSource.addFieldConfig(new FieldConfig("name", "NAME", false));
-        partition.addSourceConfig(usergroupsSource);
+        partition.getSources().addSourceConfig(usergroupsSource);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");

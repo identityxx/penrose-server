@@ -25,8 +25,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,10 +42,10 @@ public class MergeGraphVisitor extends GraphVisitor {
     private Graph graph;
     private EngineImpl engine;
     private EntryMapping entryMapping;
-    private AttributeValues loadedSourceValues;
+    private SourceValues loadedSourceValues;
     private SourceMapping primarySourceMapping;
 
-    private AttributeValues sourceValues = new AttributeValues();
+    private SourceValues sourceValues = new SourceValues();
 
     private Stack stack = new Stack();
 
@@ -54,8 +53,8 @@ public class MergeGraphVisitor extends GraphVisitor {
             EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues primarySourceValues,
-            AttributeValues loadedSourceValues,
+            SourceValues primarySourceValues,
+            SourceValues loadedSourceValues,
             SourceMapping primarySourceMapping,
             Filter filter) throws Exception {
 
@@ -113,7 +112,7 @@ public class MergeGraphVisitor extends GraphVisitor {
             Collection list = loadedSourceValues.get(sourceMapping.getName());
             if (list != null) {
                 for (Iterator i=list.iterator(); i.hasNext(); ) {
-                    AttributeValues av = (AttributeValues)i.next();
+                    SourceValues av = (SourceValues)i.next();
                     //log.debug(" - "+av);
 
                     if (relationships == null) {
@@ -171,7 +170,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
-    public AttributeValues getSourceValues() {
+    public SourceValues getSourceValues() {
         return sourceValues;
     }
 }

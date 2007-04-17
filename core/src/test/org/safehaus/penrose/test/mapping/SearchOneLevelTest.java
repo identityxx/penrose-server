@@ -3,8 +3,8 @@ package org.safehaus.penrose.test.mapping;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.Attributes;
 
 /**
  * @author Endi S. Dewata
@@ -19,7 +19,7 @@ public class SearchOneLevelTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse response = session.search(
+        SearchResponse<SearchResult> response = session.search(
                 "cn=group,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -27,11 +27,11 @@ public class SearchOneLevelTest extends StaticTestCase {
 
         assertTrue(response.hasNext());
 
-        Entry entry = (Entry) response.next();
-        String dn = entry.getDn().toString();
+        SearchResult searchResult = (SearchResult) response.next();
+        String dn = searchResult.getDn().toString();
         assertEquals(dn, "uid=member1,cn=group,"+baseDn);
 
-        Attributes attributes = entry.getAttributes();
+        Attributes attributes = searchResult.getAttributes();
 
         Object value = attributes.getValue("uid");
         assertEquals("member1", value);
@@ -41,11 +41,11 @@ public class SearchOneLevelTest extends StaticTestCase {
 
         assertTrue(response.hasNext());
 
-        entry = (Entry) response.next();
-        dn = entry.getDn().toString();
+        searchResult = (SearchResult) response.next();
+        dn = searchResult.getDn().toString();
         assertEquals(dn, "uid=member2,cn=group,"+baseDn);
 
-        attributes = entry.getAttributes();
+        attributes = searchResult.getAttributes();
 
         value = attributes.getValue("uid");
         assertEquals("member2", value);

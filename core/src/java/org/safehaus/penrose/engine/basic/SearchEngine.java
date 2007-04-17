@@ -4,14 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.util.EntryUtil;
@@ -36,9 +33,9 @@ public class SearchEngine {
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse results
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         try {
@@ -55,14 +52,15 @@ public class SearchEngine {
                 Attributes attributes = computeAttributes(interpreter, entryMapping, sv);
                 interpreter.clear();
 
-                Entry entry = new Entry(entryMapping.getDn(), entryMapping, attributes);
-                results.add(entry);
+                SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
+                searchResult.setEntryMapping(entryMapping);
+                response.add(searchResult);
 
                 return;
             }
 
-            SearchResponse sr = new SearchResponse() {
-                public void add(Object object) throws Exception {
+            SearchResponse<Entry> sr = new SearchResponse<Entry>() {
+                public void add(Entry object) throws Exception {
                     Entry result = (Entry)object;
                     EntryMapping em = result.getEntryMapping();
 
@@ -97,8 +95,9 @@ public class SearchEngine {
                         DN dn = (DN)i.next();
 
                         if (debug) log.debug("Generating entry "+dn);
-                        Entry data = new Entry(dn, em, attributes);
-                        results.add(data);
+                        SearchResult SearchResult = new SearchResult(dn, attributes);
+                        SearchResult.setEntryMapping(em);
+                        response.add(SearchResult);
                     }
                 }
             };
@@ -121,7 +120,7 @@ public class SearchEngine {
             );
 
         } finally {
-            results.close();
+            response.close();
         }
     }
 

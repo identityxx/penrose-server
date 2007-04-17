@@ -91,11 +91,11 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         //log.debug("Converting "+entry.getDn());
 
-        org.safehaus.penrose.entry.Attributes attributes = entry.getAttributes();
+        org.safehaus.penrose.ldap.Attributes attributes = entry.getAttributes();
         javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
 
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.entry.Attribute attribute = (org.safehaus.penrose.entry.Attribute)i.next();
+            Attribute attribute = (Attribute)i.next();
 
             String name = attribute.getName();
             Collection values = attribute.getValues();

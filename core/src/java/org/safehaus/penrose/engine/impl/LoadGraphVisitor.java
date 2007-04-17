@@ -29,7 +29,7 @@ import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -47,19 +47,19 @@ public class LoadGraphVisitor extends GraphVisitor {
     private Graph graph;
     private EngineImpl engine;
     private EntryMapping entryMapping;
-    private AttributeValues sourceValues;
+    private SourceValues sourceValues;
     private SourceMapping primarySourceMapping;
 
     private Stack stack = new Stack();
 
-    private AttributeValues loadedSourceValues = new AttributeValues();
+    private SourceValues loadedSourceValues = new SourceValues();
     private int returnCode;
 
     public LoadGraphVisitor(
             EngineImpl engine,
             Partition partition,
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Collection primaryKeys,
             Filter filter
     ) throws Exception {
@@ -122,7 +122,7 @@ public class LoadGraphVisitor extends GraphVisitor {
 
         log.debug("Loading source "+sourceMapping.getName()+" with filter "+filter);
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
         SearchRequest request = new SearchRequest();
         SearchResponse response = new SearchResponse();
@@ -142,9 +142,9 @@ public class LoadGraphVisitor extends GraphVisitor {
 */
         Collection list = new ArrayList();
         while (response.hasNext()) {
-            AttributeValues av = (AttributeValues)response.next();
+            SourceValues av = (SourceValues)response.next();
 
-            AttributeValues sv = new AttributeValues();
+            SourceValues sv = new SourceValues();
             sv.add(sourceMapping.getName(), av);
             list.add(sv);
 
@@ -186,7 +186,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         if (list != null) {
             log.debug("Generating filters:");
             for (Iterator i=list.iterator(); i.hasNext(); ) {
-                AttributeValues av = (AttributeValues)i.next();
+                SourceValues av = (SourceValues)i.next();
 
                 Filter f = engine.generateFilter(toSourceMapping, relationships, av);
                 log.debug(" - "+f);
@@ -206,7 +206,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         stack.pop();
     }
 
-    public AttributeValues getLoadedSourceValues() {
+    public SourceValues getLoadedSourceValues() {
         return loadedSourceValues;
     }
 

@@ -250,7 +250,7 @@ public class Analyzer {
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
         if (sourceMapping == null) throw new Exception("Invalid source mapping \""+sourceAlias+"\" in \""+entryMapping.getDn()+"\".");
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
         if (sourceMapping == null) throw new Exception("Invalid source reference \""+sourceMapping.getSourceName()+"\" in \""+entryMapping.getDn()+"\".");
 
         Collection uniqueFields = new TreeSet();

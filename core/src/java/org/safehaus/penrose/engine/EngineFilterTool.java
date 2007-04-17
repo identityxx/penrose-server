@@ -25,7 +25,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -47,7 +47,7 @@ public class EngineFilterTool {
 
     public Filter convert(
             Partition partition,
-            AttributeValues parentValues,
+            SourceValues parentValues,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             Filter filter
@@ -77,7 +77,7 @@ public class EngineFilterTool {
 
     public Filter convert(
             Partition partition,
-            AttributeValues parentValues,
+            SourceValues parentValues,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SimpleFilter filter
@@ -121,7 +121,7 @@ public class EngineFilterTool {
 
     public Filter convert(
             Partition partition,
-            AttributeValues parentValues,
+            SourceValues parentValues,
             EntryMapping entryMapping,
             SourceMapping sourceMapping,
             SubstringFilter filter)
@@ -149,7 +149,7 @@ public class EngineFilterTool {
 
         if (!sourceName.equals(sourceMapping.getName())) return null;
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
 
         ConnectionManager connectionManager = engine.getConnectionManager();
@@ -162,7 +162,7 @@ public class EngineFilterTool {
         return newFilter;
     }
 
-    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
+    public Filter convert(Partition partition, SourceValues parentValues, EntryMapping entry, SourceMapping sourceMapping, NotFilter filter)
             throws Exception {
 
         Filter f = filter.getFilter();
@@ -172,7 +172,7 @@ public class EngineFilterTool {
         return new NotFilter(newFilter);
     }
 
-    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
+    public Filter convert(Partition partition, SourceValues parentValues, EntryMapping entry, SourceMapping sourceMapping, AndFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();
@@ -192,7 +192,7 @@ public class EngineFilterTool {
         return af;
     }
 
-    public Filter convert(Partition partition, AttributeValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
+    public Filter convert(Partition partition, SourceValues parentValues, EntryMapping entry, SourceMapping sourceMapping, OrFilter filter)
             throws Exception {
 
         Collection filters = filter.getFilters();

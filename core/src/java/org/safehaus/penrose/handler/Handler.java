@@ -30,7 +30,6 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -156,8 +155,7 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry parent = null; //find(session, partition, entryMapping.getParent(), dn.getParentDn());
-        engine.add(session, partition, parent, entryMapping, request, response);
+        engine.add(session, partition, entryMapping, request, response);
     }
 
     public void bind(
@@ -170,7 +168,6 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
         engine.bind(session, partition, entryMapping, request, response);
     }
 
@@ -184,11 +181,10 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
 
-    public Entry find(
+    public SearchResult find(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -202,7 +198,7 @@ public abstract class Handler {
         request.setFilter((Filter)null);
         request.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         search(
                 session,
@@ -217,7 +213,7 @@ public abstract class Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
-        return (Entry) response.next();
+        return (SearchResult) response.next();
     }
 
     public boolean compare(
@@ -230,7 +226,6 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
         return engine.compare(session, partition, entryMapping, request, response);
     }
 
@@ -244,8 +239,7 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.delete(session, partition, entry, entryMapping, request, response);
+        engine.delete(session, partition, entryMapping, request, response);
     }
 
     public void modify(
@@ -258,8 +252,7 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.modify(session, partition, entry, entryMapping, request, response);
+        engine.modify(session, partition, entryMapping, request, response);
     }
 
     public void modrdn(
@@ -272,8 +265,7 @@ public abstract class Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        Entry entry = null; //find(session, partition, entryMapping, dn);
-        engine.modrdn(session, partition, entry, entryMapping, request, response);
+        engine.modrdn(session, partition, entryMapping, request, response);
     }
 
     public void search(
@@ -281,7 +273,7 @@ public abstract class Handler {
             Partition partition,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse results
+            SearchResponse<SearchResult> results
     ) throws Exception {
 
         search(
@@ -300,7 +292,7 @@ public abstract class Handler {
             EntryMapping baseMapping,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception;
 
     public PenroseConfig getPenroseConfig() {

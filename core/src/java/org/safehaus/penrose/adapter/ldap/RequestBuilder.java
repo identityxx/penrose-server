@@ -2,9 +2,9 @@ package org.safehaus.penrose.adapter.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.DNBuilder;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.DNBuilder;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.Request;
 

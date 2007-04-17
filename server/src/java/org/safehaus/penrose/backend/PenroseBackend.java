@@ -24,9 +24,9 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.Attributes;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
@@ -193,7 +193,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
     }
 
     public com.identyx.javabackend.SearchResponse createSearchResponse() throws Exception {
-        return new PenroseSearchResponse(new SearchResponse());
+        return new PenroseSearchResponse(new SearchResponse<SearchResult>());
     }
 
     public com.identyx.javabackend.UnbindRequest createUnbindRequest() throws Exception {

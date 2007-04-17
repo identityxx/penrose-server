@@ -7,7 +7,7 @@ import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.entry.AttributeValues;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.source.SourceRef;
@@ -26,7 +26,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     Map sourceRefs = new LinkedHashMap(); // need to maintain order
     SourceRef primarySourceRef;
 
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
     Interpreter interpreter;
 
     SearchRequest request;
@@ -38,7 +38,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             Partition partition,
             EntryMapping entryMapping,
             Collection sourceRefs,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
             SearchResponse response

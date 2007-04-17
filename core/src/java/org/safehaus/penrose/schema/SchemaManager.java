@@ -20,10 +20,9 @@ package org.safehaus.penrose.schema;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
-import org.safehaus.penrose.ldap.Modification;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -174,10 +173,10 @@ public class SchemaManager implements SchemaManagerMBean {
         return db.toDn();
     }
 
-    public Collection normalize(Collection attributeNames) {
+    public Collection<String> normalize(Collection<String> attributeNames) {
         if (attributeNames == null) return null;
 
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
         for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
             String name = (String)i.next();
             list.add(normalizeAttributeName(name));

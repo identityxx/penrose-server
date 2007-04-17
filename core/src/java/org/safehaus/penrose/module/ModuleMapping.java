@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.entry.DN;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

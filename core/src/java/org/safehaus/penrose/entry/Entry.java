@@ -18,6 +18,9 @@
 package org.safehaus.penrose.entry;
 
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
 
 import java.util.Map;
 import java.util.HashMap;

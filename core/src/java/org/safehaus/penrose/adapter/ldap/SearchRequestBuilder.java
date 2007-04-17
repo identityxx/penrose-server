@@ -3,9 +3,9 @@ package org.safehaus.penrose.adapter.ldap;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.AttributeValues;
-import org.safehaus.penrose.entry.DNBuilder;
-import org.safehaus.penrose.entry.RDNBuilder;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.DNBuilder;
+import org.safehaus.penrose.ldap.RDNBuilder;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -27,7 +27,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     EntryMapping entryMapping;
 
     Collection sourceRefs;
-    AttributeValues sourceValues;
+    SourceValues sourceValues;
 
     Interpreter interpreter;
 
@@ -40,7 +40,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             Partition partition,
             EntryMapping entryMapping,
             Collection sources,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
             SearchResponse response

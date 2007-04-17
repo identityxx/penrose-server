@@ -31,8 +31,8 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineFilterTool;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.entry.*;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -119,7 +119,6 @@ public class EngineImpl extends Engine {
     public void add(
             Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
             AddRequest request,
             AddResponse response
@@ -128,7 +127,7 @@ public class EngineImpl extends Engine {
         DN dn = request.getDn();
         Attributes attributes = request.getAttributes();
 
-        AttributeValues attributeValues = EntryUtil.computeAttributeValues(attributes);
+        SourceValues sourceValues = EntryUtil.computeAttributeValues(attributes);
         try {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -136,16 +135,16 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displayLine("DN: "+entryMapping.getDn(), 80));
 
                 log.debug(Formatter.displayLine("Attribute values:", 80));
-                for (Iterator i = attributeValues.getNames().iterator(); i.hasNext(); ) {
+                for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = attributeValues.get(name);
+                    Collection values = sourceValues.get(name);
                     log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            addEngine.add(partition, parent, entryMapping, dn, attributeValues);
+            addEngine.add(partition, null, entryMapping, dn, sourceValues);
 
         } catch (LDAPException e) {
             throw e;
@@ -163,7 +162,6 @@ public class EngineImpl extends Engine {
     public void delete(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             DeleteRequest request,
             DeleteResponse response
@@ -175,12 +173,12 @@ public class EngineImpl extends Engine {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("DELETE", 80));
-                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+                log.debug(Formatter.displayLine("DN: "+dn, 80));
 
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            deleteEngine.delete(partition, entry);
+            deleteEngine.delete(partition, null);
 
         } catch (LDAPException e) {
             throw e;
@@ -198,7 +196,6 @@ public class EngineImpl extends Engine {
     public void modify(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModifyRequest request,
             ModifyResponse response
@@ -208,7 +205,8 @@ public class EngineImpl extends Engine {
             DN dn = request.getDn();
             Collection<Modification> modifications = request.getModifications();
 
-            AttributeValues oldValues = new AttributeValues();
+            SourceValues oldValues = new SourceValues();
+/*
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
                 Attribute attribute = (Attribute)i.next();
                 oldValues.set(attribute.getName(), attribute.getValues());
@@ -216,9 +214,9 @@ public class EngineImpl extends Engine {
 
             log.debug("Old entry:");
             entry.getAttributes().print();
-
+*/
             log.debug("--- perform modification:");
-            AttributeValues newValues = new AttributeValues(oldValues);
+            SourceValues newValues = new SourceValues(oldValues);
 
             Collection objectClasses = getSchemaManager().getObjectClasses(entryMapping);
             Collection objectClassNames = new ArrayList();
@@ -273,7 +271,7 @@ public class EngineImpl extends Engine {
             }
 
             Attributes attributes = EntryUtil.computeAttributes(newValues);
-            AttributeValues sourceValues = null; // entry.getSourceValues()
+            SourceValues sourceValues = null; // entry.getSourceValues()
             Entry newEntry = null; // new Entry(entry.getDn(), entryMapping, attributes, sourceValues);
 
             log.debug("New entry:");
@@ -282,7 +280,7 @@ public class EngineImpl extends Engine {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("MODIFY", 80));
-                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+                log.debug(Formatter.displayLine("DN: "+dn, 80));
 
                 log.debug(Formatter.displayLine("Old attribute values:", 80));
                 for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
@@ -301,7 +299,7 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            modifyEngine.modify(partition, entry, newValues);
+            modifyEngine.modify(partition, null, newValues);
 
         } catch (LDAPException e) {
             throw e;
@@ -319,7 +317,6 @@ public class EngineImpl extends Engine {
     public void modrdn(
             Session session,
             Partition partition,
-            Entry entry,
             EntryMapping entryMapping,
             ModRdnRequest request,
             ModRdnResponse response
@@ -333,13 +330,13 @@ public class EngineImpl extends Engine {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine("MODRDN", 80));
-                log.debug(Formatter.displayLine("DN: "+entry.getDn(), 80));
+                log.debug(Formatter.displayLine("DN: "+dn, 80));
                 log.debug(Formatter.displayLine("New RDN: "+newRdn, 80));
                 log.debug(Formatter.displayLine("Delete old RDN: "+deleteOldRdn, 80));
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            modrdnEngine.modrdn(partition, entry, newRdn, deleteOldRdn);
+            modrdnEngine.modrdn(partition, null, newRdn, deleteOldRdn);
 
         } catch (LDAPException e) {
             throw e;
@@ -356,7 +353,7 @@ public class EngineImpl extends Engine {
 
     public List find(
             Partition partition,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             EntryMapping entryMapping,
             List rdns,
             int position
@@ -396,7 +393,7 @@ public class EngineImpl extends Engine {
         Collection list = new ArrayList();
         list.add(data);
 
-        AttributeValues loadedSourceValues = loadEngine.loadEntries(
+        SourceValues loadedSourceValues = loadEngine.loadEntries(
                 partition,
                 sourceValues,
                 entryMapping,
@@ -415,7 +412,7 @@ public class EngineImpl extends Engine {
                 String name = (String)i.next();
                 Collection c = loadedSourceValues.get(name);
                 for (Iterator j=c.iterator(); j.hasNext(); ) {
-                    AttributeValues sv = (AttributeValues)j.next();
+                    SourceValues sv = (SourceValues)j.next();
                     sourceValues.add(sv);
                 }
             }
@@ -425,7 +422,7 @@ public class EngineImpl extends Engine {
                     dn,
                     entryMapping,
                     sourceValues,
-                    new AttributeValues(),
+                    new SourceValues(),
                     new ArrayList(),
                     interpreter,
                     filter
@@ -472,9 +469,9 @@ public class EngineImpl extends Engine {
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final AttributeValues sourceValues,
+            final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -564,8 +561,8 @@ public class EngineImpl extends Engine {
                     if (dnOnly) {
                         log.debug("Returning DN only.");
 
-                        AttributeValues sv = null; // data.getAttributes();
-                        Entry entry = null; // new Entry(dn, entryMapping, null, sv);
+                        SourceValues sv = null; // data.getAttributes();
+                        SearchResult entry = null; // new Entry(dn, entryMapping, null, sv);
 
                         response.add(entry);
                         return;
@@ -612,10 +609,10 @@ public class EngineImpl extends Engine {
 
             final SearchResponse newEntries = new SearchResponse() {
                 public void add(Object object) throws Exception {
-                    Entry entry = (Entry)object;
+                    SearchResult entry = (SearchResult)object;
 
                     log.debug("Checking filter "+filter+" on "+entry.getDn());
-                    if (handler.getFilterTool().isValid(entry, filter)) {
+                    if (handler.getFilterTool().isValid(entry.getAttributes(), filter)) {
                         response.add(entry);
                     } else {
                         log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");

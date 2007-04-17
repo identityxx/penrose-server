@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.Collection;
 

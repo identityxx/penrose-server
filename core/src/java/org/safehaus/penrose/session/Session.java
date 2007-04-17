@@ -19,10 +19,10 @@ package org.safehaus.penrose.session;
 
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.entry.DN;
-import org.safehaus.penrose.entry.RDN;
-import org.safehaus.penrose.entry.Attributes;
-import org.safehaus.penrose.entry.Attribute;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
@@ -697,14 +697,14 @@ public class Session {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResponse search(
+    public SearchResponse<SearchResult> search(
             String baseDn,
             String filter
     ) throws LDAPException {
         return search(baseDn, filter, SearchRequest.SCOPE_SUB);
     }
 
-    public SearchResponse search(
+    public SearchResponse<SearchResult> search(
             String baseDn,
             String filter,
             int scope
@@ -718,7 +718,7 @@ public class Session {
         }
     }
 
-    public SearchResponse search(
+    public SearchResponse<SearchResult> search(
             DN baseDn,
             Filter filter,
             int scope
@@ -729,7 +729,7 @@ public class Session {
         request.setFilter(filter);
         request.setScope(scope);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         search(request, response);
 
@@ -738,7 +738,7 @@ public class Session {
 
     public void search(
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws LDAPException {
         try {
             DN baseDn = request.getDn();
@@ -762,7 +762,7 @@ public class Session {
     public void search(
             final Partition partition,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws LDAPException {
 
         try {
@@ -808,11 +808,11 @@ public class Session {
             }
 
             response.setSizeLimit(request.getSizeLimit());
-            SearchResponse resultsToUse = response;
+            SearchResponse<SearchResult> resultsToUse = response;
 
             if (enableEventListeners) {
-            	resultsToUse = new SearchResponse() {
-                    public void add(Object value) throws Exception {
+            	resultsToUse = new SearchResponse<SearchResult>() {
+                    public void add(SearchResult value) throws Exception {
                         response.add(value);
                     }
                     public void setException(LDAPException exception) {

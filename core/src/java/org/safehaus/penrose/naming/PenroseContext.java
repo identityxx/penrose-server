@@ -219,12 +219,12 @@ public class PenroseContext {
                 connectionManager.init(partition, connectionConfig);
             }
 
-            for (Iterator j=partition.getSourceConfigs().iterator(); j.hasNext(); ) {
+            for (Iterator j=partition.getSources().getSourceConfigs().iterator(); j.hasNext(); ) {
                 SourceConfig sourceConfig = (SourceConfig)j.next();
                 sourceManager.init(partition, sourceConfig);
             }
 
-            for (Iterator j=partition.getSourceSyncConfigs().iterator(); j.hasNext(); ) {
+            for (Iterator j=partition.getSources().getSourceSyncConfigs().iterator(); j.hasNext(); ) {
                 SourceSyncConfig sourceSyncConfig = (SourceSyncConfig)j.next();
                 sourceSyncManager.init(partition, sourceSyncConfig);
             }
