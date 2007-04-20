@@ -217,6 +217,22 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            DN dn,
+            RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+
+        ModRdnRequest request = new ModRdnRequest();
+        request.setDn(dn);
+        request.setNewRdn(newRdn);
+        request.setDeleteOldRdn(deleteOldRdn);
+
+        ModRdnResponse response = new ModRdnResponse();
+
+        connection.modrdn(this, request, response);
+    }
+
+    public void modrdn(
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {

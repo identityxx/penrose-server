@@ -466,6 +466,57 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            final Source source,
+            final ModRdnRequest request,
+            final ModRdnResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("ModRdn "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        UpdateStatement statement = new UpdateStatement();
+
+        statement.setSource(source);
+
+        RDN newRdn = request.getNewRdn();
+        for (Iterator i=newRdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = newRdn.get(name);
+
+            Field field = source.getField(name);
+            if (field == null) continue;
+
+            statement.addAssignment(new Assignment(field, value));
+        }
+
+        RDN rdn = request.getDn().getRdn();
+        Filter filter = null;
+        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Object value = rdn.get(name);
+
+            SimpleFilter sf = new SimpleFilter(name, "=", value);
+            filter = FilterTool.appendAndFilter(filter, sf);
+        }
+
+        statement.setFilter(filter);
+
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.setStatement(statement);
+
+        UpdateResponse updateResponse = new UpdateResponse();
+
+        client.executeUpdate(updateRequest, updateResponse);
+
+        log.debug("ModRdn operation completed.");
+    }
+
+    public void modrdn(
             EntryMapping entryMapping,
             Collection sourceRefs,
             SourceValues sourceValues,
