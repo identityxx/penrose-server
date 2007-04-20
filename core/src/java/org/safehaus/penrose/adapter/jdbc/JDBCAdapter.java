@@ -43,7 +43,7 @@ import java.util.*;
  */
 public class JDBCAdapter extends Adapter {
 
-    public JDBCClient client;
+    private JDBCClient client;
 
     public void init() throws Exception {
         client = new JDBCClient(getParameters());
@@ -800,5 +800,13 @@ public class JDBCAdapter extends Adapter {
         }
 
         return new SimpleFilter(fieldName, "like", sb.toString());
+    }
+
+    public JDBCClient getClient() {
+        return client;
+    }
+
+    public void setClient(JDBCClient client) {
+        this.client = client;
     }
 }
