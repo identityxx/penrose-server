@@ -39,6 +39,7 @@ import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.handler.HandlerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -139,6 +140,12 @@ public class PenroseConfigWriter {
         for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
             EngineConfig engineConfig = (EngineConfig)i.next();
             element.add(toElement(engineConfig));
+        }
+
+        Collection handlerConfigs = penroseConfig.getHandlerConfigs();
+        for (Iterator i=handlerConfigs.iterator(); i.hasNext(); ) {
+            HandlerConfig handlerConfig = (HandlerConfig)i.next();
+            element.add(toElement(handlerConfig));
         }
 
         if (penroseConfig.getConnectorConfig() != null) {
@@ -316,10 +323,7 @@ public class PenroseConfigWriter {
 
     public Element toElement(EngineConfig engineConfig) {
         Element element = new DefaultElement("engine");
-
-        Element engineName = new DefaultElement("engine-name");
-        engineName.add(new DefaultText(engineConfig.getName()));
-        element.add(engineName);
+        element.addAttribute("name", engineConfig.getName());
 
         Element engineClass = new DefaultElement("engine-class");
         engineClass.add(new DefaultText(engineConfig.getEngineClass()));
@@ -334,6 +338,40 @@ public class PenroseConfigWriter {
         for (Iterator i = engineConfig.getParameterNames().iterator(); i.hasNext();) {
             String name = (String)i.next();
             String value = (String)engineConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
+    }
+
+    public Element toElement(HandlerConfig handlerConfig) {
+        Element element = new DefaultElement("handler");
+        element.addAttribute("name", handlerConfig.getName());
+
+        Element handlerClass = new DefaultElement("handler-class");
+        handlerClass.add(new DefaultText(handlerConfig.getHandlerClass()));
+        element.add(handlerClass);
+
+        if (handlerConfig.getDescription() != null && !"".equals(handlerConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(handlerConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (Iterator i = handlerConfig.getParameterNames().iterator(); i.hasNext();) {
+            String name = (String)i.next();
+            String value = (String)handlerConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

@@ -58,10 +58,6 @@
   <schema path="schema/system.schema"/>
   <schema path="schema/apachedns.schema"/>
 
-  <entry-cache/>
-
-  <source-cache/>
-
   <engine name="DEFAULT">
     <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>
   </engine>
@@ -77,8 +73,6 @@
   <handler name="PROXY">
     <handler-class>org.safehaus.penrose.handler.proxy.ProxyHandler</handler-class>
   </handler>
-
-  <connector/>
 
   <adapter name="JDBC">
     <adapter-class>org.safehaus.penrose.adapter.jdbc.JDBCAdapter</adapter-class>
