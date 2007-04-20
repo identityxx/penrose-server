@@ -510,7 +510,7 @@ public class JDBCAdapter extends Adapter {
     public void search(
             final Source source,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -520,6 +520,8 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displayLine("Search "+source.getName(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
+
+        response.setSizeLimit(request.getSizeLimit());
 
         SelectStatement statement = new SelectStatement();
 
@@ -552,8 +554,8 @@ public class JDBCAdapter extends Adapter {
         QueryResponse queryResponse = new QueryResponse() {
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
-                Entry entry = createEntry(source, rs);
-                response.add(entry);
+                SearchResult searchResult = createSearchResult(source, rs);
+                response.add(searchResult);
             }
             public void close() throws Exception {
                 response.close();
@@ -570,7 +572,7 @@ public class JDBCAdapter extends Adapter {
             final Collection sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<Entry> response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -583,6 +585,8 @@ public class JDBCAdapter extends Adapter {
             log.debug("Source values:");
             sourceValues.print();
         }
+
+        response.setSizeLimit(request.getSizeLimit());
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
                 partition,
@@ -597,25 +601,25 @@ public class JDBCAdapter extends Adapter {
         QueryRequest queryRequest = builder.generate();
         QueryResponse queryResponse = new QueryResponse() {
 
-            Entry lastEntry;
+            SearchResult lastEntry;
 
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
-                Entry entry = createEntry(entryMapping, sourceRefs, rs);
+                SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
 
                 if (lastEntry == null) {
-                    lastEntry = entry;
+                    lastEntry = searchResult;
 
-                } else if (entry.getDn().equals(lastEntry.getDn())) {
-                    mergeEntry(entry, lastEntry);
+                } else if (searchResult.getDn().equals(lastEntry.getDn())) {
+                    mergeSearchResult(searchResult, lastEntry);
 
                 } else {
                     response.add(lastEntry);
-                    lastEntry = entry;
+                    lastEntry = searchResult;
                 }
 
                 if (debug) {
-                    Formatter.printEntry(entry);
+                    searchResult.print();
                 }
             }
 
@@ -632,12 +636,10 @@ public class JDBCAdapter extends Adapter {
         log.debug("Search operation completed.");
     }
 
-    public Entry createEntry(
+    public SearchResult createSearchResult(
             Source source,
             ResultSet rs
     ) throws Exception {
-
-        Entry entry = new Entry();
 
         Attributes attributes = new Attributes();
         RDNBuilder rb = new RDNBuilder();
@@ -655,20 +657,19 @@ public class JDBCAdapter extends Adapter {
             if (field.isPrimaryKey()) rb.set(fieldName, value);
         }
 
-        entry.setAttributes(attributes);
-        entry.setDn(rb.toRdn());
+        DN dn = new DN(rb.toRdn());
 
-        return entry;
+        return new SearchResult(dn, attributes);
     }
 
-    public Entry createEntry(
+    public SearchResult createSearchResult(
             EntryMapping entryMapping,
             Collection sources,
             ResultSet rs
     ) throws Exception {
 
-        Entry entry = new Entry();
-        entry.setEntryMapping(entryMapping);
+        SearchResult searchResult = new SearchResult();
+        searchResult.setEntryMapping(entryMapping);
 
         RDNBuilder rb = new RDNBuilder();
 
@@ -698,24 +699,24 @@ public class JDBCAdapter extends Adapter {
                 }
             }
 
-            entry.setSourceValues(sourceName, sourceValues);
+            searchResult.setSourceAttributes(sourceName, sourceValues);
         }
 
-        entry.setDn(rb.toRdn());
+        searchResult.setDn(new DN(rb.toRdn()));
 
-        return entry;
+        return searchResult;
     }
 
-    public void mergeEntry(Entry source, Entry destination) {
+    public void mergeSearchResult(SearchResult source, SearchResult destination) {
         for (Iterator i=source.getSourceNames().iterator(); i.hasNext(); ) {
             String sourceName = (String)i.next();
 
-            Attributes sourceValues = source.getSourceValues(sourceName);
+            Attributes sourceValues = source.getSourceAttributes(sourceName);
 
-            Attributes destinationValues = destination.getSourceValues(sourceName);
+            Attributes destinationValues = destination.getSourceAttributes(sourceName);
             if (destinationValues == null) {
                 destinationValues = new Attributes();
-                destination.setSourceValues(sourceName, destinationValues);
+                destination.setSourceAttributes(sourceName, destinationValues);
             }
 
             destinationValues.add(sourceValues);

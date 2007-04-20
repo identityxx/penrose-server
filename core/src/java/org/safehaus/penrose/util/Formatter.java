@@ -17,15 +17,11 @@
  */
 package org.safehaus.penrose.util;
 
-import org.safehaus.penrose.entry.Entry;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -62,47 +58,5 @@ public class Formatter {
         StringBuilder sb = new StringBuilder();
         for (int i=0; i<length; i++) sb.append(s);
         return sb.toString();
-    }
-
-    public static void printEntry(Entry entry) throws Exception {
-
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Entry: "+entry.getDn(), 80));
-
-        Attributes attributes = entry.getAttributes();
-        if (attributes != null) {
-            for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-                Attribute attribute = (Attribute)i.next();
-                String name = attribute.getName();
-
-                for (Iterator k=attribute.getValues().iterator(); k.hasNext(); ) {
-                    Object value = k.next();
-                    String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
-
-                    log.debug(Formatter.displayLine(" - "+name+": "+value+" ("+className+")", 80));
-                }
-            }
-        }
-
-        for (Iterator i=entry.getSourceNames().iterator(); i.hasNext(); ) {
-            String sourceName = (String)i.next();
-            Attributes sourceValues = entry.getSourceValues(sourceName);
-
-            for (Iterator j=sourceValues.getAll().iterator(); j.hasNext(); ) {
-                Attribute attribute = (Attribute)j.next();
-                String fieldName = sourceName+"."+attribute.getName();
-
-                for (Iterator k=attribute.getValues().iterator(); k.hasNext(); ) {
-                    Object value = k.next();
-                    String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
-
-                    log.debug(Formatter.displayLine(" - "+fieldName+": "+value+" ("+className+")", 80));
-                }
-            }
-        }
-
-        log.debug(Formatter.displaySeparator(80));
     }
 }

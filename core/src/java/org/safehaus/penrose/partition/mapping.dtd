@@ -2,7 +2,7 @@
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (description?, oc*, at*, source*, relationship*,engine?,aci*,parameter*)>
+<!ELEMENT entry (description?,oc*,at*,source*,partition?,handler?,engine?,aci*,parameter*)>
 <!ATTLIST entry dn CDATA #REQUIRED>
 
 <!ELEMENT description (#PCDATA)>
@@ -28,8 +28,6 @@
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
 
-<!ELEMENT relationship (expression)>
-
 <!ELEMENT binary (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>
 <!ELEMENT variable (#PCDATA)>
@@ -37,8 +35,9 @@
 <!ATTLIST expression foreach CDATA #IMPLIED>
 <!ATTLIST expression var CDATA #IMPLIED>
 
-<!ELEMENT engine (engine-name,parameter*)>
-<!ELEMENT engine-name (#PCDATA)>
+<!ELEMENT partition (#PCDATA)>
+<!ELEMENT handler (#PCDATA)>
+<!ELEMENT engine (#PCDATA)>
 
 <!ELEMENT aci (dn?,target?,attributes?,scope?,action?,permission)>
 <!ATTLIST aci subject CDATA #IMPLIED>

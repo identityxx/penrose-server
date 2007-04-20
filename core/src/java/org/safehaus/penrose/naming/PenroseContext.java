@@ -10,10 +10,6 @@ import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigWriter;
-import org.safehaus.penrose.log4j.Log4jConfigReader;
-import org.safehaus.penrose.log4j.Log4jConfig;
-import org.safehaus.penrose.log4j.AppenderConfig;
-import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSyncConfig;
@@ -132,26 +128,6 @@ public class PenroseContext {
     public void init(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
 
-        String home = penroseConfig.getHome();
-
-        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
-        if (!log4jXml.exists()) return;
-
-        Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
-        Log4jConfig config = configReader.read();
-
-        log.debug("Appenders:");
-        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
-            AppenderConfig appenderConfig = (AppenderConfig)i.next();
-            log.debug(" - "+appenderConfig.getName());
-        }
-
-        log.debug("Loggers:");
-        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
-            LoggerConfig loggerConfig = (LoggerConfig)i.next();
-            log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
-        }
-
         threadManager = new ThreadManager();
         threadManager.setPenroseConfig(penroseConfig);
         threadManager.setPenroseContext(this);
@@ -186,6 +162,10 @@ public class PenroseContext {
     }
 
     public void load() throws Exception {
+        load(penroseConfig.getHome());
+    }
+
+    public void load(String dir) throws Exception {
 
         for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
@@ -196,7 +176,7 @@ public class PenroseContext {
 
         for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
             SchemaConfig schemaConfig = (SchemaConfig)i.next();
-            schemaManager.init(schemaConfig);
+            schemaManager.init(dir, schemaConfig);
         }
 
         for (Iterator i=penroseConfig.getInterpreterConfigs().iterator(); i.hasNext(); ) {
@@ -208,7 +188,7 @@ public class PenroseContext {
 
         for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
             PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            partitionManager.load(partitionConfig);
+            partitionManager.load(dir, partitionConfig);
         }
 
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {

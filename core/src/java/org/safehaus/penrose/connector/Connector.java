@@ -216,7 +216,7 @@ public class Connector {
             final Collection sources,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<Entry> response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         SourceRef sourceRef = (SourceRef)sources.iterator().next();

@@ -17,7 +17,7 @@ import java.util.*;
 public class Source implements Cloneable {
 
     protected String name;
-    protected Map parameters = new LinkedHashMap();
+    protected Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     protected Partition partition;
     protected SourceConfig sourceConfig;
@@ -228,7 +228,7 @@ public class Source implements Cloneable {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResponse search(
+    public SearchResponse<SearchResult> search(
             DN dn,
             Filter filter,
             int scope
@@ -239,7 +239,7 @@ public class Source implements Cloneable {
         request.setFilter(filter);
         request.setScope(scope);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         connection.search(this, request, response);
 
@@ -248,7 +248,7 @@ public class Source implements Cloneable {
 
     public void search(
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         connection.search(this, request, response);

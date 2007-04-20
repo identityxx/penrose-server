@@ -95,9 +95,9 @@ public class EntryMapping implements Cloneable {
      */
     private Collection<Relationship> relationships = new ArrayList<Relationship>();
 
-    private String partition;
-    private HandlerMapping handlerMapping;
-    private EngineMapping engineMapping;
+    private String partitionName;
+    private String handlerName;
+    private String engineName;
 
     /**
      * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
@@ -389,14 +389,6 @@ public class EntryMapping implements Cloneable {
         this.childMappings = childMappings;
     }
 
-    public String getHandlerName() {
-        return handlerMapping == null ? null : handlerMapping.getHandlerName();
-    }
-
-    public String getEngineName() {
-        return engineMapping == null ? null : engineMapping.getEngineName();
-    }
-
     public void addACI(ACI aci) {
         acl.add(aci);
     }
@@ -453,9 +445,9 @@ public class EntryMapping implements Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
-        if (!equals(partition, entryMapping.partition)) return false;
-        if (!equals(handlerMapping, entryMapping.handlerMapping)) return false;
-        if (!equals(engineMapping, entryMapping.engineMapping)) return false;
+        if (!equals(partitionName, entryMapping.partitionName)) return false;
+        if (!equals(handlerName, entryMapping.handlerName)) return false;
+        if (!equals(engineName, entryMapping.engineName)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
         if (!equals(parameters, entryMapping.parameters)) return false;
 
@@ -493,9 +485,9 @@ public class EntryMapping implements Cloneable {
             addRelationship((Relationship)relationship.clone());
         }
 
-        partition = entryMapping.partition;
-        handlerMapping = (HandlerMapping)entryMapping.handlerMapping.clone();
-        engineMapping = (EngineMapping)entryMapping.engineMapping.clone();
+        partitionName = entryMapping.partitionName;
+        handlerName = entryMapping.handlerName;
+        engineName = entryMapping.engineName;
 
         removeACL();
         for (Iterator i=entryMapping.acl.iterator(); i.hasNext(); ) {
@@ -513,20 +505,20 @@ public class EntryMapping implements Cloneable {
         return entryMapping;
     }
 
-    public HandlerMapping getHandlerMapping() {
-        return handlerMapping;
+    public String getHandlerName() {
+        return handlerName;
     }
 
-    public void setHandlerMapping(HandlerMapping handlerMapping) {
-        this.handlerMapping = handlerMapping;
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
     }
 
-    public EngineMapping getEngineMapping() {
-        return engineMapping;
+    public String getEngineName() {
+        return engineName;
     }
 
-    public void setEngineMapping(EngineMapping engineMapping) {
-        this.engineMapping = engineMapping;
+    public void setEngineName(String engineName) {
+        this.engineName = engineName;
     }
 
     public String getId() {
@@ -545,11 +537,11 @@ public class EntryMapping implements Cloneable {
         this.parentId = parentId;
     }
 
-    public String getPartition() {
-        return partition;
+    public String getPartitionName() {
+        return partitionName;
     }
 
-    public void setPartition(String partition) {
-        this.partition = partition;
+    public void setPartitionName(String partitionName) {
+        this.partitionName = partitionName;
     }
 }

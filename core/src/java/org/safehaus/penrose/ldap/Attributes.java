@@ -19,7 +19,7 @@ public class Attributes {
     public Attributes() {
     }
 
-    public Collection getNames() {
+    public Collection<String> getNames() {
         return names;
     }
 
@@ -83,6 +83,12 @@ public class Attributes {
 
         attributes.remove(name.toLowerCase());
         names.remove(name);
+    }
+
+    public void set(Attributes attributes) {
+        if (this == attributes) return;
+        clear();
+        add(attributes);
     }
 
     public void add(Attributes attributes) {

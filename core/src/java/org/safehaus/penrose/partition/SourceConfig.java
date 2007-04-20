@@ -78,7 +78,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     /**
      * Parameters.
      */
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new HashMap<String,String>();
 
     /**
      * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
@@ -206,7 +206,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
     public void setParameter(String name, String value) {
@@ -221,7 +221,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         parameters.remove(name);
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
     

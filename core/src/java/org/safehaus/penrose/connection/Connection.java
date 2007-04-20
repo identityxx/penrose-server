@@ -21,7 +21,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -240,7 +239,7 @@ public class Connection implements ConnectionMBean {
     public void search(
             Source source,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         adapter.search(source, request, response);
@@ -251,7 +250,7 @@ public class Connection implements ConnectionMBean {
             Collection sources,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<Entry> response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         adapter.search(entryMapping, sources, sourceValues, request, response);

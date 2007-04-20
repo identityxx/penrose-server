@@ -20,10 +20,16 @@ package org.safehaus.penrose.util;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Modification;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.NamingEnumeration;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -125,5 +131,48 @@ public class LDAPUtil {
         }
 
         return null;
+    }
+
+    public static Collection<Modification> createModifications(
+            Attributes oldAttributes,
+            Attributes newAttributes
+    ) {
+
+        Collection<Modification> modifications = new ArrayList<Modification>();
+
+        Collection<String> oldNames = oldAttributes.getNames();
+        Collection<String> newNames = newAttributes.getNames();
+
+        Collection<String> adds = new ArrayList<String>();
+        adds.addAll(newNames);
+        adds.removeAll(oldNames);
+
+        for (Iterator i=adds.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Attribute attribute = newAttributes.get(name);
+            modifications.add(new Modification(Modification.ADD, attribute));
+        }
+
+        Collection<String> deletes = new ArrayList<String>();
+        deletes.addAll(oldNames);
+        deletes.removeAll(newNames);
+
+        for (Iterator i=deletes.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Attribute attribute = oldAttributes.get(name);
+            modifications.add(new Modification(Modification.DELETE, attribute));
+        }
+
+        Collection<String> modifies = new ArrayList<String>();
+        modifies.addAll(oldNames);
+        modifies.retainAll(newNames);
+
+        for (Iterator i=modifies.iterator(); i.hasNext(); ) {
+            String name = (String)i.next();
+            Attribute attribute = newAttributes.get(name);
+            modifications.add(new Modification(Modification.REPLACE, attribute));
+        }
+
+        return modifications;
     }
 }

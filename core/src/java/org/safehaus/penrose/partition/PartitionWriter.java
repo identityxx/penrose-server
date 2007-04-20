@@ -163,7 +163,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toSourcesXmlElement(Partition partition) {
+    public Element toSourcesXmlElement(Partition partition) throws Exception {
         Element element = new DefaultElement("sources");
 
         for (Iterator i = partition.getSources().getSourceConfigs().iterator(); i.hasNext(); ) {
@@ -255,7 +255,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(SourceConfig sourceConfig) {
+    public Element toElement(SourceConfig sourceConfig) throws Exception {
         Element element = new DefaultElement("source");
         element.addAttribute("name", sourceConfig.getName());
 
@@ -315,25 +315,24 @@ public class PartitionWriter {
             entryElement.add(toElement(relationship));
         }
 */
-        HandlerMapping handlerMapping = entryMapping.getHandlerMapping();
-        if (handlerMapping != null) {
-            Element element = new DefaultElement("handler");
-
-            Element handlerName = new DefaultElement("handler-name");
-            handlerName.add(new DefaultText(handlerMapping.getHandlerName()));
-            element.add(handlerName);
-
+        String partitionName = entryMapping.getPartitionName();
+        if (partitionName != null) {
+            Element element = new DefaultElement("partition");
+            element.add(new DefaultText(partitionName));
             entryElement.add(element);
         }
 
-        EngineMapping engineMapping = entryMapping.getEngineMapping();
-        if (engineMapping != null) {
+        String handlerName = entryMapping.getHandlerName();
+        if (handlerName != null) {
+            Element element = new DefaultElement("handler");
+            element.add(new DefaultText(handlerName));
+            entryElement.add(element);
+        }
+
+        String engineName = entryMapping.getEngineName();
+        if (engineName != null) {
             Element element = new DefaultElement("engine");
-
-            Element engineName = new DefaultElement("engine-name");
-            engineName.add(new DefaultText(engineMapping.getEngineName()));
-            element.add(engineName);
-
+            element.add(new DefaultText(engineName));
             entryElement.add(element);
         }
 
@@ -673,18 +672,42 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(FieldConfig field) {
+    public Element toElement(FieldConfig fieldConfig) throws Exception {
         Element element = new DefaultElement("field");
-        element.addAttribute("name", field.getName());
-        if (!field.getName().equals(field.getOriginalName())) element.addAttribute("originalName", field.getOriginalName());
-        if (field.isPrimaryKey()) element.addAttribute("primaryKey", "true");
-        if (!field.isSearchable()) element.addAttribute("searchable", "false");
-        if (field.isUnique()) element.addAttribute("unique", "true");
-        if (field.isIndex()) element.addAttribute("index", "true");
-        if (field.isCaseSensitive()) element.addAttribute("caseSensitive", "true");
-        if (!FieldConfig.DEFAULT_TYPE.equals(field.getType())) element.addAttribute("type", field.getType());
-        if (field.getLength() != field.getDefaultLength()) element.addAttribute("length", ""+field.getLength());
-        if (field.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+field.getPrecision());
+        element.addAttribute("name", fieldConfig.getName());
+
+        if (!fieldConfig.getName().equals(fieldConfig.getOriginalName())) element.addAttribute("originalName", fieldConfig.getOriginalName());
+        if (fieldConfig.isPrimaryKey()) element.addAttribute("primaryKey", "true");
+        if (!fieldConfig.isSearchable()) element.addAttribute("searchable", "false");
+        if (fieldConfig.isUnique()) element.addAttribute("unique", "true");
+        if (fieldConfig.isIndex()) element.addAttribute("index", "true");
+        if (fieldConfig.isCaseSensitive()) element.addAttribute("caseSensitive", "true");
+        if (!FieldConfig.DEFAULT_TYPE.equals(fieldConfig.getType())) element.addAttribute("type", fieldConfig.getType());
+        if (fieldConfig.getLength() != fieldConfig.getDefaultLength()) element.addAttribute("length", ""+ fieldConfig.getLength());
+        if (fieldConfig.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+ fieldConfig.getPrecision());
+
+        if (fieldConfig.getConstant() != null) {
+            Object value = fieldConfig.getConstant();
+            if (value instanceof byte[]) {
+                Element e = element.addElement("binary");
+                e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+            } else {
+                Element e = element.addElement("constant");
+                e.addText((String)value);
+            }
+
+        } else if (fieldConfig.getVariable() != null) {
+            Element scriptElement = new DefaultElement("variable");
+            scriptElement.setText(fieldConfig.getVariable());
+            element.add(scriptElement);
+
+        } else if (fieldConfig.getExpression() != null) {
+            element.add(toElement(fieldConfig.getExpression()));
+
+        } else {
+            return null;
+        }
+
         return element;
     }
 

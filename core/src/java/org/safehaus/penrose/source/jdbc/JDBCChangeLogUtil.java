@@ -27,7 +27,7 @@ public class JDBCChangeLogUtil extends ChangeLogUtil {
         return request;
     }
 
-    public ChangeLog createChangeLog(Entry changeLogEntry) throws Exception {
+    public ChangeLog createChangeLog(SearchResult changeLogEntry) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 

@@ -11,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class SourceSyncSearchResponse extends SearchResponse {
+public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
 
     protected Source source;
     protected Collection<Source> destinations;
@@ -30,11 +30,11 @@ public class SourceSyncSearchResponse extends SearchResponse {
 
     }
 
-    public void add(Object object) throws Exception {
+    public void add(SearchResult object) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        Entry sourceEntry = (Entry)object;
+        SearchResult sourceEntry = (SearchResult)object;
 
         DN dn = sourceEntry.getDn();
         Attributes attributes = sourceEntry.getAttributes();

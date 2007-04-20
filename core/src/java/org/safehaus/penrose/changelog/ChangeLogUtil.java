@@ -28,9 +28,9 @@ public abstract class ChangeLogUtil {
 
         SearchRequest request = createSearchRequest(changeNumber);
 
-        SearchResponse response = new SearchResponse() {
-            public void add(Object object) throws Exception {
-                Entry entry = (Entry)object;
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>() {
+            public void add(SearchResult object) throws Exception {
+                SearchResult entry = (SearchResult)object;
                 super.add(createChangeLog(entry));
             }
         };
@@ -63,7 +63,7 @@ public abstract class ChangeLogUtil {
 
     public abstract SearchRequest createSearchRequest(Number changeNumber) throws Exception;
 
-    public abstract ChangeLog createChangeLog(Entry changeLogEntry) throws Exception;
+    public abstract ChangeLog createChangeLog(SearchResult changeLogEntry) throws Exception;
 
     public Number getLastChangeNumber() throws Exception {
 
@@ -74,11 +74,11 @@ public abstract class ChangeLogUtil {
 
         DN dn = new DN(rb.toRdn());
 
-        SearchResponse response = tracker.search(dn, null, SearchRequest.SCOPE_BASE);
+        SearchResponse<SearchResult> response = tracker.search(dn, null, SearchRequest.SCOPE_BASE);
 
         if (!response.hasNext()) return null;
 
-        Entry trackerEntry = (Entry)response.next();
+        SearchResult trackerEntry = (SearchResult)response.next();
         Attributes attributes = trackerEntry.getAttributes();
 
         if (debug) {

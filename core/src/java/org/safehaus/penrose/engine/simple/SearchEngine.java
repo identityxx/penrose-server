@@ -22,7 +22,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.util.EntryUtil;
@@ -70,9 +69,9 @@ public class SearchEngine {
                 return;
             }
 
-            SearchResponse<Entry> sr = new SearchResponse<Entry>() {
-                public void add(Entry object) throws Exception {
-                    Entry result = (Entry)object;
+            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                public void add(SearchResult object) throws Exception {
+                    SearchResult result = (SearchResult)object;
 
                     EntryMapping em = result.getEntryMapping();
 
@@ -80,7 +79,7 @@ public class SearchEngine {
 
                     for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
                         String sourceName = (String)i.next();
-                        Attributes esv = result.getSourceValues(sourceName);
+                        Attributes esv = result.getSourceAttributes(sourceName);
                         sv.add(sourceName, esv);
                     }
 

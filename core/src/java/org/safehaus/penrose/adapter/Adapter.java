@@ -23,7 +23,6 @@ import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -209,7 +208,7 @@ public abstract class Adapter {
     public void search(
             Source source,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
     }
@@ -219,17 +218,9 @@ public abstract class Adapter {
             Collection sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<Entry> response
+            SearchResponse<SearchResult> response
     ) throws Exception {
         throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
-    }
-
-    public Long getLastChangeNumber(Source source) throws Exception {
-        return null;
-    }
-
-    public SearchResponse getChanges(Source source, Long lastChangeNumber) throws Exception {
-        return null;
     }
 
     public Object openConnection() throws Exception {

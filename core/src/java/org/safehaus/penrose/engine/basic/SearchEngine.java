@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.ldap.*;
@@ -59,16 +58,16 @@ public class SearchEngine {
                 return;
             }
 
-            SearchResponse<Entry> sr = new SearchResponse<Entry>() {
-                public void add(Entry object) throws Exception {
-                    Entry result = (Entry)object;
+            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                public void add(SearchResult object) throws Exception {
+                    SearchResult result = (SearchResult)object;
                     EntryMapping em = result.getEntryMapping();
 
                     Attributes sv = EntryUtil.computeAttributes(sourceValues);
 
                     for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
                         String sourceName = (String)i.next();
-                        Attributes esv = result.getSourceValues(sourceName);
+                        Attributes esv = result.getSourceAttributes(sourceName);
                         sv.add(sourceName, esv);
                     }
 
@@ -95,9 +94,9 @@ public class SearchEngine {
                         DN dn = (DN)i.next();
 
                         if (debug) log.debug("Generating entry "+dn);
-                        SearchResult SearchResult = new SearchResult(dn, attributes);
-                        SearchResult.setEntryMapping(em);
-                        response.add(SearchResult);
+                        SearchResult searchResult = new SearchResult(dn, attributes);
+                        searchResult.setEntryMapping(em);
+                        response.add(searchResult);
                     }
                 }
             };

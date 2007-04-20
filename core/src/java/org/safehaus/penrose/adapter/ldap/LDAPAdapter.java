@@ -35,6 +35,7 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
@@ -96,7 +97,7 @@ public class LDAPAdapter extends Adapter {
         return rb.toRdn();
     }
 
-    public Entry createEntry(
+    public SearchResult createSearchResult(
             Source source,
             javax.naming.directory.SearchResult sr
     ) throws Exception {
@@ -131,13 +132,10 @@ public class LDAPAdapter extends Adapter {
             }
         }
 
-        Entry entry = new Entry(dn);
-        entry.setAttributes(attributes);
-
-        return entry;
+        return new SearchResult(dn, attributes);
     }
 
-    public Entry createEntry(
+    public SearchResult createSearchResult(
             Partition partition,
             EntryMapping entryMapping,
             SourceRef sourceRef,
@@ -147,11 +145,13 @@ public class LDAPAdapter extends Adapter {
         String sourceName = sourceRef.getAlias();
 
         DN dn = new DN(sr.getName());
-        Entry entry = new Entry(dn);
-        entry.setEntryMapping(entryMapping);
+
+        SearchResult searchResult = new SearchResult();
+        searchResult.setDn(dn);
+        searchResult.setEntryMapping(entryMapping);
 
         Attributes sourceValues = new Attributes();
-        entry.setSourceValues(sourceName, sourceValues);
+        searchResult.setSourceAttributes(sourceName, sourceValues);
 
         RDN rdn = dn.getRdn();
         for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
@@ -179,7 +179,7 @@ public class LDAPAdapter extends Adapter {
             }
         }
 
-        return entry;
+        return searchResult;
     }
 
     public void modifyAdd(SourceConfig sourceConfig, SourceValues entry) throws LDAPException {
@@ -684,7 +684,7 @@ public class LDAPAdapter extends Adapter {
     public void search(
             final Source source,
             final SearchRequest request,
-            final SearchResponse response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -694,6 +694,8 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displayLine("Search "+source.getName(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
+
+        response.setSizeLimit(request.getSizeLimit());
 
         LdapContext ctx = null;
         try {
@@ -721,14 +723,14 @@ public class LDAPAdapter extends Adapter {
                 public void add(Object object) throws Exception {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)object;
 
-                    Entry entry = createEntry(source, sr);
-                    if (entry == null) return;
+                    SearchResult searchResult = createSearchResult(source, sr);
+                    if (searchResult == null) return;
 
                     if (debug) {
-                        Formatter.printEntry(entry);
+                        searchResult.print();
                     }
 
-                    response.add(entry);
+                    response.add(searchResult);
                 }
                 public void close() throws Exception {
                     response.close();
@@ -822,7 +824,7 @@ public class LDAPAdapter extends Adapter {
             final Collection sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<Entry> response
+            final SearchResponse<SearchResult> response
     ) throws Exception {
 
         final boolean debug = log.isDebugEnabled();
@@ -835,6 +837,8 @@ public class LDAPAdapter extends Adapter {
             log.debug("Source values:");
             sourceValues.print();
         }
+
+        response.setSizeLimit(request.getSizeLimit());
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
                 partition,
@@ -856,14 +860,14 @@ public class LDAPAdapter extends Adapter {
                 public void add(Object object) throws Exception {
                     javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)object;
 
-                    Entry entry = createEntry(partition, entryMapping, sourceRef, sr);
-                    if (entry == null) return;
+                    SearchResult searchResult = createSearchResult(partition, entryMapping, sourceRef, sr);
+                    if (searchResult == null) return;
 
                     if (debug) {
-                        Formatter.printEntry(entry);
+                        searchResult.print();
                     }
 
-                    response.add(entry);
+                    response.add(searchResult);
                 }
                 public void close() throws Exception {
                     response.close();

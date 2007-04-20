@@ -104,37 +104,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             </pattern>
 
-            <call-method-rule pattern="partition" methodname="setPartition" paramcount="0" />
-
-            <pattern value="handler">
-
-                <object-create-rule classname="org.safehaus.penrose.mapping.HandlerMapping" />
-                <call-method-rule pattern="handler-name" methodname="setHandlerName" paramcount="0" />
-
-                <pattern value="parameter">
-                    <call-method-rule methodname="setParameter" paramcount="2" />
-                    <call-param-rule pattern="param-name" paramnumber="0"/>
-                    <call-param-rule pattern="param-value" paramnumber="1"/>
-                </pattern>
-
-                <set-next-rule methodname="setHandlerMapping" />
-
-            </pattern>
-
-            <pattern value="engine">
-
-                <object-create-rule classname="org.safehaus.penrose.mapping.EngineMapping" />
-                <call-method-rule pattern="engine-name" methodname="setEngineName" paramcount="0" />
-
-                <pattern value="parameter">
-                    <call-method-rule methodname="setParameter" paramcount="2" />
-                    <call-param-rule pattern="param-name" paramnumber="0"/>
-                    <call-param-rule pattern="param-value" paramnumber="1"/>
-                </pattern>
-
-                <set-next-rule methodname="setEngineMapping" />
-                
-            </pattern>
+            <call-method-rule pattern="partition" methodname="setPartitionName" paramcount="0" />
+            <call-method-rule pattern="handler" methodname="setHandlerName" paramcount="0" />
+            <call-method-rule pattern="engine" methodname="setEngineName" paramcount="0" />
 
             <pattern value="aci">
 

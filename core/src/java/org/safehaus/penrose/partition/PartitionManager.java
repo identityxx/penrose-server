@@ -49,11 +49,11 @@ public class PartitionManager implements PartitionManagerMBean {
         return load(penroseConfig.getHome(), partitionConfig);
     }
 
-    public Partition load(String home, PartitionConfig partitionConfig) throws Exception {
+    public Partition load(String dir, PartitionConfig partitionConfig) throws Exception {
 
         log.debug("Loading "+partitionConfig.getName()+" partition.");
 
-        PartitionReader partitionReader = new PartitionReader(home);
+        PartitionReader partitionReader = new PartitionReader(dir);
         Partition partition = partitionReader.read(partitionConfig);
 
         Collection results = partitionValidator.validate(partition);

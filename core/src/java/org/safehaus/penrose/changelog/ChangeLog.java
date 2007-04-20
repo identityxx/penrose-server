@@ -1,11 +1,12 @@
 package org.safehaus.penrose.changelog;
 
 import org.safehaus.penrose.ldap.Request;
+import org.safehaus.penrose.ldap.SearchResult;
 
 /**
  * @author Endi S. Dewata
  */
-public class ChangeLog {
+public class ChangeLog extends SearchResult {
 
     public final static int ADD    = 1;
     public final static int MODIFY = 2;

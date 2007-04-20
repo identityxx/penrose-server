@@ -35,7 +35,7 @@ public class Entry {
     protected EntryMapping entryMapping;
     protected Attributes attributes;
 
-    protected Map sourceValues = new HashMap();
+    protected Map<String,Attributes> sourceValues = new HashMap<String,Attributes>();
 
     public Entry() {
     }

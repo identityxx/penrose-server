@@ -1,7 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.Attribute;
-
 /**
  * @author Endi S. Dewata
  */
@@ -14,7 +12,7 @@ public class Modification {
     protected int type;
     protected Attribute attribute;
 
-    public Modification(int type, Attribute attribute) throws Exception {
+    public Modification(int type, Attribute attribute) {
         this.type = type;
         this.attribute = attribute;
     }
@@ -23,15 +21,15 @@ public class Modification {
         this.type = type;
     }
 
-    public int getType() throws Exception {
+    public int getType() {
         return type;
     }
 
-    public void setAttribute(Attribute attribute) throws Exception {
+    public void setAttribute(Attribute attribute) {
         this.attribute = attribute;
     }
 
-    public Attribute getAttribute() throws Exception {
+    public Attribute getAttribute() {
         return attribute;
     }
 }

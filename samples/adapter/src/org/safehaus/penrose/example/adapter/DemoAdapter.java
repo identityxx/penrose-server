@@ -241,7 +241,7 @@ public class DemoAdapter extends Adapter {
             Collection sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<Entry> response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
@@ -262,10 +262,12 @@ public class DemoAdapter extends Adapter {
 
             System.out.println(" - "+rdn+" => true");
 
-            Entry entry = new Entry(rdn, entryMapping);
-            entry.setSourceValues(sourceRef.getAlias(), attributes);
+            SearchResult searchResult = new SearchResult();
+            searchResult.setDn(new DN(rdn));
+            searchResult.setEntryMapping(entryMapping);
+            searchResult.setSourceAttributes(sourceRef.getAlias(), attributes);
 
-            response.add(entry);
+            response.add(searchResult);
         }
 
         response.close();

@@ -125,7 +125,7 @@ public class DefaultHandler extends Handler {
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
 
-                String partitionName = childMapping.getPartition();
+                String partitionName = childMapping.getPartitionName();
 
                 if (partitionName == null) {
                     Handler handler = handlerManager.getHandler(partition, childMapping);

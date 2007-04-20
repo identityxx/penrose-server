@@ -551,7 +551,7 @@ public class HandlerManager {
             for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping e = (EntryMapping)j.next();
                 if (e.getDn().isEmpty()) continue;
-                attributes.addValue("namingContexts", e.getDn());
+                attributes.addValue("namingContexts", e.getDn().toString());
             }
         }
 

@@ -3,10 +3,10 @@ package org.safehaus.penrose.source;
 import org.safehaus.penrose.changelog.ChangeLogUtil;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.jdbc.JDBCClient;
 import org.slf4j.Logger;
@@ -225,7 +225,7 @@ public class SourceSync {
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
 
         SearchRequest sourceRequest = new SearchRequest();
-        SearchResponse sourceResponse = new SourceSyncSearchResponse(
+        SearchResponse<SearchResult> sourceResponse = new SourceSyncSearchResponse(
                 source,
                 targets,
                 interpreter

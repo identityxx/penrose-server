@@ -32,18 +32,14 @@
     <source name="users">
       <source-name>users</source-name>
     </source>
-    <engine>
-      <engine-name>PROXY</engine-name>
-    </engine>
+    <handler>PROXY</handler>
   </entry>
 
   <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
     <source name="groups">
       <source-name>groups</source-name>
     </source>
-    <engine>
-      <engine-name>PROXY</engine-name>
-    </engine>
+    <handler>PROXY</handler>
   </entry>
 
 </mapping>
