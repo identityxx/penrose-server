@@ -104,13 +104,9 @@ public class NestedTestCase extends JDBCTestCase {
         membersMapping.setName("m");
         membersMapping.setSourceName("members");
         membersMapping.addFieldMapping(new FieldMapping("username", FieldMapping.VARIABLE, "uid"));
-        membersMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "memberOf"));
+        membersMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "g.groupname"));
         membersMapping.addFieldMapping(new FieldMapping("name", FieldMapping.VARIABLE, "cn"));
         members.addSourceMapping(membersMapping);
-
-        Relationship relationship = new Relationship();
-        relationship.setExpression("g.groupname = m.groupname");
-        members.addRelationship(relationship);
 
         partition.addEntryMapping(members);
 

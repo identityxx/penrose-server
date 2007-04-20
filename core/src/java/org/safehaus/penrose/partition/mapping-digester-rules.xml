@@ -96,14 +96,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             </pattern>
 
-            <pattern value="relationship">
-
-                <object-create-rule classname="org.safehaus.penrose.mapping.Relationship" />
-                <call-method-rule pattern="expression" methodname="setExpression" paramcount="0" />
-                <set-next-rule methodname="addRelationship" />
-
-            </pattern>
-
             <call-method-rule pattern="partition" methodname="setPartitionName" paramcount="0" />
             <call-method-rule pattern="handler" methodname="setHandlerName" paramcount="0" />
             <call-method-rule pattern="engine" methodname="setEngineName" paramcount="0" />

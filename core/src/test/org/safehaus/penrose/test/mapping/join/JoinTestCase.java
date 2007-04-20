@@ -89,14 +89,11 @@ public class JoinTestCase extends JDBCTestCase {
         SourceMapping usergroupsMapping = new SourceMapping();
         usergroupsMapping.setName("ug");
         usergroupsMapping.setSourceName("usergroups");
-        usergroupsMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "cn"));
+        usergroupsMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "g.groupname"));
         usergroupsMapping.addFieldMapping(new FieldMapping("username", FieldMapping.VARIABLE, "uniqueMember"));
         usergroupsMapping.setRequired(false);
         groups.addSourceMapping(usergroupsMapping);
 
-        Relationship relationship = new Relationship();
-        relationship.setExpression("g.groupname = ug.groupname");
-        groups.addRelationship(relationship);
         partition.addEntryMapping(groups);
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();

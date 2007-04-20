@@ -264,8 +264,8 @@ public class PartitionWriter {
         element.add(adapterName);
 
         for (Iterator i = sourceConfig.getFieldConfigs().iterator(); i.hasNext(); ) {
-            FieldConfig field = (FieldConfig)i.next();
-            Element fieldElement = toElement(field);
+            FieldConfig fieldConfig = (FieldConfig)i.next();
+            Element fieldElement = toElement(fieldConfig);
             element.add(fieldElement);
         }
 
@@ -444,16 +444,6 @@ public class PartitionWriter {
 
             element.add(parameterElement);
         }
-
-        return element;
-    }
-
-    public Element toElement(Relationship relationship) {
-        Element element = new DefaultElement("relationship");
-
-        Element expressionElement = new DefaultElement("expression");
-        expressionElement.add(new DefaultText(relationship.getExpression()));
-        element.add(expressionElement);
 
         return element;
     }
@@ -673,39 +663,82 @@ public class PartitionWriter {
     }
 
     public Element toElement(FieldConfig fieldConfig) throws Exception {
+        log.debug("Field "+fieldConfig.getName()+":");
         Element element = new DefaultElement("field");
         element.addAttribute("name", fieldConfig.getName());
 
-        if (!fieldConfig.getName().equals(fieldConfig.getOriginalName())) element.addAttribute("originalName", fieldConfig.getOriginalName());
-        if (fieldConfig.isPrimaryKey()) element.addAttribute("primaryKey", "true");
-        if (!fieldConfig.isSearchable()) element.addAttribute("searchable", "false");
-        if (fieldConfig.isUnique()) element.addAttribute("unique", "true");
-        if (fieldConfig.isIndex()) element.addAttribute("index", "true");
-        if (fieldConfig.isCaseSensitive()) element.addAttribute("caseSensitive", "true");
-        if (!FieldConfig.DEFAULT_TYPE.equals(fieldConfig.getType())) element.addAttribute("type", fieldConfig.getType());
-        if (fieldConfig.getLength() != fieldConfig.getDefaultLength()) element.addAttribute("length", ""+ fieldConfig.getLength());
-        if (fieldConfig.getPrecision() != FieldConfig.DEFAULT_PRECISION) element.addAttribute("precision", ""+ fieldConfig.getPrecision());
+        if (!fieldConfig.getName().equals(fieldConfig.getOriginalName())) {
+            log.debug(" - originalName: "+fieldConfig.getOriginalName());
+            element.addAttribute("originalName", fieldConfig.getOriginalName());
+        }
+
+        if (fieldConfig.isPrimaryKey()) {
+            log.debug(" - primaryKey: "+fieldConfig.isPrimaryKey());
+            element.addAttribute("primaryKey", "true");
+        }
+
+        if (!fieldConfig.isSearchable()) {
+            log.debug(" - searchable: "+fieldConfig.isSearchable());
+            element.addAttribute("searchable", "false");
+        }
+
+        if (fieldConfig.isUnique()) {
+            log.debug(" - unique: "+fieldConfig.isUnique());
+            element.addAttribute("unique", "true");
+        }
+
+        if (fieldConfig.isIndex()) {
+            log.debug(" - index: "+fieldConfig.isIndex());
+            element.addAttribute("index", "true");
+        }
+
+        if (fieldConfig.isCaseSensitive()) {
+            log.debug(" - caseSensitive: "+fieldConfig.isCaseSensitive());
+            element.addAttribute("caseSensitive", "true");
+        }
+
+        if (!FieldConfig.DEFAULT_TYPE.equals(fieldConfig.getType())) {
+            log.debug(" - type: "+fieldConfig.getType());
+            element.addAttribute("type", fieldConfig.getType());
+        }
+
+        if (fieldConfig.getLength() != fieldConfig.getDefaultLength()) {
+            log.debug(" - length: "+fieldConfig.getLength());
+            element.addAttribute("length", ""+ fieldConfig.getLength());
+        }
+
+        if (fieldConfig.getPrecision() != FieldConfig.DEFAULT_PRECISION) {
+            log.debug(" - precision: "+fieldConfig.getPrecision());
+            element.addAttribute("precision", ""+ fieldConfig.getPrecision());
+        }
 
         if (fieldConfig.getConstant() != null) {
             Object value = fieldConfig.getConstant();
             if (value instanceof byte[]) {
+                String s = BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value);
+                log.debug(" - binary: "+s);
                 Element e = element.addElement("binary");
-                e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+                e.addText(s);
             } else {
+                log.debug(" - constant: "+value);
                 Element e = element.addElement("constant");
                 e.addText((String)value);
             }
 
         } else if (fieldConfig.getVariable() != null) {
+            log.debug(" - variable: "+fieldConfig.getVariable());
             Element scriptElement = new DefaultElement("variable");
             scriptElement.setText(fieldConfig.getVariable());
             element.add(scriptElement);
 
-        } else if (fieldConfig.getExpression() != null) {
-            element.add(toElement(fieldConfig.getExpression()));
+        }
 
-        } else {
-            return null;
+        Expression expression = fieldConfig.getExpression();
+        if (expression != null) {
+            log.debug(" - expression foreach: "+expression.getForeach());
+            log.debug(" - expression var: "+expression.getVar());
+            log.debug(" - expression script: "+expression.getScript());
+            element.add(toElement(fieldConfig.getExpression()));
         }
 
         return element;

@@ -100,12 +100,9 @@ public class NestedTestCase extends JDBCTestCase {
         SourceMapping membersMapping = new SourceMapping();
         membersMapping.setName("c");
         membersMapping.setSourceName("children");
+        membersMapping.addFieldMapping(new FieldMapping("parentname", FieldMapping.VARIABLE, "p.parentname"));
         membersMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         members.addSourceMapping(membersMapping);
-
-        Relationship relationship = new Relationship();
-        relationship.setExpression("c.parentname = p.parentname");
-        members.addRelationship(relationship);
 
         partition.addEntryMapping(members);
 
