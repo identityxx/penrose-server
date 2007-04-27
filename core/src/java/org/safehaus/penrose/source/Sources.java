@@ -21,9 +21,11 @@ public class Sources {
 
     public void addSourceConfig(SourceConfig sourceConfig) {
 
-        log.debug("Adding source "+sourceConfig.getName());
-        
-        sourceConfigs.put(sourceConfig.getName(), sourceConfig);
+        String sourceName = sourceConfig.getName();
+
+        log.debug("Adding source "+sourceName);
+
+        sourceConfigs.put(sourceName, sourceConfig);
 
         String sync = sourceConfig.getParameter("sync");
         if (sync != null) {
@@ -31,7 +33,7 @@ public class Sources {
             log.debug("Sync source with "+sync);
 
             SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
-            sourceSyncConfig.setName(sourceConfig.getName());
+            sourceSyncConfig.setName(sourceName);
             sourceSyncConfig.setDestinations(sync);
             sourceSyncConfig.setSourceConfig(sourceConfig);
             sourceSyncConfig.setParameters(sourceConfig.getParameters());
@@ -40,8 +42,8 @@ public class Sources {
         }
     }
 
-    public SourceConfig removeSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.remove(name);
+    public SourceConfig removeSourceConfig(String sourceName) {
+        return (SourceConfig)sourceConfigs.remove(sourceName);
     }
 
     public SourceConfig getSourceConfig(String name) {
@@ -84,5 +86,4 @@ public class Sources {
     public Collection<SourceSyncConfig> getSourceSyncConfigs() {
         return sourceSyncConfigs.values();
     }
-
 }

@@ -202,20 +202,22 @@ public class JDBCAdapter extends Adapter {
 
         RDN rdn = request.getDn().getRdn();
 
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        if (rdn != null) {
+            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
 
-            Object value = rdn.get(name);
+                Object value = rdn.get(name);
 
-            Field field = source.getField(name);
-            statement.addAssignment(new Assignment(field, value));
+                Field field = source.getField(name);
+                statement.addAssignment(new Assignment(field, value));
+            }
         }
 
         Attributes attributes = request.getAttributes();
 
         for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            if (rdn.contains(name)) continue;
+            if (rdn != null && rdn.contains(name)) continue;
 
             Object value = attributes.getValue(name); // get first value
 
