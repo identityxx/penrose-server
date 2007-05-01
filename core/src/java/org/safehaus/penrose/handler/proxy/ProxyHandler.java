@@ -55,8 +55,9 @@ public class ProxyHandler extends DefaultHandler {
         engine.search(
                 session,
                 partition,
-                sourceValues,
+                baseMapping,
                 entryMapping,
+                sourceValues,
                 request,
                 sr
         );

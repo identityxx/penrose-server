@@ -2,7 +2,7 @@
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (description?,oc*,at*,source*,partition?,handler?,engine?,aci*,parameter*)>
+<!ELEMENT entry (description?,oc*,at*,source*,link?,handler?,engine?,aci*,parameter*)>
 <!ATTLIST entry dn CDATA #REQUIRED>
 
 <!ELEMENT description (#PCDATA)>
@@ -34,6 +34,8 @@
 <!ELEMENT expression (#PCDATA)>
 <!ATTLIST expression foreach CDATA #IMPLIED>
 <!ATTLIST expression var CDATA #IMPLIED>
+
+<!ELEMENT link (dn?,partition?)>
 
 <!ELEMENT partition (#PCDATA)>
 <!ELEMENT handler (#PCDATA)>

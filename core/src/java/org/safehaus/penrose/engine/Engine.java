@@ -71,13 +71,9 @@ public abstract class Engine {
 
     public boolean stopping = false;
 
-    private FilterTool      filterTool;
-
     protected Analyzer analyzer;
 
     public void init() throws Exception {
-        filterTool = new FilterTool();
-        filterTool.setSchemaManager(schemaManager);
 
         analyzer = new Analyzer();
         analyzer.setPartitionManager(partitionManager);
@@ -501,8 +497,7 @@ public abstract class Engine {
         search(
                 session,
                 partition,
-                sourceValues,
-                entryMapping,
+                entryMapping, sourceValues,
                 request,
                 response
         );
@@ -546,8 +541,7 @@ public abstract class Engine {
     public void search(
             Session session,
             Partition partition,
-            SourceValues sourceValues,
-            EntryMapping entryMapping,
+            EntryMapping entryMapping, SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
@@ -691,14 +685,6 @@ public abstract class Engine {
 
     public PenroseConfig getServerConfig() {
         return penroseConfig;
-    }
-
-    public FilterTool getFilterTool() {
-        return filterTool;
-    }
-
-    public void setFilterTool(FilterTool filterTool) {
-        this.filterTool = filterTool;
     }
 
     public ConnectorManager getConnectorManager() {

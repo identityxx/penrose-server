@@ -43,7 +43,8 @@ public class FilterTool {
 
     private SchemaManager schemaManager;
 
-    public FilterTool() throws Exception {
+    public FilterTool(SchemaManager schemaManager) throws Exception {
+        this.schemaManager = schemaManager;
     }
 
     public static Filter parseFilter(String filter) throws Exception {
@@ -455,14 +456,6 @@ public class FilterTool {
             if (result) return true;
         }
         return false;
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
     }
 
     public static boolean isValid(RDN rdn, SimpleFilter filter) throws Exception {

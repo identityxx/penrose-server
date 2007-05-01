@@ -36,6 +36,7 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -315,11 +316,25 @@ public class PartitionWriter {
             entryElement.add(toElement(relationship));
         }
 */
-        String partitionName = entryMapping.getPartitionName();
-        if (partitionName != null) {
-            Element element = new DefaultElement("partition");
-            element.add(new DefaultText(partitionName));
-            entryElement.add(element);
+        Link link = entryMapping.getLink();
+        if (link != null) {
+            Element linkElement = new DefaultElement("link");
+
+            DN dn = link.getDn();
+            if (dn != null) {
+                Element partitionElement = new DefaultElement("dn");
+                partitionElement.add(new DefaultText(dn.toString()));
+                linkElement.add(partitionElement);
+            }
+
+            String partitionName = link.getPartitionName();
+            if (partitionName != null) {
+                Element partitionElement = new DefaultElement("partition");
+                partitionElement.add(new DefaultText(partitionName));
+                linkElement.add(partitionElement);
+            }
+
+            entryElement.add(linkElement);
         }
 
         String handlerName = entryMapping.getHandlerName();

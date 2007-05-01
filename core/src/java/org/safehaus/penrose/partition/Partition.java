@@ -34,6 +34,8 @@ public class Partition {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    public final static Collection EMPTY = new ArrayList();
+
     private PartitionConfig partitionConfig;
 
     private Map entryMappingsById = new LinkedHashMap();
@@ -89,10 +91,10 @@ public class Partition {
     }
 
     public Collection getEntryMappings(DN dn) {
-        if (dn == null) return null;
+        if (dn == null) return EMPTY;
 
         Collection list = (Collection)entryMappingsByDn.get(dn.getNormalizedDn());
-        if (list == null) return null;
+        if (list == null) return EMPTY;
 
         return new ArrayList(list);
     }
@@ -100,7 +102,7 @@ public class Partition {
     public Collection getEntryMappings(SourceConfig sourceConfig) {
         String sourceName = sourceConfig.getName();
         Collection list = (Collection)entryMappingsBySource.get(sourceName);
-        if (list == null) return new ArrayList();
+        if (list == null) return EMPTY;
         return list;
     }
 
@@ -308,7 +310,7 @@ public class Partition {
 
     public Collection getChildren(EntryMapping parentMapping) {
         Collection children = (Collection) entryMappingsByParentId.get(parentMapping.getId());
-        if (children == null) return new ArrayList();
+        if (children == null) return EMPTY;
         return children;
     }
 
@@ -424,7 +426,7 @@ public class Partition {
     }
 
     public Collection findEntryMappings(DN dn) throws Exception {
-        if (dn == null) return new ArrayList();
+        if (dn == null) return EMPTY;
         //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
 
         // search for static mappings

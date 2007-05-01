@@ -20,6 +20,8 @@ package org.safehaus.penrose.adapter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SubstringFilter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.SourceValues;
@@ -28,6 +30,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceSync;
+import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata 
@@ -118,12 +122,24 @@ public abstract class Adapter {
             AddRequest request,
             AddResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        add(source, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            Source source,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+    }
 
     public void bind(
             EntryMapping entryMapping,
@@ -132,7 +148,11 @@ public abstract class Adapter {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        bind(source, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +174,11 @@ public abstract class Adapter {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        delete(source, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +200,11 @@ public abstract class Adapter {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        modify(source, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,7 +226,11 @@ public abstract class Adapter {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+
+        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        modrdn(source, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,13 +246,53 @@ public abstract class Adapter {
     }
 
     public void search(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
-            SearchRequest request,
-            SearchResponse<SearchResult> response
+            final EntryMapping entryMapping,
+            final Collection sourceRefs,
+            final SourceValues sourceValues,
+            final SearchRequest request,
+            final SearchResponse<SearchResult> response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+
+        final SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        Filter filter = request.getFilter();
+
+        if (sourceValues != null) {
+            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
+                String name = (String)i.next();
+                Collection values = sourceValues.get(name);
+
+                int p = name.indexOf(".");
+                name = name.substring(p+1);
+                
+                for (Iterator j=values.iterator(); j.hasNext(); ) {
+                    Object value = j.next();
+                    SimpleFilter sf = new SimpleFilter(name, "=", value);
+                    filter = FilterTool.appendAndFilter(filter, sf);
+                }
+            }
+        }
+
+        SearchRequest newRequest = new SearchRequest();
+        newRequest.setFilter(filter);
+
+        SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
+            public void add(SearchResult result) throws Exception {
+
+                SearchResult searchResult = new SearchResult();
+                searchResult.setDn(result.getDn());
+                searchResult.setEntryMapping(entryMapping);
+                searchResult.setSourceAttributes(sourceRef.getAlias(), result.getAttributes());
+
+                response.add(searchResult);
+            }
+            public void close() throws Exception {
+                response.close();
+            }
+        };
+
+        search(source, newRequest, newResponse);
     }
 
     public Object openConnection() throws Exception {

@@ -5,9 +5,11 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
+import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -67,15 +69,45 @@ public class DefaultHandler extends Handler {
 
         final boolean debug = log.isDebugEnabled();
 
-        final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
+        int scope = request.getScope();
 
         if (debug) {
-            log.debug("Base DN: "+baseDn);
-            log.debug("Entry mapping: "+entryMapping.getDn());
+            log.debug("Searching "+entryMapping.getDn()+" with scope "+ LDAPUtil.getScope(scope));
         }
 
-        int scope = request.getScope();
+        Link link = entryMapping.getLink();
+
+        if (link != null) {
+
+            String partitionName = link.getPartitionName();
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
+
+            DN dn = link.getDn();
+            Collection c = p.getEntryMappings(dn == null ? entryMapping.getDn() : dn);
+
+            SearchRequest newRequest = new SearchRequest(request);
+
+            for (Iterator j=c.iterator(); j.hasNext(); ) {
+                EntryMapping em = (EntryMapping)j.next();
+
+                Handler handler = handlerManager.getHandler(p, em);
+
+                handler.search(
+                        session,
+                        p,
+                        em,
+                        em,
+                        newRequest,
+                        response
+                );
+            }
+
+            return;
+        }
+
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
                 || scope == SearchRequest.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
@@ -105,8 +137,9 @@ public class DefaultHandler extends Handler {
                 engine.search(
                         session,
                         partition,
-                        sourceValues,
+                        baseMapping,
                         entryMapping,
+                        sourceValues,
                         request,
                         sr
                 );
@@ -119,51 +152,27 @@ public class DefaultHandler extends Handler {
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
             Collection children = partition.getChildren(entryMapping);
+
+            SearchRequest newRequest = new SearchRequest(request);
+            if (scope == SearchRequest.SCOPE_ONE) {
+                newRequest.setScope(SearchRequest.SCOPE_BASE);
+            }
 
             for (Iterator i = children.iterator(); i.hasNext();) {
                 EntryMapping childMapping = (EntryMapping) i.next();
 
-                String partitionName = childMapping.getPartitionName();
+                Handler handler = handlerManager.getHandler(partition, childMapping);
 
-                if (partitionName == null) {
-                    Handler handler = handlerManager.getHandler(partition, childMapping);
-
-                    handler.search(
-                            session,
-                            partition,
-                            baseMapping,
-                            childMapping,
-                            request,
-                            response
-                    );
+                handler.search(
+                        session,
+                        partition,
+                        baseMapping,
+                        childMapping,
+                        newRequest,
+                        response
+                );
                     
-                    continue;
-                }
-
-                Partition p = partitionManager.getPartition(partitionName);
-                Collection c = p.getEntryMappings(childMapping.getDn());
-
-                SearchRequest newRequest = new SearchRequest(request);
-                if (scope == SearchRequest.SCOPE_ONE) {
-                    newRequest.setScope(SearchRequest.SCOPE_BASE);
-                }
-
-                for (Iterator j=c.iterator(); j.hasNext(); ) {
-                    EntryMapping em = (EntryMapping)j.next();
-
-                    Handler handler = handlerManager.getHandler(p, em);
-
-                    handler.search(
-                            session,
-                            p,
-                            em,
-                            em,
-                            newRequest,
-                            response
-                    );
-                }
             }
         }
     }

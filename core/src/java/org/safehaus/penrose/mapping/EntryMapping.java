@@ -95,7 +95,7 @@ public class EntryMapping implements Cloneable {
      */
     private Collection<Relationship> relationships = new ArrayList<Relationship>();
 
-    private String partitionName;
+    private Link link;
     private String handlerName;
     private String engineName;
 
@@ -445,7 +445,6 @@ public class EntryMapping implements Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
-        if (!equals(partitionName, entryMapping.partitionName)) return false;
         if (!equals(handlerName, entryMapping.handlerName)) return false;
         if (!equals(engineName, entryMapping.engineName)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
@@ -485,7 +484,7 @@ public class EntryMapping implements Cloneable {
             addRelationship((Relationship)relationship.clone());
         }
 
-        partitionName = entryMapping.partitionName;
+        link = new Link(entryMapping.link);
         handlerName = entryMapping.handlerName;
         engineName = entryMapping.engineName;
 
@@ -537,11 +536,11 @@ public class EntryMapping implements Cloneable {
         this.parentId = parentId;
     }
 
-    public String getPartitionName() {
-        return partitionName;
+    public Link getLink() {
+        return link;
     }
 
-    public void setPartitionName(String partitionName) {
-        this.partitionName = partitionName;
+    public void setLink(Link link) {
+        this.link = link;
     }
 }

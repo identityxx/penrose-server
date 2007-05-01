@@ -1,13 +1,12 @@
 package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.util.LDAPUtil;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -28,13 +27,10 @@ public class DemoAdapter extends Adapter {
         System.out.println("Initializing DemoAdapter.");
 
         SchemaManager schemaManager = penroseContext.getSchemaManager();
-
-        filterTool = new FilterTool();
-        filterTool.setSchemaManager(schemaManager);
+        filterTool = schemaManager.getFilterTool();
 
         RDNBuilder rb = new RDNBuilder();
-        rb.set("cn", "Test User");
-        rb.set("sn", "User");
+        rb.set("uid", "test");
         RDN rdn = rb.toRdn();
 
         Attributes attributes = new Attributes();
@@ -51,9 +47,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -78,9 +72,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -115,9 +107,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -140,9 +130,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -194,9 +182,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -237,40 +223,29 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
+            Source source,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
-
-        DN dn = request.getDn();
+        int scope = request.getScope();
         Filter filter = request.getFilter();
 
-        System.out.println("Searching "+dn+" with filter "+filter+".");
+        System.out.println("Searching with filter "+filter+" and scope "+ LDAPUtil.getScope(scope)+".");
 
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
             Attributes attributes = (Attributes)entries.get(rdn);
 
             if (!filterTool.isValid(attributes, filter)) {
-                System.out.println(" - "+rdn+" => false");
+                System.out.println("Entry "+rdn+" doesn't match.");
                 continue;
             }
 
-            System.out.println(" - "+rdn+" => true");
-
-            SearchResult searchResult = new SearchResult();
-            searchResult.setDn(new DN(rdn));
-            searchResult.setEntryMapping(entryMapping);
-            searchResult.setSourceAttributes(sourceRef.getAlias(), attributes);
-
-            response.add(searchResult);
+            System.out.println("Found entry "+rdn+".");
+            response.add(new SearchResult(new DN(rdn), attributes));
         }
 
         response.close();
     }
-
 }

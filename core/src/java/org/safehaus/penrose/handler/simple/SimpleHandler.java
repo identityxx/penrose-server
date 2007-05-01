@@ -96,8 +96,9 @@ public class SimpleHandler extends Handler {
             engine.search(
                     session,
                     partition,
-                    sourceValues,
+                    baseMapping,
                     entryMapping,
+                    sourceValues,
                     request,
                     sr
             );

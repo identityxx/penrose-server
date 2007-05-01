@@ -109,8 +109,7 @@ public abstract class Handler {
         try {
             status = STARTING;
 
-            filterTool = new FilterTool();
-            filterTool.setSchemaManager(schemaManager);
+            filterTool = schemaManager.getFilterTool();
 
             status = STARTED;
 

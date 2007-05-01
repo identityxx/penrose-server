@@ -23,6 +23,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.filter.FilterTool;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -41,7 +42,10 @@ public class SchemaManager implements SchemaManagerMBean {
     private Map schemas = new TreeMap();
     private Schema allSchema = new Schema();
 
-    public SchemaManager() {
+    private FilterTool filterTool;
+
+    public SchemaManager() throws Exception {
+        filterTool = new FilterTool(this);
     }
 
     public void init(SchemaConfig schemaConfig) throws Exception {
@@ -232,5 +236,13 @@ public class SchemaManager implements SchemaManagerMBean {
         }
 
         return normalizedModifications;
+    }
+
+    public FilterTool getFilterTool() {
+        return filterTool;
+    }
+
+    public void setFilterTool(FilterTool filterTool) {
+        this.filterTool = filterTool;
     }
 }

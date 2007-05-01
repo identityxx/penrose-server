@@ -8,6 +8,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 
 import java.util.*;
 
@@ -141,6 +142,13 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            String dn,
+            Attributes attributes
+    ) throws Exception {
+        add(new DN(dn), attributes);
+    }
+
+    public void add(
             DN dn,
             Attributes attributes
     ) throws Exception {
@@ -151,7 +159,7 @@ public class Source implements Cloneable {
 
         AddResponse response = new AddResponse();
 
-        connection.add(this, request, response);
+        add(request, response);
     }
 
     public void add(
@@ -167,6 +175,12 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            String dn
+    ) throws Exception {
+        delete(new DN(dn));
+    }
+
+    public void delete(
             DN dn
     ) throws Exception {
 
@@ -175,7 +189,7 @@ public class Source implements Cloneable {
 
         DeleteResponse response = new DeleteResponse();
 
-        connection.delete(this, request, response);
+        delete(request, response);
     }
 
     public void delete(
@@ -191,6 +205,13 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            String dn,
+            Collection<Modification> modifications
+    ) throws Exception {
+        modify(new DN(dn), modifications);
+    }
+
+    public void modify(
             DN dn,
             Collection<Modification> modifications
     ) throws Exception {
@@ -201,7 +222,7 @@ public class Source implements Cloneable {
 
         ModifyResponse response = new ModifyResponse();
 
-        connection.modify(this, request, response);
+        modify(request, response);
     }
 
     public void modify(
@@ -217,6 +238,14 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            String dn,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+        modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+    }
+
+    public void modrdn(
             DN dn,
             RDN newRdn,
             boolean deleteOldRdn
@@ -229,7 +258,7 @@ public class Source implements Cloneable {
 
         ModRdnResponse response = new ModRdnResponse();
 
-        connection.modrdn(this, request, response);
+        modrdn(request, response);
     }
 
     public void modrdn(
@@ -245,6 +274,14 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public SearchResponse<SearchResult> search(
+            String dn,
+            String filter,
+            int scope
+    ) throws Exception {
+        return search(new DN(dn), FilterTool.parseFilter(filter), scope);
+    }
+
+    public SearchResponse<SearchResult> search(
             DN dn,
             Filter filter,
             int scope
@@ -257,7 +294,7 @@ public class Source implements Cloneable {
 
         SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
-        connection.search(this, request, response);
+        search(request, response);
 
         return response;
     }
