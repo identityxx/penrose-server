@@ -6,7 +6,6 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.util.LDAPUtil;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -231,7 +230,7 @@ public class DemoAdapter extends Adapter {
         int scope = request.getScope();
         Filter filter = request.getFilter();
 
-        System.out.println("Searching with filter "+filter+" and scope "+ LDAPUtil.getScope(scope)+".");
+        System.out.println("Searching with filter "+filter+".");
 
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
