@@ -105,7 +105,7 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getParameter(name);
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return connectionConfig.getParameters();
     }
 

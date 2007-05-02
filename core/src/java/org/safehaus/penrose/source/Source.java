@@ -59,6 +59,10 @@ public class Source implements Cloneable {
         return name;
     }
 
+    public String getConnectionName() {
+        return sourceConfig.getConnectionName();
+    }
+    
     public void setName(String name) {
         this.name = name;
     }

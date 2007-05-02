@@ -58,7 +58,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
 
         LDAPClient client = (LDAPClient)connectionManager.openConnection(partition, connectionName);
-        return client.getContext();
+        return client.open();
     }
 
     public void cacheAdded(EntryCacheEvent event) throws Exception {

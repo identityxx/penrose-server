@@ -18,7 +18,6 @@
 package org.safehaus.penrose.engine.proxy;
 
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.*;
@@ -28,9 +27,10 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.Source;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.NamingEnumeration;
 import java.util.*;
 
 /**
@@ -61,49 +61,46 @@ public class ProxyEngine extends Engine {
 
         int start = dn.getSize() - oldSuffix.getSize();
 
-        DNBuilder newDn = new DNBuilder();
+        DNBuilder db = new DNBuilder();
         for (int i=0; i<start; i++) {
             RDN rdn = dn.get(i);
-            newDn.append(rdn);
+            db.append(rdn);
         }
 
-        newDn.append(newSuffix);
+        db.append(newSuffix);
 
-        return newDn.toDn();
+        return db.toDn();
     }
 
-    public LDAPClient createClient(Session session, Partition partition, SourceConfig sourceConfig) throws Exception {
+    public LDAPClient createClient(Session session, Partition partition, Source source) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (debug) log.debug("Authentication: "+authentication);
+        String authentication = source.getParameter(PROXY_AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
 
         if (PROXY_AUTHENTICATON_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
             throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
         }
 
-        String connectionName = sourceConfig.getConnectionName();
+        String connectionName = source.getConnectionName();
         Connection connection = connectionManager.getConnection(partition, connectionName);
 
-        Map parameters = new HashMap();
-        parameters.putAll(connection.getParameters());
-
-        return new LDAPClient(parameters);
+        return new LDAPClient(connection.getParameters());
     }
 
-    public void storeClient(Session session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
+    public void storeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (debug) log.debug("Authentication: "+authentication);
+        String authentication = source.getParameter(PROXY_AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
 
         if (PROXY_AUTHENTICATON_FULL.equals(authentication)) {
             if (debug) log.debug("Storing connection info in session.");
 
-            String connectionName = sourceConfig.getConnectionName();
+            String connectionName = source.getConnectionName();
             Connection connection = connectionManager.getConnection(partition, connectionName);
 
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
@@ -112,26 +109,26 @@ public class ProxyEngine extends Engine {
         }
     }
 
-    public void closeClient(Session session, Partition partition, SourceConfig sourceConfig, LDAPClient client) throws Exception {
+    public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = sourceConfig.getParameter(PROXY_AUTHENTICATON);
-        if (debug) log.debug("Authentication: "+authentication);
+        String authentication = source.getParameter(PROXY_AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
 
         if (!PROXY_AUTHENTICATON_FULL.equals(authentication)) {
             try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
-    public LDAPClient getClient(Session session, Partition partition, SourceConfig sourceConfig) throws Exception {
+    public LDAPClient getClient(Session session, Partition partition, Source source) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = sourceConfig.getParameter(PROXY_AUTHENTICATON);
+        String authentication = source.getParameter(PROXY_AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
 
-        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
         LDAPClient client = null;
 
         if (PROXY_AUTHENTICATON_FULL.equals(authentication)) {
@@ -144,10 +141,7 @@ public class ProxyEngine extends Engine {
                 if (session == null || session.isRootUser()) {
                     if (debug) log.debug("Creating new connection.");
 
-                    Map parameters = new HashMap();
-                    parameters.putAll(connection.getParameters());
-
-                    client = new LDAPClient(parameters);
+                    client = new LDAPClient(connection.getParameters());
 
                 } else {
                     if (debug) log.debug("Missing credentials.");
@@ -157,10 +151,8 @@ public class ProxyEngine extends Engine {
 
         } else {
             if (debug) log.debug("Creating new connection.");
-            Map parameters = new HashMap();
-            parameters.putAll(connection.getParameters());
 
-            client = new LDAPClient(parameters);
+            client = new LDAPClient(connection.getParameters());
         }
 
         return client;
@@ -184,13 +176,15 @@ public class ProxyEngine extends Engine {
         Attributes attributes = request.getAttributes();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
 
-        LDAPClient client = getClient(session, partition, sourceConfig);
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = getClient(session, partition, source);
 
         try {
             DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
@@ -206,7 +200,7 @@ public class ProxyEngine extends Engine {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            closeClient(session, partition, sourceConfig, client);
+            closeClient(session, partition, source, client);
         }
     }
 
@@ -228,13 +222,15 @@ public class ProxyEngine extends Engine {
         String password = request.getPassword();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
-        LDAPClient client = createClient(session, partition, sourceConfig);
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = createClient(session, partition, source);
 
         try {
             DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             DN bindDn = convertDn(dn, proxyDn, proxyBaseDn);
 
             if (debug) log.debug("Binding via proxy as \""+bindDn +"\" with "+password);
@@ -250,7 +246,7 @@ public class ProxyEngine extends Engine {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            storeClient(session, partition, sourceConfig, client);
+            storeClient(session, partition, source, client);
         }
     }
 
@@ -271,13 +267,15 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
-        LDAPClient client = getClient(session, partition, sourceConfig);
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = getClient(session, partition, source);
 
         try {
             DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
             if (debug) log.debug("Deleting via proxy as \""+targetDn+"\"");
@@ -292,7 +290,7 @@ public class ProxyEngine extends Engine {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            closeClient(session, partition, sourceConfig, client);
+            closeClient(session, partition, source, client);
         }
     }
 
@@ -314,13 +312,15 @@ public class ProxyEngine extends Engine {
         Collection<Modification> modifications = request.getModifications();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
-        LDAPClient client = getClient(session, partition, sourceConfig);
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = getClient(session, partition, source);
 
         try {
             DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
             if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
@@ -336,7 +336,7 @@ public class ProxyEngine extends Engine {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            closeClient(session, partition, sourceConfig, client);
+            closeClient(session, partition, source, client);
         }
     }
 
@@ -359,13 +359,15 @@ public class ProxyEngine extends Engine {
         boolean deleteOldRdn = request.getDeleteOldRdn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
 
-        LDAPClient client = getClient(session, partition, sourceConfig);
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = getClient(session, partition, source);
 
         try {
             DN proxyDn = entryMapping.getDn();
-            DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
             if (debug) log.debug("Renaming via proxy as \""+targetDn+"\"");
@@ -382,7 +384,7 @@ public class ProxyEngine extends Engine {
             throw ExceptionUtil.createLDAPException(e);
 
         } finally {
-            closeClient(session, partition, sourceConfig, client);
+            closeClient(session, partition, source, client);
         }
     }
 
@@ -417,16 +419,18 @@ public class ProxyEngine extends Engine {
         }
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
-        final SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping);
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        final Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
 
         try {
             final DN proxyDn = entryMapping.getDn();
             if (debug) log.debug("Proxy DN: "+proxyDn);
 
-            final DN proxyBaseDn = new DN(sourceConfig.getParameter(PROXY_BASE_DN));
+            final DN proxyBaseDn = new DN(source.getParameter(PROXY_BASE_DN));
             if (debug) log.debug("Proxy Base DN: "+proxyBaseDn);
 
-            if (debug) log.debug("Checking whether "+entryMapping.getDn()+" is an ancestor of "+baseDn);
+            if (debug) log.debug("Checking whether "+baseDn+" is under "+entryMapping.getDn());
             boolean found = baseDn.endsWith(entryMapping.getDn());
 
             if (debug) log.debug("Result: "+found);
@@ -435,13 +439,13 @@ public class ProxyEngine extends Engine {
             newRequest.setFilter(filter);
             newRequest.setScope(scope);
 
-            DN targetDn = null;
+            final DN targetDn;
             if (found) {
                 targetDn = convertDn(baseDn, proxyDn, proxyBaseDn);
 
             } else {
                 if (scope == SearchRequest.SCOPE_BASE) {
-                    return;
+                    //return;
 
                 } else if (scope == SearchRequest.SCOPE_ONE) {
                     newRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -453,32 +457,15 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+attributes);
 
-            final LDAPClient client = getClient(session, partition, sourceConfig);
+            final LDAPClient client = getClient(session, partition, source);
 
-            if (debug) log.debug("Creating SearchResult to Entry conversion pipeline.");
+            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                public void add(SearchResult result) throws Exception {
 
-            SearchResponse sr = new SearchResponse() {
-                public void add(Object object) throws Exception {
-                    javax.naming.directory.SearchResult ldapEntry = (javax.naming.directory.SearchResult)object;
+                    DN dn = convertDn(result.getDn(), proxyBaseDn, proxyDn);
+                    if (debug) log.debug("Entry "+dn);
 
-                    DN dn = new DN(ldapEntry.getName());
-                    //String dn = EntryUtil.append(ldapEntry.getName(), proxyBaseDn);
-
-                    if (debug) log.debug("Renaming \""+dn+"\"");
-
-                    dn = convertDn(dn, proxyBaseDn, proxyDn);
-                    if (debug) log.debug("into "+dn);
-
-                    Attributes attributes = new Attributes();
-                    for (NamingEnumeration i=ldapEntry.getAttributes().getAll(); i.hasMore(); ) {
-                        javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)i.next();
-                        String name = attribute.getID();
-
-                        for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                            Object value = j.next();
-                            attributes.addValue(name, value);
-                        }
-                    }
+                    Attributes attributes = new Attributes(result.getAttributes());
 
                     SearchResult searchResult = new SearchResult(dn, attributes);
                     searchResult.setEntryMapping(entryMapping);
@@ -486,12 +473,10 @@ public class ProxyEngine extends Engine {
                 }
 
                 public void close() throws Exception {
-                    if (debug) log.debug("Closing SearchResult to Entry conversion pipeline.");
-                    closeClient(session, partition, sourceConfig, client);
+                    closeClient(session, partition, source, client);
                 }
             };
 
-            //connector.search(partition, sourceConfig, null, filter, newRequest, sr);
             client.search(newRequest, sr);
 
         } catch (Exception e) {

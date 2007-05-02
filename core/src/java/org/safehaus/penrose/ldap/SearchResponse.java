@@ -43,10 +43,10 @@ public class SearchResponse<E> extends Response {
     LDAPException exception;
 
     boolean enableEventListeners = true;
-    List listeners = new ArrayList();
+    List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
     List referrals = new ArrayList();
-    Collection referralListeners = new ArrayList();
+    Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
 
     public SearchResponse() {
     }
@@ -60,8 +60,7 @@ public class SearchResponse<E> extends Response {
     }
 
     public boolean firePreAddEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             boolean result = listener.preAdd(event);
             if (!result) return false;
         }
@@ -70,15 +69,13 @@ public class SearchResponse<E> extends Response {
     }
 
     public void firePostAddEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             listener.postAdd(event);
         }
     }
 
     public boolean firePreRemoveEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             boolean result = listener.preRemove(event);
             if (!result) return false;
         }
@@ -87,15 +84,13 @@ public class SearchResponse<E> extends Response {
     }
 
     public void firePostRemoveEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             listener.postRemove(event);
         }
     }
 
     public boolean firePreCloseEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             boolean result = listener.preClose(event);
             if (!result) return false;
         }
@@ -104,8 +99,7 @@ public class SearchResponse<E> extends Response {
     }
 
     public void firePostCloseEvent(final SearchResponseEvent event) throws Exception {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchResponseListener listener = (SearchResponseListener)i.next();
+        for (SearchResponseListener listener : listeners) {
             listener.postClose(event);
         }
     }
@@ -119,8 +113,7 @@ public class SearchResponse<E> extends Response {
     }
 
     public void fireEvent(final ReferralEvent event) {
-        for (Iterator i=referralListeners.iterator(); i.hasNext(); ) {
-            ReferralListener listener = (ReferralListener)i.next();
+        for (ReferralListener listener : referralListeners) {
             switch (event.getType()) {
                 case ReferralEvent.REFERRAL_ADDED:
                     listener.referralAdded(event);
@@ -191,8 +184,7 @@ public class SearchResponse<E> extends Response {
     }
 
     public void addAll(Collection<E> collection) throws Exception {
-        for (Iterator i=collection.iterator(); i.hasNext(); ) {
-            E object = (E)i.next();
+        for (E object : collection) {
             add(object);
         }
     }

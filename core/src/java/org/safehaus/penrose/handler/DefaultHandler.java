@@ -162,8 +162,8 @@ public class DefaultHandler extends Handler {
                 newRequest.setScope(SearchRequest.SCOPE_BASE);
             }
 
-            for (Iterator i = children.iterator(); i.hasNext();) {
-                EntryMapping childMapping = (EntryMapping) i.next();
+            for (Object aChildren : children) {
+                EntryMapping childMapping = (EntryMapping) aChildren;
 
                 Handler handler = handlerManager.getHandler(partition, childMapping);
 
@@ -175,7 +175,7 @@ public class DefaultHandler extends Handler {
                         newRequest,
                         response
                 );
-                    
+
             }
         }
     }

@@ -30,7 +30,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 
 	public String description;
 
-	public Properties parameters = new Properties();
+	public Map<String,String> parameters = new HashMap<String,String>();
 
 	public ConnectionConfig() {
 	}
@@ -56,7 +56,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 		this.adapterName = adapterName;
 	}
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
 
@@ -65,15 +65,15 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public String removeParameter(String name) {
-        return (String)parameters.remove(name);
+        return parameters.remove(name);
     }
 
 	public String getDescription() {
@@ -117,7 +117,9 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         parameters.putAll(connectionConfig.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
+
         ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.copy(this);
 

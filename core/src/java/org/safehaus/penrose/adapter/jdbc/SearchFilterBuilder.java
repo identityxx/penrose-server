@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class FilterBuilder {
+public class SearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -44,7 +44,7 @@ public class FilterBuilder {
     Map sourceAliases = new LinkedHashMap(); // need to maintain order
     Filter sourceFilter;
 
-    public FilterBuilder(
+    public SearchFilterBuilder(
             EntryMapping entryMapping,
             Collection sourceRefs,
             SourceValues sourceValues,

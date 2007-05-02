@@ -32,7 +32,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     SearchRequest request;
     SearchResponse response;
 
-    FilterBuilder filterBuilder;
+    SearchFilterBuilder filterBuilder;
 
     public SearchRequestBuilder(
             Partition partition,
@@ -60,7 +60,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         this.request = request;
         this.response = response;
 
-        filterBuilder = new FilterBuilder(
+        filterBuilder = new SearchFilterBuilder(
                 entryMapping,
                 sourceRefs,
                 sourceValues,

@@ -19,6 +19,10 @@ public class Attributes {
     public Attributes() {
     }
 
+    public Attributes(Attributes attributes) {
+        add(attributes);
+    }
+
     public Collection<String> getNames() {
         return names;
     }
@@ -96,8 +100,7 @@ public class Attributes {
     }
 
     public void add(String prefix, Attributes attributes) {
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             add(prefix, attribute);
         }
     }
@@ -121,7 +124,7 @@ public class Attributes {
     }
 
     public Attribute get(String name) {
-        return (Attribute)attributes.get(name.toLowerCase());
+        return attributes.get(name.toLowerCase());
     }
 
     public Object getValue(String name) {
@@ -157,22 +160,20 @@ public class Attributes {
     public void print() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
 
-        for (Iterator i=attributes.values().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.values()) {
 
             String name = attribute.getName();
             Collection list = attribute.getValues();
 
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                Object value = j.next();
+            for (Object value : list) {
                 String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
+                className = className.substring(className.lastIndexOf(".") + 1);
 
                 if (value instanceof byte[]) {
-                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])value);
+                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value);
                 }
 
-                log.debug(" - "+name+": "+value+" ("+className+")");
+                log.debug(" - " + name + ": " + value + " (" + className + ")");
             }
         }
     }

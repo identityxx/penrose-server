@@ -574,8 +574,6 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        response.setSizeLimit(request.getSizeLimit());
-
         SelectStatement statement = new SelectStatement();
 
         SourceRef sourceRef = new SourceRef(source);
@@ -638,8 +636,6 @@ public class JDBCAdapter extends Adapter {
             log.debug("Source values:");
             sourceValues.print();
         }
-
-        response.setSizeLimit(request.getSizeLimit());
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
                 partition,
