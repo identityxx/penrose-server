@@ -1,9 +1,8 @@
 package org.safehaus.penrose.example.adapter;
 
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
@@ -20,13 +19,9 @@ import java.util.HashMap;
 public class DemoAdapter extends Adapter {
 
     Map entries = new HashMap();
-    FilterTool filterTool;
 
     public void init() throws Exception {
         System.out.println("Initializing DemoAdapter.");
-
-        SchemaManager schemaManager = penroseContext.getSchemaManager();
-        filterTool = schemaManager.getFilterTool();
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("uid", "test");
@@ -227,16 +222,17 @@ public class DemoAdapter extends Adapter {
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        int scope = request.getScope();
         Filter filter = request.getFilter();
 
         System.out.println("Searching with filter "+filter+".");
+
+        FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {
             RDN rdn = (RDN)i.next();
             Attributes attributes = (Attributes)entries.get(rdn);
 
-            if (!filterTool.isValid(attributes, filter)) {
+            if (!filterEvaluator.eval(attributes, filter)) {
                 System.out.println("Entry "+rdn+" doesn't match.");
                 continue;
             }

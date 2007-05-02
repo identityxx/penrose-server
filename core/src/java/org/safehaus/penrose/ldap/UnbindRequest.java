@@ -1,8 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-
 /**
  * @author Endi S. Dewata
  */

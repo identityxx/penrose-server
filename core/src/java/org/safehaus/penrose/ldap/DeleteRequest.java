@@ -1,8 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-
 /**
  * @author Endi S. Dewata
  */
@@ -10,6 +7,14 @@ public class DeleteRequest extends Request {
 
     protected DN dn;
 
+    public DeleteRequest() {
+    }
+
+    public DeleteRequest(DeleteRequest request) {
+        super(request);
+        dn = request.getDn();
+    }
+    
     public DN getDn() {
         return dn;
     }

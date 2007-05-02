@@ -1,8 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-
 /**
  * @author Endi S. Dewata
  */
@@ -11,6 +8,16 @@ public class ModRdnRequest extends Request {
     protected DN dn;
     protected RDN newRdn;
     protected boolean deleteOldRdn;
+
+    public ModRdnRequest() {
+    }
+
+    public ModRdnRequest(ModRdnRequest request) {
+        super(request);
+        dn = request.getDn();
+        newRdn = request.getNewRdn();
+        deleteOldRdn = request.getDeleteOldRdn();
+    }
 
     public DN getDn() {
         return dn;

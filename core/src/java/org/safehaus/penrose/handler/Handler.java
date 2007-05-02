@@ -19,7 +19,6 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.acl.ACLManager;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -66,7 +65,6 @@ public abstract class Handler {
     protected EngineManager      engineManager;
     protected ACLManager         aclManager;
 
-    protected FilterTool         filterTool;
     protected EntryCache         entryCache;
 
     protected String status = STOPPED;
@@ -108,9 +106,6 @@ public abstract class Handler {
 
         try {
             status = STARTING;
-
-            filterTool = schemaManager.getFilterTool();
-
             status = STARTED;
 
             //log.debug("SessionHandler started.");
@@ -308,14 +303,6 @@ public abstract class Handler {
 
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
-    }
-
-    public FilterTool getFilterTool() {
-        return filterTool;
-    }
-
-    public void setFilterTool(FilterTool filterTool) {
-        this.filterTool = filterTool;
     }
 
     public Engine getEngine(Partition partition, EntryMapping entryMapping) {

@@ -607,14 +607,14 @@ public class EngineImpl extends Engine {
 
             load(partition, entryMapping, entriesToLoad, loadedEntries);
 
-            final FilterTool filterTool = penroseContext.getSchemaManager().getFilterTool();
+            final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
             
             final SearchResponse newEntries = new SearchResponse() {
                 public void add(Object object) throws Exception {
                     SearchResult entry = (SearchResult)object;
 
                     log.debug("Checking filter "+filter+" on "+entry.getDn());
-                    if (filterTool.isValid(entry.getAttributes(), filter)) {
+                    if (filterEvaluator.eval(entry.getAttributes(), filter)) {
                         response.add(entry);
                     } else {
                         log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");

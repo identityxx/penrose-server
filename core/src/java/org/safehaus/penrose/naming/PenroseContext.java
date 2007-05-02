@@ -15,6 +15,7 @@ import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSyncConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.filter.FilterEvaluator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ public class PenroseContext {
 
     private ThreadManager      threadManager;
     private SchemaManager      schemaManager;
+    private FilterEvaluator    filterEvaluator;
     private InterpreterManager interpreterManager;
 
     private ConnectorManager   connectorManager;
@@ -135,6 +137,9 @@ public class PenroseContext {
         schemaManager = new SchemaManager();
         schemaManager.setPenroseConfig(penroseConfig);
         schemaManager.setPenroseContext(this);
+
+        filterEvaluator = new FilterEvaluator();
+        filterEvaluator.setSchemaManager(schemaManager);
 
         interpreterManager = new InterpreterManager();
         interpreterManager.setPenroseConfig(penroseConfig);
@@ -261,5 +266,13 @@ public class PenroseContext {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public FilterEvaluator getFilterEvaluator() {
+        return filterEvaluator;
+    }
+
+    public void setFilterEvaluator(FilterEvaluator filterEvaluator) {
+        this.filterEvaluator = filterEvaluator;
     }
 }

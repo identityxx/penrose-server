@@ -15,6 +15,7 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.adapter.FilterBuilder;
 
 import java.util.Collection;
 
@@ -39,7 +40,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     public SearchRequestBuilder(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
@@ -49,7 +50,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         this.partition = partition;
         this.entryMapping = entryMapping;
 
-        this.sourceRefs = sources;
+        this.sourceRefs = sourceRefs;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -60,7 +61,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         filterBuilder = new FilterBuilder(
                 partition,
                 entryMapping,
-                sources,
+                sourceRefs,
                 sourceValues,
                 interpreter
         );

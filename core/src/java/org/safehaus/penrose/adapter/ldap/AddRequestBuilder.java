@@ -8,6 +8,7 @@ import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.Field;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -58,6 +59,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         boolean debug = log.isDebugEnabled();
 
+        Source source = sourceRef.getSource();
         String sourceName = sourceRef.getAlias();
 
         if (debug) log.debug("Processing source "+sourceName);
@@ -81,19 +83,19 @@ public class AddRequestBuilder extends RequestBuilder {
 
         for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
             FieldRef fieldRef = (FieldRef)k.next();
-
+            Field field = fieldRef.getField();
             FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            String fieldName = fieldRef.getName();
+            String fieldName = field.getName();
             if (debug) log.debug(" - Field: "+fieldName+": "+value);
 
 
-            Attribute ldapAttribute = new Attribute(fieldRef.getOriginalName());
+            Attribute ldapAttribute = new Attribute(field.getOriginalName());
 
-            if ("unicodePwd".equals(fieldRef.getOriginalName())) {
+            if ("unicodePwd".equals(field.getOriginalName())) {
                 ldapAttribute.addValue(PasswordUtil.toUnicodePassword(value));
             } else {
                 ldapAttribute.addValue(value);
@@ -101,12 +103,11 @@ public class AddRequestBuilder extends RequestBuilder {
             
             ldapAttributes.add(ldapAttribute);
 
-            if (fieldRef.isPrimaryKey()) {
-                rb.set(fieldRef.getOriginalName(), value);
+            if (field.isPrimaryKey()) {
+                rb.set(field.getOriginalName(), value);
             }
         }
 
-        Source source = sourceRef.getSource();
         newRequest.setDn(getDn(source, rb.toRdn()));
 
         String objectClasses = source.getParameter(LDAPAdapter.OBJECT_CLASSES);

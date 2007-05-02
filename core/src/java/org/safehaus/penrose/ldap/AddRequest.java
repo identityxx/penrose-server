@@ -1,9 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.RDN;
-
 /**
  * @author Endi S. Dewata
  */
@@ -11,6 +7,15 @@ public class AddRequest extends Request {
 
     protected DN dn;
     protected Attributes attributes;
+
+    public AddRequest() {
+    }
+
+    public AddRequest(AddRequest request) {
+        super(request);
+        dn = request.getDn();
+        attributes = request.getAttributes();
+    }
 
     public DN getDn() {
         return dn;

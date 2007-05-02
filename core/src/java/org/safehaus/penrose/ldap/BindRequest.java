@@ -1,8 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-
 /**
  * @author Endi S. Dewata
  */
@@ -10,6 +7,15 @@ public class BindRequest extends Request {
 
     protected DN dn;
     protected String password;
+
+    public BindRequest() {
+    }
+
+    public BindRequest(BindRequest request) {
+        super(request);
+        dn = request.getDn();
+        password = request.getPassword();
+    }
 
     public DN getDn() {
         return dn;

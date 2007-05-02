@@ -1,8 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -13,6 +10,15 @@ public class ModifyRequest extends Request {
 
     protected DN dn;
     protected Collection<Modification> modifications = new ArrayList<Modification>();
+
+    public ModifyRequest() {
+    }
+
+    public ModifyRequest(ModifyRequest request) {
+        super(request);
+        dn = request.getDn();
+        modifications.addAll(request.modifications);
+    }
 
     public DN getDn() {
         return dn;

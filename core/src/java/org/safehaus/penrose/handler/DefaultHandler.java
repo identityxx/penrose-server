@@ -7,6 +7,7 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.LDAPUtil;
@@ -108,12 +109,14 @@ public class DefaultHandler extends Handler {
             return;
         }
 
+        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
                 || scope == SearchRequest.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
                 ) {
 
-            if (filterTool.isValid(entryMapping, filter)) { // Check LDAP filter
+            if (filterEvaluator.eval(entryMapping, filter)) { // Check LDAP filter
 
                 SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
                     public void add(SearchResult object) throws Exception {
@@ -121,7 +124,7 @@ public class DefaultHandler extends Handler {
 
                         if (debug) log.debug("Checking filter "+filter);
 
-                        if (!filterTool.isValid(searchResult.getAttributes(), filter)) { // Check LDAP filter
+                        if (!filterEvaluator.eval(searchResult.getAttributes(), filter)) { // Check LDAP filter
                             if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
                             return;
                         }
