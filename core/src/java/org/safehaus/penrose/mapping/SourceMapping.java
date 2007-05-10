@@ -49,7 +49,7 @@ public class SourceMapping implements Cloneable {
     /**
      * Parameters.
      */
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     private boolean required = true;
     private boolean readOnly = false;
@@ -76,21 +76,20 @@ public class SourceMapping implements Cloneable {
 	}
 
     public Collection<FieldMapping> getFieldMappings(String name) {
-        return (Collection<FieldMapping>)fieldMappings.get(name.toLowerCase());
+        return fieldMappings.get(name.toLowerCase());
     }
 
-	public Collection getFieldMappings() {
+	public Collection<FieldMapping> getFieldMappings() {
         Collection<FieldMapping> results = new ArrayList<FieldMapping>();
-        for (Iterator i=fieldMappings.values().iterator(); i.hasNext(); ) {
-            Collection<FieldMapping> list = (Collection<FieldMapping>)i.next();
+        for (Collection<FieldMapping> list : fieldMappings.values()) {
             results.addAll(list);
         }
-		return results;
+        return results;
 	}
 
 	public void addFieldMapping(FieldMapping fieldMapping) {
         String name = fieldMapping.getName().toLowerCase();
-        Collection<FieldMapping> list = (Collection<FieldMapping>)fieldMappings.get(name);
+        Collection<FieldMapping> list = fieldMappings.get(name);
         if (list == null) {
             list = new ArrayList<FieldMapping>();
             fieldMappings.put(name, list);
@@ -122,8 +121,12 @@ public class SourceMapping implements Cloneable {
         this.sourceName = sourceName;
     }
 
+    public Map<String,String> getParameters() {
+        return parameters;
+    }
+
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
     public void removeParameters() {
@@ -233,11 +236,9 @@ public class SourceMapping implements Cloneable {
         sourceName = sourceMapping.sourceName;
 
         removeFieldMappings();
-        for (Iterator i=sourceMapping.fieldMappings.values().iterator(); i.hasNext(); ) {
-            Collection<FieldMapping> list = (Collection<FieldMapping>)i.next();
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
-                addFieldMapping((FieldMapping)fieldMapping.clone());
+        for (Collection<FieldMapping> list : sourceMapping.fieldMappings.values()) {
+            for (FieldMapping fieldMapping : list) {
+                addFieldMapping((FieldMapping) fieldMapping.clone());
             }
         }
 

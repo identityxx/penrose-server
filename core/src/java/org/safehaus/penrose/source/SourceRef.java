@@ -18,14 +18,15 @@ public class SourceRef {
     Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
     Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
 
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
+
     public SourceRef(Source source) {
         this.source = source;
 
         this.alias = source.getName();
         this.required = true;
 
-        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+        for (Field field : source.getFields()) {
             String fieldName = field.getName();
 
             FieldRef fieldRef = new FieldRef(field, alias, null);
@@ -35,17 +36,20 @@ public class SourceRef {
         }
     }
 
-    public SourceRef(Source source, SourceMapping sourceMapping) {
+    public SourceRef(Source source, SourceMapping sourceMapping) throws Exception {
         this.source = source;
 
         this.alias = sourceMapping.getName();
         this.required = sourceMapping.isRequired();
+        this.parameters.putAll(sourceMapping.getParameters());
 
         Collection fieldMappings = sourceMapping.getFieldMappings();
         for (Iterator i=fieldMappings.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             String fieldName = fieldMapping.getName();
+
             Field field = source.getField(fieldName);
+            if (field == null) throw new Exception("Unknown field: "+fieldName);
 
             FieldRef fieldRef = new FieldRef(field, alias, fieldMapping);
             fieldRefs.put(fieldName, fieldRef);
@@ -92,5 +96,17 @@ public class SourceRef {
 
     public void setRequired(boolean required) {
         this.required = required;
+    }
+
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    public String getParameter(String name) {
+        return parameters.get(name);
+    }
+    
+    public void setParameters(Map<String, String> parameters) {
+        this.parameters = parameters;
     }
 }

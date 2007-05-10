@@ -60,13 +60,13 @@ public class SourceManager {
     }
 
     public void addSourceRef(String partitionName, EntryMapping entryMapping, SourceRef sourceRef) {
-        Map<String,Map<String,SourceRef>> entryMappings = (Map<String,Map<String,SourceRef>>)sourceRefs.get(partitionName);
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partitionName);
         if (entryMappings == null) {
             entryMappings = new LinkedHashMap<String,Map<String,SourceRef>>();
             sourceRefs.put(partitionName, entryMappings);
         }
 
-        Map<String,SourceRef> map = (Map<String,SourceRef>)entryMappings.get(entryMapping.getId());
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
         if (map == null) {
             map = new LinkedHashMap<String,SourceRef>();
             entryMappings.put(entryMapping.getId(), map);
@@ -76,37 +76,37 @@ public class SourceManager {
     }
 
     public Collection<String> getSourceRefNames(Partition partition, EntryMapping entryMapping) {
-        Map<String,Map<String,SourceRef>> entryMappings = (Map<String,Map<String,SourceRef>>)sourceRefs.get(partition.getName());
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partition.getName());
         if (entryMappings == null) return EMPTY_STRINGS;
 
-        Map<String,SourceRef> map = (Map<String,SourceRef>)entryMappings.get(entryMapping.getId());
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
         if (map == null) return EMPTY_STRINGS;
 
         return new ArrayList<String>(map.keySet()); // return Serializable list
     }
 
     public Collection<SourceRef> getSourceRefs(Partition partition, EntryMapping entryMapping) {
-        Map<String,Map<String,SourceRef>> entryMappings = (Map<String,Map<String,SourceRef>>)sourceRefs.get(partition.getName());
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partition.getName());
         if (entryMappings == null) return EMPTY_SOURCEREFS;
 
-        Map<String,SourceRef> map = (Map<String,SourceRef>)entryMappings.get(entryMapping.getId());
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
         if (map == null) return EMPTY_SOURCEREFS;
 
         return map.values();
     }
 
     public SourceRef getSourceRef(String partitionName, EntryMapping entryMapping, String sourceName) {
-        Map<String,Map<String,SourceRef>> entryMappings = (Map<String,Map<String,SourceRef>>)sourceRefs.get(partitionName);
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partitionName);
         if (entryMappings == null) return null;
 
-        Map<String,SourceRef> map = (Map<String,SourceRef>)entryMappings.get(entryMapping.getId());
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
         if (map == null) return null;
 
-        return (SourceRef)map.get(sourceName);
+        return map.get(sourceName);
     }
 
     public void addSource(Partition partition, Source source) {
-        Map<String,Source> map = (Map<String,Source>)sources.get(partition.getName());
+        Map<String,Source> map = sources.get(partition.getName());
         if (map == null) {
             map = new LinkedHashMap<String,Source>();
             sources.put(partition.getName(), map);
@@ -115,13 +115,13 @@ public class SourceManager {
     }
 
     public Collection<String> getSourceNames(String partitionName) {
-        Map<String,Source> map = (Map<String,Source>)sources.get(partitionName);
+        Map<String,Source> map = sources.get(partitionName);
         if (map == null) return EMPTY_STRINGS;
         return new ArrayList<String>(map.keySet()); // return Serializable list
     }
 
     public Collection<Source> getSources(Partition partition) {
-        Map<String,Source> map = (Map<String,Source>)sources.get(partition.getName());
+        Map<String,Source> map = sources.get(partition.getName());
         if (map == null) return EMPTY_SOURCES;
         return map.values();
     }
@@ -131,9 +131,9 @@ public class SourceManager {
     }
 
     public Source getSource(String partitionName, String sourceName) {
-        Map<String,Source> map = (Map<String,Source>)sources.get(partitionName);
+        Map<String,Source> map = sources.get(partitionName);
         if (map == null) return null;
-        return (Source)map.get(sourceName);
+        return map.get(sourceName);
     }
 
     public PenroseConfig getPenroseConfig() {

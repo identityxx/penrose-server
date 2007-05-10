@@ -54,8 +54,7 @@ public class JDBCStatementBuilder {
         int count = statement.getSourceAliases().size();
 
         boolean first = true;
-        for (Iterator i=statement.getFieldRefs().iterator(); i.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)i.next();
+        for (FieldRef fieldRef : statement.getFieldRefs()) {
 
             if (first) {
                 first = false;

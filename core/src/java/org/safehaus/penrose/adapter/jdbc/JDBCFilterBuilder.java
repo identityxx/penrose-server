@@ -77,11 +77,16 @@ public class JDBCFilterBuilder {
 
             SourceRef sourceRef = (SourceRef)sourceRefs.get(sourceName);
             Source s = sourceRef.getSource();
+
             field = s.getField(fieldName);
+            if (field == null) throw new Exception("Unknown field: "+name);
+
             name = sourceName+"."+ field.getOriginalName();
 
         } else {
             field = source.getField(name);
+            if (field == null) throw new Exception("Unknown field: "+name);
+
             name = field.getOriginalName();
         }
 
