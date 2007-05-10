@@ -19,6 +19,7 @@ package org.safehaus.penrose.jdbc;
 
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 import javax.sql.DataSource;
 

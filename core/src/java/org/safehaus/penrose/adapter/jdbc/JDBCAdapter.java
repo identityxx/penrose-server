@@ -209,6 +209,8 @@ public class JDBCAdapter extends Adapter {
                 Object value = rdn.get(name);
 
                 Field field = source.getField(name);
+                if (field == null) throw new Exception("Unknown field: "+name);
+
                 statement.addAssignment(new Assignment(field, value));
             }
         }
@@ -222,6 +224,8 @@ public class JDBCAdapter extends Adapter {
             Object value = attributes.getValue(name); // get first value
 
             Field field = source.getField(name);
+            if (field == null) throw new Exception("Unknown field: "+name);
+
             statement.addAssignment(new Assignment(field, value));
         }
 
