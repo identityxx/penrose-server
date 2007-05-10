@@ -92,7 +92,11 @@ public class Source implements Cloneable {
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.get(name);
+    }
+
+    public Map<String,String> getParameters() {
+        return parameters;
     }
 
     public void setParameter(String name, String value) {

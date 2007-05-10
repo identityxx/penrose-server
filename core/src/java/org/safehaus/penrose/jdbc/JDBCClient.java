@@ -19,7 +19,6 @@ package org.safehaus.penrose.jdbc;
 
 import java.sql.*;
 import java.util.*;
-import java.util.Date;
 
 import javax.sql.DataSource;
 
@@ -28,6 +27,7 @@ import org.safehaus.penrose.partition.TableConfig;
 import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.util.Formatter;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -122,13 +122,13 @@ public class JDBCClient {
         if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
 
         s = (String)properties.remove(TEST_ON_BORROW);
-        if (s != null) config.testOnBorrow = new Boolean(s).booleanValue();
+        if (s != null) config.testOnBorrow = Boolean.valueOf(s);
 
         s = (String)properties.remove(TEST_ON_RETURN);
-        if (s != null) config.testOnReturn = new Boolean(s).booleanValue();
+        if (s != null) config.testOnReturn = Boolean.valueOf(s);
 
         s = (String)properties.remove(TEST_WHILE_IDLE);
-        if (s != null) config.testWhileIdle = new Boolean(s).booleanValue();
+        if (s != null) config.testWhileIdle = Boolean.valueOf(s);
 
         s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
         if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
@@ -173,8 +173,7 @@ public class JDBCClient {
 
     public String getTypeName(int type) throws Exception {
         java.lang.reflect.Field fields[] = Types.class.getFields();
-        for (int i=0; i<fields.length; i++) {
-            java.lang.reflect.Field field = fields[i];
+        for (java.lang.reflect.Field field : fields) {
             if (field.getInt(null) != type) continue;
             return field.getName();
         }
@@ -189,7 +188,7 @@ public class JDBCClient {
 
         log.debug("Getting column names for "+tableName+" "+catalog+" "+schema);
 
-        Map columns = new HashMap();
+        Map<String,FieldConfig> columns = new HashMap<String,FieldConfig>();
 
         Connection connection = null;
 
@@ -233,7 +232,7 @@ public class JDBCClient {
                 while (rs.next()) {
                     String name = rs.getString(4);
 
-                    FieldConfig field = (FieldConfig)columns.get(name);
+                    FieldConfig field = columns.get(name);
                     field.setPrimaryKey(true);
                 }
 
@@ -252,7 +251,7 @@ public class JDBCClient {
 
         log.debug("Getting catalogs");
 
-        Collection catalogs = new ArrayList();
+        Collection<String> catalogs = new ArrayList<String>();
 
         Connection connection = null;
         ResultSet rs = null;
@@ -281,7 +280,7 @@ public class JDBCClient {
 
         log.debug("Getting schemas");
 
-        Collection schemas = new ArrayList();
+        Collection<String> schemas = new ArrayList<String>();
 
         Connection connection = null;
         ResultSet rs = null;
@@ -314,7 +313,7 @@ public class JDBCClient {
 
         log.debug("Getting table names for "+catalog+" "+schema);
 
-        Collection tables = new TreeSet();
+        Collection<TableConfig> tables = new TreeSet<TableConfig>();
 
         Connection connection = null;
         ResultSet rs = null;
@@ -369,9 +368,8 @@ public class JDBCClient {
 
         if (debug) {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            Collection lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
-            for (Iterator j=lines.iterator(); j.hasNext(); ) {
-                String line = (String)j.next();
+            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            for (String line : lines) {
                 log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
             }
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
@@ -412,6 +410,61 @@ public class JDBCClient {
         }
     }
 
+    public int executeUpdate(
+            String sql
+    ) throws Exception {
+        return executeUpdate(sql, (Collection<Object>)null);
+    }
+
+    public int executeUpdate(
+            String sql,
+            Collection<Object> parameters
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            for (String line : lines) {
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
+            }
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+
+            if (parameters != null && !parameters.isEmpty()) {
+                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
+                int counter = 1;
+                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                    Object value = j.next();
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
+                }
+                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            }
+        }
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+
+            if (parameters != null) {
+                int counter = 1;
+                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
+                    Object object = j.next();
+                    setParameter(ps, counter, object);
+                }
+            }
+
+            return ps.executeUpdate();
+
+        } finally {
+            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
+    }
+
     public void executeQuery(QueryRequest request, QueryResponse response) throws Exception {
         JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
         String sql = statementBuilder.generate(request.getStatement());
@@ -431,12 +484,11 @@ public class JDBCClient {
 
         boolean debug = log.isDebugEnabled();
 
-       if (debug) {
+        if (debug) {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            Collection lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
-            for (Iterator i=lines.iterator(); i.hasNext(); ) {
-                String line = (String)i.next();
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
+            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            for (String line : lines) {
+                log.debug(Formatter.displayLine(line, 80));
             }
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
 
@@ -488,6 +540,10 @@ public class JDBCClient {
     	ps.setObject(paramIndex, assignment.getValue());
     }
 
+    public void setParameter(PreparedStatement ps, int paramIndex, Object object) throws Exception {
+    	ps.setObject(paramIndex, object);
+    }
+
     public void createTable(Source source) throws Exception {
 
         String tableName = source.getParameter(JDBCClient.TABLE);
@@ -499,8 +555,7 @@ public class JDBCClient {
         sb.append(" (");
 
         boolean first = true;
-        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+        for (Field field : source.getFields()) {
 
             if (first) {
                 first = false;
@@ -524,9 +579,7 @@ public class JDBCClient {
         }
 
         Collection<String> indexFieldNames = source.getIndexFieldNames();
-        for (Iterator i=indexFieldNames.iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
-
+        for (String fieldName : indexFieldNames) {
             sb.append(", index (");
             sb.append(fieldName);
             sb.append(")");
@@ -537,8 +590,7 @@ public class JDBCClient {
             sb.append(", primary key (");
 
             first = true;
-            for (Iterator i=primaryKeyNames.iterator(); i.hasNext(); ) {
-                String fieldName = (String)i.next();
+            for (String fieldName : primaryKeyNames) {
 
                 if (first) {
                     first = false;
@@ -556,9 +608,7 @@ public class JDBCClient {
 
         String sql = sb.toString();
 
-        UpdateResponse response = new UpdateResponse();
-
-        executeUpdate(sql, null, response);
+        executeUpdate(sql);
     }
 
     public void renameTable(Source oldSource, Source newSource) throws Exception {
@@ -575,9 +625,7 @@ public class JDBCClient {
 
         String sql = sb.toString();
 
-        UpdateResponse response = new UpdateResponse();
-
-        executeUpdate(sql, null, response);
+        executeUpdate(sql);
     }
 
     public void dropTable(Source source) throws Exception {
@@ -591,9 +639,7 @@ public class JDBCClient {
 
         String sql = sb.toString();
 
-        UpdateResponse response = new UpdateResponse();
-
-        executeUpdate(sql, null, response);
+        executeUpdate(sql);
     }
 
     public void cleanTable(Source source) throws Exception {
@@ -607,9 +653,7 @@ public class JDBCClient {
 
         String sql = sb.toString();
 
-        UpdateResponse response = new UpdateResponse();
-
-        executeUpdate(sql, null, response);
+        executeUpdate(sql);
     }
 
     public void showStatus(final Source source) throws Exception {
@@ -637,9 +681,8 @@ public class JDBCClient {
         sb.append("select ");
 
         boolean first = true;
-        for (Iterator i=source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
-            
+        for (Field field : source.getFields()) {
+
             if (first) {
                 first = false;
             } else {

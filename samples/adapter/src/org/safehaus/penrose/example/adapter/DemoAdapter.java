@@ -226,6 +226,8 @@ public class DemoAdapter extends Adapter {
 
         System.out.println("Searching with filter "+filter+".");
 
+        response.setSizeLimit(request.getSizeLimit());
+
         FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
         for (Iterator i=entries.keySet().iterator(); i.hasNext(); ) {

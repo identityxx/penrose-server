@@ -35,18 +35,18 @@ public class SearchResponse<E> extends Response {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    LinkedList<E> list = new LinkedList<E>();
-    long sizeLimit;
-    int totalCount;
-    boolean closed = false;
+    protected LinkedList<E> list = new LinkedList<E>();
+    protected long sizeLimit;
+    protected int totalCount;
+    protected boolean closed = false;
 
-    LDAPException exception;
+    protected LDAPException exception;
 
-    boolean enableEventListeners = true;
-    List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
+    protected boolean enableEventListeners = true;
+    protected List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
-    List referrals = new ArrayList();
-    Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
+    protected List referrals = new ArrayList();
+    protected Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
 
     public SearchResponse() {
     }

@@ -30,8 +30,8 @@ public class Formatter {
 
     public static Logger log = LoggerFactory.getLogger(Formatter.class);
 
-    public static Collection split(String s, int length) {
-        Collection list = new ArrayList();
+    public static Collection<String> split(String s, int length) {
+        Collection<String> list = new ArrayList<String>();
         while (s.length() > length-4) {
             list.add(s.substring(0, length-4));
             s = s.substring(length-4);

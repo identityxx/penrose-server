@@ -296,6 +296,8 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
+        response.setSizeLimit(request.getSizeLimit());
+
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
         db.append(source.getParameter(LDAPAdapter.BASE_DN));

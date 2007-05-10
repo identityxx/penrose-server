@@ -807,7 +807,6 @@ public class Session {
 	            }
             }
 
-            response.setSizeLimit(request.getSizeLimit());
             SearchResponse<SearchResult> resultsToUse = response;
 
             if (enableEventListeners) {
