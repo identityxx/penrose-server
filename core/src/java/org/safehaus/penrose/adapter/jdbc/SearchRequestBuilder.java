@@ -172,13 +172,17 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         if (sourceFilter != null) {
             sourceFilter = sourceFilter.replaceAll(table+"\\.", alias+"\\.");
-            
+            if (debug) log.debug(" - Source filter: "+sourceFilter);
+
             sb.append(" and (");
             sb.append(sourceFilter);
             sb.append(")");
         }
 
         if (sourceMappingFilter != null) {
+            sourceMappingFilter = sourceMappingFilter.replaceAll(sourceRef.getAlias()+"\\.", alias+"\\.");
+            if (debug) log.debug(" - Source mapping filter: "+sourceMappingFilter);
+
             sb.append(" and (");
             sb.append(sourceMappingFilter);
             sb.append(")");
