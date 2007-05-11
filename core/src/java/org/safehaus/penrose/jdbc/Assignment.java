@@ -11,6 +11,10 @@ public class Assignment {
     protected Field field;
     protected Object value;
 
+    public Assignment(Object value) {
+        this.value = value;
+    }
+    
     public Assignment(FieldRef fieldRef, Object value) {
         this.field = fieldRef.getField();
         this.value = value;

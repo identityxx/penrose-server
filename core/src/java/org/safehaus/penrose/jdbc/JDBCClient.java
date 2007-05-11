@@ -354,8 +354,25 @@ public class JDBCClient {
         executeUpdate(sql, assignments, response);
     }
 
+    public int executeUpdate(
+            String sql
+    ) throws Exception {
+        UpdateResponse response = new UpdateResponse();
+        executeUpdate(sql, null, response);
+        return response.getRowCount();
+    }
+
     public void executeUpdate(String sql, UpdateResponse response) throws Exception {
         executeUpdate(sql, null, response);
+    }
+
+    public int executeUpdate(
+            String sql,
+            Collection<Assignment> assignments
+    ) throws Exception {
+        UpdateResponse response = new UpdateResponse();
+        executeUpdate(sql, assignments, response);
+        return response.getRowCount();
     }
 
     public void executeUpdate(
@@ -403,61 +420,6 @@ public class JDBCClient {
 
             int count = ps.executeUpdate();
             response.setRowCount(count);
-
-        } finally {
-            if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-        }
-    }
-
-    public int executeUpdate(
-            String sql
-    ) throws Exception {
-        return executeUpdate(sql, (Collection<Object>)null);
-    }
-
-    public int executeUpdate(
-            String sql,
-            Collection<Object> parameters
-    ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-
-        if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
-            for (String line : lines) {
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
-            }
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-
-            if (parameters != null && !parameters.isEmpty()) {
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
-                int counter = 1;
-                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Object value = j.next();
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
-                }
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            }
-        }
-
-        Connection connection = null;
-        PreparedStatement ps = null;
-
-        try {
-            connection = getConnection();
-            ps = connection.prepareStatement(sql);
-
-            if (parameters != null) {
-                int counter = 1;
-                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Object object = j.next();
-                    setParameter(ps, counter, object);
-                }
-            }
-
-            return ps.executeUpdate();
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
