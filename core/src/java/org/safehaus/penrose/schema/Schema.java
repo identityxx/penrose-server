@@ -34,8 +34,8 @@ public class Schema implements Cloneable {
 
     private SchemaConfig schemaConfig;
 
-    protected Map attributeTypes = new TreeMap();
-    protected Map objectClasses = new TreeMap();
+    protected Map<String,AttributeType> attributeTypes = new TreeMap<String,AttributeType>();
+    protected Map<String,ObjectClass> objectClasses = new TreeMap<String,ObjectClass>();
 
     public Schema() {
     }
@@ -48,100 +48,91 @@ public class Schema implements Cloneable {
         return schemaConfig == null ? null : schemaConfig.getName();
     }
     
-    public Collection getAttributeTypes() {
-        Collection list = new TreeSet();
+    public Collection<AttributeType> getAttributeTypes() {
+        Collection<AttributeType> list = new TreeSet<AttributeType>();
         list.addAll(attributeTypes.values());
         return list;
     }
 
-    public Collection getAttributeTypeNames() {
-        Collection names = new TreeSet();
-        for (Iterator i=attributeTypes.values().iterator(); i.hasNext(); ) {
-            AttributeType at = (AttributeType)i.next();
-            names.add(at.getName());
+    public Collection<String> getAttributeTypeNames() {
+        Collection<String> names = new TreeSet<String>();
+        for (AttributeType attributeType : attributeTypes.values()) {
+            names.add(attributeType.getName());
         }
         return names;
     }
 
     public AttributeType getAttributeType(String name) {
-        return (AttributeType)attributeTypes.get(name.toLowerCase());
+        return attributeTypes.get(name.toLowerCase());
     }
 
     public void addAttributeType(AttributeType at) {
         attributeTypes.put(at.getOid(), at);
-        for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : at.getNames()) {
             attributeTypes.put(name.toLowerCase(), at);
         }
     }
 
-    public void removeAttributeTypes(Collection names) {
-        for (Iterator i=names.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+    public void removeAttributeTypes(Collection<String> names) {
+        for (String name : names) {
             removeAttributeType(name);
         }
     }
 
     public AttributeType removeAttributeType(String name) {
-        AttributeType at = (AttributeType)attributeTypes.get(name.toLowerCase());
+        AttributeType at = attributeTypes.get(name.toLowerCase());
         if (at == null) return null;
         attributeTypes.remove(at.getOid());
-        for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
-            String atName = (String)i.next();
+        for (String atName : at.getNames()) {
             attributeTypes.remove(atName.toLowerCase());
         }
         return at;
     }
 
-    public Collection getObjectClasses() {
-        Collection list = new TreeSet();
+    public Collection<ObjectClass> getObjectClasses() {
+        Collection<ObjectClass> list = new TreeSet<ObjectClass>();
         list.addAll(objectClasses.values());
         return list;
     }
 
-    public Collection getObjectClassNames() {
-        Collection names = new TreeSet();
-        for (Iterator i=objectClasses.values().iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            names.add(oc.getName());
+    public Collection<String> getObjectClassNames() {
+        Collection<String> names = new TreeSet<String>();
+        for (ObjectClass objectClass : objectClasses.values()) {
+            names.add(objectClass.getName());
         }
         return names;
     }
 
     public ObjectClass getObjectClass(String name) {
-        return (ObjectClass)objectClasses.get(name.toLowerCase());
+        return objectClasses.get(name.toLowerCase());
     }
 
     public void addObjectClass(ObjectClass oc) {
         objectClasses.put(oc.getOid(), oc);
-        for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : oc.getNames()) {
             objectClasses.put(name.toLowerCase(), oc);
         }
     }
 
-    public void removeObjectClasses(Collection names) {
-        for (Iterator i=names.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+    public void removeObjectClasses(Collection<String> names) {
+        for (String name : names) {
             removeObjectClass(name);
         }
     }
 
     public ObjectClass removeObjectClass(String name) {
-        ObjectClass oc = (ObjectClass)objectClasses.get(name.toLowerCase());
+        ObjectClass oc = objectClasses.get(name.toLowerCase());
         if (oc == null) return null;
         objectClasses.remove(oc.getOid());
-        for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
+        for (String ocName : oc.getNames()) {
             objectClasses.remove(ocName.toLowerCase());
         }
         return oc;
     }
 
     public Set getRequiredAttributeNames(EntryMapping entry) {
-        Set set = new HashSet();
-        for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
+        Set<String> set = new HashSet<String>();
+        for (String ocName : entry.getObjectClasses()) {
             ObjectClass oc = getObjectClass(ocName);
             if (oc == null) continue;
 
@@ -151,36 +142,32 @@ public class Schema implements Cloneable {
         return set;
     }
 
-    public Collection getAllObjectClassNames(EntryMapping entry) {
-        Collection list = new ArrayList();
+    public Collection<String> getAllObjectClassNames(EntryMapping entry) {
+        Collection<String> list = new ArrayList<String>();
 
-        for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
-
+        for (String ocName : entry.getObjectClasses()) {
             getAllObjectClassNames(list, ocName);
         }
 
         return list;
     }
 
-    public Collection getAllObjectClassNames(String ocName) {
-        Collection list = new ArrayList();
+    public Collection<String> getAllObjectClassNames(String ocName) {
+        Collection<String> list = new ArrayList<String>();
         getAllObjectClassNames(list, ocName);
         return list;
     }
 
-    public void getAllObjectClassNames(Collection list, String ocName) {
+    public void getAllObjectClassNames(Collection<String> list, String ocName) {
     	if (list.contains(ocName)) return;
 
         ObjectClass oc = getObjectClass(ocName);
         if (oc == null) return;
 
-    	Collection superClasses = oc.getSuperClasses();
-    	for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
-    		String supName = (String)i.next();
-
+    	Collection<String> superClasses = oc.getSuperClasses();
+        for (String supName : superClasses) {
             getAllObjectClassNames(list, supName);
-    	}
+        }
 
         list.add(ocName);
     }
@@ -191,9 +178,8 @@ public class Schema implements Cloneable {
         ObjectClass oc = getObjectClass(child);
         if (oc == null) return false;
 
-        Collection superClasses = oc.getSuperClasses();
-        for (Iterator i=superClasses.iterator(); i.hasNext(); ) {
-            String supName = (String)i.next();
+        Collection<String> superClasses = oc.getSuperClasses();
+        for (String supName : superClasses) {
             //log.debug(" - comparing "+parent+" with "+supName+": "+supName.equals(parent));
             if (supName.equals(parent)) return true;
 
@@ -204,23 +190,22 @@ public class Schema implements Cloneable {
         return false;
     }
 
-    public Collection getObjectClasses(EntryMapping entry) {
-        Map map = new HashMap();
-        for (Iterator i=entry.getObjectClasses().iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
+    public Collection<ObjectClass> getObjectClasses(EntryMapping entry) {
+        Map<String,ObjectClass> map = new HashMap<String,ObjectClass>();
+        for (String ocName : entry.getObjectClasses()) {
             getAllObjectClasses(ocName, map);
         }
 
         return map.values();
     }
 
-    public Collection getAllObjectClasses(String objectClassName) {
-        Map map = new HashMap();
+    public Collection<ObjectClass> getAllObjectClasses(String objectClassName) {
+        Map<String,ObjectClass> map = new HashMap<String,ObjectClass>();
         getAllObjectClasses(objectClassName, map);
         return map.values();
     }
 
-    public void getAllObjectClasses(String objectClassName, Map map) {
+    public void getAllObjectClasses(String objectClassName, Map<String,ObjectClass> map) {
         if ("top".equalsIgnoreCase(objectClassName)) return;
         if (map.containsKey(objectClassName)) return;
 
@@ -238,8 +223,7 @@ public class Schema implements Cloneable {
         if (objectClass.getSuperClasses() == null) return;
 
         // add all superclasses
-        for (Iterator i=objectClass.getSuperClasses().iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
+        for (String ocName : objectClass.getSuperClasses()) {
             getAllObjectClasses(ocName, map);
         }
     }
@@ -250,20 +234,16 @@ public class Schema implements Cloneable {
     }
 
     public void remove(Schema schema) {
-        for (Iterator i=schema.attributeTypes.values().iterator(); i.hasNext(); ) {
-            AttributeType at = (AttributeType)i.next();
+        for (AttributeType at : schema.attributeTypes.values()) {
             attributeTypes.remove(at.getOid());
-            for (Iterator j=at.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
+            for (String name : at.getNames()) {
                 attributeTypes.remove(name.toLowerCase());
             }
         }
 
-        for (Iterator i=schema.objectClasses.values().iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
+        for (ObjectClass oc : schema.objectClasses.values()) {
             objectClasses.remove(oc.getOid());
-            for (Iterator j=oc.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
+            for (String name : oc.getNames()) {
                 objectClasses.remove(name.toLowerCase());
             }
         }
@@ -274,13 +254,9 @@ public class Schema implements Cloneable {
         objectClasses.clear();
     }
 
-    /**
-     * Check if pk2 is a subset of pk1.
-     */
     public boolean partialMatch(RDN pk1, RDN pk2) throws Exception {
 
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : pk2.getNames()) {
             Object v1 = pk1.get(name);
             Object v2 = pk2.get(name);
             //log.debug("   - comparing "+name+": ["+v1+"] ["+v2+"]");
@@ -291,7 +267,7 @@ public class Schema implements Cloneable {
             } else if (v1 == null || v2 == null) {
                 return false;
 
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
                 return false;
             }
         }
@@ -299,13 +275,9 @@ public class Schema implements Cloneable {
         return true;
     }
 
-    /**
-     * Check if row is a subset of av.
-     */
     public boolean partialMatch(SourceValues av, RDN rdn) throws Exception {
 
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Collection values = av.get(name);
             Object value = rdn.get(name);
 
@@ -317,7 +289,7 @@ public class Schema implements Cloneable {
 
             } else {
                 boolean found = false;
-                for (Iterator j=values.iterator(); j.hasNext() && !found; ) {
+                for (Iterator j = values.iterator(); j.hasNext() && !found;) {
                     Object v = j.next();
                     //log.debug("comparing ["+v+"] with ["+value+"]: "+v.toString().equalsIgnoreCase(value.toString()));
                     if (v.toString().equalsIgnoreCase(value.toString())) found = true;
@@ -333,8 +305,7 @@ public class Schema implements Cloneable {
 
         if (!pk1.getNames().equals(pk2.getNames())) return false;
 
-        for (Iterator i=pk2.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : pk2.getNames()) {
             Object v1 = pk1.get(name);
             Object v2 = pk2.get(name);
 
@@ -344,7 +315,7 @@ public class Schema implements Cloneable {
             } else if (v1 == null || v2 == null) {
                 return false;
 
-            } else  if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
+            } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
                 return false;
             }
         }
@@ -376,7 +347,7 @@ public class Schema implements Cloneable {
         return true;
     }
 
-    public void copy(Schema schema) {
+    public void copy(Schema schema) throws CloneNotSupportedException {
         if (schema.schemaConfig != null) {
             if (schemaConfig == null) {
                 schemaConfig = (SchemaConfig)schema.schemaConfig.clone();
@@ -386,19 +357,18 @@ public class Schema implements Cloneable {
         }
 
         attributeTypes.clear();
-        for (Iterator i=schema.getAttributeTypes().iterator(); i.hasNext(); ) {
-            AttributeType at = (AttributeType)i.next();
-            addAttributeType((AttributeType)at.clone());
+        for (AttributeType attributeType : schema.getAttributeTypes()) {
+            addAttributeType((AttributeType) attributeType.clone());
         }
 
         objectClasses.clear();
-        for (Iterator i=schema.getObjectClasses().iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            addObjectClass((ObjectClass)oc.clone());
+        for (ObjectClass objectClass : schema.getObjectClasses()) {
+            addObjectClass((ObjectClass) objectClass.clone());
         }
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         Schema schema = new Schema();
         schema.copy(this);
         return schema;

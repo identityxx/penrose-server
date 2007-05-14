@@ -43,18 +43,18 @@ public class Sources {
     }
 
     public SourceConfig removeSourceConfig(String sourceName) {
-        return (SourceConfig)sourceConfigs.remove(sourceName);
+        return sourceConfigs.remove(sourceName);
     }
 
     public SourceConfig getSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.get(name);
+        return sourceConfigs.get(name);
     }
 
     public SourceConfig getSourceConfig(SourceMapping sourceMapping) {
         return getSourceConfig(sourceMapping.getSourceName());
     }
 
-    public Collection getSourceConfigs() {
+    public Collection<SourceConfig> getSourceConfigs() {
         return sourceConfigs.values();
     }
 
@@ -76,11 +76,11 @@ public class Sources {
     }
 
     public SourceSyncConfig removeSourceSyncConfig(String name) {
-        return (SourceSyncConfig) sourceSyncConfigs.remove(name);
+        return sourceSyncConfigs.remove(name);
     }
 
     public SourceSyncConfig getSourceSyncConfig(String name) {
-        return (SourceSyncConfig) sourceSyncConfigs.get(name);
+        return sourceSyncConfigs.get(name);
     }
 
     public Collection<SourceSyncConfig> getSourceSyncConfigs() {

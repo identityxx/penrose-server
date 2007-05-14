@@ -31,13 +31,13 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
     SchemaManager schemaManager;
     ACLManager aclManager;
 
-    Set requestedAttributes;
+    Set<String> requestedAttributes;
     boolean allRegularAttributes;
     boolean allOpAttributes;
 
-    Collection entryMappings;
-    Map attributesToRemove = new HashMap();
-    Map results = new HashMap();
+    Collection<EntryMapping> entryMappings;
+    Map<String,Collection<String>> attributesToRemove = new HashMap<String,Collection<String>>();
+    Map<String,Exception> results = new HashMap<String,Exception>();
 
     public HandlerSearchResponse(
             SearchResponse<SearchResult> parent,
@@ -46,10 +46,10 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
             HandlerManager handlerManager,
             SchemaManager schemaManager,
             ACLManager aclManager,
-            Set requestedAttributes,
+            Set<String> requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
-            Collection entryMappings
+            Collection<EntryMapping> entryMappings
     ) {
         this.parent = parent;
         this.session = session;
@@ -66,29 +66,28 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
         this.entryMappings = entryMappings;
     }
 
-    public void add(SearchResult object) throws Exception {
-        SearchResult entry = (SearchResult)object;
+    public void add(SearchResult searchResult) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        DN dn = entry.getDn();
-        EntryMapping entryMapping = entry.getEntryMapping();
-        Attributes attributes = entry.getAttributes();
+        DN dn = searchResult.getDn();
+        EntryMapping entryMapping = searchResult.getEntryMapping();
+        Attributes attributes = searchResult.getAttributes();
 
         if (!session.isRootUser()) {
             if (debug) log.debug("Checking read permission.");
             
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Entry \""+entry.getDn()+"\" is not readable.");
+                if (debug) log.debug("Entry \""+searchResult.getDn()+"\" is not readable.");
                 return;
             }
             handlerManager.filterAttributes(session, partition, dn, entryMapping, attributes);
         }
 
-        Collection list = (Collection) attributesToRemove.get(entryMapping.getId());
+        Collection<String> list = attributesToRemove.get(entryMapping.getId());
         if (list == null) {
-            list = handlerManager.filterAttributes(session, partition, attributes, requestedAttributes, allRegularAttributes, allOpAttributes);
+            list = handlerManager.filterAttributes(session, partition, searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entryMapping.getId(), list);
         }
 
@@ -128,9 +127,8 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
         LDAPException noSuchObject = null;
         LDAPException exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            LDAPException ldapException = (LDAPException)results.get(entryMapping.getId());
+        for (EntryMapping entryMapping : entryMappings) {
+            LDAPException ldapException = (LDAPException) results.get(entryMapping.getId());
 
             int rc = ldapException.getResultCode();
             switch (rc) {

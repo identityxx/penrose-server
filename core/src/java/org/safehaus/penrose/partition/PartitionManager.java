@@ -40,7 +40,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
     private PartitionValidator partitionValidator = new PartitionValidator();
 
-    private Map partitions = new LinkedHashMap();
+    private Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
 
     public PartitionManager() {
     }
@@ -187,7 +187,7 @@ public class PartitionManager implements PartitionManagerMBean {
         return p;
     }
 
-    public Collection getPartitions() {
+    public Collection<Partition> getPartitions() {
         return partitions.values();
     }
 

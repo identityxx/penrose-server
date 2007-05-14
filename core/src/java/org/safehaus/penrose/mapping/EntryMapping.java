@@ -206,7 +206,7 @@ public class EntryMapping implements Cloneable {
         this.enabled = enabled;
     }
 
-    public Collection getAttributeMappings() {
+    public Collection<AttributeMapping> getAttributeMappings() {
         return attributeMappings;
     }
 
@@ -215,15 +215,15 @@ public class EntryMapping implements Cloneable {
         attributeMappingsByName.clear();
     }
 
-    public Collection getRelationships() {
+    public Collection<Relationship> getRelationships() {
         return relationships;
     }
 
-    public Collection getSourceMappings() {
+    public Collection<SourceMapping> getSourceMappings() {
         return sourceMappings;
     }
 
-    public Collection getObjectClasses() {
+    public Collection<String> getObjectClasses() {
         return objectClasses;
     }
 
@@ -290,9 +290,8 @@ public class EntryMapping implements Cloneable {
         return sourceMapping;
     }
 
-    public void addAttributeMappings(Collection attributeMappings) {
-        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+    public void addAttributeMappings(Collection<AttributeMapping> attributeMappings) {
+        for (AttributeMapping attributeMapping : attributeMappings) {
             addAttributeMapping(attributeMapping);
         }
     }
@@ -329,12 +328,11 @@ public class EntryMapping implements Cloneable {
         return attributeMappingsByName.get(name);
     }
 
-    public Collection getAttributeMappings(Collection<String> names) {
+    public Collection<AttributeMapping> getAttributeMappings(Collection<String> names) {
         if (names == null) return getAttributeMappings();
 
         Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
-        for (Iterator i=names.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : names) {
             Collection<AttributeMapping> list = getAttributeMappings(name);
             if (list == null) continue;
             results.addAll(list);
@@ -487,7 +485,8 @@ public class EntryMapping implements Cloneable {
         parameters.putAll(entryMapping.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         EntryMapping entryMapping = new EntryMapping();
         entryMapping.copy(this);
         return entryMapping;

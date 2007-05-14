@@ -38,7 +38,7 @@ public class AttributeType implements Cloneable, Comparable {
 	/**
 	 * Name.
 	 */
-	public Collection names = new ArrayList();
+	public Collection<String> names = new ArrayList<String>();
 	
 	/**
 	 * Description.
@@ -131,7 +131,7 @@ public class AttributeType implements Cloneable, Comparable {
 
     public String getName() {
     	if (names.isEmpty()) return null;
-        return (String)names.iterator().next();
+        return names.iterator().next();
     }
 
     public void setName(String name) {
@@ -143,12 +143,14 @@ public class AttributeType implements Cloneable, Comparable {
         names.add(name);
     }
 
-	public Collection getNames() {
+	public Collection<String> getNames() {
 		return names;
 	}
 
-	public void setNames(Collection names) {
-		this.names = names;
+	public void setNames(Collection<String> names) {
+        if (this.names == names) return;
+        this.names.clear();
+        this.names.addAll(names);
 	}
 
     public void removeNames() {
@@ -272,7 +274,8 @@ public class AttributeType implements Cloneable, Comparable {
         operational = at.operational;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         AttributeType at = new AttributeType();
         at.copy(this);
         return at;
@@ -304,9 +307,8 @@ public class AttributeType implements Cloneable, Comparable {
         } else if (names.size() > 1) {
             if (multiLine) out.print("   ");
             out.print(" NAME ( ");
-            for (Iterator i=names.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                out.print("'"+name+"' ");
+            for (String name : names) {
+                out.print("'" + name + "' ");
             }
             out.print(")");
             if (multiLine) out.println();

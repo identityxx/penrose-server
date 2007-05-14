@@ -34,23 +34,23 @@ public class Partition {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static Collection EMPTY = new ArrayList();
+    public final static Collection<EntryMapping> EMPTY = new ArrayList<EntryMapping>();
 
     private PartitionConfig partitionConfig;
 
-    private Map entryMappingsById = new LinkedHashMap();
-    private Map entryMappingsByDn = new LinkedHashMap();
-    private Map entryMappingsBySource = new LinkedHashMap();
-    private Map entryMappingsByParentId = new LinkedHashMap();
+    private Map<String,EntryMapping> entryMappingsById = new LinkedHashMap<String,EntryMapping>();
+    private Map<String,Collection<EntryMapping>> entryMappingsByDn = new LinkedHashMap<String,Collection<EntryMapping>>();
+    private Map<String,Collection<EntryMapping>> entryMappingsBySource = new LinkedHashMap<String,Collection<EntryMapping>>();
+    private Map<String,Collection<EntryMapping>> entryMappingsByParentId = new LinkedHashMap<String,Collection<EntryMapping>>();
 
-    private Collection suffixes = new ArrayList();
-    private Collection rootEntryMappings = new ArrayList();
+    private Collection<DN> suffixes = new ArrayList<DN>();
+    private Collection<EntryMapping> rootEntryMappings = new ArrayList<EntryMapping>();
 
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
     private Sources sources = new Sources();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-    private Map moduleMappings = new LinkedHashMap();
+    private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
@@ -69,12 +69,11 @@ public class Partition {
     }
 
     public boolean contains(DN dn) {
-        for (Iterator i=rootEntryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            DN suffix = entryMapping.getDn();
+        for (EntryMapping rootEntryMapping : rootEntryMappings) {
+            DN suffix = rootEntryMapping.getDn();
 
             if (suffix.isEmpty() && dn.isEmpty() // Root DSE
-                || dn.endsWith(suffix)) {
+                    || dn.endsWith(suffix)) {
                 return true;
             }
         }
@@ -86,22 +85,22 @@ public class Partition {
         return entryMappingsById.containsKey(entryMapping.getId());
     }
 
-    public Collection getEntryMappings(String dn) {
+    public Collection<EntryMapping> getEntryMappings(String dn) {
         return getEntryMappings(new DN(dn));
     }
 
-    public Collection getEntryMappings(DN dn) {
+    public Collection<EntryMapping> getEntryMappings(DN dn) {
         if (dn == null) return EMPTY;
 
-        Collection list = (Collection)entryMappingsByDn.get(dn.getNormalizedDn());
+        Collection<EntryMapping> list = entryMappingsByDn.get(dn.getNormalizedDn());
         if (list == null) return EMPTY;
 
-        return new ArrayList(list);
+        return new ArrayList<EntryMapping>(list);
     }
 
-    public Collection getEntryMappings(SourceConfig sourceConfig) {
+    public Collection<EntryMapping> getEntryMappings(SourceConfig sourceConfig) {
         String sourceName = sourceConfig.getName();
-        Collection list = (Collection)entryMappingsBySource.get(sourceName);
+        Collection<EntryMapping> list = entryMappingsBySource.get(sourceName);
         if (list == null) return EMPTY;
         return list;
     }
@@ -122,21 +121,20 @@ public class Partition {
         entryMappingsById.put(id, entryMapping);
 
         // lookup by dn
-        Collection c = (Collection) entryMappingsByDn.get(dn);
+        Collection<EntryMapping> c = entryMappingsByDn.get(dn);
         if (c == null) {
-            c = new ArrayList();
+            c = new ArrayList<EntryMapping>();
             entryMappingsByDn.put(dn, c);
         }
         c.add(entryMapping);
 
         // lookup by source
-        Collection sourceMappings = entryMapping.getSourceMappings();
-        for (Iterator i = sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+        for (SourceMapping sourceMapping : sourceMappings) {
             String sourceName = sourceMapping.getSourceName();
-            c = (Collection)entryMappingsBySource.get(sourceName);
+            c = entryMappingsBySource.get(sourceName);
             if (c == null) {
-                c = new ArrayList();
+                c = new ArrayList<EntryMapping>();
                 entryMappingsBySource.put(sourceName, c);
             }
             c.add(entryMapping);
@@ -150,7 +148,7 @@ public class Partition {
             if (!parentDn.isEmpty()) {
                 c = getEntryMappings(parentDn);
                 if (c != null && !c.isEmpty()) {
-                    parent = (EntryMapping)c.iterator().next();
+                    parent = c.iterator().next();
                     parentId = parent.getId();
                     entryMapping.setParentId(parentId);
                 }
@@ -171,7 +169,7 @@ public class Partition {
     }
 
     public EntryMapping getEntryMappingById(String id) {
-        return (EntryMapping) entryMappingsById.get(id);
+        return entryMappingsById.get(id);
     }
 
     public void modifyEntryMapping(EntryMapping oldEntry, EntryMapping newEntry) {
@@ -191,7 +189,7 @@ public class Partition {
             if (children != null) children.remove(entryMapping);
         }
 
-        Collection c = (Collection)entryMappingsByDn.get(entryMapping.getDn().getNormalizedDn());
+        Collection<EntryMapping> c = entryMappingsByDn.get(entryMapping.getDn().getNormalizedDn());
         if (c == null) return;
 
         c.remove(entryMapping);
@@ -209,7 +207,7 @@ public class Partition {
 
         if (log.isDebugEnabled()) log.debug("Renaming "+oldDn+" to "+newDn);
 
-        Collection c = (Collection) entryMappingsByDn.get(oldDn.getNormalizedDn());
+        Collection<EntryMapping> c = entryMappingsByDn.get(oldDn.getNormalizedDn());
         if (c == null) {
         	if (log.isDebugEnabled()) log.debug("Entry "+oldDn+" not found.");
             return;
@@ -222,10 +220,10 @@ public class Partition {
         }
 
         entryMapping.setDn(newDn);
-        Collection newList = (Collection) entryMappingsByDn.get(newDn.getNormalizedDn());
+        Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.getNormalizedDn());
         if (newList == null) {
         	if (log.isDebugEnabled()) log.debug("First "+newDn);
-            newList = new ArrayList();
+            newList = new ArrayList<EntryMapping>();
             entryMappingsByDn.put(newDn.getNormalizedDn(), newList);
         }
         newList.add(entryMapping);
@@ -237,14 +235,13 @@ public class Partition {
             addChildren(newParent, entryMapping);
         }
 
-        Collection children = getChildren(entryMapping);
+        Collection<EntryMapping> children = getChildren(entryMapping);
 
         if (children != null) {
             //addChildren(newDn, children);
 
-            for (Iterator i=children.iterator(); i.hasNext(); ) {
-                EntryMapping child = (EntryMapping)i.next();
-                String childNewDn = child.getRdn()+","+newDn;
+            for (EntryMapping child : children) {
+                String childNewDn = child.getRdn() + "," + newDn;
                 //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
 
                 renameChildren(child, childNewDn);
@@ -277,22 +274,21 @@ public class Partition {
         }
 
         entryMapping.setStringDn(newDn);
-        Collection newList = (Collection) entryMappingsByDn.get(newDn.toLowerCase());
+        Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.toLowerCase());
         if (newList == null) {
         	if (log.isDebugEnabled()) log.debug("First "+newDn);
-            newList = new ArrayList();
+            newList = new ArrayList<EntryMapping>();
             entryMappingsByDn.put(newDn.toLowerCase(), newList);
         }
         newList.add(entryMapping);
 
-        Collection children = getChildren(entryMapping);
+        Collection<EntryMapping> children = getChildren(entryMapping);
 
         if (children != null) {
             //addChildren(newDn, children);
 
-            for (Iterator i=children.iterator(); i.hasNext(); ) {
-                EntryMapping child = (EntryMapping)i.next();
-                String childNewDn = child.getRdn()+","+newDn;
+            for (EntryMapping child : children) {
+                String childNewDn = child.getRdn() + "," + newDn;
                 //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
 
                 renameChildren(child, childNewDn);
@@ -305,19 +301,19 @@ public class Partition {
     public EntryMapping getParent(EntryMapping entryMapping) {
         if (entryMapping == null) return null;
 
-        return (EntryMapping)entryMappingsById.get(entryMapping.getParentId());
+        return entryMappingsById.get(entryMapping.getParentId());
     }
 
-    public Collection getChildren(EntryMapping parentMapping) {
-        Collection children = (Collection) entryMappingsByParentId.get(parentMapping.getId());
+    public Collection<EntryMapping> getChildren(EntryMapping parentMapping) {
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) return EMPTY;
         return children;
     }
 
-    public void addChildren(EntryMapping parentMapping, Collection newChildren) {
-        Collection children = (Collection)entryMappingsByParentId.get(parentMapping.getId());
+    public void addChildren(EntryMapping parentMapping, Collection<EntryMapping> newChildren) {
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
-            children = new ArrayList();
+            children = new ArrayList<EntryMapping>();
             entryMappingsByParentId.put(parentMapping.getId(), children);
         }
         children.addAll(newChildren);
@@ -325,20 +321,20 @@ public class Partition {
 
     public void addChildren(EntryMapping parentMapping, EntryMapping entryMapping) {
     	//if (log.isDebugEnabled()) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
-        Collection children = (Collection) entryMappingsByParentId.get(parentMapping.getId());
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
-            children = new ArrayList();
+            children = new ArrayList<EntryMapping>();
             entryMappingsByParentId.put(parentMapping.getId(), children);
         }
         children.add(entryMapping);
     }
 
-    public Collection removeChildren(EntryMapping parentMapping) {
-        return (Collection) entryMappingsByParentId.remove(parentMapping.getId());
+    public Collection<EntryMapping> removeChildren(EntryMapping parentMapping) {
+        return entryMappingsByParentId.remove(parentMapping.getId());
     }
 
-   public Collection getEffectiveSourceMappings(EntryMapping entryMapping) {
-        Collection list = new ArrayList();
+   public Collection<SourceMapping> getEffectiveSourceMappings(EntryMapping entryMapping) {
+        Collection<SourceMapping> list = new ArrayList<SourceMapping>();
         list.addAll(entryMapping.getSourceMappings());
 
         EntryMapping parent = getParent(entryMapping);
@@ -348,7 +344,7 @@ public class Partition {
     }
 
     public SourceMapping getEffectiveSourceMapping(EntryMapping entryMapping, String name) {
-        SourceMapping sourceMapping = (SourceMapping)entryMapping.getSourceMapping(name);
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(name);
         if (sourceMapping != null) return sourceMapping;
 
         EntryMapping parent = getParent(entryMapping);
@@ -362,17 +358,17 @@ public class Partition {
     }
 
     public ModuleConfig getModuleConfig(String name) {
-        return (ModuleConfig)moduleConfigs.get(name);
+        return moduleConfigs.get(name);
     }
 
-    public Collection getModuleMappings(String name) {
-        return (Collection)moduleMappings.get(name);
+    public Collection<ModuleMapping> getModuleMappings(String name) {
+        return moduleMappings.get(name);
     }
 
     public void addModuleMapping(ModuleMapping mapping) throws Exception {
-        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c == null) {
-            c = new ArrayList();
+            c = new ArrayList<ModuleMapping>();
             moduleMappings.put(mapping.getModuleName(), c);
         }
         c.add(mapping);
@@ -399,22 +395,21 @@ public class Partition {
     }
 
     public void modifyConnectionConfig(String name, ConnectionConfig newConnectionConfig) {
-        ConnectionConfig connectionConfig = (ConnectionConfig)connectionConfigs.get(name);
+        ConnectionConfig connectionConfig = connectionConfigs.get(name);
         connectionConfig.copy(newConnectionConfig);
     }
 
     public ConnectionConfig removeConnectionConfig(String connectionName) {
-        return (ConnectionConfig)connectionConfigs.remove(connectionName);
+        return connectionConfigs.remove(connectionName);
     }
 
     public ConnectionConfig getConnectionConfig(String name) {
-        return (ConnectionConfig)connectionConfigs.get(name);
+        return connectionConfigs.get(name);
     }
 
-    public Collection getEntryMappings() {
-        Collection list = new ArrayList();
-        for (Iterator i=entryMappingsByDn.values().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
+    public Collection<EntryMapping> getEntryMappings() {
+        Collection<EntryMapping> list = new ArrayList<EntryMapping>();
+        for (Collection<EntryMapping> c : entryMappingsByDn.values()) {
             list.addAll(c);
         }
         return list;
@@ -425,12 +420,12 @@ public class Partition {
         return findEntryMappings(new DN(targetDn));
     }
 
-    public Collection findEntryMappings(DN dn) throws Exception {
+    public Collection<EntryMapping> findEntryMappings(DN dn) throws Exception {
         if (dn == null) return EMPTY;
         //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
 
         // search for static mappings
-        Collection results = (Collection) entryMappingsByDn.get(dn.getNormalizedDn());
+        Collection<EntryMapping> results = entryMappingsByDn.get(dn.getNormalizedDn());
         if (results != null) {
             //log.debug("Found "+results.size()+" mapping(s).");
             return results;
@@ -440,8 +435,8 @@ public class Partition {
 
         DN parentDn = dn.getParentDn();
 
-        results = new ArrayList();
-        Collection list;
+        results = new ArrayList<EntryMapping>();
+        Collection<EntryMapping> list;
 
         // if dn has no parent, check against root entries
         if (parentDn.isEmpty()) {
@@ -450,7 +445,7 @@ public class Partition {
 
         } else {
             if (log.isDebugEnabled()) log.debug("Search parent mappings for \""+parentDn+"\"");
-            Collection parentMappings = findEntryMappings(parentDn);
+            Collection<EntryMapping> parentMappings = findEntryMappings(parentDn);
 
             // if no parent mappings found, the entry doesn't exist in this partition
             if (parentMappings == null || parentMappings.isEmpty()) {
@@ -458,55 +453,52 @@ public class Partition {
                 return null;
             }
 
-            list = new ArrayList();
+            list = new ArrayList<EntryMapping>();
 
             // for each parent mapping found
-            for (Iterator i=parentMappings.iterator(); i.hasNext(); ) {
-                EntryMapping parentMapping = (EntryMapping)i.next();
-                if (log.isDebugEnabled()) log.debug("Found parent "+parentMapping.getDn());
+            for (EntryMapping parentMapping : parentMappings) {
+                if (log.isDebugEnabled()) log.debug("Found parent " + parentMapping.getDn());
 
                 String handlerName = parentMapping.getHandlerName();
                 if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
                     results.add(parentMapping);
 
                 } else { // otherwise check for matching siblings
-                    Collection children = getChildren(parentMapping);
+                    Collection<EntryMapping> children = getChildren(parentMapping);
                     list.addAll(children);
                 }
             }
         }
 
         // check against each mapping in the list
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping) iterator.next();
+        for (EntryMapping entryMapping : list) {
 
-            if (log.isDebugEnabled()) 
-        	{
-            	log.debug("Checking DN pattern:");
-	            log.debug(" - "+dn);
-	            log.debug(" - "+entryMapping.getDn());
-        	}
+            if (log.isDebugEnabled()) {
+                log.debug("Checking DN pattern:");
+                log.debug(" - " + dn);
+                log.debug(" - " + entryMapping.getDn());
+            }
             if (!dn.matches(entryMapping.getDn())) continue;
 
-            if (log.isDebugEnabled()) log.debug("Found "+entryMapping.getDn());
+            if (log.isDebugEnabled()) log.debug("Found " + entryMapping.getDn());
             results.add(entryMapping);
         }
 
         return results;
     }
 
-    public Collection getConnectionConfigs() {
+    public Collection<ConnectionConfig> getConnectionConfigs() {
         return connectionConfigs.values();
     }
 
-    public void setConnectionConfigs(Map connectionConfigs) {
+    public void setConnectionConfigs(Map<String,ConnectionConfig> connectionConfigs) {
         this.connectionConfigs = connectionConfigs;
     }
 
     public Collection getModuleMappings() {
         return moduleMappings.values();
     }
-    public Collection getRootEntryMappings() {
+    public Collection<EntryMapping> getRootEntryMappings() {
         return rootEntryMappings;
     }
 
@@ -515,43 +507,42 @@ public class Partition {
     }
     
     public ModuleConfig removeModuleConfig(String moduleName) {
-        return (ModuleConfig)moduleConfigs.remove(moduleName);
+        return moduleConfigs.remove(moduleName);
     }
 
-    public Collection getModuleConfigs() {
+    public Collection<ModuleConfig> getModuleConfigs() {
         return moduleConfigs.values();
     }
 
-    public Collection removeModuleMapping(String moduleName) {
-        return (Collection)moduleMappings.remove(moduleName);
+    public Collection<ModuleMapping> removeModuleMapping(String moduleName) {
+        return moduleMappings.remove(moduleName);
     }
 
     public void removeModuleMapping(ModuleMapping mapping) {
         if (mapping == null) return;
         if (mapping.getModuleName() == null) return;
 
-        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c != null) c.remove(mapping);
     }
 
-    public void setModuleConfigs(Map moduleConfigs) {
+    public void setModuleConfigs(Map<String,ModuleConfig> moduleConfigs) {
         this.moduleConfigs = moduleConfigs;
     }
 
-    public void setModuleMappings(Map moduleMappings) {
+    public void setModuleMappings(Map<String,Collection<ModuleMapping>> moduleMappings) {
         this.moduleMappings = moduleMappings;
     }
 
-    public void setRootEntryMappings(Collection rootEntryMappings) {
+    public void setRootEntryMappings(Collection<EntryMapping> rootEntryMappings) {
         this.rootEntryMappings = rootEntryMappings;
     }
 
-    public Collection getSearchableFields(SourceMapping sourceMapping) {
+    public Collection<FieldMapping> getSearchableFields(SourceMapping sourceMapping) {
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
-        Collection results = new ArrayList();
-        for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)i.next();
+        Collection<FieldMapping> results = new ArrayList<FieldMapping>();
+        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
             if (fieldConfig == null) continue;
             if (!fieldConfig.isSearchable()) continue;

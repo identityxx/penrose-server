@@ -100,7 +100,7 @@ public abstract class Handler {
 
     public void start() throws Exception {
 
-        if (status != STOPPED) return;
+        if (!STOPPED.equals(status)) return;
 
         //log.debug("Starting SessionHandler...");
 
@@ -119,7 +119,7 @@ public abstract class Handler {
 
     public void stop() throws Exception {
 
-        if (status != STARTED) return;
+        if (!STARTED.equals(status)) return;
 
         try {
             status = STOPPING;
@@ -173,7 +173,7 @@ public abstract class Handler {
             UnbindResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        //Engine engine = getEngine(partition, entryMapping);
 
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
@@ -207,7 +207,7 @@ public abstract class Handler {
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
-        return (SearchResult) response.next();
+        return response.next();
     }
 
     public boolean compare(

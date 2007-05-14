@@ -38,7 +38,7 @@ public class SchemaManager implements SchemaManagerMBean {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private Map schemas = new TreeMap();
+    private Map<String,Schema> schemas = new TreeMap<String,Schema>();
     private Schema allSchema = new Schema();
 
     public SchemaManager() throws Exception {
@@ -65,7 +65,7 @@ public class SchemaManager implements SchemaManagerMBean {
     }
 
     public void removeSchema(String name) {
-        Schema schema = (Schema)schemas.remove(name);
+        Schema schema = schemas.remove(name);
         allSchema.remove(schema);
     }
 
@@ -75,18 +75,18 @@ public class SchemaManager implements SchemaManagerMBean {
     }
 
     public Schema getSchema(String name) {
-        return (Schema)schemas.get(name);
+        return schemas.get(name);
     }
 
     public Schema getAllSchema() {
         return allSchema;
     }
 
-    public Collection getObjectClasses() {
+    public Collection<ObjectClass> getObjectClasses() {
         return allSchema.getObjectClasses();
     }
 
-    public Collection getObjectClassNames() {
+    public Collection<String> getObjectClassNames() {
         return allSchema.getObjectClassNames();
     }
 
@@ -94,23 +94,23 @@ public class SchemaManager implements SchemaManagerMBean {
         return allSchema.getObjectClass(ocName);
     }
 
-    public Collection getAllObjectClasses(String ocName) {
+    public Collection<ObjectClass> getAllObjectClasses(String ocName) {
         return allSchema.getAllObjectClasses(ocName);
     }
     
-    public Collection getAllObjectClassNames(String ocName) {
+    public Collection<String> getAllObjectClassNames(String ocName) {
         return allSchema.getAllObjectClassNames(ocName);
     }
 
-    public Collection getObjectClasses(EntryMapping entryMapping) {
+    public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
         return allSchema.getObjectClasses(entryMapping);
     }
 
-    public Collection getAttributeTypes() {
+    public Collection<AttributeType> getAttributeTypes() {
         return allSchema.getAttributeTypes();
     }
 
-    public Collection getAttributeTypeNames() {
+    public Collection<String> getAttributeTypeNames() {
         return allSchema.getAttributeTypeNames();
     }
 
@@ -145,8 +145,7 @@ public class SchemaManager implements SchemaManagerMBean {
     public RDN normalize(RDN rdn) {
         RDNBuilder rb = new RDNBuilder();
 
-        for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
-            String name = (String)j.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
             rb.set(normalizeAttributeName(name), value);
         }
@@ -158,12 +157,10 @@ public class SchemaManager implements SchemaManagerMBean {
         DNBuilder db = new DNBuilder();
         RDNBuilder rb = new RDNBuilder();
 
-        for (Iterator i=dn.getRdns().iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        for (RDN rdn : dn.getRdns()) {
 
             rb.clear();
-            for (Iterator j=rdn.getNames().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
+            for (String name : rdn.getNames()) {
                 Object value = rdn.get(name);
                 rb.set(normalizeAttributeName(name), value);
             }
@@ -177,8 +174,7 @@ public class SchemaManager implements SchemaManagerMBean {
         if (attributeNames == null) return null;
 
         Collection<String> list = new ArrayList<String>();
-        for (Iterator i = attributeNames.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : attributeNames) {
             list.add(normalizeAttributeName(name));
         }
 
@@ -187,10 +183,9 @@ public class SchemaManager implements SchemaManagerMBean {
 
     public Attributes normalize(Attributes attributes) throws Exception{
 
-        Collection names = new ArrayList(attributes.getNames());
+        Collection<String> names = new ArrayList<String>(attributes.getNames());
 
-        for (Iterator i=names.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : names) {
 
             Collection values = attributes.getValues(name);
             attributes.remove(name);
@@ -205,8 +200,7 @@ public class SchemaManager implements SchemaManagerMBean {
     public Collection<Modification> normalizeModifications(Collection<Modification> modifications) throws Exception {
         Collection<Modification> normalizedModifications = new ArrayList<Modification>();
 
-        for (Iterator i = modifications.iterator(); i.hasNext();) {
-            Modification modification = (Modification) i.next();
+        for (Modification modification : modifications) {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();

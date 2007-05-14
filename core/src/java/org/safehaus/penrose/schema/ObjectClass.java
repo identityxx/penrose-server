@@ -42,7 +42,7 @@ public class ObjectClass implements Cloneable, Comparable {
 	/**
 	 * Name.
 	 */
-	public Collection names = new ArrayList();
+	public Collection<String> names = new ArrayList<String>();
     
     /**
      * Description.
@@ -57,7 +57,7 @@ public class ObjectClass implements Cloneable, Comparable {
     /**
      * Super class.
      */
-	public Collection superClasses = new ArrayList();
+	public Collection<String> superClasses = new ArrayList<String>();
     
     /**
      * Type (ABSTRACT, STRUCTURAL, AUXILIARY). Default: STRUCTURAL.
@@ -67,12 +67,12 @@ public class ObjectClass implements Cloneable, Comparable {
     /**
      * Required attribute types. Each element is of type String.
      */
-	public Collection requiredAttributes = new ArrayList();
+	public Collection<String> requiredAttributes = new ArrayList<String>();
     
     /**
      * Optional attribute types. Each element is of type String.
      */
-	public Collection optionalAttributes = new ArrayList();
+	public Collection<String> optionalAttributes = new ArrayList<String>();
 	
 	public ObjectClass() {
 	}
@@ -83,14 +83,14 @@ public class ObjectClass implements Cloneable, Comparable {
         this.description = description;
     }
 
-    public ObjectClass(Collection names, Collection superClasses, String description) {
+    public ObjectClass(Collection<String> names, Collection<String> superClasses, String description) {
         this.names.addAll(names);
         this.superClasses.addAll(superClasses);
         this.description = description;
     }
     
     public String getName() {
-    	if (names != null && names.size() >= 1) return names.iterator().next().toString();
+    	if (names != null && names.size() >= 1) return names.iterator().next();
     	return null;
     }
     
@@ -103,12 +103,14 @@ public class ObjectClass implements Cloneable, Comparable {
         names.add(name);
     }
 
-    public Collection getNames() {
+    public Collection<String> getNames() {
         return names;
     }
 
-    public void setNames(Collection names) {
-        this.names = names;
+    public void setNames(Collection<String> names) {
+        if (this.names == names) return;
+        this.names.clear();
+        this.names.addAll(names);
     }
 
     public void removeNames() {
@@ -119,11 +121,11 @@ public class ObjectClass implements Cloneable, Comparable {
         superClasses.add(superClass);
     }
 
-    public Collection getSuperClasses() {
+    public Collection<String> getSuperClasses() {
         return superClasses;
     }
 
-    public void setSuperClasses(Collection superClasses) {
+    public void setSuperClasses(Collection<String> superClasses) {
         this.superClasses.addAll(superClasses);
     }
 
@@ -139,7 +141,7 @@ public class ObjectClass implements Cloneable, Comparable {
         this.description = description;
     }
 
-    public Collection getRequiredAttributes() {
+    public Collection<String> getRequiredAttributes() {
         return requiredAttributes;
     }
 
@@ -147,12 +149,12 @@ public class ObjectClass implements Cloneable, Comparable {
         requiredAttributes.add(requiredAttribute);
     }
     
-    public void addRequiredAttributes(Collection requiredAttributes) {
+    public void addRequiredAttributes(Collection<String> requiredAttributes) {
         if (requiredAttributes == null) return;
         this.requiredAttributes.addAll(requiredAttributes);
     }
 
-    public void setRequiredAttributes(Collection requiredAttributes) {
+    public void setRequiredAttributes(Collection<String> requiredAttributes) {
         this.requiredAttributes.clear();
         if (requiredAttributes == null) return;
         this.requiredAttributes.addAll(requiredAttributes);
@@ -170,12 +172,12 @@ public class ObjectClass implements Cloneable, Comparable {
         optionalAttributes.add(optionalAttribute);
     }
 
-    public void addOptionalAttributes(Collection optionalAttributes) {
+    public void addOptionalAttributes(Collection<String> optionalAttributes) {
         if (optionalAttributes == null) return;
         this.optionalAttributes.addAll(optionalAttributes);
     }
 
-    public void setOptionalAttributes(Collection optionalAttributes) {
+    public void setOptionalAttributes(Collection<String> optionalAttributes) {
         this.optionalAttributes.clear();
         if (optionalAttributes == null) return;
         this.optionalAttributes.addAll(optionalAttributes);
@@ -222,9 +224,8 @@ public class ObjectClass implements Cloneable, Comparable {
     public boolean containsRequiredAttribute(String name) {
         name = name.toLowerCase();
 
-        for (Iterator i=requiredAttributes.iterator(); i.hasNext(); ) {
-            String attrName = (String)i.next();
-            if (name.equals(attrName.toLowerCase())) return true;
+        for (String requiredAttribute : requiredAttributes) {
+            if (name.equals(requiredAttribute.toLowerCase())) return true;
         }
 
         return false;
@@ -233,9 +234,8 @@ public class ObjectClass implements Cloneable, Comparable {
     public boolean containsOptionalAttribute(String name) {
         name = name.toLowerCase();
 
-        for (Iterator i=optionalAttributes.iterator(); i.hasNext(); ) {
-            String attrName = (String)i.next();
-            if (name.equals(attrName.toLowerCase())) return true;
+        for (String optionalAttribute : optionalAttributes) {
+            if (name.equals(optionalAttribute.toLowerCase())) return true;
         }
 
         return false;
@@ -302,7 +302,8 @@ public class ObjectClass implements Cloneable, Comparable {
         optionalAttributes.addAll(oc.optionalAttributes);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         ObjectClass oc = new ObjectClass();
         oc.copy(this);
         return oc;
@@ -334,9 +335,8 @@ public class ObjectClass implements Cloneable, Comparable {
         } else if (names.size() > 1) {
             if (multiLine) out.print("   ");
             out.print(" NAME ( ");
-            for (Iterator i=names.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                out.print("'"+name+"' ");
+            for (String name : names) {
+                out.print("'" + name + "' ");
             }
             out.print(")");
             if (multiLine) out.println();

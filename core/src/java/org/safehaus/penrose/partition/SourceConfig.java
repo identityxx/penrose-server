@@ -121,7 +121,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
-    public Collection getOriginalPrimaryKeyNames() {
+    public Collection<String> getOriginalPrimaryKeyNames() {
         Collection<String> results = new LinkedHashSet<String>();
         for (FieldConfig fieldConfig : pkFieldConfigs) {
             results.add(fieldConfig.getOriginalName());
@@ -129,15 +129,15 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
-    public Collection getPrimaryKeyFieldConfigs() {
+    public Collection<FieldConfig> getPrimaryKeyFieldConfigs() {
         return pkFieldConfigs;
     }
 
-    public Collection getNonPrimaryKeyFieldConfigs() {
+    public Collection<FieldConfig> getNonPrimaryKeyFieldConfigs() {
         return nonPkFieldConfigs;
     }
 
-    public Collection getUniqueFieldConfigs() {
+    public Collection<FieldConfig> getUniqueFieldConfigs() {
         Collection<FieldConfig> results = new ArrayList<FieldConfig>();
         for (FieldConfig fieldConfig : fieldConfigs.values()) {
             if (!fieldConfig.isUnique()) continue;
@@ -155,7 +155,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
-    public Collection getIndexedFieldConfigs() {
+    public Collection<FieldConfig> getIndexedFieldConfigs() {
         Collection<FieldConfig> results = new ArrayList<FieldConfig>();
         for (FieldConfig fieldConfig : fieldConfigs.values()) {
             if (!fieldConfig.isPrimaryKey() && !fieldConfig.isUnique() && !fieldConfig.isIndex()) continue;
@@ -164,7 +164,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return results;
     }
 
-	public Collection getFieldConfigs() {
+	public Collection<FieldConfig> getFieldConfigs() {
 		return fieldConfigs.values();
 	}
 

@@ -26,6 +26,7 @@ import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.thread.ThreadManager;
@@ -42,7 +43,9 @@ import java.util.*;
 public class HandlerManager {
 
     Logger log = LoggerFactory.getLogger(getClass());
-    
+
+    public final static DN SCHEMA_DN = new DN("cn=Subschema");
+
     Map handlers = new TreeMap();
 
     PenroseConfig penroseConfig;
@@ -374,17 +377,16 @@ public class HandlerManager {
         RDN newRdn = schemaManager.normalize(request.getNewRdn());
         request.setNewRdn(newRdn);
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Renaming "+dn+" in "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Renaming " + dn + " in " + entryMapping.getDn());
 
             int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to modify "+dn);
+                if (debug) log.debug("Not allowed to modify " + dn);
                 exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
@@ -437,7 +439,7 @@ public class HandlerManager {
                     attrs.print();
                 }
 
-                Collection list = filterAttributes(session, partition, attrs, requestedAttributes, allRegularAttributes, allOpAttributes);
+                Collection<String> list = filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
                 removeAttributes(attrs, list);
 
                 if (debug) {
@@ -449,9 +451,30 @@ public class HandlerManager {
             }
             response.close();
             return;
+
+        } else if (baseDn.matches(SCHEMA_DN)) {
+
+            SearchResult result = createSchema();
+            Attributes attrs = result.getAttributes();
+            if (debug) {
+                log.debug("Before: "+result.getDn());
+                attrs.print();
+            }
+
+            Collection<String> list = filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
+            removeAttributes(attrs, list);
+
+            if (debug) {
+                log.debug("After: "+result.getDn());
+                attrs.print();
+            }
+
+            response.add(result);
+            response.close();
+            return;
         }
 
-        Collection entryMappings = partition.findEntryMappings(baseDn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(baseDn);
 
         if (entryMappings.isEmpty()) {
             if (debug) log.debug("Base DN "+baseDn+" not found.");
@@ -526,11 +549,10 @@ public class HandlerManager {
 
         DN bindDn = request.getDn();
 
-        Collection entryMappings = partition.findEntryMappings(bindDn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(bindDn);
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Unbinding "+bindDn+" from "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Unbinding " + bindDn + " from " + entryMapping.getDn());
 
             Handler handler = getHandler(partition, entryMapping);
             handler.unbind(session, partition, entryMapping, request, response);
@@ -544,41 +566,60 @@ public class HandlerManager {
         attributes.addValue("objectClass", "extensibleObject");
         attributes.addValue("vendorName", Penrose.VENDOR_NAME);
         attributes.addValue("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+        attributes.addValue("supportedLDAPVersion", "3");
+        attributes.addValue("subschemaSubentry", SCHEMA_DN.toString());
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition p = (Partition)i.next();
-            for (Iterator j=p.getRootEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping e = (EntryMapping)j.next();
-                if (e.getDn().isEmpty()) continue;
-                attributes.addValue("namingContexts", e.getDn().toString());
+        for (Partition partition : partitionManager.getPartitions()) {
+            for (EntryMapping entryMapping : partition.getRootEntryMappings()) {
+                if (entryMapping.getDn().isEmpty()) continue;
+                attributes.addValue("namingContexts", entryMapping.getDn().toString());
             }
         }
 
         return new SearchResult("", attributes);
     }
 
-    public void removeAttributes(Attributes attributes, Collection list) throws Exception {
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
+    public SearchResult createSchema() throws Exception {
+
+        Attributes attributes = new Attributes();
+        attributes.addValue("objectClass", "top");
+        attributes.addValue("objectClass", "subentry");
+        attributes.addValue("objectClass", "subschema");
+        attributes.addValue("objectClass", "extensibleObject");
+
+        for (AttributeType attributeType : schemaManager.getAttributeTypes()) {
+            attributes.addValue("attributeTypes", "( "+attributeType+" )");
+        }
+
+        for (ObjectClass objectClass : schemaManager.getObjectClasses()) {
+            attributes.addValue("objectClasses", "( "+objectClass+" )");
+        }
+
+        return new SearchResult(SCHEMA_DN, attributes);
+    }
+
+    public void removeAttributes(Attributes attributes, Collection<String> list) throws Exception {
+        for (String attributeName : list) {
             attributes.remove(attributeName);
         }
     }
 
-    public Collection filterAttributes(
+    public Collection<String> filterAttributes(
             Session session,
             Partition partition,
-            Attributes attributes,
-            Collection requestedAttributeNames,
+            SearchResult searchResult,
+            Collection<String> requestedAttributeNames,
             boolean allRegularAttributes,
             boolean allOpAttributes
     ) throws Exception {
 
-        Collection list = new HashSet();
+        Collection<String> list = new HashSet<String>();
 
         if (session == null) return list;
 
-        Collection attributeNames = attributes.getNames();
+        Attributes attributes = searchResult.getAttributes();
+        Collection<String> attributeNames = attributes.getNames();
 
         boolean debug = log.isDebugEnabled();
         if (debug) {
@@ -593,12 +634,11 @@ public class HandlerManager {
         if (allRegularAttributes) {
 
             // return regular attributes only
-            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
+            for (String attributeName : attributes.getNames()) {
 
                 AttributeType attributeType = schemaManager.getAttributeType(attributeName);
                 if (attributeType == null) {
-                    if (debug) log.debug("Attribute "+attributeName+" undefined.");
+                    if (debug) log.debug("Attribute " + attributeName + " undefined.");
                     continue;
                 }
 
@@ -607,19 +647,18 @@ public class HandlerManager {
                     continue;
                 }
 
-                //log.debug("Remove operational attribute "+attributeName);
+                log.debug("Remove operational attribute " + attributeName);
                 list.add(attributeName);
             }
 
         } else if (allOpAttributes) {
 
             // return operational attributes only
-            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
+            for (String attributeName : attributes.getNames()) {
 
                 AttributeType attributeType = schemaManager.getAttributeType(attributeName);
                 if (attributeType == null) {
-                    if (debug) log.debug("Attribute "+attributeName+" undefined.");
+                    if (debug) log.debug("Attribute " + attributeName + " undefined.");
                     list.add(attributeName);
                     continue;
                 }
@@ -629,22 +668,21 @@ public class HandlerManager {
                     continue;
                 }
 
-                //log.debug("Remove regular attribute "+attributeName);
+                log.debug("Remove regular attribute " + attributeName);
                 list.add(attributeName);
             }
 
         } else {
 
             // return requested attributes
-            for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-                String attributeName = (String)i.next();
+            for (String attributeName : attributes.getNames()) {
 
                 if (requestedAttributeNames.contains(attributeName)) {
                     //log.debug("Keep requested attribute "+attributeName);
                     continue;
                 }
 
-                //log.debug("Remove unrequested attribute "+attributeName);
+                log.debug("Remove unrequested attribute " + attributeName);
                 list.add(attributeName);
             }
         }
@@ -662,14 +700,13 @@ public class HandlerManager {
 
         if (session == null) return;
 
-        Collection attributeNames = new ArrayList();
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
+        Collection<String> attributeNames = new ArrayList<String>();
+        for (String attributeName : attributes.getNames()) {
             attributeNames.add(attributeName.toLowerCase());
         }
 
-        Set grants = new HashSet();
-        Set denies = new HashSet();
+        Set<String> grants = new HashSet<String>();
+        Set<String> denies = new HashSet<String>();
         denies.addAll(attributeNames);
 
         DN bindDn = session.getBindDn();
@@ -682,10 +719,9 @@ public class HandlerManager {
             log.debug("Denied: "+denies);
         }
 
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
 
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
+        for (String attributeName : attributes.getNames()) {
             String normalizedName = attributeName.toLowerCase();
 
             if (!denies.contains(normalizedName)) {

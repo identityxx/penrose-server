@@ -746,7 +746,7 @@ public class Session {
             PartitionManager partitionManager = penroseContext.getPartitionManager();
             Partition partition = partitionManager.getPartition(baseDn);
 
-            if (partition == null && !baseDn.isEmpty()) {
+            if (partition == null && !baseDn.isEmpty() && !baseDn.equals(HandlerManager.SCHEMA_DN)) {
                 log.debug("Partition for entry "+baseDn+" not found.");
                 throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
             }
