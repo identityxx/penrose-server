@@ -410,6 +410,7 @@ public class EngineImpl extends Engine {
 
             for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
+
                 Collection c = loadedSourceValues.get(name);
                 for (Iterator j=c.iterator(); j.hasNext(); ) {
                     SourceValues sv = (SourceValues)j.next();
@@ -543,7 +544,7 @@ public class EngineImpl extends Engine {
 
             final Interpreter interpreter = getInterpreterManager().newInstance();
 
-            Collection attributeNames = request.getAttributes();
+            Collection<String> attributeNames = request.getAttributes();
             Collection attributeDefinitions = entryMapping.getAttributeMappings(attributeNames);
 
             // check if client only requests the dn to be returned

@@ -19,6 +19,7 @@ package org.safehaus.penrose.entry;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.ldap.RDN;
 
@@ -31,7 +32,7 @@ public class SourceValues implements Cloneable, Comparable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map<String,Collection> values = new TreeMap<String,Collection>();
+    public Map<String,Collection<Object>> values = new TreeMap<String,Collection<Object>>();
 
     public SourceValues() {
     }
@@ -50,21 +51,18 @@ public class SourceValues implements Cloneable, Comparable {
 
     public void add(String prefix, SourceValues sourceValues) {
         if (sourceValues == null) return;
-        Map v = sourceValues.getValues();
-        for (Iterator i = v.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-
-            Collection c = (Collection)v.get(name);
-            add(prefix == null ? name : prefix+"."+name, c);
+        Map<String,Collection<Object>> v = sourceValues.getValues();
+        for (String name : v.keySet()) {
+            Collection<Object> c = v.get(name);
+            add(prefix == null ? name : prefix + "." + name, c);
         }
     }
 
     public void shift(String prefix) {
-        Map newValues = new TreeMap();
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection c = (Collection)values.get(name);
-            newValues.put(prefix+"."+name, c);
+        Map<String,Collection<Object>> newValues = new TreeMap<String,Collection<Object>>();
+        for (String name : values.keySet()) {
+            Collection<Object> c = values.get(name);
+            newValues.put(prefix + "." + name, c);
         }
         values = newValues;
     }
@@ -75,13 +73,12 @@ public class SourceValues implements Cloneable, Comparable {
 
     public void add(String prefix, RDN rdn) {
         if (rdn == null) return;
-        for (Iterator i = rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
-            String targetName = prefix == null ? name : prefix+"."+name;
-            Collection c = get(targetName);
-            if (c == null) c = new LinkedHashSet();
+            String targetName = prefix == null ? name : prefix + "." + name;
+            Collection<Object> c = get(targetName);
+            if (c == null) c = new LinkedHashSet<Object>();
             c.add(value);
             set(targetName, c);
         }
@@ -92,12 +89,11 @@ public class SourceValues implements Cloneable, Comparable {
     }
 
     public void set(String prefix, RDN rdn) {
-        for (Iterator i = rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
-            String targetName = prefix == null ? name : prefix+"."+name;
-            Collection c = new LinkedHashSet();
+            String targetName = prefix == null ? name : prefix + "." + name;
+            Collection<Object> c = new LinkedHashSet<Object>();
             c.add(value);
             set(targetName, c);
         }
@@ -113,15 +109,14 @@ public class SourceValues implements Cloneable, Comparable {
             return;
         }
 
-        for (Iterator i= sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection c = sourceValues.get(name);
-            set(prefix == null ? name : prefix+"."+name, c);
+        for (String name : sourceValues.getNames()) {
+            Collection<Object> c = sourceValues.get(name);
+            set(prefix == null ? name : prefix + "." + name, c);
         }
     }
 
-    public void set(String name, Collection values) {
-        Collection c = new LinkedHashSet();
+    public void set(String name, Collection<Object> values) {
+        Collection<Object> c = new LinkedHashSet<Object>();
         c.addAll(values);
         this.values.put(name, c);
     }
@@ -135,7 +130,7 @@ public class SourceValues implements Cloneable, Comparable {
             return;
         }
 
-        Collection c = new LinkedHashSet();
+        Collection<Object> c = new LinkedHashSet<Object>();
         c.add(value);
         this.values.put(name, c);
     }
@@ -149,9 +144,9 @@ public class SourceValues implements Cloneable, Comparable {
             return;
         }
         
-        Collection c = (Collection)this.values.get(name);
+        Collection<Object> c = this.values.get(name);
         if (c == null) {
-            c = new LinkedHashSet();
+            c = new LinkedHashSet<Object>();
             this.values.put(name, c);
         }
         c.add(value);
@@ -161,27 +156,27 @@ public class SourceValues implements Cloneable, Comparable {
         add(name, Arrays.asList(objects));
     }
 
-    public void add(String name, Collection values) {
+    public void add(String name, Collection<Object> values) {
         if (values == null) return;
-        Collection c = (Collection)this.values.get(name);
+        Collection<Object> c = this.values.get(name);
         if (c == null) {
-            c = new LinkedHashSet();
+            c = new LinkedHashSet<Object>();
             this.values.put(name, c);
         }
         c.addAll(values);
     }
 
-    public Collection get(String name) {
-        return (Collection)values.get(name);
+    public Collection<Object> get(String name) {
+        return values.get(name);
     }
 
     public Object getOne(String name) {
-        Collection c = (Collection)values.get(name);
+        Collection<Object> c = values.get(name);
         if (c == null || c.isEmpty()) return null;
         return c.iterator().next();
     }
     
-    public Collection getNames() {
+    public Collection<String> getNames() {
         return values.keySet();
     }
 
@@ -189,9 +184,8 @@ public class SourceValues implements Cloneable, Comparable {
         boolean b = values.containsKey(name);
         if (b) return true;
 
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String s = (String)i.next();
-            if (s.startsWith(name+".")) return true;
+        for (String s : values.keySet()) {
+            if (s.startsWith(name + ".")) return true;
         }
 
         return false;
@@ -202,10 +196,9 @@ public class SourceValues implements Cloneable, Comparable {
     }
     
     public boolean contains(String prefix, RDN rdn) {
-        
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String fullName = (prefix == null ? name : prefix+"."+name);
+
+        for (String name : rdn.getNames()) {
+            String fullName = (prefix == null ? name : prefix + "." + name);
 
             Object value = rdn.get(name);
             Collection list = get(fullName);
@@ -224,12 +217,11 @@ public class SourceValues implements Cloneable, Comparable {
     public void remove(String name) {
         if (name == null) return;
 
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
         list.addAll(values.keySet());
 
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            String s = (String)i.next();
-            if (s.equals(name) || s.startsWith(name+".")) {
+        for (String s : list) {
+            if (s.equals(name) || s.startsWith(name + ".")) {
                 values.remove(s);
             }
         }
@@ -238,7 +230,7 @@ public class SourceValues implements Cloneable, Comparable {
     public void remove(String name, Object value) {
         if (value == null) return;
 
-        Collection c = (Collection)values.get(name);
+        Collection<Object> c = values.get(name);
         if (c == null) return;
 
         c.remove(value);
@@ -248,26 +240,23 @@ public class SourceValues implements Cloneable, Comparable {
     public void remove(String name, Collection values) {
         if (values == null) return;
 
-        Collection c = (Collection)this.values.get(name);
+        Collection<Object> c = this.values.get(name);
         if (c == null) return;
 
         c.removeAll(values);
         if (c.isEmpty()) this.values.remove(name);
     }
 
-    public void retain(Collection names) {
-        Collection lcNames = new ArrayList();
-        for (Iterator i=names.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+    public void retain(Collection<String> names) {
+        Collection<String> lcNames = new ArrayList<String>();
+        for (String name : names) {
             lcNames.add(name.toLowerCase());
         }
 
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
         list.addAll(values.keySet());
 
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            String s = (String)i.next();
-
+        for (String s : list) {
             int p = s.indexOf(".");
             String n = p >= 0 ? s.substring(0, p) : s;
 
@@ -276,11 +265,10 @@ public class SourceValues implements Cloneable, Comparable {
     }
 
     public void retain(String name) {
-        Collection list = new ArrayList();
+        Collection<String> list = new ArrayList<String>();
         list.addAll(values.keySet());
 
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            String s = (String)i.next();
+        for (String s : list) {
 
             int p = s.indexOf(".");
             String n = p >= 0 ? s.substring(0, p) : s;
@@ -289,7 +277,7 @@ public class SourceValues implements Cloneable, Comparable {
         }
     }
     
-    public Map<String,Collection> getValues() {
+    public Map<String,Collection<Object>> getValues() {
         return values;
     }
 
@@ -309,12 +297,13 @@ public class SourceValues implements Cloneable, Comparable {
         return values.equals(av.values);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
+
         SourceValues sourceValues = new SourceValues();
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection c = (Collection)values.get(name);
-            Collection s = new LinkedHashSet();
+        for (String name : values.keySet()) {
+            Collection<Object> c =  values.get(name);
+            Collection<Object> s = new LinkedHashSet<Object>();
             s.addAll(c);
             sourceValues.values.put(name, s);
         }
@@ -341,8 +330,8 @@ public class SourceValues implements Cloneable, Comparable {
                 c = name1.compareTo(name2);
                 if (c != 0) return c;
 
-                Collection values1 = (Collection)values.get(name1);
-                Collection values2 = (Collection) sourceValues.values.get(name2);
+                Collection<Object> values1 = values.get(name1);
+                Collection<Object> values2 = sourceValues.values.get(name2);
 
                 Iterator k = values1.iterator();
                 Iterator l = values2.iterator();
@@ -352,8 +341,8 @@ public class SourceValues implements Cloneable, Comparable {
                     Object value2 = l.next();
 
                     if (value1 instanceof Comparable && value2 instanceof Comparable) {
-                        Comparable v1 = (Comparable)value1.toString();
-                        Comparable v2 = (Comparable)value2.toString();
+                        Comparable v1 = value1.toString();
+                        Comparable v2 = value2.toString();
 
                         c = v1.compareTo(v2);
                         if (c != 0) return c;
@@ -377,20 +366,18 @@ public class SourceValues implements Cloneable, Comparable {
     public void print() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
 
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection list = (Collection)values.get(name);
-            
-            for (Iterator j=list.iterator(); j.hasNext(); ) {
-                Object value = j.next();
+        for (String name : values.keySet()) {
+            Collection<Object> list = values.get(name);
+
+            for (Object value : list) {
                 String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
-                
+                className = className.substring(className.lastIndexOf(".") + 1);
+
                 if (value instanceof byte[]) {
-                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])value);
+                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value);
                 }
 
-                log.debug(" - "+name+": "+value+" ("+className+")");
+                log.debug(" - " + name + ": " + value + " (" + className + ")");
             }
         }
     }

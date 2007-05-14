@@ -34,6 +34,10 @@
         </condition>
     </target>
 
+    <target name="javacc" depends="init">
+        <ant dir="core" target="javacc"/>
+    </target>
+    
     <target name="compile" depends="init">
         <ant dir="core" target="compile"/>
         <ant dir="server" target="compile"/>

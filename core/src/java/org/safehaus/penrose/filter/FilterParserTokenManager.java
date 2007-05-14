@@ -18,6 +18,8 @@
  */
 package org.safehaus.penrose.filter;
 import java.util.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public class FilterParserTokenManager implements FilterParserConstants
 {

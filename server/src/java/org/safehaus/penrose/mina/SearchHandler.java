@@ -3,10 +3,9 @@ package org.safehaus.penrose.mina;
 import org.apache.mina.common.IoSession;
 import org.apache.mina.handler.demux.MessageHandler;
 import org.apache.directory.shared.ldap.message.*;
+import org.apache.directory.shared.ldap.name.LdapDN;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.apacheds.FilterTool;
-import org.safehaus.penrose.backend.PenroseFilter;
 import org.ietf.ldap.LDAPException;
 import com.identyx.javabackend.Session;
 import com.identyx.javabackend.DN;
@@ -34,7 +33,7 @@ public class SearchHandler implements MessageHandler {
 
         try {
             DN baseDn = handler.backend.createDn(request.getBase().toString());
-            Filter filter = new PenroseFilter(FilterTool.convert(request.getFilter()));
+            Filter filter = handler.backend.createFilter(FilterTool.convert(request.getFilter()));
 
             Session session = handler.getPenroseSession(ioSession);
 
@@ -84,7 +83,7 @@ public class SearchHandler implements MessageHandler {
         Entry entry = result.getEntry();
 
         SearchResponseEntry response = new SearchResponseEntryImpl(request.getMessageId());
-        response.setObjectName(new PenroseDN(entry.getDn().toString()));
+        response.setObjectName(new LdapDN(entry.getDn().toString()));
         response.setAttributes(handler.createAttributes(entry.getAttributes()));
         handler.setControls(result, response);
 

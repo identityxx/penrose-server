@@ -138,12 +138,10 @@ public class EntryMapping implements Cloneable {
     }
     
     public RDN getRdn(SourceValues sourceValues) {
-        Collection rdnAttributes = getRdnAttributeMappings();
 
         RDNBuilder rb = new RDNBuilder();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping rdnAttribute = (AttributeMapping)i.next();
-            String name = rdnAttribute.getName();
+        for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
+            String name = rdnAttributeMapping.getName();
             Object value = sourceValues.getOne(name);
             rb.set(name, value);
         }
@@ -160,8 +158,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public boolean isDynamic() {
-        for (Iterator i= attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
             if (attributeMapping.getConstant() == null) return true;
         }
 
@@ -174,8 +171,7 @@ public class EntryMapping implements Cloneable {
 
     public Collection getNonRdnAttributeMappings() {
         Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
-        for (Iterator i= attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
             if (attributeMapping.isRdn()) continue;
             results.add(attributeMapping);
         }
@@ -232,8 +228,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public boolean containsObjectClass(String objectClass) {
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String oc = (String)i.next();
+        for (String oc : objectClasses) {
             if (oc.equalsIgnoreCase(objectClass)) return true;
         }
         return false;
@@ -277,15 +272,14 @@ public class EntryMapping implements Cloneable {
     }
 
     public SourceMapping getSourceMapping(String name) {
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        for (SourceMapping sourceMapping : sourceMappings) {
             if (sourceMapping.getName().equals(name)) return sourceMapping;
         }
         return null;
     }
 
     public SourceMapping getSourceMapping(int index) {
-        return (SourceMapping)sourceMappings.get(index);
+        return sourceMappings.get(index);
     }
 
     public SourceMapping removeSourceMapping(String name) {
@@ -309,7 +303,7 @@ public class EntryMapping implements Cloneable {
 
         attributeMappings.add(attributeMapping);
 
-        Collection<AttributeMapping> list = (Collection<AttributeMapping>) attributeMappingsByName.get(name);
+        Collection<AttributeMapping> list = attributeMappingsByName.get(name);
         if (list == null) {
             list = new ArrayList<AttributeMapping>();
             attributeMappingsByName.put(name, list);
@@ -332,10 +326,10 @@ public class EntryMapping implements Cloneable {
     }
 
     public Collection<AttributeMapping> getAttributeMappings(String name) {
-        return (Collection<AttributeMapping>)attributeMappingsByName.get(name);
+        return attributeMappingsByName.get(name);
     }
 
-    public Collection getAttributeMappings(Collection names) {
+    public Collection getAttributeMappings(Collection<String> names) {
         if (names == null) return getAttributeMappings();
 
         Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
@@ -406,7 +400,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.get(name);
     }
 
     public void setParameter(String name, String value) {
@@ -461,37 +455,32 @@ public class EntryMapping implements Cloneable {
         description = entryMapping.description;
 
         removeObjectClasses();
-        for (Iterator i=entryMapping.objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
+        for (String objectClass : entryMapping.objectClasses) {
             addObjectClass(objectClass);
         }
 
         removeAttributeMappings();
-        for (Iterator i=entryMapping.attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attribute = (AttributeMapping)i.next();
-            addAttributeMapping((AttributeMapping)attribute.clone());
+        for (AttributeMapping attributeMapping : entryMapping.attributeMappings) {
+            addAttributeMapping((AttributeMapping) attributeMapping.clone());
         }
 
         removeSourceMappings();
-        for (Iterator i=entryMapping.sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            addSourceMapping((SourceMapping)sourceMapping.clone());
+        for (SourceMapping sourceMapping : entryMapping.sourceMappings) {
+            addSourceMapping((SourceMapping) sourceMapping.clone());
         }
 
         removeRelationships();
-        for (Iterator i=entryMapping.relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            addRelationship((Relationship)relationship.clone());
+        for (Relationship relationship : entryMapping.relationships) {
+            addRelationship((Relationship) relationship.clone());
         }
 
-        link = new Link(entryMapping.link);
+        link = link == null ? null : new Link(entryMapping.link);
         handlerName = entryMapping.handlerName;
         engineName = entryMapping.engineName;
 
         removeACL();
-        for (Iterator i=entryMapping.acl.iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
-            addACI((ACI)aci.clone());
+        for (ACI aci : entryMapping.acl) {
+            addACI((ACI) aci.clone());
         }
 
         parameters.clear();

@@ -24,7 +24,6 @@ import org.apache.directory.server.core.DirectoryServiceConfiguration;
 import org.apache.directory.shared.ldap.filter.ExprNode;
 import org.apache.directory.shared.ldap.name.LdapDN;
 import org.apache.directory.shared.ldap.message.ModificationItemImpl;
-import org.safehaus.penrose.backend.PenroseFilter;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -486,7 +485,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            Filter newFilter = new PenroseFilter(FilterTool.convert(filter));
+            Filter newFilter = backend.createFilter(FilterTool.convert(filter));
             if (debug) {
 	            log.debug("Searching \""+base+"\"");
 	            log.debug(" - deref: "+deref);

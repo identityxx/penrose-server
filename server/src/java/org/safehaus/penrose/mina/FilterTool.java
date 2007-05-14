@@ -1,8 +1,8 @@
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.mina;
 
-import org.apache.directory.shared.ldap.filter.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.directory.shared.ldap.filter.*;
 
 import java.util.Collection;
 import java.util.Iterator;
