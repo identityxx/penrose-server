@@ -23,6 +23,8 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -35,50 +37,65 @@ public class SearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    PenroseContext penroseContext;
     EntryMapping entryMapping;
 
-    Map sourceRefs = new LinkedHashMap(); // need to maintain order
+    Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
 
     Interpreter interpreter;
 
-    Map sourceAliases = new LinkedHashMap(); // need to maintain order
+    Map<String,SourceRef> sourceAliases = new LinkedHashMap<String,SourceRef>(); // need to maintain order
     Filter sourceFilter;
 
     public SearchFilterBuilder(
+            PenroseContext penroseContext,
+            Partition partition,
             EntryMapping entryMapping,
-            Collection sourceRefs,
-            SourceValues sourceValues,
-            Interpreter interpreter
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues
     ) throws Exception {
 
+        this.penroseContext = penroseContext;
         this.entryMapping = entryMapping;
 
-        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
+
+            if (entryMapping.getSourceMapping(sourceRef.getAlias()) == null) continue;
             this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
         }
-
-        this.interpreter = interpreter;
+/*
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        EntryMapping em = partition.getParent(entryMapping);
+        while (em != null) {
+            Collection<SourceRef> list = sourceManager.getSourceRefs(partition, em);
+            for (Iterator i=list.iterator(); i.hasNext(); ) {
+                SourceRef sourceRef = (SourceRef)i.next();
+                this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
+            }
+            em = partition.getParent(em);
+        }
+*/
+        this.interpreter = penroseContext.getInterpreterManager().newInstance();
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sourceValues.get(name);
+        for (String name : sourceValues.getNames()) {
+            Collection<Object> values = sourceValues.get(name);
 
             int p = name.indexOf(".");
             String sourceName = name.substring(0, p);
-            String fieldName = name.substring(p+1);
+            String fieldName = name.substring(p + 1);
 
-            String alias = createTableAlias(sourceName);
-            setTableAlias(sourceName, alias);
+            //if (!this.sourceRefs.containsKey(sourceName)) continue;
 
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
+            //String alias = createTableAlias(sourceName);
+            //setTableAlias(sourceName, alias);
 
-                SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
-                if (debug) log.debug(" - Filter "+f);
+            for (Object value : values) {
+                //SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
+                SimpleFilter f = new SimpleFilter(sourceName + "." + fieldName, "=", value);
+                if (debug) log.debug(" - Filter " + f);
 
                 sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
             }
@@ -120,10 +137,8 @@ public class SearchFilterBuilder {
 
         Filter newFilter = null;
 
-        Collection filters = filter.getFilters();
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-
+        Collection<Filter> filters = filter.getFilters();
+        for (Filter f : filters) {
             Filter nf = convert(f);
             newFilter = FilterTool.appendAndFilter(newFilter, nf);
         }
@@ -135,10 +150,8 @@ public class SearchFilterBuilder {
 
         Filter newFilter = null;
 
-        Collection filters = filter.getFilters();
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-
+        Collection<Filter> filters = filter.getFilters();
+        for (Filter f : filters) {
             Filter nf = convert(f);
             newFilter = FilterTool.appendOrFilter(newFilter, nf);
         }
@@ -160,15 +173,13 @@ public class SearchFilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (Iterator i= sourceRefs.values().iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs.values()) {
             String sourceName = sourceRef.getAlias();
 
             String alias = createTableAlias(sourceName);
 
             Filter f = null;
-            for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                FieldRef fieldRef = (FieldRef)j.next();
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 String fieldName = fieldRef.getName();
 
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -180,10 +191,10 @@ public class SearchFilterBuilder {
                 }
 
                 setTableAlias(sourceName, alias);
-                SimpleFilter sf = new SimpleFilter(alias+"."+fieldName, operator, value);
+                SimpleFilter sf = new SimpleFilter(alias + "." + fieldName, operator, value);
 
                 f = FilterTool.appendAndFilter(f, sf);
-                if (debug) log.debug(" - Filter "+sf);
+                if (debug) log.debug(" - Filter " + sf);
             }
 
             newFilter = FilterTool.appendOrFilter(newFilter, f);
@@ -200,7 +211,7 @@ public class SearchFilterBuilder {
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();
@@ -218,12 +229,11 @@ public class SearchFilterBuilder {
         setTableAlias(sourceName, alias);
 
         StringBuilder sb = new StringBuilder();
-        for (Iterator j=substrings.iterator(); j.hasNext(); ) {
-            Object o = j.next();
+        for (Object o : substrings) {
             if (o.equals(SubstringFilter.STAR)) {
                 sb.append("%");
             } else {
-                String substring = (String)o;
+                String substring = (String) o;
                 sb.append(substring);
             }
         }
@@ -249,14 +259,12 @@ public class SearchFilterBuilder {
 
         Filter newFilter = null;
 
-        for (Iterator i= sourceRefs.values().iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs.values()) {
 
             String sourceName = sourceRef.getAlias();
             String alias = createTableAlias(sourceName);
 
-            for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                FieldRef fieldRef = (FieldRef)j.next();
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldRef.getName();
 
@@ -280,8 +288,8 @@ public class SearchFilterBuilder {
 
                 setTableAlias(sourceName, alias);
 
-                PresentFilter f = new PresentFilter(alias+"."+fieldName);
-                if (debug) log.debug(" - Filter "+f);
+                PresentFilter f = new PresentFilter(alias + "." + fieldName);
+                if (debug) log.debug(" - Filter " + f);
 
                 newFilter = FilterTool.appendAndFilter(newFilter, f);
             }
@@ -311,15 +319,15 @@ public class SearchFilterBuilder {
     }
 
     public void setTableAlias(String sourceName, String alias) {
-        SourceRef sourceRef = (SourceRef) sourceRefs.get(sourceName);
+        SourceRef sourceRef = sourceRefs.get(sourceName);
         sourceAliases.put(alias, sourceRef);
     }
 
-    public Map getSourceAliases() {
+    public Map<String,SourceRef> getSourceAliases() {
         return sourceAliases;
     }
 
-    public void setSourceAliases(Map sourceAliases) {
+    public void setSourceAliases(Map<String,SourceRef> sourceAliases) {
         this.sourceAliases = sourceAliases;
     }
 }

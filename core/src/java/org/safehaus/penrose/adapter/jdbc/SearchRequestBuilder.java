@@ -1,6 +1,5 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
@@ -14,6 +13,7 @@ import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.*;
 
@@ -22,13 +22,14 @@ import java.util.*;
  */
 public class SearchRequestBuilder extends RequestBuilder {
 
+    PenroseContext penroseContext;
+
     EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
     SourceRef primarySourceRef;
 
     SourceValues sourceValues;
-    Interpreter interpreter;
 
     SearchRequest request;
     SearchResponse response;
@@ -36,14 +37,16 @@ public class SearchRequestBuilder extends RequestBuilder {
     SearchFilterBuilder filterBuilder;
 
     public SearchRequestBuilder(
+            PenroseContext penroseContext,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
-            Interpreter interpreter,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
+
+        this.penroseContext = penroseContext;
 
         this.entryMapping = entryMapping;
 
@@ -55,16 +58,15 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         this.sourceValues = sourceValues;
 
-        this.interpreter = interpreter;
-
         this.request = request;
         this.response = response;
 
         filterBuilder = new SearchFilterBuilder(
+                penroseContext,
+                partition,
                 entryMapping,
                 sourceRefs,
-                sourceValues,
-                interpreter
+                sourceValues
         );
     }
 
@@ -74,11 +76,11 @@ public class SearchRequestBuilder extends RequestBuilder {
         return joinType;
     }
 
-    public String generateJoinOn(SourceRef sourceRef) {
+    public String generateJoinOn(SourceRef sourceRef) throws Exception {
         return generateJoinOn(sourceRef, sourceRef.getAlias());
     }
 
-    public String generateJoinOn(SourceRef sourceRef, String alias) {
+    public String generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
@@ -106,6 +108,8 @@ public class SearchRequestBuilder extends RequestBuilder {
                 if (variable == null) continue;
 
                 AttributeMapping attributeMapping = entryMapping.getAttributeMapping(variable);
+                if (attributeMapping == null) throw new Exception("Unknown attribute "+variable);
+
                 if (!attributeMapping.isRdn()) continue;
 
                 String sn = primarySourceRef.getAlias();
@@ -233,12 +237,11 @@ public class SearchRequestBuilder extends RequestBuilder {
 */
         filterBuilder.append(request.getFilter());
 
-        Map tableAliases = filterBuilder.getSourceAliases();
-        for (Iterator i= tableAliases.keySet().iterator(); i.hasNext(); ) {
-            String alias = (String)i.next();
-            SourceRef sourceRef = (SourceRef)tableAliases.get(alias);
+        Map<String,SourceRef> tableAliases = filterBuilder.getSourceAliases();
+        for (String alias : tableAliases.keySet()) {
+            SourceRef sourceRef = tableAliases.get(alias);
 
-            if (debug) log.debug("Adding source "+alias);
+            if (debug) log.debug("Adding source " + alias);
             statement.addSourceRef(alias, sourceRef);
 
             String joinType = generateJoinType(sourceRef);

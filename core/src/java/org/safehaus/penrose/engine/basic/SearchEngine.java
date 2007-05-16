@@ -59,14 +59,12 @@ public class SearchEngine {
             }
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
-                public void add(SearchResult object) throws Exception {
-                    SearchResult result = (SearchResult)object;
+                public void add(SearchResult result) throws Exception {
                     EntryMapping em = result.getEntryMapping();
 
                     Attributes sv = EntryUtil.computeAttributes(sourceValues);
 
-                    for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
-                        String sourceName = (String)i.next();
+                    for (String sourceName : result.getSourceNames()) {
                         Attributes esv = result.getSourceAttributes(sourceName);
                         sv.add(sourceName, esv);
                     }
@@ -80,7 +78,7 @@ public class SearchEngine {
 
                     interpreter.set(sv);
 
-                    Collection dns = engine.computeDns(partition, interpreter, em, sv);
+                    Collection<DN> dns = engine.computeDns(partition, interpreter, em, sv);
                     Attributes attributes = computeAttributes(interpreter, em, sv);
 
                     interpreter.clear();
@@ -90,10 +88,9 @@ public class SearchEngine {
                         attributes.print();
                     }
 
-                    for (Iterator i=dns.iterator(); i.hasNext(); ) {
-                        DN dn = (DN)i.next();
+                    for (DN dn : dns) {
 
-                        if (debug) log.debug("Generating entry "+dn);
+                        if (debug) log.debug("Generating entry " + dn);
                         SearchResult searchResult = new SearchResult(dn, attributes);
                         searchResult.setEntryMapping(em);
                         response.add(searchResult);
@@ -101,12 +98,12 @@ public class SearchEngine {
                 }
             };
 
-            Collection groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
+            Collection<Collection<SourceRef>> groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
 
-            Iterator iterator = groupsOfSources.iterator();
-            Collection primarySources = (Collection)iterator.next();
+            Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+            Collection<SourceRef> primarySources = iterator.next();
 
-            SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+            SourceRef sourceRef = primarySources.iterator().next();
             Connector connector = engine.getConnector(sourceRef);
 
             connector.search(
@@ -131,24 +128,22 @@ public class SearchEngine {
 
         Attributes attributes = new Attributes();
 
-        Collection attributeMappings = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
 
-        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
 
             Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
             if (value instanceof Collection) {
-                attributes.addValues(attributeMapping.getName(), (Collection)value);
+                attributes.addValues(attributeMapping.getName(), (Collection) value);
             } else {
                 attributes.addValue(attributeMapping.getName(), value);
             }
         }
 
-        Collection objectClasses = entryMapping.getObjectClasses();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }
 

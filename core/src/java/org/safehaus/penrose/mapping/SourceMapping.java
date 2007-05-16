@@ -51,7 +51,7 @@ public class SourceMapping implements Cloneable {
      */
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    private boolean required = true;
+    private boolean required = false;
     private boolean readOnly = false;
 
     private boolean includeOnAdd = true;

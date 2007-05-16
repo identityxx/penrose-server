@@ -46,7 +46,7 @@ public class HandlerManager {
 
     public final static DN SCHEMA_DN = new DN("cn=Subschema");
 
-    Map handlers = new TreeMap();
+    Map<String,Handler> handlers = new TreeMap<String,Handler>();
 
     PenroseConfig penroseConfig;
     PenroseContext penroseContext;
@@ -110,24 +110,24 @@ public class HandlerManager {
     }
 
     public Handler getHandler(String name) {
-        return (Handler)handlers.get(name);
+        return handlers.get(name);
     }
 
     public Handler getHandler(Partition partition, EntryMapping entryMapping) {
         String handlerName = entryMapping.getHandlerName();
-        if (handlerName != null) return (Handler)handlers.get(handlerName);
+        if (handlerName != null) return handlers.get(handlerName);
 
         handlerName = partition.getHandlerName();
-        if (handlerName != null) return (Handler)handlers.get(handlerName);
+        if (handlerName != null) return handlers.get(handlerName);
 
-        return (Handler)handlers.get("DEFAULT");
+        return handlers.get("DEFAULT");
     }
 
     public Handler getHandler(Partition partition) {
         String handlerName = partition.getHandlerName();
-        if (handlerName != null) return (Handler)handlers.get(handlerName);
+        if (handlerName != null) return handlers.get(handlerName);
 
-        return (Handler)handlers.get("DEFAULT");
+        return handlers.get("DEFAULT");
     }
     
     public void clear() {
@@ -135,15 +135,13 @@ public class HandlerManager {
     }
 
     public void start() throws Exception {
-        for (Iterator i=handlers.values().iterator(); i.hasNext(); ) {
-            Handler handler = (Handler)i.next();
+        for (Handler handler : handlers.values()) {
             handler.start();
         }
     }
 
     public void stop() throws Exception {
-        for (Iterator i=handlers.values().iterator(); i.hasNext(); ) {
-            Handler handler = (Handler)i.next();
+        for (Handler handler : handlers.values()) {
             handler.stop();
         }
     }
@@ -169,18 +167,17 @@ public class HandlerManager {
 
         DN parentDn = dn.getParentDn();
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Adding "+dn+" into "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Adding " + dn + " into " + entryMapping.getDn());
 
             EntryMapping parentMapping = partition.getParent(entryMapping);
             int rc = aclManager.checkAdd(session, partition, parentMapping, parentDn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to add "+dn);
+                if (debug) log.debug("Not allowed to add " + dn);
                 exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
@@ -213,11 +210,10 @@ public class HandlerManager {
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Binding "+dn+" in "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Binding " + dn + " in " + entryMapping.getDn());
 
             Handler handler = getHandler(partition, entryMapping);
             handler.bind(session, partition, entryMapping, request, response);
@@ -243,17 +239,16 @@ public class HandlerManager {
         String attributeName = schemaManager.normalizeAttributeName(request.getAttributeName());
         request.setAttributeName(attributeName);
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Comparing "+dn+" in "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Comparing " + dn + " in " + entryMapping.getDn());
 
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to compare "+dn);
+                if (debug) log.debug("Not allowed to compare " + dn);
                 exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
@@ -285,17 +280,16 @@ public class HandlerManager {
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Deleting "+dn+" from "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Deleting " + dn + " from " + entryMapping.getDn());
 
             int rc = aclManager.checkDelete(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to delete "+dn);
+                if (debug) log.debug("Not allowed to delete " + dn);
                 exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
@@ -331,17 +325,16 @@ public class HandlerManager {
         Collection<Modification> modifications = schemaManager.normalizeModifications(request.getModifications());
         request.setModifications(modifications);
 
-        Collection entryMappings = partition.findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partition.findEntryMappings(dn);
         Exception exception = null;
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Modifying "+dn+" in "+entryMapping.getDn());
+        for (EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Modifying " + dn + " in " + entryMapping.getDn());
 
             int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to modify "+dn);
+                if (debug) log.debug("Not allowed to modify " + dn);
                 exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }

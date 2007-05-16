@@ -385,7 +385,7 @@ public class LDAPAdapter extends Adapter {
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();

@@ -26,6 +26,7 @@ import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.ldap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,13 +137,13 @@ public class Connection implements ConnectionMBean {
 
     public void add(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        adapter.add(entryMapping, sources, sourceValues, request, response);
+        adapter.add(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,13 +152,13 @@ public class Connection implements ConnectionMBean {
 
     public void bind(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(entryMapping, sources, sourceValues, request, response);
+        adapter.bind(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,13 +176,13 @@ public class Connection implements ConnectionMBean {
 
     public void delete(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        adapter.delete(entryMapping, sources, sourceValues, request, response);
+        adapter.delete(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,13 +200,13 @@ public class Connection implements ConnectionMBean {
 
     public void modify(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(entryMapping, sources, sourceValues, request, response);
+        adapter.modify(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,13 +224,13 @@ public class Connection implements ConnectionMBean {
 
     public void modrdn(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        adapter.modrdn(entryMapping, sources, sourceValues, request, response);
+        adapter.modrdn(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,13 +248,13 @@ public class Connection implements ConnectionMBean {
 
     public void search(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        adapter.search(entryMapping, sources, sourceValues, request, response);
+        adapter.search(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

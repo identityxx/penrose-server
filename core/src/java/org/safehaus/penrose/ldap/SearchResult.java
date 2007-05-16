@@ -79,12 +79,12 @@ public class SearchResult {
         this.entryMapping = entryMapping;
     }
 
-    public Collection getSourceNames() {
+    public Collection<String> getSourceNames() {
         return sourceAttributes.keySet();
     }
 
     public Attributes getSourceAttributes(String sourceName) {
-        return (Attributes) sourceAttributes.get(sourceName);
+        return sourceAttributes.get(sourceName);
     }
 
     public void setSourceAttributes(String sourceName, Attributes attributes) {
@@ -96,33 +96,28 @@ public class SearchResult {
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Search Result: "+dn, 80));
 
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             String name = attribute.getName();
 
-            for (Iterator k=attribute.getValues().iterator(); k.hasNext(); ) {
-                Object value = k.next();
+            for (Object value : attribute.getValues()) {
                 String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".")+1);
+                className = className.substring(className.lastIndexOf(".") + 1);
 
-                log.debug(Formatter.displayLine(" - "+name+": "+value+" ("+className+")", 80));
+                log.debug(Formatter.displayLine(" - " + name + ": " + value + " (" + className + ")", 80));
             }
         }
 
-        for (Iterator i= sourceAttributes.keySet().iterator(); i.hasNext(); ) {
-            String sourceName = (String)i.next();
-            Attributes attrs = (Attributes) sourceAttributes.get(sourceName);
+        for (String sourceName : sourceAttributes.keySet()) {
+            Attributes attrs = sourceAttributes.get(sourceName);
 
-            for (Iterator j=attrs.getAll().iterator(); j.hasNext(); ) {
-                Attribute attribute = (Attribute)j.next();
-                String fieldName = sourceName+"."+attribute.getName();
+            for (Attribute attribute : attrs.getAll()) {
+                String fieldName = sourceName + "." + attribute.getName();
 
-                for (Iterator k=attribute.getValues().iterator(); k.hasNext(); ) {
-                    Object value = k.next();
+                for (Object value : attribute.getValues()) {
                     String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
+                    className = className.substring(className.lastIndexOf(".") + 1);
 
-                    log.debug(Formatter.displayLine(" - "+fieldName+": "+value+" ("+className+")", 80));
+                    log.debug(Formatter.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 80));
                 }
             }
         }

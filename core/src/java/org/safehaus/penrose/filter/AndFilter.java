@@ -23,12 +23,12 @@ import java.util.Collection;
 
 public class AndFilter extends Filter {
 	
-	Collection filters = new ArrayList();
+	Collection<Filter> filters = new ArrayList<Filter>();
 
 	public AndFilter() {
 	}
 
-	public Collection getFilters() {
+	public Collection<Filter> getFilters() {
 		return filters;
 	}
 
@@ -67,11 +67,10 @@ public class AndFilter extends Filter {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(&");
-		for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter filter = (Filter)i.next();
-			sb.append(filter);
-		}
-		sb.append(")");
+        for (Filter filter : filters) {
+            sb.append(filter);
+        }
+        sb.append(")");
 		return sb.toString();
 	}
 }

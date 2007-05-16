@@ -75,9 +75,8 @@ public class Connector {
 
     public void addPartition(Partition partition) throws Exception {
 
-        Collection sourceConfigs = partition.getSources().getSourceConfigs();
-        for (Iterator i=sourceConfigs.iterator(); i.hasNext(); ) {
-            SourceConfig sourceConfig = (SourceConfig)i.next();
+        Collection<SourceConfig> sourceConfigs = partition.getSources().getSourceConfigs();
+        for (SourceConfig sourceConfig : sourceConfigs) {
 
             String connectorName = sourceConfig.getParameter("connectorName");
             connectorName = connectorName == null ? "DEFAULT" : connectorName;
@@ -87,7 +86,7 @@ public class Connector {
     }
 
     public Connection getConnection(Partition partition, String name) throws Exception {
-        return (Connection)connectionManager.getConnection(partition, name);
+        return connectionManager.getConnection(partition, name);
     }
 
     public RDN normalize(RDN rdn) throws Exception {
@@ -95,14 +94,13 @@ public class Connector {
         RDNBuilder rb = new RDNBuilder();
         if (rdn == null) return rb.toRdn();
 
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
             if (value == null) continue;
 
             if (value instanceof String) {
-                value = ((String)value).toLowerCase();
+                value = ((String) value).toLowerCase();
             }
 
             rb.set(name, value);
@@ -118,16 +116,16 @@ public class Connector {
     public void add(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.add(entryMapping, sources, sourceValues, request, response);
+        connection.add(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,16 +135,16 @@ public class Connector {
     public void bind(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.bind(entryMapping, sources, sourceValues, request, response);
+        connection.bind(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,16 +154,16 @@ public class Connector {
     public void delete(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.delete(entryMapping, sources, sourceValues, request, response);
+        connection.delete(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,16 +173,16 @@ public class Connector {
     public void modify(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.modify(entryMapping, sources, sourceValues, request, response);
+        connection.modify(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,16 +192,16 @@ public class Connector {
     public void modrdn(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.modrdn(entryMapping, sources, sourceValues, request, response);
+        connection.modrdn(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,16 +211,16 @@ public class Connector {
     public void search(
             final Partition partition,
             final EntryMapping entryMapping,
-            final Collection sources,
+            final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef)sources.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.search(entryMapping, sources, sourceValues, request, response);
+        connection.search(entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     public ConnectorConfig getConnectorConfig() {

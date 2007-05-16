@@ -43,13 +43,12 @@ public class SourceRef {
         this.required = sourceMapping.isRequired();
         this.parameters.putAll(sourceMapping.getParameters());
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator i=fieldMappings.iterator(); i.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)i.next();
+        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+        for (FieldMapping fieldMapping : fieldMappings) {
             String fieldName = fieldMapping.getName();
 
             Field field = source.getField(fieldName);
-            if (field == null) throw new Exception("Unknown field: "+fieldName);
+            if (field == null) throw new Exception("Unknown field: " + fieldName);
 
             FieldRef fieldRef = new FieldRef(field, alias, fieldMapping);
             fieldRefs.put(fieldName, fieldRef);
@@ -67,7 +66,7 @@ public class SourceRef {
     }
 
     public FieldRef getFieldRef(String fieldName) {
-        return (FieldRef)fieldRefs.get(fieldName);
+        return fieldRefs.get(fieldName);
     }
 
     public String getAlias() {

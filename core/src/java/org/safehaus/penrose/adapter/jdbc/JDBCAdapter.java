@@ -28,10 +28,8 @@ import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.jdbc.Request;
+import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 
@@ -64,10 +62,8 @@ public class JDBCAdapter extends Adapter {
     public String getFieldNames(SourceConfig sourceConfig) throws Exception {
         StringBuilder sb = new StringBuilder();
 
-        Collection fields = sourceConfig.getFieldConfigs();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-
+        Collection<FieldConfig> fields = sourceConfig.getFieldConfigs();
+        for (FieldConfig fieldConfig : fields) {
             if (sb.length() > 0) sb.append(", ");
             sb.append(fieldConfig.getOriginalName());
         }
@@ -78,10 +74,8 @@ public class JDBCAdapter extends Adapter {
     public String getOringialPrimaryKeyFieldNamesAsString(SourceConfig sourceConfig) throws Exception {
         StringBuilder sb = new StringBuilder();
 
-        Collection fields = sourceConfig.getOriginalPrimaryKeyNames();
-        for (Iterator i=fields.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-
+        Collection<String> fields = sourceConfig.getOriginalPrimaryKeyNames();
+        for (String name : fields) {
             if (sb.length() > 0) sb.append(", ");
             sb.append(name);
         }
@@ -203,13 +197,12 @@ public class JDBCAdapter extends Adapter {
         RDN rdn = request.getDn().getRdn();
 
         if (rdn != null) {
-            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            for (String name : rdn.getNames()) {
 
                 Object value = rdn.get(name);
 
                 Field field = source.getField(name);
-                if (field == null) throw new Exception("Unknown field: "+name);
+                if (field == null) throw new Exception("Unknown field: " + name);
 
                 statement.addAssignment(new Assignment(field, value));
             }
@@ -217,14 +210,13 @@ public class JDBCAdapter extends Adapter {
 
         Attributes attributes = request.getAttributes();
 
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : attributes.getNames()) {
             if (rdn != null && rdn.contains(name)) continue;
 
             Object value = attributes.getValue(name); // get first value
 
             Field field = source.getField(name);
-            if (field == null) throw new Exception("Unknown field: "+name);
+            if (field == null) throw new Exception("Unknown field: " + name);
 
             statement.addAssignment(new Assignment(field, value));
         }
@@ -241,7 +233,7 @@ public class JDBCAdapter extends Adapter {
 
     public void add(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -266,9 +258,9 @@ public class JDBCAdapter extends Adapter {
                 response
         );
 
-        Collection requests = builder.generate();
-        for (Iterator i=requests.iterator(); i.hasNext(); ) {
-            UpdateRequest updateRequest = (UpdateRequest)i.next();
+        Collection<Request> requests = builder.generate();
+        for (Request req : requests) {
+            UpdateRequest updateRequest = (UpdateRequest) req;
             UpdateResponse updateResponse = new UpdateResponse();
 
             client.executeUpdate(updateRequest, updateResponse);
@@ -301,8 +293,7 @@ public class JDBCAdapter extends Adapter {
 
         RDN rdn = request.getDn().getRdn();
         Filter filter = null;
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
             SimpleFilter sf = new SimpleFilter(name, "=", value);
@@ -323,7 +314,7 @@ public class JDBCAdapter extends Adapter {
 
     public void delete(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -348,7 +339,7 @@ public class JDBCAdapter extends Adapter {
                 response
         );
 
-        Collection requests = builder.generate();
+        Collection<Request> requests = builder.generate();
         for (Iterator i=requests.iterator(); i.hasNext(); ) {
             UpdateRequest updateRequest = (UpdateRequest)i.next();
             UpdateResponse updateResponse = new UpdateResponse();
@@ -431,7 +422,7 @@ public class JDBCAdapter extends Adapter {
 
     public void modify(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -524,7 +515,7 @@ public class JDBCAdapter extends Adapter {
 
     public void modrdn(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -626,7 +617,7 @@ public class JDBCAdapter extends Adapter {
 
     public void search(
             final EntryMapping entryMapping,
-            final Collection sourceRefs,
+            final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
@@ -646,11 +637,11 @@ public class JDBCAdapter extends Adapter {
         response.setSizeLimit(request.getSizeLimit());
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
+                penroseContext,
                 partition,
                 entryMapping,
                 sourceRefs,
                 sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
                 request,
                 response
         );
@@ -662,7 +653,9 @@ public class JDBCAdapter extends Adapter {
 
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
+
                 SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
+                if (searchResult == null) return;
 
                 if (lastEntry == null) {
                     lastEntry = searchResult;
@@ -721,7 +714,7 @@ public class JDBCAdapter extends Adapter {
 
     public SearchResult createSearchResult(
             EntryMapping entryMapping,
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             ResultSet rs
     ) throws Exception {
 
@@ -730,33 +723,36 @@ public class JDBCAdapter extends Adapter {
 
         RDNBuilder rb = new RDNBuilder();
 
-        boolean first = true;
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection<SourceRef> primarySourceRefs = sourceManager.getPrimarySourceRefs(partition.getName(), entryMapping);
+
         int column = 1;
 
-        for (Iterator i=sources.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
-            String sourceName = sourceRef.getAlias();
+        for (SourceRef sourceRef : sourceRefs) {
+            String alias = sourceRef.getAlias();
+            boolean primarySource = primarySourceRefs.contains(sourceRef);
 
             Attributes sourceValues = new Attributes();
 
-            for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); column++) {
-                FieldRef fieldRef = (FieldRef)j.next();
+            for (Iterator j = sourceRef.getFieldRefs().iterator(); j.hasNext(); column++) {
+                FieldRef fieldRef = (FieldRef) j.next();
 
                 Object value = rs.getObject(column);
-                if (value == null) continue;
 
                 String fieldName = fieldRef.getName();
-                String name = sourceName+"."+fieldName;
-                sourceValues.addValue(fieldName, value);
+                String name = alias + "." + fieldName;
 
-                if (first && fieldRef.isPrimaryKey()) {
+                if (primarySource && fieldRef.isPrimaryKey()) {
+                    if (value == null) return null;
                     rb.set(name, value);
-                    sourceValues.addValue("primaryKey."+fieldName, value);
-                    first = false;
+                    sourceValues.addValue("primaryKey." + fieldName, value);
                 }
+
+                if (value == null) continue;
+                sourceValues.addValue(fieldName, value);
             }
 
-            searchResult.setSourceAttributes(sourceName, sourceValues);
+            searchResult.setSourceAttributes(alias, sourceValues);
         }
 
         searchResult.setDn(new DN(rb.toRdn()));
@@ -765,8 +761,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void mergeSearchResult(SearchResult source, SearchResult destination) {
-        for (Iterator i=source.getSourceNames().iterator(); i.hasNext(); ) {
-            String sourceName = (String)i.next();
+        for (String sourceName : source.getSourceNames()) {
 
             Attributes sourceValues = source.getSourceAttributes(sourceName);
 
@@ -783,7 +778,7 @@ public class JDBCAdapter extends Adapter {
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();

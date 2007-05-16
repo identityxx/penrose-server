@@ -8,6 +8,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.InsertStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
+import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
@@ -21,7 +22,7 @@ import java.util.*;
  */
 public class AddRequestBuilder extends RequestBuilder {
 
-    Collection sources;
+    Collection<SourceRef> sourceRefs;
 
     SourceValues sourceValues;
     Interpreter interpreter;
@@ -30,14 +31,14 @@ public class AddRequestBuilder extends RequestBuilder {
     AddResponse response;
 
     public AddRequestBuilder(
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        this.sources = sources;
+        this.sourceRefs = sourceRefs;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -46,11 +47,10 @@ public class AddRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection generate() throws Exception {
+    public Collection<Request> generate() throws Exception {
 
         boolean first = true;
-        for (Iterator i= sources.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
@@ -80,8 +80,7 @@ public class AddRequestBuilder extends RequestBuilder {
         interpreter.set(sourceValues);
 
         Attributes attributes = request.getAttributes();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
 
             String attributeName = attribute.getName();
             Object attributeValue = attribute.getValue(); // use only the first value
@@ -89,8 +88,7 @@ public class AddRequestBuilder extends RequestBuilder {
             interpreter.set(attributeName, attributeValue);
         }
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -98,7 +96,7 @@ public class AddRequestBuilder extends RequestBuilder {
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
@@ -120,22 +118,18 @@ public class AddRequestBuilder extends RequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         Attributes attributes = request.getAttributes();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
 
             String attributeName = attribute.getName();
-            Collection attributeValues = attribute.getValues();
+            Collection<Object> attributeValues = attribute.getValues();
 
-            for (Iterator j=attributeValues.iterator(); j.hasNext(); ) {
-                Object attributeValue = j.next();
-
+            for (Object attributeValue : attributeValues) {
                 interpreter.set(sourceValues);
                 interpreter.set(attributeName, attributeValue);
 
-                Map values = new HashMap();
+                Map<String,Object> values = new HashMap<String,Object>();
 
-                for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-                    FieldRef fieldRef = (FieldRef)k.next();
+                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                     FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
                     String variable = fieldMapping.getVariable();
@@ -165,7 +159,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
     public void generateInsertStatement(
             SourceRef sourceRef,
-            Map values
+            Map<String,Object> values
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -177,8 +171,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         statement.setSource(sourceRef.getSource());
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -190,18 +183,17 @@ public class AddRequestBuilder extends RequestBuilder {
             Object value = sourceValues.getOne(variable);
             if (value == null) continue;
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
+        for (String fieldName : values.keySet()) {
             Object value = values.get(fieldName);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
             Field field = fieldRef.getField();
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 

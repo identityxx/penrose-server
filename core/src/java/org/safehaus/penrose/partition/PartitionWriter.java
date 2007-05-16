@@ -420,7 +420,7 @@ public class PartitionWriter {
         Element element = new DefaultElement("source");
 
         element.add(new DefaultAttribute("name", sourceMapping.getName()));
-        if (!sourceMapping.isRequired()) element.add(new DefaultAttribute("required", "false"));
+        if (sourceMapping.isRequired()) element.add(new DefaultAttribute("required", "true"));
         if (sourceMapping.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
         if (!sourceMapping.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
         if (!sourceMapping.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));

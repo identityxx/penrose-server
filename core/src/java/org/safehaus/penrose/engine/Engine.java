@@ -603,14 +603,14 @@ public abstract class Engine {
         return rb.toRdn();
     }
 
-    public Collection computeDns(
+    public Collection<DN> computeDns(
             Partition partition,
             Interpreter interpreter,
             EntryMapping entryMapping,
             Attributes sourceValues
     ) throws Exception {
 
-        Collection dns = new ArrayList();
+        Collection<DN> dns = new ArrayList<DN>();
         computeDns(partition, interpreter, entryMapping, dns);
         return dns;
     }
@@ -619,12 +619,12 @@ public abstract class Engine {
             Partition partition,
             Interpreter interpreter,
             EntryMapping entryMapping,
-            Collection dns
+            Collection<DN> dns
     ) throws Exception {
 
         EntryMapping parentMapping = partition.getParent(entryMapping);
 
-        Collection parentDns = new ArrayList();
+        Collection<DN> parentDns = new ArrayList<DN>();
         if (parentMapping != null) {
             computeDns(partition, interpreter, parentMapping, parentDns);
 
@@ -638,7 +638,7 @@ public abstract class Engine {
             dns.add(dn);
 
         } else {
-            Collection rdns = computeRdns(interpreter, entryMapping);
+            Collection<RDN> rdns = computeRdns(interpreter, entryMapping);
 
             DNBuilder db = new DNBuilder();
 
@@ -661,7 +661,7 @@ public abstract class Engine {
         }
     }
 
-    public Collection computeRdns(
+    public Collection<RDN> computeRdns(
             Interpreter interpreter,
             EntryMapping entryMapping
     ) throws Exception {
@@ -669,9 +669,8 @@ public abstract class Engine {
         //log.debug("Computing RDNs:");
         Attributes rdns = new Attributes();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributeMappings();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection<AttributeMapping> rdnAttributes = entryMapping.getRdnAttributeMappings();
+        for (AttributeMapping attributeMapping : rdnAttributes) {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(attributeMapping);
@@ -709,38 +708,38 @@ public abstract class Engine {
         partitionManager = penroseContext.getPartitionManager();
     }
 
-    public Collection createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+    public Collection<Collection<SourceRef>> createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        Collection groupsOfSources = new ArrayList();
+        Collection<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
         SourceManager sourceManager = penroseContext.getSourceManager();
-        Collection sourceRefs = sourceManager.getSourceRefs(partition, entryMapping);
-
-        Collection sources = new ArrayList();
+        Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        for (Iterator i=sourceRefs.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (EntryMapping em : partition.getPath(entryMapping)) {
 
-            Source source = sourceRef.getSource();
-            Connection connection = source.getConnection();
-            Adapter adapter = connection.getAdapter();
+            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
 
-            if (lastConnection == null) {
-                lastConnection = connection;
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+                Adapter adapter = connection.getAdapter();
 
-            } else if (lastConnection != connection || !adapter.isJoinSupported()) {
-                groupsOfSources.add(sources);
-                sources = new ArrayList();
-                lastConnection = connection;
+                if (lastConnection == null) {
+                    lastConnection = connection;
+
+                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                    results.add(list);
+                    list = new ArrayList<SourceRef>();
+                    lastConnection = connection;
+                }
+
+                list.add(sourceRef);
             }
-
-            sources.add(sourceRef);
         }
 
-        groupsOfSources.add(sources);
-
-        return groupsOfSources;
+        results.add(list);
+        
+        return results;
     }
 
     public SessionContext getSessionContext() {

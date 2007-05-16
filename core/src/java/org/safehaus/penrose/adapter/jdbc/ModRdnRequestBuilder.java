@@ -85,8 +85,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         interpreter.set(sourceValues);
 
         RDN newRdn = request.getNewRdn();
-        for (Iterator i=newRdn.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
+        for (String attributeName : newRdn.getNames()) {
             Object attributeValue = newRdn.get(attributeName);
 
             interpreter.set(attributeName, attributeValue);
@@ -94,8 +93,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         newSourceValues.set(sourceValues);
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -104,21 +102,20 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
 
-            newSourceValues.set(sourceName+"."+fieldName, value);
+            newSourceValues.set(sourceName + "." + fieldName, value);
         }
 
         Filter filter = null;
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : sourceValues.getNames()) {
             Object value = sourceValues.getOne(name);
 
             int p = name.indexOf(".");
             String sn = name.substring(0, p);
-            String fn = name.substring(p+1);
+            String fn = name.substring(p + 1);
 
             if (!sourceName.equals(sn)) continue;
 
@@ -155,15 +152,13 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         interpreter.set(newSourceValues);
 
         RDN newRdn = request.getNewRdn();
-        for (Iterator i=newRdn.getNames().iterator(); i.hasNext(); ) {
-            String attributeName = (String)i.next();
+        for (String attributeName : newRdn.getNames()) {
             Object attributeValue = newRdn.get(attributeName);
 
             interpreter.set(attributeName, attributeValue);
         }
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -172,14 +167,13 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
         Filter filter = null;
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -194,7 +188,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
         }
 
         statement.setFilter(filter);

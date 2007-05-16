@@ -216,11 +216,7 @@ public class PenroseContext {
 
             for (Iterator j=partition.getEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
-
-                for (Iterator k=entryMapping.getSourceMappings().iterator(); k.hasNext(); ) {
-                    SourceMapping sourceMapping = (SourceMapping)k.next();
-                    sourceManager.init(partition, entryMapping, sourceMapping);
-                }
+                sourceManager.init(partition, entryMapping);
             }
         }
     }

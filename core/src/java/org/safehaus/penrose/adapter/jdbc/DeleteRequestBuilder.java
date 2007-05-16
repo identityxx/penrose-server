@@ -5,6 +5,7 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.DeleteStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
+import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
@@ -22,7 +23,7 @@ import java.util.*;
  */
 public class DeleteRequestBuilder extends RequestBuilder {
 
-    Collection sources;
+    Collection<SourceRef> sourceRefs;
 
     SourceValues sourceValues;
     Interpreter interpreter;
@@ -31,14 +32,14 @@ public class DeleteRequestBuilder extends RequestBuilder {
     DeleteResponse response;
 
     public DeleteRequestBuilder(
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        this.sources = sources;
+        this.sourceRefs = sourceRefs;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -47,16 +48,15 @@ public class DeleteRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection generate() throws Exception {
+    public Collection<Request> generate() throws Exception {
 
         boolean first = true;
-        for (Iterator i= sources.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
                 first = false;
-                
+
             } else {
                 generateSecondaryRequests(sourceRef);
             }
@@ -81,13 +81,12 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : sourceValues.getNames()) {
             Object value = sourceValues.getOne(name);
 
             int p = name.indexOf(".");
             String sn = name.substring(0, p);
-            String fn = name.substring(p+1);
+            String fn = name.substring(p + 1);
 
             if (!sourceName.equals(sn)) continue;
 
@@ -122,8 +121,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -138,7 +136,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
             SimpleFilter sf = new SimpleFilter(fieldName, "=", "?");
             filter = FilterTool.appendAndFilter(filter, sf);
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
         }
 
         statement.setFilter(filter);

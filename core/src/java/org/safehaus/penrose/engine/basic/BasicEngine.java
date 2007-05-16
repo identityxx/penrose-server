@@ -1,6 +1,7 @@
 package org.safehaus.penrose.engine.basic;
 
 import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -83,16 +84,41 @@ public class BasicEngine extends Engine {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
-        for (Iterator i=dn.getRdns().iterator(); i.hasNext() && entryMapping != null; ) {
-            RDN rdn = (RDN)i.next();
+        extractSourceValues(
+                partition,
+                interpreter,
+                dn,
+                entryMapping,
+                sourceValues
+        );
+    }
 
-            Collection sourceMappings = entryMapping.getSourceMappings();
-            for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)j.next();
-                extractSourceValues(interpreter, rdn, entryMapping, sourceMapping, sourceValues);
-            }
+    public void extractSourceValues(
+            Partition partition,
+            Interpreter interpreter,
+            DN dn,
+            EntryMapping entryMapping,
+            SourceValues sourceValues
+    ) throws Exception {
 
-            entryMapping = partition.getParent(entryMapping);
+        DN parentDn = dn.getParentDn();
+        EntryMapping em = partition.getParent(entryMapping);
+
+        if (parentDn != null && em != null) {
+            extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
+        }
+
+        RDN rdn = dn.getRdn();
+        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+
+        for (SourceMapping sourceMapping : sourceMappings) {
+            extractSourceValues(
+                    interpreter,
+                    rdn,
+                    entryMapping,
+                    sourceMapping,
+                    sourceValues
+            );
         }
     }
 
@@ -107,6 +133,7 @@ public class BasicEngine extends Engine {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
+        interpreter.set(sourceValues);
         interpreter.set(rdn);
 
         Collection fieldMappings = sourceMapping.getFieldMappings();
@@ -413,7 +440,7 @@ public class BasicEngine extends Engine {
 
         try {
             extractSourceValues(partition, baseMapping, request.getDn(), sourceValues);
-            //EngineTool.propagateDown(partition, entryMapping, sourceValues);
+            EngineTool.propagateDown(partition, entryMapping, sourceValues);
 
             if (debug) {
                 log.debug("Source values:");

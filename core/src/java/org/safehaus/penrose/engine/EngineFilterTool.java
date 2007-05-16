@@ -130,7 +130,7 @@ public class EngineFilterTool {
         boolean debug = log.isDebugEnabled();
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();

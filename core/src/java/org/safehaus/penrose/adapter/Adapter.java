@@ -109,7 +109,7 @@ public abstract class Adapter {
 
     public void add(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -117,7 +117,7 @@ public abstract class Adapter {
 
         boolean debug = log.isDebugEnabled();
         
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
@@ -176,13 +176,13 @@ public abstract class Adapter {
 
     public void bind(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
@@ -227,13 +227,13 @@ public abstract class Adapter {
 
     public void delete(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
@@ -280,7 +280,7 @@ public abstract class Adapter {
 
     public void modify(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -288,7 +288,7 @@ public abstract class Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
@@ -424,13 +424,13 @@ public abstract class Adapter {
 
     public void modrdn(
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
@@ -502,7 +502,7 @@ public abstract class Adapter {
 
     public void search(
             final EntryMapping entryMapping,
-            final Collection sourceRefs,
+            final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
@@ -510,7 +510,7 @@ public abstract class Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        final SourceRef sourceRef = (SourceRef) sourceRefs.iterator().next();
+        final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();

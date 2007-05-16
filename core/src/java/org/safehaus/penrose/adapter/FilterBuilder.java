@@ -22,7 +22,7 @@ public class FilterBuilder {
     Partition partition;
     EntryMapping entryMapping;
 
-    Collection sourceRefs;
+    Collection<SourceRef> sourceRefs;
 
     Interpreter interpreter;
 
@@ -31,7 +31,7 @@ public class FilterBuilder {
     public FilterBuilder(
             Partition partition,
             EntryMapping entryMapping,
-            Collection sourceRefs,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
@@ -46,18 +46,15 @@ public class FilterBuilder {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sourceValues.get(name);
+        for (String name : sourceValues.getNames()) {
+            Collection<Object> values = sourceValues.get(name);
 
             int p = name.indexOf(".");
-            String fieldName = name.substring(p+1);
+            String fieldName = name.substring(p + 1);
 
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-
+            for (Object value : values) {
                 SimpleFilter f = new SimpleFilter(fieldName, "=", value.toString());
-                if (debug) log.debug(" - Filter "+f);
+                if (debug) log.debug(" - Filter " + f);
 
                 filter = FilterTool.appendAndFilter(filter, f);
             }
@@ -99,10 +96,8 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        Collection filters = filter.getFilters();
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-
+        Collection<Filter> filters = filter.getFilters();
+        for (Filter f : filters) {
             Filter nf = convert(f);
             newFilter = FilterTool.appendAndFilter(newFilter, nf);
         }
@@ -114,10 +109,8 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        Collection filters = filter.getFilters();
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-
+        Collection<Filter> filters = filter.getFilters();
+        for (Filter f : filters) {
             Filter nf = convert(f);
             newFilter = FilterTool.appendOrFilter(newFilter, nf);
         }
@@ -139,11 +132,9 @@ public class FilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
 
-            for (Iterator j=sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                FieldRef fieldRef = (FieldRef)j.next();
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 
@@ -154,7 +145,7 @@ public class FilterBuilder {
                 }
 
                 SimpleFilter f = new SimpleFilter(fieldName, operator, value.toString());
-                if (debug) log.debug(" - Filter "+f);
+                if (debug) log.debug(" - Filter " + f);
 
                 newFilter = FilterTool.appendAndFilter(newFilter, f);
             }
@@ -171,7 +162,7 @@ public class FilterBuilder {
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         String variable = attributeMapping.getVariable();
@@ -203,11 +194,9 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (Iterator i= sourceRefs.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
 
-            for (Iterator j=sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                FieldRef fieldRef = (FieldRef)j.next();
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 
@@ -230,7 +219,7 @@ public class FilterBuilder {
                 }
 
                 PresentFilter f = new PresentFilter(fieldName);
-                if (debug) log.debug(" - Filter "+f);
+                if (debug) log.debug(" - Filter " + f);
 
                 newFilter = FilterTool.appendAndFilter(newFilter, f);
             }

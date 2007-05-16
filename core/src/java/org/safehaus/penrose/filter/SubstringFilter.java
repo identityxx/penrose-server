@@ -23,15 +23,15 @@ import java.util.Collection;
 
 public class SubstringFilter extends ItemFilter {
 
-    public final static Character STAR = new Character('*');
+    public final static Character STAR = '*';
 
 	String attribute;
-	Collection substrings = new ArrayList();
+	Collection<Object> substrings = new ArrayList<Object>();
 	
 	public SubstringFilter() {
 	}
 	
-	public SubstringFilter(String attr, Collection substrings) {
+	public SubstringFilter(String attr, Collection<Object> substrings) {
 		this.attribute = attr;
 		this.substrings.addAll(substrings);
 	}
@@ -44,11 +44,11 @@ public class SubstringFilter extends ItemFilter {
 		this.attribute = attribute;
 	}
 
-    public Collection getSubstrings() {
+    public Collection<Object> getSubstrings() {
 		return substrings;
 	}
 
-	public void addSubstring(Object s) {
+	public void addSubstring(String s) {
 		this.substrings.add(s);
 	}
 

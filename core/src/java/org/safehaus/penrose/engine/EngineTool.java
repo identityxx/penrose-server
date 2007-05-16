@@ -27,7 +27,7 @@ public class EngineTool {
             SourceValues sourceValues
     ) throws Exception {
 
-        List mappings = new ArrayList();
+        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
 
         while (entryMapping != null) {
             mappings.add(entryMapping);
@@ -43,7 +43,7 @@ public class EngineTool {
             SourceValues sourceValues
     ) throws Exception {
 
-        List mappings = new ArrayList();
+        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
 
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
@@ -53,28 +53,25 @@ public class EngineTool {
         propagate(mappings, sourceValues);
     }
 
-    public static void propagate(Collection mappings, SourceValues sourceValues) throws Exception {
+    public static void propagate(Collection<EntryMapping> mappings, SourceValues sourceValues) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        for (Iterator i=mappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
+        for (EntryMapping entryMapping : mappings) {
 
-            Collection sourceMappings = entryMapping.getSourceMappings();
-            for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)j.next();
+            Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+            for (SourceMapping sourceMapping : sourceMappings) {
 
-                Collection fieldMappings = sourceMapping.getFieldMappings();
-                for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-                    FieldMapping fieldMapping = (FieldMapping)k.next();
+                Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+                for (FieldMapping fieldMapping : fieldMappings) {
 
                     String variable = fieldMapping.getVariable();
                     if (variable == null) continue;
 
                     int p = variable.indexOf(".");
                     if (p < 0) continue;
-                    
-                    String lhs = sourceMapping.getName()+"."+fieldMapping.getName();
+
+                    String lhs = sourceMapping.getName() + "." + fieldMapping.getName();
                     String rhs = variable;
 
                     Collection values = sourceValues.get(lhs);
@@ -82,11 +79,11 @@ public class EngineTool {
                         values = sourceValues.get(rhs);
                         if (values != null) {
                             sourceValues.set(lhs, values);
-                            if (debug) log.debug("Propagating "+lhs+": "+values);
+                            if (debug) log.debug("Propagating " + lhs + ": " + values);
                         }
                     } else {
                         sourceValues.set(rhs, values);
-                        if (debug) log.debug("Propagating "+rhs+": "+values);
+                        if (debug) log.debug("Propagating " + rhs + ": " + values);
                     }
                 }
             }

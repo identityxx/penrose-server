@@ -58,10 +58,9 @@ public class TransformEngine {
      * @param attributes
      * @return collection of Rows
      */
-    public static Collection convert(Attributes attributes) {
+    public static Collection<RDN> convert(Attributes attributes) {
         Map<String,Collection> map = new HashMap<String,Collection>();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             map.put(attribute.getName(), attribute.getValues());
         }
         return convert(map);
@@ -76,7 +75,7 @@ public class TransformEngine {
      * @param values Map of collections.
      * @return collection of Rows
      */
-    public static Collection convert(Map<String,Collection> values) {
+    public static Collection<RDN> convert(Map<String,Collection> values) {
         List<String> names = new ArrayList<String>(values.keySet());
         List<RDN> results = new ArrayList<RDN>();
         Map<String,Object> temp = new HashMap<String,Object>();

@@ -298,6 +298,17 @@ public class Partition {
         }
     }
 
+    public List<EntryMapping> getPath(EntryMapping entryMapping) {
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
+        
+        while (entryMapping != null) {
+            path.add(0, entryMapping);
+            entryMapping = getParent(entryMapping);
+        }
+
+        return path;
+    }
+
     public EntryMapping getParent(EntryMapping entryMapping) {
         if (entryMapping == null) return null;
 

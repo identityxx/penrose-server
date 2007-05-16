@@ -165,7 +165,7 @@ public class EntryMapping implements Cloneable {
         return false;
     }
     
-    public Collection getRdnAttributeMappings() {
+    public Collection<AttributeMapping> getRdnAttributeMappings() {
         return rdnAttributeMappings;
     }
 

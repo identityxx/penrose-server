@@ -10,6 +10,7 @@ import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
 
 import java.util.*;
 
@@ -28,7 +29,9 @@ public class SourceManager {
     private PenroseContext penroseContext;
 
     public Map<String,Map<String,Source>> sources = new LinkedHashMap<String,Map<String,Source>>();
+
     public Map<String,Map<String,Map<String,SourceRef>>> sourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
+    public Map<String,Map<String,Map<String,SourceRef>>> primarySourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
 
     public void init(Partition partition, SourceConfig sourceConfig) throws Exception {
 
@@ -44,6 +47,38 @@ public class SourceManager {
         source.setConnection(connection);
 
         addSource(partition, source);
+    }
+
+    public void init(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
+            init(partition, entryMapping, sourceMapping);
+        }
+
+        EntryMapping em = entryMapping;
+
+        while (em != null) {
+
+            String primarySourceName = null;
+            Collection<AttributeMapping> rdnAttributeMappings = em.getRdnAttributeMappings();
+            for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
+                String variable = rdnAttributeMapping.getVariable();
+                if (variable == null) continue;
+
+                int i = variable.indexOf('.');
+                if (i < 0) continue;
+
+                primarySourceName = variable.substring(0, i);
+                break;
+            }
+
+            if (primarySourceName != null) {
+                SourceRef primarySourceRef = getSourceRef(partition.getName(), em, primarySourceName);
+                addPrimarySourceRef(partition.getName(), entryMapping, primarySourceRef);
+            }
+
+            em = partition.getParent(em);
+        }
     }
 
     public void init(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping) throws Exception {
@@ -73,6 +108,33 @@ public class SourceManager {
         }
 
         map.put(sourceRef.getAlias(), sourceRef);
+    }
+
+    public void addPrimarySourceRef(String partitionName, EntryMapping entryMapping, SourceRef sourceRef) {
+
+        Map<String,Map<String,SourceRef>> primaryEntryMappings = primarySourceRefs.get(partitionName);
+        if (primaryEntryMappings == null) {
+            primaryEntryMappings = new LinkedHashMap<String,Map<String,SourceRef>>();
+            primarySourceRefs.put(partitionName, primaryEntryMappings);
+        }
+
+        Map<String,SourceRef> primaryMap = primaryEntryMappings.get(entryMapping.getId());
+        if (primaryMap == null) {
+            primaryMap = new LinkedHashMap<String,SourceRef>();
+            primaryEntryMappings.put(entryMapping.getId(), primaryMap);
+        }
+
+        primaryMap.put(sourceRef.getAlias(), sourceRef);
+    }
+
+    public Collection<SourceRef> getPrimarySourceRefs(String partitionName, EntryMapping entryMapping) {
+        Map<String,Map<String,SourceRef>> primaryEntryMappings = primarySourceRefs.get(partitionName);
+        if (primaryEntryMappings == null) return EMPTY_SOURCEREFS;
+
+        Map<String,SourceRef> primaryMap = primaryEntryMappings.get(entryMapping.getId());
+        if (primaryMap == null) return EMPTY_SOURCEREFS;
+
+        return primaryMap.values();
     }
 
     public Collection<String> getSourceRefNames(Partition partition, EntryMapping entryMapping) {

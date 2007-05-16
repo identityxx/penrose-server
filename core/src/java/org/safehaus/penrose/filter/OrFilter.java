@@ -23,12 +23,12 @@ import java.util.Collection;
 
 public class OrFilter extends Filter {
 
-	Collection filters = new ArrayList();
+	Collection<Filter> filters = new ArrayList<Filter>();
 
 	public OrFilter() {
 	}
 
-	public Collection getFilters() {
+	public Collection<Filter> getFilters() {
 		return filters;
 	}
 
@@ -67,11 +67,10 @@ public class OrFilter extends Filter {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(|");
-        for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter filter = (Filter)i.next();
+        for (Filter filter : filters) {
             sb.append(filter);
         }
-		sb.append(")");
+        sb.append(")");
 		return sb.toString();
 	}
 }

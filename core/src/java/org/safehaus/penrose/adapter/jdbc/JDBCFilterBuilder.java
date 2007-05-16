@@ -84,7 +84,11 @@ public class JDBCFilterBuilder {
             name = sourceName+"."+ field.getOriginalName();
 
         } else {
-            field = source.getField(name);
+            int i = name.indexOf('.');
+            String sourceName = name.substring(0, i);
+            String fieldName = name.substring(i+1);
+
+            field = source.getField(fieldName);
             if (field == null) throw new Exception("Unknown field: "+name);
 
             name = field.getOriginalName();

@@ -9,7 +9,7 @@ import java.util.LinkedHashSet;
 public class Attribute {
 
     protected String name;
-    protected Collection values = new LinkedHashSet();
+    protected Collection<Object> values = new LinkedHashSet<Object>();
 
     public Attribute(String name) {
         this.name = name;
@@ -20,7 +20,7 @@ public class Attribute {
         this.values.add(value);
     }
 
-    public Attribute(String name, Collection values) {
+    public Attribute(String name, Collection<Object> values) {
         this.name = name;
         this.values.addAll(values);
     }
@@ -38,7 +38,7 @@ public class Attribute {
         return values.iterator().next();
     }
     
-    public Collection getValues() {
+    public Collection<Object> getValues() {
         return values;
     }
 
@@ -55,17 +55,17 @@ public class Attribute {
         values.remove(value);
     }
 
-    public void addValues(Collection values) {
+    public void addValues(Collection<Object> values) {
         if (values != null) this.values.addAll(values);
     }
 
-    public void setValues(Collection values) {
+    public void setValues(Collection<Object> values) {
         if (this.values == values) return;
         this.values.clear();
         if (values != null) this.values.addAll(values);
     }
 
-    public void removeValues(Collection values) {
+    public void removeValues(Collection<Object> values) {
         if (values != null) this.values.removeAll(values);
     }
 

@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class ModifyRequestBuilder extends RequestBuilder {
 
-    Collection sources;
+    Collection<SourceRef> sourceRefs;
 
     SourceValues sourceValues;
     Interpreter interpreter;
@@ -33,14 +33,14 @@ public class ModifyRequestBuilder extends RequestBuilder {
     ModifyResponse response;
 
     public ModifyRequestBuilder(
-            Collection sources,
+            Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        this.sources = sources;
+        this.sourceRefs = sourceRefs;
         this.sourceValues = sourceValues;
 
         this.interpreter = interpreter;
@@ -49,11 +49,10 @@ public class ModifyRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection generate() throws Exception {
+    public Collection<Request> generate() throws Exception {
 
         boolean first = true;
-        for (Iterator i= sources.iterator(); i.hasNext(); ) {
-            SourceRef sourceRef = (SourceRef)i.next();
+        for (SourceRef sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
@@ -82,8 +81,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         statement.setSource(source);
 
         Collection<Modification> modifications = request.getModifications();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification modification = (Modification)i.next();
+        for (Modification modification : modifications) {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
@@ -94,13 +92,13 @@ public class ModifyRequestBuilder extends RequestBuilder {
             if (debug) {
                 switch (type) {
                     case Modification.ADD:
-                        log.debug("Adding attribute "+attributeName+": "+attributeValues);
+                        log.debug("Adding attribute " + attributeName + ": " + attributeValues);
                         break;
                     case Modification.REPLACE:
-                        log.debug("Replacing attribute "+attributeName+": "+attributeValues);
+                        log.debug("Replacing attribute " + attributeName + ": " + attributeValues);
                         break;
                     case Modification.DELETE:
-                        log.debug("Deleting attribute "+attributeName+": "+attributeValues);
+                        log.debug("Deleting attribute " + attributeName + ": " + attributeValues);
                         break;
                 }
             }
@@ -113,8 +111,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
             switch (type) {
                 case Modification.ADD:
                 case Modification.REPLACE:
-                    for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                        FieldRef fieldRef = (FieldRef)j.next();
+                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                         Field field = fieldRef.getField();
 
                         FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -123,15 +120,14 @@ public class ModifyRequestBuilder extends RequestBuilder {
                         if (value == null) continue;
 
                         String fieldName = field.getName();
-                        if (debug) log.debug("Setting field "+fieldName+" to "+value);
+                        if (debug) log.debug("Setting field " + fieldName + " to " + value);
 
                         statement.addAssignment(new Assignment(fieldRef, value));
                     }
                     break;
 
                 case Modification.DELETE:
-                    for (Iterator j= sourceRef.getFieldRefs().iterator(); j.hasNext(); ) {
-                        FieldRef fieldRef = (FieldRef)j.next();
+                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                         Field field = fieldRef.getField();
 
                         FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -140,9 +136,9 @@ public class ModifyRequestBuilder extends RequestBuilder {
                         if (variable == null) continue;
 
                         if (!variable.equals(attributeName)) continue;
-                        
+
                         String fieldName = field.getName();
-                        if (debug) log.debug("Setting field "+fieldName+" to null");
+                        if (debug) log.debug("Setting field " + fieldName + " to null");
 
                         statement.addAssignment(new Assignment(fieldRef, null));
                     }
@@ -156,13 +152,12 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : sourceValues.getNames()) {
             Object value = sourceValues.getOne(name);
 
             int p = name.indexOf(".");
             String sn = name.substring(0, p);
-            String fn = name.substring(p+1);
+            String fn = name.substring(p + 1);
 
             if (!sourceName.equals(sn)) continue;
 
@@ -191,8 +186,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         if (debug) log.debug("Processing source "+sourceName);
 
         Collection<Modification> modifications = request.getModifications();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification modification = (Modification)i.next();
+        for (Modification modification : modifications) {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
@@ -203,20 +197,19 @@ public class ModifyRequestBuilder extends RequestBuilder {
             if (debug) {
                 switch (type) {
                     case Modification.ADD:
-                        log.debug("Adding attribute "+attributeName+": "+attributeValues);
+                        log.debug("Adding attribute " + attributeName + ": " + attributeValues);
                         break;
                     case Modification.REPLACE:
-                        log.debug("Replacing attribute "+attributeName+": "+attributeValues);
+                        log.debug("Replacing attribute " + attributeName + ": " + attributeValues);
                         break;
                     case Modification.DELETE:
-                        log.debug("Deleting attribute "+attributeName+": "+attributeValues);
+                        log.debug("Deleting attribute " + attributeName + ": " + attributeValues);
                         break;
                 }
             }
 
             if (attributeValues.isEmpty()) {
-                for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-                    FieldRef fieldRef = (FieldRef)k.next();
+                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                     FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
                     String variable = fieldMapping.getVariable();
@@ -247,19 +240,16 @@ public class ModifyRequestBuilder extends RequestBuilder {
                 }
                 continue;
             }
-            
+
             boolean first = true;
 
-            for (Iterator j=attributeValues.iterator(); j.hasNext(); ) {
-                Object attributeValue = j.next();
-
+            for (Object attributeValue : attributeValues) {
                 interpreter.set(sourceValues);
                 interpreter.set(attributeName, attributeValue);
 
-                Map values = new HashMap();
+                Map<String,Object> values = new HashMap<String,Object>();
 
-                for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-                    FieldRef fieldRef = (FieldRef)k.next();
+                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                     FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
                     String variable = fieldMapping.getVariable();
@@ -313,7 +303,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
     public void generateInsertStatement(
             SourceRef sourceRef,
-            Map values
+            Map<String,Object> values
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -325,8 +315,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         statement.setSource(sourceRef.getSource());
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
 
             FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -339,18 +328,17 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
             String fieldName = field.getName();
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String fieldName = (String)i.next();
+        for (String fieldName : values.keySet()) {
             Object value = values.get(fieldName);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
             Field field = fieldRef.getField();
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
@@ -368,7 +356,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
     public void generateDeleteStatement(
             SourceRef sourceRef,
-            Map values
+            Map<String,Object> values
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -383,8 +371,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (Iterator k= sourceRef.getFieldRefs().iterator(); k.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)k.next();
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
 
             FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -400,12 +387,11 @@ public class ModifyRequestBuilder extends RequestBuilder {
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
 
-            if (debug) log.debug(" - Field: "+fieldName+": "+value);
+            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
         }
 
         if (values != null) {
-            for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-                String fieldName = (String)i.next();
+            for (String fieldName : values.keySet()) {
                 Object value = values.get(fieldName);
 
                 FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
@@ -414,7 +400,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                 SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
                 filter = FilterTool.appendAndFilter(filter, sf);
 
-                if (debug) log.debug(" - Field: "+fieldName+": "+value);
+                if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             }
         }
 

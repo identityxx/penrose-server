@@ -67,7 +67,7 @@ public class FilterEvaluator {
 
     public boolean eval(Attributes attributes, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) return false;
@@ -255,7 +255,7 @@ public class FilterEvaluator {
 
     public boolean eval(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
+        Collection<Object> substrings = filter.getSubstrings();
 
         AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
         if (attributeMapping == null) return false;
