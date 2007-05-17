@@ -39,9 +39,8 @@ public class Source implements Cloneable {
         this.name = sourceConfig.getName();
         this.parameters.putAll(sourceConfig.getParameters());
 
-        Collection fieldConfigs = sourceConfig.getFieldConfigs();
-        for (Iterator i=fieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
+        Collection<FieldConfig> fieldConfigs = sourceConfig.getFieldConfigs();
+        for (FieldConfig fieldConfig : fieldConfigs) {
             String fieldName = fieldConfig.getName();
 
             Field field = new Field(fieldConfig);
@@ -142,7 +141,7 @@ public class Source implements Cloneable {
     }
 
     public Field getField(String fieldName) {
-        return (Field)fields.get(fieldName);
+        return fields.get(fieldName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -339,7 +338,8 @@ public class Source implements Cloneable {
         connection.status(this);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         Source source = new Source(partition, sourceConfig);
         source.setConnection(connection);
         return source;

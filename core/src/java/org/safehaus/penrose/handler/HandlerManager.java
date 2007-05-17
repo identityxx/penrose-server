@@ -487,14 +487,13 @@ public class HandlerManager {
                 entryMappings
         );
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            final EntryMapping entryMapping = (EntryMapping)i.next();
-            if (debug) log.debug("Searching "+baseDn+" in "+entryMapping.getDn());
+        for (final EntryMapping entryMapping : entryMappings) {
+            if (debug) log.debug("Searching " + baseDn + " in " + entryMapping.getDn());
 
             int rc = aclManager.checkSearch(session, partition, entryMapping, baseDn);
 
             if (rc != LDAPException.SUCCESS) {
-                if (debug) log.debug("Not allowed to search "+baseDn);
+                if (debug) log.debug("Not allowed to search " + baseDn);
                 continue;
             }
 
@@ -518,7 +517,11 @@ public class HandlerManager {
                         sr.setResult(entryMapping, ExceptionUtil.createLDAPException(e));
 
                     } finally {
-                        try { sr.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+                        try {
+                            sr.close();
+                        } catch (Exception e) {
+                            log.error(e.getMessage(), e);
+                        }
                     }
                 }
             };

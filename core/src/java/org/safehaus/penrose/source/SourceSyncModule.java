@@ -61,8 +61,7 @@ public class SourceSyncModule extends Module {
 
         if (initialize) {
             log.warn("Initializing "+partition.getName()+"/"+sourceNames+".");
-            for (Iterator i= sourceSyncs.iterator(); i.hasNext(); ) {
-                SourceSync sourceSync = (SourceSync)i.next();
+            for (SourceSync sourceSync : sourceSyncs) {
                 sourceSync.update();
             }
         }
@@ -86,9 +85,8 @@ public class SourceSyncModule extends Module {
     }
 
     public void process() throws Exception {
-        for (Iterator i= sourceSyncs.iterator(); i.hasNext(); ) {
-            SourceSync sourceSync = (SourceSync)i.next();
-            log.warn("Synchronizing "+partition.getName()+"/"+sourceSync.getName()+".");
+        for (SourceSync sourceSync : sourceSyncs) {
+            log.warn("Synchronizing " + partition.getName() + "/" + sourceSync.getName() + ".");
             sourceSync.synchronize();
         }
     }

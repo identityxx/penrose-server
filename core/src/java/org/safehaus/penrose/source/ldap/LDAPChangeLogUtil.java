@@ -61,8 +61,7 @@ public class LDAPChangeLogUtil extends ChangeLogUtil {
         RDNBuilder rb = new RDNBuilder();
         Attributes attributes = new Attributes();
 
-        for (Iterator i= source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+        for (Field field : source.getFields()) {
             String fieldName = field.getName();
 
             Object value = changeLogAttributes.getValue(fieldName);
@@ -88,8 +87,7 @@ public class LDAPChangeLogUtil extends ChangeLogUtil {
 
             ModifyRequest request = new ModifyRequest();
             request.setDn(dn);
-            for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-                Attribute attribute = (Attribute)i.next();
+            for (Attribute attribute : attributes.getAll()) {
                 request.addModification(new Modification(Modification.REPLACE, attribute));
             }
 

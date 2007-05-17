@@ -31,11 +31,16 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
+import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.cache.CacheManager;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
+
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Endi S. Dewata

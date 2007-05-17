@@ -15,23 +15,22 @@ public class JDBCSourceSync extends org.safehaus.penrose.source.SourceSync {
         return new JDBCChangeLogUtil();
     }
 
-    public void generateCreateTable(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+    public void generateCreateTable(String tableName, Collection<FieldConfig> primaryKeyFieldConfigs) throws Exception {
         System.out.println("create table "+tableName+"_changelog (");
         System.out.println("    changeNumber integer auto_increment,");
         System.out.println("    changeTime datetime,");
         System.out.println("    changeAction varchar(10),");
         System.out.println("    changeUser varchar(10),");
 
-        for (Iterator i=primaryKeyFieldConfigs.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-            System.out.println("    "+fieldConfig.getName()+" "+fieldConfig.getType()+",");
+        for (FieldConfig fieldConfig : primaryKeyFieldConfigs) {
+            System.out.println("    " + fieldConfig.getName() + " " + fieldConfig.getType() + ",");
         }
 
         System.out.println("    primary key (changeNumber)");
         System.out.println(");");
     }
 
-    public void generateAddTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+    public void generateAddTrigger(String tableName, Collection<FieldConfig> primaryKeyFieldConfigs) throws Exception {
         System.out.println("create trigger "+tableName+"_add after insert on "+tableName);
         System.out.println("for each row insert into "+tableName+"_changelog values (");
         System.out.println("    null,");
@@ -49,7 +48,7 @@ public class JDBCSourceSync extends org.safehaus.penrose.source.SourceSync {
         System.out.println(");");
     }
 
-    public void generateModifyTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+    public void generateModifyTrigger(String tableName, Collection<FieldConfig> primaryKeyFieldConfigs) throws Exception {
         System.out.println("delimiter |");
         System.out.println("create trigger "+tableName+"_modify after update on "+tableName);
         System.out.println("for each row begin");
@@ -110,7 +109,7 @@ public class JDBCSourceSync extends org.safehaus.penrose.source.SourceSync {
         System.out.println("delimiter ;");
     }
 
-    public void generateDeleteTrigger(String tableName, Collection primaryKeyFieldConfigs) throws Exception {
+    public void generateDeleteTrigger(String tableName, Collection<FieldConfig> primaryKeyFieldConfigs) throws Exception {
         System.out.println("create trigger "+tableName+"_delete after delete on "+tableName);
         System.out.println("for each row insert into "+tableName+"_changelog values (");
         System.out.println("    null,");

@@ -40,7 +40,7 @@ public class PenroseSearchResponse
     }
 
     public Object next() throws Exception {
-        SearchResult result = (SearchResult)searchResponse.next();
+        SearchResult result = searchResponse.next();
 
         PenroseEntry entry = new PenroseEntry(result.getDn(), result.getAttributes());
 

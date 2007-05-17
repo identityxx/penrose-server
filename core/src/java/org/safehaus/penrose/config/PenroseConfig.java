@@ -47,16 +47,16 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     private String home;
 
-    private Map systemProperties   = new LinkedHashMap();
-    private Map properties         = new LinkedHashMap();
-    private Map serviceConfigs     = new LinkedHashMap();
+    private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
+    private Map<String,String> properties                    = new LinkedHashMap<String,String>();
+    private Map<String,ServiceConfig> serviceConfigs         = new LinkedHashMap<String,ServiceConfig>();
 
-    private Map schemaConfigs      = new LinkedHashMap();
-    private Map adapterConfigs     = new LinkedHashMap();
-    private Map partitionConfigs   = new LinkedHashMap();
-    private Map engineConfigs      = new LinkedHashMap();
-    private Map handlerConfigs     = new LinkedHashMap();
-    private Map interpreterConfigs = new LinkedHashMap();
+    private Map<String,SchemaConfig> schemaConfigs           = new LinkedHashMap<String,SchemaConfig>();
+    private Map<String,AdapterConfig> adapterConfigs         = new LinkedHashMap<String,AdapterConfig>();
+    private Map<String,PartitionConfig> partitionConfigs     = new LinkedHashMap<String,PartitionConfig>();
+    private Map<String,EngineConfig> engineConfigs           = new LinkedHashMap<String,EngineConfig>();
+    private Map<String,HandlerConfig> handlerConfigs         = new LinkedHashMap<String,HandlerConfig>();
+    private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
     private CacheConfig entryCacheConfig;
 
@@ -86,14 +86,14 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public String getSystemProperty(String name) {
-        return (String)systemProperties.get(name);
+        return systemProperties.get(name);
     }
 
-    public Map getSystemProperties() {
+    public Map<String,String> getSystemProperties() {
         return systemProperties;
     }
 
-    public Collection getSystemPropertyNames() {
+    public Collection<String> getSystemPropertyNames() {
         return systemProperties.keySet();
     }
 
@@ -102,18 +102,18 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public String removeSystemProperty(String name) {
-        return (String)systemProperties.remove(name);
+        return systemProperties.remove(name);
     }
 
     public String getProperty(String name) {
-        return (String)properties.get(name);
+        return properties.get(name);
     }
 
     public Map getProperties() {
         return properties;
     }
 
-    public Collection getPropertyNames() {
+    public Collection<String> getPropertyNames() {
         return properties.keySet();
     }
 
@@ -122,7 +122,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public String removeProperty(String name) {
-        return (String)properties.remove(name);
+        return properties.remove(name);
     }
 
     public void addServiceConfig(ServiceConfig serviceConfig) {
@@ -130,19 +130,19 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public ServiceConfig getServiceConfig(String name) {
-        return (ServiceConfig)serviceConfigs.get(name);
+        return serviceConfigs.get(name);
     }
 
-    public Collection getServiceConfigs() {
+    public Collection<ServiceConfig> getServiceConfigs() {
         return serviceConfigs.values();
     }
 
-    public Collection getServiceNames() {
+    public Collection<String> getServiceNames() {
         return serviceConfigs.keySet();
     }
 
     public ServiceConfig removeServiceConfig(String name) {
-        return (ServiceConfig)serviceConfigs.remove(name);
+        return serviceConfigs.remove(name);
     }
 
     public void addEngineConfig(EngineConfig engineConfig) {
@@ -150,18 +150,18 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public EngineConfig getEngineConfig(String name) {
-        return (EngineConfig)engineConfigs.get(name);
+        return engineConfigs.get(name);
     }
 
-    public Collection getEngineConfigs() {
+    public Collection<EngineConfig> getEngineConfigs() {
         return engineConfigs.values();
     }
 
-    public Collection getEngineNames() {
+    public Collection<String> getEngineNames() {
         return engineConfigs.keySet();
     }
 
-    public Collection getInterpreterConfigs() {
+    public Collection<InterpreterConfig> getInterpreterConfigs() {
         return interpreterConfigs.values();
     }
 
@@ -169,23 +169,19 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         interpreterConfigs.put(interpreterConfig.getName(), interpreterConfig);
     }
 
-    public Collection getAdapterConfigs() {
+    public Collection<AdapterConfig> getAdapterConfigs() {
         return adapterConfigs.values();
     }
 
     public AdapterConfig getAdapterConfig(String name) {
-        return (AdapterConfig)adapterConfigs.get(name);
-    }
-
-    public void setAdapterConfigs(Map adapterConfigs) {
-        this.adapterConfigs = adapterConfigs;
+        return adapterConfigs.get(name);
     }
 
     public void addAdapterConfig(AdapterConfig adapter) {
         adapterConfigs.put(adapter.getName(), adapter);
     }
 
-    public Collection getAdapterNames() {
+    public Collection<String> getAdapterNames() {
         return adapterConfigs.keySet();
     }
 
@@ -218,19 +214,19 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public SchemaConfig getSchemaConfig(String name) {
-        return (SchemaConfig)schemaConfigs.get(name);
+        return schemaConfigs.get(name);
     }
 
-    public Collection getSchemaConfigs() {
+    public Collection<SchemaConfig> getSchemaConfigs() {
         return schemaConfigs.values();
     }
 
-    public Collection getSchemaNames() {
+    public Collection<String> getSchemaNames() {
         return schemaConfigs.keySet();
     }
 
     public SchemaConfig removeSchemaConfig(String name) {
-        return (SchemaConfig)schemaConfigs.remove(name);
+        return schemaConfigs.remove(name);
     }
 
     public void addPartitionConfig(PartitionConfig partitionConfig) {
@@ -238,30 +234,30 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public PartitionConfig getPartitionConfig(String name) {
-        return (PartitionConfig)partitionConfigs.get(name);
+        return partitionConfigs.get(name);
     }
 
     public Collection getPartitionConfigs() {
         return partitionConfigs.values();
     }
 
-    public Collection getPartitionNames() {
+    public Collection<String> getPartitionNames() {
         return partitionConfigs.keySet();
     }
 
     public PartitionConfig removePartitionConfig(String name) {
-        return (PartitionConfig)partitionConfigs.remove(name);
+        return partitionConfigs.remove(name);
     }
 
     public HandlerConfig getHandlerConfig(String name) {
-        return (HandlerConfig)handlerConfigs.get(name);
+        return handlerConfigs.get(name);
     }
 
-    public Collection getHandlerConfigs() {
+    public Collection<HandlerConfig> getHandlerConfigs() {
         return handlerConfigs.values();
     }
 
-    public Collection getHandlerNames() {
+    public Collection<String> getHandlerNames() {
         return handlerConfigs.keySet();
     }
 
@@ -271,7 +267,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public HandlerConfig removeHandlerConfig(String name) {
-        return (HandlerConfig)handlerConfigs.remove(name);
+        return handlerConfigs.remove(name);
     }
 
     public UserConfig getRootUserConfig() {
@@ -370,39 +366,32 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         systemProperties.putAll(penroseConfig.systemProperties);
         properties.putAll(penroseConfig.properties);
 
-        for (Iterator i=penroseConfig.serviceConfigs.values().iterator(); i.hasNext(); ) {
-            ServiceConfig serviceConfig = (ServiceConfig)i.next();
-            addServiceConfig((ServiceConfig)serviceConfig.clone());
+        for (ServiceConfig serviceConfig : penroseConfig.serviceConfigs.values()) {
+            addServiceConfig((ServiceConfig) serviceConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.schemaConfigs.values().iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
-            addSchemaConfig((SchemaConfig)schemaConfig.clone());
+        for (SchemaConfig schemaConfig : penroseConfig.schemaConfigs.values()) {
+            addSchemaConfig((SchemaConfig) schemaConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.adapterConfigs.values().iterator(); i.hasNext(); ) {
-            AdapterConfig adapterConfig = (AdapterConfig)i.next();
-            addAdapterConfig((AdapterConfig)adapterConfig.clone());
+        for (AdapterConfig adapterConfig : penroseConfig.adapterConfigs.values()) {
+            addAdapterConfig((AdapterConfig) adapterConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.partitionConfigs.values().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
-            addPartitionConfig((PartitionConfig)partitionConfig.clone());
+        for (PartitionConfig partitionConfig : penroseConfig.partitionConfigs.values()) {
+            addPartitionConfig((PartitionConfig) partitionConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.engineConfigs.values().iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
-            addEngineConfig((EngineConfig)engineConfig.clone());
+        for (EngineConfig engineConfig : penroseConfig.engineConfigs.values()) {
+            addEngineConfig((EngineConfig) engineConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.handlerConfigs.values().iterator(); i.hasNext(); ) {
-            HandlerConfig handlerConfig = (HandlerConfig)i.next();
-            addHandlerConfig((HandlerConfig)handlerConfig.clone());
+        for (HandlerConfig handlerConfig : penroseConfig.handlerConfigs.values()) {
+            addHandlerConfig((HandlerConfig) handlerConfig.clone());
         }
 
-        for (Iterator i=penroseConfig.interpreterConfigs.values().iterator(); i.hasNext(); ) {
-            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
-            addInterpreterConfig((InterpreterConfig)interpreterConfig.clone());
+        for (InterpreterConfig interpreterConfig : penroseConfig.interpreterConfigs.values()) {
+            addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
         }
 
         entryCacheConfig.copy(entryCacheConfig);
@@ -427,7 +416,8 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         init();
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         PenroseConfig penroseConfig = new PenroseConfig();
         penroseConfig.copy(this);
         return penroseConfig;

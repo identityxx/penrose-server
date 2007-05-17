@@ -41,7 +41,7 @@ public class SearchEvent extends Event {
             int type,
             Session session,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) {
         super(source, type);
         this.session = session;

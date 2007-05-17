@@ -45,7 +45,7 @@ public class SearchResponse<E> extends Response {
     protected boolean enableEventListeners = true;
     protected List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
-    protected List referrals = new ArrayList();
+    protected List<Object> referrals = new ArrayList<Object>();
     protected Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
 
     public SearchResponse() {

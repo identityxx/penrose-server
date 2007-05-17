@@ -161,4 +161,4 @@ cd "$PENROSE_HOME"
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -Djava.library.path="$LOCALLIBPATH" \
   -Dpenrose.home="$PENROSE_HOME" \
-  org.safehaus.penrose.cache.CacheManager $PENROSE_ARGS "$@"
+  org.safehaus.penrose.cache.CacheUtil $PENROSE_ARGS "$@"

@@ -22,7 +22,7 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    SearchResponse<SearchResult> parent;
+    SearchResponse<SearchResult> response;
 
     Session session;
     Partition partition;
@@ -51,7 +51,7 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
             boolean allOpAttributes,
             Collection<EntryMapping> entryMappings
     ) {
-        this.parent = parent;
+        this.response = parent;
         this.session = session;
         this.partition = partition;
 
@@ -103,7 +103,7 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
         SearchResult result = new SearchResult(dn, attributes);
 
-        parent.add(result);
+        response.add(result);
     }
 
     public void setResult(EntryMapping entryMapping, LDAPException exception) {
@@ -150,13 +150,13 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
         if (exception != null) {
             if (debug) log.debug("Returning: "+exception.getMessage());
-            parent.setException(exception);
+            response.setException(exception);
 
         } else if (noSuchObject != null && !successes) {
             if (debug) log.debug("Returning: "+noSuchObject.getMessage());
-            parent.setException(noSuchObject);
+            response.setException(noSuchObject);
         } 
 
-        parent.close();
+        response.close();
     }
 }

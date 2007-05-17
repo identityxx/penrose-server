@@ -6,6 +6,7 @@ import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
@@ -32,7 +33,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     SourceValues sourceValues;
 
     SearchRequest request;
-    SearchResponse response;
+    SearchResponse<SearchResult> response;
 
     SearchFilterBuilder filterBuilder;
 
@@ -43,7 +44,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse response
+            SearchResponse<SearchResult> response
     ) throws Exception {
 
         this.penroseContext = penroseContext;

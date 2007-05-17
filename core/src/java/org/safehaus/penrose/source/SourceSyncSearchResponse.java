@@ -5,7 +5,6 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
 
-import java.util.Iterator;
 import java.util.Collection;
 
 /**
@@ -30,35 +29,30 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
 
     }
 
-    public void add(SearchResult object) throws Exception {
+    public void add(SearchResult result) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        SearchResult sourceEntry = (SearchResult)object;
-
-        DN dn = sourceEntry.getDn();
-        Attributes attributes = sourceEntry.getAttributes();
+        DN dn = result.getDn();
+        Attributes attributes = result.getAttributes();
 
         if (debug) {
             log.debug("Synchronizing "+dn);
         }
 
         SourceValues sourceValues = new SourceValues();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             sourceValues.set(source.getName(), attribute.getName(), attribute.getValues());
         }
 
         interpreter.set(sourceValues);
 
-        for (Iterator i= destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
 
             Attributes newAttributes = new Attributes();
             Attributes newRdns = new Attributes();
 
-            for (Iterator j=destination.getFields().iterator(); j.hasNext(); ) {
-                Field field = (Field)j.next();
+            for (Field field : destination.getFields()) {
                 String fieldName = field.getName();
 
                 Object value = interpreter.eval(field);
@@ -68,7 +62,7 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
                 }
 
                 if (value instanceof Collection) {
-                    Collection list = (Collection)value;
+                    Collection list = (Collection) value;
                     newAttributes.addValues(fieldName, list);
                     if (field.isPrimaryKey()) newRdns.addValues(fieldName, list);
                 } else {
@@ -78,15 +72,14 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
             }
 
             if (newRdns == null) continue;
-            
-            Collection rdns = TransformEngine.convert(newRdns);
 
-            for (Iterator j=rdns.iterator(); j.hasNext(); ) {
-                RDN rdn = (RDN)j.next();
+            Collection<RDN> rdns = TransformEngine.convert(newRdns);
+
+            for (RDN rdn : rdns) {
                 DN newDn = new DN(rdn);
 
                 if (debug) {
-                    log.debug("Adding "+destination.getName()+": "+newDn);
+                    log.debug("Adding " + destination.getName() + ": " + newDn);
                     newAttributes.print();
                 }
 

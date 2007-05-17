@@ -65,7 +65,7 @@ public class SourceSync {
         if (trackerName == null) trackerName = DEFAULT_TRACKER;
         //log.debug("Tracker: "+trackerName);
 
-        user = (String) sourceSyncConfig.getParameter(USER);
+        user = sourceSyncConfig.getParameter(USER);
         //log.debug("User: "+user);
 
         SourceManager sourceManager = penroseContext.getSourceManager();
@@ -119,7 +119,7 @@ public class SourceSync {
         return null;
     }
 
-    public Source createTemporarySource(Source dest) {
+    public Source createTemporarySource(Source dest) throws Exception {
         String tableName = dest.getParameter(JDBCClient.TABLE);
 
         Source snapshot = (Source)dest.clone();
@@ -169,8 +169,7 @@ public class SourceSync {
             update();
 
         } else {
-            for (Iterator i=changeLogUtils.iterator(); i.hasNext(); ) {
-                ChangeLogUtil changeLogUtil = (ChangeLogUtil)i.next();
+            for (ChangeLogUtil changeLogUtil : changeLogUtils) {
                 changeLogUtil.update();
             }
         }
@@ -180,8 +179,7 @@ public class SourceSync {
 
         Collection<Source> tmps = new ArrayList<Source>();
 
-        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
 
             Source tmp = createTemporarySource(destination);
             tmps.add(tmp);
@@ -189,7 +187,7 @@ public class SourceSync {
             try {
                 tmp.create();
             } catch (Exception e) {
-                log.error("Failed to create "+tmp.getName()+": "+e.getMessage());
+                log.error("Failed to create " + tmp.getName() + ": " + e.getMessage());
                 tmp.drop();
                 tmp.create();
             }
@@ -283,29 +281,25 @@ public class SourceSync {
     }
 
     public void create() throws Exception {
-        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
             destination.create();
         }
     }
 
     public void clean() throws Exception {
-        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
             destination.clean();
         }
     }
 
     public void drop() throws Exception {
-        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
             destination.drop();
         }
     }
 
     public void status() throws Exception {
-        for (Iterator i=destinations.iterator(); i.hasNext(); ) {
-            Source destination = (Source)i.next();
+        for (Source destination : destinations) {
             destination.status();
         }
     }

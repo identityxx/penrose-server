@@ -29,8 +29,7 @@ public abstract class ChangeLogUtil {
         SearchRequest request = createSearchRequest(changeNumber);
 
         SearchResponse<SearchResult> response = new SearchResponse<SearchResult>() {
-            public void add(SearchResult object) throws Exception {
-                SearchResult entry = (SearchResult)object;
+            public void add(SearchResult entry) throws Exception {
                 super.add(createChangeLog(entry));
             }
         };

@@ -151,4 +151,35 @@ public class SearchRequest extends Request {
     public void setFilter(Filter filter) {
         this.filter = filter;
     }
+
+    public int hashCode() {
+        return super.hashCode() +
+                (dn == null ? 0 : dn.hashCode());
+    }
+
+    private boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
+
+        SearchRequest searchRequest = (SearchRequest)object;
+        if (!equals(dn, searchRequest.dn)) return false;
+        if (!equals(filter, searchRequest.filter)) return false;
+
+        if (!equals(scope, searchRequest.scope)) return false;
+        if (!equals(dereference, searchRequest.dereference)) return false;
+        if (!equals(typesOnly, searchRequest.typesOnly)) return false;
+
+        if (!equals(sizeLimit, searchRequest.sizeLimit)) return false;
+        if (!equals(timeLimit, searchRequest.timeLimit)) return false;
+        if (!equals(attributes, searchRequest.attributes)) return false;
+
+        return true;
+    }
 }

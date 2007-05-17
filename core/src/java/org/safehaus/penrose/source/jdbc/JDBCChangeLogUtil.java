@@ -5,10 +5,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.changelog.ChangeLog;
 import org.safehaus.penrose.changelog.ChangeLogUtil;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.Field;
-
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -46,8 +43,7 @@ public class JDBCChangeLogUtil extends ChangeLogUtil {
         RDNBuilder rb = new RDNBuilder();
         Attributes attributes = new Attributes();
 
-        for (Iterator i= source.getFields().iterator(); i.hasNext(); ) {
-            Field field = (Field)i.next();
+        for (Field field : source.getFields()) {
             String fieldName = field.getName();
 
             Object value = changeLogAttributes.getValue(fieldName);
@@ -73,8 +69,7 @@ public class JDBCChangeLogUtil extends ChangeLogUtil {
 
             ModifyRequest request = new ModifyRequest();
             request.setDn(dn);
-            for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-                Attribute attribute = (Attribute)i.next();
+            for (Attribute attribute : attributes.getAll()) {
                 request.addModification(new Modification(Modification.REPLACE, attribute));
             }
 
