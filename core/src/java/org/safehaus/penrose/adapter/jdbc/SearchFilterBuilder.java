@@ -60,10 +60,14 @@ public class SearchFilterBuilder {
         this.penroseContext = penroseContext;
         this.entryMapping = entryMapping;
 
-        for (SourceRef sourceRef : sourceRefs) {
+        Set<String> aliases = new HashSet<String>();
 
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) == null) continue;
-            this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
+        for (SourceRef sourceRef : sourceRefs) {
+            String alias = sourceRef.getAlias();
+            aliases.add(alias);
+
+            if (entryMapping.getSourceMapping(alias) == null) continue;
+            this.sourceRefs.put(alias, sourceRef);
         }
 /*
         SourceManager sourceManager = penroseContext.getSourceManager();
@@ -83,7 +87,7 @@ public class SearchFilterBuilder {
         if (debug) log.debug("Creating filters:");
 
         for (String sourceName : sourceValues.getNames()) {
-            if (!this.sourceRefs.containsKey(sourceName)) continue;
+            if (!aliases.contains(sourceName)) continue;
 
             Attributes attributes = sourceValues.get(sourceName);
 
