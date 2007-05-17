@@ -66,7 +66,7 @@ public class MergeGraphVisitor extends GraphVisitor {
 
         graph = engine.getGraph(entryMapping);
 
-        sourceValues.add(primarySourceValues);
+        //sourceValues.add(primarySourceValues);
 
         Map map = new HashMap();
         map.put("filter", filter);
@@ -107,7 +107,7 @@ public class MergeGraphVisitor extends GraphVisitor {
         }
 
         if (!sourceValues.contains(sourceMapping.getName())) {
-
+/*
             //log.debug("Loaded values:");
             Collection list = loadedSourceValues.get(sourceMapping.getName());
             if (list != null) {
@@ -122,9 +122,10 @@ public class MergeGraphVisitor extends GraphVisitor {
                         if (!engine.joinEngine.evaluate(partition, entryMapping, relationships, sourceValues, av)) continue;
                     }
     
-                    sourceValues.add(av);
+                    //sourceValues.add(av);
                 }
             }
+*/
         }
 /*
         log.debug("Merged source values:");

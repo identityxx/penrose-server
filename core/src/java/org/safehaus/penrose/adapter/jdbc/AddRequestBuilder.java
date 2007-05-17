@@ -165,6 +165,7 @@ public class AddRequestBuilder extends RequestBuilder {
         boolean debug = log.isDebugEnabled();
 
         String sourceName = sourceRef.getAlias();
+
         if (debug) log.debug("Inserting values into "+sourceName);
 
         InsertStatement statement = new InsertStatement();
@@ -180,7 +181,14 @@ public class AddRequestBuilder extends RequestBuilder {
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
 
-            Object value = sourceValues.getOne(variable);
+            int i = variable.indexOf(".");
+            String sn = variable.substring(0, i);
+            String fn = variable.substring(i + 1);
+
+            Attributes fields = sourceValues.get(sn);
+            if (fields == null) continue;
+
+            Object value = fields.getValue(fn);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);

@@ -17,9 +17,6 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.ldap.RDNBuilder;
-import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -238,30 +235,6 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
-    }
-
-
-    public RDN getPrimaryKeyValues(SourceValues sourceValues) throws Exception {
-
-        RDNBuilder rb = new RDNBuilder();
-
-        for (FieldConfig fieldConfig : fieldConfigs.values()) {
-            if (!fieldConfig.isPrimaryKey()) continue;
-
-            String fieldName = fieldConfig.getName();
-
-            Collection values = sourceValues.get(fieldName);
-            if (values == null) return null;
-
-            Iterator iterator = values.iterator();
-            if (!iterator.hasNext()) return null;
-
-            Object value = iterator.next();
-
-            rb.set(fieldName, value);
-        }
-
-        return rb.toRdn();
     }
 
     public int hashCode() {

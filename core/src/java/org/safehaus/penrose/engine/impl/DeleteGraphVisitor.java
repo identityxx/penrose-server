@@ -108,11 +108,11 @@ public class DeleteGraphVisitor extends GraphVisitor {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
-            Collection values = sourceValues.get(name);
-            log.debug(" - "+name+": "+values);
+            //Collection values = sourceValues.get(name);
+            //log.debug(" - "+name+": "+values);
 
             name = name.substring(sourceMapping.getName().length()+1);
-            newSourceValues.set(name, values);
+            //newSourceValues.set(name, values);
         }
 
         SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());

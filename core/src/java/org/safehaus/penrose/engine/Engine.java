@@ -304,7 +304,7 @@ public abstract class Engine {
 
             //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
-            Collection v = sv.get(rhs);
+            Collection v = null; //sv.get(rhs);
             //log.debug("   - found "+v);
             if (v == null) continue;
 
@@ -606,8 +606,7 @@ public abstract class Engine {
     public Collection<DN> computeDns(
             Partition partition,
             Interpreter interpreter,
-            EntryMapping entryMapping,
-            Attributes sourceValues
+            EntryMapping entryMapping
     ) throws Exception {
 
         Collection<DN> dns = new ArrayList<DN>();
@@ -708,9 +707,9 @@ public abstract class Engine {
         partitionManager = penroseContext.getPartitionManager();
     }
 
-    public Collection<Collection<SourceRef>> createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+    public List<Collection<SourceRef>> createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
 
-        Collection<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
         SourceManager sourceManager = penroseContext.getSourceManager();
         Collection<SourceRef> list = new ArrayList<SourceRef>();
@@ -737,7 +736,7 @@ public abstract class Engine {
             }
         }
 
-        results.add(list);
+        if (!list.isEmpty()) results.add(list);
         
         return results;
     }

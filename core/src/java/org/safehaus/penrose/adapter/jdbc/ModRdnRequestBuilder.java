@@ -6,6 +6,7 @@ import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.ModRdnRequest;
 import org.safehaus.penrose.ldap.ModRdnResponse;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
@@ -105,23 +106,19 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
 
-            newSourceValues.set(sourceName + "." + fieldName, value);
+            newSourceValues.set(sourceName, fieldName, value);
         }
 
         Filter filter = null;
 
-        for (String name : sourceValues.getNames()) {
-            Object value = sourceValues.getOne(name);
+        Attributes attributes = sourceValues.get(sourceName);
+        
+        for (String fieldName : attributes.getNames()) {
+            Object value = attributes.getValue(fieldName);
 
-            int p = name.indexOf(".");
-            String sn = name.substring(0, p);
-            String fn = name.substring(p + 1);
+            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
 
-            if (!sourceName.equals(sn)) continue;
-
-            FieldRef fieldRef = sourceRef.getFieldRef(fn);
-
-            SimpleFilter sf = new SimpleFilter(fn, "=", value);
+            SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
         }
 
@@ -182,7 +179,14 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
 
-            Object value = sourceValues.getOne(variable);
+            int i = variable.indexOf(".");
+            String sn = variable.substring(0, i);
+            String fn = variable.substring(i + 1);
+
+            Attributes fields = sourceValues.get(sn);
+            if (fields == null) continue;
+            
+            Object value = fields.getValue(fn);
             if (value == null) continue;
 
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);

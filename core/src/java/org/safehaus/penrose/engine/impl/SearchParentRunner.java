@@ -159,7 +159,7 @@ public class SearchParentRunner extends GraphVisitor {
                 SourceValues av = (SourceValues)response.next();
 
                 SourceValues sv = new SourceValues();
-                sv.add(sourceMapping.getName(), av);
+                //sv.add(sourceMapping.getName(), av);
                 list.add(sv);
             }
 

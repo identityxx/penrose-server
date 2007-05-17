@@ -169,7 +169,7 @@ public class SearchEngine {
                     av = new SourceValues();
                     sourceValues.put(dn, av);
                 }
-                av.add(sv);
+                //av.add(sv);
 
                 Collection r = (Collection)rows.get(dn);
                 if (r == null) {
@@ -274,8 +274,8 @@ public class SearchEngine {
 
                 try {
                     SourceValues sv = new SourceValues();
-                    sv.add(parentSourceValues);
-                    sv.add(sourceMapping.getName(), av);
+                    //sv.add(parentSourceValues);
+                    //sv.add(sourceMapping.getName(), av);
 
                     Collection list = null; // engine.computeDns(partition, interpreter, entryMapping, sv);
                     for (Iterator j=list.iterator(); j.hasNext(); ) {
@@ -462,8 +462,8 @@ public class SearchEngine {
 
             for (Iterator j=sourceValues.getNames().iterator(); j.hasNext(); ) {
                 String name = (String)j.next();
-                Collection v = sourceValues.get(name);
-                log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
+                //Collection v = sourceValues.get(name);
+                //log.debug(Formatter.displayLine(" - "+name+": "+v, 80));
             }
 
             log.debug(Formatter.displayLine("Starting source: "+startingSourceMapping.getName(), 80));
@@ -552,7 +552,7 @@ public class SearchEngine {
         SourceValues sourceValues = new SourceValues();
         for (Iterator i=results.iterator(); i.hasNext(); ) {
             SourceValues sv = (SourceValues)i.next();
-            sourceValues.add(sv);
+            //sourceValues.add(sv);
         }
 
         if (log.isDebugEnabled()) {
@@ -568,8 +568,8 @@ public class SearchEngine {
                 log.debug(Formatter.displayLine("Record #"+counter, 80));
                 for (Iterator j=sv.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
-                    Collection values = sv.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sv.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 
@@ -662,8 +662,8 @@ public class SearchEngine {
                 log.debug(Formatter.displayLine("Result #"+counter, 80));
                 for (Iterator k=av.getNames().iterator(); k.hasNext(); ) {
                     String name = (String)k.next();
-                    Collection values = av.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = av.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 

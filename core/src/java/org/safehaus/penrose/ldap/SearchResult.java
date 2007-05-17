@@ -3,6 +3,7 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,7 @@ public class SearchResult {
     private DN dn;
     private Attributes attributes = new Attributes();
 
-    private Map<String,Attributes> sourceAttributes = new HashMap<String,Attributes>();
+    private SourceValues sourceValues = new SourceValues();
 
     private Collection<Control> controls = new ArrayList<Control>();
 
@@ -79,16 +80,12 @@ public class SearchResult {
         this.entryMapping = entryMapping;
     }
 
-    public Collection<String> getSourceNames() {
-        return sourceAttributes.keySet();
+    public SourceValues getSourceValues() {
+        return sourceValues;
     }
-
-    public Attributes getSourceAttributes(String sourceName) {
-        return sourceAttributes.get(sourceName);
-    }
-
-    public void setSourceAttributes(String sourceName, Attributes attributes) {
-        sourceAttributes.put(sourceName, attributes);
+    
+    public void setSourceValues(String sourceName, Attributes attributes) {
+        sourceValues.set(sourceName, attributes);
     }
 
     public void print() throws Exception {
@@ -107,8 +104,8 @@ public class SearchResult {
             }
         }
 
-        for (String sourceName : sourceAttributes.keySet()) {
-            Attributes attrs = sourceAttributes.get(sourceName);
+        for (String sourceName : sourceValues.getNames()) {
+            Attributes attrs = sourceValues.get(sourceName);
 
             for (Attribute attribute : attrs.getAll()) {
                 String fieldName = sourceName + "." + attribute.getName();

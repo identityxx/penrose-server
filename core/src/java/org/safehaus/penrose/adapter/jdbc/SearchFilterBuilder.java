@@ -25,6 +25,8 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -80,25 +82,27 @@ public class SearchFilterBuilder {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
-        for (String name : sourceValues.getNames()) {
-            Collection<Object> values = sourceValues.get(name);
+        for (String sourceName : sourceValues.getNames()) {
+            if (!this.sourceRefs.containsKey(sourceName)) continue;
 
-            int p = name.indexOf(".");
-            String sourceName = name.substring(0, p);
-            String fieldName = name.substring(p + 1);
+            Attributes attributes = sourceValues.get(sourceName);
 
-            //if (!this.sourceRefs.containsKey(sourceName)) continue;
+            for (String fieldName : attributes.getNames()) {
 
-            //String alias = createTableAlias(sourceName);
-            //setTableAlias(sourceName, alias);
+                Attribute attribute = attributes.get(fieldName);
 
-            for (Object value : values) {
-                //SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
-                SimpleFilter f = new SimpleFilter(sourceName + "." + fieldName, "=", value);
-                if (debug) log.debug(" - Filter " + f);
+                //String alias = createTableAlias(sourceName);
+                //setTableAlias(sourceName, alias);
 
-                sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
+                for (Object value : attribute.getValues()) {
+                    //SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
+                    SimpleFilter f = new SimpleFilter(sourceName + "." + fieldName, "=", value);
+                    if (debug) log.debug(" - Filter " + f);
+
+                    sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
+                }
             }
+
         }
     }
 

@@ -136,7 +136,7 @@ public class SearchLocalRunner extends GraphVisitor {
             Entry result = (Entry)response.next();
 
             SourceValues sv = new SourceValues();
-            sv.add(sourceValues);
+            //sv.add(sourceValues);
             //sv.add(sourceMapping.getName(), result.getSourceValues());
             list.add(sv);
         }

@@ -24,7 +24,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.util.EntryUtil;
 import org.safehaus.penrose.source.SourceRef;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -59,8 +58,7 @@ public class SearchEngine {
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
                 
-                Attributes sv = EntryUtil.computeAttributes(sourceValues);
-                Attributes attributes = computeAttributes(entryMapping, sv);
+                Attributes attributes = computeAttributes(entryMapping, sourceValues);
 
                 SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
                 searchResult.setEntryMapping(entryMapping);
@@ -70,18 +68,12 @@ public class SearchEngine {
             }
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
-                public void add(SearchResult object) throws Exception {
-                    SearchResult result = (SearchResult)object;
+                public void add(SearchResult result) throws Exception {
 
                     EntryMapping em = result.getEntryMapping();
 
-                    Attributes sv = EntryUtil.computeAttributes(sourceValues);
-
-                    for (Iterator i=result.getSourceNames().iterator(); i.hasNext(); ) {
-                        String sourceName = (String)i.next();
-                        Attributes esv = result.getSourceAttributes(sourceName);
-                        sv.add(sourceName, esv);
-                    }
+                    SourceValues sv = result.getSourceValues();
+                    sv.add(sourceValues);
 
                     EngineTool.propagateUp(partition, em, sv);
 
@@ -105,12 +97,12 @@ public class SearchEngine {
                 }
             };
 
-            Collection groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
+            Collection<Collection<SourceRef>> groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
 
-            Iterator iterator = groupsOfSources.iterator();
-            Collection primarySources = (Collection)iterator.next();
+            Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+            Collection<SourceRef> primarySources = iterator.next();
 
-            SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+            SourceRef sourceRef = primarySources.iterator().next();
             Connector connector = engine.getConnector(sourceRef);
 
             connector.search(
@@ -138,43 +130,40 @@ public class SearchEngine {
     public DN computeDn(
             Partition partition,
             EntryMapping entryMapping,
-            Attributes sourceValues)
-            throws Exception {
+            SourceValues sourceValues
+    ) throws Exception {
 
-        Collection args = new ArrayList();
+        Collection<Object> args = new ArrayList<Object>();
         computeArguments(partition, entryMapping, sourceValues, args);
 
         DN dn = entryMapping.getDn();
-        DN newDn = new DN(dn.format(args));
 
-        return newDn;
+        return new DN(dn.format(args));
     }
 
     public void computeArguments(
             Partition partition,
             EntryMapping entryMapping,
-            Attributes sourceValues,
-            Collection args
+            SourceValues sourceValues,
+            Collection<Object> args
     ) throws Exception {
 
         EntryMapping em = entryMapping;
 
         while (em != null) {
-            Collection rdnAttributes = em.getRdnAttributeMappings();
+            Collection<AttributeMapping> rdnAttributes = em.getRdnAttributeMappings();
 
-            for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-                AttributeMapping attributeMapping = (AttributeMapping)i.next();
+            for (AttributeMapping attributeMapping : rdnAttributes) {
+
                 String variable = attributeMapping.getVariable();
                 if (variable == null) continue; // skip static rdn
 
-                Object value = null;
+                int p = variable.indexOf(".");
+                String sourceName = variable.substring(0, p);
+                String fieldName = variable.substring(p + 1);
 
-                Collection values = sourceValues.getValues(variable);
-                if (values != null) {
-                    if (values.size() >= 1) {
-                        value = values.iterator().next();
-                    }
-                }
+                Attributes attributes = sourceValues.get(sourceName);
+                Object value = attributes.getValue(fieldName);
 
                 args.add(value);
             }
@@ -183,32 +172,35 @@ public class SearchEngine {
         }
     }
 
-    public Attributes computeAttributes(EntryMapping entryMapping, Attributes sourceValues) {
+    public Attributes computeAttributes(EntryMapping entryMapping, SourceValues sourceValues) {
 
         Attributes attributes = new Attributes();
 
-        Collection attributeMappings = entryMapping.getAttributeMappings();
-        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        for (AttributeMapping attributeMapping : attributeMappings) {
             String name = attributeMapping.getName();
 
-            String constant = (String)attributeMapping.getConstant();
+            String constant = (String) attributeMapping.getConstant();
             if (constant != null) {
                 attributes.addValue(name, constant);
                 continue;
             }
 
             String variable = attributeMapping.getVariable();
-            if (variable != null) {
-                Collection values = sourceValues.getValues(variable);
-                attributes.addValues(name, values);
-                continue;
-            }
+            if (variable == null) continue;
+
+            int p = variable.indexOf(".");
+            String sourceName = variable.substring(0, p);
+            String fieldName = variable.substring(p + 1);
+
+            Attributes attrs = sourceValues.get(sourceName);
+            Collection<Object> values = attrs.getValues(fieldName);
+
+            attributes.addValues(name, values);
         }
 
-        Collection objectClasses = entryMapping.getObjectClasses();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }
 

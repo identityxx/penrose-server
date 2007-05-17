@@ -145,13 +145,13 @@ public class LoadGraphVisitor extends GraphVisitor {
             SourceValues av = (SourceValues)response.next();
 
             SourceValues sv = new SourceValues();
-            sv.add(sourceMapping.getName(), av);
+            //sv.add(sourceMapping.getName(), av);
             list.add(sv);
 
             //sourceValues.add(sv);
         }
 
-        loadedSourceValues.set(sourceMapping.getName(), list);
+        //loadedSourceValues.set(sourceMapping.getName(), list);
 
         int rc = response.getReturnCode();
         if (rc != LDAPException.SUCCESS) {
@@ -181,7 +181,7 @@ public class LoadGraphVisitor extends GraphVisitor {
         }
 
         Filter filter = null;
-
+/*
         Collection list = loadedSourceValues.get(fromSourceMapping.getName());
         if (list != null) {
             log.debug("Generating filters:");
@@ -194,7 +194,7 @@ public class LoadGraphVisitor extends GraphVisitor {
                 filter = FilterTool.appendOrFilter(filter, f);
             }
         }
-
+*/
         Map map = new HashMap();
         map.put("filter", filter);
         map.put("relationships", relationships);

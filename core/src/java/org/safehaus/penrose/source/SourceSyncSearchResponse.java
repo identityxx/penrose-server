@@ -46,7 +46,7 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
         SourceValues sourceValues = new SourceValues();
         for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
-            sourceValues.set(source.getName()+"."+attribute.getName(), attribute.getValues());
+            sourceValues.set(source.getName(), attribute.getName(), attribute.getValues());
         }
 
         interpreter.set(sourceValues);

@@ -752,7 +752,7 @@ public class JDBCAdapter extends Adapter {
                 sourceValues.addValue(fieldName, value);
             }
 
-            searchResult.setSourceAttributes(alias, sourceValues);
+            searchResult.setSourceValues(alias, sourceValues);
         }
 
         searchResult.setDn(new DN(rb.toRdn()));
@@ -761,18 +761,10 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void mergeSearchResult(SearchResult source, SearchResult destination) {
-        for (String sourceName : source.getSourceNames()) {
+        SourceValues sourceValues = source.getSourceValues();
+        SourceValues destinationValues = destination.getSourceValues();
 
-            Attributes sourceValues = source.getSourceAttributes(sourceName);
-
-            Attributes destinationValues = destination.getSourceAttributes(sourceName);
-            if (destinationValues == null) {
-                destinationValues = new Attributes();
-                destination.setSourceAttributes(sourceName, destinationValues);
-            }
-
-            destinationValues.add(sourceValues);
-        }
+        destinationValues.add(sourceValues);
     }
 
     public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {

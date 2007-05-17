@@ -215,7 +215,7 @@ public class LoadEngine {
 
                     if (sv == null) continue;
 
-                    sourceValues.add(sv);
+                    //sourceValues.add(sv);
                 }
 
                 SourceValues sv = loadEntries(partition, sourceValues, entryMapping, entries);
@@ -345,7 +345,7 @@ public class LoadEngine {
             for (Iterator i=allSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String sourceName = (String)i.next();
                 log.debug(Formatter.displayLine("Source "+sourceName+":", 80));
-
+/*
                 Collection rows = allSourceValues.get(sourceName);
                 for (Iterator j=rows.iterator(); j.hasNext(); ) {
                     SourceValues av = (SourceValues)j.next();
@@ -356,6 +356,7 @@ public class LoadEngine {
                         log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                     }
                 }
+*/
             }
 
             log.debug(Formatter.displaySeparator(80));

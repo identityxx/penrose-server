@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class Attributes {
 
-    public final static Collection EMPTY = new ArrayList();
+    public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
     protected Collection<String> names = new LinkedHashSet<String>();
     protected Map<String,Attribute> attributes = new LinkedHashMap<String,Attribute>();
@@ -28,6 +28,7 @@ public class Attributes {
     }
 
     public void setValue(String name, Object value) {
+        if (value == null) return;
         names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
@@ -58,7 +59,7 @@ public class Attributes {
         names.remove(name);
     }
 
-    public void setValues(String name, Collection values) {
+    public void setValues(String name, Collection<Object> values) {
         names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
@@ -68,7 +69,7 @@ public class Attributes {
         attribute.setValues(values);
     }
 
-    public void addValues(String name, Collection values) {
+    public void addValues(String name, Collection<Object> values) {
         names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
@@ -78,7 +79,7 @@ public class Attributes {
         attribute.addValues(values);
     }
 
-    public void removeValues(String name, Collection values) {
+    public void removeValues(String name, Collection<Object> values) {
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return;
 
@@ -133,7 +134,7 @@ public class Attributes {
         return attribute.getValue();
     }
 
-    public Collection getValues(String name) {
+    public Collection<Object> getValues(String name) {
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return EMPTY;
         return attribute.getValues();

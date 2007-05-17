@@ -56,7 +56,7 @@ public class AddEngine {
 
         try {
             RDN rdn = dn.getRdn();
-            sourceValues.set("rdn", rdn);
+            //sourceValues.set("rdn", rdn);
 
             SourceValues parentSourceValues = null; // parent.getSourceValues();
             SourceValues sv = new SourceValues();
@@ -79,8 +79,8 @@ public class AddEngine {
 
                 for (Iterator j=output.getNames().iterator(); j.hasNext(); ) {
                     String name = (String)j.next();
-                    Collection values = output.get(name);
-                    sv.add(sourceMapping.getName()+"."+name, values);
+                    //Collection values = output.get(name);
+                    //sv.add(sourceMapping.getName()+"."+name, values);
                 }
             }
 
@@ -90,21 +90,21 @@ public class AddEngine {
                 log.debug(Formatter.displayLine("Parent source values:", 80));
                 for (Iterator i = parentSourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = parentSourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = parentSourceValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displayLine("Local source values:", 80));
                 for (Iterator i = sv.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sv.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sv.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));
             }
 
-            sv.add(parentSourceValues);
+            //sv.add(parentSourceValues);
 
             Graph graph = engine.getGraph(entryMapping);
             String startingSourceName = engine.getStartingSourceName(partition, entryMapping);
@@ -130,9 +130,9 @@ public class AddEngine {
                         rhs = exp;
                     }
 
-                    Collection lhsValues = sv.get(lhs);
-                    log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
-                    sv.set(rhs, lhsValues);
+                    //Collection lhsValues = sv.get(lhs);
+                    //log.debug(" - "+lhs+" -> "+rhs+": "+lhsValues);
+                    //sv.set(rhs, lhsValues);
                 }
             }
 

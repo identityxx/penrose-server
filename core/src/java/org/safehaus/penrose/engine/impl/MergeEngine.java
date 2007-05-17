@@ -101,7 +101,7 @@ public class MergeEngine {
             log.debug(Formatter.displayLine("MERGE", 80));
             log.debug(Formatter.displayLine("DN: "+dn, 80));
             log.debug(Formatter.displayLine("PK: "+pk, 80));
-
+/*
             if (primarySourceValues != null) {
                 log.debug(Formatter.displayLine("Primary source values:", 80));
                 for (Iterator j=primarySourceValues.getNames().iterator(); j.hasNext(); ) {
@@ -127,7 +127,7 @@ public class MergeEngine {
                     }
                }
             }
-
+*/
             log.debug(Formatter.displayLine("Rows:", 80));
             if (rows != null) {
                 int counter = 0;

@@ -57,17 +57,17 @@ public class ModRdnEngine {
             SourceValues oldAttributeValues = new SourceValues();
             for (Iterator i=entry.getAttributes().getAll().iterator(); i.hasNext(); ) {
                 Attribute attribute = (Attribute)i.next();
-                oldAttributeValues.set(attribute.getName(), attribute.getValues());
+                //oldAttributeValues.set(attribute.getName(), attribute.getValues());
             }
             
             SourceValues newAttributeValues = new SourceValues(oldAttributeValues);
 
             RDN rdn1 = entry.getDn().getRdn();
-            oldAttributeValues.set("rdn", rdn1);
+            //oldAttributeValues.set("rdn", rdn1);
 
             RDN rdn2 = newRdn;
-            newAttributeValues.set("rdn", rdn2);
-            newAttributeValues.add(rdn2);
+            //newAttributeValues.set("rdn", rdn2);
+            //newAttributeValues.add(rdn2);
 
             log.debug("Renaming "+rdn1+" to "+rdn2);
 
@@ -76,7 +76,7 @@ public class ModRdnEngine {
                 for (Iterator i=rdn1.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
                     Object value = rdn1.get(name);
-                    newAttributeValues.remove(name, value);
+                    //newAttributeValues.remove(name, value);
                     log.debug(" - "+name+": "+value);
                 }
             }
@@ -107,9 +107,9 @@ public class ModRdnEngine {
                         output
                 );
 
-                newSv.set(sourceMapping.getName(), output);
+                //newSv.set(sourceMapping.getName(), output);
             }
-
+/*
             if (log.isDebugEnabled()) {
                 log.debug("Old attribute values:");
                 for (Iterator iterator = oldAttributeValues.getNames().iterator(); iterator.hasNext(); ) {
@@ -139,7 +139,7 @@ public class ModRdnEngine {
                     log.debug(" - "+name+": "+values);
                 }
             }
-
+*/
             ModRdnGraphVisitor visitor = new ModRdnGraphVisitor(engine, partition, entryMapping, oldSv, newSv);
             visitor.run();
 

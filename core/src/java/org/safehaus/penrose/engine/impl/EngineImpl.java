@@ -116,6 +116,15 @@ public class EngineImpl extends Engine {
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public SourceValues computeSourceValues(Attributes attributes) {
+        SourceValues sourceValues = new SourceValues();
+        for (String name : attributes.getNames()) {
+            Collection<Object> values = attributes.getValues(name);
+            //sourceValues.set(name, values);
+        }
+        return sourceValues;
+    }
+
     public void add(
             Session session,
             Partition partition,
@@ -127,7 +136,7 @@ public class EngineImpl extends Engine {
         DN dn = request.getDn();
         Attributes attributes = request.getAttributes();
 
-        SourceValues sourceValues = EntryUtil.computeAttributeValues(attributes);
+        SourceValues sourceValues = computeSourceValues(attributes);
         try {
             if (log.isDebugEnabled()) {
                 log.debug(Formatter.displaySeparator(80));
@@ -137,8 +146,8 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displayLine("Attribute values:", 80));
                 for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sourceValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));
@@ -241,12 +250,12 @@ public class EngineImpl extends Engine {
                 Set newAttrValues = new HashSet();
                 newAttrValues.addAll(values);
 
-                Collection value = newValues.get(attributeName);
-                log.debug("old value " + attributeName + ": "
-                        + newValues.get(attributeName));
+                //Collection value = newValues.get(attributeName);
+                //log.debug("old value " + attributeName + ": "
+                //        + newValues.get(attributeName));
 
                 Set newValue = new HashSet();
-                if (value != null) newValue.addAll(value);
+                //if (value != null) newValue.addAll(value);
 
                 switch (type) {
                     case Modification.ADD:
@@ -264,13 +273,13 @@ public class EngineImpl extends Engine {
                         break;
                 }
 
-                newValues.set(attributeName, newValue);
+                //newValues.set(attributeName, newValue);
 
-                log.debug("new value " + attributeName + ": "
-                        + newValues.get(attributeName));
+                //log.debug("new value " + attributeName + ": "
+                //        + newValues.get(attributeName));
             }
 
-            Attributes attributes = EntryUtil.computeAttributes(newValues);
+            Attributes attributes = null; //EntryUtil.computeAttributes(newValues);
             SourceValues sourceValues = null; // entry.getSourceValues()
             Entry newEntry = null; // new Entry(entry.getDn(), entryMapping, attributes, sourceValues);
 
@@ -285,15 +294,15 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displayLine("Old attribute values:", 80));
                 for (Iterator iterator = oldValues.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = oldValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = oldValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displayLine("New attribute values:", 80));
                 for (Iterator iterator = newValues.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = newValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = newValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
 
                 log.debug(Formatter.displaySeparator(80));
@@ -375,8 +384,8 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displayLine("Source values:", 80));
                 for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sourceValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 
@@ -411,11 +420,11 @@ public class EngineImpl extends Engine {
             for (Iterator i=loadedSourceValues.getNames().iterator(); i.hasNext(); ) {
                 String name = (String)i.next();
 
-                Collection c = loadedSourceValues.get(name);
-                for (Iterator j=c.iterator(); j.hasNext(); ) {
-                    SourceValues sv = (SourceValues)j.next();
-                    sourceValues.add(sv);
-                }
+                //Collection c = loadedSourceValues.get(name);
+                //for (Iterator j=c.iterator(); j.hasNext(); ) {
+                    //SourceValues sv = (SourceValues)j.next();
+                    //sourceValues.add(sv);
+                //}
             }
 
             Entry entry = mergeEngine.mergeEntries(
@@ -450,8 +459,8 @@ public class EngineImpl extends Engine {
                 log.debug(Formatter.displayLine("Source values:", 80));
                 for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sourceValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 
@@ -491,8 +500,8 @@ public class EngineImpl extends Engine {
             if (sourceValues != null) {
                 for (Iterator i = sourceValues.getNames().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
-                    Collection values = sourceValues.get(name);
-                    log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
+                    //Collection values = sourceValues.get(name);
+                    //log.debug(Formatter.displayLine(" - "+name+": "+values, 80));
                 }
             }
 

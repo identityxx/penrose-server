@@ -124,8 +124,9 @@ public class SimpleEngine extends Engine {
             Object value = rdn.get(variable);
             if (value == null) continue;
 
+            sourceValues.set(sourceMapping.getName(), fieldMapping.getName(), value);
+
             String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
-            sourceValues.set(fieldName, value);
             if (debug) log.debug(" => "+fieldName+": "+value);
         }
     }

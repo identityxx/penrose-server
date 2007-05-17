@@ -66,22 +66,22 @@ public class ModifyEngine {
                         newValues,
                         output
                 );
-                newSourceValues.set(sourceMapping.getName(), output);
+                //newSourceValues.set(sourceMapping.getName(), output);
             }
 
             if (log.isDebugEnabled()) {
                 log.debug("Old source values:");
                 for (Iterator iterator = oldSourceValues.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = oldSourceValues.get(name);
-                    log.debug(" - "+name+": "+values);
+                    //Collection values = oldSourceValues.get(name);
+                    //log.debug(" - "+name+": "+values);
                 }
 
                 log.debug("New source values:");
                 for (Iterator iterator = newSourceValues.getNames().iterator(); iterator.hasNext(); ) {
                     String name = (String)iterator.next();
-                    Collection values = newSourceValues.get(name);
-                    log.debug(" - "+name+": "+values);
+                    //Collection values = newSourceValues.get(name);
+                    //log.debug(" - "+name+": "+values);
                 }
             }
 

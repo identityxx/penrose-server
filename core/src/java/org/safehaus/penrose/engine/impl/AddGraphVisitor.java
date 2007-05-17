@@ -62,7 +62,7 @@ public class AddGraphVisitor extends GraphVisitor {
         this.entryMapping = entryMapping;
         this.sourceValues = sourceValues;
 
-        addedSourceValues.add(sourceValues);
+        //addedSourceValues.add(sourceValues);
 
         this.graph = engine.getGraph(entryMapping);
         this.primarySourceMapping = engine.getPrimarySource(entryMapping);
@@ -110,11 +110,11 @@ public class AddGraphVisitor extends GraphVisitor {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
-            Collection values = sourceValues.get(name);
-            log.debug(" - "+name+": "+values);
+            //Collection values = sourceValues.get(name);
+            //log.debug(" - "+name+": "+values);
 
             name = name.substring(sourceMapping.getName().length()+1);
-            newSourceValues.set(name, values);
+            //newSourceValues.set(name, values);
         }
 
         SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());

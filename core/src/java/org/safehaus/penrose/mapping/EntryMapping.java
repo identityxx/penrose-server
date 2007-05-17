@@ -137,18 +137,6 @@ public class EntryMapping implements Cloneable {
         return dn.getRdn();
     }
     
-    public RDN getRdn(SourceValues sourceValues) {
-
-        RDNBuilder rb = new RDNBuilder();
-        for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
-            String name = rdnAttributeMapping.getName();
-            Object value = sourceValues.getOne(name);
-            rb.set(name, value);
-        }
-
-        return rb.toRdn();
-    }
-
     public DN getParentDn() {
         return dn.getParentDn();
     }

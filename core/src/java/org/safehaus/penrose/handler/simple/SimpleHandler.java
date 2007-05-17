@@ -37,7 +37,7 @@ public class SimpleHandler extends Handler {
     ) throws Exception {
 
         Attributes attributes = request.getAttributes();
-        Collection values = attributes.getValues("objectClass");
+        Collection<Object> values = attributes.getValues("objectClass");
 
         Collection objectClasses = entryMapping.getObjectClasses();
         boolean childHasObjectClass = false;
@@ -45,8 +45,8 @@ public class SimpleHandler extends Handler {
         for (Iterator i = objectClasses.iterator(); !childHasObjectClass && i.hasNext(); ) {
             String oc = (String)i.next();
 
-            for (Iterator j = values.iterator(); j.hasNext(); ) {
-                String objectClass = (String)j.next();
+            for (Object value : values) {
+                String objectClass = (String) value;
                 if (childHasObjectClass = oc.equalsIgnoreCase(objectClass)) break;
             }
         }
@@ -85,8 +85,7 @@ public class SimpleHandler extends Handler {
             Engine engine = getEngine(partition, entryMapping);
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
-                 public void add(SearchResult object) throws Exception {
-                     SearchResult searchResult = (SearchResult)object;
+                 public void add(SearchResult searchResult) throws Exception {
                      response.add(searchResult);
                  }
              };
@@ -107,10 +106,9 @@ public class SimpleHandler extends Handler {
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            Collection children = partition.getChildren(entryMapping);
+            Collection<EntryMapping> children = partition.getChildren(entryMapping);
 
-            for (Iterator i = children.iterator(); i.hasNext();) {
-                EntryMapping childMapping = (EntryMapping) i.next();
+            for (EntryMapping childMapping : children) {
                 Handler handler = handlerManager.getHandler(partition, childMapping);
 
                 handler.search(

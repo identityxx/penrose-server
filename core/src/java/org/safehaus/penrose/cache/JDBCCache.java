@@ -541,7 +541,7 @@ public class JDBCCache {
             FieldConfig fieldConfig = (FieldConfig)i.next();
 
             deleteColumnValue(fieldConfig, pk);
-
+/*
             Collection values = sourceValues.get(fieldConfig.getName());
             if (values == null) continue;
 
@@ -549,6 +549,7 @@ public class JDBCCache {
                 Object value = iterator.next();
                 insertColumnValue(pk, fieldConfig, value);
             }
+*/
         }
     }
 

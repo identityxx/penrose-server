@@ -19,7 +19,6 @@ package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -269,32 +268,6 @@ public class Schema implements Cloneable {
 
             } else if (!(v1.toString()).equalsIgnoreCase(v2.toString())) {
                 return false;
-            }
-        }
-
-        return true;
-    }
-
-    public boolean partialMatch(SourceValues av, RDN rdn) throws Exception {
-
-        for (String name : rdn.getNames()) {
-            Collection values = av.get(name);
-            Object value = rdn.get(name);
-
-            if (values == null && value == null) {
-                continue;
-
-            } else if (values == null || value == null) {
-                return false;
-
-            } else {
-                boolean found = false;
-                for (Iterator j = values.iterator(); j.hasNext() && !found;) {
-                    Object v = j.next();
-                    //log.debug("comparing ["+v+"] with ["+value+"]: "+v.toString().equalsIgnoreCase(value.toString()));
-                    if (v.toString().equalsIgnoreCase(value.toString())) found = true;
-                }
-                if (!found) return false;
             }
         }
 

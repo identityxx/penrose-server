@@ -539,7 +539,7 @@ public abstract class Adapter {
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(result.getDn());
                 searchResult.setEntryMapping(entryMapping);
-                searchResult.setSourceAttributes(sourceRef.getAlias(), result.getAttributes());
+                searchResult.setSourceValues(sourceRef.getAlias(), result.getAttributes());
 
                 response.add(searchResult);
             }

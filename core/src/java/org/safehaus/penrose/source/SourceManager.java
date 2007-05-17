@@ -74,6 +74,8 @@ public class SourceManager {
 
             if (primarySourceName != null) {
                 SourceRef primarySourceRef = getSourceRef(partition.getName(), em, primarySourceName);
+                if (primarySourceRef == null) throw new Exception("Unknown source "+primarySourceName);
+                
                 addPrimarySourceRef(partition.getName(), entryMapping, primarySourceRef);
             }
 

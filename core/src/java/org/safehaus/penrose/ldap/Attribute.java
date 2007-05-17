@@ -72,4 +72,8 @@ public class Attribute {
     public boolean isEmpty() {
         return values.isEmpty();
     }
+
+    public int getSize() {
+        return values.size();
+    }
 }

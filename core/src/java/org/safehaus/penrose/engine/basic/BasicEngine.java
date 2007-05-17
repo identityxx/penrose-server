@@ -23,21 +23,21 @@ import java.util.*;
  */
 public class BasicEngine extends Engine {
 
-    SearchEngine searchEngine;
+    BasicSearchEngine searchEngine;
 
     public void init() throws Exception {
         super.init();
 
-        searchEngine = new SearchEngine(this);
+        searchEngine = new BasicSearchEngine(this);
 
         log.debug("Default engine initialized.");
     }
 
-    public SearchEngine getSearchEngine() {
+    public BasicSearchEngine getSearchEngine() {
         return searchEngine;
     }
 
-    public void setSearchEngine(SearchEngine searchEngine) {
+    public void setSearchEngine(BasicSearchEngine searchEngine) {
         this.searchEngine = searchEngine;
     }
 
@@ -143,8 +143,9 @@ public class BasicEngine extends Engine {
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
+            sourceValues.set(sourceMapping.getName(), fieldMapping.getName(), value);
+
             String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
-            sourceValues.set(fieldName, value);
             if (debug) log.debug(" => "+fieldName+": "+value);
         }
 

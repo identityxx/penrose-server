@@ -1,14 +1,12 @@
 package org.safehaus.penrose.adapter.jdbc;
 
-import org.safehaus.penrose.ldap.Modification;
-import org.safehaus.penrose.ldap.ModifyRequest;
-import org.safehaus.penrose.ldap.ModifyResponse;
-import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.*;
+import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
@@ -152,19 +150,15 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (String name : sourceValues.getNames()) {
-            Object value = sourceValues.getOne(name);
+        Attributes attributes = sourceValues.get(sourceName);
 
-            int p = name.indexOf(".");
-            String sn = name.substring(0, p);
-            String fn = name.substring(p + 1);
+        for (String fieldName : attributes.getNames()) {
+            Object value = attributes.getValue(fieldName);
 
-            if (!sourceName.equals(sn)) continue;
-
-            FieldRef fieldRef = sourceRef.getFieldRef(fn);
+            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
             Field field = fieldRef.getField();
 
-            SimpleFilter sf = new SimpleFilter(fn, "=", value);
+            SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
         }
 
@@ -323,7 +317,14 @@ public class ModifyRequestBuilder extends RequestBuilder {
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
 
-            Object value = sourceValues.getOne(variable);
+            int i = variable.indexOf(".");
+            String sn = variable.substring(0, i);
+            String fn = variable.substring(i + 1);
+
+            Attributes fields = sourceValues.get(sn);
+            if (fields == null) continue;
+
+            Object value = fields.getValue(fn);
             if (value == null) continue;
 
             String fieldName = field.getName();
@@ -379,7 +380,14 @@ public class ModifyRequestBuilder extends RequestBuilder {
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
 
-            Object value = sourceValues.getOne(variable);
+            int i = variable.indexOf(".");
+            String sn = variable.substring(0, i);
+            String fn = variable.substring(i + 1);
+
+            Attributes fields = sourceValues.get(sn);
+            if (fields == null) continue;
+
+            Object value = fields.getValue(fn);
             if (value == null) continue;
 
             String fieldName = field.getName();

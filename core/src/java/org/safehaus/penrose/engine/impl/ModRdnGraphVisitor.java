@@ -70,7 +70,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         this.oldSourceValues = oldSourceValues;
         this.newSourceValues = newSourceValues;
 
-        modifiedSourceValues.add(newSourceValues);
+        //modifiedSourceValues.add(newSourceValues);
 
         graph = engine.getGraph(entryMapping);
         primarySourceMapping = engine.getPrimarySource(entryMapping);
@@ -116,11 +116,11 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
-            Collection values = oldSourceValues.get(name);
-            log.debug(" - "+name+": "+values);
+            //Collection values = oldSourceValues.get(name);
+            //log.debug(" - "+name+": "+values);
 
             name = name.substring(sourceMapping.getName().length()+1);
-            oldValues.set(name, values);
+            //oldValues.set(name, values);
         }
 
         log.debug("New values:");
@@ -129,11 +129,11 @@ public class ModRdnGraphVisitor extends GraphVisitor {
             String name = (String)i.next();
             if (!name.startsWith(sourceMapping.getName()+".")) continue;
 
-            Collection values = newSourceValues.get(name);
-            log.debug(" - "+name+": "+values);
+            //Collection values = newSourceValues.get(name);
+            //log.debug(" - "+name+": "+values);
 
             name = name.substring(sourceMapping.getName().length()+1);
-            newValues.set(name, values);
+            //newValues.set(name, values);
         }
 
         SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
@@ -160,7 +160,7 @@ public class ModRdnGraphVisitor extends GraphVisitor {
         }
 */
         modifiedSourceValues.remove(sourceMapping.getName());
-        modifiedSourceValues.set(sourceMapping.getName(), newValues);
+        //modifiedSourceValues.set(sourceMapping.getName(), newValues);
 
         graphIterator.traverseEdges(node);
     }
@@ -198,10 +198,10 @@ public class ModRdnGraphVisitor extends GraphVisitor {
                 rhs = tmp;
             }
 
-            Collection values = newSourceValues.get(lhs);
-            newSourceValues.set(rhs, values);
+            //Collection values = newSourceValues.get(lhs);
+            //newSourceValues.set(rhs, values);
 
-            log.debug(lhs+" ==> "+rhs+": "+values);
+            //log.debug(lhs+" ==> "+rhs+": "+values);
         }
 
         graphIterator.traverse(node2);

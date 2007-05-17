@@ -222,10 +222,10 @@ public class TransformEngine {
             }
 
             if (fieldConfig.isPrimaryKey()) {
-                output.set("primaryKey."+fieldName, newValues);
+                //output.set("primaryKey."+fieldName, newValues);
             }
 
-            output.add(fieldName, newValues);
+            //output.add(fieldName, newValues);
         }
 
         interpreter.clear();

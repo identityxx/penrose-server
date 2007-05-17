@@ -61,8 +61,8 @@ public class JoinEngine {
                 if (!evaluate(partition, entryMapping, relationships, av1, av2)) continue;
 
                 SourceValues sv = new SourceValues();
-                sv.add(av1);
-                sv.add(av2);
+                //sv.add(av1);
+                //sv.add(av2);
 
                 results.add(sv);
 /*
@@ -101,8 +101,8 @@ public class JoinEngine {
                 if (evaluate(partition, entryMapping, relationships, av1, av2)) {
 
                     SourceValues sv = new SourceValues();
-                    sv.add(av1);
-                    sv.add(av2);
+                    //sv.add(av1);
+                    //sv.add(av2);
 
                     results.add(sv);
                     found = true;
@@ -152,7 +152,7 @@ public class JoinEngine {
             SourceMapping rsource = partition.getEffectiveSourceMapping(entryMapping, rsourceName);
             SourceConfig rsourceConfig = partition.getSources().getSourceConfig(rsource.getSourceName());
             FieldConfig rfieldConfig = rsourceConfig.getFieldConfig(rfieldName);
-
+/*
             Collection values1 = sv1.get(lhs);
             Collection values2 = sv2.get(rhs);
 
@@ -179,6 +179,8 @@ public class JoinEngine {
             }
 
             if (!result) return false;
+*/
+
 /*
             log.debug("Comparing "+relationship+":");
             log.debug(" - "+lhs+": "+values1+" ("+lfieldConfig.getType()+")");

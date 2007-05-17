@@ -9,6 +9,8 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.*;
 
@@ -22,7 +24,7 @@ public class FilterBuilder {
     Partition partition;
     EntryMapping entryMapping;
 
-    Collection<SourceRef> sourceRefs;
+    Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>();
 
     Interpreter interpreter;
 
@@ -39,24 +41,30 @@ public class FilterBuilder {
         this.partition = partition;
         this.entryMapping = entryMapping;
 
-        this.sourceRefs = sourceRefs;
+        for (SourceRef sourceRef : sourceRefs) {
+            this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
+        }
 
         this.interpreter = interpreter;
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
-        for (String name : sourceValues.getNames()) {
-            Collection<Object> values = sourceValues.get(name);
+        for (String sourceName : sourceValues.getNames()) {
+            if (!this.sourceRefs.containsKey(sourceName)) continue;
 
-            int p = name.indexOf(".");
-            String fieldName = name.substring(p + 1);
+            Attributes attributes = sourceValues.get(sourceName);
 
-            for (Object value : values) {
-                SimpleFilter f = new SimpleFilter(fieldName, "=", value.toString());
-                if (debug) log.debug(" - Filter " + f);
+            for (String fieldName : attributes.getNames()) {
 
-                filter = FilterTool.appendAndFilter(filter, f);
+                Attribute attribute = attributes.get(fieldName);
+
+                for (Object value : attribute.getValues()) {
+                    SimpleFilter f = new SimpleFilter(fieldName, "=", value);
+                    if (debug) log.debug(" - Filter " + f);
+
+                    filter = FilterTool.appendAndFilter(filter, f);
+                }
             }
         }
     }
@@ -132,7 +140,7 @@ public class FilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (SourceRef sourceRef : sourceRefs) {
+        for (SourceRef sourceRef : sourceRefs.values()) {
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -194,7 +202,7 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (SourceRef sourceRef : sourceRefs) {
+        for (SourceRef sourceRef : sourceRefs.values()) {
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();

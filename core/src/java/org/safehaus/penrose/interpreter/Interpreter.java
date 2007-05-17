@@ -21,11 +21,11 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.source.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,34 +40,31 @@ public abstract class Interpreter {
     Collection rows;
 
     public void set(RDN rdn) throws Exception {
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
             set(name, value);
         }
     }
 
     public void set(SourceValues av) throws Exception {
-        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection list = av.get(name);
-            //set(name, list);
+        for (String sourceName : av.getNames()) {
+            Attributes attributes = av.get(sourceName);
 
-            Object value;
-            if (list.size() == 1) {
-                value = list.iterator().next();
-            } else {
-                value = list;
+            for (String fieldName : attributes.getNames()) {
+                Attribute attribute = attributes.get(fieldName);
+
+                if (attribute.getSize() == 1) {
+                    set(sourceName+"."+fieldName, attribute.getValue());
+                } else {
+                    set(sourceName+"."+fieldName, attribute.getValues());
+                }
             }
-            set(name, value);
         }
     }
 
     public void set(Attributes attributes) throws Exception {
-        for (Iterator i=attributes.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : attributes.getNames()) {
             Collection list = attributes.getValues(name);
-            //set(name, list);
 
             Object value;
             if (list.size() == 1) {
@@ -185,20 +182,19 @@ public abstract class Interpreter {
             Object v = get(foreach);
             //log.debug("Values: "+v);
 
-            Collection newValues = new HashSet();
+            Collection<Object> newValues = new HashSet<Object>();
 
             if (v != null) {
 
-                Collection values;
+                Collection<Object> values;
                 if (v instanceof Collection) {
-                    values = (Collection)v;
+                    values = (Collection<Object>)v;
                 } else {
-                    values = new ArrayList();
+                    values = new ArrayList<Object>();
                     values.add(v);
                 }
 
-                for (Iterator i=values.iterator(); i.hasNext(); ) {
-                    Object o = i.next();
+                for (Object o : values) {
                     set(var, o);
                     value = eval(script);
                     if (value == null) continue;

@@ -5,6 +5,7 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,19 +72,36 @@ public class EngineTool {
                     int p = variable.indexOf(".");
                     if (p < 0) continue;
 
-                    String lhs = sourceMapping.getName() + "." + fieldMapping.getName();
-                    String rhs = variable;
+                    String lsourceName = sourceMapping.getName();
+                    String lfieldName = fieldMapping.getName();
+                    String lhs = lsourceName + "." + lfieldName;
 
-                    Collection values = sourceValues.get(lhs);
-                    if (values == null) {
-                        values = sourceValues.get(rhs);
-                        if (values != null) {
-                            sourceValues.set(lhs, values);
-                            if (debug) log.debug("Propagating " + lhs + ": " + values);
+                    String rsourceName = variable.substring(0, p);
+                    String rfieldName = variable.substring(p+1);
+                    String rhs = rsourceName+"."+rfieldName;
+
+                    Attributes attributes = sourceValues.get(lsourceName);
+
+                    if (attributes != null) {
+
+                        Attribute attribute = attributes.get(lfieldName);
+
+                        if (attribute != null) {
+                            sourceValues.set(rsourceName, rfieldName, attribute.getValues());
+                            if (debug) log.debug("Propagating " + lhs + ": " + attribute.getValues());
                         }
+
                     } else {
-                        sourceValues.set(rhs, values);
-                        if (debug) log.debug("Propagating " + rhs + ": " + values);
+                        attributes = sourceValues.get(rsourceName);
+
+                        if (attributes != null) {
+                            Attribute attribute = attributes.get(rfieldName);
+
+                            if (attribute != null) {
+                                sourceValues.set(lsourceName, lfieldName, attribute.getValues());
+                                if (debug) log.debug("Propagating " + rhs + ": " + attribute.getValues());
+                            }
+                        }
                     }
                 }
             }
