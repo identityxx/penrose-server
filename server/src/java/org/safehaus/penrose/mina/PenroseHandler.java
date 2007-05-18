@@ -19,10 +19,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingEnumeration;
+import javax.naming.directory.*;
 import java.util.*;
 
 import com.identyx.javabackend.*;
 import com.identyx.javabackend.Request;
+import com.identyx.javabackend.Attribute;
+import com.identyx.javabackend.Attributes;
+import com.identyx.javabackend.SearchResult;
 
 /**
  * @author Endi S. Dewata
@@ -34,7 +38,7 @@ public class PenroseHandler extends DemuxingIoHandler {
     public Backend backend;
     public ProtocolCodecFactory codecFactory;
 
-    public Map sessions = new HashMap();
+    public Map<IoSession,Session> sessions = new HashMap<IoSession,Session>();
     long counter;
 
     public PenroseHandler(Backend penrose, ProtocolCodecFactory codecFactory) throws Exception {
@@ -74,11 +78,11 @@ public class PenroseHandler extends DemuxingIoHandler {
         addMessageHandler(SearchRequestImpl.class, searchHandler);
     }
 
-    public void sessionCreated(IoSession session) throws Exception {
-        IoFilterChain filters = session.getFilterChain();
+    public void sessionCreated(IoSession ioSession) throws Exception {
+        IoFilterChain filters = ioSession.getFilterChain();
         filters.addLast("codec", new ProtocolCodecFilter(getCodecFactory()));
 
-        sessions.put(session, backend.createSession(counter));
+        sessions.put(ioSession, backend.createSession(counter));
         
         if (counter == Long.MAX_VALUE) {
             counter = 0;
@@ -86,33 +90,35 @@ public class PenroseHandler extends DemuxingIoHandler {
             counter++;
         }
 
-        super.sessionCreated(session);
+        super.sessionCreated(ioSession);
     }
 
     public void sessionClosed(IoSession ioSession) throws Exception {
 
-        Session session = (Session)sessions.get(ioSession);
+        Session session = sessions.get(ioSession);
         if (session != null) {
             session.close();
+            sessions.remove(ioSession);
         }
         
         super.sessionClosed(ioSession);
     }
 
-    public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+    public void exceptionCaught(IoSession ioSession, Throwable cause) throws Exception {
 
         log.debug(cause.getMessage(), cause);
 
         if (cause.getCause() instanceof ResponseCarryingMessageException) {
             ResponseCarryingMessageException rcme = (ResponseCarryingMessageException)cause.getCause();
-            session.write(rcme.getResponse());
+            ioSession.write(rcme.getResponse());
             return;
         }
 
-        session.write(NoticeOfDisconnect.PROTOCOLERROR);
-        session.close();
+        ioSession.write(NoticeOfDisconnect.PROTOCOLERROR);
+        ioSession.close();
+        sessions.remove(ioSession);
 
-        super.exceptionCaught(session, cause);
+        super.exceptionCaught(ioSession, cause);
     }
 
     public Backend getBackend() {
@@ -132,7 +138,7 @@ public class PenroseHandler extends DemuxingIoHandler {
     }
 
     public Session getPenroseSession(IoSession session) {
-        return (Session)sessions.get(session);
+        return sessions.get(session);
     }
 
     public void getControls(
@@ -140,9 +146,9 @@ public class PenroseHandler extends DemuxingIoHandler {
             Request request
     ) throws Exception {
         Map controls = message.getControls();
-        Collection list = new ArrayList();
-        for (Iterator i=controls.values().iterator(); i.hasNext(); ) {
-            Control control = (Control)i.next();
+        Collection<com.identyx.javabackend.Control> list = new ArrayList<com.identyx.javabackend.Control>();
+        for (Object o : controls.values()) {
+            Control control = (Control) o;
 
             String oid = control.getID();
             byte[] value = control.getValue();
@@ -159,9 +165,8 @@ public class PenroseHandler extends DemuxingIoHandler {
             SearchResult result,
             SearchResponseEntry response
     ) throws Exception {
-        Collection controls = result.getControls();
-        for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            com.identyx.javabackend.Control control = (com.identyx.javabackend.Control)i.next();
+        Collection<com.identyx.javabackend.Control> controls = result.getControls();
+        for (com.identyx.javabackend.Control control : controls) {
             Control ctrl = createControl(control);
             response.add(ctrl);
         }
@@ -171,9 +176,8 @@ public class PenroseHandler extends DemuxingIoHandler {
             com.identyx.javabackend.Response penroseResponse,
             ResultResponse response
     ) throws Exception {
-        Collection controls = penroseResponse.getControls();
-        for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            com.identyx.javabackend.Control control = (com.identyx.javabackend.Control)i.next();
+        Collection<com.identyx.javabackend.Control> controls = penroseResponse.getControls();
+        for (com.identyx.javabackend.Control control : controls) {
             Control ctrl = createControl(control);
             response.add(ctrl);
         }
@@ -193,12 +197,11 @@ public class PenroseHandler extends DemuxingIoHandler {
         return ctrl;
     }
 
-    public Collection createModifications(Collection modificationItems) throws Exception {
+    public Collection<Modification> createModifications(Collection<javax.naming.directory.ModificationItem> modificationItems) throws Exception {
 
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
 
-        for (Iterator i=modificationItems.iterator(); i.hasNext(); ) {
-            javax.naming.directory.ModificationItem mi = (javax.naming.directory.ModificationItem)i.next();
+        for (ModificationItem mi : modificationItems) {
             modifications.add(createModification(mi));
         }
 
@@ -241,16 +244,13 @@ public class PenroseHandler extends DemuxingIoHandler {
 
         javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
 
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
 
             String name = attribute.getName();
             Collection values = attribute.getValues();
 
-            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-
+            javax.naming.directory.Attribute attr = new BasicAttribute(name);
+            for (Object value : values) {
                 if (value instanceof byte[]) {
                     attr.add(value);
 
