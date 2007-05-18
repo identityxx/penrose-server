@@ -15,7 +15,7 @@
 # file and include the License file at
 # trunk/opends/resource/legal-notices/OpenDS.LICENSE.  If applicable,
 # add the following below this CDDL HEADER, with the fields enclosed
-# by brackets "[]" replaced with your own identifying * information:
+# by brackets "[]" replaced with your own identifying information:
 #      Portions Copyright [yyyy] [name of copyright owner]
 #
 # CDDL HEADER END
@@ -50,9 +50,12 @@ ds-cfg-default-password-policy: cn=Default Password Policy,cn=Password Policies,
 dn: cn=Access Control Handler,cn=config
 objectClass: top
 objectClass: ds-cfg-access-control-handler
+objectClass: ds-cfg-dseecompat-access-control-handler
+ds-cfg-global-aci: (targetattr!="userPassword||authPassword")(version 3.0; acl "Anonymous read access"; allow (read,search,compare) userdn="ldap:///anyone";)
+ds-cfg-global-aci: (targetattr="*")(version 3.0; acl "Self entry modification"; allow (write) userdn="ldap:///self";)
 cn: Access Control Handler
-ds-cfg-acl-handler-class: org.opends.server.authorization.BasicAccessControlProvider
-ds-cfg-acl-handler-enabled: false
+ds-cfg-acl-handler-class: org.opends.server.authorization.dseecompat.AciProvider
+ds-cfg-acl-handler-enabled: true
 
 dn: cn=Account Status Notification Handlers,cn=config
 objectClass: top
@@ -117,11 +120,32 @@ ds-cfg-backend-import-pass-size: 0
 ds-cfg-backend-import-thread-count: 8
 ds-cfg-backend-entries-compressed: false
 ds-cfg-backend-deadlock-retry-limit: 10
+ds-cfg-database-cache-percent: 10
+ds-cfg-database-cache-size: 0 megabytes
+ds-cfg-database-txn-no-sync: false
+ds-cfg-database-txn-write-no-sync: true
+ds-cfg-database-run-cleaner: true
+ds-cfg-database-cleaner-num-threads: 1
+ds-cfg-database-cleaner-min-utilization: 75
+ds-cfg-database-evictor-lru-only: true
+ds-cfg-database-evictor-nodes-per-scan: 10
+ds-cfg-database-log-file-max: 50 megabytes
+ds-cfg-database-logging-file-handler-on: true
+ds-cfg-database-logging-level: CONFIG
+ds-cfg-database-checkpointer-bytes-interval: 20 megabytes
+ds-cfg-database-checkpointer-wakeup-interval: 30 seconds
+ds-cfg-database-lock-num-lock-tables: 19
 
 dn: cn=Index,ds-cfg-backend-id=userRoot,cn=Backends,cn=config
 objectClass: top
 objectClass: ds-cfg-branch
 cn: Index
+
+dn: ds-cfg-index-attribute=aci,cn=Index,ds-cfg-backend-id=userRoot,cn=Backends,cn=config
+objectClass: top
+objectClass: ds-cfg-je-index
+ds-cfg-index-attribute: aci
+ds-cfg-index-type: presence
 
 dn: ds-cfg-index-attribute=cn,cn=Index,ds-cfg-backend-id=userRoot,cn=Backends,cn=config
 objectClass: top
@@ -193,26 +217,6 @@ objectClass: ds-cfg-je-index
 ds-cfg-index-attribute: entryuuid
 ds-cfg-index-type: equality
 
-dn: cn=JE Database,ds-cfg-backend-id=userRoot,cn=Backends,cn=config
-objectClass: top
-objectClass: ds-cfg-je-database
-cn: JE Database
-ds-cfg-database-cache-percent: 10
-ds-cfg-database-cache-size: 0 megabytes
-ds-cfg-database-txn-no-sync: false
-ds-cfg-database-txn-write-no-sync: true
-ds-cfg-database-run-cleaner: true
-ds-cfg-database-cleaner-num-threads: 1
-ds-cfg-database-cleaner-min-utilization: 75
-ds-cfg-database-evictor-lru-only: true
-ds-cfg-database-evictor-nodes-per-scan: 10
-ds-cfg-database-log-file-max: 50 megabytes
-ds-cfg-database-logging-file-handler-on: true
-ds-cfg-database-logging-level: CONFIG
-ds-cfg-database-checkpointer-bytes-interval: 20 megabytes
-ds-cfg-database-checkpointer-wakeup-interval: 30 seconds
-ds-cfg-database-lock-num-lock-tables: 19
-
 dn: ds-cfg-backend-id=backup,cn=Backends,cn=config
 objectClass: top
 objectClass: ds-cfg-backend
@@ -273,9 +277,38 @@ cn: Certificate Mappers
 dn: cn=Subject Equals DN,cn=Certificate Mappers,cn=config
 objectClass: top
 objectClass: ds-cfg-certificate-mapper
-cn: Certificate Mapper
+cn: Subject Equals DN
 ds-cfg-certificate-mapper-class: org.opends.server.extensions.SubjectEqualsDNCertificateMapper
 ds-cfg-certificate-mapper-enabled: true
+
+dn: cn=Subject DN to User Attribute,cn=Certificate Mappers,cn=config
+objectClass: top
+objectClass: ds-cfg-certificate-mapper
+objectClass: ds-cfg-subject-dn-to-user-attribute-certificate-mapper
+cn: Subject DN to User Attribute
+ds-cfg-certificate-mapper-class: org.opends.server.extensions.SubjectDNToUserAttributeCertificateMapper
+ds-cfg-certificate-mapper-enabled: true
+ds-cfg-certificate-subject-attribute-type: ds-certificate-subject-dn
+
+dn: cn=Subject Attribute to User Attribute,cn=Certificate Mappers,cn=config
+objectClass: top
+objectClass: ds-cfg-certificate-mapper
+objectClass: ds-cfg-subject-attribute-to-user-attribute-certificate-mapper
+cn: Subject Attribute to User Attribute
+ds-cfg-certificate-mapper-class: org.opends.server.extensions.SubjectAttributeToUserAttributeCertificateMapper
+ds-cfg-certificate-mapper-enabled: true
+ds-cfg-certificate-subject-attribute-mapping: cn:cn
+ds-cfg-certificate-subject-attribute-mapping: e:mail
+
+dn: cn=Fingerprint Mapper,cn=Certificate Mappers,cn=config
+objectClass: top
+objectClass: ds-cfg-certificate-mapper
+objectClass: ds-cfg-fingerprint-certificate-mapper
+cn: Fingerprint Mapper
+ds-cfg-certificate-mapper-class: org.opends.server.extensions.FingerprintCertificateMapper
+ds-cfg-certificate-mapper-enabled: true
+ds-cfg-certificate-fingerprint-attribute-type: ds-certificate-fingerprint
+ds-cfg-certificate-fingerprint-algorithm: MD5
 
 dn: cn=Connection Handlers,cn=config
 objectClass: top
@@ -339,7 +372,7 @@ ds-cfg-connection-handler-class: org.opends.server.protocols.jmx.JmxConnectionHa
 ds-cfg-connection-handler-enabled: true
 ds-cfg-use-ssl: false
 ds-cfg-listen-port: 10689
-ds-cfg-ssl-cert-nickname: adm-server-cert
+ds-cfg-ssl-cert-nickname: server-cert
 
 dn: cn=Entry Cache,cn=config
 objectClass: top
@@ -389,11 +422,25 @@ objectClass: top
 objectClass: ds-cfg-branch
 cn: Group Implementations
 
+dn: cn=Dynamic,cn=Group Implementations,cn=config
+objectClass: top
+objectClass: ds-cfg-group-implementation
+cn: Dynamic
+ds-cfg-group-implementation-class: org.opends.server.extensions.DynamicGroup
+ds-cfg-group-implementation-enabled: true
+
 dn: cn=Static,cn=Group Implementations,cn=config
 objectClass: top
 objectClass: ds-cfg-group-implementation
 cn: Static
 ds-cfg-group-implementation-class: org.opends.server.extensions.StaticGroup
+ds-cfg-group-implementation-enabled: true
+
+dn: cn=Virtual Static,cn=Group Implementations,cn=config
+objectClass: top
+objectClass: ds-cfg-group-implementation
+cn: Virtual Static
+ds-cfg-group-implementation-class: org.opends.server.extensions.VirtualStaticGroup
 ds-cfg-group-implementation-enabled: true
 
 dn: cn=Identity Mappers,cn=config
@@ -457,14 +504,15 @@ objectClass: ds-cfg-logger
 objectClass: ds-cfg-access-logger
 objectClass: ds-cfg-file-based-access-logger
 cn: File-Based Access Logger
-ds-cfg-logger-class: org.opends.server.loggers.DirectoryAccessLogger
+ds-cfg-logger-class: org.opends.server.loggers.TextAccessLogPublisher
 ds-cfg-logger-enabled: true
 ds-cfg-log-file: logs/access
+ds-cfg-log-file-mode: 640
 ds-cfg-suppress-internal-operations: true
-ds-cfg-rotation-policy: Size
-ds-cfg-rotation-policy: FixedTime
-ds-cfg-size-limit: 104857600
-ds-cfg-fixed-time-limit: 86400000
+ds-cfg-asynchronous-writes: true
+ds-cfg-rotation-policy-dn: cn=24 Hours Time Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-rotation-policy-dn: cn=Size Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-retention-policy-dn: cn=File Count Retention Policy,cn=Log Retention Policies,cn=config
 
 dn: cn=File-Based Audit Logger,cn=Loggers,cn=config
 objectClass: top
@@ -472,26 +520,15 @@ objectClass: ds-cfg-logger
 objectClass: ds-cfg-access-logger
 objectClass: ds-cfg-file-based-access-logger
 cn: File-Based Audit Logger
-ds-cfg-logger-class: org.opends.server.loggers.DirectoryAuditLogger
+ds-cfg-logger-class: org.opends.server.loggers.TextAuditLogPublisher
 ds-cfg-logger-enabled: false
 ds-cfg-log-file: logs/audit
+ds-cfg-log-file-mode: 640
 ds-cfg-suppress-internal-operations: true
-ds-cfg-rotation-policy: Size
-ds-cfg-rotation-policy: FixedTime
-ds-cfg-size-limit: 104857600
-ds-cfg-fixed-time-limit: 86400000
-
-dn: cn=File-Based Debug Logger,cn=Loggers,cn=config
-objectClass: top
-objectClass: ds-cfg-logger
-objectClass: ds-cfg-debug-logger
-objectClass: ds-cfg-file-based-debug-logger
-cn: File-Based Debug Logger
-ds-cfg-logger-class: org.opends.server.loggers.DirectoryDebugLogger
-ds-cfg-logger-enabled: true
-ds-cfg-log-file: logs/debug
-ds-cfg-default-severity: ERROR
-ds-cfg-default-severity: WARNING
+ds-cfg-asynchronous-writes: true
+ds-cfg-rotation-policy-dn: cn=24 Hours Time Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-rotation-policy-dn: cn=Size Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-retention-policy-dn: cn=File Count Retention Policy,cn=Log Retention Policies,cn=config
 
 dn: cn=File-Based Error Logger,cn=Loggers,cn=config
 objectClass: top
@@ -499,17 +536,97 @@ objectClass: ds-cfg-logger
 objectClass: ds-cfg-error-logger
 objectClass: ds-cfg-file-based-error-logger
 cn: File-Based Error Logger
-ds-cfg-logger-class: org.opends.server.loggers.DirectoryErrorLogger
+ds-cfg-logger-class: org.opends.server.loggers.TextErrorLogPublisher
 ds-cfg-logger-enabled: true
-ds-cfg-log-file: logs/errors
-ds-cfg-default-severity: FATAL_ERROR
-ds-cfg-default-severity: NOTICE
-ds-cfg-default-severity: SEVERE_ERROR
-ds-cfg-default-severity: SEVERE_WARNING
-ds-cfg-rotation-policy: Size
-ds-cfg-rotation-policy: FixedTime
-ds-cfg-size-limit: 104857600
-ds-cfg-fixed-time-limit: 86400000
+ds-cfg-log-file: logs/error
+ds-cfg-log-file-mode: 640
+ds-cfg-default-severity: severe-warning
+ds-cfg-default-severity: severe-error
+ds-cfg-default-severity: fatal-error
+ds-cfg-default-severity: notice
+ds-cfg-asynchronous-writes: false
+ds-cfg-rotation-policy-dn: cn=7 Days Time Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-rotation-policy-dn: cn=Size Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+ds-cfg-retention-policy-dn: cn=File Count Retention Policy,cn=Log Retention Policies,cn=config
+
+dn: cn=File-Based Debug Logger,cn=Loggers,cn=config
+objectClass: top
+objectClass: ds-cfg-logger
+objectClass: ds-cfg-debug-logger
+objectClass: ds-cfg-file-based-debug-logger
+cn: File-Based Debug Logger
+ds-cfg-logger-class: org.opends.server.loggers.debug.TextDebugLogPublisher
+ds-cfg-logger-enabled: false
+ds-cfg-log-file: logs/debug
+ds-cfg-log-file-mode: 640
+ds-cfg-default-debug-level: error
+ds-cfg-asynchronous-writes: false
+
+dn: cn=Log Rotation Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-branch
+cn: Log Rotation Policies
+
+dn: cn=24 Hours Time Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-rotation-policy
+objectClass: ds-cfg-time-limit-log-rotation-policy
+cn: Time Limit Rotation Policy
+ds-cfg-rotation-policy-class: org.opends.server.loggers.TimeLimitRotationPolicy
+ds-cfg-rotation-interval: 24 hours
+
+dn: cn=7 Days Time Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-rotation-policy
+objectClass: ds-cfg-time-limit-log-rotation-policy
+cn: Time Limit Rotation Policy
+ds-cfg-rotation-policy-class: org.opends.server.loggers.TimeLimitRotationPolicy
+ds-cfg-rotation-interval: 7 days
+
+dn: cn=Size Limit Rotation Policy,cn=Log Rotation Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-rotation-policy
+objectClass: ds-cfg-size-limit-log-rotation-policy
+cn: Size Limit Rotation Policy
+ds-cfg-rotation-policy-class: org.opends.server.loggers.SizeBasedRotationPolicy
+ds-cfg-file-size-limit: 100 megabytes
+
+dn: cn=Fixed Time Rotation Policy,cn=Log Rotation Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-rotation-policy
+objectClass: ds-cfg-fixed-time-log-rotation-policy
+cn: Fixed Time Rotation Policy
+ds-cfg-rotation-policy-class: org.opends.server.loggers.FixedTimeRotationPolicy
+ds-cfg-time-of-day: 2359
+
+dn: cn=Log Retention Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-branch
+cn: Log Retention Policies
+
+dn: cn=File Count Retention Policy,cn=Log Retention Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-retention-policy
+objectClass: ds-cfg-file-count-log-retention-policy
+cn: File Count Retention Policy
+ds-cfg-retention-policy-class: org.opends.server.loggers.FileNumberRetentionPolicy
+ds-cfg-number-of-files: 10
+
+dn: cn=Free Disk Space Retention Policy,cn=Log Retention Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-retention-policy
+objectClass: ds-cfg-free-disk-space-log-retention-policy
+cn: Free Disk Space Retention Policy
+ds-cfg-retention-policy-class: org.opends.server.loggers.FreeDiskSpaceRetentionPolicy
+ds-cfg-free-disk-space: 500 megabytes
+
+dn: cn=Size Limit Retention Policy,cn=Log Retention Policies,cn=config
+objectClass: top
+objectClass: ds-cfg-log-retention-policy
+objectClass: ds-cfg-size-limit-log-retention-policy
+cn: Size Limit Retention Policy
+ds-cfg-retention-policy-class: org.opends.server.loggers.SizeBasedRetentionPolicy
+ds-cfg-disk-space-used: 500 megabytes
 
 dn: cn=Matching Rules,cn=config
 objectClass: top
@@ -688,7 +805,7 @@ dn: cn=Historical CSN Ordering Matching Rule,cn=Matching Rules,cn=config
 objectClass: ds-cfg-ordering-matching-rule
 objectClass: top
 objectClass: ds-cfg-matching-rule
-ds-cfg-matching-rule-class: org.opends.server.synchronization.plugin.HistoricalCsnOrderingMatchingRule
+ds-cfg-matching-rule-class: org.opends.server.replication.plugin.HistoricalCsnOrderingMatchingRule
 ds-cfg-matching-rule-enabled: true
 cn: Historical CSN Ordering Matching Rule
 
@@ -1038,10 +1155,50 @@ cn: SHA-1
 ds-cfg-password-storage-scheme-class: org.opends.server.extensions.SHA1PasswordStorageScheme
 ds-cfg-password-storage-scheme-enabled: true
 
+dn: cn=CRYPT,cn=Password Storage Schemes,cn=config
+objectClass: top
+objectClass: ds-cfg-password-storage-scheme
+cn: CRYPT
+ds-cfg-password-storage-scheme-class: org.opends.server.extensions.CryptPasswordStorageScheme
+ds-cfg-password-storage-scheme-enabled: true
+
 dn: cn=Password Validators,cn=config
 objectClass: top
 objectClass: ds-cfg-branch
 cn: Password Validators
+
+dn: cn=Attribute Value,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-attribute-value-password-validator
+cn: Attribute Value
+ds-cfg-password-validator-class: org.opends.server.extensions.AttributeValuePasswordValidator
+ds-cfg-password-validator-enabled: true
+ds-cfg-test-reversed-password: true
+
+dn: cn=Character Set,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-character-set-password-validator
+cn: Character Set
+ds-cfg-password-validator-class: org.opends.server.extensions.CharacterSetPasswordValidator
+ds-cfg-password-validator-enabled: true
+ds-cfg-character-set: 1:abcdefghijklmnopqrstuvwxyz
+ds-cfg-character-set: 1:ABCDEFGHIJKLMNOPQRSTUVWXYZ
+ds-cfg-character-set: 1:0123456789
+ds-cfg-character-set: 1:~!@#$%^&*()-_=+[]{}|;:,.<>/?
+ds-cfg-allow-unclassified-characters: true
+
+dn: cn=Dictionary,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-dictionary-password-validator
+cn: Dictionary
+ds-cfg-password-validator-class: org.opends.server.extensions.DictionaryPasswordValidator
+ds-cfg-password-validator-enabled: false
+ds-cfg-dictionary-file: config/wordlist.txt
+ds-cfg-case-sensitive-validation: false
+ds-cfg-test-reversed-password: true
 
 dn: cn=Length-Based Password Validator,cn=Password Validators,cn=config
 objectClass: top
@@ -1052,6 +1209,35 @@ ds-cfg-password-validator-class: org.opends.server.extensions.LengthBasedPasswor
 ds-cfg-password-validator-enabled: true
 ds-cfg-minimum-password-length: 6
 ds-cfg-maximum-password-length: 0
+
+dn: cn=Repeated Characters,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-repeated-characters-password-validator
+cn: Repeated Characters
+ds-cfg-password-validator-class: org.opends.server.extensions.RepeatedCharactersPasswordValidator
+ds-cfg-password-validator-enabled: true
+ds-cfg-maximum-consecutive-length: 2
+ds-cfg-case-sensitive-validation: false
+
+dn: cn=Similarity-Based Password Validator,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-similarity-based-password-validator
+cn: Similarity-Based Password Validator
+ds-cfg-password-validator-class: org.opends.server.extensions.SimilarityBasedPasswordValidator
+ds-cfg-password-validator-enabled: true
+ds-cfg-minimum-password-difference: 3
+
+dn: cn=Unique Characters,cn=Password Validators,cn=config
+objectClass: top
+objectClass: ds-cfg-password-validator
+objectClass: ds-cfg-unique-characters-password-validator
+cn: Unique Characters
+ds-cfg-password-validator-class: org.opends.server.extensions.UniqueCharactersPasswordValidator
+ds-cfg-password-validator-enabled: true
+ds-cfg-minimum-unique-characters: 5
+ds-cfg-case-sensitive-validation: false
 
 dn: cn=Plugins,cn=config
 objectClass: top
@@ -1125,6 +1311,8 @@ ds-cfg-default-root-privilege-name: search-unindexed
 ds-cfg-default-root-privilege-name: password-reset
 ds-cfg-default-root-privilege-name: update-schema
 ds-cfg-default-root-privilege-name: privilege-change
+ds-cfg-default-root-privilege-name: index-rebuild
+ds-cfg-default-root-privilege-name: unindexed-search
 
 dn: cn=Directory Manager,cn=Root DNs,cn=config
 objectClass: top
@@ -1223,6 +1411,13 @@ objectClass: top
 objectClass: ds-cfg-attribute-syntax
 cn: Absolute Subtree Specification
 ds-cfg-syntax-class: org.opends.server.schema.AbsoluteSubtreeSpecificationSyntax
+ds-cfg-syntax-enabled: true
+
+dn: cn=Sun-defined Access Control Information,cn=Syntaxes,cn=config
+objectClass: top
+objectClass: ds-cfg-attribute-syntax
+cn: Sun-defined Access Control Information
+ds-cfg-syntax-class: org.opends.server.schema.AciSyntax
 ds-cfg-syntax-enabled: true
 
 dn: cn=Attribute Type Description,cn=Syntaxes,cn=config
@@ -1581,12 +1776,64 @@ cn: PKCS12
 ds-cfg-trust-manager-provider-class: org.opends.server.extensions.FileBasedTrustManagerProvider
 ds-cfg-trust-manager-provider-enabled: false
 ds-cfg-trust-store-type: PKCS12
-ds-cfg-trust-store-file: config/truststore
+ds-cfg-trust-store-file: config/truststore.p12
 
 dn: cn=Virtual Attributes,cn=config
 objectClass: top
 objectClass: ds-cfg-branch
 cn: Virtual Attributes
+
+dn: cn=entryDN,cn=Virtual Attributes,cn=config
+objectClass: top
+objectClass: ds-cfg-virtual-attribute
+cn: entryDN
+ds-cfg-virtual-attribute-class: org.opends.server.extensions.EntryDNVirtualAttributeProvider
+ds-cfg-virtual-attribute-enabled: true
+ds-cfg-virtual-attribute-type: entryDN
+ds-cfg-virtual-attribute-conflict-behavior: virtual-overrides-real
+
+dn: cn=isMemberOf,cn=Virtual Attributes,cn=config
+objectClass: top
+objectClass: ds-cfg-virtual-attribute
+cn: isMemberOf
+ds-cfg-virtual-attribute-class: org.opends.server.extensions.IsMemberOfVirtualAttributeProvider
+ds-cfg-virtual-attribute-enabled: true
+ds-cfg-virtual-attribute-type: isMemberOf
+ds-cfg-virtual-attribute-filter: (objectClass=person)
+ds-cfg-virtual-attribute-conflict-behavior: virtual-overrides-real
+
+dn: cn=subschemaSubentry,cn=Virtual Attributes,cn=config
+objectClass: top
+objectClass: ds-cfg-virtual-attribute
+cn: subschemaSubentry
+ds-cfg-virtual-attribute-class: org.opends.server.extensions.SubschemaSubentryVirtualAttributeProvider
+ds-cfg-virtual-attribute-enabled: true
+ds-cfg-virtual-attribute-type: subschemaSubentry
+ds-cfg-virtual-attribute-conflict-behavior: virtual-overrides-real
+
+dn: cn=Virtual Static member,cn=Virtual Attributes,cn=config
+objectClass: top
+objectClass: ds-cfg-virtual-attribute
+objectClass: ds-cfg-member-virtual-attribute
+cn: Virtual Static member
+ds-cfg-virtual-attribute-class: org.opends.server.extensions.MemberVirtualAttributeProvider
+ds-cfg-virtual-attribute-enabled: true
+ds-cfg-virtual-attribute-type: member
+ds-cfg-virtual-attribute-conflict-behavior: virtual-overrides-real
+ds-cfg-virtual-attribute-filter: (&(objectClass=groupOfNames)(objectClass=ds-virtual-static-group))
+ds-cfg-allow-retrieving-membership: false
+
+dn: cn=Virtual Static uniqueMember,cn=Virtual Attributes,cn=config
+objectClass: top
+objectClass: ds-cfg-virtual-attribute
+objectClass: ds-cfg-member-virtual-attribute
+cn: Virtual Static uniqueMember
+ds-cfg-virtual-attribute-class: org.opends.server.extensions.MemberVirtualAttributeProvider
+ds-cfg-virtual-attribute-enabled: true
+ds-cfg-virtual-attribute-type: uniqueMember
+ds-cfg-virtual-attribute-conflict-behavior: virtual-overrides-real
+ds-cfg-virtual-attribute-filter: (&(objectClass=groupOfUniqueNames)(objectClass=ds-virtual-static-group))
+ds-cfg-allow-retrieving-membership: false
 
 dn: cn=Work Queue,cn=config
 objectClass: top

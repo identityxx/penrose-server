@@ -44,7 +44,9 @@ public class OpenDSLDAPService extends LDAPService {
             if (startingFile.exists()) {
                 startingFile.deleteOnExit();
             }
+
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
 
         DirectoryServer directoryServer = DirectoryServer.getInstance();
