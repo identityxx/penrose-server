@@ -218,12 +218,16 @@ public class RDN implements Comparable {
                 return false;
             }
 
-            String value = (String)values.get(name);
-            String value2 = (String)rdn.values.get(name2);
+            Object value = values.get(name);
+            Object value2 = rdn.values.get(name2);
 
-            if (!"...".equals(value) && !"...".equals(value2) && !value.equalsIgnoreCase(value2)) {
-                return false;
-            }
+            if ("...".equals(value)) continue;
+            if ("...".equals(value2)) continue;
+
+            String s1 = value.toString();
+            String s2 = value2.toString();
+
+            if (!s1.equalsIgnoreCase(s2)) return false;
         }
 
         return true;
