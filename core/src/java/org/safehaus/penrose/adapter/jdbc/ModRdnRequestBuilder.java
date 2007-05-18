@@ -10,10 +10,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
@@ -75,8 +72,8 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         boolean debug = log.isDebugEnabled();
 
-        String sourceName = sourceRef.getAlias();
-        if (debug) log.debug("Processing source "+sourceName);
+        String alias = sourceRef.getAlias();
+        if (debug) log.debug("Processing source "+alias);
 
         UpdateStatement statement = new UpdateStatement();
 
@@ -94,6 +91,8 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         newSourceValues.set(sourceValues);
 
+        Attributes attributes = newSourceValues.get(alias);
+
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
@@ -103,15 +102,19 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
+            if ("INTEGER".equals(field.getType()) && value instanceof String) {
+                value = Integer.parseInt((String)value);
+            }
+
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
 
-            newSourceValues.set(sourceName, fieldName, value);
+            attributes.setValue(fieldName, value);
         }
 
         Filter filter = null;
 
-        Attributes attributes = sourceValues.get(sourceName);
+        attributes = sourceValues.get(alias);
         
         for (String fieldName : attributes.getNames()) {
             Object value = attributes.getValue(fieldName);

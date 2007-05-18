@@ -80,27 +80,24 @@ public class EngineTool {
                     String rfieldName = variable.substring(p+1);
                     String rhs = rsourceName+"."+rfieldName;
 
-                    Attributes attributes = sourceValues.get(lsourceName);
+                    Attributes lattributes = sourceValues.get(lsourceName);
+                    Attributes rattributes = sourceValues.get(rsourceName);
 
-                    if (attributes != null) {
+                    if (lattributes.isEmpty()) {
 
-                        Attribute attribute = attributes.get(lfieldName);
+                        Attribute attribute = rattributes.get(rfieldName);
 
                         if (attribute != null) {
-                            sourceValues.set(rsourceName, rfieldName, attribute.getValues());
-                            if (debug) log.debug("Propagating " + lhs + ": " + attribute.getValues());
+                            lattributes.setValues(lfieldName, attribute.getValues());
+                            if (debug) log.debug("Propagating " + rhs + ": " + attribute.getValues());
                         }
 
                     } else {
-                        attributes = sourceValues.get(rsourceName);
+                        Attribute attribute = lattributes.get(lfieldName);
 
-                        if (attributes != null) {
-                            Attribute attribute = attributes.get(rfieldName);
-
-                            if (attribute != null) {
-                                sourceValues.set(lsourceName, lfieldName, attribute.getValues());
-                                if (debug) log.debug("Propagating " + rhs + ": " + attribute.getValues());
-                            }
+                        if (attribute != null) {
+                            rattributes.setValues(rfieldName, attribute.getValues());
+                            if (debug) log.debug("Propagating " + lhs + ": " + attribute.getValues());
                         }
                     }
                 }

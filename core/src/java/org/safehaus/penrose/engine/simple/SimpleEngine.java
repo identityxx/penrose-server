@@ -27,6 +27,7 @@ import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Sources;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -101,33 +102,51 @@ public class SimpleEngine extends Engine {
             Collection sourceMappings = entryMapping.getSourceMappings();
             for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
                 SourceMapping sourceMapping = (SourceMapping)j.next();
-                extractSourceValues(rdn, sourceMapping, sourceValues);
+                extractSourceValues(
+                        partition,
+                        rdn,
+                        sourceMapping,
+                        sourceValues
+                );
             }
 
             entryMapping = partition.getParent(entryMapping);
         }
     }
 
-    public void extractSourceValues(RDN rdn, SourceMapping sourceMapping, SourceValues sourceValues) throws Exception {
+    public void extractSourceValues(
+            Partition partition,
+            RDN rdn,
+            SourceMapping sourceMapping,
+            SourceValues sourceValues
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
-            //log.debug("Field: "+fieldMapping.getName());
+        Attributes attributes = sourceValues.get(sourceMapping.getName());
+
+        Sources sources = partition.getSources();
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
+
+        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+        for (FieldMapping fieldMapping : fieldMappings) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+
             if (fieldMapping.getVariable() == null) continue;
 
             String variable = fieldMapping.getVariable();
-            //log.debug("Variable: "+variable);
             Object value = rdn.get(variable);
             if (value == null) continue;
 
-            sourceValues.set(sourceMapping.getName(), fieldMapping.getName(), value);
+            if ("INTEGER".equals(fieldConfig.getType()) && value instanceof String) {
+                value = Integer.parseInt((String)value);
+            }
 
-            String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
-            if (debug) log.debug(" => "+fieldName+": "+value);
+            attributes.setValue(fieldMapping.getName(), value);
+
+            String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
+            if (debug) log.debug(" => " + fieldName + ": " + value);
         }
     }
 

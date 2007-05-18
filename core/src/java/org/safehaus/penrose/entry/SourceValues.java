@@ -51,36 +51,6 @@ public class SourceValues implements Cloneable {
         }
     }
 
-    public void set(String sourceName, String fieldName, Object value) {
-        if (value == null) return;
-
-        if (value instanceof Collection) {
-            set(sourceName, fieldName, (Collection)value);
-            return;
-        }
-
-        Attributes attributes = map.get(sourceName);
-
-        if (attributes == null) {
-            attributes = new Attributes();
-            map.put(sourceName, attributes);
-        }
-
-        attributes.setValue(fieldName, value);
-    }
-
-    public void set(String sourceName, String fieldName, Collection<Object> values) {
-
-        Attributes attributes = map.get(sourceName);
-
-        if (attributes == null) {
-            attributes = new Attributes();
-            map.put(sourceName, attributes);
-        }
-
-        attributes.setValues(fieldName, values);
-    }
-
     public void set(String sourceName, Attributes newAttributes) {
 
         Attributes attributes = map.get(sourceName);
@@ -130,8 +100,16 @@ public class SourceValues implements Cloneable {
         return map.isEmpty();
     }
 
-    public Attributes get(String name) {
-        return map.get(name);
+    public Attributes get(String sourceName) {
+
+        Attributes attributes = map.get(sourceName);
+
+        if (attributes == null) {
+            attributes = new Attributes();
+            map.put(sourceName, attributes);
+        }
+
+        return attributes;
     }
 
     public Collection<String> getNames() {

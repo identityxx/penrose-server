@@ -85,6 +85,47 @@ public class DefaultHandler extends Handler {
         }
 
         super.add(session, partition, entryMapping, request, response);
+
+        cacheManager.clear();
+    }
+
+    public void delete(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        super.delete(session, partition, entryMapping, request, response);
+
+        cacheManager.clear();
+    }
+
+    public void modify(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        super.modify(session, partition, entryMapping, request, response);
+
+        cacheManager.clear();
+    }
+
+    public void modrdn(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        super.modrdn(session, partition, entryMapping, request, response);
+
+        cacheManager.clear();
     }
 
     public void search(

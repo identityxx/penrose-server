@@ -4,6 +4,8 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
@@ -13,6 +15,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -119,6 +122,7 @@ public class BasicEngine extends Engine {
 
         for (SourceMapping sourceMapping : sourceMappings) {
             extractSourceValues(
+                    partition,
                     interpreter,
                     rdn,
                     entryMapping,
@@ -131,6 +135,7 @@ public class BasicEngine extends Engine {
     }
 
     public void extractSourceValues(
+            Partition partition,
             Interpreter interpreter,
             RDN rdn,
             EntryMapping entryMapping,
@@ -141,13 +146,23 @@ public class BasicEngine extends Engine {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
+        Attributes attributes = sourceValues.get(sourceMapping.getName());
+
+        Sources sources = partition.getSources();
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
+
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
         for (FieldMapping fieldMapping : fieldMappings) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
 
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            sourceValues.set(sourceMapping.getName(), fieldMapping.getName(), value);
+            if ("INTEGER".equals(fieldConfig.getType()) && value instanceof String) {
+                value = Integer.parseInt((String)value);
+            }
+
+            attributes.setValue(fieldMapping.getName(), value);
 
             String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
             if (debug) log.debug(" => " + fieldName + ": " + value);
