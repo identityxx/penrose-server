@@ -67,6 +67,10 @@ public class PasswordUtil {
         }
     }
 
+    public static byte[] encrypt(String method, String password) throws Exception {
+        return encrypt(method, null, password.getBytes());
+    }
+
     public static byte[] encrypt(String method, byte[] bytes) throws Exception {
         return encrypt(method, null, bytes);
     }

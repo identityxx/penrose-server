@@ -18,7 +18,7 @@ public class JDBCFilterBuilder {
     Logger log = LoggerFactory.getLogger(getClass());
 
     protected Source source;
-    protected Map sourceRefs = new LinkedHashMap(); // need to maintain order
+    protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
 
     private String sql;
     private Collection<Assignment> assignments = new ArrayList<Assignment>();
@@ -75,7 +75,7 @@ public class JDBCFilterBuilder {
             String sourceName = name.substring(0, i);
             String fieldName = name.substring(i+1);
 
-            SourceRef sourceRef = (SourceRef)sourceRefs.get(sourceName);
+            SourceRef sourceRef = sourceRefs.get(sourceName);
             Source s = sourceRef.getSource();
 
             field = s.getField(fieldName);
@@ -85,8 +85,7 @@ public class JDBCFilterBuilder {
 
         } else {
             int i = name.indexOf('.');
-            String sourceName = name.substring(0, i);
-            String fieldName = name.substring(i+1);
+            String fieldName = i >= 0 ? name.substring(i+1) : name;
 
             field = source.getField(fieldName);
             if (field == null) throw new Exception("Unknown field: "+name);
@@ -169,8 +168,7 @@ public class JDBCFilterBuilder {
     ) throws Exception {
 
         StringBuilder sb2 = new StringBuilder();
-        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
-            Filter f = (Filter) i.next();
+        for (Filter f : filter.getFilters()) {
 
             StringBuilder sb3 = new StringBuilder();
 
@@ -199,8 +197,7 @@ public class JDBCFilterBuilder {
     ) throws Exception {
 
         StringBuilder sb2 = new StringBuilder();
-        for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
-            Filter f = (Filter) i.next();
+        for (Filter f : filter.getFilters()) {
 
             StringBuilder sb3 = new StringBuilder();
 
@@ -231,12 +228,12 @@ public class JDBCFilterBuilder {
         this.source = source;
     }
 
-    public Collection getSourceAliases() {
+    public Collection<String> getSourceAliases() {
         return sourceRefs.keySet();
     }
 
     public SourceRef getSourceRef(String alias) {
-        return (SourceRef)sourceRefs.get(alias);
+        return sourceRefs.get(alias);
     }
 
     public void addSourceRef(String alias, SourceRef sourceRef) {
