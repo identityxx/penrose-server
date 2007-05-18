@@ -109,7 +109,11 @@ public class EntryMapping implements Cloneable {
 	public EntryMapping() {
 	}
 
-	public EntryMapping(String dn) {
+    public EntryMapping(EntryMapping entryMapping) {
+        copy(entryMapping);
+    }
+
+    public EntryMapping(String dn) {
         this.dn = new DN(dn);
     }
 
@@ -412,8 +416,9 @@ public class EntryMapping implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == this) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         EntryMapping entryMapping = (EntryMapping)object;
         if (!equals(id, entryMapping.id)) return false;
@@ -425,6 +430,7 @@ public class EntryMapping implements Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
         if (!equals(relationships, entryMapping.relationships)) return false;
+        if (!equals(link, entryMapping.link)) return false;
         if (!equals(handlerName, entryMapping.handlerName)) return false;
         if (!equals(engineName, entryMapping.engineName)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
@@ -460,7 +466,7 @@ public class EntryMapping implements Cloneable {
             addRelationship((Relationship) relationship.clone());
         }
 
-        link = link == null ? null : new Link(entryMapping.link);
+        link = entryMapping.link == null ? null : new Link(entryMapping.link);
         handlerName = entryMapping.handlerName;
         engineName = entryMapping.engineName;
 
@@ -475,9 +481,7 @@ public class EntryMapping implements Cloneable {
 
     public Object clone() throws CloneNotSupportedException {
         super.clone();
-        EntryMapping entryMapping = new EntryMapping();
-        entryMapping.copy(this);
-        return entryMapping;
+        return new EntryMapping(this);
     }
 
     public String getHandlerName() {
