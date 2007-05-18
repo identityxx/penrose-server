@@ -30,7 +30,7 @@ public class BindHandler implements MessageHandler {
 
         try {
             DN bindDn = handler.backend.createDn(request.getName().toString());
-            String password = new String(request.getCredentials());
+            byte[] password = request.getCredentials();
 
             Session session = handler.getPenroseSession(ioSession);
 

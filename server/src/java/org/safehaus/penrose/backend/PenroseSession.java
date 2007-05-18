@@ -94,6 +94,18 @@ public class PenroseSession implements com.identyx.javabackend.Session {
     }
 
     public void bind(
+            com.identyx.javabackend.DN dn,
+            byte[] password
+    ) throws Exception {
+
+        log.debug("bind(\""+dn+", \""+password+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.bind(penroseDn, password);
+    }
+
+    public void bind(
             com.identyx.javabackend.BindRequest request,
             com.identyx.javabackend.BindResponse response
     ) throws Exception {

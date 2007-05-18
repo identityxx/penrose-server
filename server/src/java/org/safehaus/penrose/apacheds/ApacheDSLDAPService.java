@@ -143,13 +143,13 @@ public class ApacheDSLDAPService extends LDAPService {
         }
 
         // Initialize ApacheDS
-        final Properties env = new Properties();
-        env.setProperty(Context.PROVIDER_URL, "ou=system");
-        env.setProperty(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
-        env.setProperty(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());
-        env.setProperty(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
-        env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
-        env.setProperty(Context.REFERRAL, "throw");
+        final Hashtable env = new Hashtable();
+        env.put(Context.PROVIDER_URL, "ou=system");
+        env.put(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
+        env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());
+        env.put(Context.SECURITY_CREDENTIALS, penroseConfig.getRootPassword());
+        env.put(Context.SECURITY_AUTHENTICATION, "simple");
+        env.put(Context.REFERRAL, "throw");
 /*
         env.setProperty("asn.1.berlib.provider", "org.apache.ldap.common.berlib.asn1.SnickersProvider");
         //env.setProperty("asn.1.berlib.provider", "org.apache.asn1new.ldap.TwixProvider");
@@ -163,7 +163,7 @@ public class ApacheDSLDAPService extends LDAPService {
         String binaryAttributes = getParameter("java.naming.ldap.attributes.binary");
         if (binaryAttributes != null) {
             //log.debug("Setting java.naming.ldap.attributes.binary: "+binaryAttributes);
-            env.setProperty("java.naming.ldap.attributes.binary", binaryAttributes);
+            env.put("java.naming.ldap.attributes.binary", binaryAttributes);
         }
 
         env.putAll(configuration.toJndiEnvironment());

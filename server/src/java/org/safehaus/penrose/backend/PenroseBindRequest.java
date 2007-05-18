@@ -30,7 +30,11 @@ public class PenroseBindRequest
         bindRequest.setPassword(password);
     }
 
-    public String getPassword() throws Exception {
+    public void setPassword(byte[] password) throws Exception {
+        bindRequest.setPassword(password);
+    }
+
+    public byte[] getPassword() throws Exception {
         return bindRequest.getPassword();
     }
 

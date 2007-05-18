@@ -6,15 +6,15 @@ package org.safehaus.penrose.ldap;
 public class BindRequest extends Request {
 
     protected DN dn;
-    protected String password;
+    protected byte[] password;
 
     public BindRequest() {
     }
 
     public BindRequest(BindRequest request) {
         super(request);
-        dn = request.getDn();
-        password = request.getPassword();
+        dn = request.dn;
+        password = request.password.clone();
     }
 
     public DN getDn() {
@@ -33,11 +33,15 @@ public class BindRequest extends Request {
         this.dn = dn;
     }
 
-    public String getPassword() {
+    public byte[] getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
+        this.password = password == null ? null : password.getBytes();
+    }
+
+    public void setPassword(byte[] password) {
         this.password = password;
     }
 }

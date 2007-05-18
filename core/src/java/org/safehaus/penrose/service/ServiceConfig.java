@@ -31,7 +31,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     private String serviceClass;
     private String description;
 
-    private Map parameters = new TreeMap();
+    private Map<String,String> parameters = new TreeMap<String,String>();
 
     public ServiceConfig() {
     }
@@ -73,11 +73,11 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
         this.description = description;
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
 
@@ -90,7 +90,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.get(name);
     }
 
     public int hashCode() {
@@ -131,7 +131,8 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
         parameters.putAll(serviceConfig.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         ServiceConfig serviceConfig = new ServiceConfig();
         serviceConfig.copy(this);
         return serviceConfig;

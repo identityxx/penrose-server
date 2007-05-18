@@ -426,7 +426,7 @@ public class Partition {
         return list;
     }
 
-    public Collection findEntryMappings(String targetDn) throws Exception {
+    public Collection<EntryMapping> findEntryMappings(String targetDn) throws Exception {
         if (targetDn == null) return null;
         return findEntryMappings(new DN(targetDn));
     }
@@ -506,7 +506,7 @@ public class Partition {
         this.connectionConfigs = connectionConfigs;
     }
 
-    public Collection getModuleMappings() {
+    public Collection<Collection<ModuleMapping>> getModuleMappings() {
         return moduleMappings.values();
     }
     public Collection<EntryMapping> getRootEntryMappings() {

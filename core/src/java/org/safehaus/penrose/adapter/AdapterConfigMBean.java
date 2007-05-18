@@ -35,6 +35,6 @@ public interface AdapterConfigMBean {
 
     public void setParameter(String name, String value) throws Exception;
     public void removeParameter(String name) throws Exception;
-    public Map getParameters() throws Exception;
+    public Map<String,String> getParameters() throws Exception;
     public String getParameter(String name) throws Exception;
 }

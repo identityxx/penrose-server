@@ -219,7 +219,7 @@ public class ProxyEngine extends Engine {
         boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
-        String password = request.getPassword();
+        byte[] password = request.getPassword();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 

@@ -20,6 +20,7 @@ package org.safehaus.penrose.session;
 import java.util.Properties;
 import java.util.Collection;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -34,7 +35,7 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
 
     private String description;
 
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public String getDescription() {
         return description;
@@ -45,22 +46,22 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public void removeParameter(String name) {
         parameters.remove(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
 
@@ -85,7 +86,8 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
         return true;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         SessionConfig sessionConfig = new SessionConfig();
         sessionConfig.copy(this);
         return sessionConfig;

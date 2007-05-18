@@ -5,6 +5,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -72,7 +73,7 @@ public class DemoAdapter extends Adapter {
     ) throws Exception {
 
         DN dn = request.getDn();
-        String password = request.getPassword();
+        byte[] password = request.getPassword();
 
         System.out.println("Binding as "+dn+" with password "+password+".");
 
@@ -90,7 +91,7 @@ public class DemoAdapter extends Adapter {
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }
 
-        if (!userPassword.equals(password)) {
+        if (!PasswordUtil.comparePassword(password, userPassword)) {
             int rc = LDAPException.INVALID_CREDENTIALS;
             throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
         }

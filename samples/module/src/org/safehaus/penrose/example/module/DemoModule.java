@@ -8,9 +8,6 @@ import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
-import java.util.Collection;
-import java.util.Iterator;
-
 /**
  * @author Endi S. Dewata
  */
@@ -72,13 +69,10 @@ public class DemoModule extends Module {
         System.out.println("#### Adding "+request.getDn()+":");
 
         Attributes attributes = request.getAttributes();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             String name = attribute.getName();
-            Collection values = attribute.getValues();
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                System.out.println(" - "+name+": "+value);
+            for (Object value : attribute.getValues()) {
+                System.out.println(" - " + name + ": " + value);
             }
         }
 
@@ -102,9 +96,7 @@ public class DemoModule extends Module {
         ModifyRequest request = event.getRequest();
         System.out.println("#### Modifying "+request.getDn()+":");
 
-        Collection<Modification> modifications = request.getModifications();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification mi = (Modification)i.next();
+        for (Modification mi : request.getModifications()) {
 
             int type = mi.getType();
             Attribute attribute = mi.getAttribute();
@@ -112,19 +104,18 @@ public class DemoModule extends Module {
 
             switch (type) {
                 case Modification.ADD:
-                    System.out.println(" - add: "+name);
+                    System.out.println(" - add: " + name);
                     break;
                 case Modification.DELETE:
-                    System.out.println(" - delete: "+name);
+                    System.out.println(" - delete: " + name);
                     break;
                 case Modification.REPLACE:
-                    System.out.println(" - replace: "+name);
+                    System.out.println(" - replace: " + name);
                     break;
             }
 
-            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                System.out.println("   "+name+": "+value);
+            for (Object value : attribute.getValues()) {
+                System.out.println("   " + name + ": " + value);
             }
         }
 

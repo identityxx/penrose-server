@@ -58,13 +58,13 @@ public class Session {
     private Object sessionId;
 
     private DN bindDn;
-    private String bindPassword;
+    private byte[] bindPassword;
     private boolean rootUser;
 
     private Date createDate;
     private Date lastActivityDate;
 
-    private Map attributes = new HashMap();
+    private Map<String,Object> attributes = new HashMap<String,Object>();
     
     boolean enableEventListeners = true;
 
@@ -96,10 +96,7 @@ public class Session {
     }
 
     public boolean isValid() {
-    	if (sessionManager.isExpired(this)) {
-    		return sessionManager.isValid(this);
-    	}
-    	return true;
+        return !sessionManager.isExpired(this) || sessionManager.isValid(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,10 +149,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
             
-            DN dn = request.getDn();
-
             if (log.isWarnEnabled()) {
-                log.warn("Add entry \""+dn+"\".");
+                log.warn("Add entry \""+request.getDn()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -164,7 +159,7 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
                 log.debug(" - Bind DN : "+bindDn);
-                log.debug(" - Entry   : "+dn);
+                log.debug(" - Entry   : "+request.getDn());
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -203,10 +198,18 @@ public class Session {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(String dn, String password) throws LDAPException {
+        bind(new DN(dn), password.getBytes());
+    }
+
+    public void bind(String dn, byte[] password) throws LDAPException {
     	bind(new DN(dn), password);
     }
 
     public void bind(DN dn, String password) throws LDAPException {
+        bind(dn, password.getBytes());
+    }
+
+    public void bind(DN dn, byte[] password) throws LDAPException {
         BindRequest request = new BindRequest();
         request.setDn(dn);
         request.setPassword(password);
@@ -222,11 +225,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DN dn = request.getDn();
-            String password = request.getPassword();
-
             if (log.isWarnEnabled()) {
-                log.warn("Bind \""+dn+"\".");
+                log.warn("Bind \""+request.getDn()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -234,8 +234,8 @@ public class Session {
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
-                log.debug(" - Bind DN       : "+dn);
-                log.debug(" - Bind Password : "+password);
+                log.debug(" - Bind DN       : "+request.getDn());
+                log.debug(" - Bind Password : "+request.getPassword());
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -250,6 +250,9 @@ public class Session {
             	}
         	}
             
+            DN dn = request.getDn();
+            byte[] password = request.getPassword();
+
             int rc = LDAPException.SUCCESS;
             try {
                 if (dn.isEmpty()) {
@@ -345,12 +348,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DN dn = request.getDn();
-            String attributeName = request.getAttributeName();
-            Object attributeValue = request.getAttributeValue();
-
             if (log.isWarnEnabled()) {
-                log.warn("Compare attribute "+attributeName+" in \""+dn+"\" with \""+attributeValue+"\".");
+                log.warn("Compare attribute "+request.getAttributeName()+" in \""+request.getDn()+"\" with \""+request.getAttributeValue()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -359,12 +358,16 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
                 log.debug(" - Bind DN         : "+bindDn);
-                log.debug(" - DN              : "+dn);
-                log.debug(" - Attribute Name  : "+attributeName);
+                log.debug(" - DN              : "+request.getDn());
+                log.debug(" - Attribute Name  : "+request.getAttributeName());
 
-                Object value = attributeValue;
+                Object attributeValue = request.getAttributeValue();
+
+                Object value;
                 if (attributeValue instanceof byte[]) {
                     value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue);
+                } else {
+                    value = attributeValue;
                 }
 
                 log.debug(" - Attribute Value : "+value);
@@ -448,10 +451,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DN dn = request.getDn();
-
             if (log.isWarnEnabled()) {
-                log.warn("Delete entry \""+dn+"\".");
+                log.warn("Delete entry \""+request.getDn()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -460,7 +461,7 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
                 log.debug(" - Bind DN : "+bindDn);
-                log.debug(" - DN      : "+dn);
+                log.debug(" - DN      : "+request.getDn());
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -539,11 +540,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DN dn = request.getDn();
-            Collection<Modification> modifications = request.getModifications();
-
             if (log.isWarnEnabled()) {
-                log.warn("Modify entry \""+dn+"\".");
+                log.warn("Modify entry \""+request.getDn()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -552,15 +550,16 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
                 log.debug(" - Bind DN    : "+bindDn);
-                log.debug(" - DN         : "+dn);
+                log.debug(" - DN         : "+request.getDn());
                 log.debug(" - Attributes : ");
 
-                for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-                    Modification modification = (Modification)i.next();
+                Collection<Modification> modifications = request.getModifications();
+
+                for (Modification modification : modifications) {
                     Attribute attribute = modification.getAttribute();
 
                     String op = LDAPUtil.getModificationOperations(modification.getType());
-                    log.debug("   - "+op+": "+attribute.getName()+" => "+attribute.getValues());
+                    log.debug("   - " + op + ": " + attribute.getName() + " => " + attribute.getValues());
                 }
 
                 log.debug("");
@@ -642,12 +641,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            DN dn = request.getDn();
-            RDN newRdn = request.getNewRdn();
-            boolean deleteOldRdn = request.getDeleteOldRdn();
-
             if (log.isWarnEnabled()) {
-                log.warn("ModRDN \""+dn+"\" to \""+newRdn+"\".");
+                log.warn("ModRDN \""+request.getDn()+"\" to \""+request.getNewRdn()+"\".");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -656,9 +651,9 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
                 log.debug(" - Bind DN        : "+bindDn);
-                log.debug(" - DN             : "+dn);
-                log.debug(" - New RDN        : "+newRdn);
-                log.debug(" - Delete old RDN : "+deleteOldRdn);
+                log.debug(" - DN             : "+request.getDn());
+                log.debug(" - New RDN        : "+request.getNewRdn());
+                log.debug(" - Delete old RDN : "+request.getDeleteOldRdn());
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -770,12 +765,8 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            final DN baseDn = request.getDn();
-            Filter filter = request.getFilter();
-            String scope = LDAPUtil.getScope(request.getScope());
-
             if (log.isWarnEnabled()) {
-                log.warn("Search \""+baseDn +"\" with scope "+scope+" and filter \""+filter+"\"");
+                log.warn("Search \""+request.getDn() +"\" with scope "+LDAPUtil.getScope(request.getScope())+" and filter \""+request.getFilter()+"\"");
             }
 
             boolean debug = log.isDebugEnabled();
@@ -784,9 +775,9 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
                 log.debug(" - Bind DN    : "+bindDn);
-                log.debug(" - Base DN    : "+baseDn);
-                log.debug(" - Scope      : "+scope);
-                log.debug(" - Filter     : "+filter);
+                log.debug(" - Base DN    : "+request.getDn());
+                log.debug(" - Scope      : "+LDAPUtil.getScope(request.getScope()));
+                log.debug(" - Filter     : "+request.getFilter());
                 log.debug(" - Attributes : "+request.getAttributes());
                 log.debug("");
 
@@ -1013,10 +1004,6 @@ public class Session {
         eventManager.removeSearchListener(listener);
     }
 
-    public Collection getAttributes() {
-        return attributes.values();
-    }
-
     public void setAttribute(String name, Object value) {
         attributes.put(name, value);
     }
@@ -1029,11 +1016,15 @@ public class Session {
         return attributes.keySet();
     }
 
-    public String getBindPassword() {
+    public byte[] getBindPassword() {
         return bindPassword;
     }
 
     public void setBindPassword(String bindPassword) {
+        this.bindPassword = bindPassword == null ? null : bindPassword.getBytes();
+    }
+
+    public void setBindPassword(byte[] bindPassword) {
         this.bindPassword = bindPassword;
     }
 
@@ -1080,6 +1071,6 @@ public class Session {
         this.penroseConfig = penroseConfig;
 
         String s = penroseConfig.getProperty("enableEventListeners");
-        enableEventListeners = s == null ? true : new Boolean(s).booleanValue();
+        enableEventListeners = s == null || Boolean.valueOf(s);
     }
 }

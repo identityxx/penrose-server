@@ -43,7 +43,4 @@ public interface PenroseConfigMBean {
 
     public DN getRootDn() throws Exception;
     public void setRootDn(DN rootDn) throws Exception;
-
-    public String getRootPassword() throws Exception;
-    public void setRootPassword(String rootPassword) throws Exception;
 }

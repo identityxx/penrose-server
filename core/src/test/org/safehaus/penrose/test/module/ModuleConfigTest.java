@@ -8,7 +8,7 @@ import org.safehaus.penrose.module.ModuleConfig;
  */
 public class ModuleConfigTest extends TestCase {
 
-    public void testClone() {
+    public void testClone() throws Exception {
         ModuleConfig m1 = new ModuleConfig();
         m1.setName("name");
         m1.setDescription("description");

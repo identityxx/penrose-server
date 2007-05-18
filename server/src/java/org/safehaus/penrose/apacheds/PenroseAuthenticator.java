@@ -60,8 +60,7 @@ public class PenroseAuthenticator extends AbstractAuthenticator {
     public LdapPrincipal authenticate(LdapDN name, ServerContext ctx) throws NamingException {
 
         String dn = name.getUpName();
-        byte[] credentials = (byte[])ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
-        String password = new String(credentials);
+        byte[] password = (byte[])ctx.getEnvironment().get(Context.SECURITY_CREDENTIALS);
 
         if (dn == null || "".equals(dn)) {
             throw new LdapAuthenticationException();

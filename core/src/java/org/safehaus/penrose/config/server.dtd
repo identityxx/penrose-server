@@ -6,8 +6,6 @@
         service*,
         schema*,
         interpreter*,
-        entry-cache*,
-        source-cache*,
         session*,
         handler*,
         engine*,
@@ -36,12 +34,6 @@
 <!ATTLIST interpreter name CDATA #IMPLIED>
 <!ELEMENT interpreter-name (#PCDATA)>
 <!ELEMENT interpreter-class (#PCDATA)>
-
-<!ELEMENT entry-cache (cache-class?, description?, parameter*)>
-<!ATTLIST entry-cache name CDATA #IMPLIED>
-
-<!ELEMENT source-cache (cache-class?, description?, parameter*)>
-<!ATTLIST source-cache name CDATA #IMPLIED>
 
 <!ELEMENT session (description?, parameter*)>
 <!ATTLIST session name CDATA #IMPLIED>

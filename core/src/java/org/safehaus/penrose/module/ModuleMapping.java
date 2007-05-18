@@ -124,7 +124,8 @@ public class ModuleMapping implements Cloneable {
         return true;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         ModuleMapping mapping = new ModuleMapping();
         mapping.moduleName = moduleName;
         mapping.moduleConfig = moduleConfig == null ? null : (ModuleConfig)moduleConfig.clone();

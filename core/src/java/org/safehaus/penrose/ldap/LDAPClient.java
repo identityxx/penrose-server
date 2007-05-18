@@ -50,7 +50,7 @@ public class LDAPClient {
         "crossCertificatePair", "x500UniqueIdentifier"
     };
 
-    public Hashtable<String,String> parameters = new Hashtable<String,String>();
+    public Hashtable<String,Object> parameters = new Hashtable<String,Object>();
     public Collection<String> binaryAttributes;
 
     private DN suffix;
@@ -125,7 +125,7 @@ public class LDAPClient {
         String bindPassword = (String)parameters.get(Context.SECURITY_CREDENTIALS);
 
         if (bindDn != null && !"".equals(bindDn)) {
-            connection.bind(3, bindDn, bindPassword.getBytes());
+            connection.bind(3, bindDn, bindPassword.getPassword());
         }
 */
     }
@@ -197,7 +197,7 @@ public class LDAPClient {
     ) throws Exception {
 
         DN bindDn = request.getDn();
-        String password = request.getPassword();
+        byte[] password = request.getPassword();
 
         DNBuilder db = new DNBuilder();
         db.set(bindDn);
@@ -364,14 +364,14 @@ public class LDAPClient {
                 requestControls.add(control);
             }
 
-            Hashtable env = new Hashtable();
+            Hashtable<String,Object> env = new Hashtable<String,Object>();
             env.putAll(parameters);
             env.put(Context.REFERRAL, referral);
 
             context = open(env);
 
             int page = 0;
-            byte[] cookie = null;
+            byte[] cookie;
 
             do {
                 if (debug) {
@@ -528,10 +528,10 @@ public class LDAPClient {
             connection.connect(ldapUrl.getHost(), ldapUrl.getPort());
 
             String bindDn = (String)parameters.get(Context.SECURITY_PRINCIPAL);
-            String password = (String)parameters.get(Context.SECURITY_CREDENTIALS);
+            byte[] password = (byte[])parameters.get(Context.SECURITY_CREDENTIALS);
 
             if (bindDn != null && !"".equals(bindDn) && password != null && !"".equals(password)) {
-                connection.bind(3, bindDn, password.getBytes());
+                connection.bind(3, bindDn, password);
             }
 
             LDAPSearchResults sr = connection.search("", LDAPConnection.SCOPE_BASE, "(objectClass=*)", new String[] { "*", "+" }, false);

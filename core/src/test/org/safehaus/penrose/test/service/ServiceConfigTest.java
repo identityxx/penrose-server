@@ -8,7 +8,7 @@ import org.safehaus.penrose.service.ServiceConfig;
  */
 public class ServiceConfigTest extends TestCase {
 
-    public void testClone() {
+    public void testClone() throws Exception {
         ServiceConfig s1 = new ServiceConfig();
         s1.setName("name");
         s1.setDescription("description");

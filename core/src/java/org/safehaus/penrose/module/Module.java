@@ -65,7 +65,7 @@ public class Module implements
         return moduleConfig.getParameter(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return moduleConfig.getParameterNames();
     }
 

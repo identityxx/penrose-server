@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -41,14 +40,14 @@ public class EventManager {
     private PenroseContext penroseContext;
     private SessionContext sessionContext;
 
-    public Collection addListeners = new ArrayList();
-    public Collection bindListeners = new ArrayList();
-    public Collection compareListeners = new ArrayList();
-    public Collection deleteListeners = new ArrayList();
-    public Collection modifyListeners = new ArrayList();
-    public Collection modrdnListeners = new ArrayList();
-    public Collection searchListeners = new ArrayList();
-    public Collection unbindListeners = new ArrayList();
+    public Collection<AddListener> addListeners         = new ArrayList<AddListener>();
+    public Collection<BindListener> bindListeners       = new ArrayList<BindListener>();
+    public Collection<CompareListener> compareListeners = new ArrayList<CompareListener>();
+    public Collection<DeleteListener> deleteListeners   = new ArrayList<DeleteListener>();
+    public Collection<ModifyListener> modifyListeners   = new ArrayList<ModifyListener>();
+    public Collection<ModRdnListener> modrdnListeners   = new ArrayList<ModRdnListener>();
+    public Collection<SearchListener> searchListeners   = new ArrayList<SearchListener>();
+    public Collection<UnbindListener> unbindListeners   = new ArrayList<UnbindListener>();
 
     public boolean postEvent(AddEvent event) throws Exception {
 
@@ -59,11 +58,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+
+        Collection<AddListener> listeners = new ArrayList<AddListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(addListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            AddListener listener = (AddListener)i.next();
+        for (AddListener listener : listeners) {
 
             switch (event.getType()) {
                 case AddEvent.BEFORE_ADD:
@@ -89,11 +89,11 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<BindListener> listeners = new ArrayList<BindListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(bindListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            BindListener listener = (BindListener)i.next();
+        for (BindListener listener : listeners) {
 
             switch (event.getType()) {
                 case BindEvent.BEFORE_BIND:
@@ -119,11 +119,11 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<CompareListener> listeners = new ArrayList<CompareListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(compareListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            CompareListener listener = (CompareListener)i.next();
+        for (CompareListener listener : listeners) {
 
             switch (event.getType()) {
                 case CompareEvent.BEFORE_COMPARE:
@@ -149,20 +149,20 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(deleteListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            DeleteListener listener = (DeleteListener)i.next();
+        for (DeleteListener listener : listeners) {
 
             switch (event.getType()) {
                 case DeleteEvent.BEFORE_DELETE:
-                    boolean b = listener.beforeDelete((DeleteEvent)event);
+                    boolean b = listener.beforeDelete(event);
                     if (!b) return false;
                     break;
 
                 case DeleteEvent.AFTER_DELETE:
-                    listener.afterDelete((DeleteEvent)event);
+                    listener.afterDelete(event);
                     break;
             }
         }
@@ -179,21 +179,21 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(modifyListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            ModifyListener listener = (ModifyListener)i.next();
+        for (ModifyListener listener : listeners) {
 
             switch (event.getType()) {
-            case ModifyEvent.BEFORE_MODIFY:
-                boolean b = listener.beforeModify(event);
-                if (!b) return false;
-                break;
+                case ModifyEvent.BEFORE_MODIFY:
+                    boolean b = listener.beforeModify(event);
+                    if (!b) return false;
+                    break;
 
-            case ModifyEvent.AFTER_MODIFY:
-                listener.afterModify(event);
-                break;
+                case ModifyEvent.AFTER_MODIFY:
+                    listener.afterModify(event);
+                    break;
             }
         }
 
@@ -209,21 +209,21 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(modrdnListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            ModRdnListener listener = (ModRdnListener)i.next();
+        for (ModRdnListener listener : listeners) {
 
             switch (event.getType()) {
-            case ModRdnEvent.BEFORE_MODRDN:
-                boolean b = listener.beforeModRdn(event);
-                if (!b) return false;
-                break;
+                case ModRdnEvent.BEFORE_MODRDN:
+                    boolean b = listener.beforeModRdn(event);
+                    if (!b) return false;
+                    break;
 
-            case ModRdnEvent.AFTER_MODRDN:
-                listener.afterModRdn(event);
-                break;
+                case ModRdnEvent.AFTER_MODRDN:
+                    listener.afterModRdn(event);
+                    break;
             }
         }
 
@@ -239,11 +239,11 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<SearchListener> listeners = new ArrayList<SearchListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(searchListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchListener listener = (SearchListener)i.next();
+        for (SearchListener listener : listeners) {
 
             switch (event.getType()) {
                 case SearchEvent.BEFORE_SEARCH:
@@ -269,11 +269,11 @@ public class EventManager {
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
-        Collection listeners = moduleManager.getModules(dn);
+        Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(unbindListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            BindListener listener = (BindListener)i.next();
+        for (UnbindListener listener : listeners) {
 
             switch (event.getType()) {
                 case UnbindEvent.BEFORE_UNBIND:
@@ -282,7 +282,7 @@ public class EventManager {
                     break;
 
                 case UnbindEvent.AFTER_UNBIND:
-                    listener.afterUnbind((UnbindEvent)event);
+                    listener.afterUnbind(event);
                     break;
             }
         }

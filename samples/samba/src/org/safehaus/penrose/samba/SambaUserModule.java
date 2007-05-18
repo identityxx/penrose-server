@@ -27,10 +27,9 @@ public class SambaUserModule extends Module {
 
     public void init() throws Exception {
         log.debug("Initializing SambaUserModule.");
-        for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : getParameterNames()) {
             String value = getParameter(name);
-            log.debug(" - "+name+": "+value);
+            log.debug(" - " + name + ": " + value);
         }
     }
 
@@ -52,7 +51,7 @@ public class SambaUserModule extends Module {
         Session session = event.getSession();
         session.search(searchRequest, searchResponse);
 
-        SearchResult result = (SearchResult) searchResponse.next();
+        SearchResult result = searchResponse.next();
         Attributes attributes = result.getAttributes();
 
         if (attributes.get("sambaNTPassword") == null ||
@@ -170,7 +169,7 @@ public class SambaUserModule extends Module {
 
         session.search(searchRequest, searchResponse);
 
-        SearchResult result = (SearchResult) searchResponse.next();
+        SearchResult result = searchResponse.next();
         Attributes attributes = result.getAttributes();
 
         if (attributes.get("uidNumber") == null ||

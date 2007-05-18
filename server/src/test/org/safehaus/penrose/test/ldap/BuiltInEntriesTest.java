@@ -63,7 +63,7 @@ public class BuiltInEntriesTest extends TestCase {
     public void testSearch() throws Exception {
 
         Session session = penrose.newSession();
-        session.bind(penroseConfig.getRootUserConfig().getDn(), penroseConfig.getRootUserConfig().getPassword());
+        session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         String baseDn = "ou=system";
         System.out.println("Searching "+baseDn+":");

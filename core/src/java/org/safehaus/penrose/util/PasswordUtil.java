@@ -67,19 +67,6 @@ public class PasswordUtil {
         }
     }
 
-    public static byte[] encrypt(String method, String password) throws Exception {
-        return encrypt(method, null, password);
-    }
-
-    public static byte[] encrypt(String method, String salt, String password) throws Exception {
-        if (password == null) return null;
-
-        byte[] saltBytes = salt == null ? null : salt.getBytes();
-        byte[] passwordBytes = password == null ? null : password.getBytes();
-
-        return encrypt(method, saltBytes, passwordBytes);
-    }
-
     public static byte[] encrypt(String method, byte[] bytes) throws Exception {
         return encrypt(method, null, bytes);
     }
@@ -187,12 +174,16 @@ public class PasswordUtil {
 
     /**
      * 
-     * @param credential
+     * @param password
      * @param digest
      * @return true if password matches the digest
      * @throws Exception
      */
-    public static boolean comparePassword(String credential, Object digest) throws Exception {
+    public static boolean comparePassword(String password, Object digest) throws Exception {
+        return comparePassword(password.getBytes(), digest);
+    }
+
+    public static boolean comparePassword(byte[] password, Object digest) throws Exception {
 
         if (digest == null) return false;
 
@@ -200,10 +191,10 @@ public class PasswordUtil {
         String encoding       = getEncodingMethod(digest);
         String storedPassword = getEncryptedPassword(digest);
 
-        return comparePassword(credential, encryption, encoding, storedPassword);
+        return comparePassword(password, encryption, encoding, storedPassword);
     }
 
-    public static boolean comparePassword(String credential, String encryption, String encoding, String storedPassword) throws Exception {
+    public static boolean comparePassword(byte[] credential, String encryption, String encoding, String storedPassword) throws Exception {
         log.debug("Comparing passwords:");
         if (encryption != null) log.debug("Encryption ["+encryption+"]");
         if (encoding != null)   log.debug("Encoding   ["+encoding+"]");
@@ -211,17 +202,20 @@ public class PasswordUtil {
         String encryptedCredential;
 
         if ("crypt".equals(encryption) && storedPassword.startsWith("$1$")) {
+
             // get the salt form the stored password
             int i = storedPassword.indexOf("$", 3);
             String salt = storedPassword.substring(3, i);
             log.debug("Salt       ["+salt+"]");
+
             // encrypt the new password with the same salt
-            byte[] bytes = encrypt(encryption, salt, credential);
+            byte[] bytes = encrypt(encryption, salt.getBytes(), credential);
+
             // the result is already in encoded form: $1$salt$hash
             encryptedCredential = new String(bytes);
 
         } else {
-            byte[] bytes = encrypt(encryption, null, credential);
+            byte[] bytes = encrypt(encryption, credential);
             encryptedCredential = BinaryUtil.encode(encoding, bytes);
         }
 

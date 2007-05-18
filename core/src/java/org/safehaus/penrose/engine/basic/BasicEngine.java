@@ -111,6 +111,12 @@ public class BasicEngine extends Engine {
         RDN rdn = dn.getRdn();
         Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
 
+        //if (sourceMappings.isEmpty()) return;
+        //SourceMapping sourceMapping = sourceMappings.iterator().next();
+
+        //interpreter.set(sourceValues);
+        interpreter.set(rdn);
+
         for (SourceMapping sourceMapping : sourceMappings) {
             extractSourceValues(
                     interpreter,
@@ -120,6 +126,8 @@ public class BasicEngine extends Engine {
                     sourceValues
             );
         }
+
+        interpreter.clear();
     }
 
     public void extractSourceValues(
@@ -133,23 +141,17 @@ public class BasicEngine extends Engine {
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
-        interpreter.set(sourceValues);
-        interpreter.set(rdn);
-
-        Collection fieldMappings = sourceMapping.getFieldMappings();
-        for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)k.next();
+        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+        for (FieldMapping fieldMapping : fieldMappings) {
 
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             sourceValues.set(sourceMapping.getName(), fieldMapping.getName(), value);
 
-            String fieldName = sourceMapping.getName()+"."+fieldMapping.getName();
-            if (debug) log.debug(" => "+fieldName+": "+value);
+            String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
+            if (debug) log.debug(" => " + fieldName + ": " + value);
         }
-
-        interpreter.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,12 +186,12 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator iterator = groupsOfSources.iterator();
-        Collection primarySources = (Collection)iterator.next();
+        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        Collection<SourceRef> primarySources = iterator.next();
 
-        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        SourceRef sourceRef = primarySources.iterator().next();
         Connector connector = getConnector(sourceRef);
 
         connector.add(
@@ -234,12 +236,12 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator iterator = groupsOfSources.iterator();
-        Collection primarySources = (Collection)iterator.next();
+        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        Collection<SourceRef> primarySources = iterator.next();
 
-        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        SourceRef sourceRef = primarySources.iterator().next();
         Connector connector = getConnector(sourceRef);
 
         try {
@@ -294,12 +296,12 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator iterator = groupsOfSources.iterator();
-        Collection primarySources = (Collection)iterator.next();
+        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        Collection<SourceRef> primarySources = iterator.next();
 
-        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        SourceRef sourceRef = primarySources.iterator().next();
         Connector connector = getConnector(sourceRef);
 
         connector.delete(
@@ -344,12 +346,12 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator iterator = groupsOfSources.iterator();
-        Collection primarySources = (Collection)iterator.next();
+        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        Collection<SourceRef> primarySources = iterator.next();
 
-        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        SourceRef sourceRef = primarySources.iterator().next();
         Connector connector = getConnector(sourceRef);
 
         connector.modify(
@@ -394,12 +396,12 @@ public class BasicEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator iterator = groupsOfSources.iterator();
-        Collection primarySources = (Collection)iterator.next();
+        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        Collection<SourceRef> primarySources = iterator.next();
 
-        SourceRef sourceRef = (SourceRef)primarySources.iterator().next();
+        SourceRef sourceRef = primarySources.iterator().next();
         Connector connector = getConnector(sourceRef);
 
         connector.modrdn(
@@ -441,7 +443,7 @@ public class BasicEngine extends Engine {
 
         try {
             extractSourceValues(partition, baseMapping, request.getDn(), sourceValues);
-            EngineTool.propagateDown(partition, entryMapping, sourceValues);
+            //EngineTool.propagateDown(partition, entryMapping, sourceValues);
 
             if (debug) {
                 log.debug("Source values:");

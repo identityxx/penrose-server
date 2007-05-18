@@ -18,8 +18,8 @@
 package org.safehaus.penrose.module;
 
 import java.util.Collection;
-import java.util.Properties;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -31,7 +31,7 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
     private String moduleClass;
     private String description;
 
-    public Properties parameters = new Properties();
+    public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public String getName() {
         return name;
@@ -54,14 +54,14 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.get(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
 
@@ -127,7 +127,8 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
         parameters.putAll(moduleConfig.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         ModuleConfig moduleConfig = new ModuleConfig();
         moduleConfig.copy(this);
         return moduleConfig;

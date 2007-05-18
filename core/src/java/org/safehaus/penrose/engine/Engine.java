@@ -379,7 +379,7 @@ public abstract class Engine {
         boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
-        String password = request.getPassword();
+        byte[] password = request.getPassword();
 
         SourceValues sourceValues = new SourceValues();
         SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
@@ -392,10 +392,9 @@ public abstract class Engine {
             throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
         }
 
-        Collection userPasswords = attribute.getValues();
-        for (Iterator j = userPasswords.iterator(); j.hasNext(); ) {
-            Object userPassword = j.next();
-            if (debug) log.debug("userPassword: "+userPassword);
+        Collection<Object> userPasswords = attribute.getValues();
+        for (Object userPassword : userPasswords) {
+            if (debug) log.debug("userPassword: " + userPassword);
             if (PasswordUtil.comparePassword(password, userPassword)) return;
         }
 

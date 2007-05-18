@@ -86,7 +86,7 @@ public class PenroseInterceptor extends BaseInterceptor {
     public void bind(
             NextInterceptor next,
             LdapDN bindDn,
-            byte[] credentials,
+            byte[] password,
             List mechanisms,
             String saslAuthId) throws NamingException {
 
@@ -95,11 +95,9 @@ public class PenroseInterceptor extends BaseInterceptor {
             log.debug("bind(\""+bindDn+"\")");
             //log.debug(" - mechanisms: "+mechanisms);
             //log.debug(" - sslAuthId: "+saslAuthId);
-
-            String password = new String(credentials);
             //log.debug(" - password: "+password);
 
-            next.bind(bindDn, credentials, mechanisms, saslAuthId);
+            next.bind(bindDn, password, mechanisms, saslAuthId);
 
             Session session = getSession();
 

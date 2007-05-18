@@ -237,7 +237,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return partitionConfigs.get(name);
     }
 
-    public Collection getPartitionConfigs() {
+    public Collection<PartitionConfig> getPartitionConfigs() {
         return partitionConfigs.values();
     }
 
@@ -290,11 +290,15 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         rootUserConfig.setDn(rootDn);
     }
 
-    public String getRootPassword() {
+    public byte[] getRootPassword() {
         return rootUserConfig.getPassword();
     }
 
     public void setRootPassword(String rootPassword) {
+        rootUserConfig.setPassword(rootPassword);
+    }
+
+    public void setRootPassword(byte[] rootPassword) {
         rootUserConfig.setPassword(rootPassword);
     }
 
@@ -358,7 +362,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return true;
     }
 
-    public void copy(PenroseConfig penroseConfig) {
+    public void copy(PenroseConfig penroseConfig) throws CloneNotSupportedException {
         clear();
 
         home = penroseConfig.home;

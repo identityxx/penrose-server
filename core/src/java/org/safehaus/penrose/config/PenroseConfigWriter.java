@@ -18,7 +18,6 @@
 package org.safehaus.penrose.config;
 
 import java.util.Iterator;
-import java.util.Collection;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.File;
@@ -29,7 +28,6 @@ import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
@@ -119,16 +117,8 @@ public class PenroseConfigWriter {
             element.add(schema);
         }
 
-        Collection interpreterConfigs = penroseConfig.getInterpreterConfigs();
-        for (Iterator i=interpreterConfigs.iterator(); i.hasNext(); ) {
-            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
+        for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
             element.add(toElement(interpreterConfig));
-        }
-
-        if (penroseConfig.getEntryCacheConfig() != null) {
-            Element entryCache = new DefaultElement("entry-cache");
-            addElements(entryCache, penroseConfig.getEntryCacheConfig());
-            element.add(entryCache);
         }
 
         if (penroseConfig.getSessionConfig() != null) {
@@ -136,15 +126,11 @@ public class PenroseConfigWriter {
             element.add(toElement(sessionConfig));
         }
 
-        Collection engineConfigs = penroseConfig.getEngineConfigs();
-        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
+        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
             element.add(toElement(engineConfig));
         }
 
-        Collection handlerConfigs = penroseConfig.getHandlerConfigs();
-        for (Iterator i=handlerConfigs.iterator(); i.hasNext(); ) {
-            HandlerConfig handlerConfig = (HandlerConfig)i.next();
+        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
             element.add(toElement(handlerConfig));
         }
 
@@ -153,13 +139,11 @@ public class PenroseConfigWriter {
             element.add(toElement(connectorConfig));
         }
 
-        for (Iterator i = penroseConfig.getAdapterConfigs().iterator(); i.hasNext();) {
-            AdapterConfig adapterConfig = (AdapterConfig)i.next();
+        for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
             element.add(toElement(adapterConfig));
         }
 
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+        for (PartitionConfig partitionConfig : penroseConfig.getPartitionConfigs()) {
             element.add(toElement(partitionConfig));
         }
 
@@ -175,7 +159,7 @@ public class PenroseConfigWriter {
 
             if (rootUserConfig.getPassword() != null) {
                 Element rootPassword = new DefaultElement("root-password");
-                rootPassword.add(new DefaultText(rootUserConfig.getPassword()));
+                rootPassword.add(new DefaultText(new String(rootUserConfig.getPassword())));
                 rootElement.add(rootPassword);
             }
 
@@ -201,9 +185,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = serviceConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)serviceConfig.getParameter(name);
+        for (String name : serviceConfig.getParameterNames()) {
+            String value = serviceConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -235,9 +218,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = adapterConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)adapterConfig.getParameter(name);
+        for (String name : adapterConfig.getParameterNames()) {
+            String value = adapterConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -272,9 +254,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = interpreterConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)interpreterConfig.getParameter(name);
+        for (String name : interpreterConfig.getParameterNames()) {
+            String value = interpreterConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -301,9 +282,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = sessionConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)sessionConfig.getParameter(name);
+        for (String name : sessionConfig.getParameterNames()) {
+            String value = sessionConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -335,9 +315,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = engineConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)engineConfig.getParameter(name);
+        for (String name : engineConfig.getParameterNames()) {
+            String value = engineConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -369,9 +348,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = handlerConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)handlerConfig.getParameter(name);
+        for (String name : handlerConfig.getParameterNames()) {
+            String value = handlerConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -412,42 +390,6 @@ public class PenroseConfigWriter {
         return element;
     }
     
-    public void addElements(Element element, CacheConfig cacheConfig) {
-/*
-        Element cacheName = new DefaultElement("cache-name");
-        cacheName.add(new DefaultText(cacheConfig.getName()));
-        element.add(cacheName);
-*/
-        if (cacheConfig.getCacheClass() != null && !"".equals(cacheConfig.getCacheClass())) {
-            Element cacheClass = new DefaultElement("cache-class");
-            cacheClass.add(new DefaultText(cacheConfig.getCacheClass()));
-            element.add(cacheClass);
-        }
-
-        if (cacheConfig.getDescription() != null && !"".equals(cacheConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(cacheConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (Iterator i = cacheConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)cacheConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-    }
-
     public Element toElement(ConnectorConfig connectorConfig) {
         Element element = new DefaultElement("connector");
 /*
@@ -467,9 +409,8 @@ public class PenroseConfigWriter {
             element.add(description);
         }
 
-        for (Iterator i = connectorConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)connectorConfig.getParameter(name);
+        for (String name : connectorConfig.getParameterNames()) {
+            String value = connectorConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

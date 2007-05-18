@@ -27,7 +27,7 @@ public interface SessionConfigMBean {
     public String getDescription();
     public void setDescription(String description);
 
-    public Map getParameters();
+    public Map<String,String> getParameters();
     public void setParameter(String name, String value);
     public void removeParameter(String name);
     public String getParameter(String name);

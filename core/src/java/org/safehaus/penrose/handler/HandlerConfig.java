@@ -17,9 +17,9 @@
  */
 package org.safehaus.penrose.handler;
 
-import java.util.Properties;
 import java.util.Collection;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -30,7 +30,7 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
     private String handlerClass = DefaultHandler.class.getName();
     private String description;
 
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public HandlerConfig() {
     }
@@ -57,22 +57,22 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public void removeParameter(String name) {
         parameters.remove(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return parameters;
     }
 
@@ -118,7 +118,8 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
         parameters.putAll(handlerConfig.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         HandlerConfig sessionConfig = new HandlerConfig();
         sessionConfig.copy(this);
         return sessionConfig;
