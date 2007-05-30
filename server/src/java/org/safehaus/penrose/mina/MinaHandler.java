@@ -31,7 +31,7 @@ import com.identyx.javabackend.SearchResult;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseHandler extends DemuxingIoHandler {
+public class MinaHandler extends DemuxingIoHandler {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -41,7 +41,7 @@ public class PenroseHandler extends DemuxingIoHandler {
     public Map<IoSession,Session> sessions = new HashMap<IoSession,Session>();
     long counter;
 
-    public PenroseHandler(Backend penrose, ProtocolCodecFactory codecFactory) throws Exception {
+    public MinaHandler(Backend penrose, ProtocolCodecFactory codecFactory) throws Exception {
         this.backend = penrose;
         this.codecFactory = codecFactory;
 

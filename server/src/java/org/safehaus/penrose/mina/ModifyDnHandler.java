@@ -20,9 +20,9 @@ public class ModifyDnHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public ModifyDnHandler(PenroseHandler handler) {
+    public ModifyDnHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

@@ -16,9 +16,9 @@ public class BindHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public BindHandler(PenroseHandler handler) {
+    public BindHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

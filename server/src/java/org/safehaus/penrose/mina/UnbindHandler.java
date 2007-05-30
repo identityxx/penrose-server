@@ -14,9 +14,9 @@ public class UnbindHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public UnbindHandler(PenroseHandler handler) {
+    public UnbindHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

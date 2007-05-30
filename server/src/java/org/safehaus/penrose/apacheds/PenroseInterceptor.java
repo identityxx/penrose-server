@@ -112,7 +112,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -136,7 +136,7 @@ public class PenroseInterceptor extends BaseInterceptor {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw new NamingException(e.getMessage());
+            throw ExceptionTool.createNamingException(e);
         }
     }
 
@@ -355,6 +355,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             );
 
             return response.hasNext();
+
         } catch (LDAPException e) {
             throw ExceptionTool.createNamingException(e);
 

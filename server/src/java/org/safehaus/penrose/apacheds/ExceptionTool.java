@@ -18,7 +18,7 @@ public class ExceptionTool {
             LDAPException ldapException = (LDAPException)e;
             return createNamingException(ldapException.getResultCode(), ldapException.getMessage());
         }
-        
+
         ResultCodeEnum rce = ResultCodeEnum.getResultCode(e);
         return new LdapNamingException(e.getMessage(), rce);
     }

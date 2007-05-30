@@ -19,9 +19,9 @@ public class CompareHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public CompareHandler(PenroseHandler handler) {
+    public CompareHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

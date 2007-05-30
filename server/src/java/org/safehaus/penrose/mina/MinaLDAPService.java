@@ -30,7 +30,7 @@ public class MinaLDAPService extends LDAPService {
     SocketAcceptor acceptor;
 
     PenroseProtocolCodecFactory codecFactory;
-    PenroseHandler handler;
+    MinaHandler handler;
 
     ExecutorThreadModel threadModel;
     ThreadPoolExecutor threadPoolExecutor;
@@ -92,7 +92,7 @@ public class MinaLDAPService extends LDAPService {
         env.put("java.naming.ldap.attributes.binary", binaryAttributes);
 
         codecFactory = new PenroseProtocolCodecFactory(env);
-        handler = new PenroseHandler(backend, codecFactory);
+        handler = new MinaHandler(backend, codecFactory);
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 maxThreads,

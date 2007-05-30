@@ -528,10 +528,16 @@ public class LDAPClient {
             connection.connect(ldapUrl.getHost(), ldapUrl.getPort());
 
             String bindDn = (String)parameters.get(Context.SECURITY_PRINCIPAL);
-            byte[] password = (byte[])parameters.get(Context.SECURITY_CREDENTIALS);
+            Object password = parameters.get(Context.SECURITY_CREDENTIALS);
 
-            if (bindDn != null && !"".equals(bindDn) && password != null && !"".equals(password)) {
-                connection.bind(3, bindDn, password);
+            if (bindDn != null && !"".equals(bindDn) && password != null) {
+                byte[] bytes;
+                if (password instanceof byte[]) {
+                    bytes = (byte[])password;
+                } else {
+                    bytes = password.toString().getBytes();
+                }
+                connection.bind(3, bindDn, bytes);
             }
 
             LDAPSearchResults sr = connection.search("", LDAPConnection.SCOPE_BASE, "(objectClass=*)", new String[] { "*", "+" }, false);

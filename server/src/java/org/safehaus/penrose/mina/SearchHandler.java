@@ -19,9 +19,9 @@ public class SearchHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public SearchHandler(PenroseHandler handler) {
+    public SearchHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

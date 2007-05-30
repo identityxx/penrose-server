@@ -20,9 +20,9 @@ public class AddHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public AddHandler(PenroseHandler handler) {
+    public AddHandler(MinaHandler handler) {
         this.handler = handler;
     }
 

@@ -19,9 +19,9 @@ public class DeleteHandler implements MessageHandler {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseHandler handler;
+    MinaHandler handler;
 
-    public DeleteHandler(PenroseHandler handler) {
+    public DeleteHandler(MinaHandler handler) {
         this.handler = handler;
     }
 
