@@ -1,5 +1,5 @@
 drop table users;
 
-drop table users2;
+drop table groups;
 
 drop table usergroups;

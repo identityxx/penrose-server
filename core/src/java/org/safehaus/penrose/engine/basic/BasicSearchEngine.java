@@ -56,9 +56,13 @@ public class BasicSearchEngine {
             }
 
             SearchResponse<SearchResult> entryGenerator = new SearchResponse<SearchResult>() {
+
+                DN lastDn;
+                Attributes lastAttributes;
+                EntryMapping lastEntryMapping;
+
                 public void add(SearchResult result) throws Exception {
                     EntryMapping em = result.getEntryMapping();
-                    log.debug("Generating entry "+em.getDn());
 
                     SourceValues sv = result.getSourceValues();
                     sv.add(sourceValues);
@@ -79,9 +83,34 @@ public class BasicSearchEngine {
                     }
 
                     for (DN dn : dns) {
-                        if (debug) log.debug("Generating entry " + dn);
-                        SearchResult searchResult = new SearchResult(dn, attributes);
-                        searchResult.setEntryMapping(em);
+                        if (lastDn == null) {
+                            log.debug("Generating entry "+dn);
+                            lastDn = dn;
+                            lastAttributes = attributes;
+                            lastEntryMapping = em;
+
+                        } else if (lastDn.equals(dn)) {
+                            if (debug) log.debug("Merging entry " + dn);
+                            lastAttributes.add(attributes);
+
+                        } else {
+                            if (debug) log.debug("Returning entry " + lastDn);
+                            SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
+                            searchResult.setEntryMapping(lastEntryMapping);
+                            response.add(searchResult);
+
+                            lastDn = dn;
+                            lastAttributes = attributes;
+                            lastEntryMapping = em;
+                        }
+                    }
+                }
+
+                public void close() throws Exception {
+                    if (lastDn != null) {
+                        if (debug) log.debug("Returning entry " + lastDn);
+                        SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
+                        searchResult.setEntryMapping(lastEntryMapping);
                         response.add(searchResult);
                     }
                 }

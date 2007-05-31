@@ -98,4 +98,8 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         );
 
     }
+
+    public void close() throws Exception {
+        response.close();
+    }
 }

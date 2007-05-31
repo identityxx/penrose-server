@@ -1,5 +1,5 @@
 delete from users;
 
-delete from users2;
+delete from groups;
 
 delete from usergroups;

@@ -10,7 +10,7 @@
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>
-    <field name="encPassword"/>
+    <field name="password"/>
     <parameter>
       <param-name>table</param-name>
       <param-value>users</param-value>
