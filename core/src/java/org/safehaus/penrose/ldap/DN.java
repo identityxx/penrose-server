@@ -34,8 +34,7 @@ public class DN implements Comparable {
         if (rdns != null) return;
         rdns = new ArrayList<RDN>();
         Collection<RDN> list = DNBuilder.parse(originalDn);
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        for (RDN rdn : list) {
             rdns.add(rdn);
         }
     }
@@ -47,8 +46,7 @@ public class DN implements Comparable {
         StringBuilder sb = new StringBuilder();
         int counter = 0;
 
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        for (RDN rdn : rdns) {
 
             counter = rdn.createPattern(counter);
 
@@ -85,12 +83,12 @@ public class DN implements Comparable {
     public RDN getRdn() {
         parse();
         if (rdns.size() == 0) return null;
-        return (RDN)rdns.get(0);
+        return rdns.get(0);
     }
 
     public RDN get(int i) {
         parse();
-        return (RDN)rdns.get(i);
+        return rdns.get(i);
     }
 
     public Collection<RDN> getRdns() {
@@ -102,8 +100,7 @@ public class DN implements Comparable {
         if (originalDn != null) return originalDn;
 
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        for (RDN rdn : rdns) {
 
             if (sb.length() > 0) sb.append(",");
             sb.append(rdn.getOriginal());
@@ -118,8 +115,7 @@ public class DN implements Comparable {
 
         parse();
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=rdns.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        for (RDN rdn : rdns) {
 
             if (sb.length() > 0) sb.append(",");
             sb.append(rdn.getNormalized());
@@ -135,7 +131,7 @@ public class DN implements Comparable {
         parse();
         DNBuilder db = new DNBuilder();
         for (int i=1; i<rdns.size(); i++) {
-            RDN rdn = (RDN)rdns.get(i);
+            RDN rdn = rdns.get(i);
             db.append(rdn);
         }
 
@@ -156,8 +152,8 @@ public class DN implements Comparable {
         if (i1 < i2) return false;
 
         while (i1 > 0 && i2 > 0) {
-            RDN rdn1 = (RDN)rdns.get(i1-1);
-            RDN rdn2 = (RDN)suffix.rdns.get(i2-1);
+            RDN rdn1 = rdns.get(i1-1);
+            RDN rdn2 = suffix.rdns.get(i2-1);
 
             if (!rdn1.match(rdn2)) return false;
 
@@ -227,8 +223,8 @@ public class DN implements Comparable {
         int i = rdns.size();
 
         while (i > 0) {
-            RDN rdn1 = (RDN)rdns.get(i-1);
-            RDN rdn2 = (RDN)dn.rdns.get(i-1);
+            RDN rdn1 = rdns.get(i-1);
+            RDN rdn2 = dn.rdns.get(i-1);
 
             int c = rdn1.compareTo(rdn2);
             if (c != 0) return c;

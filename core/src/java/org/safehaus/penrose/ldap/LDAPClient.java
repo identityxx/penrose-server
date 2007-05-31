@@ -23,6 +23,7 @@ import java.util.*;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.ReferralException;
+import javax.naming.PartialResultException;
 import javax.naming.directory.*;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.BasicControl;
@@ -335,11 +336,11 @@ public class LDAPClient {
 
         if (debug) log.debug("Search \""+ baseDn +"\" with filter "+filter+" with scope "+ LDAPUtil.getScope(request.getScope()));
 
-        String attributes[] = request.getAttributes().toArray(new String[request.getAttributes().size()]);
+        String attributeNames[] = request.getAttributes().toArray(new String[request.getAttributes().size()]);
 
         javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
         sc.setSearchScope(request.getScope());
-        sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributes);
+        sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributeNames);
         sc.setCountLimit(request.getSizeLimit());
         sc.setTimeLimit((int) request.getTimeLimit());
 
@@ -354,7 +355,8 @@ public class LDAPClient {
                 requestControls.add(new javax.naming.ldap.PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
 
-            String referral = "follow";
+            //String referral = "follow";
+            String referral = "throw";
 
             for (Control control : origControls) {
                 if (control.getID().equals("2.16.840.1.113730.3.4.2")) {
@@ -370,23 +372,23 @@ public class LDAPClient {
 
             context = open(env);
 
-            int page = 0;
-            byte[] cookie;
+            boolean moreReferrals = true;
 
-            do {
-                if (debug) {
-                    log.debug("Request Controls:");
-                    for (Control control : requestControls) {
-                        log.debug(" - "+control.getID());
-                    }
-                }
+            while (moreReferrals) {
+                try {
+                    int page = 0;
+                    byte[] cookie;
 
-                context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
+                    do {
+                        if (debug) {
+                            log.debug("Request Controls:");
+                            for (Control control : requestControls) {
+                                log.debug(" - "+control.getID());
+                            }
+                        }
 
-                boolean moreReferrals = true;
+                        context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
 
-                while (moreReferrals) {
-                    try {
                         if (debug) log.debug("Searching page #"+page);
                         ne = context.search(baseDn.toString(), filter, sc);
 
@@ -395,56 +397,61 @@ public class LDAPClient {
                             response.add(createSearchResult(request, sr));
                         }
 
-                        moreReferrals = false;
+                        // get cookie returned by server
+                        Control[] responseControls = context.getResponseControls();
+                        cookie = null;
 
-                    } catch (ReferralException e) {
-                        String ref = e.getReferralInfo().toString();
-                        log.debug("Referral: "+ ref);
-
-                        LDAPUrl url = new LDAPUrl(ref);
-
-                        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
-                        attrs.put("ref", ref);
-                        attrs.put("objectClass", "referral");
-
-                        javax.naming.directory.SearchResult sr = new javax.naming.directory.SearchResult(url.getDN(), null, attrs);
-                        response.add(createSearchResult(request, sr));
-                        //response.addReferral(ref);
-
-                        moreReferrals = e.skipReferral();
-
-                        if (moreReferrals) {
-                            context = (javax.naming.ldap.LdapContext)e.getReferralContext();
+                        if (responseControls != null) {
+                            log.debug("Response Controls:");
+                            for (Control control : responseControls) {
+                                log.debug(" - "+control.getID());
+                                if (control instanceof PagedResultsResponseControl) {
+                                    PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
+                                    cookie = prrc.getCookie();
+                                }
+                            }
                         }
+
+                        // pass cookie back to server for the next page
+                        requestControls = new ArrayList<Control>();
+                        requestControls.addAll(origControls);
+
+                        if (pageSize > 0 && cookie != null) {
+                            requestControls.add(new javax.naming.ldap.PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                        }
+
+                        page++;
+
+                    } while (cookie != null && cookie.length != 0);
+
+                    moreReferrals = false;
+
+                } catch (PartialResultException e) {
+                    log.debug(e.getMessage(), e);
+                    moreReferrals = false;
+
+                } catch (ReferralException e) {
+                    String ref = e.getReferralInfo().toString();
+                    log.debug("Referral: "+ ref);
+
+                    LDAPUrl url = new LDAPUrl(ref);
+                    DN dn = new DN(url.getDN());
+
+                    Attributes attributes = new Attributes();
+                    attributes.setValue("ref", ref);
+                    attributes.setValue("objectClass", "referral");
+
+                    SearchResult result = new SearchResult(dn, attributes);
+                    response.add(result);
+                    //response.addReferral(ref);
+
+                    moreReferrals = e.skipReferral();
+
+                    if (moreReferrals) {
+                        context = (javax.naming.ldap.LdapContext)e.getReferralContext();
                     }
                 }
-
-                // get cookie returned by server
-                Control[] responseControls = context.getResponseControls();
-                cookie = null;
-
-                if (responseControls != null) {
-                    log.debug("Response Controls:");
-                    for (Control control : responseControls) {
-                        log.debug(" - "+control.getID());
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
-                            cookie = prrc.getCookie();
-                        }
-                    }
-                }
-
-                // pass cookie back to server for the next page
-                requestControls = new ArrayList<Control>();
-                requestControls.addAll(origControls);
-
-                if (pageSize > 0 && cookie != null) {
-                    requestControls.add(new javax.naming.ldap.PagedResultsControl(pageSize, cookie, Control.CRITICAL));
-                }
-
-                page++;
-
-            } while (cookie != null && cookie.length != 0);
+            }
 
         } finally {
             if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }

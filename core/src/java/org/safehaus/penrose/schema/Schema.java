@@ -34,7 +34,12 @@ public class Schema implements Cloneable {
     private SchemaConfig schemaConfig;
 
     protected Map<String,AttributeType> attributeTypes = new TreeMap<String,AttributeType>();
+    protected Map<String,AttributeType> attributeTypesByName = new TreeMap<String,AttributeType>();
+    protected Map<String,AttributeType> attributeTypesByOid = new TreeMap<String,AttributeType>();
+
     protected Map<String,ObjectClass> objectClasses = new TreeMap<String,ObjectClass>();
+    protected Map<String,ObjectClass> objectClassesByName = new TreeMap<String,ObjectClass>();
+    protected Map<String,ObjectClass> objectClassesByOid = new TreeMap<String,ObjectClass>();
 
     public Schema() {
     }
@@ -48,17 +53,11 @@ public class Schema implements Cloneable {
     }
     
     public Collection<AttributeType> getAttributeTypes() {
-        Collection<AttributeType> list = new ArrayList<AttributeType>();
-        list.addAll(attributeTypes.values());
-        return list;
+        return attributeTypesByName.values();
     }
 
     public Collection<String> getAttributeTypeNames() {
-        Collection<String> names = new TreeSet<String>();
-        for (AttributeType attributeType : attributeTypes.values()) {
-            names.add(attributeType.getName());
-        }
-        return names;
+        return attributeTypesByName.keySet();
     }
 
     public AttributeType getAttributeType(String name) {
@@ -66,6 +65,9 @@ public class Schema implements Cloneable {
     }
 
     public void addAttributeType(AttributeType at) {
+        attributeTypesByName.put(at.getName(), at);
+        attributeTypesByOid.put(at.getOid(), at);
+
         attributeTypes.put(at.getOid(), at);
         for (String name : at.getNames()) {
             attributeTypes.put(name.toLowerCase(), at);
@@ -81,6 +83,10 @@ public class Schema implements Cloneable {
     public AttributeType removeAttributeType(String name) {
         AttributeType at = attributeTypes.get(name.toLowerCase());
         if (at == null) return null;
+
+        attributeTypesByName.remove(at.getName());
+        attributeTypesByOid.remove(at.getOid());
+
         attributeTypes.remove(at.getOid());
         for (String atName : at.getNames()) {
             attributeTypes.remove(atName.toLowerCase());
@@ -89,17 +95,11 @@ public class Schema implements Cloneable {
     }
 
     public Collection<ObjectClass> getObjectClasses() {
-        Collection<ObjectClass> list = new ArrayList<ObjectClass>();
-        list.addAll(objectClasses.values());
-        return list;
+        return objectClassesByName.values();
     }
 
     public Collection<String> getObjectClassNames() {
-        Collection<String> names = new TreeSet<String>();
-        for (ObjectClass objectClass : objectClasses.values()) {
-            names.add(objectClass.getName());
-        }
-        return names;
+        return objectClassesByName.keySet();
     }
 
     public ObjectClass getObjectClass(String name) {
@@ -107,6 +107,9 @@ public class Schema implements Cloneable {
     }
 
     public void addObjectClass(ObjectClass oc) {
+        objectClassesByName.put(oc.getName(), oc);
+        objectClassesByOid.put(oc.getOid(), oc);
+
         objectClasses.put(oc.getOid(), oc);
         for (String name : oc.getNames()) {
             objectClasses.put(name.toLowerCase(), oc);
@@ -122,6 +125,10 @@ public class Schema implements Cloneable {
     public ObjectClass removeObjectClass(String name) {
         ObjectClass oc = objectClasses.get(name.toLowerCase());
         if (oc == null) return null;
+
+        objectClassesByName.remove(oc.getName());
+        objectClassesByOid.remove(oc.getOid());
+
         objectClasses.remove(oc.getOid());
         for (String ocName : oc.getNames()) {
             objectClasses.remove(ocName.toLowerCase());
@@ -228,19 +235,30 @@ public class Schema implements Cloneable {
     }
 
     public void add(Schema schema) {
+        attributeTypesByName.putAll(schema.attributeTypesByName);
+        attributeTypesByOid.putAll(schema.attributeTypesByOid);
         attributeTypes.putAll(schema.attributeTypes);
+
+        objectClassesByName.putAll(schema.objectClassesByName);
+        objectClassesByOid.putAll(schema.objectClassesByOid);
         objectClasses.putAll(schema.objectClasses);
     }
 
     public void remove(Schema schema) {
-        for (AttributeType at : schema.attributeTypes.values()) {
+        for (AttributeType at : schema.attributeTypesByName.values()) {
+            attributeTypesByName.remove(at.getName());
+            attributeTypesByOid.remove(at.getOid());
+
             attributeTypes.remove(at.getOid());
             for (String name : at.getNames()) {
                 attributeTypes.remove(name.toLowerCase());
             }
         }
 
-        for (ObjectClass oc : schema.objectClasses.values()) {
+        for (ObjectClass oc : schema.objectClassesByName.values()) {
+            objectClassesByName.remove(oc.getName());
+            objectClassesByOid.remove(oc.getOid());
+
             objectClasses.remove(oc.getOid());
             for (String name : oc.getNames()) {
                 objectClasses.remove(name.toLowerCase());
@@ -249,7 +267,12 @@ public class Schema implements Cloneable {
     }
 
     public void clear() {
+        attributeTypesByName.clear();
+        attributeTypesByOid.clear();
         attributeTypes.clear();
+
+        objectClassesByName.clear();
+        objectClassesByOid.clear();
         objectClasses.clear();
     }
 
@@ -261,7 +284,6 @@ public class Schema implements Cloneable {
             //log.debug("   - comparing "+name+": ["+v1+"] ["+v2+"]");
 
             if (v1 == null && v2 == null) {
-                continue;
 
             } else if (v1 == null || v2 == null) {
                 return false;
@@ -283,7 +305,6 @@ public class Schema implements Cloneable {
             Object v2 = pk2.get(name);
 
             if (v1 == null && v2 == null) {
-                continue;
 
             } else if (v1 == null || v2 == null) {
                 return false;
@@ -298,8 +319,8 @@ public class Schema implements Cloneable {
 
     public int hashCode() {
         return (schemaConfig == null ? 0 : schemaConfig.hashCode()) +
-                (attributeTypes == null ? 0 : attributeTypes.hashCode()) +
-                (objectClasses == null ? 0 : objectClasses.hashCode());
+                (attributeTypesByName == null ? 0 : attributeTypesByName.hashCode()) +
+                (objectClassesByName == null ? 0 : objectClassesByName.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -314,8 +335,8 @@ public class Schema implements Cloneable {
 
         Schema schema = (Schema)object;
         if (!equals(schemaConfig, schema.schemaConfig)) return false;
-        if (!equals(attributeTypes, schema.attributeTypes)) return false;
-        if (!equals(objectClasses, schema.objectClasses)) return false;
+        if (!equals(attributeTypesByName, schema.attributeTypesByName)) return false;
+        if (!equals(objectClassesByName, schema.objectClassesByName)) return false;
 
         return true;
     }
@@ -329,11 +350,15 @@ public class Schema implements Cloneable {
             }
         }
 
+        attributeTypesByName.clear();
+        attributeTypesByOid.clear();
         attributeTypes.clear();
         for (AttributeType attributeType : schema.getAttributeTypes()) {
             addAttributeType((AttributeType) attributeType.clone());
         }
 
+        objectClassesByName.clear();
+        objectClassesByOid.clear();
         objectClasses.clear();
         for (ObjectClass objectClass : schema.getObjectClasses()) {
             addObjectClass((ObjectClass) objectClass.clone());

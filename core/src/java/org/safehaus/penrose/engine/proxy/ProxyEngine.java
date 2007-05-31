@@ -29,6 +29,7 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.control.Control;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -438,6 +439,7 @@ public class ProxyEngine extends Engine {
             SearchRequest newRequest = new SearchRequest(request);
             newRequest.setFilter(filter);
             newRequest.setScope(scope);
+            //newRequest.addControl(new Control("2.16.840.1.113730.3.4.2", null, true));
 
             final DN targetDn;
             if (found) {
