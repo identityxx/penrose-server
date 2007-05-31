@@ -44,7 +44,8 @@ public class HandlerManager {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static DN SCHEMA_DN = new DN("cn=Subschema");
+    public final static DN ROOT_DSE_DN = new DN("");
+    public final static DN SCHEMA_DN   = new DN("cn=Subschema");
 
     Map<String,Handler> handlers = new TreeMap<String,Handler>();
 
@@ -409,21 +410,15 @@ public class HandlerManager {
 
         boolean debug = log.isDebugEnabled();
 
-        DN baseDn = schemaManager.normalize(request.getDn());
-        request.setDn(baseDn);
+        DN baseDn = request.getDn();
+        Collection<String> requestedAttributes = request.getAttributes();
 
-        Collection<String> attributeNames = schemaManager.normalize(request.getAttributes());
-        request.setAttributes(attributeNames);
-
-        final Set<String> requestedAttributes = new HashSet<String>();
-        if (request.getAttributes() != null) requestedAttributes.addAll(request.getAttributes());
-
-        final boolean allRegularAttributes = request.getAttributes() == null || request.getAttributes().isEmpty() || request.getAttributes().contains("*");
-        final boolean allOpAttributes = request.getAttributes() != null && request.getAttributes().contains("+");
+        boolean allRegularAttributes = requestedAttributes.isEmpty() || requestedAttributes.contains("*");
+        boolean allOpAttributes = requestedAttributes.contains("+");
 
         if (debug) log.debug("Requested: "+request.getAttributes());
-
-        if (baseDn.isEmpty()) {
+/*
+        if (baseDn.equals(ROOT_DSE_DN)) {
             if (request.getScope() == SearchRequest.SCOPE_BASE) {
                 SearchResult result = createRootDSE();
                 Attributes attrs = result.getAttributes();
@@ -445,7 +440,7 @@ public class HandlerManager {
             response.close();
             return;
 
-        } else if (baseDn.matches(SCHEMA_DN)) {
+        } else if (baseDn.equals(SCHEMA_DN)) {
 
             SearchResult result = createSchema();
             Attributes attrs = result.getAttributes();
@@ -466,7 +461,7 @@ public class HandlerManager {
             response.close();
             return;
         }
-
+*/
         Collection<EntryMapping> entryMappings = partition.findEntryMappings(baseDn);
 
         if (entryMappings.isEmpty()) {
@@ -479,7 +474,6 @@ public class HandlerManager {
                 session,
                 partition,
                 this,
-                schemaManager,
                 aclManager,
                 requestedAttributes,
                 allRegularAttributes,
@@ -573,7 +567,7 @@ public class HandlerManager {
             }
         }
 
-        return new SearchResult("", attributes);
+        return new SearchResult(ROOT_DSE_DN, attributes);
     }
 
     public SearchResult createSchema() throws Exception {

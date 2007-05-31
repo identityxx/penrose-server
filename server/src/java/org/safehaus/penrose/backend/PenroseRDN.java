@@ -16,12 +16,12 @@ public class PenroseRDN implements com.identyx.javabackend.RDN {
         this.rdn = rdn;
     }
 
-    public Collection getNames() throws Exception {
+    public Collection<String> getNames() throws Exception {
         return rdn.getNames();
     }
 
-    public Collection getValues(String name) throws Exception {
-        Collection values = new ArrayList();
+    public Collection<Object> getValues(String name) throws Exception {
+        Collection<Object> values = new ArrayList<Object>();
         values.add(rdn.get(name));
         return values;
     }

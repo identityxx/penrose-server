@@ -100,13 +100,16 @@ public class DN implements Comparable {
         if (originalDn != null) return originalDn;
 
         StringBuilder sb = new StringBuilder();
-        for (RDN rdn : rdns) {
 
-            if (sb.length() > 0) sb.append(",");
-            sb.append(rdn.getOriginal());
+        if (rdns != null) {
+            for (RDN rdn : rdns) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(rdn.getOriginal());
+            }
         }
 
         originalDn = sb.toString();
+
         return originalDn;
     }
 

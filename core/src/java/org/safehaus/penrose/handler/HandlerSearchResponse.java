@@ -28,10 +28,9 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
     Partition partition;
 
     HandlerManager handlerManager;
-    SchemaManager schemaManager;
     ACLManager aclManager;
 
-    Set<String> requestedAttributes;
+    Collection<String> requestedAttributes;
     boolean allRegularAttributes;
     boolean allOpAttributes;
 
@@ -44,9 +43,8 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
             Session session,
             Partition partition,
             HandlerManager handlerManager,
-            SchemaManager schemaManager,
             ACLManager aclManager,
-            Set<String> requestedAttributes,
+            Collection<String> requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
             Collection<EntryMapping> entryMappings
@@ -56,7 +54,6 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
         this.partition = partition;
 
         this.handlerManager = handlerManager;
-        this.schemaManager  = schemaManager;
         this.aclManager = aclManager;
 
         this.requestedAttributes = requestedAttributes;

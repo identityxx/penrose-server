@@ -34,6 +34,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -732,34 +733,9 @@ public class Session {
     }
 
     public void search(
-            SearchRequest request,
-            SearchResponse<SearchResult> response
-    ) throws LDAPException {
-        try {
-            DN baseDn = request.getDn();
-
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(baseDn);
-
-            if (partition == null && !baseDn.isEmpty() && !baseDn.equals(HandlerManager.SCHEMA_DN)) {
-                log.debug("Partition for entry "+baseDn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            search(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
-    }
-
-    public void search(
-            final Partition partition,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws LDAPException {
-
         try {
             if (!isValid()) throw new Exception("Invalid session.");
 
@@ -784,6 +760,14 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
+            SchemaManager schemaManager = penroseContext.getSchemaManager();
+
+            DN baseDn = schemaManager.normalize(request.getDn());
+            request.setDn(baseDn);
+
+            Collection<String> requestedAttributes = schemaManager.normalize(request.getAttributes());
+            request.setAttributes(requestedAttributes);
+
             response.setEnableEventListeners(enableEventListeners);
 
             final Session session = this;
@@ -798,6 +782,63 @@ public class Session {
 	            }
             }
 
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(baseDn);
+
+            if (partition == null) {
+
+                boolean allRegularAttributes = requestedAttributes.isEmpty() || requestedAttributes.contains("*");
+                boolean allOpAttributes = requestedAttributes.contains("+");
+
+                if (baseDn.equals(HandlerManager.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
+
+                    SearchResult result = handlerManager.createRootDSE();
+                    Attributes attrs = result.getAttributes();
+                    if (debug) {
+                        log.debug("Before: "+result.getDn());
+                        attrs.print();
+                    }
+
+                    Collection<String> list = handlerManager.filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
+                    handlerManager.removeAttributes(attrs, list);
+
+                    if (debug) {
+                        log.debug("After: "+result.getDn());
+                        attrs.print();
+                    }
+
+                    response.add(result);
+                    response.close();
+                    return;
+
+                } else if (baseDn.equals(HandlerManager.SCHEMA_DN)) {
+
+                    SearchResult result = handlerManager.createSchema();
+                    Attributes attrs = result.getAttributes();
+                    if (debug) {
+                        log.debug("Before: "+result.getDn());
+                        attrs.print();
+                    }
+
+                    Collection<String> list = handlerManager.filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
+                    handlerManager.removeAttributes(attrs, list);
+
+                    if (debug) {
+                        log.debug("After: "+result.getDn());
+                        attrs.print();
+                    }
+
+                    response.add(result);
+                    response.close();
+                    return;
+
+                } else {
+                    log.debug("Partition for entry "+baseDn+" not found.");
+                    response.close();
+                    throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+                }
+            }
+
             SearchResponse<SearchResult> resultsToUse = response;
 
             if (enableEventListeners) {
@@ -810,11 +851,11 @@ public class Session {
                     }
                     public void close() throws Exception {
                         response.close();
-    
+
                         lastActivityDate.setTime(System.currentTimeMillis());
-    
+
                         SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, request, response);
-    
+
                         LDAPException exception = response.getException();
                         if (exception != null) {
                             afterSearchEvent.setReturnCode(exception.getResultCode());

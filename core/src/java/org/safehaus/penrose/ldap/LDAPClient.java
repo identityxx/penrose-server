@@ -62,7 +62,7 @@ public class LDAPClient {
     private javax.naming.directory.SearchResult rootDSE;
     private Schema schema;
 
-    private int pageSize = 0;
+    private int pageSize = 100;
 
     public LDAPClient(LDAPClient client, Map<String,String> parameters) throws Exception {
         init(parameters);

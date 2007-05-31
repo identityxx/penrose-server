@@ -23,10 +23,9 @@ public class PenroseDN implements com.identyx.javabackend.DN {
         return new PenroseRDN(dn.getRdn());
     }
 
-    public Collection getRdns() throws Exception {
-        List rdns = new ArrayList();
-        for (Iterator i=dn.getRdns().iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+    public Collection<com.identyx.javabackend.RDN> getRdns() throws Exception {
+        List<com.identyx.javabackend.RDN> rdns = new ArrayList<com.identyx.javabackend.RDN>();
+        for (RDN rdn : dn.getRdns()) {
             rdns.add(new PenroseRDN(rdn));
         }
         return rdns;
@@ -37,6 +36,6 @@ public class PenroseDN implements com.identyx.javabackend.DN {
     }
 
     public String toString() {
-        return dn.toString();
+        return dn == null ? "" : dn.toString();
     }
 }

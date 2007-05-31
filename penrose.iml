@@ -555,7 +555,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="opends" />
     <orderEntry type="module" module-name="java-backend" />
     <orderEntryProperties />
   </component>
