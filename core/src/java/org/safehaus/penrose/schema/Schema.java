@@ -48,7 +48,7 @@ public class Schema implements Cloneable {
     }
     
     public Collection<AttributeType> getAttributeTypes() {
-        Collection<AttributeType> list = new TreeSet<AttributeType>();
+        Collection<AttributeType> list = new ArrayList<AttributeType>();
         list.addAll(attributeTypes.values());
         return list;
     }
@@ -89,7 +89,7 @@ public class Schema implements Cloneable {
     }
 
     public Collection<ObjectClass> getObjectClasses() {
-        Collection<ObjectClass> list = new TreeSet<ObjectClass>();
+        Collection<ObjectClass> list = new ArrayList<ObjectClass>();
         list.addAll(objectClasses.values());
         return list;
     }

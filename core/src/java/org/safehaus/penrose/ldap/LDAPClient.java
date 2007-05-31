@@ -81,7 +81,7 @@ public class LDAPClient {
 
         this.parameters.putAll(parameters);
 
-        String providerUrl = (String)parameters.get(Context.PROVIDER_URL);
+        String providerUrl = parameters.get(Context.PROVIDER_URL);
 
         int index = providerUrl.indexOf("://");
         index = providerUrl.indexOf("/", index+3);
@@ -101,7 +101,7 @@ public class LDAPClient {
             binaryAttributes.add(name.toLowerCase());
         }
 
-        String s = (String)parameters.get("java.naming.ldap.attributes.binary");
+        String s = parameters.get("java.naming.ldap.attributes.binary");
         //log.debug("java.naming.ldap.attributes.binary: "+s);
 
         if (s != null) {
@@ -333,7 +333,7 @@ public class LDAPClient {
 
         String filter = request.getFilter() == null ? "(objectClass=*)" : request.getFilter().toString();
 
-        log.debug("Search \""+ baseDn +"\" with filter "+filter+" with scope "+ LDAPUtil.getScope(request.getScope()));
+        if (debug) log.debug("Search \""+ baseDn +"\" with filter "+filter+" with scope "+ LDAPUtil.getScope(request.getScope()));
 
         String attributes[] = request.getAttributes().toArray(new String[request.getAttributes().size()]);
 
@@ -641,28 +641,40 @@ public class LDAPClient {
 
     public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug("Search \""+ schemaDn +"\"");
+
+        javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
+        searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
+
         javax.naming.ldap.LdapContext context = null;
+        NamingEnumeration ne = null;
 
         try {
-            //log.debug("Attribute Types:");
+            Collection<Control> requestControls = new ArrayList<Control>();
+            requestControls.add(new javax.naming.ldap.PagedResultsControl(100, Control.NONCRITICAL));
 
-            javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
-            searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
-    /*
-            byte[] cookie = null;
+            context = open();
+
+            int page = 0;
+            byte[] cookie;
 
             do {
-                Control[] controls = new Control[]{
-                    new PagedResultsControl(100, cookie, Control.CRITICAL)
-                };
+                if (debug) {
+                    log.debug("Request Controls:");
+                    for (Control control : requestControls) {
+                        log.debug(" - "+control.getID());
+                    }
+                }
 
-                context.setRequestControls(controls);
-    */
-                context = open();
-                NamingEnumeration results = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
+                context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
 
-                while (results.hasMore()) {
-                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
+                if (debug) log.debug("Searching page #"+page);
+                ne = context.search(schemaDn, "(objectClass=attributeSchema)", searchControls);
+
+                while (ne.hasMore()) {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                     javax.naming.directory.Attributes attributes = sr.getAttributes();
 
                     javax.naming.directory.Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
@@ -686,54 +698,75 @@ public class LDAPClient {
 
                     schema.addAttributeType(at);
                 }
-    /*
-                controls = context.getResponseControls();
 
-                if (controls != null) {
-                    for (int i = 0; i < controls.length; i++) {
-                        if (controls[i] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                (PagedResultsResponseControl)controls[i];
+                // get cookie returned by server
+                Control[] responseControls = context.getResponseControls();
+                cookie = null;
+
+                if (responseControls != null) {
+                    log.debug("Response Controls:");
+                    for (Control control : responseControls) {
+                        log.debug(" - "+control.getID());
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
                         }
                     }
                 }
-    */
-                results.close();
-    /*
-            } while (cookie != null);
 
-            context.setRequestControls(null);
-    */
+                // pass cookie back to server for the next page
+                requestControls = new ArrayList<Control>();
+
+                if (cookie != null) {
+                    requestControls.add(new javax.naming.ldap.PagedResultsControl(100, cookie, Control.CRITICAL));
+                }
+
+                page++;
+
+            } while (cookie != null && cookie.length != 0);
+
         } finally {
+            if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
 
     public void getActiveDirectoryObjectClasses(Schema schema, String schemaDn) throws Exception {
 
-        //log.debug("Object Classes:");
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug("Search \""+ schemaDn +"\"");
+
+        javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
+        searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
 
         javax.naming.ldap.LdapContext context = null;
+        NamingEnumeration ne = null;
 
         try {
-            javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
-            searchControls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
-    /*
-            byte[] cookie = null;
+            Collection<Control> requestControls = new ArrayList<Control>();
+            requestControls.add(new javax.naming.ldap.PagedResultsControl(100, Control.NONCRITICAL));
+
+            context = open();
+
+            int page = 0;
+            byte[] cookie;
 
             do {
-                Control[] controls = new Control[]{
-                    new PagedResultsControl(100, cookie, Control.CRITICAL)
-                };
+                if (debug) {
+                    log.debug("Request Controls:");
+                    for (Control control : requestControls) {
+                        log.debug(" - "+control.getID());
+                    }
+                }
 
-                context.setRequestControls(controls);
-    */
-                context = open();
-                NamingEnumeration results = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
+                context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
 
-                while (results.hasMore()) {
-                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)results.next();
+                if (debug) log.debug("Searching page #"+page);
+                ne = context.search(schemaDn, "(objectClass=classSchema)", searchControls);
+
+                while (ne.hasMore()) {
+                    javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
                     javax.naming.directory.Attributes attributes = sr.getAttributes();
 
                     javax.naming.directory.Attribute lDAPDisplayName = attributes.get("lDAPDisplayName");
@@ -751,63 +784,71 @@ public class LDAPClient {
 
                     javax.naming.directory.Attribute mustContain = attributes.get("mustContain");
                     if (mustContain != null) {
-                        NamingEnumeration ne = mustContain.getAll();
-                        while (ne.hasMore()) {
-                            String requiredAttribute = (String)ne.next();
+                        NamingEnumeration ne2 = mustContain.getAll();
+                        while (ne2.hasMore()) {
+                            String requiredAttribute = (String)ne2.next();
                             oc.addRequiredAttribute(requiredAttribute);
                         }
                     }
 
                     javax.naming.directory.Attribute systemMustContain = attributes.get("systemMustContain");
                     if (systemMustContain != null) {
-                        NamingEnumeration ne = systemMustContain.getAll();
-                        while (ne.hasMore()) {
-                            String requiredAttribute = (String)ne.next();
+                        NamingEnumeration ne2 = systemMustContain.getAll();
+                        while (ne2.hasMore()) {
+                            String requiredAttribute = (String)ne2.next();
                             oc.addRequiredAttribute(requiredAttribute);
                         }
                     }
 
                     javax.naming.directory.Attribute mayContain = attributes.get("mayContain");
                     if (mayContain != null) {
-                        NamingEnumeration ne = mayContain.getAll();
-                        while (ne.hasMore()) {
-                            String optionalAttribute = (String)ne.next();
+                        NamingEnumeration ne2 = mayContain.getAll();
+                        while (ne2.hasMore()) {
+                            String optionalAttribute = (String)ne2.next();
                             oc.addOptionalAttribute(optionalAttribute);
                         }
                     }
 
                     javax.naming.directory.Attribute systemMayContain = attributes.get("systemMayContain");
                     if (systemMayContain != null) {
-                        NamingEnumeration ne = systemMayContain.getAll();
-                        while (ne.hasMore()) {
-                            String optionalAttribute = (String)ne.next();
+                        NamingEnumeration ne2 = systemMayContain.getAll();
+                        while (ne2.hasMore()) {
+                            String optionalAttribute = (String)ne2.next();
                             oc.addOptionalAttribute(optionalAttribute);
                         }
                     }
 
                     schema.addObjectClass(oc);
                 }
-    /*
-                controls = context.getResponseControls();
 
-                if (controls != null) {
-                    for (int i = 0; i < controls.length; i++) {
-                        if (controls[i] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl prrc =
-                                (PagedResultsResponseControl)controls[i];
+                // get cookie returned by server
+                Control[] responseControls = context.getResponseControls();
+                cookie = null;
+
+                if (responseControls != null) {
+                    log.debug("Response Controls:");
+                    for (Control control : responseControls) {
+                        log.debug(" - "+control.getID());
+                        if (control instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
                         }
                     }
                 }
-    */
-                results.close();
-    /*
-            } while (cookie != null);
 
-            context.setRequestControls(null);
-    */
+                // pass cookie back to server for the next page
+                requestControls = new ArrayList<Control>();
+
+                if (cookie != null) {
+                    requestControls.add(new javax.naming.ldap.PagedResultsControl(100, cookie, Control.CRITICAL));
+                }
+
+                page++;
+
+            } while (cookie != null && cookie.length != 0);
 
         } finally {
+            if (ne != null) try { ne.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }
