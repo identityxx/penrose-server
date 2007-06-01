@@ -86,7 +86,7 @@ public class DefaultHandler extends Handler {
 
         super.add(session, partition, entryMapping, request, response);
 
-        cacheManager.clear();
+        if (cacheManager != null) cacheManager.clear();
     }
 
     public void delete(
@@ -99,7 +99,7 @@ public class DefaultHandler extends Handler {
 
         super.delete(session, partition, entryMapping, request, response);
 
-        cacheManager.clear();
+        if (cacheManager != null) cacheManager.clear();
     }
 
     public void modify(
@@ -112,7 +112,7 @@ public class DefaultHandler extends Handler {
 
         super.modify(session, partition, entryMapping, request, response);
 
-        cacheManager.clear();
+        if (cacheManager != null) cacheManager.clear();
     }
 
     public void modrdn(
@@ -125,7 +125,7 @@ public class DefaultHandler extends Handler {
 
         super.modrdn(session, partition, entryMapping, request, response);
 
-        cacheManager.clear();
+        if (cacheManager != null) cacheManager.clear();
     }
 
     public void search(

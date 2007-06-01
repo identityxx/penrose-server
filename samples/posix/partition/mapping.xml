@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=Posix,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Posix</constant>
+    </at>
+    <at name="o">
+      <constant>Posix</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=People,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>People</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=People,dc=Posix,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <oc>posixAccount</oc>
+    <at name="cn">
+      <variable>u.cn</variable>
+    </at>
+    <at name="sn">
+      <expression>
+if (u == void || u == null) return null;
+if (u.cn == void || u.cn == null) return null;
+int i = u.cn.lastIndexOf(" ");
+if (i &lt; 0) return u.cn;
+return u.cn.substring(i+1);
+      </expression>
+    </at>
+    <at name="uid" rdn="true">
+      <variable>u.uid</variable>
+    </at>
+    <at name="uidNumber">
+      <variable>u.uidNumber</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>u.gidNumber</variable>
+    </at>
+    <at name="homeDirectory">
+      <variable>u.homeDirectory</variable>
+    </at>
+    <at name="userPassword">
+      <expression>
+import org.safehaus.penrose.util.*;
+
+if (u == void || u == null) return;
+if (u.userPassword == void || u.userPassword == null) return;
+
+return "{crypt}"+u.userPassword;
+      </expression>
+    </at>
+    <at name="loginShell">
+      <variable>u.loginShell</variable>
+    </at>
+    <at name="gecos">
+      <variable>u.gecos</variable>
+    </at>
+    <at name="description">
+      <variable>u.description</variable>
+    </at>
+    <source name="u">
+      <source-name>posixAccount</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="uid">
+        <variable>uid</variable>
+      </field>
+      <field name="uidNumber">
+        <variable>uidNumber</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="homeDirectory">
+        <variable>homeDirectory</variable>
+      </field>
+      <field name="userPassword">
+        <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="loginShell">
+        <variable>loginShell</variable>
+      </field>
+      <field name="gecos">
+        <variable>gecos</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Group,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Group,dc=Posix,dc=Example,dc=com">
+    <oc>posixGroup</oc>
+    <at name="cn" rdn="true">
+      <variable>g.cn</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>g.gidNumber</variable>
+    </at>
+    <at name="userPassword">
+      <variable>g.userPassword</variable>
+    </at>
+    <at name="memberUid">
+      <variable>ug.memberUid</variable>
+    </at>
+    <at name="description">
+      <variable>g.description</variable>
+    </at>
+    <source name="g">
+      <source-name>posixGroup</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="userPassword">
+        <variable>userPassword</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="ug">
+      <source-name>posixGroup_memberUid</source-name>
+      <field name="cn">
+        <variable>g.cn</variable>
+      </field>
+      <field name="memberUid">
+        <variable>memberUid</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Hosts,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Hosts,dc=NIS Cache,dc=Example,dc=com">
+    <oc>device</oc>
+    <oc>ipHost</oc>
+    <at name="cn" rdn="true">
+      <variable>d.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>hc.cn</variable>
+    </at>
+    <at name="serialNumber">
+      <variable>d.serialNumber</variable>
+    </at>
+    <at name="seeAlso">
+      <variable>d.seeAlso</variable>
+    </at>
+    <at name="owner">
+      <variable>d.owner</variable>
+    </at>
+    <at name="ou">
+      <variable>d.ou</variable>
+    </at>
+    <at name="o">
+      <variable>d.o</variable>
+    </at>
+    <at name="l">
+      <variable>d.l</variable>
+    </at>
+    <at name="description">
+      <variable>d.description</variable>
+    </at>
+    <at name="ipHostNumber">
+      <variable>h.ipHostNumber</variable>
+    </at>
+    <source name="d">
+      <source-name>device</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="serialNumber">
+        <variable>serialNumber</variable>
+      </field>
+      <field name="seeAlso">
+        <variable>seeAlso</variable>
+      </field>
+      <field name="owner">
+        <variable>owner</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="o">
+        <variable>o</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="h">
+      <source-name>ipHost</source-name>
+      <field name="cn">
+        <variable>d.cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>ipHostNumber</variable>
+      </field>
+    </source>
+    <source name="hc">
+      <source-name>ipHost_cn</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>h.ipHostNumber</variable>
+      </field>
+    </source>
+  </entry>
+
+</mapping>
