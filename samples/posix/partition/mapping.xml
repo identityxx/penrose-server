@@ -190,14 +190,14 @@ return bytes;
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Hosts,dc=NIS Cache,dc=Example,dc=com">
+  <entry dn="cn=...,ou=Hosts,dc=Posix,dc=Example,dc=com">
     <oc>device</oc>
     <oc>ipHost</oc>
     <at name="cn" rdn="true">
       <variable>d.cn</variable>
     </at>
     <at name="cn">
-      <variable>hc.cn</variable>
+      <variable>hc.alias</variable>
     </at>
     <at name="serialNumber">
       <variable>d.serialNumber</variable>
@@ -260,13 +260,128 @@ return bytes;
       </field>
     </source>
     <source name="hc">
-      <source-name>ipHost_cn</source-name>
+      <source-name>ipHost_alias</source-name>
+      <field name="cn">
+        <variable>h.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Networks,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Networks</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Networks,dc=Posix,dc=Example,dc=com">
+    <oc>ipNetwork</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>nc.alias</variable>
+    </at>
+    <at name="ipNetworkNumber">
+      <variable>n.ipNetworkNumber</variable>
+    </at>
+    <at name="ipNetmaskNumber">
+      <variable>n.ipNetmaskNumber</variable>
+    </at>
+    <at name="l">
+      <variable>n.l</variable>
+    </at>
+    <at name="description">
+      <variable>n.description</variable>
+    </at>
+    <at name="manager">
+      <variable>n.manager</variable>
+    </at>
+    <source name="n">
+      <source-name>ipNetwork</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
-      <field name="ipHostNumber">
-        <variable>h.ipHostNumber</variable>
+      <field name="ipNetworkNumber">
+        <variable>ipNetworkNumber</variable>
       </field>
+      <field name="ipNetmaskNumber">
+        <variable>ipNetmaskNumber</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="manager">
+        <variable>manager</variable>
+      </field>
+    </source>
+    <source name="nc" required="false">
+      <source-name>ipNetwork_alias</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Services,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Services</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+ipServiceProtocol=...,ou=Services,dc=Posix,dc=Example,dc=com">
+    <oc>ipService</oc>
+    <at name="cn" rdn="true">
+      <variable>s.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>sc.alias</variable>
+    </at>
+    <at name="ipServicePort">
+      <variable>s.ipServicePort</variable>
+    </at>
+    <at name="ipServiceProtocol" rdn="true">
+      <variable>s.ipServiceProtocol</variable>
+    </at>
+    <at name="description">
+      <variable>s.description</variable>
+    </at>
+    <source name="s">
+      <source-name>ipService</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipServicePort">
+        <variable>ipServicePort</variable>
+      </field>
+      <field name="ipServiceProtocol">
+        <variable>ipServiceProtocol</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="sc">
+      <source-name>ipService_alias</source-name>
+      <field name="cn">
+        <variable>s.cn</variable>
+      </field>
+      <field name="ipServiceProtocol">
+        <variable>s.ipServiceProtocol</variable>
+      </field>
+      <field name="alias">
+      <variable>cn</variable>
+    </field>
     </source>
   </entry>
 

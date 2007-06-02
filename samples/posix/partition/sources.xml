@@ -70,13 +70,60 @@
     </parameter>
   </source>
 
-  <source name="ipHost_cn">
+  <source name="ipHost_alias">
     <connection-name>Posix</connection-name>
     <field name="cn" primaryKey="true"/>
-    <field name="ipHostNumber" primaryKey="true"/>
+    <field name="alias" primaryKey="true"/>
     <parameter>
       <param-name>table</param-name>
-      <param-value>ipHost_cn</param-value>
+      <param-value>ipHost_alias</param-value>
+    </parameter>
+  </source>
+
+  <source name="ipNetwork">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipNetworkNumber"/>
+    <field name="ipNetmaskNumber"/>
+    <field name="l"/>
+    <field name="description"/>
+    <field name="manager"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipNetwork</param-value>
+    </parameter>
+  </source>
+
+  <source name="ipNetwork_alias">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="alias" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipNetwork_alias</param-value>
+    </parameter>
+  </source>
+
+  <source name="ipService">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipServicePort" type="INTEGER"/>
+    <field name="ipServiceProtocol" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipService</param-value>
+    </parameter>
+  </source>
+
+  <source name="ipService_alias">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipServiceProtocol" primaryKey="true"/>
+    <field name="alias" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipService_alias</param-value>
     </parameter>
   </source>
 

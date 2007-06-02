@@ -44,8 +44,40 @@ create table ipHost (
     primary key (cn)
 );
 
-create table ipHost_cn (
+create table ipHost_alias (
     cn varchar(100),
-    ipHostNumber varchar(100),
-    primary key (cn,ipHostNumber)
+    alias varchar(100),
+    primary key (cn,alias)
 );
+
+create table ipNetwork (
+    cn varchar(100),
+    ipNetworkNumber varchar(255),
+    ipNetmaskNumber varchar(255),
+    l varchar(255),
+    description varchar(255),
+    manager varchar(255),
+    primary key (cn)
+);
+
+create table ipNetwork_alias (
+    cn varchar(100),
+    alias varchar(100),
+    primary key (cn,alias)
+);
+
+create table ipService (
+    cn varchar(100),
+    ipServicePort int(11),
+    ipServiceProtocol varchar(100),
+    description varchar(255),
+    primary key (cn,ipServiceProtocol)
+);
+
+create table ipService_alias (
+    cn varchar(100),
+    ipServiceProtocol varchar(100),
+    alias varchar(100),
+    primary key (cn,ipServiceProtocol,alias)
+);
+
