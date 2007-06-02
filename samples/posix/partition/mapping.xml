@@ -385,4 +385,92 @@ return bytes;
     </source>
   </entry>
 
+  <entry dn="ou=Protocols,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Protocols</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Protocols,dc=Posix,dc=Example,dc=com">
+    <oc>ipProtocol</oc>
+    <at name="cn" rdn="true">
+      <variable>p.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>pc.alias</variable>
+    </at>
+    <at name="ipProtocolNumber">
+      <variable>p.ipProtocolNumber</variable>
+    </at>
+    <at name="description">
+      <variable>p.description</variable>
+    </at>
+    <source name="p">
+      <source-name>ipProtocol</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipProtocolNumber">
+        <variable>ipProtocolNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="pc" required="false">
+      <source-name>ipProtocol_alias</source-name>
+      <field name="cn">
+        <variable>p.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Rpc,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Rpc</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Rpc,dc=Posix,dc=Example,dc=com">
+    <oc>ipProtocol</oc>
+    <at name="cn" rdn="true">
+      <variable>r.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>rc.alias</variable>
+    </at>
+    <at name="oncRpcNumber">
+      <variable>r.oncRpcNumber</variable>
+    </at>
+    <at name="description">
+      <variable>r.description</variable>
+    </at>
+    <source name="r">
+      <source-name>oncRpc</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="oncRpcNumber">
+        <variable>oncRpcNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="rc" required="false">
+      <source-name>oncRpc_alias</source-name>
+      <field name="cn">
+        <variable>r.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
 </mapping>

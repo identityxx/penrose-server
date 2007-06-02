@@ -127,4 +127,46 @@
     </parameter>
   </source>
 
+  <source name="ipProtocol">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipProtocolNumber"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipProtocol</param-value>
+    </parameter>
+  </source>
+
+  <source name="ipProtocol_alias">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="alias" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ipProtocol_alias</param-value>
+    </parameter>
+  </source>
+
+  <source name="oncRpc">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="oncRpcNumber"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>oncRpc</param-value>
+    </parameter>
+  </source>
+
+  <source name="oncRpc_alias">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="alias" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>oncRpc_alias</param-value>
+    </parameter>
+  </source>
+
 </sources>

@@ -81,3 +81,28 @@ create table ipService_alias (
     primary key (cn,ipServiceProtocol,alias)
 );
 
+create table ipProtocol (
+    cn varchar(100),
+    ipProtocolNumber int(11),
+    description varchar(255),
+    primary key (cn)
+);
+
+create table ipProtocol_alias (
+    cn varchar(100),
+    alias varchar(100),
+    primary key (cn,alias)
+);
+
+create table oncRpc (
+    cn varchar(100),
+    oncRpcNumber int(11),
+    description varchar(255),
+    primary key (cn)
+);
+
+create table oncRpc_alias (
+    cn varchar(100),
+    alias varchar(100),
+    primary key (cn,alias)
+);
