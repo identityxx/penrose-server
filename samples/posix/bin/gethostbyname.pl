@@ -1,15 +1,15 @@
 #!/usr/bin/perl
 
-if ($#ARGV == -1) {
-    $hostname = `/bin/hostname`;
-    chomp($hostname);
+if ($#ARGV == 0) {
+    $name = $ARGV[0];
 } else {
-    $hostname = $ARGV[0];
+    $name = `/bin/hostname`;
+    chomp($name);
 }
 
-print "Calling gethostbyname(\"$hostname\")...\n\n";
+print "Calling gethostbyname(\"$name\")...\n\n";
 
-($name,$aliases,$addrtype,$length,@addrs) = gethostbyname($hostname);
+($name, $aliases, $addrtype, $length, @addrs) = gethostbyname($name);
 
 print "Name         : $name\n";
 print "Aliases      : $aliases\n";

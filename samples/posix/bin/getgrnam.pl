@@ -1,15 +1,15 @@
 #!/usr/bin/perl
 
-if ($#ARGV == -1) {
-    $groupname = `/usr/bin/whoami`;
-    chomp($groupname);
+if ($#ARGV == 0) {
+    $name = $ARGV[0];
 } else {
-    $groupname = $ARGV[0];
+    $name = `/usr/bin/whoami`;
+    chomp($name);
 }
 
-print "Calling getgrnam(\"$groupname\")...\n\n";
+print "Calling getgrnam(\"$name\")...\n\n";
 
-($name, $password, $gid, $members) = getgrnam($groupname);
+($name, $password, $gid, $members) = getgrnam($name);
 
 print "Name     : $name\n";
 print "Password : $password\n";
