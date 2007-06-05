@@ -461,7 +461,7 @@ return bytes;
       <field name="description">
         <variable>description</variable>
       </field>
-    </source>
+    </source>                                     b
     <source name="rc" required="false">
       <source-name>oncRpc_alias</source-name>
       <field name="cn">
@@ -469,6 +469,56 @@ return bytes;
       </field>
       <field name="alias">
         <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Netgroup,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Netgroups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Netgroup,dc=Posix,dc=Example,dc=com">
+    <oc>nisNetgroup</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="nisNetgroupTriple">
+      <variable>nn.nisNetgroupTriple</variable>
+    </at>
+    <at name="memberNisNetgroup">
+      <variable>nm.memberNisNetgroup</variable>
+    </at>
+    <at name="description">
+      <variable>n.description</variable>
+    </at>
+    <source name="n">
+      <source-name>nisNetgroup</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="nn" required="false">
+      <source-name>nisNetgroup_nisNetgroupTriple</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="nisNetgroupTriple">
+        <variable>nisNetgroupTriple</variable>
+      </field>
+    </source>
+    <source name="nm" required="false">
+      <source-name>nisNetgroup_memberNisNetgroup</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="memberNisNetgroup">
+        <variable>memberNisNetgroup</variable>
       </field>
     </source>
   </entry>

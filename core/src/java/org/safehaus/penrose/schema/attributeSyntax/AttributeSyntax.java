@@ -20,90 +20,64 @@ package org.safehaus.penrose.schema.attributeSyntax;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 /**
  * @author Endi S. Dewata
  */
 public class AttributeSyntax {
 
-    public Logger log = LoggerFactory.getLogger(AttributeSyntax.class);
+    public static Logger log = LoggerFactory.getLogger(AttributeSyntax.class);
 
-    public final static AttributeSyntax ACI_ITEM = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.1", "ACI Item", false);
-
-    public final static AttributeSyntax ACCESS_POINT = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.2", "Access Point", true);
-
-    public final static AttributeSyntax ATTRIBUTE_TYPE_DESCRIPTION = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.3", "Attribute Type Description", true);
-
-    public final static AttributeSyntax AUDIO = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.4", "Audio", false);
-
-    public final static AttributeSyntax BINARY = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.5", "Binary", false);
-
-    public final static AttributeSyntax BIT_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.6", "Bit String", true);
-
-    public final static AttributeSyntax BOOLEAN = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.7", "Boolean", true);
-
-    public final static AttributeSyntax CERTIFICATE = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.8", "Certificate", false);
-
-    public final static AttributeSyntax CERTIFICATE_LIST = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.9", "Certificate List", false);
-
-    public final static AttributeSyntax CERTIFICATE_PAIR = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.10", "Certificate Pair", false);
-
-    public final static AttributeSyntax COUNTRY_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.11", "Country String", true);
-
-    public final static AttributeSyntax DN = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.12", "DN", true);
-
-    public final static AttributeSyntax DATA_QUALITY_SYNTAX = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.13", "Data Quality Syntax", true);
-
-    public final static AttributeSyntax DELIVERY_METHOD = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.14", "Delivery Method", true);
-
-    public final static AttributeSyntax DIRECTORY_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.15", "Directory String", true);
-
-    public final static AttributeSyntax IA5_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.26", "IA5 String", true);
-
-    public final static AttributeSyntax INTEGER = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.27", "Integer", true);
-
-    public final static AttributeSyntax NUMERIC_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.36", "Numeric String", true);
-
-    public final static AttributeSyntax OID = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.38", "OID", true);
-
-    public final static AttributeSyntax OCTET_STRING = new AttributeSyntax(
-            "1.3.6.1.4.1.1466.115.121.1.40", "Octet String", true);
-
-    public static Map attributeSyntaxes = new TreeMap();
+    public static Map<String,AttributeSyntax> attributeSyntaxes = new TreeMap<String,AttributeSyntax>();
 
     static {
-        try {
-            Field fields[] = AttributeSyntax.class.getFields();
-            for (int i=0; i<fields.length; i++) {
-                Field field = fields[i];
-                if (!AttributeSyntax.class.equals(field.getType())) continue;
 
-                AttributeSyntax as = (AttributeSyntax)field.get(null);
-                attributeSyntaxes.put(as.getOid(), as);
+        boolean debug = log.isDebugEnabled();
+
+        try {
+            if (debug) log.debug("Attribute syntaxes:");
+
+            ClassLoader cl = AttributeSyntax.class.getClassLoader();
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                        cl.getResourceAsStream(
+                                "org/safehaus/penrose/schema/attributeSyntax/AttributeSyntax.properties"
+                        )
+                    )
+            );
+
+            String line;
+            while ((line = in.readLine()) != null) {
+                line = line.trim();
+                if (line.length() == 0) continue;
+                if (line.startsWith("#")) continue;
+
+                //if (debug) log.debug("Parsing ["+line+"]");
+                int i = line.lastIndexOf(' ');
+                String oid = line.substring(i+1);
+                //if (debug) log.debug(" - OID            : "+oid);
+
+                while (line.charAt(i) == ' ') i--;
+
+                boolean humanReadable = line.charAt(i) == 'Y';
+                //if (debug) log.debug(" - Human Readable : "+humanReadable);
+
+                String description = line.substring(0, i).trim();
+                //if (debug) log.debug(" - Description    : "+description);
+
+                if (debug) log.debug(" - "+oid+": "+description+(humanReadable ? " [Y]" : ""));
+
+                AttributeSyntax attributeSyntax = new AttributeSyntax(oid, description, humanReadable);
+                attributeSyntaxes.put(oid, attributeSyntax);
             }
+
+            in.close();
+
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -112,7 +86,7 @@ public class AttributeSyntax {
     }
     
     public static AttributeSyntax getAttributeSyntax(String oid) {
-        return (AttributeSyntax)attributeSyntaxes.get(oid);
+        return attributeSyntaxes.get(oid);
     }
 
     public String oid;

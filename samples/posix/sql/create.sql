@@ -106,3 +106,21 @@ create table oncRpc_alias (
     alias varchar(100),
     primary key (cn,alias)
 );
+
+create table nisNetgroup (
+    cn varchar(100),
+    description varchar(255),
+    primary key (cn)
+);
+
+create table nisNetgroup_nisNetgroupTriple (
+    cn varchar(100),
+    nisNetgroupTriple varchar(100),
+    primary key (cn,nisNetgroupTriple)
+);
+
+create table nisNetgroup_memberNisNetgroup (
+    cn varchar(100),
+    memberNisNetgroup varchar(100),
+    primary key (cn,memberNisNetgroup)
+);

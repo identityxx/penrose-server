@@ -169,4 +169,34 @@
     </parameter>
   </source>
 
+  <source name="nisNetgroup">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>nisNetgroup</param-value>
+    </parameter>
+  </source>
+
+  <source name="nisNetgroup_nisNetgroupTriple">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="nisNetgroupTriple" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>nisNetgroup_nisNetgroupTriple</param-value>
+    </parameter>
+  </source>
+
+  <source name="nisNetgroup_memberNisNetgroup">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="memberNisNetgroup" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>nisNetgroup_memberNisNetgroup</param-value>
+    </parameter>
+  </source>
+
 </sources>

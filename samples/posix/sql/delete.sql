@@ -12,3 +12,7 @@ delete from ipNetwork_alias;
 
 delete from ipService;
 delete from ipService_alias;
+
+delete from nisNetgroup;
+delete from nisNetgroup_nisNetgroupTriple;
+delete from nisNetgroup_memberNisNetgroup;

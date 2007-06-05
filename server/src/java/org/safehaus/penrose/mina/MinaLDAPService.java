@@ -45,20 +45,19 @@ public class MinaLDAPService extends LDAPService {
         Backend backend = new PenroseBackend(penroseServer);
 
         SchemaManager schemaManager = penroseContext.getSchemaManager();
-        Collection attributeTypes = schemaManager.getAttributeTypes();
-        Set binaryAttributes = new HashSet();
+        Collection<AttributeType> attributeTypes = schemaManager.getAttributeTypes();
+        Set<String> binaryAttributes = new HashSet<String>();
 
-        log.debug("Binary attributes:");
-        for (Iterator i=attributeTypes.iterator(); i.hasNext(); ) {
-            AttributeType attributeType = (AttributeType)i.next();
+        //log.debug("Binary attributes:");
+        for (AttributeType attributeType : attributeTypes) {
 
-            String name = attributeType.getName();
+            //String name = attributeType.getName();
             //log.debug("Attribute type "+name);
 
             String syntax = attributeType.getSyntax();
             //log.debug("Attribute syntax: "+syntax);
             if (syntax == null) {
-                log.debug("Attribute syntax for "+name+" not defined.");
+                //log.debug("Attribute syntax for "+name+" not defined.");
                 continue;
             }
 
@@ -72,7 +71,7 @@ public class MinaLDAPService extends LDAPService {
 
             AttributeSyntax as = AttributeSyntax.getAttributeSyntax(oid);
             if (as == null) {
-                log.debug("Attribute syntax "+oid+" not found.");
+                //log.debug("Attribute syntax "+oid+" not found.");
                 continue;
             }
 
@@ -81,14 +80,13 @@ public class MinaLDAPService extends LDAPService {
                 continue;
             }
 
-            log.debug(" - "+name);
-            for (Iterator j=attributeType.getNames().iterator(); j.hasNext(); ) {
-                name = (String)j.next();
-                binaryAttributes.add(name.toLowerCase());
+            //log.debug(" - " + name);
+            for (String cn : attributeType.getNames()) {
+                binaryAttributes.add(cn.toLowerCase());
             }
         }
 
-        Hashtable env = new Hashtable();
+        Hashtable<Object,Object> env = new Hashtable<Object,Object>();
         env.put("java.naming.ldap.attributes.binary", binaryAttributes);
 
         codecFactory = new PenroseProtocolCodecFactory(env);

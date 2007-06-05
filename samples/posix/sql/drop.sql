@@ -13,3 +13,6 @@ drop table ipNetwork_alias;
 drop table ipService;
 drop table ipService_alias;
 
+drop table nisNetgroup;
+drop table nisNetgroup_nisNetgroupTriple;
+drop table nisNetgroup_memberNisNetgroup;

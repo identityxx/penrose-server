@@ -15,13 +15,13 @@ import java.util.Hashtable;
  */
 public class PenroseProtocolCodecFactory implements ProtocolCodecFactory {
 
-    Hashtable env;
+    Hashtable<Object,Object> env;
 
     public PenroseProtocolCodecFactory() {
-        env = new Hashtable();
+        env = new Hashtable<Object,Object>();
     }
     
-    public PenroseProtocolCodecFactory(Hashtable env) {
+    public PenroseProtocolCodecFactory(Hashtable<Object,Object> env) {
         this.env = env;
     }
 
