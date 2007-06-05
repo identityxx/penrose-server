@@ -1,0 +1,21 @@
+<project name="posix" default="build">
+
+    <target name="build">
+        <mkdir dir="target"/>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-netgroup.c"/>
+            <arg line="-o target/test-netgroup"/>
+        </exec>
+    </target>
+
+    <target name="run">
+        <exec executable="target/test-netgroup">
+            <arg line="nightfly"/>
+        </exec>
+    </target>
+
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+
+</project>
