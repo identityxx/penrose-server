@@ -33,8 +33,8 @@ public class ModifyDnHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = handler.backend.createDn(request.getName().toString());
-            RDN newRdn = handler.backend.createRdn(request.getNewRdn().toString());
+            DN dn = handler.backend.createDn(request.getName().getUpName());
+            RDN newRdn = handler.backend.createRdn(request.getNewRdn().getUpName());
             boolean deleteOldRdn = request.getDeleteOldRdn();
 
             Session session = handler.getPenroseSession(ioSession);

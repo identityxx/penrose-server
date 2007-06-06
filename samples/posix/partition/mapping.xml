@@ -270,6 +270,81 @@ return bytes;
     </source>
   </entry>
 
+  <entry dn="ou=Ethers,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Ethers</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Ethers,dc=Posix,dc=Example,dc=com">
+    <oc>device</oc>
+    <oc>ieee802Device</oc>
+    <at name="cn" rdn="true">
+      <variable>d.cn</variable>
+    </at>
+    <at name="serialNumber">
+      <variable>d.serialNumber</variable>
+    </at>
+    <at name="seeAlso">
+      <variable>d.seeAlso</variable>
+    </at>
+    <at name="owner">
+      <variable>d.owner</variable>
+    </at>
+    <at name="ou">
+      <variable>d.ou</variable>
+    </at>
+    <at name="o">
+      <variable>d.o</variable>
+    </at>
+    <at name="l">
+      <variable>d.l</variable>
+    </at>
+    <at name="description">
+      <variable>d.description</variable>
+    </at>
+    <at name="macAddress">
+      <variable>e.macAddress</variable>
+    </at>
+    <source name="d">
+      <source-name>device</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="serialNumber">
+        <variable>serialNumber</variable>
+      </field>
+      <field name="seeAlso">
+        <variable>seeAlso</variable>
+      </field>
+      <field name="owner">
+        <variable>owner</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="o">
+        <variable>o</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="e">
+      <source-name>ieee802Device</source-name>
+      <field name="cn">
+        <variable>d.cn</variable>
+      </field>
+      <field name="macAddress">
+        <variable>macAddress</variable>
+      </field>
+    </source>
+  </entry>
+
   <entry dn="ou=Networks,dc=Posix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
@@ -519,6 +594,60 @@ return bytes;
       </field>
       <field name="memberNisNetgroup">
         <variable>memberNisNetgroup</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Automounts</constant>
+    </at>
+  </entry>
+
+  <entry dn="automountMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>automountMap</oc>
+    <at name="automountMapName" rdn="true">
+      <variable>am.automountMapName</variable>
+    </at>
+    <at name="description">
+      <variable>am.description</variable>
+    </at>
+    <source name="am">
+      <source-name>automountMap</source-name>
+      <field name="automountMapName">
+        <variable>automountMapName</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="automountKey=...,automountMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>automount</oc>
+    <at name="automountKey" rdn="true">
+      <variable>a.automountKey</variable>
+    </at>
+    <at name="automountInformation">
+      <variable>a.automountInformation</variable>
+    </at>
+    <at name="description">
+       <variable>a.description</variable>
+    </at>
+    <source name="a">
+      <source-name>automount</source-name>
+      <field name="automountMapName">
+        <variable>am.automountMapName</variable>
+      </field>
+      <field name="automountKey">
+        <variable>automountKey</variable>
+      </field>
+      <field name="automountInformation">
+        <variable>automountInformation</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
       </field>
     </source>
   </entry>

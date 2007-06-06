@@ -50,6 +50,12 @@ create table ipHost_alias (
     primary key (cn,alias)
 );
 
+create table ieee802Device (
+    cn varchar(100),
+    macAddress varchar(100),
+    primary key (cn)
+);
+
 create table ipNetwork (
     cn varchar(100),
     ipNetworkNumber varchar(255),
@@ -123,4 +129,18 @@ create table nisNetgroup_memberNisNetgroup (
     cn varchar(100),
     memberNisNetgroup varchar(100),
     primary key (cn,memberNisNetgroup)
+);
+
+create table automountMap (
+    automountMapName varchar(100),
+    description varchar(255),
+    primary key (automountMapName)
+);
+
+create table automount (
+    automountMapName varchar(100),
+    automountKey varchar(100),
+    automountInformation text,
+    description varchar(255),
+    primary key (automountMapName, automountKey)
 );

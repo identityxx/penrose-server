@@ -29,7 +29,7 @@ public class BindHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN bindDn = handler.backend.createDn(request.getName().toString());
+            DN bindDn = handler.backend.createDn(request.getName().getUpName());
             byte[] password = request.getCredentials();
 
             Session session = handler.getPenroseSession(ioSession);

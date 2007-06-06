@@ -32,8 +32,8 @@ public class SearchHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN baseDn = handler.backend.createDn(request.getBase().toString());
-            Filter filter = handler.backend.createFilter(FilterTool.convert(request.getFilter()));
+            DN baseDn = handler.backend.createDn(request.getBase().getUpName());
+            Filter filter = handler.backend.createFilter(MinaFilterTool.convert(request.getFilter()));
 
             Session session = handler.getPenroseSession(ioSession);
 

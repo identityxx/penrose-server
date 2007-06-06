@@ -32,7 +32,7 @@ public class CompareHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = handler.backend.createDn(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().getUpName());
             String name = request.getAttributeId();
             Object value = request.getAssertionValue();
 

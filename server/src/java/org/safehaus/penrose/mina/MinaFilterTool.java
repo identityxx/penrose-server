@@ -1,8 +1,9 @@
-package org.safehaus.penrose.apacheds;
+package org.safehaus.penrose.mina;
 
-import org.apache.directory.shared.ldap.filter.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.directory.shared.ldap.filter.*;
+import org.safehaus.penrose.filter.FilterTool;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,9 +11,9 @@ import java.util.Iterator;
 /**
  * @author Endi S. Dewata
  */
-public class FilterTool {
+public class MinaFilterTool {
 
-    public static Logger log = LoggerFactory.getLogger(FilterTool.class);
+    public static Logger log = LoggerFactory.getLogger(MinaFilterTool.class);
 
     public static String convert(ExprNode node) throws Exception {
         StringBuilder sb = new StringBuilder();
@@ -32,12 +33,12 @@ public class FilterTool {
 
             String attribute = simpleNode.getAttribute();
             String operation = AbstractExprNode.getOperationString(simpleNode.getAssertionType());
-            Object value = simpleNode.getValue();
+            String value = simpleNode.getValue().toString();
 
             sb.append("(");
             sb.append(attribute);
             sb.append(operation);
-            sb.append(value);
+            sb.append(FilterTool.escape(value));
             sb.append(")");
 
         } else if (node instanceof PresenceNode) {

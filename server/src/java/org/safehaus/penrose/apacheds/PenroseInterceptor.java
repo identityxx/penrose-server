@@ -484,7 +484,7 @@ public class PenroseInterceptor extends BaseInterceptor {
             String returningAttributes[] = searchControls.getReturningAttributes();
             List attributeNames = returningAttributes == null ? new ArrayList() : Arrays.asList(returningAttributes);
 
-            Filter newFilter = backend.createFilter(FilterTool.convert(filter));
+            Filter newFilter = backend.createFilter(ApacheDSFilterTool.convert(filter));
             if (debug) {
 	            log.debug("Searching \""+base+"\"");
 	            log.debug(" - deref: "+deref);

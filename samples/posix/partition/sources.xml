@@ -80,6 +80,16 @@
     </parameter>
   </source>
 
+  <source name="ieee802Device">
+    <connection-name>Posix</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="macAddress"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>ieee802Device</param-value>
+    </parameter>
+  </source>
+
   <source name="ipNetwork">
     <connection-name>Posix</connection-name>
     <field name="cn" primaryKey="true"/>
@@ -196,6 +206,28 @@
     <parameter>
       <param-name>table</param-name>
       <param-value>nisNetgroup_memberNisNetgroup</param-value>
+    </parameter>
+  </source>
+
+  <source name="automountMap">
+    <connection-name>Posix</connection-name>
+    <field name="automountMapName" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>automountMap</param-value>
+    </parameter>
+  </source>
+
+  <source name="automount">
+    <connection-name>Posix</connection-name>
+    <field name="automountMapName" primaryKey="true"/>
+    <field name="automountKey" primaryKey="true"/>
+    <field name="automountInformation"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>automount</param-value>
     </parameter>
   </source>
 

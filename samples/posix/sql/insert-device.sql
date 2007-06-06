@@ -35,3 +35,11 @@ insert into ipHost_alias (
     'penrose.example.com',
     'penrose'
 );
+
+insert into ieee802Device (
+    cn,
+    macAddress
+) values (
+    'penrose.example.com',
+    '00:00:92:90:ee:e2'
+);

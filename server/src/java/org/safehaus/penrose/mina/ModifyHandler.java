@@ -35,7 +35,7 @@ public class ModifyHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = handler.backend.createDn(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().getUpName());
             Collection modifications = handler.createModifications(request.getModificationItems());
 
             Session session = handler.getPenroseSession(ioSession);

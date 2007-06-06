@@ -33,7 +33,7 @@ public class AddHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = handler.backend.createDn(request.getEntry().toString());
+            DN dn = handler.backend.createDn(request.getEntry().getUpName());
             Attributes attributes = handler.createAttributes(request.getAttributes());
 
             Session session = handler.getPenroseSession(ioSession);

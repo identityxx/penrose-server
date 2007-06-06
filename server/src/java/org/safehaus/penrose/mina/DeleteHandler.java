@@ -32,7 +32,7 @@ public class DeleteHandler implements MessageHandler {
         LdapResult result = response.getLdapResult();
 
         try {
-            DN dn = handler.backend.createDn(request.getName().toString());
+            DN dn = handler.backend.createDn(request.getName().getUpName());
 
             Session session = handler.getPenroseSession(ioSession);
 
