@@ -6,11 +6,21 @@
             <arg line="src/test-netgroup.c"/>
             <arg line="-o target/test-netgroup"/>
         </exec>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-rpc.c"/>
+            <arg line="-o target/test-rpc"/>
+        </exec>
     </target>
 
-    <target name="run">
+    <target name="test-netgroup">
         <exec executable="target/test-netgroup">
             <arg line="nightfly"/>
+        </exec>
+    </target>
+
+    <target name="test-rpc">
+        <exec executable="target/test-rpc">
+            <arg line="nfs"/>
         </exec>
     </target>
 

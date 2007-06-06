@@ -4,17 +4,22 @@
 int main(int argc, char **argv) {
 
     if (argc != 2) {
-        printf("Usage: test-netgroup <netgroup name>\n");
+        printf("Usage: test-netgroup <name>\n");
         return -1;
     }
 
-    char* netgroup = argv[1];
+    char* name = argv[1];
 
     char* host;
     char* user;
     char* domain;
 
-    setnetgrent(netgroup);
+    int found = setnetgrent(name);
+
+    if (!found) {
+        printf("Netgroup %s not found.\n", name);
+        return -1;
+    }
 
     int more = getnetgrent(&host, &user, &domain);
 
