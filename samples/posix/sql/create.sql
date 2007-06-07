@@ -4,6 +4,7 @@ create table posixAccount (
     uidNumber int(11),
     gidNumber int(11),
     homeDirectory varchar(255),
+    authPassword varchar(255),
     userPassword varchar(255),
     loginShell varchar(255),
     gecos varchar(255),
@@ -11,9 +12,25 @@ create table posixAccount (
     primary key (uid)
 );
 
+create table shadowAccount (
+    uid varchar(100),
+    authPassword int(11),
+    userPassword varchar(255),
+    description varchar(255),
+    shadowLastChange int(11),
+    shadowMin int(11),
+    shadowMax int(11),
+    shadowWarning int(11),
+    shadowInactive int(11),
+    shadowExpire int(11),
+    shadowFlag int(11),
+    primary key (uid)
+);
+
 create table posixGroup (
     cn varchar(100),
     gidNumber int(11),
+    authPassword varchar(255),
     userPassword varchar(255),
     description varchar(255),
     primary key (cn)
@@ -40,6 +57,10 @@ create table device (
 create table ipHost (
     cn varchar(100),
     ipHostNumber varchar(100),
+    authPassword varchar(255),
+    userPassword varchar(255),
+    l varchar(255),
+    description varchar(255),
     manager varchar(255),
     primary key (cn)
 );

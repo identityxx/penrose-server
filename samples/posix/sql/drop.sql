@@ -1,5 +1,7 @@
 drop table posixAccount;
 
+drop table shadowAccount;
+
 drop table posixGroup;
 drop table posixGroup_memberUid;
 

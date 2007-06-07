@@ -21,10 +21,18 @@ insert into device (
 insert into ipHost (
     cn,
     ipHostNumber,
+    authPassword,
+    userPassword,
+    l,
+    description,
     manager
 ) values (
     'penrose.example.com',
     '127.0.0.1',
+    null,
+    null,
+    null,
+    null,
     null
 );
 

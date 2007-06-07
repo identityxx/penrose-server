@@ -1,5 +1,7 @@
 delete from posixAccount;
 
+delete from shadowAccount;
+
 delete from posixGroup;
 delete from posixGroup_memberUid;
 

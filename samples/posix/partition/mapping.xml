@@ -40,6 +40,7 @@
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
     <oc>posixAccount</oc>
+    <oc>shadowAccount</oc>
     <at name="cn">
       <variable>u.cn</variable>
     </at>
@@ -68,10 +69,17 @@ return u.cn.substring(i+1);
       <expression>
 import org.safehaus.penrose.util.*;
 
-if (u == void || u == null) return;
-if (u.userPassword == void || u.userPassword == null) return;
+if (u != void &amp;&amp; u != null
+    &amp;&amp; u.userPassword != void &amp;&amp; u.userPassword != null) {
+        return "{crypt}"+u.userPassword;
+}
 
-return "{crypt}"+u.userPassword;
+if (s != void &amp;&amp; s != null
+    &amp;&amp; s.userPassword != void &amp;&amp; s.userPassword != null) {
+    return "{crypt}"+s.userPassword;
+}
+
+return null;
       </expression>
     </at>
     <at name="loginShell">
@@ -82,6 +90,27 @@ return "{crypt}"+u.userPassword;
     </at>
     <at name="description">
       <variable>u.description</variable>
+    </at>
+    <at name="shadowLastChange">
+      <variable>s.shadowLastChange</variable>
+    </at>
+    <at name="shadowMin">
+      <variable>s.shadowMin</variable>
+    </at>
+    <at name="shadowMax">
+      <variable>s.shadowMax</variable>
+    </at>
+    <at name="shadowWarning">
+      <variable>s.shadowWarning</variable>
+    </at>
+    <at name="shadowInactive">
+      <variable>s.shadowInactive</variable>
+    </at>
+    <at name="shadowExpire">
+      <variable>s.shadowExpire</variable>
+    </at>
+    <at name="shadowFlag">
+      <variable>s.shadowFlag</variable>
     </at>
     <source name="u">
       <source-name>posixAccount</source-name>
@@ -129,6 +158,57 @@ return bytes;
       </field>
       <field name="description">
         <variable>description</variable>
+      </field>
+    </source>
+    <source name="s">
+      <source-name>shadowAccount</source-name>
+      <field name="uid">
+        <variable>u.uid</variable>
+      </field>
+      <field name="userPassword">
+          <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="shadowLastChange">
+        <variable>shadowLastChange</variable>
+      </field>
+      <field name="shadowMin">
+        <variable>shadowMin</variable>
+      </field>
+      <field name="shadowMax">
+        <variable>shadowMax</variable>
+      </field>
+      <field name="shadowWarning">
+        <variable>shadowWarning</variable>
+      </field>
+      <field name="shadowInactive">
+        <variable>shadowInactive</variable>
+      </field>
+      <field name="shadowExpire">
+        <variable>shadowExpire</variable>
+      </field>
+      <field name="shadowFlag">
+        <variable>shadowFlag</variable>
       </field>
     </source>
   </entry>
@@ -605,9 +685,9 @@ return bytes;
     </at>
   </entry>
 
-  <entry dn="automountMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
-    <oc>automountMap</oc>
-    <at name="automountMapName" rdn="true">
+  <entry dn="nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>nisMap</oc>
+    <at name="nisMapName" rdn="true">
       <variable>am.automountMapName</variable>
     </at>
     <at name="description">
@@ -616,7 +696,7 @@ return bytes;
     <source name="am">
       <source-name>automountMap</source-name>
       <field name="automountMapName">
-        <variable>automountMapName</variable>
+        <variable>nisMapName</variable>
       </field>
       <field name="description">
         <variable>description</variable>
@@ -624,13 +704,16 @@ return bytes;
     </source>
   </entry>
 
-  <entry dn="automountKey=...,automountMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
-    <oc>automount</oc>
-    <at name="automountKey" rdn="true">
+  <entry dn="cn=...,nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>nisObject</oc>
+    <at name="cn" rdn="true">
       <variable>a.automountKey</variable>
     </at>
-    <at name="automountInformation">
+    <at name="nisMapEntry">
       <variable>a.automountInformation</variable>
+    </at>
+    <at name="nisMapName">
+      <variable>am.automountMapName</variable>
     </at>
     <at name="description">
        <variable>a.description</variable>
@@ -641,10 +724,10 @@ return bytes;
         <variable>am.automountMapName</variable>
       </field>
       <field name="automountKey">
-        <variable>automountKey</variable>
+        <variable>cn</variable>
       </field>
       <field name="automountInformation">
-        <variable>automountInformation</variable>
+        <variable>nisMapEntry</variable>
       </field>
       <field name="description">
         <variable>description</variable>

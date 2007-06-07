@@ -12,6 +12,7 @@
     <field name="uidNumber" type="INTEGER"/>
     <field name="gidNumber" type="INTEGER"/>
     <field name="homeDirectory"/>
+    <field name="authPassword"/>
     <field name="userPassword"/>
     <field name="loginShell"/>
     <field name="gecos"/>
@@ -22,10 +23,30 @@
     </parameter>
   </source>
 
+  <source name="shadowAccount">
+    <connection-name>Posix</connection-name>
+    <field name="uid" primaryKey="true"/>
+    <field name="authPassword"/>
+    <field name="userPassword"/>
+    <field name="description"/>
+    <field name="shadowLastChange" type="INTEGER"/>
+    <field name="shadowMin" type="INTEGER"/>
+    <field name="shadowMax" type="INTEGER"/>
+    <field name="shadowWarning" type="INTEGER"/>
+    <field name="shadowInactive" type="INTEGER"/>
+    <field name="shadowExpire" type="INTEGER"/>
+    <field name="shadowFlag" type="INTEGER"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>shadowAccount</param-value>
+    </parameter>
+  </source>
+
   <source name="posixGroup">
     <connection-name>Posix</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="gidNumber" type="INTEGER"/>
+    <field name="authPassword"/>
     <field name="userPassword"/>
     <field name="description"/>
     <parameter>

@@ -110,7 +110,8 @@ public class PenroseSession implements com.identyx.javabackend.Session {
             com.identyx.javabackend.BindResponse response
     ) throws Exception {
 
-        log.debug("bind(\""+request.getDn()+", \""+request.getPassword()+"\")");
+        byte[] password = request.getPassword();
+        log.debug("bind(\""+request.getDn()+"\", "+(password == null ? null : "\""+new String(password)+"\"")+")");
 
         BindRequest penroseRequest = ((PenroseBindRequest)request).getBindRequest();
         BindResponse penroseResponse = ((PenroseBindResponse)response).getBindResponse();
