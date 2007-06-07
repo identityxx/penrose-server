@@ -27,5 +27,7 @@ int main(int argc, char **argv) {
 
     printf("Number : %d\n", rpc->r_number);
 
+    printf("\n");
+
     return 0;
 }

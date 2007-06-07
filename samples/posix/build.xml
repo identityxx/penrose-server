@@ -3,6 +3,10 @@
     <target name="build">
         <mkdir dir="target"/>
         <exec executable="/usr/bin/gcc">
+            <arg line="src/test-group.c"/>
+            <arg line="-o target/test-group"/>
+        </exec>
+        <exec executable="/usr/bin/gcc">
             <arg line="src/test-netgroup.c"/>
             <arg line="-o target/test-netgroup"/>
         </exec>
@@ -17,6 +21,12 @@
         <exec executable="/usr/bin/gcc">
             <arg line="src/test-user.c"/>
             <arg line="-o target/test-user"/>
+        </exec>
+    </target>
+
+    <target name="test-group">
+        <exec executable="target/test-group">
+            <arg line="test"/>
         </exec>
     </target>
 

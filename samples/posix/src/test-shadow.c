@@ -31,5 +31,7 @@ int main(int argc, char **argv) {
 
     endspent();
 
+    printf("\n");
+
     return 0;
 }
