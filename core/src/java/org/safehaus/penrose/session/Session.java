@@ -236,7 +236,7 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
                 log.debug(" - Bind DN       : "+request.getDn());
-                log.debug(" - Bind Password : "+request.getPassword() == null ? null : new String(request.getPassword()));
+                log.debug(" - Bind Password : "+(request.getPassword() == null ? null : new String(request.getPassword())));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
