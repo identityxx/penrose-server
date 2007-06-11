@@ -157,7 +157,7 @@ public class EngineFilterTool {
         if (connection == null) throw new Exception("Unknown connection: "+sourceConfig.getConnectionName());
 
         Adapter adapter = connection.getAdapter();
-        Filter newFilter = adapter.convert(entryMapping, filter);
+        Filter newFilter = null; // adapter.convert(entryMapping, filter);
 
         return newFilter;
     }

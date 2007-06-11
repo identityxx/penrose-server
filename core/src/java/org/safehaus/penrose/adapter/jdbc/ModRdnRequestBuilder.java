@@ -10,6 +10,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
+import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -50,7 +51,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection generate() throws Exception {
+    public Collection<Request> generate() throws Exception {
 
         int sourceCounter = 0;
         for (Iterator i= sources.iterator(); i.hasNext(); sourceCounter++) {

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+
+<connections>
+
+  <connection name="PostgreSQL">
+    <adapter-name>JDBC</adapter-name>
+    <parameter>
+      <param-name>driver</param-name>
+      <param-value>org.postgresql.Driver</param-value>
+    </parameter>
+    <parameter>
+      <param-name>url</param-name>
+      <param-value>jdbc:postgresql://localhost/postgres</param-value>
+    </parameter>
+    <parameter>
+      <param-name>user</param-name>
+      <param-value>postgres</param-value>
+    </parameter>
+    <parameter>
+      <param-name>password</param-name>
+      <param-value>secret</param-value>
+    </parameter>
+    <parameter>
+      <param-name>quote</param-name>
+      <param-value>"</param-value>
+    </parameter>
+  </connection>
+
+</connections>

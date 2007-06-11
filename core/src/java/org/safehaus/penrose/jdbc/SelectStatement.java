@@ -14,10 +14,11 @@ public class SelectStatement extends Statement {
     protected Collection<FieldRef> fieldRefs = new ArrayList<FieldRef>();
 
     protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // maintain source order
-    protected Collection<String> joinTypes = new ArrayList<String>();
-    protected Collection<String> joinOns = new ArrayList<String>();
+    protected Collection<JoinClause> joinClauses = new ArrayList<JoinClause>();
 
     protected Filter filter;
+    private String where;
+
     protected Collection<FieldRef> orders = new ArrayList<FieldRef>();
 
     public Collection<FieldRef> getFieldRefs() {
@@ -44,11 +45,11 @@ public class SelectStatement extends Statement {
 
     public SourceRef getSourceRef() {
         if (sourceRefs.isEmpty()) return null;
-        return (SourceRef)sourceRefs.values().iterator().next();
+        return sourceRefs.values().iterator().next();
     }
 
     public SourceRef getSourceRef(String alias) {
-        return (SourceRef)sourceRefs.get(alias);
+        return sourceRefs.get(alias);
     }
 
     public void addSourceRef(SourceRef sourceRef) {
@@ -58,30 +59,13 @@ public class SelectStatement extends Statement {
     public void addSourceRef(String alias, SourceRef sourceRef) {
         sourceRefs.put(alias, sourceRef);
     }
-    
-    public void addJoin(String joinType, String joinOn) {
-        joinTypes.add(joinType);
-        joinOns.add(joinOn);
-    }
-    
-    public Collection getJoinTypes() {
-        return joinTypes;
+
+    public void addJoin(JoinClause joinClause) {
+        joinClauses.add(joinClause);
     }
 
-    public void setJoinTypes(Collection<String> joinTypes) {
-        if (this.joinTypes == joinTypes) return;
-        this.joinTypes.clear();
-        this.joinTypes.addAll(joinTypes);
-    }
-
-    public Collection getJoinOns() {
-        return joinOns;
-    }
-
-    public void setJoinOns(Collection<String> joinOns) {
-        if (this.joinOns == joinOns) return;
-        this.joinOns.clear();
-        this.joinOns.addAll(joinOns);
+    public Collection<JoinClause> getJoinClauses() {
+        return joinClauses;
     }
 
     public Filter getFilter() {
@@ -92,7 +76,7 @@ public class SelectStatement extends Statement {
         this.filter = filter;
     }
 
-    public Collection getOrders() {
+    public Collection<FieldRef> getOrders() {
         return orders;
     }
 
@@ -103,9 +87,18 @@ public class SelectStatement extends Statement {
     public void addOrders(Collection<FieldRef> orders) {
         this.orders.addAll(orders);
     }
+
     public void setOrders(Collection<FieldRef> orders) {
         if (this.orders == orders) return;
         this.orders.clear();
         this.orders.addAll(orders);
+    }
+
+    public String getWhere() {
+        return where;
+    }
+
+    public void setWhere(String where) {
+        this.where = where;
     }
 }

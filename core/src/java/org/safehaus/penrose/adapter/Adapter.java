@@ -591,10 +591,6 @@ public abstract class Adapter {
         return connection.getConnectionName();
     }
 
-    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
-        return filter;
-    }
-
     public PenroseConfig getPenroseConfig() {
         return penroseConfig;
     }

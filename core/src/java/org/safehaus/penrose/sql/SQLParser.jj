@@ -293,6 +293,7 @@ SQLCompareExpr SQLCompareExpr() :
   SQLCompareExpr compareExpr = new SQLCompareExpr();
   SQLCompareExprRight compareExprRight;
   SQLSelect select;
+  SQLIsClause isClause;
 }
 {
   (
@@ -301,14 +302,16 @@ SQLCompareExpr SQLCompareExpr() :
     {
       ts = select.toString();
       rs = rs + ts;
-      compareExpr.addChild(ts);
+      compareExpr.addChild(select);
     }
-  | LOOKAHEAD (SQLColRef() <IS>) ts = SQLIsClause()
+  | LOOKAHEAD (SQLColRef() <IS>)
+    ts = SQLIsClause()
     {
       rs = rs + ts;
       compareExpr.addChild(ts);
     }
-  | LOOKAHEAD (<EXISTS>) ts = SQLExistsClause()
+  | LOOKAHEAD (<EXISTS>)
+    ts = SQLExistsClause()
     {
       rs = rs + ts;
       compareExpr.addChild(ts);
@@ -335,13 +338,15 @@ SQLCompareExprRight SQLCompareExprRight() :
   String rs = "", ts;
   SQLCompareExprRight compareExprRight = new SQLCompareExprRight();
   SQLCompareOp compareOp;
+  SQLLikeClause likeClause;
 }
 {
   (
-    LOOKAHEAD(2) ts = SQLLikeClause()
+    LOOKAHEAD(2)
+    likeClause = SQLLikeClause()
     {
-      rs = rs + ts;
-      compareExprRight.addChild(ts);
+      rs = rs + likeClause.toString();
+      compareExprRight.addChild(likeClause);
     }
   | LOOKAHEAD(2) ts = SQLInClause()
     {
@@ -773,13 +778,30 @@ String SQLLeftJoinClause() :
   { return rs; }
 }
 
-String SQLLikeClause() :
-{ String rs = new String(""), ts;}
+SQLLikeClause SQLLikeClause() :
 {
-  [ <NOT> { rs = rs + fout.print(" NOT"); } ]
-  <LIKE> { rs = rs + fout.print(" LIKE "); }
-  ts = SQLPattern() { rs = rs + ts; }
-  { return rs; }
+  SQLLikeClause likeClause = new SQLLikeClause();
+  String rs = "";
+  String ts;
+}
+{
+  [
+    <NOT>
+    {
+      rs = rs + fout.print(" NOT");
+      likeClause.setNot(true);
+    }
+  ]
+  <LIKE>
+  {
+    rs = rs + fout.print(" LIKE ");
+  }
+  ts = SQLPattern()
+  {
+    rs = rs + ts;
+    likeClause.setPattern(ts);
+    return likeClause;
+  }
 }
 
 String SQLLiteral() :

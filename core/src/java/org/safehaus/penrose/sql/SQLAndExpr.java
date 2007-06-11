@@ -26,21 +26,27 @@ import java.util.Iterator;
  */
 public class SQLAndExpr {
 
-    Collection children = new ArrayList();
+    Collection<SQLNotExpr> children = new ArrayList<SQLNotExpr>();
 
-    public void addChild(Object object) {
+    public void addChild(SQLNotExpr object) {
         children.add(object);
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=children.iterator(); i.hasNext(); ) {
-            Object child = i.next();
-            if (sb.length() > 0) sb.append(" and ");
-            sb.append("(");
+
+        boolean first = true;
+
+        for (SQLNotExpr child : children) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(" and ");
+            }
+            
             sb.append(child);
-            sb.append(")");
         }
+
         return sb.toString();
     }
 }

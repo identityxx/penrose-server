@@ -3,7 +3,6 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
@@ -11,10 +10,13 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.jdbc.JDBCClient;
+import org.safehaus.penrose.jdbc.JoinClause;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import java.util.*;
 
@@ -22,8 +24,6 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class SearchRequestBuilder extends RequestBuilder {
-
-    PenroseContext penroseContext;
 
     EntryMapping entryMapping;
 
@@ -38,16 +38,13 @@ public class SearchRequestBuilder extends RequestBuilder {
     SearchFilterBuilder filterBuilder;
 
     public SearchRequestBuilder(
-            PenroseContext penroseContext,
-            Partition partition,
+            Interpreter interpreter,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
-
-        this.penroseContext = penroseContext;
 
         this.entryMapping = entryMapping;
 
@@ -63,8 +60,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         this.response = response;
 
         filterBuilder = new SearchFilterBuilder(
-                penroseContext,
-                partition,
+                interpreter,
                 entryMapping,
                 sourceRefs,
                 sourceValues
@@ -77,29 +73,23 @@ public class SearchRequestBuilder extends RequestBuilder {
         return joinType;
     }
 
+    public Filter generateJoinFilter(SourceRef sourceRef) throws Exception {
+        return generateJoinFilter(sourceRef, sourceRef.getAlias());
+    }
+
     public String generateJoinOn(SourceRef sourceRef) throws Exception {
         return generateJoinOn(sourceRef, sourceRef.getAlias());
     }
 
-    public String generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
+    public Filter generateJoinFilter(SourceRef sourceRef, String alias) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
         if (debug) log.debug(" - Join on:");
 
-        String table = sourceRef.getSource().getParameter(JDBCClient.TABLE);
-        String sourceFilter = sourceRef.getSource().getParameter(JDBCClient.FILTER);
-        String sourceMappingFilter = sourceRef.getParameter(JDBCClient.FILTER);
-
-        StringBuffer sb = new StringBuffer();
-
-        if (sourceFilter != null && sourceMappingFilter != null) {
-            sb.append("(");
-        }
+        Filter filter = null;
 
         if (primarySourceRef == sourceRef) {
-
-            boolean first = true;
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
 
@@ -122,22 +112,14 @@ public class SearchRequestBuilder extends RequestBuilder {
                 String lhs = alias + "." + fieldRef.getOriginalName();
                 String rhs = sn + "." + f.getOriginalName();
 
-                if (debug) log.debug("   - " + lhs + ": " + rhs);
+                if (debug) log.debug("   - " + lhs + " =  " + rhs);
 
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(" and ");
-                }
-
-                sb.append(lhs);
-                sb.append("=");
-                sb.append(rhs);
+                SimpleFilter sf = new SimpleFilter(lhs, "=", rhs);
+                filter = FilterTool.appendAndFilter(filter, sf);
             }
 
         } else {
 
-            boolean first = true;
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
 
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
@@ -157,43 +139,58 @@ public class SearchRequestBuilder extends RequestBuilder {
                 String lhs = alias + "." + fieldRef.getOriginalName();
                 String rhs = sn + "." + f.getOriginalName();
 
-                if (debug) log.debug("   - " + lhs + ": " + rhs);
+                if (debug) log.debug("   - " + lhs + " = " + rhs);
 
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(" and ");
-                }
-                
-                sb.append(lhs);
-                sb.append("=");
-                sb.append(rhs);
+                SimpleFilter sf = new SimpleFilter(lhs, "=", rhs);
+                filter = FilterTool.appendAndFilter(filter, sf);
             }
         }
 
-        if (sourceFilter != null && sourceMappingFilter != null) {
-            sb.append(")");
+        return filter;
+    }
+
+    public String generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug(" - Join filter:");
+
+        String table = sourceRef.getSource().getParameter(JDBCClient.TABLE);
+
+        String sourceFilter = sourceRef.getSource().getParameter(JDBCClient.FILTER);
+        String sourceMappingFilter = sourceRef.getParameter(JDBCClient.FILTER);
+
+        if (sourceFilter == null && sourceMappingFilter == null) {
+            return null;
         }
 
         if (sourceFilter != null) {
             sourceFilter = sourceFilter.replaceAll(table+"\\.", alias+"\\.");
-            if (debug) log.debug(" - Source filter: "+sourceFilter);
-
-            sb.append(" and (");
-            sb.append(sourceFilter);
-            sb.append(")");
+            if (debug) log.debug("   - "+sourceFilter);
         }
 
         if (sourceMappingFilter != null) {
             sourceMappingFilter = sourceMappingFilter.replaceAll(sourceRef.getAlias()+"\\.", alias+"\\.");
-            if (debug) log.debug(" - Source mapping filter: "+sourceMappingFilter);
-
-            sb.append(" and (");
-            sb.append(sourceMappingFilter);
-            sb.append(")");
+            if (debug) log.debug("   - "+sourceMappingFilter);
         }
 
-        return sb.toString();
+        if (sourceMappingFilter == null) {
+            return sourceFilter;
+
+        } else if (sourceFilter == null) {
+            return sourceMappingFilter;
+
+        } else {
+            StringBuffer sb = new StringBuffer();
+
+            sb.append("(");
+            sb.append(sourceFilter);
+            sb.append(") and (");
+            sb.append(sourceMappingFilter);
+            sb.append(")");
+
+            return sb.toString();
+        }
     }
 
     public QueryRequest generate() throws Exception {
@@ -203,6 +200,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         SelectStatement statement = new SelectStatement();
 
         int sourceCounter = 0;
+        String where = null;
         for (SourceRef sourceRef : sourceRefs.values()) {
 
             String sourceName = sourceRef.getAlias();
@@ -217,9 +215,18 @@ public class SearchRequestBuilder extends RequestBuilder {
             // join previous table
             if (sourceCounter > 0) {
                 String joinType = generateJoinType(sourceRef);
+                Filter joinFilter = generateJoinFilter(sourceRef);
                 String joinOn = generateJoinOn(sourceRef);
 
-                statement.addJoin(joinType, joinOn);
+                JoinClause joinClause = new JoinClause();
+                joinClause.setType(joinType);
+                joinClause.setFilter(joinFilter);
+                joinClause.setSql(joinOn);
+
+                statement.addJoin(joinClause);
+
+            } else {
+                where = sourceRef.getParameter(JDBCClient.FILTER);
             }
 
             statement.addOrders(sourceRef.getPrimaryKeyFieldRefs());
@@ -246,15 +253,22 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.addSourceRef(alias, sourceRef);
 
             String joinType = generateJoinType(sourceRef);
+            Filter joinFilter = generateJoinFilter(sourceRef, alias);
             String joinOn = generateJoinOn(sourceRef, alias);
 
-            statement.addJoin(joinType, joinOn);
+            JoinClause joinClause = new JoinClause();
+            joinClause.setType(joinType);
+            joinClause.setFilter(joinFilter);
+            joinClause.setSql(joinOn);
+
+            statement.addJoin(joinClause);
         }
 
         Filter sourceFilter = filterBuilder.getFilter();
         if (debug) log.debug("Source filter: "+sourceFilter);
 
         statement.setFilter(sourceFilter);
+        statement.setWhere(where);
 
 /*
         for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {

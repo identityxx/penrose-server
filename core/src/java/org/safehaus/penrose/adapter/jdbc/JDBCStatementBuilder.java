@@ -23,6 +23,8 @@ public class JDBCStatementBuilder {
     protected String sql;
     protected Collection<Assignment> assigments = new ArrayList<Assignment>();
 
+    private String quote;
+
     public JDBCStatementBuilder() {
     }
 
@@ -67,43 +69,77 @@ public class JDBCStatementBuilder {
                 sb.append('.');
             }
 
+            if (quote != null) sb.append(quote);
             sb.append(fieldRef.getOriginalName());
+            if (quote != null) sb.append(quote);
         }
 
         sb.append(" from ");
 
-        Iterator i = statement.getSourceAliases().iterator();
-        Iterator j = statement.getJoinTypes().iterator();
-        Iterator k = statement.getJoinOns().iterator();
+        Collection<String> aliases = statement.getSourceAliases();
+        Iterator i = aliases.iterator();
+        Iterator j = statement.getJoinClauses().iterator();
 
         String alias = (String)i.next();
         SourceRef sourceRef = statement.getSourceRef(alias);
         Source source = sourceRef.getSource();
         String table = getTableName(source);
 
+        if (quote != null) sb.append(quote);
         sb.append(table);
+        if (quote != null) sb.append(quote);
 
         if (count > 1) {
             sb.append(" ");
             sb.append(alias);
         }
 
-        while (i.hasNext() && j.hasNext() && k.hasNext()) {
+        while (i.hasNext() && j.hasNext()) {
             alias = (String)i.next();
             sourceRef = statement.getSourceRef(alias);
             source = sourceRef.getSource();
             table = getTableName(source);
 
-            String joinType = (String)j.next();
-            String joinOn = (String)k.next();
+            JoinClause joinClause = (JoinClause)j.next();
+            String joinType = joinClause.getType();
+            Filter joinFilter = joinClause.getFilter();
+            String joinOn = joinClause.getSql();
+
             sb.append(" ");
             sb.append(joinType);
+
             sb.append(" ");
+            if (quote != null) sb.append(quote);
             sb.append(table);
+            if (quote != null) sb.append(quote);
+
             sb.append(" ");
             sb.append(alias);
+
             sb.append(" on ");
-            sb.append(joinOn);
+
+            if (joinOn != null) {
+                sb.append("(");
+            }
+
+            JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(false);
+            filterBuilder.setQuote(quote);
+
+            for (String cn : statement.getSourceAliases()) {
+                SourceRef sr = statement.getSourceRef(cn);
+                filterBuilder.addSourceRef(cn, sr);
+            }
+
+            filterBuilder.generate(joinFilter);
+
+            String sqlFilter = filterBuilder.getSql();
+            sb.append(sqlFilter);
+
+            if (joinOn != null) {
+                sb.append(") and (");
+                sb.append(joinOn);
+                sb.append(")");
+            }
         }
 
         Filter filter = statement.getFilter();
@@ -112,19 +148,28 @@ public class JDBCStatementBuilder {
 
         if (count > 1) {
             filterBuilder = new JDBCFilterBuilder();
+            filterBuilder.setQuote(quote);
 
-            for (Iterator iterator=statement.getSourceAliases().iterator(); iterator.hasNext(); ) {
-                alias = (String)iterator.next();
-                sourceRef = statement.getSourceRef(alias);
-                filterBuilder.addSourceRef(alias, sourceRef);
+            for (String cn : statement.getSourceAliases()) {
+                sourceRef = statement.getSourceRef(cn);
+                filterBuilder.addSourceRef(cn, sourceRef);
             }
 
         } else {
             filterBuilder = new JDBCFilterBuilder(source);
+            filterBuilder.setQuote(quote);
         }
 
         filterBuilder.generate(filter);
         String whereClause = filterBuilder.getSql();
+
+        if (statement.getWhere() != null) {
+            if (whereClause.length() > 0) {
+                whereClause = "("+whereClause+") and ("+statement.getWhere()+")";
+            } else {
+                whereClause = statement.getWhere();
+            }
+        }
 
         if (whereClause.length() > 0) {
             sb.append(" where ");
@@ -133,10 +178,8 @@ public class JDBCStatementBuilder {
 
         assigments.addAll(filterBuilder.getAssignments());
 
-        Collection orders = statement.getOrders();
         first = true;
-        for (Iterator iterator=orders.iterator(); iterator.hasNext(); ) {
-            FieldRef fieldRef = (FieldRef)iterator.next();
+        for (FieldRef fieldRef : statement.getOrders()) {
 
             if (first) {
                 sb.append(" order by ");
@@ -149,8 +192,10 @@ public class JDBCStatementBuilder {
                 sb.append(fieldRef.getSourceName());
                 sb.append('.');
             }
-            
+
+            if (quote != null) sb.append(quote);
             sb.append(fieldRef.getOriginalName());
+            if (quote != null) sb.append(quote);
         }
 
 /*
@@ -180,40 +225,38 @@ public class JDBCStatementBuilder {
 
         Source source = statement.getSource();
         String table = getTableName(source);
+
+        if (quote != null) sb.append(quote);
         sb.append(table);
+        if (quote != null) sb.append(quote);
 
-        sb.append(" (");
-
+        StringBuilder sb1 = new StringBuilder();
+        StringBuilder sb2 = new StringBuilder();
         boolean first = true;
-        for (Iterator i=statement.getAssignments().iterator(); i.hasNext(); ) {
-            Assignment assignment = (Assignment)i.next();
+
+        for (Assignment assignment : statement.getAssignments()) {
             Field field = assignment.getField();
 
             if (first) {
                 first = false;
             } else {
-                sb.append(", ");
+                sb1.append(", ");
+                sb2.append(", ");
             }
 
-            sb.append(field.getOriginalName());
+            if (quote != null) sb1.append(quote);
+            sb1.append(field.getOriginalName());
+            if (quote != null) sb1.append(quote);
+
+            sb2.append("?");
+
             assigments.add(assignment);
         }
 
+        sb.append(" (");
+        sb.append(sb1);
         sb.append(") values (");
-
-        first = true;
-        for (Iterator i=statement.getAssignments().iterator(); i.hasNext(); ) {
-            i.next();
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append("?");
-        }
-
+        sb.append(sb2);
         sb.append(")");
 
         return sb.toString();
@@ -228,13 +271,15 @@ public class JDBCStatementBuilder {
 
         Source source = statement.getSource();
         String table = getTableName(source);
+
+        if (quote != null) sb.append(quote);
         sb.append(table);
+        if (quote != null) sb.append(quote);
 
         sb.append(" set ");
 
         boolean first = true;
-        for (Iterator j=statement.getAssignments().iterator(); j.hasNext(); ) {
-            Assignment assignment = (Assignment)j.next();
+        for (Assignment assignment : statement.getAssignments()) {
             Field field = assignment.getField();
 
             if (first) {
@@ -243,14 +288,20 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
+            if (quote != null) sb.append(quote);
             sb.append(field.getOriginalName());
+            if (quote != null) sb.append(quote);
+
             sb.append("=?");
+
             assigments.add(assignment);
         }
 
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
+        filterBuilder.setQuote(quote);
+
         filterBuilder.generate(filter);
 
         String whereClause = filterBuilder.getSql();
@@ -273,11 +324,16 @@ public class JDBCStatementBuilder {
 
         Source source = statement.getSource();
         String table = getTableName(source);
+
+        if (quote != null) sb.append(quote);
         sb.append(table);
+        if (quote != null) sb.append(quote);
 
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
+        filterBuilder.setQuote(quote);
+
         filterBuilder.generate(filter);
 
         String whereClause = filterBuilder.getSql();
@@ -318,5 +374,13 @@ public class JDBCStatementBuilder {
 
     public void setAssigments(Collection<Assignment> assigments) {
         this.assigments = assigments;
+    }
+
+    public String getQuote() {
+        return quote;
+    }
+
+    public void setQuote(String quote) {
+        this.quote = quote;
     }
 }

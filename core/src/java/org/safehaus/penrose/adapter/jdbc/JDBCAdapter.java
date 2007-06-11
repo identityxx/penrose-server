@@ -19,7 +19,6 @@ package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
@@ -32,6 +31,7 @@ import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import java.sql.ResultSet;
 import java.util.*;
@@ -375,8 +375,7 @@ public class JDBCAdapter extends Adapter {
         RDN rdn = request.getDn().getRdn();
 
         Collection<Modification> modifications = request.getModifications();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            Modification modification = (Modification)i.next();
+        for (Modification modification : modifications) {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
@@ -400,8 +399,7 @@ public class JDBCAdapter extends Adapter {
         }
 
         Filter filter = null;
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
             SimpleFilter sf = new SimpleFilter(name, "=", value);
@@ -447,7 +445,7 @@ public class JDBCAdapter extends Adapter {
                 response
         );
 
-        Collection requests = builder.generate();
+        Collection<Request> requests = builder.generate();
         for (Iterator i=requests.iterator(); i.hasNext(); ) {
             UpdateRequest updateRequest = (UpdateRequest)i.next();
             UpdateResponse updateResponse = new UpdateResponse();
@@ -481,8 +479,7 @@ public class JDBCAdapter extends Adapter {
         statement.setSource(source);
 
         RDN newRdn = request.getNewRdn();
-        for (Iterator i=newRdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : newRdn.getNames()) {
             Object value = newRdn.get(name);
 
             Field field = source.getField(name);
@@ -493,8 +490,7 @@ public class JDBCAdapter extends Adapter {
 
         RDN rdn = request.getDn().getRdn();
         Filter filter = null;
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
             SimpleFilter sf = new SimpleFilter(name, "=", value);
@@ -540,7 +536,7 @@ public class JDBCAdapter extends Adapter {
                 response
         );
 
-        Collection requests = builder.generate();
+        Collection<Request> requests = builder.generate();
         for (Iterator i=requests.iterator(); i.hasNext(); ) {
             UpdateRequest updateRequest = (UpdateRequest)i.next();
             UpdateResponse updateResponse = new UpdateResponse();
@@ -580,8 +576,7 @@ public class JDBCAdapter extends Adapter {
         DN dn = request.getDn();
         if (dn != null) {
             RDN rdn = dn.getRdn();
-            for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+            for (String name : rdn.getNames()) {
                 Object value = rdn.get(name);
 
                 SimpleFilter sf = new SimpleFilter(name, "=", value);
@@ -636,9 +631,10 @@ public class JDBCAdapter extends Adapter {
 
         response.setSizeLimit(request.getSizeLimit());
 
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+
         SearchRequestBuilder builder = new SearchRequestBuilder(
-                penroseContext,
-                partition,
+                interpreter,
                 entryMapping,
                 sourceRefs,
                 sourceValues,
@@ -765,34 +761,6 @@ public class JDBCAdapter extends Adapter {
         SourceValues destinationValues = destination.getSourceValues();
 
         destinationValues.add(sourceValues);
-    }
-
-    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
-
-        String attributeName = filter.getAttribute();
-        Collection<Object> substrings = filter.getSubstrings();
-
-        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
-        String variable = attributeMapping.getVariable();
-
-        if (variable == null) return null;
-
-        int index = variable.indexOf(".");
-        String sourceName = variable.substring(0, index);
-        String fieldName = variable.substring(index+1);
-
-        StringBuilder sb = new StringBuilder();
-        for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            Object o = i.next();
-            if (o.equals(SubstringFilter.STAR)) {
-                sb.append("%");
-            } else {
-                String substring = (String)o;
-                sb.append(substring);
-            }
-        }
-
-        return new SimpleFilter(fieldName, "like", sb.toString());
     }
 
     public JDBCClient getClient() {

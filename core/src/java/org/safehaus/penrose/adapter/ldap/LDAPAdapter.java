@@ -17,9 +17,6 @@
  */
 package org.safehaus.penrose.adapter.ldap;
 
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SubstringFilter;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.ldap.Attribute;
@@ -380,22 +377,5 @@ public class LDAPAdapter extends Adapter {
         }
 
         return new SearchResult(newDn, newAttributes);
-    }
-
-    public Filter convert(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
-
-        String attributeName = filter.getAttribute();
-        Collection<Object> substrings = filter.getSubstrings();
-
-        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
-        String variable = attributeMapping.getVariable();
-
-        if (variable == null) return null;
-
-        int index = variable.indexOf(".");
-        String sourceName = variable.substring(0, index);
-        String fieldName = variable.substring(index+1);
-
-        return new SubstringFilter(fieldName, substrings);
     }
 }

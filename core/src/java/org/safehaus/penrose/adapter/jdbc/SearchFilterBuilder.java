@@ -23,8 +23,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,6 @@ public class SearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    PenroseContext penroseContext;
     EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
@@ -50,14 +47,12 @@ public class SearchFilterBuilder {
     Filter sourceFilter;
 
     public SearchFilterBuilder(
-            PenroseContext penroseContext,
-            Partition partition,
+            Interpreter interpreter,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues
     ) throws Exception {
 
-        this.penroseContext = penroseContext;
         this.entryMapping = entryMapping;
 
         Set<String> aliases = new HashSet<String>();
@@ -69,19 +64,8 @@ public class SearchFilterBuilder {
             if (entryMapping.getSourceMapping(alias) == null) continue;
             this.sourceRefs.put(alias, sourceRef);
         }
-/*
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        EntryMapping em = partition.getParent(entryMapping);
-        while (em != null) {
-            Collection<SourceRef> list = sourceManager.getSourceRefs(partition, em);
-            for (Iterator i=list.iterator(); i.hasNext(); ) {
-                SourceRef sourceRef = (SourceRef)i.next();
-                this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
-            }
-            em = partition.getParent(em);
-        }
-*/
-        this.interpreter = penroseContext.getInterpreterManager().newInstance();
+
+        this.interpreter = interpreter;
 
         boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
@@ -95,11 +79,7 @@ public class SearchFilterBuilder {
 
                 Attribute attribute = attributes.get(fieldName);
 
-                //String alias = createTableAlias(sourceName);
-                //setTableAlias(sourceName, alias);
-
                 for (Object value : attribute.getValues()) {
-                    //SimpleFilter f = new SimpleFilter(alias+"."+fieldName, "=", value);
                     SimpleFilter f = new SimpleFilter(sourceName + "." + fieldName, "=", value);
                     if (debug) log.debug(" - Filter " + f);
 

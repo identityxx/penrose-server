@@ -46,6 +46,7 @@ public class JDBCClient {
     public final static String URL          = "url";
     public final static String USER         = "user";
     public final static String PASSWORD     = "password";
+    public final static String QUOTE        = "quote";
 
     public final static String CATALOG      = "catalog";
     public final static String SCHEMA       = "schema";
@@ -71,13 +72,22 @@ public class JDBCClient {
     public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
 
     public Properties properties = new Properties();
+    public String quote;
 
     public GenericObjectPool.Config config = new GenericObjectPool.Config();
     public GenericObjectPool connectionPool;
     public DataSource ds;
 
-    public JDBCClient(Map properties) throws Exception {
-        this.properties.putAll(properties);
+    public JDBCClient(Map<String,?> properties) throws Exception {
+        for (String key : properties.keySet()) {
+            Object value = properties.get(key);
+
+            if (QUOTE.equals(key)) {
+                quote = (String)value;
+            } else {
+                this.properties.put(key, value);
+            }
+        }
     }
 
     public JDBCClient(
@@ -349,6 +359,8 @@ public class JDBCClient {
 
     public void executeUpdate(UpdateRequest request, UpdateResponse response) throws Exception {
         JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
+        statementBuilder.setQuote(quote);
+
         String sql = statementBuilder.generate(request.getStatement());
         Collection<Assignment> assignments = statementBuilder.getAssigments();
         executeUpdate(sql, assignments, response);
@@ -429,6 +441,8 @@ public class JDBCClient {
 
     public void executeQuery(QueryRequest request, QueryResponse response) throws Exception {
         JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
+        statementBuilder.setQuote(quote);
+
         String sql = statementBuilder.generate(request.getStatement());
         Collection<Assignment> assignments = statementBuilder.getAssigments();
         executeQuery(sql, assignments, response);

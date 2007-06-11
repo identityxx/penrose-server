@@ -23,7 +23,14 @@ public class JDBCFilterBuilder {
     private String sql;
     private Collection<Assignment> assignments = new ArrayList<Assignment>();
 
+    private String quote;
+    public boolean extractValues = true;
+
     public JDBCFilterBuilder() throws Exception {
+    }
+
+    public JDBCFilterBuilder(boolean extractValues) throws Exception {
+        this.extractValues = extractValues;
     }
 
     public JDBCFilterBuilder(
@@ -67,8 +74,9 @@ public class JDBCFilterBuilder {
         Object value = filter.getValue();
 
         log.debug("Simple Filter: "+name+" "+operator+" "+value);
-        
-        Field field;
+
+        Field lField;
+        String lhs;
 
         if (source == null) {
             int i = name.indexOf('.');
@@ -78,41 +86,82 @@ public class JDBCFilterBuilder {
             SourceRef sourceRef = sourceRefs.get(sourceName);
             Source s = sourceRef.getSource();
 
-            field = s.getField(fieldName);
-            if (field == null) throw new Exception("Unknown field: "+name);
+            lField = s.getField(fieldName);
+            if (lField == null) throw new Exception("Unknown field: "+name);
 
-            name = sourceName+"."+ field.getOriginalName();
+            StringBuilder sb1 = new StringBuilder();
+            sb1.append(sourceName);
+            sb1.append(".");
+
+            if (quote != null) sb1.append(quote);
+            sb1.append(lField.getOriginalName());
+            if (quote != null) sb1.append(quote);
+
+            lhs = sb1.toString();
 
         } else {
             int i = name.indexOf('.');
             String fieldName = i >= 0 ? name.substring(i+1) : name;
 
-            field = source.getField(fieldName);
-            if (field == null) throw new Exception("Unknown field: "+name);
+            lField = source.getField(fieldName);
+            if (lField == null) throw new Exception("Unknown field: "+name);
 
-            name = field.getOriginalName();
+            StringBuilder sb1 = new StringBuilder();
+            if (quote != null) sb1.append(quote);
+            sb1.append(lField.getOriginalName());
+            if (quote != null) sb1.append(quote);
+
+            lhs = sb1.toString();
         }
 
-        generate(
-                field,
-                name,
-                operator,
-                "?",
-                sb
-        );
+        Field rField;
+        String rhs;
 
-        assignments.add(new Assignment(field, value));
-    }
+        if (extractValues) {
+            rhs = "?";
+            assignments.add(new Assignment(lField, value));
 
-    public void generate(
-            Field field,
-            String lhs,
-            String operator,
-            String rhs,
-            StringBuilder sb
-    ) throws Exception {
+        } else {
+            rhs = value.toString();
 
-        if ("VARCHAR".equals(field.getType()) && !field.isCaseSensitive()) {
+            if (source == null) {
+                int i = rhs.indexOf('.');
+                String sourceName = rhs.substring(0, i);
+                String fieldName = rhs.substring(i+1);
+
+                SourceRef sourceRef = sourceRefs.get(sourceName);
+                Source s = sourceRef.getSource();
+
+                rField = s.getField(fieldName);
+                if (rField == null) throw new Exception("Unknown field: "+rhs);
+
+                StringBuilder sb1 = new StringBuilder();
+                sb1.append(sourceName);
+                sb1.append(".");
+
+                if (quote != null) sb1.append(quote);
+                sb1.append(rField.getOriginalName());
+                if (quote != null) sb1.append(quote);
+
+                rhs = sb1.toString();
+
+            } else {
+                int i = rhs.indexOf('.');
+                String fieldName = i >= 0 ? rhs.substring(i+1) : rhs;
+
+                rField = source.getField(fieldName);
+                if (rField == null) throw new Exception("Unknown field: "+rhs);
+
+                StringBuilder sb1 = new StringBuilder();
+                if (quote != null) sb1.append(quote);
+                sb1.append(rField.getOriginalName());
+                if (quote != null) sb1.append(quote);
+
+                rhs = sb1.toString();
+            }
+        }
+
+        if ("VARCHAR".equals(lField.getType()) && !lField.isCaseSensitive()) {
             sb.append("lower(");
             sb.append(lhs);
             sb.append(")");
@@ -130,6 +179,7 @@ public class JDBCFilterBuilder {
             sb.append(" ");
             sb.append(rhs);
         }
+
     }
 
     public void generate(
@@ -254,5 +304,13 @@ public class JDBCFilterBuilder {
 
     public void setSql(String sql) {
         this.sql = sql;
+    }
+
+    public String getQuote() {
+        return quote;
+    }
+
+    public void setQuote(String quote) {
+        this.quote = quote;
     }
 }
