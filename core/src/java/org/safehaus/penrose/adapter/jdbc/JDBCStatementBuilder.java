@@ -348,14 +348,30 @@ public class JDBCStatementBuilder {
     }
 
     public String getTableName(Source source) {
+        StringBuilder sb = new StringBuilder();
+
+        String catalog = source.getParameter(JDBCClient.CATALOG);
+        if (catalog != null) {
+            if (quote != null) sb.append(quote);
+            sb.append(catalog);
+            if (quote != null) sb.append(quote);
+            sb.append(".");
+        }
+
+        String schema = source.getParameter(JDBCClient.SCHEMA);
+        if (schema != null) {
+            if (quote != null) sb.append(quote);
+            sb.append(schema);
+            if (quote != null) sb.append(quote);
+            sb.append(".");
+        }
+
         String table = source.getParameter(JDBCClient.TABLE);
         if (table == null) table = source.getParameter(JDBCClient.TABLE_NAME);
 
-        String catalog = source.getParameter(JDBCClient.CATALOG);
-        if (catalog != null) table = catalog +"."+table;
-
-        String schema = source.getParameter(JDBCClient.SCHEMA);
-        if (schema != null) table = schema +"."+table;
+        if (quote != null) sb.append(quote);
+        sb.append(table);
+        if (quote != null) sb.append(quote);
 
         return table;
     }

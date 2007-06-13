@@ -14,13 +14,11 @@ import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSyncConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.filter.FilterEvaluator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.io.File;
 
 /**
@@ -172,50 +170,41 @@ public class PenroseContext {
 
     public void load(String dir) throws Exception {
 
-        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : penroseConfig.getSystemPropertyNames()) {
             String value = penroseConfig.getSystemProperty(name);
 
             System.setProperty(name, value);
         }
 
-        for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+        for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
             schemaManager.init(dir, schemaConfig);
         }
 
-        for (Iterator i=penroseConfig.getInterpreterConfigs().iterator(); i.hasNext(); ) {
-            InterpreterConfig interpreterConfig = (InterpreterConfig)i.next();
+        for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
             interpreterManager.init(interpreterConfig);
         }
 
         connectorManager.init(penroseConfig.getConnectorConfig());
 
-        for (Iterator i=penroseConfig.getPartitionConfigs().iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+        for (PartitionConfig partitionConfig : penroseConfig.getPartitionConfigs()) {
             partitionManager.load(dir, partitionConfig);
         }
 
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Partition partition : partitionManager.getPartitions()) {
 
-            for (Iterator j=partition.getConnectionConfigs().iterator(); j.hasNext(); ) {
-                ConnectionConfig connectionConfig = (ConnectionConfig)j.next();
+            for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
                 connectionManager.init(partition, connectionConfig);
             }
 
-            for (Iterator j=partition.getSources().getSourceConfigs().iterator(); j.hasNext(); ) {
-                SourceConfig sourceConfig = (SourceConfig)j.next();
+            for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
                 sourceManager.init(partition, sourceConfig);
             }
 
-            for (Iterator j=partition.getSources().getSourceSyncConfigs().iterator(); j.hasNext(); ) {
-                SourceSyncConfig sourceSyncConfig = (SourceSyncConfig)j.next();
+            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
                 sourceSyncManager.init(partition, sourceSyncConfig);
             }
 
-            for (Iterator j=partition.getEntryMappings().iterator(); j.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)j.next();
+            for (EntryMapping entryMapping : partition.getEntryMappings()) {
                 sourceManager.init(partition, entryMapping);
             }
         }

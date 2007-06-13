@@ -33,20 +33,38 @@ public class SourceManager {
     public Map<String,Map<String,Map<String,SourceRef>>> sourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
     public Map<String,Map<String,Map<String,SourceRef>>> primarySourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
 
-    public void init(Partition partition, SourceConfig sourceConfig) throws Exception {
+    public Source createSource(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Connection connection
+    ) throws Exception {
+
+        Source source = new Source(partition, sourceConfig);
+        source.setConnection(connection);
+
+        return source;
+    }
+
+    public Source init(
+            Partition partition,
+            SourceConfig sourceConfig
+    ) throws Exception {
 
         Source source = getSource(partition, sourceConfig.getName());
-        if (source != null) return;
+        if (source != null) return source;
 
         log.debug("Initializing source "+sourceConfig.getName()+".");
 
-        source = new Source(partition, sourceConfig);
-
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
         Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
-        source.setConnection(connection);
+
+        if (connection == null) throw new Exception("Connection "+sourceConfig.getConnectionName()+" not found.");
+
+        source = createSource(partition, sourceConfig, connection);
 
         addSource(partition, source);
+
+        return source;
     }
 
     public void init(Partition partition, EntryMapping entryMapping) throws Exception {

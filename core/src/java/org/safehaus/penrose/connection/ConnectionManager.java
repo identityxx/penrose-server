@@ -39,37 +39,43 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
     public Map<String,Map<String,Connection>> connections = new TreeMap<String,Map<String,Connection>>();
 
-    public void init(Partition partition, ConnectionConfig connectionConfig) throws Exception {
-
-        Connection connection = getConnection(partition, connectionConfig.getName());
-        if (connection != null) return;
-
-        log.debug("Initializing connection "+connectionConfig.getName()+".");
+    public Connection createConnection(Partition partition, ConnectionConfig connectionConfig) throws Exception {
 
         String adapterName = connectionConfig.getAdapterName();
-        if (adapterName == null) throw new Exception("Missing adapter name");
+        if (adapterName == null) throw new Exception("Missing adapter name.");
 
         AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
-        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName);
+        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName+".");
 
-        connection = new Connection(partition, connectionConfig, adapterConfig);
+        Connection connection = new Connection(partition, connectionConfig, adapterConfig);
         connection.setPenroseConfig(penroseConfig);
         connection.setPenroseContext(penroseContext);
         connection.init();
 
+        return connection;
+    }
+
+    public Connection init(Partition partition, ConnectionConfig connectionConfig) throws Exception {
+
+        Connection connection = getConnection(partition, connectionConfig.getName());
+        if (connection != null) return connection;
+
+        log.debug("Initializing connection "+connectionConfig.getName()+".");
+
+        connection = createConnection(partition, connectionConfig);
         addConnection(partition.getName(), connection);
+
+        return connection;
     }
 
     public void start() throws Exception {
-        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map)connections.get(partitionName);
+        for (String partitionName : connections.keySet()) {
+            Map<String,Connection> map = connections.get(partitionName);
 
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Connection connection = (Connection)map.get(name);
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
 
-                log.debug("Starting "+name+" connection.");
+                log.debug("Starting " + name + " connection.");
                 try {
                     connection.start();
 
@@ -81,15 +87,13 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public void stop() throws Exception {
-        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+        for (String partitionName : connections.keySet()) {
+            Map<String, Connection> map = connections.get(partitionName);
 
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Connection connection = (Connection)map.get(name);
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
 
-                log.debug("Stopping "+name+" connection.");
+                log.debug("Stopping " + name + " connection.");
                 try {
                     connection.stop();
 
@@ -101,15 +105,13 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public void dispose() throws Exception {
-        for (Iterator i=connections.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+        for (String partitionName : connections.keySet()) {
+            Map<String, Connection> map = connections.get(partitionName);
 
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                Connection connection = (Connection)map.get(name);
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
 
-                log.debug("Removing "+name+" connection.");
+                log.debug("Removing " + name + " connection.");
                 try {
                     connection.dispose();
 
@@ -121,7 +123,7 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public void addConnection(String partitionName, Connection connection) {
-        Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+        Map<String,Connection> map = connections.get(partitionName);
         if (map == null) {
             map = new TreeMap<String,Connection>();
             connections.put(partitionName, map);
@@ -130,25 +132,25 @@ public class ConnectionManager implements ConnectionManagerMBean {
     }
 
     public Connection getConnection(Partition partition, String connectionName) throws Exception {
-        Map<String,Connection> map = (Map<String,Connection>)connections.get(partition.getName());
+        Map<String,Connection> map = connections.get(partition.getName());
         if (map == null) return null;
-        return (Connection)map.get(connectionName);
+        return map.get(connectionName);
     }
 
     public Collection<String> getPartitionNames() {
-        return new ArrayList(connections.keySet()); // return Serializable list
+        return new ArrayList<String>(connections.keySet()); // return Serializable list
     }
 
     public Collection getConnectionNames(String partitionName) {
-        Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+        Map<String,Connection> map = connections.get(partitionName);
         if (map == null) return new ArrayList();
         return new ArrayList<String>(map.keySet()); // return Serializable list
     }
 
     public Connection removeConnection(String partitionName, String connectionName) {
-        Map<String,Connection> map = (Map<String,Connection>)connections.get(partitionName);
+        Map<String,Connection> map = connections.get(partitionName);
         if (map == null) return null;
-        return (Connection)map.remove(connectionName);
+        return map.remove(connectionName);
     }
 
     public void clear() {

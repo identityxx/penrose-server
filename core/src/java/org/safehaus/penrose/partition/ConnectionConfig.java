@@ -60,7 +60,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         return parameters;
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
@@ -68,6 +68,12 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         return parameters.get(name);
     }
 
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
+    }
+    
     public void setParameter(String name, String value) {
         parameters.put(name, value);
     }

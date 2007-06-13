@@ -83,18 +83,6 @@ public class JDBCAdapter extends Adapter {
         return sb.toString();
     }
 
-    public String getTableName(SourceConfig sourceConfig) {
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        if (table == null) table = sourceConfig.getParameter(JDBCClient.TABLE_NAME);
-        if (catalog != null) table = catalog +"."+table;
-        if (schema != null) table = schema +"."+table;
-
-        return table;
-    }
-
     public boolean isJoinSupported() {
         return true;
     }

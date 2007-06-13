@@ -26,6 +26,8 @@ import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.ldap.LDAPSourceSync;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 
 import java.util.*;
 
@@ -311,6 +313,14 @@ public class LDAPAdapter extends Adapter {
 
         } else if ("SUBTREE".equals(scope)) {
             newRequest.setScope(SearchRequest.SCOPE_SUB);
+        }
+
+        String filter = source.getParameter(LDAPAdapter.FILTER);
+        if (filter != null) {
+            Filter f1 = request.getFilter();
+            Filter f2 = FilterTool.parseFilter(filter);
+            f1 = FilterTool.appendAndFilter(f1, f2);
+            newRequest.setFilter(f1);
         }
 
         SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {

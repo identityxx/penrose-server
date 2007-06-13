@@ -10,7 +10,7 @@ import java.util.*;
 public class DNBuilder {
 
     Logger log = Logger.getLogger(getClass());
-    
+
     public List<RDN> rdns = new ArrayList<RDN>();
 
     public void set(String dn) {
@@ -30,9 +30,8 @@ public class DNBuilder {
 
     public void append(String dn) {
         if (dn == null) return;
-        Collection list = parse(dn);
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        Collection<RDN> list = parse(dn);
+        for (RDN rdn : list) {
             rdns.add(rdn);
         }
     }
@@ -44,18 +43,16 @@ public class DNBuilder {
 
     public void append(DN dn) {
         if (dn == null) return;
-        Collection list = dn.getRdns();
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        Collection<RDN> list = dn.getRdns();
+        for (RDN rdn : list) {
             rdns.add(rdn);
         }
     }
 
     public void prepend(String dn) {
         if (dn == null) return;
-        Collection list = parse(dn);
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        Collection<RDN> list = parse(dn);
+        for (RDN rdn : list) {
             rdns.add(0, rdn);
         }
     }
@@ -67,9 +64,8 @@ public class DNBuilder {
 
     public void prepend(DN dn) {
         if (dn == null) return;
-        Collection list = dn.getRdns();
-        for (Iterator i=list.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
+        Collection<RDN> list = dn.getRdns();
+        for (RDN rdn : list) {
             rdns.add(0, rdn);
         }
     }
@@ -91,21 +87,22 @@ public class DNBuilder {
         if (list.isEmpty()) return null;
         return (RDN)list.iterator().next();
     }
+
     /**
      * Take a "string" representation of a distinguished name and return an
      * ordered list or relative distingished names.
      * The string is formatted as
      *     <attributeName>=<attributeValue>[+<attributeName>=<attributeValue>],...
      * attributeName is case insensitive.
-     * attributeValue is case sensitive. 
+     * attributeValue is case sensitive.
      *     Contents may be escaped with backslash to
-     *     avoid the special meaning they would have otherwise. 
+     *     avoid the special meaning they would have otherwise.
      *     Or, the value may be wrapped by double quotes in which case
      *     the special characters do not need to be escaped, but the quotes are not
      *     part of the value.
      * A multi-valued RDN will have name=value pairs separated by the '+'
      *     character.
-     * @param dn
+     * @param dn DN
      * @return a Collection of RDN objects
      */
     public static Collection<RDN> parse(String dn) {
@@ -115,31 +112,31 @@ public class DNBuilder {
         if (dn == null || "".equals(dn)) return list;
 
         char[] value = dn.toCharArray();
-        TreeMap map = new TreeMap();
+        Map<String,Object> map = new TreeMap<String,Object>();
         boolean inName = true;
         boolean sawDQ = false;
         StringBuilder sb = new StringBuilder(100);
         String name = null;
-        String val = null;
-        for (int i = 0; i < value.length; i++)
-        {
-        	if (inName)
-        	{
-        		switch (value[i])
-        		{
+        String val;
+
+        for (int i = 0; i < value.length; i++) {
+
+            if (inName) {
+
+                switch (value[i]) {
         		case '=':
         			name = sb.toString().trim();
         			sb.delete(0, sb.length());
         			inName = false;
         			break;
-    			default:
+
+                default:
         			sb.append(value[i]);
-        		}        		
-        	}
-        	else
-        	{
-        		switch (value[i])
-        		{
+        		}
+
+            } else {
+
+                switch (value[i]) {
         		case '"':
         			sawDQ = true;
         			break;
@@ -147,8 +144,7 @@ public class DNBuilder {
         		case '+':
         			// an rdn w/multiple attributes
         			val = sb.toString();
-        			if (!sawDQ)
-        			{
+        			if (!sawDQ) {
         				val = val.trim();
         			}
         			map.put(name, val);
@@ -156,22 +152,22 @@ public class DNBuilder {
         			sawDQ = false;
         			sb.delete(0, sb.length());
         			break;
-        		case ',':
+
+                case ',':
         		case ';':
         			val = sb.toString();
-        			if (!sawDQ)
-        			{
+        			if (!sawDQ) {
         				val = val.trim();
         			}
         			map.put(name, val);
         			list.add(new RDN(map));
-        			map = new TreeMap();
+        			map = new TreeMap<String,Object>();
         			inName = true;
         			sb.delete(0, sb.length());
         			break;
-        		case '\\':
-        			if (!sawDQ)
-        			{
+
+                case '\\':
+        			if (!sawDQ) {
         				// this is an escape - pick up next character
         				switch (value[++i])
         				{
@@ -185,25 +181,27 @@ public class DNBuilder {
         					break;
     					default:
     						// normal escaped special character
-    						sb.append(value[i]);	
+    						sb.append(value[i]);
         				}
         				break;
         			}
         			// else no escapes - fall through and keep the backslash literal
-    			default:
-    				sb.append(value[i]);	
+
+                default:
+    				sb.append(value[i]);
         		}
         	}
         }
+
         // a well formed DN will have left us 1 more RDN at the end
 		val = sb.toString();
-		if (!sawDQ)
-		{
+		if (!sawDQ) {
 			val = val.trim();
 		}
-		map.put(name, val);
+
+        map.put(name, val);
 		list.add(new RDN(map));
-        
+
         return list;
     }
 

@@ -190,11 +190,11 @@ public class JDBCClient {
         return "UNKNOWN";
     }
 
-    public Collection getColumns(String tableName) throws Exception {
+    public Collection<FieldConfig> getColumns(String tableName) throws Exception {
         return getColumns(null, null, tableName);
     }
 
-    public Collection getColumns(String catalog, String schema, String tableName) throws Exception {
+    public Collection<FieldConfig> getColumns(String catalog, String schema, String tableName) throws Exception {
 
         log.debug("Getting column names for "+tableName+" "+catalog+" "+schema);
 
@@ -257,7 +257,7 @@ public class JDBCClient {
         return columns.values();
     }
 
-    public Collection getCatalogs() throws Exception {
+    public Collection<String> getCatalogs() throws Exception {
 
         log.debug("Getting catalogs");
 
@@ -286,7 +286,7 @@ public class JDBCClient {
         return catalogs;
     }
 
-    public Collection getSchemas() throws Exception {
+    public Collection<String> getSchemas() throws Exception {
 
         log.debug("Getting schemas");
 
@@ -315,11 +315,11 @@ public class JDBCClient {
         return schemas;
     }
 
-    public Collection getTables() throws Exception {
+    public Collection<TableConfig> getTables() throws Exception {
         return getTables(null, null);
     }
 
-    public Collection getTables(String catalog, String schema) throws Exception {
+    public Collection<TableConfig> getTables(String catalog, String schema) throws Exception {
 
         log.debug("Getting table names for "+catalog+" "+schema);
 
@@ -344,7 +344,7 @@ public class JDBCClient {
                 String tableType = rs.getString(4);
                 //String remarks = rs.getString(5);
 
-                //log.debug(" - "+tableSchema+" "+tableName);
+                log.debug(" - "+tableCatalog+" "+tableSchema+" "+tableName);
                 TableConfig tableConfig = new TableConfig(tableName, tableType, tableCatalog, tableSchema);
                 tables.add(tableConfig);
             }
