@@ -3,6 +3,7 @@ package org.safehaus.penrose.adapter.jdbc;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
@@ -68,7 +69,8 @@ public class SearchRequestBuilder extends RequestBuilder {
     }
 
     public String generateJoinType(SourceRef sourceRef) {
-        String joinType = sourceRef.isRequired() ? "join" : "left join";
+        String search = sourceRef.getSearch();
+        String joinType = search == null || SourceMapping.SUFFICIENT.equals(search) ? "left join" : "join" ;
         log.debug(" - Join type: "+joinType);
         return joinType;
     }

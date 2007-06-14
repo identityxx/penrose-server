@@ -172,7 +172,7 @@ public class Partition {
         return entryMappingsById.get(id);
     }
 
-    public void modifyEntryMapping(EntryMapping oldEntry, EntryMapping newEntry) {
+    public void modifyEntryMapping(EntryMapping oldEntry, EntryMapping newEntry) throws Exception {
         oldEntry.copy(newEntry);
     }
 

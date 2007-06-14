@@ -140,6 +140,8 @@ public class LDAPAdapter extends Adapter {
         newRequest.setDn(dn);
         newRequest.setAttributes(attributes);
 
+        if (debug) log.debug("Adding entry "+dn);
+
         client.add(newRequest, response);
 
         log.debug("Add operation completed.");
@@ -172,6 +174,8 @@ public class LDAPAdapter extends Adapter {
 
         BindRequest newRequest = new BindRequest(request);
         newRequest.setDn(dn);
+
+        if (debug) log.debug("Binding as "+dn);
 
         client.bind(newRequest, response);
 
@@ -206,6 +210,8 @@ public class LDAPAdapter extends Adapter {
         DeleteRequest newRequest = new DeleteRequest(request);
         newRequest.setDn(dn);
 
+        if (debug) log.debug("Deleting entry "+dn);
+
         client.delete(newRequest, response);
 
         log.debug("Delete operation completed.");
@@ -239,6 +245,8 @@ public class LDAPAdapter extends Adapter {
         ModifyRequest newRequest = new ModifyRequest(request);
         newRequest.setDn(dn);
         
+        if (debug) log.debug("Modifying entry "+dn);
+
         client.modify(newRequest, response);
 
         log.debug("Modify operation completed.");
@@ -272,6 +280,8 @@ public class LDAPAdapter extends Adapter {
         ModRdnRequest newRequest = new ModRdnRequest(request);
         newRequest.setDn(dn);
 
+        if (debug) log.debug("Renaming entry "+dn);
+
         client.modrdn(newRequest, response);
 
         log.debug("ModRdn operation completed.");
@@ -300,9 +310,10 @@ public class LDAPAdapter extends Adapter {
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
         db.append(source.getParameter(LDAPAdapter.BASE_DN));
+        DN dn = db.toDn();
 
         SearchRequest newRequest = new SearchRequest(request);
-        newRequest.setDn(db.toDn());
+        newRequest.setDn(dn);
 
         String scope = source.getParameter(LDAPAdapter.SCOPE);
         if ("OBJECT".equals(scope)) {
@@ -339,6 +350,8 @@ public class LDAPAdapter extends Adapter {
                 response.close();
             }
         };
+
+        if (debug) log.debug("Searching with base "+dn);
 
         client.search(newRequest, newResponse);
 

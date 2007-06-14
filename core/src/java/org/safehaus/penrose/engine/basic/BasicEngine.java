@@ -9,10 +9,12 @@ import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Sources;
@@ -246,6 +248,8 @@ public class BasicEngine extends Engine {
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
         if (debug) {
             log.debug("Source values:");
             sourceValues.print();
@@ -253,29 +257,62 @@ public class BasicEngine extends Engine {
 
         Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);
 
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> primarySources = iterator.next();
+        boolean success = true;
+        boolean found = false;
 
-        SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        for (Collection<SourceRef> primarySources : groupsOfSources) {
 
-        try {
-            connector.bind(
-                    partition,
-                    entryMapping,
-                    primarySources,
-                    sourceValues,
-                    request,
-                    response
-            );
+            SourceRef sourceRef = primarySources.iterator().next();
+            Connector connector = getConnector(sourceRef);
 
-        } catch (LDAPException e) {
-            if (e.getResultCode() == LDAPException.INVALID_CREDENTIALS) {
-                log.debug("Calling default bind operation.");
-                super.bind(session, partition, entryMapping, request, response);
-            } else {
-                throw e;
+            String flag = sourceRef.getBind();
+            if (debug) log.debug("Flag: "+flag);
+            
+            if (SourceMapping.IGNORE.equals(flag)) {
+                continue;
             }
+
+            found = true;
+
+            try {
+                connector.bind(
+                        partition,
+                        entryMapping,
+                        primarySources,
+                        sourceValues,
+                        request,
+                        response
+                );
+
+                if (flag == null || SourceMapping.SUFFICIENT.equals(flag)) {
+                    if (debug) log.debug("Bind is sufficient.");
+                    return;
+                }
+
+            } catch (Exception e) {
+
+                if (debug) log.debug(e.getMessage());
+
+                if (SourceMapping.REQUISITE.equals(flag)) {
+                    if (debug) log.debug("Bind is requisite.");
+                    log.error(e.getMessage(), e);
+                    throw e;
+                    
+                } else {
+                    success = false;
+                }
+            }
+        }
+
+        if (found) {
+            if (!success) {
+                if (debug) log.debug("No successful bind.");
+                throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+            }
+            
+        } else {
+            log.debug("Calling default bind operation.");
+            super.bind(session, partition, entryMapping, request, response);
         }
     }
 
@@ -477,5 +514,34 @@ public class BasicEngine extends Engine {
         } finally {
             response.close();
         }
+    }
+
+    public Attributes computeAttributes(
+            Interpreter interpreter,
+            EntryMapping entryMapping
+    ) throws Exception {
+
+        Attributes attributes = new Attributes();
+
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+
+        for (AttributeMapping attributeMapping : attributeMappings) {
+
+            Object value = interpreter.eval(attributeMapping);
+            if (value == null) continue;
+
+            if (value instanceof Collection) {
+                attributes.addValues(attributeMapping.getName(), (Collection) value);
+            } else {
+                attributes.addValue(attributeMapping.getName(), value);
+            }
+        }
+
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        for (String objectClass : objectClasses) {
+            attributes.addValue("objectClass", objectClass);
+        }
+
+        return attributes;
     }
 }

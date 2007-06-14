@@ -13,10 +13,17 @@ public class SourceRef {
     private Source source;
 
     private String alias;
-    private boolean required;
 
     Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
     Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
+
+    private String search;
+    private String bind;
+
+    private String add;
+    private String delete;
+    private String modify;
+    private String modrdn;
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -24,7 +31,6 @@ public class SourceRef {
         this.source = source;
 
         this.alias = source.getName();
-        this.required = true;
 
         for (Field field : source.getFields()) {
             String fieldName = field.getName();
@@ -40,7 +46,6 @@ public class SourceRef {
         this.source = source;
 
         this.alias = sourceMapping.getName();
-        this.required = sourceMapping.isRequired();
         this.parameters.putAll(sourceMapping.getParameters());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
@@ -55,6 +60,9 @@ public class SourceRef {
 
             if (field.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
         }
+
+        search = sourceMapping.getSearch();
+        bind = sourceMapping.getBind();
     }
 
     public Collection<FieldRef> getPrimaryKeyFieldRefs() {
@@ -73,8 +81,8 @@ public class SourceRef {
         return alias;
     }
 
-    public boolean isRequired() {
-        return required;
+    public String getSearch() {
+        return search;
     }
 
     public String toString() {
@@ -93,8 +101,8 @@ public class SourceRef {
         this.alias = alias;
     }
 
-    public void setRequired(boolean required) {
-        this.required = required;
+    public void setSearch(String search) {
+        this.search = search;
     }
 
     public Map<String, String> getParameters() {
@@ -107,5 +115,45 @@ public class SourceRef {
     
     public void setParameters(Map<String, String> parameters) {
         this.parameters = parameters;
+    }
+
+    public String getBind() {
+        return bind;
+    }
+
+    public void setBind(String bind) {
+        this.bind = bind;
+    }
+
+    public String getAdd() {
+        return add;
+    }
+
+    public void setAdd(String add) {
+        this.add = add;
+    }
+
+    public String getDelete() {
+        return delete;
+    }
+
+    public void setDelete(String delete) {
+        this.delete = delete;
+    }
+
+    public String getModify() {
+        return modify;
+    }
+
+    public void setModify(String modify) {
+        this.modify = modify;
+    }
+
+    public String getModrdn() {
+        return modrdn;
+    }
+
+    public void setModrdn(String modrdn) {
+        this.modrdn = modrdn;
     }
 }

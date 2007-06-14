@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.partition;
 
-import java.util.Iterator;
 import java.util.Collection;
 import java.io.File;
 import java.io.FileWriter;
@@ -145,9 +144,8 @@ public class PartitionWriter {
     public Element toMappingXmlElement(Partition partition) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
-        for (Iterator i = partition.getRootEntryMappings().iterator(); i.hasNext();) {
-            EntryMapping entry = (EntryMapping)i.next();
-            toElement(partition, entry, mappingElement);
+        for (EntryMapping entryMapping : partition.getRootEntryMappings()) {
+            toElement(partition, entryMapping, mappingElement);
         }
 
         return mappingElement;
@@ -156,9 +154,8 @@ public class PartitionWriter {
     public Element toConnectionsXmlElement(Partition partition) {
         Element element = new DefaultElement("connections");
 
-        for (Iterator i = partition.getConnectionConfigs().iterator(); i.hasNext();) {
-            ConnectionConfig connection = (ConnectionConfig)i.next();
-            element.add(toElement(connection));
+        for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
+            element.add(toElement(connectionConfig));
         }
 
         return element;
@@ -167,8 +164,7 @@ public class PartitionWriter {
     public Element toSourcesXmlElement(Partition partition) throws Exception {
         Element element = new DefaultElement("sources");
 
-        for (Iterator i = partition.getSources().getSourceConfigs().iterator(); i.hasNext(); ) {
-            SourceConfig sourceConfig = (SourceConfig)i.next();
+        for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
             element.add(toElement(sourceConfig));
         }
 
@@ -179,22 +175,20 @@ public class PartitionWriter {
         Element modulesElement = new DefaultElement("modules");
 
         // module
-        for (Iterator iter = partition.getModuleConfigs().iterator(); iter.hasNext();) {
-            ModuleConfig module = (ModuleConfig)iter.next();
-            Element moduleElement = toElement(module);
+        for (ModuleConfig moduleConfig : partition.getModuleConfigs()) {
+            Element moduleElement = toElement(moduleConfig);
             modulesElement.add(moduleElement);
         }
 
         // module-mapping
-        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext();) {
-            Collection c = (Collection)i.next();
+        for (Collection<ModuleMapping> moduleMappings : partition.getModuleMappings()) {
 
-            for (Iterator j = c.iterator(); j.hasNext(); ) {
-                ModuleMapping mapping = (ModuleMapping)j.next();
-                Element mappingElement = toElement(mapping);
+            for (ModuleMapping moduleMapping : moduleMappings) {
+                Element mappingElement = toElement(moduleMapping);
                 modulesElement.add(mappingElement);
             }
         }
+
         return modulesElement;
     }
 
@@ -236,9 +230,8 @@ public class PartitionWriter {
         element.add(adapterName);
 
         // parameters
-        for (Iterator iter = connection.parameters.keySet().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) connection.parameters.get(name);
+        for (String name : connection.getParameterNames()) {
+            String value = connection.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -264,14 +257,12 @@ public class PartitionWriter {
         adapterName.add(new DefaultText(sourceConfig.getConnectionName()));
         element.add(adapterName);
 
-        for (Iterator i = sourceConfig.getFieldConfigs().iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
+        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
             Element fieldElement = toElement(fieldConfig);
             element.add(fieldElement);
         }
 
-        for (Iterator i = sourceConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : sourceConfig.getParameterNames()) {
             String value = sourceConfig.getParameter(name);
             if ("".equals(value)) continue;
 
@@ -289,16 +280,14 @@ public class PartitionWriter {
         if (!entryMapping.isEnabled()) entryElement.add(new DefaultAttribute("enabled", "false"));
         configElement.add(entryElement);
 
-        for (Iterator i=entryMapping.getObjectClasses().iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
+        for (String objectClass : entryMapping.getObjectClasses()) {
             Element objectClassElement = new DefaultElement("oc");
             objectClassElement.setText(objectClass);
             entryElement.add(objectClassElement);
         }
 
-        Collection attributes = entryMapping.getAttributeMappings();
-        for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attribute = (AttributeMapping)i.next();
+        Collection<AttributeMapping> attributes = entryMapping.getAttributeMappings();
+        for (AttributeMapping attribute : attributes) {
 
             Element child = toElement(attribute);
             if (child == null) continue;
@@ -306,8 +295,7 @@ public class PartitionWriter {
             entryElement.add(child);
         }
 
-        for (Iterator i = entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
             entryElement.add(toElement(sourceMapping));
         }
 /*
@@ -351,13 +339,11 @@ public class PartitionWriter {
             entryElement.add(element);
         }
 
-        for (Iterator i = entryMapping.getACL().iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
+        for (ACI aci : entryMapping.getACL()) {
             entryElement.add(toElement(aci));
         }
 
-        for (Iterator i = entryMapping.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : entryMapping.getParameterNames()) {
             String value = entryMapping.getParameter(name);
             if ("".equals(value)) continue;
 
@@ -365,9 +351,8 @@ public class PartitionWriter {
             entryElement.add(parameterElement);
         }
 
-        Collection children = partition.getChildren(entryMapping);
-        for (Iterator i = children.iterator(); i.hasNext(); ) {
-            EntryMapping child = (EntryMapping)i.next();
+        Collection<EntryMapping> children = partition.getChildren(entryMapping);
+        for (EntryMapping child : children) {
             toElement(partition, child, configElement);
         }
 
@@ -420,20 +405,38 @@ public class PartitionWriter {
         Element element = new DefaultElement("source");
 
         element.add(new DefaultAttribute("name", sourceMapping.getName()));
-        if (sourceMapping.isRequired()) element.add(new DefaultAttribute("required", "true"));
         if (sourceMapping.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
-        if (!sourceMapping.isIncludeOnAdd()) element.add(new DefaultAttribute("includeOnAdd", "false"));
-        if (!sourceMapping.isIncludeOnModify()) element.add(new DefaultAttribute("includeOnModify", "false"));
-        if (!sourceMapping.isIncludeOnModRdn()) element.add(new DefaultAttribute("includeOnModRdn", "false"));
-        if (!sourceMapping.isIncludeOnDelete()) element.add(new DefaultAttribute("includeOnDelete", "false"));
+
+        if (sourceMapping.getSearch() != null) {
+            element.add(new DefaultAttribute("search", sourceMapping.getSearch()));
+        }
+
+        if (sourceMapping.getBind() != null) {
+            element.add(new DefaultAttribute("bind", sourceMapping.getBind()));
+        }
+
+        if (sourceMapping.getAdd() != null) {
+            element.add(new DefaultAttribute("add", sourceMapping.getAdd()));
+        }
+
+        if (sourceMapping.getDelete() != null) {
+            element.add(new DefaultAttribute("delete", sourceMapping.getDelete()));
+        }
+
+        if (sourceMapping.getModify() != null) {
+            element.add(new DefaultAttribute("modify", sourceMapping.getModify()));
+        }
+
+        if (sourceMapping.getModrdn() != null) {
+            element.add(new DefaultAttribute("modrdn", sourceMapping.getModrdn()));
+        }
 
         Element sourceName = new DefaultElement("source-name");
         sourceName.add(new DefaultText(sourceMapping.getSourceName()));
         element.add(sourceName);
 
         // fields
-        for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)i.next();
+        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
 
             Element child = toElement(fieldMapping);
             if (child == null) continue;
@@ -442,8 +445,7 @@ public class PartitionWriter {
         }
 
         // parameters
-        for (Iterator i = sourceMapping.getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : sourceMapping.getParameterNames()) {
             String value = sourceMapping.getParameter(name);
             if ("".equals(value)) continue;
 
@@ -515,8 +517,7 @@ public class PartitionWriter {
         element.add(oidElement);
 
         Element namesElement = new DefaultElement("names");
-        for (Iterator i=oc.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : oc.getNames()) {
             Element nameElement = new DefaultElement("name");
             nameElement.add(new DefaultText(name));
             namesElement.add(nameElement);
@@ -532,8 +533,7 @@ public class PartitionWriter {
         element.add(obsoleteElement);
 
         Element superclassesElement = new DefaultElement("superclasses");
-        for (Iterator i=oc.getSuperClasses().iterator(); i.hasNext(); ) {
-            String superClass = (String)i.next();
+        for (String superClass : oc.getSuperClasses()) {
             Element ocElement = new DefaultElement("oc");
             ocElement.add(new DefaultText(superClass));
             superclassesElement.add(ocElement);
@@ -545,8 +545,7 @@ public class PartitionWriter {
         element.add(typeElement);
 
         Element requiredAttributesElement = new DefaultElement("required-attributes");
-        for (Iterator i=oc.getRequiredAttributes().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : oc.getRequiredAttributes()) {
             Element atElement = new DefaultElement("at");
             atElement.add(new DefaultText(name));
             requiredAttributesElement.add(atElement);
@@ -554,8 +553,7 @@ public class PartitionWriter {
         element.add(requiredAttributesElement);
 
         Element optionalAttributesElement = new DefaultElement("optional-attributes");
-        for (Iterator i=oc.getOptionalAttributes().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : oc.getOptionalAttributes()) {
             Element atElement = new DefaultElement("at");
             atElement.add(new DefaultText(name));
             optionalAttributesElement.add(atElement);
@@ -573,8 +571,7 @@ public class PartitionWriter {
         element.add(oidElement);
 
         Element namesElement = new DefaultElement("names");
-        for (Iterator i=at.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : at.getNames()) {
             Element nameElement = new DefaultElement("name");
             nameElement.add(new DefaultText(name));
             namesElement.add(nameElement);
@@ -644,9 +641,8 @@ public class PartitionWriter {
             element.add(description);
         }
 
-        for (Iterator i = moduleConfig.getParameterNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
-            String value = (String)moduleConfig.getParameter(name);
+        for (String name : moduleConfig.getParameterNames()) {
+            String value = moduleConfig.getParameter(name);
 
             Element parameterElement = createParameterElement(name, value);
             element.add(parameterElement);

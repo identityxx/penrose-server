@@ -92,11 +92,11 @@ public class AddGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnAdd()) {
-            log.debug("Source "+sourceMapping.getName()+" is not included on add");
-            graphIterator.traverseEdges(node);
-            return;
-        }
+        //if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnAdd()) {
+        //    log.debug("Source "+sourceMapping.getName()+" is not included on add");
+        //    graphIterator.traverseEdges(node);
+        //    return;
+        //}
 
         if (entryMapping.getSourceMapping(sourceMapping.getName()) == null) {
             log.debug("Source "+sourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());

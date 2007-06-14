@@ -98,11 +98,11 @@ public class ModifyGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displaySeparator(40));
         }
 
-        if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnModify()) {
-            log.debug("Source "+sourceMapping.getName()+" is not included on modify");
-            graphIterator.traverseEdges(node);
-            return;
-        }
+        //if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnModify()) {
+        //    log.debug("Source "+sourceMapping.getName()+" is not included on modify");
+        //    graphIterator.traverseEdges(node);
+        //    return;
+        //}
 
         if (entryMapping.getSourceMapping(sourceMapping.getName()) == null) {
             log.debug("Source "+sourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());

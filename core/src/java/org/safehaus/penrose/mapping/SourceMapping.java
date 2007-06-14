@@ -29,6 +29,11 @@ public class SourceMapping implements Cloneable {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    public final static String REQUIRED   = "required";
+    public final static String REQUISITE  = "requisite";
+    public final static String SUFFICIENT = "sufficient";
+    public final static String IGNORE     = "ignore";
+
     public final static String FILTER     = "filter";
 
 	/**
@@ -51,13 +56,15 @@ public class SourceMapping implements Cloneable {
      */
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    private boolean required = false;
     private boolean readOnly = false;
 
-    private boolean includeOnAdd = true;
-    private boolean includeOnModify = true;
-    private boolean includeOnModRdn = true;
-    private boolean includeOnDelete = true;
+    private String search;
+    private String bind;
+
+    private String add;
+    private String delete;
+    private String modify;
+    private String modrdn;
 
 	public SourceMapping() {
 	}
@@ -141,48 +148,8 @@ public class SourceMapping implements Cloneable {
         parameters.remove(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
-    }
-
-    public boolean isIncludeOnDelete() {
-        return includeOnDelete;
-    }
-
-    public void setIncludeOnDelete(boolean includeOnDelete) {
-        this.includeOnDelete = includeOnDelete;
-    }
-
-    public boolean isIncludeOnAdd() {
-        return includeOnAdd;
-    }
-
-    public void setIncludeOnAdd(boolean includeOnAdd) {
-        this.includeOnAdd = includeOnAdd;
-    }
-
-    public boolean isIncludeOnModify() {
-        return includeOnModify;
-    }
-
-    public void setIncludeOnModify(boolean includeOnModify) {
-        this.includeOnModify = includeOnModify;
-    }
-
-    public boolean isIncludeOnModRdn() {
-        return includeOnModRdn;
-    }
-
-    public void setIncludeOnModRdn(boolean includeOnModRdn) {
-        this.includeOnModRdn = includeOnModRdn;
     }
 
     public boolean isReadOnly() {
@@ -198,12 +165,13 @@ public class SourceMapping implements Cloneable {
                 (sourceName == null ? 0 : sourceName.hashCode()) +
                 (fieldMappings == null ? 0 : fieldMappings.hashCode()) +
                 (parameters == null ? 0 : parameters.hashCode()) +
-                (required ? 0 : 1) +
                 (readOnly ? 0 : 1) +
-                (includeOnAdd ? 0 : 1) +
-                (includeOnModify? 0 : 1) +
-                (includeOnModRdn? 0 : 1) +
-                (includeOnDelete ? 0 : 1);
+                (search == null ? 0 : search.hashCode()) +
+                (bind == null ? 0 : bind.hashCode()) +
+                (add == null ? 0 : add.hashCode()) +
+                (delete == null ? 0 : delete.hashCode()) +
+                (modify == null ? 0 : modify.hashCode()) +
+                (modrdn == null ? 0 : modrdn.hashCode());
     }
 
     boolean equals(Object o1, Object o2) {
@@ -221,12 +189,13 @@ public class SourceMapping implements Cloneable {
         if (!equals(sourceName, sourceMapping.sourceName)) return false;
         if (!equals(fieldMappings, sourceMapping.fieldMappings)) return false;
         if (!equals(parameters, sourceMapping.parameters)) return false;
-        if (required != sourceMapping.required) return false;
         if (readOnly != sourceMapping.readOnly) return false;
-        if (includeOnAdd != sourceMapping.includeOnAdd) return false;
-        if (includeOnModify != sourceMapping.includeOnModify) return false;
-        if (includeOnModRdn != sourceMapping.includeOnModRdn) return false;
-        if (includeOnDelete != sourceMapping.includeOnDelete) return false;
+        if (!equals(search, sourceMapping.search)) return false;
+        if (!equals(bind, sourceMapping.bind)) return false;
+        if (!equals(add, sourceMapping.add)) return false;
+        if (!equals(delete, sourceMapping.delete)) return false;
+        if (!equals(modify, sourceMapping.modify)) return false;
+        if (!equals(modrdn, sourceMapping.modrdn)) return false;
 
         return true;
     }
@@ -245,17 +214,69 @@ public class SourceMapping implements Cloneable {
         removeParameters();
         parameters.putAll(sourceMapping.parameters);
 
-        required = sourceMapping.required;
         readOnly = sourceMapping.readOnly;
-        includeOnAdd = sourceMapping.includeOnAdd;
-        includeOnModify = sourceMapping.includeOnModify;
-        includeOnModRdn = sourceMapping.includeOnModRdn;
-        includeOnDelete = sourceMapping.includeOnDelete;
+
+        search = sourceMapping.search;
+        bind = sourceMapping.bind;
+        add = sourceMapping.add;
+        delete = sourceMapping.delete;
+        modify = sourceMapping.modify;
+        modrdn = sourceMapping.modrdn;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
+        
         SourceMapping sourceMapping = new SourceMapping();
         sourceMapping.copy(this);
         return sourceMapping;
+    }
+
+    public String getBind() {
+        return bind;
+    }
+
+    public void setBind(String bind) {
+        this.bind = bind;
+    }
+
+    public String getAdd() {
+        return add;
+    }
+
+    public void setAdd(String add) {
+        this.add = add;
+    }
+
+    public String getDelete() {
+        return delete;
+    }
+
+    public void setDelete(String delete) {
+        this.delete = delete;
+    }
+
+    public String getModify() {
+        return modify;
+    }
+
+    public void setModify(String modify) {
+        this.modify = modify;
+    }
+
+    public String getModrdn() {
+        return modrdn;
+    }
+
+    public void setModrdn(String modrdn) {
+        this.modrdn = modrdn;
+    }
+
+    public String getSearch() {
+        return search;
+    }
+
+    public void setSearch(String search) {
+        this.search = search;
     }
 }

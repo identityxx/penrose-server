@@ -91,7 +91,7 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsMapping.setSourceName("usergroups");
         usergroupsMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "g.groupname"));
         usergroupsMapping.addFieldMapping(new FieldMapping("username", FieldMapping.VARIABLE, "uniqueMember"));
-        usergroupsMapping.setRequired(false);
+        usergroupsMapping.setSearch(SourceMapping.REQUIRED);
         groups.addSourceMapping(usergroupsMapping);
 
         partition.addEntryMapping(groups);

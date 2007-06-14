@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -18,7 +17,7 @@ import java.util.*;
  */
 public class BasicSearchEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private BasicEngine engine;
 
@@ -45,7 +44,7 @@ public class BasicSearchEngine {
                 if (debug) log.debug("Returning static entry "+entryMapping.getDn());
 
                 interpreter.set(sourceValues);
-                Attributes attributes = computeAttributes(interpreter, entryMapping);
+                Attributes attributes = engine.computeAttributes(interpreter, entryMapping);
                 interpreter.clear();
 
                 SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
@@ -55,70 +54,9 @@ public class BasicSearchEngine {
                 return;
             }
 
-            SearchResponse<SearchResult> entryGenerator = new SearchResponse<SearchResult>() {
+            Collection<SourceRef> group = groupsOfSources.get(0);
 
-                DN lastDn;
-                Attributes lastAttributes;
-                EntryMapping lastEntryMapping;
-
-                public void add(SearchResult result) throws Exception {
-                    EntryMapping em = result.getEntryMapping();
-
-                    SourceValues sv = result.getSourceValues();
-                    sv.add(sourceValues);
-
-                    if (debug) {
-                        log.debug("Source values:");
-                        sv.print();
-                    }
-
-                    interpreter.set(sv);
-                    Collection<DN> dns = engine.computeDns(partition, interpreter, em);
-                    Attributes attributes = computeAttributes(interpreter, em);
-                    interpreter.clear();
-
-                    if (debug) {
-                        log.debug("Attributes:");
-                        attributes.print();
-                    }
-
-                    for (DN dn : dns) {
-                        if (lastDn == null) {
-                            log.debug("Generating entry "+dn);
-                            lastDn = dn;
-                            lastAttributes = attributes;
-                            lastEntryMapping = em;
-
-                        } else if (lastDn.equals(dn)) {
-                            if (debug) log.debug("Merging entry " + dn);
-                            lastAttributes.add(attributes);
-
-                        } else {
-                            if (debug) log.debug("Returning entry " + lastDn);
-                            SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-                            searchResult.setEntryMapping(lastEntryMapping);
-                            response.add(searchResult);
-
-                            lastDn = dn;
-                            lastAttributes = attributes;
-                            lastEntryMapping = em;
-                        }
-                    }
-                }
-
-                public void close() throws Exception {
-                    if (lastDn != null) {
-                        if (debug) log.debug("Returning entry " + lastDn);
-                        SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-                        searchResult.setEntryMapping(lastEntryMapping);
-                        response.add(searchResult);
-                    }
-                }
-            };
-
-            Collection<SourceRef> primarySources = groupsOfSources.get(0);
-
-            SourceRef sourceRef = primarySources.iterator().next();
+            SourceRef sourceRef = group.iterator().next();
             Connector connector = engine.getConnector(sourceRef);
 
             BasicSearchResponse sr = new BasicSearchResponse(
@@ -126,16 +64,16 @@ public class BasicSearchEngine {
                     engine,
                     entryMapping,
                     groupsOfSources,
-                    0,
                     sourceValues,
+                    interpreter,
                     request,
-                    entryGenerator
+                    response
             );
 
             connector.search(
                     partition,
                     entryMapping,
-                    primarySources,
+                    group,
                     sourceValues,
                     request,
                     sr
@@ -144,34 +82,5 @@ public class BasicSearchEngine {
         } finally {
             response.close();
         }
-    }
-
-    public Attributes computeAttributes(
-            Interpreter interpreter,
-            EntryMapping entryMapping
-    ) throws Exception {
-
-        Attributes attributes = new Attributes();
-
-        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
-
-        for (AttributeMapping attributeMapping : attributeMappings) {
-
-            Object value = interpreter.eval(attributeMapping);
-            if (value == null) continue;
-
-            if (value instanceof Collection) {
-                attributes.addValues(attributeMapping.getName(), (Collection) value);
-            } else {
-                attributes.addValue(attributeMapping.getName(), value);
-            }
-        }
-
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
-        for (String objectClass : objectClasses) {
-            attributes.addValue("objectClass", objectClass);
-        }
-
-        return attributes;
     }
 }

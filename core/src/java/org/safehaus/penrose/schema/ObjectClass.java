@@ -164,7 +164,7 @@ public class ObjectClass implements Cloneable, Comparable {
         requiredAttributes.clear();
     }
     
-    public Collection getOptionalAttributes() {
+    public Collection<String> getOptionalAttributes() {
         return optionalAttributes;
     }
 

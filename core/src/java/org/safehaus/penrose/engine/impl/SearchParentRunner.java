@@ -167,14 +167,14 @@ public class SearchParentRunner extends GraphVisitor {
                 results.addAll(list);
 
             } else {
-                Collection temp;
-                if (sourceMapping.isRequired()) {
-                    temp = engine.joinEngine.join(results, list, partition, entryMapping, relationships);
-                } else {
-                    temp = engine.joinEngine.leftJoin(results, list, partition, entryMapping, relationships);
-                }
-                results.clear();
-                results.addAll(temp);
+                //Collection temp;
+                //if (sourceMapping.isRequired()) {
+                //    temp = engine.joinEngine.join(results, list, partition, entryMapping, relationships);
+                //} else {
+                //    temp = engine.joinEngine.leftJoin(results, list, partition, entryMapping, relationships);
+                //}
+                //results.clear();
+                //results.addAll(temp);
             }
         }
 /*

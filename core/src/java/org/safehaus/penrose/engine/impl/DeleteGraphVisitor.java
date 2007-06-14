@@ -89,13 +89,13 @@ public class DeleteGraphVisitor extends GraphVisitor {
             log.debug(Formatter.displayLine("Visiting "+sourceMapping.getName(), 40));
             log.debug(Formatter.displaySeparator(40));
         }
-
+/*
         if (sourceMapping.isReadOnly() || !sourceMapping.isIncludeOnDelete()) {
             log.debug("Source "+sourceMapping.getName()+" is not included on delete");
             graphIterator.traverseEdges(node);
             return;
         }
-
+*/
         if (entryMapping.getSourceMapping(sourceMapping.getName()) == null) {
             log.debug("Source "+sourceMapping.getName()+" is not defined in entry "+entryMapping.getDn());
             graphIterator.traverseEdges(node);

@@ -207,6 +207,11 @@ public abstract class Adapter {
             rb.set(field.getOriginalName(), value);
         }
 
+        if (rb.isEmpty()) {
+            log.error("Empty RDN.");
+            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        }
+
         BindRequest newRequest = new BindRequest(request);
         newRequest.setDn(new DN(rb.toRdn()));
 

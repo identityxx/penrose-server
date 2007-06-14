@@ -148,15 +148,15 @@ public class SearchLocalRunner extends GraphVisitor {
             results.addAll(list);
 
         } else {
-            Collection temp;
-            if (sourceMapping.isRequired()) {
-                temp = engine.joinEngine.join(results, list, partition, entryMapping, relationships);
-            } else {
-                temp = engine.joinEngine.leftJoin(results, list, partition, entryMapping, relationships);
-            }
+            //Collection temp;
+            //if (sourceMapping.isRequired()) {
+            //    temp = engine.joinEngine.join(results, list, partition, entryMapping, relationships);
+            //} else {
+            //    temp = engine.joinEngine.leftJoin(results, list, partition, entryMapping, relationships);
+            //}
 
-            results.clear();
-            results.addAll(temp);
+            //results.clear();
+            //results.addAll(temp);
         }
 
         if (returnCode != LDAPException.SUCCESS) return;

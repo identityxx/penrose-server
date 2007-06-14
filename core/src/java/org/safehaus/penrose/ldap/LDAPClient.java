@@ -136,11 +136,21 @@ public class LDAPClient {
     }
 
     public javax.naming.ldap.LdapContext open(Hashtable parameters) throws Exception {
-        log.debug("Creating InitialLdapContext:");
-        for (Object name : parameters.keySet()) {
-            Object value = parameters.get(name);
-            log.debug(" - " + name + ": " + value);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Creating InitialLdapContext:");
+
+            for (Object name : parameters.keySet()) {
+                Object value = parameters.get(name);
+
+                if (Context.SECURITY_CREDENTIALS.equals(name) && value instanceof byte[]) {
+                    log.debug(" - " + name + ": " + new String((byte[])value));
+                } else {
+                    log.debug(" - " + name + ": " + value);
+                }
+            }
         }
+
         return new javax.naming.ldap.InitialLdapContext(parameters, null);
     }
 

@@ -217,7 +217,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return parameters;
     }
     
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 

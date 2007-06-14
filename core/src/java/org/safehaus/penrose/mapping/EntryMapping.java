@@ -109,10 +109,6 @@ public class EntryMapping implements Cloneable {
 	public EntryMapping() {
 	}
 
-    public EntryMapping(EntryMapping entryMapping) {
-        copy(entryMapping);
-    }
-
     public EntryMapping(String dn) {
         this.dn = new DN(dn);
     }
@@ -309,7 +305,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public AttributeMapping getAttributeMapping(String name) {
-        Collection list = getAttributeMappings(name);
+        Collection<AttributeMapping> list = getAttributeMappings(name);
         if (list == null) return null;
         Iterator i = list.iterator();
         if (!i.hasNext()) return null;
@@ -338,7 +334,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public void removeAttributeMapping(AttributeMapping attributeMapping) {
-        Collection list = getAttributeMappings(attributeMapping.getName());
+        Collection<AttributeMapping> list = getAttributeMappings(attributeMapping.getName());
         if (list == null) return;
 
         list.remove(attributeMapping);
@@ -377,7 +373,7 @@ public class EntryMapping implements Cloneable {
         acl.add(aci);
     }
 
-    public Collection getACL() {
+    public Collection<ACI> getACL() {
         return acl;
     }
 
@@ -401,7 +397,7 @@ public class EntryMapping implements Cloneable {
         parameters.remove(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
@@ -439,7 +435,7 @@ public class EntryMapping implements Cloneable {
         return true;
     }
 
-    public void copy(EntryMapping entryMapping) {
+    public void copy(EntryMapping entryMapping) throws CloneNotSupportedException {
         id = entryMapping.id;
         parentId = entryMapping.parentId;
         dn = entryMapping.dn;
@@ -481,7 +477,9 @@ public class EntryMapping implements Cloneable {
 
     public Object clone() throws CloneNotSupportedException {
         super.clone();
-        return new EntryMapping(this);
+        EntryMapping entryMapping = new EntryMapping();
+        entryMapping.copy(this);
+        return entryMapping;
     }
 
     public String getHandlerName() {

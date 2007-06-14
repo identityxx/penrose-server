@@ -488,6 +488,8 @@ public class HandlerManager {
 
             if (rc != LDAPException.SUCCESS) {
                 if (debug) log.debug("Not allowed to search " + baseDn);
+                sr.setResult(entryMapping, ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS));
+                sr.close();
                 continue;
             }
 
