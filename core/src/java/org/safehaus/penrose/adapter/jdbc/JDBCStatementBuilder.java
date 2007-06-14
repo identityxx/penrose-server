@@ -373,7 +373,7 @@ public class JDBCStatementBuilder {
         sb.append(table);
         if (quote != null) sb.append(quote);
 
-        return table;
+        return sb.toString();
     }
 
     public String getSql() {
