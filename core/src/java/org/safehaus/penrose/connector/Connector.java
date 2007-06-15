@@ -26,6 +26,7 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -114,6 +115,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -125,7 +127,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.add(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.add(
+                session,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,6 +143,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -144,7 +155,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.bind(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.bind(
+                session,
+                entryMapping, 
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,6 +171,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -163,7 +183,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.delete(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.delete(
+                session,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +199,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -182,7 +211,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.modify(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.modify(
+                session,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,6 +227,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            Session session,
             Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -201,7 +239,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.modrdn(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.modrdn(
+                session,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,6 +255,7 @@ public class Connector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            final Session session,
             final Partition partition,
             final EntryMapping entryMapping,
             final Collection<SourceRef> sourceRefs,
@@ -220,7 +267,15 @@ public class Connector {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
-        connection.search(entryMapping, sourceRefs, sourceValues, request, response);
+
+        connection.search(
+                session,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     public ConnectorConfig getConnectorConfig() {

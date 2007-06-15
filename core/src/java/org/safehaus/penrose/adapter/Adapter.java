@@ -19,7 +19,6 @@ package org.safehaus.penrose.adapter;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SubstringFilter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.SourceValues;
@@ -29,6 +28,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.session.Session;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -100,6 +100,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            Session session,
             Source source,
             AddRequest request,
             AddResponse response
@@ -108,6 +109,7 @@ public abstract class Adapter {
     }
 
     public void add(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -159,7 +161,7 @@ public abstract class Adapter {
         newRequest.setDn(new DN(rb.toRdn()));
         newRequest.setAttributes(newAttributes);
 
-        add(source, newRequest, response);
+        add(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,6 +169,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            Session session,
             Source source,
             BindRequest request,
             BindResponse response
@@ -175,6 +178,7 @@ public abstract class Adapter {
     }
 
     public void bind(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -215,7 +219,7 @@ public abstract class Adapter {
         BindRequest newRequest = new BindRequest(request);
         newRequest.setDn(new DN(rb.toRdn()));
 
-        bind(source, newRequest, response);
+        bind(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,6 +227,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            Session session,
             Source source,
             DeleteRequest request,
             DeleteResponse response
@@ -231,6 +236,7 @@ public abstract class Adapter {
     }
 
     public void delete(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -268,7 +274,7 @@ public abstract class Adapter {
         newRequest.setDn(new DN(rb.toRdn()));
 
 
-        delete(source, newRequest, response);
+        delete(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,6 +282,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Session session,
             Source source,
             ModifyRequest request,
             ModifyResponse response
@@ -284,6 +291,7 @@ public abstract class Adapter {
     }
 
     public void modify(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -412,7 +420,7 @@ public abstract class Adapter {
         newRequest.setDn(newDn);
         newRequest.setModifications(newModifications);
 
-        modify(source, newRequest, response);
+        modify(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,6 +428,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            Session session,
             Source source,
             ModRdnRequest request,
             ModRdnResponse response
@@ -428,6 +437,7 @@ public abstract class Adapter {
     }
 
     public void modrdn(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -490,7 +500,7 @@ public abstract class Adapter {
         newRequest.setDn(newDn);
         newRequest.setNewRdn(rb.toRdn());
 
-        modrdn(source, newRequest, response);
+        modrdn(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -498,6 +508,7 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            Session session,
             Source source,
             SearchRequest request,
             SearchResponse<SearchResult> response
@@ -506,6 +517,7 @@ public abstract class Adapter {
     }
 
     public void search(
+            final Session session,
             final EntryMapping entryMapping,
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
@@ -553,7 +565,7 @@ public abstract class Adapter {
             }
         };
 
-        search(source, newRequest, newResponse);
+        search(session, source, newRequest, newResponse);
     }
 
     public Object openConnection() throws Exception {

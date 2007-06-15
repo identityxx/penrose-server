@@ -297,7 +297,7 @@ return BinaryUtil.encode("BigInteger", bytes);
       </field>
     </source>
 
-    <source name="m" required="false">
+    <source name="m">
       <source-name>relationships</source-name>
       <field name="manager">
         <expression>
@@ -312,7 +312,7 @@ return manager.substring(i+1, j);
       </field>
     </source>
 
-    <source name="r" required="false">
+    <source name="r">
       <source-name>relationships</source-name>
       <field name="manager">
         <variable>u.username</variable>

@@ -32,6 +32,7 @@ import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.session.Session;
 
 import java.sql.ResultSet;
 import java.util.*;
@@ -165,6 +166,7 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            final Session session,
             final Source source,
             final AddRequest request,
             final AddResponse response
@@ -220,6 +222,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void add(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -262,6 +265,7 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            final Session session,
             final Source source,
             final DeleteRequest request,
             final DeleteResponse response
@@ -301,6 +305,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void delete(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -343,6 +348,7 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            final Session session,
             final Source source,
             final ModifyRequest request,
             final ModifyResponse response
@@ -407,6 +413,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void modify(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -449,6 +456,7 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            final Session session,
             final Source source,
             final ModRdnRequest request,
             final ModRdnResponse response
@@ -498,6 +506,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void modrdn(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -540,6 +549,7 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            final Session session,
             final Source source,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
@@ -599,6 +609,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void search(
+            final Session session,
             final EntryMapping entryMapping,
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,

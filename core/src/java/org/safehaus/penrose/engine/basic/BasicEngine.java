@@ -212,6 +212,7 @@ public class BasicEngine extends Engine {
         Connector connector = getConnector(sourceRef);
 
         connector.add(
+                session,
                 partition,
                 entryMapping,
                 primarySources,
@@ -276,6 +277,7 @@ public class BasicEngine extends Engine {
 
             try {
                 connector.bind(
+                        session,
                         partition,
                         entryMapping,
                         primarySources,
@@ -357,6 +359,7 @@ public class BasicEngine extends Engine {
         Connector connector = getConnector(sourceRef);
 
         connector.delete(
+                session,
                 partition,
                 entryMapping,
                 primarySources,
@@ -407,6 +410,7 @@ public class BasicEngine extends Engine {
         Connector connector = getConnector(sourceRef);
 
         connector.modify(
+                session,
                 partition,
                 entryMapping,
                 primarySources,
@@ -457,6 +461,7 @@ public class BasicEngine extends Engine {
         Connector connector = getConnector(sourceRef);
 
         connector.modrdn(
+                session,
                 partition,
                 entryMapping,
                 primarySources,
@@ -503,6 +508,7 @@ public class BasicEngine extends Engine {
             }
 
             searchEngine.search(
+                    session,
                     partition,
                     baseMapping,
                     entryMapping,

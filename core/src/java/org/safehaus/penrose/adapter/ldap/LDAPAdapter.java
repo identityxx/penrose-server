@@ -18,6 +18,7 @@
 package org.safehaus.penrose.adapter.ldap;
 
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
@@ -28,6 +29,11 @@ import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.ldap.LDAPSourceSync;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -44,6 +50,11 @@ public class LDAPAdapter extends Adapter {
     public final static String PAGE_SIZE      = "pageSize";
     public final static int DEFAULT_PAGE_SIZE = 1000;
 
+    public final static String AUTHENTICATON          = "authentication";
+    public final static String AUTHENTICATON_DEFAULT  = "default";
+    public final static String AUTHENTICATON_FULL     = "full";
+    public final static String AUTHENTICATON_DISABLED = "disabled";
+
     private LDAPClient client;
 
     public void init() throws Exception {
@@ -56,6 +67,95 @@ public class LDAPAdapter extends Adapter {
 
     public String getSyncClassName() {
         return LDAPSourceSync.class.getName();
+    }
+
+    public LDAPClient createClient(Session session, Partition partition, Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
+
+        if (AUTHENTICATON_DISABLED.equals(authentication)) {
+            if (debug) log.debug("Pass-Through Authentication is disabled.");
+            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        }
+
+        String connectionName = source.getConnectionName();
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, connectionName);
+
+        return new LDAPClient(connection.getParameters());
+    }
+
+    public void storeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
+
+        if (AUTHENTICATON_FULL.equals(authentication)) {
+            if (debug) log.debug("Storing connection info in session.");
+
+            String connectionName = source.getConnectionName();
+            ConnectionManager connectionManager = penroseContext.getConnectionManager();
+            Connection connection = connectionManager.getConnection(partition, connectionName);
+
+            if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
+        } else {
+            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
+
+        //boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
+
+        if (!AUTHENTICATON_FULL.equals(authentication)) {
+            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    public LDAPClient getClient(Session session, Partition partition, Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        if (debug) log.debug("Authentication: "+authentication);
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
+        LDAPClient client;
+
+        if (AUTHENTICATON_FULL.equals(authentication)) {
+            if (debug) log.debug("Getting connection info from session.");
+
+            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
+
+            if (client == null) {
+
+                if (session == null || session.isRootUser()) {
+                    if (debug) log.debug("Creating new connection.");
+
+                    client = new LDAPClient(connection.getParameters());
+
+                } else {
+                    if (debug) log.debug("Missing credentials.");
+                    throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                }
+            }
+
+        } else {
+            if (debug) log.debug("Creating new connection.");
+
+            client = new LDAPClient(connection.getParameters());
+        }
+
+        return client;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,6 +206,7 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            Session session,
             Source source,
             AddRequest request,
             AddResponse response
@@ -119,39 +220,47 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+        LDAPClient client = getClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(baseDn);
-        DN dn = db.toDn();
+        try {
+            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
 
-        String objectClasses = source.getParameter(LDAPAdapter.OBJECT_CLASSES);
-        Attribute ocAttribute = new Attribute("objectClass");
-        for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
-            String objectClass = st.nextToken().trim();
-            ocAttribute.addValue(objectClass);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
+
+            String objectClasses = source.getParameter(LDAPAdapter.OBJECT_CLASSES);
+            Attribute ocAttribute = new Attribute("objectClass");
+            for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
+                String objectClass = st.nextToken().trim();
+                ocAttribute.addValue(objectClass);
+            }
+
+            Attributes attributes = new Attributes(request.getAttributes());
+            attributes.add(ocAttribute);
+
+            AddRequest newRequest = new AddRequest(request);
+            newRequest.setDn(dn);
+            newRequest.setAttributes(attributes);
+
+            if (debug) log.debug("Adding entry "+dn);
+
+            client.add(newRequest, response);
+
+            log.debug("Add operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        Attributes attributes = new Attributes(request.getAttributes());
-        attributes.add(ocAttribute);
-
-        AddRequest newRequest = new AddRequest(request);
-        newRequest.setDn(dn);
-        newRequest.setAttributes(attributes);
-
-        if (debug) log.debug("Adding entry "+dn);
-
-        client.add(newRequest, response);
-
-        log.debug("Add operation completed.");
-    }
+     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            Session session,
             Source source,
             BindRequest request,
             BindResponse response
@@ -165,21 +274,28 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+        LDAPClient client = createClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(baseDn);
-        DN dn = db.toDn();
+        try {
+            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
 
-        BindRequest newRequest = new BindRequest(request);
-        newRequest.setDn(dn);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
 
-        if (debug) log.debug("Binding as "+dn);
+            BindRequest newRequest = new BindRequest(request);
+            newRequest.setDn(dn);
 
-        client.bind(newRequest, response);
+            if (debug) log.debug("Binding as "+dn);
 
-        log.debug("Bind operation completed.");
+            client.bind(newRequest, response);
+
+            log.debug("Bind operation completed.");
+
+        } finally {
+            storeClient(session, partition, source, client);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +303,7 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            Session session,
             Source source,
             DeleteRequest request,
             DeleteResponse response
@@ -200,21 +317,28 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+        LDAPClient client = getClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(baseDn);
-        DN dn = db.toDn();
+        try {
+            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
 
-        DeleteRequest newRequest = new DeleteRequest(request);
-        newRequest.setDn(dn);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
 
-        if (debug) log.debug("Deleting entry "+dn);
+            DeleteRequest newRequest = new DeleteRequest(request);
+            newRequest.setDn(dn);
 
-        client.delete(newRequest, response);
+            if (debug) log.debug("Deleting entry "+dn);
 
-        log.debug("Delete operation completed.");
+            client.delete(newRequest, response);
+
+            log.debug("Delete operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -222,6 +346,7 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Session session,
             Source source,
             ModifyRequest request,
             ModifyResponse response
@@ -235,21 +360,28 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+        LDAPClient client = getClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(baseDn);
-        DN dn = db.toDn();
+        try {
+            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
 
-        ModifyRequest newRequest = new ModifyRequest(request);
-        newRequest.setDn(dn);
-        
-        if (debug) log.debug("Modifying entry "+dn);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
 
-        client.modify(newRequest, response);
+            ModifyRequest newRequest = new ModifyRequest(request);
+            newRequest.setDn(dn);
 
-        log.debug("Modify operation completed.");
+            if (debug) log.debug("Modifying entry "+dn);
+
+            client.modify(newRequest, response);
+
+            log.debug("Modify operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,6 +389,7 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            Session session,
             Source source,
             ModRdnRequest request,
             ModRdnResponse response
@@ -270,21 +403,28 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+        LDAPClient client = getClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(baseDn);
-        DN dn = db.toDn();
+        try {
+            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
 
-        ModRdnRequest newRequest = new ModRdnRequest(request);
-        newRequest.setDn(dn);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
 
-        if (debug) log.debug("Renaming entry "+dn);
+            ModRdnRequest newRequest = new ModRdnRequest(request);
+            newRequest.setDn(dn);
 
-        client.modrdn(newRequest, response);
+            if (debug) log.debug("Renaming entry "+dn);
 
-        log.debug("ModRdn operation completed.");
+            client.modrdn(newRequest, response);
+
+            log.debug("ModRdn operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,6 +432,7 @@ public class LDAPAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            final Session session,
             final Source source,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
@@ -305,57 +446,62 @@ public class LDAPAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        response.setSizeLimit(request.getSizeLimit());
+        final LDAPClient client = getClient(session, partition, source);
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
-        db.append(source.getParameter(LDAPAdapter.BASE_DN));
-        DN dn = db.toDn();
+        try {
+            response.setSizeLimit(request.getSizeLimit());
 
-        SearchRequest newRequest = new SearchRequest(request);
-        newRequest.setDn(dn);
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(source.getParameter(LDAPAdapter.BASE_DN));
+            DN dn = db.toDn();
 
-        String scope = source.getParameter(LDAPAdapter.SCOPE);
-        if ("OBJECT".equals(scope)) {
-            newRequest.setScope(SearchRequest.SCOPE_BASE);
+            SearchRequest newRequest = new SearchRequest(request);
+            newRequest.setDn(dn);
 
-        } else if ("ONELEVEL".equals(scope)) {
-            newRequest.setScope(SearchRequest.SCOPE_ONE);
+            String scope = source.getParameter(LDAPAdapter.SCOPE);
+            if ("OBJECT".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        } else if ("SUBTREE".equals(scope)) {
-            newRequest.setScope(SearchRequest.SCOPE_SUB);
-        }
+            } else if ("ONELEVEL".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_ONE);
 
-        String filter = source.getParameter(LDAPAdapter.FILTER);
-        if (filter != null) {
-            Filter f1 = request.getFilter();
-            Filter f2 = FilterTool.parseFilter(filter);
-            f1 = FilterTool.appendAndFilter(f1, f2);
-            newRequest.setFilter(f1);
-        }
+            } else if ("SUBTREE".equals(scope)) {
+                newRequest.setScope(SearchRequest.SCOPE_SUB);
+            }
 
-        SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
-            public void add(SearchResult sr) throws Exception {
+            String filter = source.getParameter(LDAPAdapter.FILTER);
+            if (filter != null) {
+                Filter f1 = request.getFilter();
+                Filter f2 = FilterTool.parseFilter(filter);
+                f1 = FilterTool.appendAndFilter(f1, f2);
+                newRequest.setFilter(f1);
+            }
 
-                SearchResult searchResult = createSearchResult(source, sr);
-                if (searchResult == null) return;
+            SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
+                public void add(SearchResult sr) throws Exception {
 
-                if (debug) {
-                    searchResult.print();
+                    SearchResult searchResult = createSearchResult(source, sr);
+                    if (searchResult == null) return;
+
+                    if (debug) {
+                        searchResult.print();
+                    }
+
+                    response.add(searchResult);
                 }
+            };
 
-                response.add(searchResult);
-            }
-            public void close() throws Exception {
-                response.close();
-            }
-        };
+            if (debug) log.debug("Searching with base "+dn);
 
-        if (debug) log.debug("Searching with base "+dn);
+            client.search(newRequest, newResponse);
 
-        client.search(newRequest, newResponse);
+            log.debug("Search operation completed.");
 
-        log.debug("Search operation completed.");
+        } finally {
+            response.close();
+            closeClient(session, partition, source, client);
+        }
     }
 
     public SearchResult createSearchResult(

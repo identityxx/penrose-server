@@ -12,6 +12,7 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.connector.Connector;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +24,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
 
     boolean debug = log.isDebugEnabled();
 
+    Session session;
     Partition partition;
     BasicEngine engine;
 
@@ -39,6 +41,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     EntryMapping lastEntryMapping;
 
     public BasicSearchResponse(
+            Session session,
             Partition partition,
             BasicEngine engine,
             EntryMapping entryMapping,
@@ -48,6 +51,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) {
+        this.session = session;
         this.partition = partition;
         this.engine = engine;
 
@@ -143,6 +147,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>();
 
             connector.search(
+                    session,
                     partition,
                     em,
                     group,

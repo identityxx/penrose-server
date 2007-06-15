@@ -25,6 +25,7 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -44,6 +45,7 @@ public class SearchEngine {
     }
 
     public void search(
+            final Session session,
             final Partition partition,
             final EntryMapping entryMapping,
             final SourceValues sourceValues,
@@ -106,6 +108,7 @@ public class SearchEngine {
             Connector connector = engine.getConnector(sourceRef);
 
             connector.search(
+                    session,
                     partition,
                     entryMapping,
                     primarySources,

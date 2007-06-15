@@ -9,6 +9,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.session.Session;
 
 import java.util.*;
 
@@ -26,6 +27,7 @@ public class BasicSearchEngine {
     }
 
     public void search(
+            final Session session,
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
@@ -60,6 +62,7 @@ public class BasicSearchEngine {
             Connector connector = engine.getConnector(sourceRef);
 
             BasicSearchResponse sr = new BasicSearchResponse(
+                    session,
                     partition,
                     engine,
                     entryMapping,
@@ -71,6 +74,7 @@ public class BasicSearchEngine {
             );
 
             connector.search(
+                    session,
                     partition,
                     entryMapping,
                     group,

@@ -174,7 +174,7 @@ public class Source implements Cloneable {
             AddResponse response
     ) throws Exception {
 
-        connection.add(this, request, response);
+        connection.add(null, this, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ public class Source implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
-        connection.delete(this, request, response);
+        connection.delete(null, this, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,7 +237,7 @@ public class Source implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
-        connection.modify(this, request, response);
+        connection.modify(null, this, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +273,7 @@ public class Source implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
-        connection.modrdn(this, request, response);
+        connection.modrdn(null, this, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +311,7 @@ public class Source implements Cloneable {
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        connection.search(this, request, response);
+        connection.search(null, this, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

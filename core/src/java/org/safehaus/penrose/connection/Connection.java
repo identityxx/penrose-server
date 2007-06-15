@@ -28,6 +28,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,15 +128,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            Session session,
             Source source,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        adapter.add(source, request, response);
+        adapter.add(session, source, request, response);
     }
 
     public void add(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -143,7 +146,7 @@ public class Connection implements ConnectionMBean {
             AddResponse response
     ) throws Exception {
 
-        adapter.add(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.add(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,6 +154,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            Session session,
+            Source source,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        adapter.bind(session, source, request, response);
+    }
+
+    public void bind(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -158,7 +172,7 @@ public class Connection implements ConnectionMBean {
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.bind(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,15 +180,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            Session session,
             Source source,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        adapter.delete(source, request, response);
+        adapter.delete(session, source, request, response);
     }
 
     public void delete(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -182,7 +198,7 @@ public class Connection implements ConnectionMBean {
             DeleteResponse response
     ) throws Exception {
 
-        adapter.delete(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.delete(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,15 +206,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Session session,
             Source source,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(source, request, response);
+        adapter.modify(session, source, request, response);
     }
 
     public void modify(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -206,7 +224,7 @@ public class Connection implements ConnectionMBean {
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.modify(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,15 +232,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            Session session,
             Source source,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        adapter.modrdn(source, request, response);
+        adapter.modrdn(session, source, request, response);
     }
 
     public void modrdn(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -230,7 +250,7 @@ public class Connection implements ConnectionMBean {
             ModRdnResponse response
     ) throws Exception {
 
-        adapter.modrdn(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.modrdn(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,15 +258,17 @@ public class Connection implements ConnectionMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            Session session,
             Source source,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        adapter.search(source, request, response);
+        adapter.search(session, source, request, response);
     }
 
     public void search(
+            Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -254,7 +276,7 @@ public class Connection implements ConnectionMBean {
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        adapter.search(entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.search(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

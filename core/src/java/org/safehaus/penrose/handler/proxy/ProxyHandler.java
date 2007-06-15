@@ -44,9 +44,8 @@ public class ProxyHandler extends DefaultHandler {
         Engine engine = getEngine(partition, entryMapping);
 
         SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
-            public void add(SearchResult object) throws Exception {
-                SearchResult searchResult = (SearchResult)object;
-                response.add(searchResult);
+            public void add(SearchResult result) throws Exception {
+                response.add(result);
             }
         };
 

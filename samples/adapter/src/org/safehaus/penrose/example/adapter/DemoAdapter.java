@@ -6,6 +6,7 @@ import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.session.Session;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Iterator;
@@ -42,6 +43,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
+            Session session,
             Source source,
             AddRequest request,
             AddResponse response
@@ -67,6 +69,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            Session session,
             Source source,
             BindRequest request,
             BindResponse response
@@ -102,6 +105,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
+            Session session,
             Source source,
             DeleteRequest request,
             DeleteResponse response
@@ -125,6 +129,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
+            Session session,
             Source source,
             ModifyRequest request,
             ModifyResponse response
@@ -177,6 +182,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
+            Session session,
             Source source,
             ModRdnRequest request,
             ModRdnResponse response
@@ -218,6 +224,7 @@ public class DemoAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
+            Session session,
             Source source,
             SearchRequest request,
             SearchResponse<SearchResult> response

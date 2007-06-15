@@ -109,6 +109,9 @@ public class SourceManager {
         log.debug("Initializing source mapping "+sourceMapping.getName()+".");
 
         Source source = getSource(partition, sourceMapping.getSourceName());
+
+        if (source == null) throw new Exception("Unknown source "+sourceMapping.getSourceName()+".");
+        
         sourceRef = new SourceRef(source, sourceMapping);
 
         addSourceRef(partition.getName(), entryMapping, sourceRef);

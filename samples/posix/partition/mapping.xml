@@ -476,7 +476,7 @@ return bytes;
         <variable>manager</variable>
       </field>
     </source>
-    <source name="nc" required="false">
+    <source name="nc">
       <source-name>ipNetwork_alias</source-name>
       <field name="cn">
         <variable>n.cn</variable>
@@ -573,7 +573,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="pc" required="false">
+    <source name="pc">
       <source-name>ipProtocol_alias</source-name>
       <field name="cn">
         <variable>p.cn</variable>
@@ -617,7 +617,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>                                     b
-    <source name="rc" required="false">
+    <source name="rc">
       <source-name>oncRpc_alias</source-name>
       <field name="cn">
         <variable>r.cn</variable>
@@ -658,7 +658,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="nn" required="false">
+    <source name="nn">
       <source-name>nisNetgroup_nisNetgroupTriple</source-name>
       <field name="cn">
         <variable>n.cn</variable>
@@ -667,7 +667,7 @@ return bytes;
         <variable>nisNetgroupTriple</variable>
       </field>
     </source>
-    <source name="nm" required="false">
+    <source name="nm">
       <source-name>nisNetgroup_memberNisNetgroup</source-name>
       <field name="cn">
         <variable>n.cn</variable>

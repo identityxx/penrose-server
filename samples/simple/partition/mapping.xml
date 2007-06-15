@@ -88,7 +88,7 @@
         <variable>userPassword</variable>
       </field>
     </source>
-    <source name="ug" required="false">
+    <source name="ug">
       <source-name>usergroups</source-name>
       <field name="username">
         <variable>u.username</variable>
