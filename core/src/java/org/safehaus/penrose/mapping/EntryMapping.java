@@ -18,9 +18,7 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.acl.ACI;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDNBuilder;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
 import org.slf4j.LoggerFactory;

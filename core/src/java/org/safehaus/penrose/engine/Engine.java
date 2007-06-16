@@ -138,14 +138,6 @@ public abstract class Engine {
         return analyzer.getPrimarySource(entryMapping);
     }
 
-    /**
-     * Compute attribute values of an entry given the source values
-     * @param entryMapping
-     * @param sourceValues
-     * @param interpreter
-     * @return attribute values
-     * @throws Exception
-     */
     public Attributes createAttributes(
             EntryMapping entryMapping,
             SourceValues sourceValues,
@@ -156,9 +148,8 @@ public abstract class Engine {
 
         if (sourceValues != null) interpreter.set(sourceValues);
 
-        Collection attributeMappings = entryMapping.getAttributeMappings();
-        for (Iterator i=attributeMappings.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        for (AttributeMapping attributeMapping : attributeMappings) {
 
             Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
@@ -169,9 +160,8 @@ public abstract class Engine {
 
         interpreter.clear();
 
-        Collection objectClasses = entryMapping.getObjectClasses();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }
 
@@ -422,9 +412,6 @@ public abstract class Engine {
         SourceValues sourceValues = new SourceValues();
         SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
 
-        List attributeNames = new ArrayList();
-        attributeNames.add(attributeName);
-
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) {
@@ -432,18 +419,16 @@ public abstract class Engine {
             return false;
         }
 
-        Collection values = attribute.getValues();
+        Collection<Object> values = attribute.getValues();
         AttributeType attributeType = schemaManager.getAttributeType(attributeName);
 
         String equality = attributeType == null ? null : attributeType.getEquality();
         EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
 
         if (debug) log.debug("Comparing values:");
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            Object value = i.next();
-
+        for (Object value : values) {
             boolean b = equalityMatchingRule.compare(value, attributeValue);
-            if (debug) log.debug(" - ["+value+"] => "+b);
+            if (debug) log.debug(" - [" + value + "] => " + b);
 
             if (b) return true;
 
@@ -506,7 +491,7 @@ public abstract class Engine {
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
         }
 
-        return (SearchResult)response.next();
+        return response.next();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -578,13 +563,12 @@ public abstract class Engine {
             return new RDN();
         }
 
-        Collection fields = partition.getSearchableFields(sourceMapping);
+        Collection<FieldMapping> fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
         RDNBuilder rb = new RDNBuilder();
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)j.next();
+        for (FieldMapping fieldMapping : fields) {
             String name = fieldMapping.getName();
 
             Object value = interpreter.eval(fieldMapping);
@@ -640,19 +624,17 @@ public abstract class Engine {
 
             DNBuilder db = new DNBuilder();
 
-            for (Iterator iterator=rdns.iterator(); iterator.hasNext(); ) {
-                RDN rdn = (RDN)iterator.next();
+            for (RDN rdn : rdns) {
                 //log.info("Processing RDN: "+rdn);
 
-                for (Iterator j=parentDns.iterator(); j.hasNext(); ) {
-                    DN parentDn = (DN)j.next();
+                for (DN parentDn : parentDns) {
                     //log.debug("Appending parent DN: "+parentDn);
 
                     db.set(rdn);
                     db.append(parentDn);
                     DN dn = db.toDn();
 
-                    log.debug("DN: "+dn);
+                    log.debug("DN: " + dn);
                     dns.add(dn);
                 }
             }
