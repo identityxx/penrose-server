@@ -64,10 +64,8 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            if (count > 1) {
-                sb.append(fieldRef.getSourceName());
-                sb.append('.');
-            }
+            sb.append(fieldRef.getSourceName());
+            sb.append('.');
 
             if (quote != null) sb.append(quote);
             sb.append(fieldRef.getOriginalName());
@@ -89,10 +87,8 @@ public class JDBCStatementBuilder {
         sb.append(table);
         if (quote != null) sb.append(quote);
 
-        if (count > 1) {
-            sb.append(" ");
-            sb.append(alias);
-        }
+        sb.append(" ");
+        sb.append(alias);
 
         while (i.hasNext() && j.hasNext()) {
             alias = (String)i.next();
