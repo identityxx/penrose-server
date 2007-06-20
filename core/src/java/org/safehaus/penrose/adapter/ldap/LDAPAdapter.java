@@ -55,14 +55,11 @@ public class LDAPAdapter extends Adapter {
     public final static String AUTHENTICATON_FULL     = "full";
     public final static String AUTHENTICATON_DISABLED = "disabled";
 
-    private LDAPClient client;
-
     public void init() throws Exception {
-        client = new LDAPClient(getParameters());
     }
 
     public Object openConnection() throws Exception {
-        return new LDAPClient(client, getParameters());
+        return new LDAPClient(getParameters());
     }
 
     public String getSyncClassName() {
@@ -108,18 +105,6 @@ public class LDAPAdapter extends Adapter {
         }
     }
 
-    public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
-
-        //boolean debug = log.isDebugEnabled();
-
-        String authentication = source.getParameter(AUTHENTICATON);
-        //if (debug) log.debug("Authentication: "+authentication);
-
-        if (!AUTHENTICATON_FULL.equals(authentication)) {
-            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
-        }
-    }
-
     public LDAPClient getClient(Session session, Partition partition, Source source) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -156,6 +141,18 @@ public class LDAPAdapter extends Adapter {
         }
 
         return client;
+    }
+
+    public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
+
+        //boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
+
+        if (!AUTHENTICATON_FULL.equals(authentication)) {
+            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

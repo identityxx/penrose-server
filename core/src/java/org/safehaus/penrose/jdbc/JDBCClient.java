@@ -74,9 +74,11 @@ public class JDBCClient {
     public Properties properties = new Properties();
     public String quote;
 
-    public GenericObjectPool.Config config = new GenericObjectPool.Config();
-    public GenericObjectPool connectionPool;
-    public DataSource ds;
+    //public GenericObjectPool.Config config = new GenericObjectPool.Config();
+    //public GenericObjectPool connectionPool;
+    //public DataSource ds;
+
+    Connection connection;
 
     public JDBCClient(Map<String,?> properties) throws Exception {
         for (String key : properties.keySet()) {
@@ -88,6 +90,8 @@ public class JDBCClient {
                 this.properties.put(key, value);
             }
         }
+
+        connect();
     }
 
     public JDBCClient(
@@ -101,13 +105,31 @@ public class JDBCClient {
         properties.put(URL, url);
         properties.put(USER, username);
         properties.put(PASSWORD, password);
+
+        connect();
+    }
+
+    public JDBCClient(
+            Connection connection
+    ) throws Exception {
+
+        this.connection = connection;
     }
 
     public void connect() throws Exception {
 
+        if (connection != null) return;
+
         String driver = (String)properties.remove(DRIVER);
         String url = (String)properties.remove(URL);
 
+        Class clazz = Class.forName(driver);
+
+        Driver driverInstance = (Driver)clazz.newInstance();
+        DriverManager.registerDriver(driverInstance);
+
+        connection = DriverManager.getConnection(url, properties);
+/*
         Class.forName(driver);
 
         String s = (String)properties.remove(INITIAL_SIZE);
@@ -171,14 +193,19 @@ public class JDBCClient {
          }
 
         ds = new PoolingDataSource(connectionPool);
+
+        connection = ds.getConnection();
+*/  
     }
 
     public Connection getConnection() throws Exception {
-        return ds.getConnection();
+        //return ds.getConnection();
+        return connection;
     }
 
     public void close() throws Exception {
-        connectionPool.close();
+        //connectionPool.close();
+        connection.close();
     }
 
     public String getTypeName(int type) throws Exception {
@@ -200,58 +227,51 @@ public class JDBCClient {
 
         Map<String,FieldConfig> columns = new HashMap<String,FieldConfig>();
 
-        Connection connection = null;
+        Connection connection = getConnection();
+        DatabaseMetaData dmd = connection.getMetaData();
+
+        ResultSet rs = null;
 
         try {
-            connection = getConnection();
-            DatabaseMetaData dmd = connection.getMetaData();
+            rs = dmd.getColumns(catalog, schema, tableName, "%");
 
-            ResultSet rs = null;
+            while (rs.next()) {
+                //String tableCatalog = rs.getString(1);
+                //String tableSchema = rs.getString(2);
+                //String tableNm = rs.getString(3);
+                String columnName = rs.getString(4);
+                String columnType = getTypeName(rs.getInt(5));
+                int length = rs.getInt(7);
+                int precision = rs.getInt(9);
 
-            try {
-                rs = dmd.getColumns(catalog, schema, tableName, "%");
+                log.debug(" - "+columnName+" "+columnType+" ("+length+","+precision+")");
 
-                while (rs.next()) {
-                    //String tableCatalog = rs.getString(1);
-                    //String tableSchema = rs.getString(2);
-                    //String tableNm = rs.getString(3);
-                    String columnName = rs.getString(4);
-                    String columnType = getTypeName(rs.getInt(5));
-                    int length = rs.getInt(7);
-                    int precision = rs.getInt(9);
+                FieldConfig field = new FieldConfig(columnName);
+                field.setOriginalName(columnName);
+                field.setType(columnType);
+                field.setLength(length);
+                field.setPrecision(precision);
 
-                    log.debug(" - "+columnName+" "+columnType+" ("+length+","+precision+")");
-
-                    FieldConfig field = new FieldConfig(columnName);
-                    field.setOriginalName(columnName);
-                    field.setType(columnType);
-                    field.setLength(length);
-                    field.setPrecision(precision);
-
-                    columns.put(columnName, field);
-                }
-
-            } finally {
-                if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            }
-
-            rs = null;
-            try {
-                rs = dmd.getPrimaryKeys(catalog, schema, tableName);
-
-                while (rs.next()) {
-                    String name = rs.getString(4);
-
-                    FieldConfig field = columns.get(name);
-                    field.setPrimaryKey(true);
-                }
-
-            } finally {
-                if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+                columns.put(columnName, field);
             }
 
         } finally {
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+        }
+
+        rs = null;
+        try {
+            rs = dmd.getPrimaryKeys(catalog, schema, tableName);
+
+            while (rs.next()) {
+                String name = rs.getString(4);
+
+                FieldConfig field = columns.get(name);
+                field.setPrimaryKey(true);
+            }
+
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
         return columns.values();
@@ -263,11 +283,10 @@ public class JDBCClient {
 
         Collection<String> catalogs = new ArrayList<String>();
 
-        Connection connection = null;
+        Connection connection = getConnection();
         ResultSet rs = null;
 
         try {
-            connection = getConnection();
             DatabaseMetaData dmd = connection.getMetaData();
 
             rs = dmd.getCatalogs();
@@ -280,7 +299,6 @@ public class JDBCClient {
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
         return catalogs;
@@ -292,11 +310,10 @@ public class JDBCClient {
 
         Collection<String> schemas = new ArrayList<String>();
 
-        Connection connection = null;
+        Connection connection = getConnection();
         ResultSet rs = null;
 
         try {
-            connection = getConnection();
             DatabaseMetaData dmd = connection.getMetaData();
 
             rs = dmd.getSchemas();
@@ -309,7 +326,6 @@ public class JDBCClient {
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
         return schemas;
@@ -325,11 +341,10 @@ public class JDBCClient {
 
         Collection<TableConfig> tables = new TreeSet<TableConfig>();
 
-        Connection connection = null;
+        Connection connection = getConnection();
         ResultSet rs = null;
 
         try {
-            connection = getConnection();
             DatabaseMetaData dmd = connection.getMetaData();
 
             // String[] tableTypes = { "TABLE", "VIEW", "ALIAS", "SYNONYM", "GLOBAL
@@ -351,7 +366,6 @@ public class JDBCClient {
 
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
 
         return tables;
@@ -415,11 +429,10 @@ public class JDBCClient {
             }
         }
 
-        Connection connection = null;
+        Connection connection = getConnection();
         PreparedStatement ps = null;
 
         try {
-            connection = getConnection();
             ps = connection.prepareStatement(sql);
 
             if (assignments != null) {
@@ -435,7 +448,6 @@ public class JDBCClient {
 
         } finally {
             if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
     }
 
@@ -480,13 +492,11 @@ public class JDBCClient {
            }
         }
 
-        Connection connection = null;
+        Connection connection = getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            connection = getConnection();
-
             ps = connection.prepareStatement(sql);
 
             if (parameters != null) {
@@ -506,7 +516,6 @@ public class JDBCClient {
         } finally {
             if (rs != null) try { rs.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
             if (ps != null) try { ps.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-            if (connection != null) try { connection.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
 
             response.close();
         }

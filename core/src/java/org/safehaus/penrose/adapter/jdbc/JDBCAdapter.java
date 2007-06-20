@@ -18,12 +18,14 @@
 package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.jdbc.*;
@@ -33,7 +35,16 @@ import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.ietf.ldap.LDAPException;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.dbcp.ConnectionFactory;
+import org.apache.commons.dbcp.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp.PoolableConnectionFactory;
+import org.apache.commons.dbcp.PoolingDataSource;
 
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.util.*;
 
@@ -42,14 +53,125 @@ import java.util.*;
  */
 public class JDBCAdapter extends Adapter {
 
+    public final static String DRIVER       = "driver";
+    public final static String URL          = "url";
+    public final static String USER         = "user";
+    public final static String PASSWORD     = "password";
+    public final static String QUOTE        = "quote";
+
+    public final static String CATALOG      = "catalog";
+    public final static String SCHEMA       = "schema";
+    public final static String TABLE        = "table";
+    public final static String TABLE_NAME   = "tableName";
+    public final static String FILTER       = "filter";
+
+    public final static String AUTHENTICATON          = "authentication";
+    public final static String AUTHENTICATON_DEFAULT  = "default";
+    public final static String AUTHENTICATON_FULL     = "full";
+    public final static String AUTHENTICATON_DISABLED = "disabled";
+
+    public final static String INITIAL_SIZE                         = "initialSize";
+    public final static String MAX_ACTIVE                           = "maxActive";
+    public final static String MAX_IDLE                             = "maxIdle";
+    public final static String MIN_IDLE                             = "minIdle";
+    public final static String MAX_WAIT                             = "maxWait";
+
+    public final static String VALIDATION_QUERY                     = "validationQuery";
+    public final static String TEST_ON_BORROW                       = "testOnBorrow";
+    public final static String TEST_ON_RETURN                       = "testOnReturn";
+    public final static String TEST_WHILE_IDLE                      = "testWhileIdle";
+    public final static String TIME_BETWEEN_EVICTION_RUNS_MILLIS    = "timeBetweenEvictionRunsMillis";
+    public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
+    public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
+
+    public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
+    public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
+
+    public GenericObjectPool.Config config = new GenericObjectPool.Config();
+    public GenericObjectPool connectionPool;
+    public DataSource ds;
+
     private JDBCClient client;
 
     public void init() throws Exception {
-        client = new JDBCClient(getParameters());
+
+        Properties properties = new Properties();
+        properties.putAll(getParameters());
+
+        String driver = (String)properties.remove(DRIVER);
+        String url = (String)properties.remove(URL);
+
+        Class.forName(driver);
+
+        String s = (String)properties.remove(INITIAL_SIZE);
+        int initialSize = s == null ? 1 : Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_ACTIVE);
+        if (s != null) config.maxActive = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_IDLE);
+        if (s != null) config.maxIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(MAX_WAIT);
+        if (s != null) config.maxWait = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        s = (String)properties.remove(MIN_IDLE);
+        if (s != null) config.minIdle = Integer.parseInt(s);
+
+        s = (String)properties.remove(NUM_TESTS_PER_EVICTION_RUN);
+        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
+
+        s = (String)properties.remove(TEST_ON_BORROW);
+        if (s != null) config.testOnBorrow = Boolean.valueOf(s);
+
+        s = (String)properties.remove(TEST_ON_RETURN);
+        if (s != null) config.testOnReturn = Boolean.valueOf(s);
+
+        s = (String)properties.remove(TEST_WHILE_IDLE);
+        if (s != null) config.testWhileIdle = Boolean.valueOf(s);
+
+        s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
+        if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
+        //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
+
+        connectionPool = new GenericObjectPool(null, config);
+
+        String validationQuery = (String)properties.remove(VALIDATION_QUERY);
+
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
+
+        //PoolableConnectionFactory poolableConnectionFactory =
+                new PoolableConnectionFactory(
+                        connectionFactory,
+                        connectionPool,
+                        null, // statement pool factory
+                        validationQuery, // test query
+                        false, // read only
+                        true // auto commit
+                );
     }
 
     public void start() throws Exception {
-        client.connect();
+
+        String s = getParameter(INITIAL_SIZE);
+        int initialSize = s == null ? 1 : Integer.parseInt(s);
+
+        //log.debug("Initializing "+initialSize+" connections.");
+        for (int i = 0; i < initialSize; i++) {
+             connectionPool.addObject();
+         }
+
+        ds = new PoolingDataSource(connectionPool);
+
+        client = new JDBCClient(getParameters());
     }
 
     public void stop() throws Exception {
@@ -90,6 +212,50 @@ public class JDBCAdapter extends Adapter {
 
     public String getSyncClassName() {
         return JDBCSourceSync.class.getName();
+    }
+
+    public JDBCClient getClient(Session session, Partition partition, Source source) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String authentication = source.getParameter(AUTHENTICATON);
+        if (debug) log.debug("Authentication: "+authentication);
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
+        JDBCClient client;
+
+        if (AUTHENTICATON_FULL.equals(authentication)) {
+            if (debug) log.debug("Getting connection info from session.");
+
+            client = session == null ? null : (JDBCClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
+
+            if (client == null) {
+
+                if (session == null || session.isRootUser()) {
+                    if (debug) log.debug("Creating new connection.");
+
+                    client = new JDBCClient(connection.getParameters());
+
+                } else {
+                    if (debug) log.debug("Missing credentials.");
+                    throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                }
+            }
+
+        } else {
+            client = this.client;
+        }
+
+        return client;
+    }
+
+    public void closeClient(Session session, Partition partition, Source source, JDBCClient client) throws Exception {
+
+        //boolean debug = log.isDebugEnabled();
+
+        //String authentication = source.getParameter(AUTHENTICATON);
+        //if (debug) log.debug("Authentication: "+authentication);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,45 +346,51 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        InsertStatement statement = new InsertStatement();
+        JDBCClient client = getClient(session, partition, source);
 
-        statement.setSource(source);
+        try {
+            InsertStatement statement = new InsertStatement();
+            statement.setSource(source);
 
-        RDN rdn = request.getDn().getRdn();
+            RDN rdn = request.getDn().getRdn();
 
-        if (rdn != null) {
-            for (String name : rdn.getNames()) {
+            if (rdn != null) {
+                for (String name : rdn.getNames()) {
 
-                Object value = rdn.get(name);
+                    Object value = rdn.get(name);
+
+                    Field field = source.getField(name);
+                    if (field == null) throw new Exception("Unknown field: " + name);
+
+                    statement.addAssignment(new Assignment(field, value));
+                }
+            }
+
+            Attributes attributes = request.getAttributes();
+
+            for (String name : attributes.getNames()) {
+                if (rdn != null && rdn.contains(name)) continue;
+
+                Object value = attributes.getValue(name); // get first value
 
                 Field field = source.getField(name);
                 if (field == null) throw new Exception("Unknown field: " + name);
 
                 statement.addAssignment(new Assignment(field, value));
             }
+
+            UpdateRequest updateRequest = new UpdateRequest();
+            updateRequest.setStatement(statement);
+
+            UpdateResponse updateResponse = new UpdateResponse();
+
+            client.executeUpdate(updateRequest, updateResponse);
+
+            log.debug("Add operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        Attributes attributes = request.getAttributes();
-
-        for (String name : attributes.getNames()) {
-            if (rdn != null && rdn.contains(name)) continue;
-
-            Object value = attributes.getValue(name); // get first value
-
-            Field field = source.getField(name);
-            if (field == null) throw new Exception("Unknown field: " + name);
-
-            statement.addAssignment(new Assignment(field, value));
-        }
-
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        UpdateResponse updateResponse = new UpdateResponse();
-
-        client.executeUpdate(updateRequest, updateResponse);
-
-        log.debug("Add operation completed.");
     }
 
     public void add(
@@ -241,23 +413,32 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        AddRequestBuilder builder = new AddRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
-                request,
-                response
-        );
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        JDBCClient client = getClient(session, partition, source);
 
-        Collection<Request> requests = builder.generate();
-        for (Request req : requests) {
-            UpdateRequest updateRequest = (UpdateRequest) req;
-            UpdateResponse updateResponse = new UpdateResponse();
+        try {
+            AddRequestBuilder builder = new AddRequestBuilder(
+                    sourceRefs,
+                    sourceValues,
+                    penroseContext.getInterpreterManager().newInstance(),
+                    request,
+                    response
+            );
 
-            client.executeUpdate(updateRequest, updateResponse);
+            Collection<Request> requests = builder.generate();
+            for (Request req : requests) {
+                UpdateRequest updateRequest = (UpdateRequest) req;
+                UpdateResponse updateResponse = new UpdateResponse();
+
+                client.executeUpdate(updateRequest, updateResponse);
+            }
+
+            log.debug("Add operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        log.debug("Add operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -279,29 +460,36 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        DeleteStatement statement = new DeleteStatement();
+        JDBCClient client = getClient(session, partition, source);
 
-        statement.setSource(source);
+        try {
+            DeleteStatement statement = new DeleteStatement();
 
-        RDN rdn = request.getDn().getRdn();
-        Filter filter = null;
-        for (String name : rdn.getNames()) {
-            Object value = rdn.get(name);
+            statement.setSource(source);
 
-            SimpleFilter sf = new SimpleFilter(name, "=", value);
-            filter = FilterTool.appendAndFilter(filter, sf);
+            RDN rdn = request.getDn().getRdn();
+            Filter filter = null;
+            for (String name : rdn.getNames()) {
+                Object value = rdn.get(name);
+
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+
+            statement.setFilter(filter);
+
+            UpdateRequest updateRequest = new UpdateRequest();
+            updateRequest.setStatement(statement);
+
+            UpdateResponse updateResponse = new UpdateResponse();
+
+            client.executeUpdate(updateRequest, updateResponse);
+
+            log.debug("Delete operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        statement.setFilter(filter);
-
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        UpdateResponse updateResponse = new UpdateResponse();
-
-        client.executeUpdate(updateRequest, updateResponse);
-
-        log.debug("Delete operation completed.");
     }
 
     public void delete(
@@ -324,23 +512,32 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        DeleteRequestBuilder builder = new DeleteRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
-                request,
-                response
-        );
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        JDBCClient client = getClient(session, partition, source);
 
-        Collection<Request> requests = builder.generate();
-        for (Iterator i=requests.iterator(); i.hasNext(); ) {
-            UpdateRequest updateRequest = (UpdateRequest)i.next();
-            UpdateResponse updateResponse = new UpdateResponse();
+        try {
+            DeleteRequestBuilder builder = new DeleteRequestBuilder(
+                    sourceRefs,
+                    sourceValues,
+                    penroseContext.getInterpreterManager().newInstance(),
+                    request,
+                    response
+            );
 
-            client.executeUpdate(updateRequest, updateResponse);
+            Collection<Request> requests = builder.generate();
+            for (Iterator i=requests.iterator(); i.hasNext(); ) {
+                UpdateRequest updateRequest = (UpdateRequest)i.next();
+                UpdateResponse updateResponse = new UpdateResponse();
+
+                client.executeUpdate(updateRequest, updateResponse);
+            }
+
+            log.debug("Delete operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        log.debug("Delete operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,54 +559,61 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        UpdateStatement statement = new UpdateStatement();
+        JDBCClient client = getClient(session, partition, source);
 
-        statement.setSource(source);
+        try {
+            UpdateStatement statement = new UpdateStatement();
 
-        RDN rdn = request.getDn().getRdn();
+            statement.setSource(source);
 
-        Collection<Modification> modifications = request.getModifications();
-        for (Modification modification : modifications) {
+            RDN rdn = request.getDn().getRdn();
 
-            int type = modification.getType();
-            Attribute attribute = modification.getAttribute();
-            String name = attribute.getName();
+            Collection<Modification> modifications = request.getModifications();
+            for (Modification modification : modifications) {
 
-            Field field = source.getField(name);
-            if (field == null) continue;
+                int type = modification.getType();
+                Attribute attribute = modification.getAttribute();
+                String name = attribute.getName();
 
-            switch (type) {
-                case Modification.ADD:
-                case Modification.REPLACE:
-                    Object value = rdn.get(name);
-                    if (value == null) value = attribute.getValue();
-                    statement.addAssignment(new Assignment(field, value));
-                    break;
+                Field field = source.getField(name);
+                if (field == null) continue;
 
-                case Modification.DELETE:
-                    statement.addAssignment(new Assignment(field, null));
-                    break;
+                switch (type) {
+                    case Modification.ADD:
+                    case Modification.REPLACE:
+                        Object value = rdn.get(name);
+                        if (value == null) value = attribute.getValue();
+                        statement.addAssignment(new Assignment(field, value));
+                        break;
+
+                    case Modification.DELETE:
+                        statement.addAssignment(new Assignment(field, null));
+                        break;
+                }
             }
+
+            Filter filter = null;
+            for (String name : rdn.getNames()) {
+                Object value = rdn.get(name);
+
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+
+            statement.setFilter(filter);
+
+            UpdateRequest updateRequest = new UpdateRequest();
+            updateRequest.setStatement(statement);
+
+            UpdateResponse updateResponse = new UpdateResponse();
+
+            client.executeUpdate(updateRequest, updateResponse);
+
+            log.debug("Modify operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        Filter filter = null;
-        for (String name : rdn.getNames()) {
-            Object value = rdn.get(name);
-
-            SimpleFilter sf = new SimpleFilter(name, "=", value);
-            filter = FilterTool.appendAndFilter(filter, sf);
-        }
-
-        statement.setFilter(filter);
-
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        UpdateResponse updateResponse = new UpdateResponse();
-
-        client.executeUpdate(updateRequest, updateResponse);
-
-        log.debug("Modify operation completed.");
     }
 
     public void modify(
@@ -432,23 +636,32 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        ModifyRequestBuilder builder = new ModifyRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
-                request,
-                response
-        );
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        JDBCClient client = getClient(session, partition, source);
 
-        Collection<Request> requests = builder.generate();
-        for (Iterator i=requests.iterator(); i.hasNext(); ) {
-            UpdateRequest updateRequest = (UpdateRequest)i.next();
-            UpdateResponse updateResponse = new UpdateResponse();
+        try {
+            ModifyRequestBuilder builder = new ModifyRequestBuilder(
+                    sourceRefs,
+                    sourceValues,
+                    penroseContext.getInterpreterManager().newInstance(),
+                    request,
+                    response
+            );
 
-            client.executeUpdate(updateRequest, updateResponse);
+            Collection<Request> requests = builder.generate();
+            for (Iterator i=requests.iterator(); i.hasNext(); ) {
+                UpdateRequest updateRequest = (UpdateRequest)i.next();
+                UpdateResponse updateResponse = new UpdateResponse();
+
+                client.executeUpdate(updateRequest, updateResponse);
+            }
+
+            log.debug("Modify operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        log.debug("Modify operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -470,39 +683,46 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        UpdateStatement statement = new UpdateStatement();
+        JDBCClient client = getClient(session, partition, source);
 
-        statement.setSource(source);
+        try {
+            UpdateStatement statement = new UpdateStatement();
 
-        RDN newRdn = request.getNewRdn();
-        for (String name : newRdn.getNames()) {
-            Object value = newRdn.get(name);
+            statement.setSource(source);
 
-            Field field = source.getField(name);
-            if (field == null) continue;
+            RDN newRdn = request.getNewRdn();
+            for (String name : newRdn.getNames()) {
+                Object value = newRdn.get(name);
 
-            statement.addAssignment(new Assignment(field, value));
+                Field field = source.getField(name);
+                if (field == null) continue;
+
+                statement.addAssignment(new Assignment(field, value));
+            }
+
+            RDN rdn = request.getDn().getRdn();
+            Filter filter = null;
+            for (String name : rdn.getNames()) {
+                Object value = rdn.get(name);
+
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+
+            statement.setFilter(filter);
+
+            UpdateRequest updateRequest = new UpdateRequest();
+            updateRequest.setStatement(statement);
+
+            UpdateResponse updateResponse = new UpdateResponse();
+
+            client.executeUpdate(updateRequest, updateResponse);
+
+            log.debug("ModRdn operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        RDN rdn = request.getDn().getRdn();
-        Filter filter = null;
-        for (String name : rdn.getNames()) {
-            Object value = rdn.get(name);
-
-            SimpleFilter sf = new SimpleFilter(name, "=", value);
-            filter = FilterTool.appendAndFilter(filter, sf);
-        }
-
-        statement.setFilter(filter);
-
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        UpdateResponse updateResponse = new UpdateResponse();
-
-        client.executeUpdate(updateRequest, updateResponse);
-
-        log.debug("ModRdn operation completed.");
     }
 
     public void modrdn(
@@ -525,23 +745,32 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                penroseContext.getInterpreterManager().newInstance(),
-                request,
-                response
-        );
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        JDBCClient client = getClient(session, partition, source);
 
-        Collection<Request> requests = builder.generate();
-        for (Iterator i=requests.iterator(); i.hasNext(); ) {
-            UpdateRequest updateRequest = (UpdateRequest)i.next();
-            UpdateResponse updateResponse = new UpdateResponse();
+        try {
+            ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
+                    sourceRefs,
+                    sourceValues,
+                    penroseContext.getInterpreterManager().newInstance(),
+                    request,
+                    response
+            );
 
-            client.executeUpdate(updateRequest, updateResponse);
+            Collection<Request> requests = builder.generate();
+            for (Iterator i=requests.iterator(); i.hasNext(); ) {
+                UpdateRequest updateRequest = (UpdateRequest)i.next();
+                UpdateResponse updateResponse = new UpdateResponse();
+
+                client.executeUpdate(updateRequest, updateResponse);
+            }
+
+            log.debug("ModRdn operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        log.debug("ModRdn operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -563,49 +792,56 @@ public class JDBCAdapter extends Adapter {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        response.setSizeLimit(request.getSizeLimit());
+        JDBCClient client = getClient(session, partition, source);
 
-        SelectStatement statement = new SelectStatement();
+        try {
+            response.setSizeLimit(request.getSizeLimit());
 
-        SourceRef sourceRef = new SourceRef(source);
+            SelectStatement statement = new SelectStatement();
 
-        Filter filter = null;
+            SourceRef sourceRef = new SourceRef(source);
 
-        DN dn = request.getDn();
-        if (dn != null) {
-            RDN rdn = dn.getRdn();
-            for (String name : rdn.getNames()) {
-                Object value = rdn.get(name);
+            Filter filter = null;
 
-                SimpleFilter sf = new SimpleFilter(name, "=", value);
-                filter = FilterTool.appendAndFilter(filter, sf);
+            DN dn = request.getDn();
+            if (dn != null) {
+                RDN rdn = dn.getRdn();
+                for (String name : rdn.getNames()) {
+                    Object value = rdn.get(name);
+
+                    SimpleFilter sf = new SimpleFilter(name, "=", value);
+                    filter = FilterTool.appendAndFilter(filter, sf);
+                }
             }
+
+            filter = FilterTool.appendAndFilter(filter, request.getFilter());
+
+            statement.addFieldRefs(sourceRef.getFieldRefs());
+            statement.addSourceRef(sourceRef);
+            statement.setFilter(filter);
+            statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
+
+            QueryRequest queryRequest = new QueryRequest();
+            queryRequest.setStatement(statement);
+
+            QueryResponse queryResponse = new QueryResponse() {
+                public void add(Object object) throws Exception {
+                    ResultSet rs = (ResultSet)object;
+                    SearchResult searchResult = createSearchResult(source, rs);
+                    response.add(searchResult);
+                }
+                public void close() throws Exception {
+                    response.close();
+                }
+            };
+
+            client.executeQuery(queryRequest, queryResponse);
+
+            log.debug("Search operation completed.");
+
+        } finally {
+            closeClient(session, partition, source, client);
         }
-
-        filter = FilterTool.appendAndFilter(filter, request.getFilter());
-
-        statement.addFieldRefs(sourceRef.getFieldRefs());
-        statement.addSourceRef(sourceRef);
-        statement.setFilter(filter);
-        statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
-
-        QueryRequest queryRequest = new QueryRequest();
-        queryRequest.setStatement(statement);
-
-        QueryResponse queryResponse = new QueryResponse() {
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-                SearchResult searchResult = createSearchResult(source, rs);
-                response.add(searchResult);
-            }
-            public void close() throws Exception {
-                response.close();
-            }
-        };
-
-        client.executeQuery(queryRequest, queryResponse);
-
-        log.debug("Search operation completed.");
     }
 
     public void search(
@@ -628,57 +864,66 @@ public class JDBCAdapter extends Adapter {
             sourceValues.print();
         }
 
-        response.setSizeLimit(request.getSizeLimit());
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        JDBCClient client = getClient(session, partition, source);
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        try {
+            response.setSizeLimit(request.getSizeLimit());
 
-        SearchRequestBuilder builder = new SearchRequestBuilder(
-                interpreter,
-                entryMapping,
-                sourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+            Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
 
-        QueryRequest queryRequest = builder.generate();
-        QueryResponse queryResponse = new QueryResponse() {
+            SearchRequestBuilder builder = new SearchRequestBuilder(
+                    interpreter,
+                    entryMapping,
+                    sourceRefs,
+                    sourceValues,
+                    request,
+                    response
+            );
 
-            SearchResult lastEntry;
+            QueryRequest queryRequest = builder.generate();
+            QueryResponse queryResponse = new QueryResponse() {
 
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
+                SearchResult lastEntry;
 
-                SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
-                if (searchResult == null) return;
+                public void add(Object object) throws Exception {
+                    ResultSet rs = (ResultSet)object;
 
-                if (lastEntry == null) {
-                    lastEntry = searchResult;
+                    SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
+                    if (searchResult == null) return;
 
-                } else if (searchResult.getDn().equals(lastEntry.getDn())) {
-                    mergeSearchResult(searchResult, lastEntry);
+                    if (lastEntry == null) {
+                        lastEntry = searchResult;
 
-                } else {
-                    response.add(lastEntry);
-                    lastEntry = searchResult;
+                    } else if (searchResult.getDn().equals(lastEntry.getDn())) {
+                        mergeSearchResult(searchResult, lastEntry);
+
+                    } else {
+                        response.add(lastEntry);
+                        lastEntry = searchResult;
+                    }
+
+                    if (debug) {
+                        searchResult.print();
+                    }
                 }
 
-                if (debug) {
-                    searchResult.print();
+                public void close() throws Exception {
+                    if (lastEntry != null) {
+                        response.add(lastEntry);
+                    }
+                    response.close();
                 }
-            }
+            };
 
-            public void close() throws Exception {
-                if (lastEntry != null) {
-                    response.add(lastEntry);
-                }
-                response.close();
-            }
-        };
+            client.executeQuery(queryRequest, queryResponse);
 
-        client.executeQuery(queryRequest, queryResponse);
+            log.debug("Search operation completed.");
 
-        log.debug("Search operation completed.");
+        } finally {
+            closeClient(session, partition, source, client);
+        }
     }
 
     public SearchResult createSearchResult(

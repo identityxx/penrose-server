@@ -79,6 +79,7 @@ public class SessionManager implements SessionManagerMBean {
         session.setPenroseConfig(penroseConfig);
         session.setPenroseContext(penroseContext);
         session.setSessionContext(sessionContext);
+        session.init();
 
         sessions.put(sessionId, session);
 

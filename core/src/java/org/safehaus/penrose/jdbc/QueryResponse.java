@@ -7,7 +7,7 @@ import java.util.LinkedList;
  */
 public class QueryResponse extends Response {
 
-    LinkedList results = new LinkedList();
+    LinkedList<Object> results = new LinkedList<Object>();
 
     public void add(Object object) throws Exception {
         results.add(object);

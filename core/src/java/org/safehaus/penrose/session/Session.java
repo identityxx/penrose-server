@@ -48,6 +48,9 @@ public class Session {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
+    public final static String EVENTS_ENABLED              = "eventsEnabled";
+    public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";
+
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
     private SessionContext sessionContext;
@@ -67,13 +70,22 @@ public class Session {
 
     private Map<String,Object> attributes = new HashMap<String,Object>();
     
-    boolean enableEventListeners = true;
+    boolean eventsEnabled = true;
+    long bufferSize;
 
     public Session(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
 
         createDate = new Date();
         lastActivityDate = (Date)createDate.clone();
+    }
+
+    public void init() {
+        String s = penroseConfig.getProperty(EVENTS_ENABLED);
+        eventsEnabled = s == null || Boolean.valueOf(s);
+
+        s = penroseConfig.getProperty(SEARCH_RESPONSE_BUFFER_SIZE);
+        bufferSize = s == null ? 0 : Long.parseLong(s);
     }
 
     public DN getBindDn() {
@@ -166,7 +178,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, request, response);
             	boolean b = eventManager.postEvent(beforeModifyEvent);
 
@@ -182,7 +194,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                 	AddEvent afterModifyEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, request, response);
                 	afterModifyEvent.setReturnCode(rc);
                 	eventManager.postEvent(afterModifyEvent);
@@ -242,7 +254,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, request, response);
             	boolean b = eventManager.postEvent(beforeBindEvent);
             
@@ -291,7 +303,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                 	BindEvent afterBindEvent = new BindEvent(this, BindEvent.AFTER_BIND, this, request, response);
                 	afterBindEvent.setReturnCode(rc);
                 	eventManager.postEvent(afterBindEvent);
@@ -377,7 +389,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, request, response);
             	boolean b = eventManager.postEvent(beforeCompareEvent);
 
@@ -395,7 +407,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                 	CompareEvent afterCompareEvent = new CompareEvent(this, CompareEvent.AFTER_COMPARE, this, request, response);
                 	afterCompareEvent.setReturnCode(rc);
                 	eventManager.postEvent(afterCompareEvent);
@@ -468,7 +480,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, request, response);
             	boolean b = eventManager.postEvent(beforeDeleteEvent);
 
@@ -484,7 +496,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                 	DeleteEvent afterDeleteEvent = new DeleteEvent(this, DeleteEvent.AFTER_DELETE, this, request, response);
                 	afterDeleteEvent.setReturnCode(rc);
                 	eventManager.postEvent(afterDeleteEvent);
@@ -568,7 +580,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, request, response);
             	boolean b = eventManager.postEvent(beforeModifyEvent);
 
@@ -584,7 +596,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                 	ModifyEvent afterModifyEvent = new ModifyEvent(this, ModifyEvent.AFTER_MODIFY, this, request, response);
                 	afterModifyEvent.setReturnCode(rc);
                 	eventManager.postEvent(afterModifyEvent);
@@ -660,7 +672,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, request, response);
 	            boolean b = eventManager.postEvent(beforeModRdnEvent);
 	
@@ -676,7 +688,7 @@ public class Session {
                 rc = e.getResultCode();
                 throw e;
             } finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
                     ModRdnEvent afterModRdnEvent = new ModRdnEvent(this, ModRdnEvent.AFTER_MODRDN, this, request, response);
                     afterModRdnEvent.setReturnCode(rc);
                     eventManager.postEvent(afterModRdnEvent);
@@ -768,11 +780,12 @@ public class Session {
             Collection<String> requestedAttributes = schemaManager.normalize(request.getAttributes());
             request.setAttributes(requestedAttributes);
 
-            response.setEnableEventListeners(enableEventListeners);
+            response.setEventsEnabled(eventsEnabled);
+            response.setBufferSize(bufferSize);
 
             final Session session = this;
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
                 SearchEvent beforeSearchEvent = new SearchEvent(session, SearchEvent.BEFORE_SEARCH, this, request, response);
 	           	boolean b = eventManager.postEvent(beforeSearchEvent);
 
@@ -841,7 +854,7 @@ public class Session {
 
             SearchResponse<SearchResult> resultsToUse = response;
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	resultsToUse = new SearchResponse<SearchResult>() {
                     public void add(SearchResult value) throws Exception {
                         response.add(value);
@@ -908,7 +921,7 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            if (enableEventListeners) {
+            if (eventsEnabled) {
             	UnbindEvent beforeUnbindEvent = new UnbindEvent(this, UnbindEvent.BEFORE_UNBIND, this, request, response);
 	            boolean b = eventManager.postEvent(beforeUnbindEvent);
 
@@ -940,7 +953,7 @@ public class Session {
                 throw e;
             }
             finally {
-                if (enableEventListeners) {
+                if (eventsEnabled) {
 	                UnbindEvent afterUnbindEvent = new UnbindEvent(this, UnbindEvent.AFTER_UNBIND, this, request, response);
 	                afterUnbindEvent.setReturnCode(rc);
 	                eventManager.postEvent(afterUnbindEvent);
@@ -1110,8 +1123,5 @@ public class Session {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
-
-        String s = penroseConfig.getProperty("enableEventListeners");
-        enableEventListeners = s == null || Boolean.valueOf(s);
     }
 }

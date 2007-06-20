@@ -35,14 +35,16 @@ public class SearchResponse<E> extends Response {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    protected LinkedList<E> list = new LinkedList<E>();
+    protected LinkedList<E> buffer = new LinkedList<E>();
+
+    protected long bufferSize;
     protected long sizeLimit;
     protected int totalCount;
     protected boolean closed = false;
 
     protected LDAPException exception;
 
-    protected boolean enableEventListeners = true;
+    protected boolean eventsEnabled = true;
     protected List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
     protected List<Object> referrals = new ArrayList<Object>();
@@ -166,17 +168,27 @@ public class SearchResponse<E> extends Response {
             throw exception;
         }
 
+        while (!closed && bufferSize > 0 && buffer.size() >= bufferSize) {
+            try {
+                log.debug("Buffer full (size: "+bufferSize+").");
+                wait();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
         SearchResponseEvent event = null;
-        if (enableEventListeners) {
+
+        if (eventsEnabled) {
             event = new SearchResponseEvent(SearchResponseEvent.ADD_EVENT, object);
             if (!firePreAddEvent(event)) return;
             object = (E)event.getObject();
         }
 
-        list.add(object);
+        buffer.add(object);
         totalCount++;
 
-        if (enableEventListeners) {
+        if (eventsEnabled) {
             firePostAddEvent(event);
         }
 
@@ -190,20 +202,20 @@ public class SearchResponse<E> extends Response {
     }
 
     public synchronized boolean hasNext() throws Exception {
-        while (!closed && list.size() == 0) {
+        while (!closed && buffer.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
-        if (list.size() == 0 && exception != null) throw exception;
+        if (buffer.size() == 0 && exception != null) throw exception;
 
-        return list.size() > 0;
+        return buffer.size() > 0;
     }
 
     public synchronized E next() throws Exception {
-        while (!closed && list.size() == 0) {
+        while (!closed && buffer.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
@@ -212,36 +224,38 @@ public class SearchResponse<E> extends Response {
             if (exception != null) throw exception;
         }
 
-        if (list.size() == 0) return null;
+        if (buffer.size() == 0) return null;
 
-        E object = list.getFirst();
+        E object = buffer.getFirst();
 
         SearchResponseEvent event = null;
-        if (enableEventListeners) {
+        if (eventsEnabled) {
             event = new SearchResponseEvent(SearchResponseEvent.REMOVE_EVENT, object);
             if (!firePreRemoveEvent(event)) return null;
             object = (E)event.getObject();
         }
 
-        list.removeFirst();
+        buffer.removeFirst();
 
-        if (enableEventListeners) {
+        if (eventsEnabled) {
             firePostRemoveEvent(event);
         }
+
+        notifyAll();
 
         return object;
     }
 
     public synchronized void close() throws Exception {
         SearchResponseEvent event = null;
-        if (enableEventListeners) {
+        if (eventsEnabled) {
             event = new SearchResponseEvent(SearchResponseEvent.CLOSE_EVENT);
             if (!firePreCloseEvent(event)) return;
         }
 
         closed = true;
 
-        if (enableEventListeners) {
+        if (eventsEnabled) {
             firePostCloseEvent(event);
         }
 
@@ -264,11 +278,19 @@ public class SearchResponse<E> extends Response {
         this.sizeLimit = sizeLimit;
     }
 
-    public boolean isEnableEventListeners() {
-        return enableEventListeners;
+    public boolean isEventsEnabled() {
+        return eventsEnabled;
     }
 
-    public void setEnableEventListeners(boolean enableEventListeners) {
-        this.enableEventListeners = enableEventListeners;
+    public void setEventsEnabled(boolean eventsEnabled) {
+        this.eventsEnabled = eventsEnabled;
+    }
+
+    public long getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(long bufferSize) {
+        this.bufferSize = bufferSize;
     }
 }
