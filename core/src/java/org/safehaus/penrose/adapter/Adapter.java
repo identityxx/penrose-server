@@ -140,16 +140,24 @@ public abstract class Adapter {
             interpreter.set(attributeName, attributeValue);
         }
 
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
         Attributes newAttributes = new Attributes();
         RDNBuilder rb = new RDNBuilder();
 
-        if (debug) log.debug("Values:");
+        if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
-            if (value == null) continue;
 
             Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
+            if (value == null) continue;
+
             String fieldName = field.getOriginalName();
             if (debug) log.debug(" - " + fieldName + ": " + value);
 
@@ -157,8 +165,11 @@ public abstract class Adapter {
             if (field.isPrimaryKey()) rb.set(fieldName, value);
         }
 
+        DN dn = new DN(rb.toRdn());
+        log.debug("Target DN: "+dn);
+
         AddRequest newRequest = new AddRequest(request);
-        newRequest.setDn(new DN(rb.toRdn()));
+        newRequest.setDn(dn);
         newRequest.setAttributes(newAttributes);
 
         add(session, source, newRequest, response);
@@ -186,6 +197,8 @@ public abstract class Adapter {
             BindResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -198,17 +211,28 @@ public abstract class Adapter {
             interpreter.set(attributeName, attributeValue);
         }
 
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
         RDNBuilder rb = new RDNBuilder();
 
+        if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
             if (value == null) continue;
 
-            Field field = fieldRef.getField();
-            rb.set(field.getOriginalName(), value);
+            String fieldName = field.getOriginalName();
+            if (debug) log.debug(" - "+fieldName+": "+value);
+
+            rb.set(fieldName, value);
         }
 
         if (rb.isEmpty()) {
@@ -216,8 +240,10 @@ public abstract class Adapter {
             throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
         }
 
+        DN dn = new DN(rb.toRdn());
+
         BindRequest newRequest = new BindRequest(request);
-        newRequest.setDn(new DN(rb.toRdn()));
+        newRequest.setDn(dn);
 
         bind(session, source, newRequest, response);
     }
@@ -244,6 +270,8 @@ public abstract class Adapter {
             DeleteResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -257,22 +285,34 @@ public abstract class Adapter {
             interpreter.set(attributeName, attributeValue);
         }
 
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
         RDNBuilder rb = new RDNBuilder();
 
+        if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
             if (value == null) continue;
 
-            Field field = fieldRef.getField();
-            rb.set(field.getOriginalName(), value);
+            String fieldName = field.getOriginalName();
+            if (debug) log.debug(" - "+fieldName+": "+value);
+            
+            rb.set(fieldName, value);
         }
 
-        DeleteRequest newRequest = new DeleteRequest(request);
-        newRequest.setDn(new DN(rb.toRdn()));
+        DN dn = new DN(rb.toRdn());
 
+        DeleteRequest newRequest = new DeleteRequest(request);
+        newRequest.setDn(dn);
 
         delete(session, source, newRequest, response);
     }
@@ -314,20 +354,31 @@ public abstract class Adapter {
             interpreter.set(attributeName, attributeValue);
         }
 
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
         RDNBuilder rb = new RDNBuilder();
 
+        if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
             if (value == null) continue;
 
-            Field field = fieldRef.getField();
-            rb.set(field.getOriginalName(), value);
+            String fieldName = field.getOriginalName();
+            if (debug) log.debug(" - "+fieldName+": "+value);
+
+            rb.set(fieldName, value);
         }
 
-        DN newDn = new DN(rb.toRdn());
+        DN dn = new DN(rb.toRdn());
 
         Collection<Modification> newModifications = new ArrayList<Modification>();
 
@@ -417,7 +468,7 @@ public abstract class Adapter {
         }
 
         ModifyRequest newRequest = new ModifyRequest();
-        newRequest.setDn(newDn);
+        newRequest.setDn(dn);
         newRequest.setModifications(newModifications);
 
         modify(session, source, newRequest, response);
@@ -445,6 +496,8 @@ public abstract class Adapter {
             ModRdnResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -458,20 +511,31 @@ public abstract class Adapter {
             interpreter.set(attributeName, attributeValue);
         }
 
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
         RDNBuilder rb = new RDNBuilder();
 
+        if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
             if (value == null) continue;
 
-            Field field = fieldRef.getField();
-            rb.set(field.getOriginalName(), value);
+            String fieldName = field.getOriginalName();
+            if (debug) log.debug(" - "+fieldName+": "+value);
+
+            rb.set(fieldName, value);
         }
 
-        DN newDn = new DN(rb.toRdn());
+        DN dn = new DN(rb.toRdn());
 
         interpreter.clear();
         interpreter.set(sourceValues);
@@ -497,7 +561,7 @@ public abstract class Adapter {
         }
 
         ModRdnRequest newRequest = new ModRdnRequest(request);
-        newRequest.setDn(newDn);
+        newRequest.setDn(dn);
         newRequest.setNewRdn(rb.toRdn());
 
         modrdn(session, source, newRequest, response);

@@ -9,6 +9,7 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.entry.SourceValues;
 
 import java.util.*;
 
@@ -174,7 +175,8 @@ public class Source implements Cloneable {
             AddResponse response
     ) throws Exception {
 
-        connection.add(null, this, request, response);
+        SourceValues sourceValues = new SourceValues();
+        connection.add(null, this, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +206,8 @@ public class Source implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
-        connection.delete(null, this, request, response);
+        SourceValues sourceValues = new SourceValues();
+        connection.delete(null, this, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,7 +240,8 @@ public class Source implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
-        connection.modify(null, this, request, response);
+        SourceValues sourceValues = new SourceValues();
+        connection.modify(null, this, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +277,8 @@ public class Source implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
-        connection.modrdn(null, this, request, response);
+        SourceValues sourceValues = new SourceValues();
+        connection.modrdn(null, this, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +316,8 @@ public class Source implements Cloneable {
             SearchResponse<SearchResult> response
     ) throws Exception {
 
-        connection.search(null, this, request, response);
+        SourceValues sourceValues = new SourceValues();
+        connection.search(null, this, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

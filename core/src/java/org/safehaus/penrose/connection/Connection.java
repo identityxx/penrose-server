@@ -130,6 +130,7 @@ public class Connection implements ConnectionMBean {
     public void add(
             Session session,
             Source source,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -156,6 +157,7 @@ public class Connection implements ConnectionMBean {
     public void bind(
             Session session,
             Source source,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -182,6 +184,7 @@ public class Connection implements ConnectionMBean {
     public void delete(
             Session session,
             Source source,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -208,6 +211,7 @@ public class Connection implements ConnectionMBean {
     public void modify(
             Session session,
             Source source,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -234,6 +238,7 @@ public class Connection implements ConnectionMBean {
     public void modrdn(
             Session session,
             Source source,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -260,6 +265,7 @@ public class Connection implements ConnectionMBean {
     public void search(
             Session session,
             Source source,
+            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {

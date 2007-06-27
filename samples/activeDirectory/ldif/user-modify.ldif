@@ -1,0 +1,5 @@
+dn: uid=test,ou=Users,dc=Active Directory,dc=Example,dc=com
+changetype: modify
+replace: sn
+sn: User2
+-

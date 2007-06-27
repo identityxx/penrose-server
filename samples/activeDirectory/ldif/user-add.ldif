@@ -1,0 +1,7 @@
+dn: uid=test,ou=Users,dc=Active Directory,dc=Example,dc=com
+sn: User
+cn: Test User
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: test
