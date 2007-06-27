@@ -308,14 +308,11 @@ public class DefaultHandler extends Handler {
 
         Engine engine = getEngine(partition, entryMapping);
 
-        SourceValues sourceValues = new SourceValues();
-
         engine.search(
                 session,
                 partition,
                 baseMapping,
                 entryMapping,
-                sourceValues,
                 request,
                 sr
         );

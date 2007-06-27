@@ -7,6 +7,7 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,117 +64,152 @@ public class EngineTool {
             Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
             for (SourceMapping sourceMapping : sourceMappings) {
 
+                if (debug) log.debug("Propagating source " + sourceMapping.getName());
+
                 Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
                 for (FieldMapping fieldMapping : fieldMappings) {
-
-                    String variable = fieldMapping.getVariable();
-                    if (variable == null) continue;
-
-                    int p = variable.indexOf(".");
-                    if (p < 0) continue;
 
                     String lsourceName = sourceMapping.getName();
                     String lfieldName = fieldMapping.getName();
                     String lhs = lsourceName + "." + lfieldName;
 
+                    String variable = fieldMapping.getVariable();
+                    if (variable == null) {
+                        if (debug) log.debug("Skipping field " + lhs);
+                        continue;
+                    }
+
+                    int p = variable.indexOf(".");
+                    if (p < 0) {
+                        if (debug) log.debug("Skipping field " + lhs);
+                        continue;
+                    }
+
                     String rsourceName = variable.substring(0, p);
                     String rfieldName = variable.substring(p+1);
-                    String rhs = rsourceName+"."+rfieldName;
 
                     Attributes lattributes = sourceValues.get(lsourceName);
                     Attributes rattributes = sourceValues.get(rsourceName);
 
-                    if (lattributes.isEmpty()) {
+                    Attribute attribute = rattributes.get(rfieldName);
 
-                        Attribute attribute = rattributes.get(rfieldName);
-
-                        if (attribute != null) {
-                            lattributes.setValues(lfieldName, attribute.getValues());
-                            if (debug) log.debug("Propagating " + rhs + ": " + attribute.getValues());
-                        }
-
-                    } else {
-                        Attribute attribute = lattributes.get(lfieldName);
-
-                        if (attribute != null) {
-                            rattributes.setValues(rfieldName, attribute.getValues());
-                            if (debug) log.debug("Propagating " + lhs + ": " + attribute.getValues());
-                        }
+                    if (attribute == null) {
+                        if (debug) log.debug("Skipping field " + lhs);
+                        continue;
                     }
+
+                    lattributes.setValues(lfieldName, attribute.getValues());
+                    if (debug) log.debug("Propagating field " + lhs + ": " + attribute.getValues());
                 }
             }
         }
     }
 
-    public static void propagateUp(
-            Partition partition,
-            EntryMapping entryMapping,
-            Attributes sourceValues
-    ) throws Exception {
-
-        List mappings = new ArrayList();
-
-        while (entryMapping != null) {
-            mappings.add(entryMapping);
-            entryMapping = partition.getParent(entryMapping);
-        }
-
-        propagate(mappings, sourceValues);
-    }
-
     public static void propagateDown(
             Partition partition,
             EntryMapping entryMapping,
-            Attributes sourceValues
+            SourceValues sourceValues,
+            Interpreter interpreter
     ) throws Exception {
 
-        List mappings = new ArrayList();
+        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
 
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
             entryMapping = partition.getParent(entryMapping);
         }
 
-        propagate(mappings, sourceValues);
+        propagate(mappings, sourceValues, interpreter);
     }
 
-    public static void propagate(Collection mappings, Attributes sourceValues) throws Exception {
+    public static void propagate(
+            Collection<EntryMapping> mappings,
+            SourceValues sourceValues,
+            Interpreter interpreter
+    ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        for (Iterator i=mappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
+        for (EntryMapping entryMapping : mappings) {
 
-            Collection sourceMappings = entryMapping.getSourceMappings();
-            for (Iterator j=sourceMappings.iterator(); j.hasNext(); ) {
-                SourceMapping sourceMapping = (SourceMapping)j.next();
+            Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+            for (SourceMapping sourceMapping : sourceMappings) {
 
-                Collection fieldMappings = sourceMapping.getFieldMappings();
-                for (Iterator k=fieldMappings.iterator(); k.hasNext(); ) {
-                    FieldMapping fieldMapping = (FieldMapping)k.next();
+                if (debug) log.debug("Propagating source " + sourceMapping.getName());
+
+                Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+                for (FieldMapping fieldMapping : fieldMappings) {
 
                     String variable = fieldMapping.getVariable();
-                    if (variable == null) continue;
 
-                    int p = variable.indexOf(".");
-                    if (p < 0) continue;
+                    if (variable != null) {
+                        propagateVariable(
+                                sourceValues,
+                                sourceMapping,
+                                fieldMapping,
+                                variable
+                        );
 
-                    String lhs = sourceMapping.getName()+"."+fieldMapping.getName();
-                    String rhs = variable;
-
-                    Collection values = sourceValues.getValues(lhs);
-                    if (values == null) {
-                        values = sourceValues.getValues(rhs);
-                        if (values != null) {
-                            sourceValues.addValues(lhs, values);
-                            if (debug) log.debug("Propagating "+lhs+": "+values);
-                        }
                     } else {
-                        sourceValues.addValues(rhs, values);
-                        if (debug) log.debug("Propagating "+rhs+": "+values);
+                        String lsourceName = sourceMapping.getName();
+                        String lfieldName = fieldMapping.getName();
+                        String lhs = lsourceName + "." + lfieldName;
+
+                        Object value = interpreter.eval(fieldMapping);
+                        if (value == null) {
+                            if (debug) log.debug("Skipping field " + lhs);
+                            continue;
+                        }
+
+                        if (debug) log.debug("Propagating field " + lhs + ": " + value);
+
+                        Attributes lattributes = sourceValues.get(lsourceName);
+                        
+                        if (value instanceof Collection) {
+                            lattributes.addValues(lfieldName, (Collection)value);
+                        } else {
+                            lattributes.addValue(lfieldName, value);
+                        }
                     }
                 }
             }
         }
     }
+
+    public static void propagateVariable(
+            SourceValues sourceValues,
+            SourceMapping sourceMapping,
+            FieldMapping fieldMapping,
+            String variable
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        String lsourceName = sourceMapping.getName();
+        String lfieldName = fieldMapping.getName();
+        String lhs = lsourceName + "." + lfieldName;
+
+        int p = variable.indexOf(".");
+        if (p < 0) {
+            if (debug) log.debug("Skipping field " + lhs);
+            return;
+        }
+
+        String rsourceName = variable.substring(0, p);
+        String rfieldName = variable.substring(p+1);
+
+        Attributes lattributes = sourceValues.get(lsourceName);
+        Attributes rattributes = sourceValues.get(rsourceName);
+
+        Attribute attribute = rattributes.get(rfieldName);
+
+        if (attribute == null) {
+            if (debug) log.debug("Skipping field " + lhs);
+            return;
+        }
+
+        lattributes.setValues(lfieldName, attribute.getValues());
+        if (debug) log.debug("Propagating field " + lhs + ": " + attribute.getValues());
+    }
+
 }

@@ -32,16 +32,9 @@ public class FieldMapping implements Cloneable {
 
     public final static String DEFAULT_TYPE   = VARIABLE;
 
-	/**
-	 * Name.
-	 */
 	private String name;
+    private String type;
 
-    private String type = DEFAULT_TYPE;
-
-	/**
-	 * Expression.
-	 */
     private Object constant;
     private String variable;
 	private Expression expression;
@@ -55,7 +48,6 @@ public class FieldMapping implements Cloneable {
 
     public FieldMapping(String name, String type, String value) {
         this.name = name;
-        this.type = type;
 
         if (CONSTANT.equals(type)) {
             this.constant = value;
@@ -81,7 +73,6 @@ public class FieldMapping implements Cloneable {
 	}
 
 	public void setExpression(Expression expression) {
-        this.type = EXPRESSION;
 		this.expression = expression;
 	}
 
@@ -90,12 +81,10 @@ public class FieldMapping implements Cloneable {
     }
 
     public void setBinary(byte[] bytes) {
-        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
-        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -104,7 +93,6 @@ public class FieldMapping implements Cloneable {
     }
 
     public void setConstant(Object constant) {
-        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -113,7 +101,6 @@ public class FieldMapping implements Cloneable {
     }
 
     public void setVariable(String variable) {
-        this.type = VARIABLE;
         this.variable = variable;
     }
 

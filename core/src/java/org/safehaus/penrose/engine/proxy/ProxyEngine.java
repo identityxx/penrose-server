@@ -398,7 +398,6 @@ public class ProxyEngine extends Engine {
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {

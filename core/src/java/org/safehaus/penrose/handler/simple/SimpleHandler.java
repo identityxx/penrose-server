@@ -90,14 +90,11 @@ public class SimpleHandler extends Handler {
                  }
              };
 
-            SourceValues sourceValues = new SourceValues();
-
             engine.search(
                     session,
                     partition,
                     baseMapping,
                     entryMapping,
-                    sourceValues,
                     request,
                     sr
             );

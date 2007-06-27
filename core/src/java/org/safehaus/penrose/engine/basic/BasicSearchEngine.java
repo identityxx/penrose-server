@@ -51,15 +51,14 @@ public class BasicSearchEngine {
 
                 SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
                 searchResult.setEntryMapping(entryMapping);
+                searchResult.setSourceValues(sourceValues);
                 response.add(searchResult);
 
                 return;
             }
 
-            Collection<SourceRef> group = groupsOfSources.get(0);
-
-            SourceRef sourceRef = group.iterator().next();
-            Connector connector = engine.getConnector(sourceRef);
+            Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
+            Connector connector = engine.getConnector(sourceRefs.iterator().next());
 
             BasicSearchResponse sr = new BasicSearchResponse(
                     session,
@@ -77,7 +76,7 @@ public class BasicSearchEngine {
                     session,
                     partition,
                     entryMapping,
-                    group,
+                    sourceRefs,
                     sourceValues,
                     request,
                     sr

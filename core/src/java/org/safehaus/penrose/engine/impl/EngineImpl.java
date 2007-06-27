@@ -479,7 +479,6 @@ public class EngineImpl extends Engine {
             final Partition partition,
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
-            final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
@@ -487,6 +486,8 @@ public class EngineImpl extends Engine {
         final boolean debug = log.isDebugEnabled();
         final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
+
+        SourceValues sourceValues = new SourceValues();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));

@@ -86,10 +86,9 @@ public class DeleteRequestBuilder extends RequestBuilder {
         Attributes values = sourceValues.get(sourceName);
 
         for (String fieldName : values.getNames()) {
-            Object value = values.getValue(fieldName);
+            if (fieldName.startsWith("primaryKey.")) continue;
 
-            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-            Field field = fieldRef.getField();
+            Object value = values.getValue(fieldName);
 
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);

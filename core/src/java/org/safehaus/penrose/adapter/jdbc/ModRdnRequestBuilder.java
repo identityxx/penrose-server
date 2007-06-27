@@ -118,6 +118,8 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         attributes = sourceValues.get(alias);
         
         for (String fieldName : attributes.getNames()) {
+            if (fieldName.startsWith("primaryKey.")) continue;
+
             Object value = attributes.getValue(fieldName);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);

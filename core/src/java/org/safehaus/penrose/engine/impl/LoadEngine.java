@@ -291,7 +291,7 @@ public class LoadEngine {
             FieldMapping fieldMapping = (FieldMapping)i.next();
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
             if (!fieldConfig.isPrimaryKey()) continue;
-            if (!fieldMapping.getType().equalsIgnoreCase(FieldMapping.VARIABLE)) continue;
+            //if (!fieldMapping.getType().equalsIgnoreCase(FieldMapping.VARIABLE)) continue;
 
             String attributeName = fieldMapping.getVariable();
             if (attributeName.startsWith("rdn.")) attributeName = attributeName.substring(4);

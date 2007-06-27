@@ -172,6 +172,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         statement.setSource(sourceRef.getSource());
 
+        if (debug) log.debug("Fields:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
@@ -181,7 +182,11 @@ public class AddRequestBuilder extends RequestBuilder {
             String variable = fieldMapping.getVariable();
             if (variable == null) continue;
 
+            if (debug) log.debug(" - " + fieldName + ": " + variable);
+
             int i = variable.indexOf(".");
+            if (i < 0) continue;
+            
             String sn = variable.substring(0, i);
             String fn = variable.substring(i + 1);
 
@@ -191,17 +196,18 @@ public class AddRequestBuilder extends RequestBuilder {
             Object value = fields.getValue(fn);
             if (value == null) continue;
 
-            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
+            if (debug) log.debug("   - value: " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 
+        if (debug) log.debug("Fields:");
         for (String fieldName : values.keySet()) {
             Object value = values.get(fieldName);
+            if (debug) log.debug(" - " + fieldName + ": " + value);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
             Field field = fieldRef.getField();
 
-            if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef, value));
         }
 

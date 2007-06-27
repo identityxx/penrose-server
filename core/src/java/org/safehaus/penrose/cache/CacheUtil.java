@@ -23,6 +23,8 @@ import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSync;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.Source;
 import org.apache.log4j.*;
 
 import java.util.Collection;
@@ -65,6 +67,15 @@ public class CacheUtil {
         }
     }
 
+    public void status(Source source) throws Exception {
+        try {
+            log.warn("Cache status for "+source.getPartition().getName()+"/"+source.getName()+".");
+            source.status();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
     public void status(SourceSync sourceSync) throws Exception {
         try {
             log.warn("Cache status for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
@@ -84,6 +95,15 @@ public class CacheUtil {
         Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
         for (SourceSync sourceSync : caches) {
             create(sourceSync);
+        }
+    }
+
+    public void create(Source source) throws Exception {
+        try {
+            log.warn("Creating cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
+            source.create();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -153,6 +173,15 @@ public class CacheUtil {
         }
     }
 
+    public void clean(Source source) throws Exception {
+        try {
+            log.warn("Cleaning cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
+            source.clean();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
     public void clean(SourceSync sourceSync) throws Exception {
         try {
             log.warn("Cleaning cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
@@ -172,6 +201,15 @@ public class CacheUtil {
         Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
         for (SourceSync sourceSync : caches) {
             drop(sourceSync);
+        }
+    }
+
+    public void drop(Source source) throws Exception {
+        try {
+            log.warn("Dropping cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
+            source.drop();
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
     }
 
@@ -275,11 +313,13 @@ public class CacheUtil {
         penroseContext.start();
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
+        SourceManager sourceManager = penroseContext.getSourceManager();
         SourceSyncManager sourceSyncManager = penroseContext.getSourceSyncManager();
 
         CacheUtil cacheManager = new CacheUtil(partitionManager, sourceSyncManager);
 
         Partition partition = null;
+        Source source = null;
         SourceSync sourceSync = null;
 
         Iterator iterator = parameters.iterator();
@@ -293,7 +333,11 @@ public class CacheUtil {
             if (iterator.hasNext()) {
                 String sourceName = (String)iterator.next();
                 sourceSync = sourceSyncManager.getSourceSync(partition, sourceName);
-                if (sourceSync == null) throw new Exception("Source sync "+sourceName+" not found.");
+
+                if (sourceSync == null) {
+                    source = sourceManager.getSource(partition, sourceName);
+                    if (source == null) throw new Exception("Source "+sourceName+" not found.");
+                }
             }
         }
 
@@ -316,6 +360,21 @@ public class CacheUtil {
 
             } else if ("status".equals(command)) {
                 cacheManager.status(sourceSync);
+            }
+
+        } else if (source != null) {
+
+            if ("create".equals(command)) {
+                cacheManager.create(source);
+
+            } else if ("clean".equals(command)) {
+                cacheManager.clean(source);
+
+            } else if ("drop".equals(command)) {
+                cacheManager.drop(source);
+
+            } else if ("status".equals(command)) {
+                cacheManager.status(source);
             }
 
         } else if (partition != null) {

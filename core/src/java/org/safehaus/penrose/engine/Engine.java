@@ -73,6 +73,14 @@ public abstract class Engine {
 
     protected Analyzer analyzer;
 
+    public Collection<String> getParameterNames() {
+        return engineConfig.getParameterNames();
+    }
+
+    public String getParameter(String name) {
+        return engineConfig.getParameter(name);
+    }
+
     public void init() throws Exception {
 
         analyzer = new Analyzer();
@@ -319,9 +327,6 @@ public abstract class Engine {
         return stopping;
     }
 
-    /**
-     * Check whether the entry uses no sources and all attributes are constants.
-     */
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
@@ -371,8 +376,7 @@ public abstract class Engine {
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
-        SourceValues sourceValues = new SourceValues();
-        SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
+        SearchResult searchResult = find(session, partition, entryMapping, dn);
 
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get("userPassword");
@@ -409,8 +413,7 @@ public abstract class Engine {
         String attributeName = request.getAttributeName();
         Object attributeValue = request.getAttributeValue();
 
-        SourceValues sourceValues = new SourceValues();
-        SearchResult searchResult = find(session, partition, sourceValues, entryMapping, dn);
+        SearchResult searchResult = find(session, partition, entryMapping, dn);
 
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get(attributeName);
@@ -456,24 +459,14 @@ public abstract class Engine {
     public SearchResult find(
             Session session,
             Partition partition,
-            SourceValues sourceValues,
             EntryMapping entryMapping,
             DN dn
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
-        if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("FIND", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-        }
-
         SearchRequest request = new SearchRequest();
         request.setDn(dn);
-        request.setFilter((Filter)null);
         request.setScope(SearchRequest.SCOPE_BASE);
 
         SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
@@ -481,7 +474,7 @@ public abstract class Engine {
         search(
                 session,
                 partition,
-                entryMapping, sourceValues,
+                entryMapping,
                 request,
                 response
         );
@@ -525,7 +518,7 @@ public abstract class Engine {
     public void search(
             Session session,
             Partition partition,
-            EntryMapping entryMapping, SourceValues sourceValues,
+            EntryMapping entryMapping,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
@@ -535,7 +528,6 @@ public abstract class Engine {
                 partition,
                 entryMapping,
                 entryMapping,
-                sourceValues,
                 request,
                 response
         );
@@ -546,7 +538,6 @@ public abstract class Engine {
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception;

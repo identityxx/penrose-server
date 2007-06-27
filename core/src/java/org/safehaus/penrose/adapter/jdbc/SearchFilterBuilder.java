@@ -79,12 +79,16 @@ public class SearchFilterBuilder {
 
                 Attribute attribute = attributes.get(fieldName);
 
+                Filter of = null;
+
                 for (Object value : attribute.getValues()) {
                     SimpleFilter f = new SimpleFilter(sourceName + "." + fieldName, "=", value);
                     if (debug) log.debug(" - Filter " + f);
 
-                    sourceFilter = FilterTool.appendAndFilter(sourceFilter, f);
+                    of = FilterTool.appendOrFilter(of, f);
                 }
+
+                sourceFilter = FilterTool.appendAndFilter(sourceFilter, of);
             }
 
         }

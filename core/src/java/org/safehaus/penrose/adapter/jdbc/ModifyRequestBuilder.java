@@ -153,6 +153,8 @@ public class ModifyRequestBuilder extends RequestBuilder {
         Attributes attributes = sourceValues.get(sourceName);
 
         for (String fieldName : attributes.getNames()) {
+            if (fieldName.startsWith("primaryKey.")) continue;
+
             Object value = attributes.getValue(fieldName);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);

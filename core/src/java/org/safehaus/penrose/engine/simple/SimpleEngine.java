@@ -424,7 +424,6 @@ public class SimpleEngine extends Engine {
             Partition partition,
             EntryMapping baseMapping,
             EntryMapping entryMapping,
-            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
@@ -443,6 +442,8 @@ public class SimpleEngine extends Engine {
         }
 
         try {
+            SourceValues sourceValues = new SourceValues();
+
             extractSourceValues(partition, baseMapping, request.getDn(), sourceValues);
             //EngineTool.propagateDown(partition, entryMapping, sourceValues);
 

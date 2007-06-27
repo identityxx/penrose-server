@@ -36,11 +36,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     public final static int DEFAULT_LENGTH    = 0;
     public final static int DEFAULT_PRECISION = 0;
 
-	/**
-	 * Name.
-	 */
 	private String name;
-
     private String originalName;
 
     private String type   = DEFAULT_TYPE;

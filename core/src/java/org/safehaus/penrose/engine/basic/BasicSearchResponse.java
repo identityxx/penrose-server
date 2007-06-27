@@ -39,6 +39,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     DN lastDn;
     Attributes lastAttributes;
     EntryMapping lastEntryMapping;
+    SourceValues lastSourceValues;
 
     public BasicSearchResponse(
             Session session,
@@ -80,10 +81,13 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
 
         EntryMapping em = result.getEntryMapping();
 
-        SourceValues sv = result.getSourceValues();
+        SourceValues sv = new SourceValues();
         sv.add(sourceValues);
+        sv.add(result.getSourceValues());
 
-        EngineTool.propagateDown(partition, em, sv);
+        interpreter.set(sv);
+        EngineTool.propagateDown(partition, em, sv, interpreter);
+        interpreter.clear();
 
         if (debug) {
             log.debug("Source values:");
@@ -110,21 +114,25 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
                 lastDn = dn;
                 lastAttributes = attributes;
                 lastEntryMapping = em;
+                lastSourceValues = sv;
 
             } else if (lastDn.equals(dn)) {
                 if (debug) log.debug("Merging entry " + dn);
                 lastAttributes.add(attributes);
+                lastSourceValues.add(sv);
 
             } else {
                 if (debug) log.debug("Returning entry " + lastDn);
                 SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
                 searchResult.setEntryMapping(lastEntryMapping);
+                searchResult.setSourceValues(lastSourceValues);
                 response.add(searchResult);
 
                 if (debug) log.debug("Generating entry "+dn);
                 lastDn = dn;
                 lastAttributes = attributes;
                 lastEntryMapping = em;
+                lastSourceValues = sv;
             }
         }
     }
@@ -136,9 +144,10 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         if (groupsOfSources.size() <= 1) return true;
 
         for (int i=1; i<groupsOfSources.size(); i++) {
-            Collection<SourceRef> group = groupsOfSources.get(1);
+            Collection<SourceRef> sourceRefs = groupsOfSources.get(i);
+            if (debug) log.debug("Processing group " + sourceRefs);
 
-            SourceRef sourceRef = group.iterator().next();
+            SourceRef sourceRef = sourceRefs.iterator().next();
             Connector connector = engine.getConnector(sourceRef);
 
             String flag = sourceRef.getSearch();
@@ -150,7 +159,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
                     session,
                     partition,
                     em,
-                    group,
+                    sourceRefs,
                     sv,
                     request,
                     sr
@@ -166,7 +175,9 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
                 sv.add(result.getSourceValues());
             }
 
-            EngineTool.propagateDown(partition, em, sv);
+            interpreter.set(sv);
+            EngineTool.propagateDown(partition, em, sv, interpreter);
+            interpreter.clear();
 
             if (debug) {
                 log.debug("Source values:");
@@ -185,6 +196,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
             searchResult.setEntryMapping(lastEntryMapping);
+            searchResult.setSourceValues(lastSourceValues);
             response.add(searchResult);
         }
 

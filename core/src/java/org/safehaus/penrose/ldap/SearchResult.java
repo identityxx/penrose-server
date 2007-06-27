@@ -84,6 +84,14 @@ public class SearchResult {
         return sourceValues;
     }
     
+    public void addSourceValues(SourceValues sourceValues) {
+        this.sourceValues.add(sourceValues);
+    }
+
+    public void setSourceValues(SourceValues sourceValues) {
+        this.sourceValues.set(sourceValues);
+    }
+
     public void setSourceValues(String sourceName, Attributes attributes) {
         sourceValues.set(sourceName, attributes);
     }
