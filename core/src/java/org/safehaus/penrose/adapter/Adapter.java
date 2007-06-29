@@ -146,6 +146,9 @@ public abstract class Adapter {
 
         if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.ADD)) continue;
 
             Field field = fieldRef.getField();
 
@@ -217,6 +220,9 @@ public abstract class Adapter {
         if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
+
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.BIND)) continue;
 
             Field field = fieldRef.getField();
 
@@ -292,6 +298,9 @@ public abstract class Adapter {
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.DELETE)) continue;
+
             Field field = fieldRef.getField();
 
             Attribute attribute = sv == null ? null : sv.get(field.getName());
@@ -361,6 +370,9 @@ public abstract class Adapter {
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
+
             Field field = fieldRef.getField();
 
             Attribute attribute = sv == null ? null : sv.get(field.getName());
@@ -413,14 +425,18 @@ public abstract class Adapter {
                 case Modification.ADD:
                 case Modification.REPLACE:
                     for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
+
+                        Collection<String> operations = fieldRef.getOperations();
+                        if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
+
                         String fieldName = fieldRef.getName();
                         if (fieldRef.isPrimaryKey()) continue;
 
+                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
                         Object value = interpreter.eval(fieldMapping);
                         if (value == null) continue;
 
-                        if (debug) log.debug("Setting field " + fieldName + " to " + value);
+                        if (debug) log.debug(" => Replacing field " + fieldName + ": " + value);
 
                         Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                         if (value instanceof Collection) {
@@ -437,16 +453,19 @@ public abstract class Adapter {
 
                 case Modification.DELETE:
                     for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
+
+                        Collection<String> operations = fieldRef.getOperations();
+                        if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
 
                         String fieldName = fieldRef.getName();
 
+                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
                         String variable = fieldMapping.getVariable();
                         if (variable == null) {
                             Object value = interpreter.eval(fieldMapping);
                             if (value == null) continue;
 
-                            if (debug) log.debug("Setting field " + fieldName + " to null");
+                            if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+value);
 
                             Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                             newAttribute.addValue(value);
@@ -454,6 +473,8 @@ public abstract class Adapter {
 
                         } else {
                             if (!variable.equals(attributeName)) continue;
+
+                            if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+attributeValues);
 
                             Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
                             for (Object value : attributeValues) {
@@ -517,6 +538,9 @@ public abstract class Adapter {
         if (debug) log.debug("Target values:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
+
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.MODRDN)) continue;
 
             Field field = fieldRef.getField();
 
@@ -594,26 +618,51 @@ public abstract class Adapter {
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
-
-        FilterBuilder filterBuilder = new FilterBuilder(
-                partition,
-                entryMapping,
-                sourceRefs,
-                sourceValues,
-                interpreter
-        );
-
-        Filter filter = filterBuilder.getFilter();
-        if (debug) log.debug("Base filter: "+filter);
-
-        filterBuilder.append(request.getFilter());
-        filter = filterBuilder.getFilter();
-        if (debug) log.debug("Added search filter: "+filter);
-
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setFilter(filter);
+/*
+        if (request.getScope() == SearchRequest.SCOPE_BASE) {
 
+            RDNBuilder rb = new RDNBuilder();
+            Attributes attributes = sourceValues.get(sourceRef.getAlias());
+
+            for (Field field : source.getPrimaryKeyFields()) {
+                String fieldName = field.getName();
+                Attribute attribute = attributes.get(fieldName);
+
+                for (Object value : attribute.getValues()) {
+                    rb.set(fieldName, value);
+                }
+            }
+
+            DNBuilder db = new DNBuilder();
+            db.append(rb.toRdn());
+            db.append(request.getDn());
+
+            newRequest.setDn(db.toDn());
+
+        } else {
+*/
+            Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+
+            FilterBuilder filterBuilder = new FilterBuilder(
+                    partition,
+                    entryMapping,
+                    sourceRefs,
+                    sourceValues,
+                    interpreter
+            );
+
+            Filter filter = filterBuilder.getFilter();
+            if (debug) log.debug("Base filter: "+filter);
+
+            filterBuilder.append(request.getFilter());
+            filter = filterBuilder.getFilter();
+            if (debug) log.debug("Added search filter: "+filter);
+
+            newRequest.setFilter(filter);
+/*
+        }
+*/
         SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
             public void add(SearchResult result) throws Exception {
 

@@ -5,3 +5,4 @@ objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: person
 uid: test
+userPassword: secret

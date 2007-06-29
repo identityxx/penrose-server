@@ -3,6 +3,9 @@ package org.safehaus.penrose.source;
 import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.FieldMapping;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 /**
  * @author Endi S. Dewata
  */
@@ -18,6 +21,8 @@ public class FieldRef {
     private String type;
     private boolean caseSensitive;
     private boolean primaryKey;
+
+    private Collection<String> operations = new HashSet<String>();
 
     private FieldMapping fieldMapping;
 
@@ -41,6 +46,7 @@ public class FieldRef {
             name = fieldConfig.getName();
         } else {
             name = fieldMapping.getName();
+            operations.addAll(fieldMapping.getOperations());
         }
     }
     
@@ -114,5 +120,13 @@ public class FieldRef {
 
     public void setField(Field field) {
         this.field = field;
+    }
+
+    public Collection<String> getOperations() {
+        return operations;
+    }
+
+    public void setOperations(Collection<String> operations) {
+        this.operations = operations;
     }
 }

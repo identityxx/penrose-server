@@ -65,10 +65,10 @@ public class JDBCAdapter extends Adapter {
     public final static String TABLE_NAME   = "tableName";
     public final static String FILTER       = "filter";
 
-    public final static String AUTHENTICATON          = "authentication";
-    public final static String AUTHENTICATON_DEFAULT  = "default";
-    public final static String AUTHENTICATON_FULL     = "full";
-    public final static String AUTHENTICATON_DISABLED = "disabled";
+    public final static String AUTHENTICATION          = "authentication";
+    public final static String AUTHENTICATION_DEFAULT  = "default";
+    public final static String AUTHENTICATION_FULL     = "full";
+    public final static String AUTHENTICATION_DISABLED = "disabled";
 
     public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
@@ -218,14 +218,14 @@ public class JDBCAdapter extends Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = source.getParameter(AUTHENTICATON);
+        String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
         Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
         JDBCClient client;
 
-        if (AUTHENTICATON_FULL.equals(authentication)) {
+        if (AUTHENTICATION_FULL.equals(authentication)) {
             if (debug) log.debug("Getting connection info from session.");
 
             client = session == null ? null : (JDBCClient)session.getAttribute(partition.getName()+".connection."+connection.getName());

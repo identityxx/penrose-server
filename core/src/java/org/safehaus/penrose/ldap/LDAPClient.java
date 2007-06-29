@@ -35,6 +35,7 @@ import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.util.BinaryUtil;
 
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -168,7 +169,7 @@ public class LDAPClient {
     ) throws Exception {
 
         DN targetDn = request.getDn();
-        javax.naming.directory.Attributes attributes = convertAttributes(request.getAttributes());
+        Attributes attributes = request.getAttributes();
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
@@ -177,21 +178,13 @@ public class LDAPClient {
 
         log.debug("Adding "+dn);
 
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)i.next();
-            String name = attribute.getID();
-
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                log.debug(" - "+name+": "+value);
-            }
-        }
+        javax.naming.directory.Attributes attrs = convertAttributes(attributes);
 
         javax.naming.ldap.LdapContext context = null;
 
         try {
             context = open();
-            context.createSubcontext(dn.toString(), attributes);
+            context.createSubcontext(dn.toString(), attrs);
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -265,6 +258,8 @@ public class LDAPClient {
             ModifyResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN targetDn = request.getDn();
         Collection<Modification> modifications = request.getModifications();
 
@@ -273,16 +268,18 @@ public class LDAPClient {
         db.append(suffix);
         DN dn = db.toDn();
 
-        log.debug("Modifying "+dn);
+        if (debug) log.debug("Modifying "+dn);
 
         Collection<javax.naming.directory.ModificationItem> list = new ArrayList<javax.naming.directory.ModificationItem>();
 
         for (Modification modification : modifications) {
 
             int type = modification.getType();
-            javax.naming.directory.Attribute attribute = convertAttribute(modification.getAttribute());
+            Attribute attribute = modification.getAttribute();
+            if (debug) log.debug(" - "+LDAPUtil.getModificationOperations(type)+": "+attribute.getName());
 
-            list.add(new javax.naming.directory.ModificationItem(type, attribute));
+            javax.naming.directory.Attribute attr = convertAttribute(attribute);
+            list.add(new javax.naming.directory.ModificationItem(type, attr));
         }
 
         javax.naming.directory.ModificationItem mods[] = list.toArray(new javax.naming.directory.ModificationItem[list.size()]);
@@ -1155,17 +1152,19 @@ public class LDAPClient {
 
     public javax.naming.directory.Attribute convertAttribute(Attribute attribute) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         String name = attribute.getName();
         javax.naming.directory.Attribute attr = new BasicAttribute(name);
 
-        if ("unicodePwd".equalsIgnoreCase(name)) { // need to encode unicodePwd
-            for (Object value : attribute.getValues()) {
-                attr.add(PasswordUtil.toUnicodePassword(value));
-            }
-
-        } else {
-            for (Object value : attribute.getValues()) {
-                attr.add(value);
+        for (Object value : attribute.getValues()) {
+            attr.add(value);
+            if (debug) {
+                if (value instanceof byte[]) {
+                    log.debug(" - "+name+": "+BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+                } else {
+                    log.debug(" - "+name+": "+value);
+                }
             }
         }
 

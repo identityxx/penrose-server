@@ -200,7 +200,7 @@ public class SourceMapping implements Cloneable {
         return true;
     }
 
-    public void copy(SourceMapping sourceMapping) {
+    public void copy(SourceMapping sourceMapping) throws CloneNotSupportedException {
         name = sourceMapping.name;
         sourceName = sourceMapping.sourceName;
 
@@ -225,9 +225,7 @@ public class SourceMapping implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        
-        SourceMapping sourceMapping = new SourceMapping();
+        SourceMapping sourceMapping = (SourceMapping)super.clone();
         sourceMapping.copy(this);
         return sourceMapping;
     }

@@ -268,14 +268,6 @@ public class BasicEngine extends Engine {
 
         DN dn = request.getDn();
 
-        if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("BIND", 80));
-            log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
-
         SourceValues sourceValues = new SourceValues();
 
         boolean fetchEntry = fetch;
@@ -284,7 +276,7 @@ public class BasicEngine extends Engine {
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(session, partition, entryMapping, dn);
+            SearchResult entry = find(null, partition, entryMapping, dn);
             sourceValues.add(entry.getSourceValues());
         } else {
             extractSourceValues(partition, entryMapping, dn, sourceValues);
@@ -294,6 +286,14 @@ public class BasicEngine extends Engine {
         if (debug) {
             log.debug("Source values:");
             sourceValues.print();
+        }
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("BIND", 80));
+            log.debug(Formatter.displayLine("DN            : "+dn, 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displaySeparator(80));
         }
 
         Collection<Collection<SourceRef>> groupsOfSources = createGroupsOfSources(partition, entryMapping);

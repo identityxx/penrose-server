@@ -256,11 +256,16 @@ public class PasswordUtil {
         } else {
             newPassword = "\""+password+ "\"";
         }
+
+        return newPassword.getBytes("UTF-16LE");
+/*
         byte unicodeBytes[] = newPassword.getBytes("Unicode");
         byte bytes[]  = new byte[unicodeBytes.length-2];
 
         System.arraycopy(unicodeBytes, 2, bytes, 0, unicodeBytes.length-2);
+
         return bytes;
+*/
     }
 
     public static String getEncryptionMethod(Object password) {

@@ -8,7 +8,7 @@ import org.safehaus.penrose.mapping.FieldMapping;
  */
 public class FieldMappingTest extends TestCase {
 
-    public void testClone() {
+    public void testClone() throws Exception {
         FieldMapping f1 = new FieldMapping();
         f1.setName("name");
         f1.setConstant("constant");

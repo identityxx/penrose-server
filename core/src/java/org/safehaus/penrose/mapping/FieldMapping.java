@@ -18,13 +18,20 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.StringTokenizer;
 
 /**
  * @author Endi S. Dewata
  */
 public class FieldMapping implements Cloneable {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
@@ -32,12 +39,22 @@ public class FieldMapping implements Cloneable {
 
     public final static String DEFAULT_TYPE   = VARIABLE;
 
-	private String name;
+    public final static String ADD     = "add";
+    public final static String BIND    = "bind";
+    public final static String COMPARE = "compare";
+    public final static String DELETE  = "delete";
+    public final static String MODIFY  = "modify";
+    public final static String MODRDN  = "modrdn";
+    public final static String SEARCH  = "search";
+
+    private String name;
     private String type;
 
     private Object constant;
     private String variable;
 	private Expression expression;
+
+    private HashSet<String> operations = new HashSet<String>();
 
     public FieldMapping() {
     }
@@ -130,6 +147,7 @@ public class FieldMapping implements Cloneable {
 
         if (!equals(variable, fieldMapping.variable)) return false;
         if (!equals(expression, fieldMapping.expression)) return false;
+        if (!equals(operations, fieldMapping.operations)) return false;
 
         return true;
     }
@@ -146,10 +164,11 @@ public class FieldMapping implements Cloneable {
 
         variable = fieldMapping.variable;
         expression = fieldMapping.expression == null ? null : (Expression)fieldMapping.expression.clone();
+        operations = (HashSet<String>)fieldMapping.operations.clone();
     }
 
-    public Object clone() {
-        FieldMapping fieldMapping = new FieldMapping();
+    public Object clone() throws CloneNotSupportedException {
+        FieldMapping fieldMapping = (FieldMapping)super.clone();
         fieldMapping.copy(this);
         return fieldMapping;
     }
@@ -160,5 +179,23 @@ public class FieldMapping implements Cloneable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Collection<String> getOperations() {
+        return operations;
+    }
+
+    public void setOperations(Collection<String> operations) {
+        if (this.operations == operations) return;
+        this.operations.clear();
+        this.operations.addAll(operations);
+    }
+    
+    public void setStringOperations(String operations) {
+        StringTokenizer st = new StringTokenizer(operations, ",");
+        while (st.hasMoreTokens()) {
+            String operation = st.nextToken();
+            this.operations.add(operation);
+        }
     }
 }

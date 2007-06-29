@@ -196,6 +196,14 @@ public class PartitionWriter {
         Element element = new DefaultElement("field");
         element.add(new DefaultAttribute("name", fieldMapping.getName()));
 
+        if (!fieldMapping.getOperations().isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String operation : fieldMapping.getOperations()) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(operation);
+            }
+        }
+
         if (fieldMapping.getConstant() != null) {
             Object value = fieldMapping.getConstant();
             if (value instanceof byte[]) {

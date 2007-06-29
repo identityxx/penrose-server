@@ -50,10 +50,10 @@ public class LDAPAdapter extends Adapter {
     public final static String PAGE_SIZE      = "pageSize";
     public final static int DEFAULT_PAGE_SIZE = 1000;
 
-    public final static String AUTHENTICATON          = "authentication";
-    public final static String AUTHENTICATON_DEFAULT  = "default";
-    public final static String AUTHENTICATON_FULL     = "full";
-    public final static String AUTHENTICATON_DISABLED = "disabled";
+    public final static String AUTHENTICATION          = "authentication";
+    public final static String AUTHENTICATION_DEFAULT  = "default";
+    public final static String AUTHENTICATION_FULL     = "full";
+    public final static String AUTHENTICATION_DISABLED = "disabled";
 
     public void init() throws Exception {
     }
@@ -70,10 +70,10 @@ public class LDAPAdapter extends Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = source.getParameter(AUTHENTICATON);
+        String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
-        if (AUTHENTICATON_DISABLED.equals(authentication)) {
+        if (AUTHENTICATION_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
             throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
         }
@@ -89,10 +89,10 @@ public class LDAPAdapter extends Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = source.getParameter(AUTHENTICATON);
+        String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
-        if (AUTHENTICATON_FULL.equals(authentication)) {
+        if (AUTHENTICATION_FULL.equals(authentication)) {
             if (debug) log.debug("Storing connection info in session.");
 
             String connectionName = source.getConnectionName();
@@ -109,14 +109,14 @@ public class LDAPAdapter extends Adapter {
 
         boolean debug = log.isDebugEnabled();
 
-        String authentication = source.getParameter(AUTHENTICATON);
+        String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
         ConnectionManager connectionManager = penroseContext.getConnectionManager();
         Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
         LDAPClient client;
 
-        if (AUTHENTICATON_FULL.equals(authentication)) {
+        if (AUTHENTICATION_FULL.equals(authentication)) {
             if (debug) log.debug("Getting connection info from session.");
 
             client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
@@ -147,10 +147,10 @@ public class LDAPAdapter extends Adapter {
 
         //boolean debug = log.isDebugEnabled();
 
-        String authentication = source.getParameter(AUTHENTICATON);
+        String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
-        if (!AUTHENTICATON_FULL.equals(authentication)) {
+        if (!AUTHENTICATION_FULL.equals(authentication)) {
             try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
     }

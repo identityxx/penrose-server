@@ -51,11 +51,18 @@ public class FilterBuilder {
         if (debug) log.debug("Creating filters:");
 
         for (String sourceName : sourceValues.getNames()) {
-            if (!this.sourceRefs.containsKey(sourceName)) continue;
+
+            SourceRef sourceRef = this.sourceRefs.get(sourceName);
+            if (sourceRef == null) continue;
 
             Attributes attributes = sourceValues.get(sourceName);
 
             for (String fieldName : attributes.getNames()) {
+
+                FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+
+                Collection<String> operations = fieldRef.getOperations();
+                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
 
                 Attribute attribute = attributes.get(fieldName);
 

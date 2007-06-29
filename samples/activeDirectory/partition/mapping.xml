@@ -50,14 +50,24 @@
     </at>
     <source name="u">
       <source-name>users</source-name>
-      <field name="sAMAccountName">
-        <variable>uid</variable>
-      </field>
       <field name="cn">
         <variable>cn</variable>
       </field>
       <field name="sn">
         <variable>sn</variable>
+      </field>
+      <field name="sAMAccountName">
+        <variable>uid</variable>
+      </field>
+      <field name="unicodePwd">
+        <expression foreach="userPassword" var="p">
+import org.safehaus.penrose.util.*;
+if (p == void || p == null) return null;
+return PasswordUtil.toUnicodePassword(p);
+        </expression>
+      </field>
+      <field name="userAccountControl" operations="add">
+        <constant>512</constant>
       </field>
     </source>
     <parameter>
