@@ -14,6 +14,7 @@ import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.jdbc.JoinClause;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -202,11 +203,11 @@ public class SearchRequestBuilder extends RequestBuilder {
         SelectStatement statement = new SelectStatement();
 
         int sourceCounter = 0;
-        String where = null;
+        Collection<String> filters = new ArrayList<String>();
         for (SourceRef sourceRef : sourceRefs.values()) {
 
-            String sourceName = sourceRef.getAlias();
-            if (debug) log.debug("Processing source " + sourceName);
+            String alias = sourceRef.getAlias();
+            if (debug) log.debug("Processing source " + alias);
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 statement.addFieldRef(fieldRef);
@@ -226,9 +227,16 @@ public class SearchRequestBuilder extends RequestBuilder {
                 joinClause.setSql(joinOn);
 
                 statement.addJoin(joinClause);
+            }
 
-            } else {
-                where = sourceRef.getParameter(JDBCClient.FILTER);
+            String where = sourceRef.getParameter(JDBCClient.FILTER);
+            if (where != null) filters.add(where);
+
+            Source source = sourceRef.getSource();
+            where = source.getParameter(JDBCClient.FILTER);
+            if (where != null) {
+                where = where.replaceAll(source.getName()+".", alias+".");
+                filters.add(where);
             }
 
             statement.addOrders(sourceRef.getPrimaryKeyFieldRefs());
@@ -270,21 +278,17 @@ public class SearchRequestBuilder extends RequestBuilder {
         if (debug) log.debug("Source filter: "+sourceFilter);
 
         statement.setFilter(sourceFilter);
-        statement.setWhere(where);
 
-/*
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping);
-
-            String defaultFilter = sourceConfig.getParameter(FILTER);
-
-            if (defaultFilter != null) {
-                if (debug) log.debug("Default filter: "+defaultFilter);
-                filters.add(defaultFilter);
+        if (!filters.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String where : filters) {
+                if (sb.length() > 0) sb.append(" and ");
+                sb.append("(");
+                sb.append(where);
+                sb.append(")");
             }
+            statement.setWhere(sb.toString());
         }
-*/
 
         QueryRequest queryRequest = new QueryRequest();
         queryRequest.setStatement(statement);

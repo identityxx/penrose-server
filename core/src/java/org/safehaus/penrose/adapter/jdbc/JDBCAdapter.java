@@ -819,6 +819,12 @@ public class JDBCAdapter extends Adapter {
             statement.addFieldRefs(sourceRef.getFieldRefs());
             statement.addSourceRef(sourceRef);
             statement.setFilter(filter);
+
+            String where = source.getParameter(FILTER);
+            if (where != null) {
+                statement.setWhere(where);
+            }
+
             statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
 
             QueryRequest queryRequest = new QueryRequest();

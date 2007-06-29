@@ -150,6 +150,10 @@ public class FilterBuilder {
         for (SourceRef sourceRef : sourceRefs.values()) {
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+                Collection<String> operations = fieldRef.getOperations();
+                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 
@@ -188,7 +192,14 @@ public class FilterBuilder {
         }
 
         int index = variable.indexOf(".");
+        String sourceName = variable.substring(0, index);
         String fieldName = variable.substring(index+1);
+
+        SourceRef sourceRef = sourceRefs.get(sourceName);
+        FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+
+        Collection<String> operations = fieldRef.getOperations();
+        if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) return null;
 
         SubstringFilter f = new SubstringFilter(fieldName, substrings);
         if (debug) log.debug(" - Filter "+f);
@@ -212,6 +223,10 @@ public class FilterBuilder {
         for (SourceRef sourceRef : sourceRefs.values()) {
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+                Collection<String> operations = fieldRef.getOperations();
+                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+
                 FieldMapping fieldMapping = fieldRef.getFieldMapping();
                 String fieldName = fieldMapping.getName();
 

@@ -618,51 +618,26 @@ public abstract class Adapter {
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+
+        FilterBuilder filterBuilder = new FilterBuilder(
+                partition,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                interpreter
+        );
+
+        Filter filter = filterBuilder.getFilter();
+        if (debug) log.debug("Base filter: "+filter);
+
+        filterBuilder.append(request.getFilter());
+        filter = filterBuilder.getFilter();
+        if (debug) log.debug("Added search filter: "+filter);
+
         SearchRequest newRequest = new SearchRequest();
-/*
-        if (request.getScope() == SearchRequest.SCOPE_BASE) {
+        newRequest.setFilter(filter);
 
-            RDNBuilder rb = new RDNBuilder();
-            Attributes attributes = sourceValues.get(sourceRef.getAlias());
-
-            for (Field field : source.getPrimaryKeyFields()) {
-                String fieldName = field.getName();
-                Attribute attribute = attributes.get(fieldName);
-
-                for (Object value : attribute.getValues()) {
-                    rb.set(fieldName, value);
-                }
-            }
-
-            DNBuilder db = new DNBuilder();
-            db.append(rb.toRdn());
-            db.append(request.getDn());
-
-            newRequest.setDn(db.toDn());
-
-        } else {
-*/
-            Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
-
-            FilterBuilder filterBuilder = new FilterBuilder(
-                    partition,
-                    entryMapping,
-                    sourceRefs,
-                    sourceValues,
-                    interpreter
-            );
-
-            Filter filter = filterBuilder.getFilter();
-            if (debug) log.debug("Base filter: "+filter);
-
-            filterBuilder.append(request.getFilter());
-            filter = filterBuilder.getFilter();
-            if (debug) log.debug("Added search filter: "+filter);
-
-            newRequest.setFilter(filter);
-/*
-        }
-*/
         SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
             public void add(SearchResult result) throws Exception {
 

@@ -157,19 +157,19 @@ public class JDBCStatementBuilder {
         }
 
         filterBuilder.generate(filter);
-        String whereClause = filterBuilder.getSql();
+        String sql = filterBuilder.getSql();
 
         if (statement.getWhere() != null) {
-            if (whereClause.length() > 0) {
-                whereClause = "("+whereClause+") and ("+statement.getWhere()+")";
+            if (sql.length() > 0) {
+                sql = "("+sql+") and ("+statement.getWhere()+")";
             } else {
-                whereClause = statement.getWhere();
+                sql = statement.getWhere();
             }
         }
 
-        if (whereClause.length() > 0) {
+        if (sql.length() > 0) {
             sb.append(" where ");
-            sb.append(whereClause);
+            sb.append(sql);
         }
 
         assigments.addAll(filterBuilder.getAssignments());
