@@ -32,12 +32,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDataSource;
-
 public class JDBCClient {
 
     Logger log = LoggerFactory.getLogger(getClass());
@@ -73,10 +67,6 @@ public class JDBCClient {
 
     public Properties properties = new Properties();
     public String quote;
-
-    //public GenericObjectPool.Config config = new GenericObjectPool.Config();
-    //public GenericObjectPool connectionPool;
-    //public DataSource ds;
 
     Connection connection;
 
@@ -129,82 +119,13 @@ public class JDBCClient {
         DriverManager.registerDriver(driverInstance);
 
         connection = DriverManager.getConnection(url, properties);
-/*
-        Class.forName(driver);
-
-        String s = (String)properties.remove(INITIAL_SIZE);
-        int initialSize = s == null ? 1 : Integer.parseInt(s);
-
-        s = (String)properties.remove(MAX_ACTIVE);
-        if (s != null) config.maxActive = Integer.parseInt(s);
-
-        s = (String)properties.remove(MAX_IDLE);
-        if (s != null) config.maxIdle = Integer.parseInt(s);
-
-        s = (String)properties.remove(MAX_WAIT);
-        if (s != null) config.maxWait = Integer.parseInt(s);
-
-        s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
-        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
-
-        s = (String)properties.remove(MIN_IDLE);
-        if (s != null) config.minIdle = Integer.parseInt(s);
-
-        s = (String)properties.remove(NUM_TESTS_PER_EVICTION_RUN);
-        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
-
-        s = (String)properties.remove(TEST_ON_BORROW);
-        if (s != null) config.testOnBorrow = Boolean.valueOf(s);
-
-        s = (String)properties.remove(TEST_ON_RETURN);
-        if (s != null) config.testOnReturn = Boolean.valueOf(s);
-
-        s = (String)properties.remove(TEST_WHILE_IDLE);
-        if (s != null) config.testWhileIdle = Boolean.valueOf(s);
-
-        s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
-        if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
-
-        //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
-        //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
-
-        //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
-        //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
-
-        connectionPool = new GenericObjectPool(null, config);
-
-        String validationQuery = (String)properties.remove(VALIDATION_QUERY);
-
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
-
-        //PoolableConnectionFactory poolableConnectionFactory =
-                new PoolableConnectionFactory(
-                        connectionFactory,
-                        connectionPool,
-                        null, // statement pool factory
-                        validationQuery, // test query
-                        false, // read only
-                        true // auto commit
-                );
-
-        //log.debug("Initializing "+initialSize+" connections.");
-        for (int i = 0; i < initialSize; i++) {
-             connectionPool.addObject();
-         }
-
-        ds = new PoolingDataSource(connectionPool);
-
-        connection = ds.getConnection();
-*/  
     }
 
     public Connection getConnection() throws Exception {
-        //return ds.getConnection();
         return connection;
     }
 
     public void close() throws Exception {
-        //connectionPool.close();
         connection.close();
     }
 

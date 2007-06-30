@@ -635,7 +635,7 @@ public abstract class Adapter {
         filter = filterBuilder.getFilter();
         if (debug) log.debug("Added search filter: "+filter);
 
-        SearchRequest newRequest = new SearchRequest();
+        SearchRequest newRequest = new SearchRequest(request);
         newRequest.setFilter(filter);
 
         SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {

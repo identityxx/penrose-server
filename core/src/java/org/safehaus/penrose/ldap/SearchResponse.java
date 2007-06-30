@@ -39,7 +39,7 @@ public class SearchResponse<E> extends Response {
 
     protected long bufferSize;
     protected long sizeLimit;
-    protected int totalCount;
+    protected long totalCount;
     protected boolean closed = false;
 
     protected LDAPException exception;
@@ -262,7 +262,7 @@ public class SearchResponse<E> extends Response {
         notifyAll();
     }
 
-    public int getTotalCount() throws Exception {
+    public long getTotalCount() throws Exception {
         return totalCount;
     }
 

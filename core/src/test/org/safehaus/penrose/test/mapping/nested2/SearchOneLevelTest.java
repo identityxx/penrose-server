@@ -58,7 +58,7 @@ public class SearchOneLevelTest extends NestedTestCase {
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
-        int totalCount = response.getTotalCount();
+        long totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(1, totalCount);
 
@@ -87,7 +87,7 @@ public class SearchOneLevelTest extends NestedTestCase {
         log.debug("hasNext: "+hasNext);
         assertFalse(hasNext);
 
-        int totalCount = response.getTotalCount();
+        long totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(0, totalCount);
 

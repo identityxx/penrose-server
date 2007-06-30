@@ -46,6 +46,8 @@ public class LDAPAdapter extends Adapter {
     public final static String SCOPE          = "scope";
     public final static String FILTER         = "filter";
     public final static String OBJECT_CLASSES = "objectClasses";
+    public final static String SIZE_LIMIT     = "sizeLimit";
+    public final static String TIME_LIMIT     = "timeLimit";
 
     public final static String PAGE_SIZE      = "pageSize";
     public final static int DEFAULT_PAGE_SIZE = 1000;
@@ -220,14 +222,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+            String baseDn = source.getParameter(BASE_DN);
 
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
             db.append(baseDn);
             DN dn = db.toDn();
 
-            String objectClasses = source.getParameter(LDAPAdapter.OBJECT_CLASSES);
+            String objectClasses = source.getParameter(OBJECT_CLASSES);
             Attribute ocAttribute = new Attribute("objectClass");
             for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
                 String objectClass = st.nextToken().trim();
@@ -274,7 +276,7 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = createClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+            String baseDn = source.getParameter(BASE_DN);
 
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
@@ -317,7 +319,7 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+            String baseDn = source.getParameter(BASE_DN);
 
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
@@ -360,7 +362,7 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+            String baseDn = source.getParameter(BASE_DN);
 
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
@@ -403,7 +405,7 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(LDAPAdapter.BASE_DN);
+            String baseDn = source.getParameter(BASE_DN);
 
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
@@ -448,15 +450,12 @@ public class LDAPAdapter extends Adapter {
         try {
             response.setSizeLimit(request.getSizeLimit());
 
-            DNBuilder db = new DNBuilder();
-            db.append(request.getDn());
-            db.append(source.getParameter(LDAPAdapter.BASE_DN));
-            DN dn = db.toDn();
+            DN dn = new DN(source.getParameter(BASE_DN));
 
             SearchRequest newRequest = new SearchRequest(request);
             newRequest.setDn(dn);
 
-            String scope = source.getParameter(LDAPAdapter.SCOPE);
+            String scope = source.getParameter(SCOPE);
             if ("OBJECT".equals(scope)) {
                 newRequest.setScope(SearchRequest.SCOPE_BASE);
 
@@ -467,12 +466,22 @@ public class LDAPAdapter extends Adapter {
                 newRequest.setScope(SearchRequest.SCOPE_SUB);
             }
 
-            String filter = source.getParameter(LDAPAdapter.FILTER);
+            String filter = source.getParameter(FILTER);
             if (filter != null) {
                 Filter f1 = request.getFilter();
                 Filter f2 = FilterTool.parseFilter(filter);
                 f1 = FilterTool.appendAndFilter(f1, f2);
                 newRequest.setFilter(f1);
+            }
+
+            String sizeLimit = source.getParameter(SIZE_LIMIT);
+            if (sizeLimit != null) {
+                newRequest.setSizeLimit(Long.parseLong(sizeLimit));
+            }
+
+            String timeLimit = source.getParameter(TIME_LIMIT);
+            if (timeLimit != null) {
+                newRequest.setTimeLimit(Long.parseLong(timeLimit));
             }
 
             SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {

@@ -83,7 +83,7 @@ public class SearchSubtreeTest extends NestedTestCase {
             log.debug("hasNext: "+hasNext);
         }
 
-        int totalCount = response.getTotalCount();
+        long totalCount = response.getTotalCount();
         log.debug("totalCount: "+totalCount);
         assertEquals(8, totalCount);
 

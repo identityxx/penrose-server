@@ -340,16 +340,26 @@ public class LDAPClient {
         DN baseDn = db.toDn();
 
         String filter = request.getFilter() == null ? "(objectClass=*)" : request.getFilter().toString();
+        Collection<String> attributes = request.getAttributes();
+        long sizeLimit = request.getSizeLimit();
+        long timeLimit = request.getTimeLimit();
 
-        if (debug) log.debug("Search \""+ baseDn +"\" with filter "+filter+" with scope "+ LDAPUtil.getScope(request.getScope()));
+        if (debug) {
+            log.debug("Searching "+baseDn);
+            log.debug(" - filter: "+filter);
+            log.debug(" - scope: "+LDAPUtil.getScope(request.getScope()));
+            log.debug(" - attributes: "+attributes);
+            log.debug(" - sizeLimit: "+sizeLimit);
+            log.debug(" - timeLimit: "+timeLimit);
+        }
 
         String attributeNames[] = request.getAttributes().toArray(new String[request.getAttributes().size()]);
 
         javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
         sc.setSearchScope(request.getScope());
         sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributeNames);
-        sc.setCountLimit(request.getSizeLimit());
-        sc.setTimeLimit((int) request.getTimeLimit());
+        sc.setCountLimit(sizeLimit);
+        sc.setTimeLimit((int)timeLimit);
 
         javax.naming.ldap.LdapContext context = null;
         NamingEnumeration ne = null;
@@ -444,11 +454,11 @@ public class LDAPClient {
                     LDAPUrl url = new LDAPUrl(ref);
                     DN dn = new DN(url.getDN());
 
-                    Attributes attributes = new Attributes();
-                    attributes.setValue("ref", ref);
-                    attributes.setValue("objectClass", "referral");
+                    Attributes attrs = new Attributes();
+                    attrs.setValue("ref", ref);
+                    attrs.setValue("objectClass", "referral");
 
-                    SearchResult result = new SearchResult(dn, attributes);
+                    SearchResult result = new SearchResult(dn, attrs);
                     response.add(result);
                     //response.addReferral(ref);
 

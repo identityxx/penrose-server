@@ -62,8 +62,8 @@ public class JDBCAdapter extends Adapter {
     public final static String CATALOG      = "catalog";
     public final static String SCHEMA       = "schema";
     public final static String TABLE        = "table";
-    public final static String TABLE_NAME   = "tableName";
     public final static String FILTER       = "filter";
+    public final static String SIZE_LIMIT   = "sizeLimit";
 
     public final static String AUTHENTICATION          = "authentication";
     public final static String AUTHENTICATION_DEFAULT  = "default";
@@ -833,13 +833,25 @@ public class JDBCAdapter extends Adapter {
             QueryResponse queryResponse = new QueryResponse() {
                 public void add(Object object) throws Exception {
                     ResultSet rs = (ResultSet)object;
+
+                    if (sizeLimit > 0 && totalCount >= sizeLimit) {
+                        throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+                    }
+
                     SearchResult searchResult = createSearchResult(source, rs);
                     response.add(searchResult);
+
+                    totalCount++;
                 }
                 public void close() throws Exception {
                     response.close();
                 }
             };
+
+            String sizeLimit = source.getParameter(SIZE_LIMIT);
+            if (sizeLimit != null) {
+                queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
+            }
 
             client.executeQuery(queryRequest, queryResponse);
 
@@ -896,6 +908,10 @@ public class JDBCAdapter extends Adapter {
                 public void add(Object object) throws Exception {
                     ResultSet rs = (ResultSet)object;
 
+                    if (sizeLimit > 0 && totalCount >= sizeLimit) {
+                        throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+                    }
+
                     SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
                     if (searchResult == null) return;
 
@@ -910,6 +926,8 @@ public class JDBCAdapter extends Adapter {
                         lastEntry = searchResult;
                     }
 
+                    totalCount++;
+
                     if (debug) {
                         searchResult.print();
                     }
@@ -922,6 +940,11 @@ public class JDBCAdapter extends Adapter {
                     response.close();
                 }
             };
+
+            String sizeLimit = source.getParameter(SIZE_LIMIT);
+            if (sizeLimit != null) {
+                queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
+            }
 
             client.executeQuery(queryRequest, queryResponse);
 
