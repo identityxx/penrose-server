@@ -99,7 +99,7 @@ public class SearchEngine {
                 }
             };
 
-            Collection<Collection<SourceRef>> groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
+            Collection<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entryMapping);
 
             Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
             Collection<SourceRef> primarySources = iterator.next();

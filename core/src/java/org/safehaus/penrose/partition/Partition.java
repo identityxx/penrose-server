@@ -309,6 +309,19 @@ public class Partition {
         return path;
     }
 
+    public List<EntryMapping> getRelativePath(EntryMapping baseMapping, EntryMapping entryMapping) {
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
+
+        while (entryMapping != null) {
+            path.add(0, entryMapping);
+            if (entryMapping == baseMapping) break;
+            
+            entryMapping = getParent(entryMapping);
+        }
+
+        return path;
+    }
+
     public EntryMapping getParent(EntryMapping entryMapping) {
         if (entryMapping == null) return null;
 

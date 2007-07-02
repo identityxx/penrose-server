@@ -83,6 +83,8 @@ public class JDBCFilterBuilder {
             String sourceName = name.substring(0, i);
             String fieldName = name.substring(i+1);
 
+            if (fieldName.startsWith("primaryKey.")) fieldName = fieldName.substring(11);
+
             SourceRef sourceRef = sourceRefs.get(sourceName);
             Source s = sourceRef.getSource();
 

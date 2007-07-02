@@ -182,7 +182,7 @@ public class SimpleEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
         Collection primarySources = (Collection)iterator.next();
@@ -233,7 +233,7 @@ public class SimpleEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
         Collection primarySources = (Collection)iterator.next();
@@ -294,7 +294,7 @@ public class SimpleEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
         Collection primarySources = (Collection)iterator.next();
@@ -345,7 +345,7 @@ public class SimpleEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
         Collection primarySources = (Collection)iterator.next();
@@ -396,7 +396,7 @@ public class SimpleEngine extends Engine {
             sourceValues.print();
         }
 
-        Collection groupsOfSources = createGroupsOfSources(partition, entryMapping);
+        Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
         Collection primarySources = (Collection)iterator.next();

@@ -39,7 +39,8 @@ public class BasicSearchEngine {
         try {
             final boolean debug = log.isDebugEnabled();
 
-            List<Collection<SourceRef>> groupsOfSources = engine.createGroupsOfSources(partition, entryMapping);
+            //List<Collection<SourceRef>> groupsOfSources = engine.getLocalGroupsOfSources(partition, entryMapping, baseMapping);
+            List<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entryMapping);
             final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
             if (groupsOfSources.isEmpty()) {

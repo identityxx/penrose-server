@@ -679,7 +679,7 @@ public abstract class Engine {
         partitionManager = penroseContext.getPartitionManager();
     }
 
-    public List<Collection<SourceRef>> createGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+    public List<Collection<SourceRef>> getGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
@@ -710,6 +710,41 @@ public abstract class Engine {
 
         if (!list.isEmpty()) results.add(list);
         
+        return results;
+    }
+
+    public List<Collection<SourceRef>> getLocalGroupsOfSources(Partition partition, EntryMapping entryMapping, EntryMapping baseMapping) throws Exception {
+
+        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Connection lastConnection = null;
+
+        for (EntryMapping em : partition.getRelativePath(baseMapping, entryMapping)) {
+            if (em == baseMapping) continue;
+            
+            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
+
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+                Adapter adapter = connection.getAdapter();
+
+                if (lastConnection == null) {
+                    lastConnection = connection;
+
+                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                    results.add(list);
+                    list = new ArrayList<SourceRef>();
+                    lastConnection = connection;
+                }
+
+                list.add(sourceRef);
+            }
+        }
+
+        if (!list.isEmpty()) results.add(list);
+
         return results;
     }
 
