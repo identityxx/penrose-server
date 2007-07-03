@@ -19,28 +19,31 @@ package org.safehaus.penrose.sql;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class SQLCompareExpr {
 
-    Collection children = new ArrayList();
+    Collection<Object> children = new ArrayList<Object>();
 
     public void addChild(Object object) {
         children.add(object);
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i=children.iterator(); i.hasNext(); ) {
-            Object child = i.next();
-            if (sb.length() > 0) sb.append(" ");
-            sb.append("(");
+        StringBuilder sb = new StringBuilder();
+
+        boolean first = true;
+        for (Object child : children) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(" ");
+            }
             sb.append(child);
-            sb.append(")");
         }
+
         return sb.toString();
     }
 }

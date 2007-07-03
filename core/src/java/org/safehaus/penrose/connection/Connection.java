@@ -17,38 +17,41 @@
  */
 package org.safehaus.penrose.connection;
 
+import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.source.SourceConfig;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
  */
 public class Connection implements ConnectionMBean {
 
-    public final static String STOPPING = "STOPPING";
-    public final static String STOPPED  = "STOPPED";
-    public final static String STARTING = "STARTING";
-    public final static String STARTED  = "STARTED";
+    Logger log = LoggerFactory.getLogger(getClass());
 
-    private ConnectionConfig connectionConfig;
-    private AdapterConfig adapterConfig;
-    private Adapter adapter;
+    protected PenroseConfig penroseConfig;
+    protected PenroseContext penroseContext;
 
-    private String status = STOPPED;
-    private ConnectionCounter counter = new ConnectionCounter();
+    protected Partition partition;
+    protected ConnectionConfig connectionConfig;
+    protected AdapterConfig adapterConfig;
+    protected Adapter adapter;
 
-    public Connection(ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
+    public Connection(Partition partition, ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
+        this.partition = partition;
         this.connectionConfig = connectionConfig;
         this.adapterConfig = adapterConfig;
     }
@@ -57,38 +60,31 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public String getAdapterName() {
-        return adapterConfig.getName();
-    }
-
-    public String getDescription() {
-        return connectionConfig.getDescription();
-    }
-
-    public void start() throws Exception {
-
-        counter.reset();
+    public void init() throws Exception {
 
         String adapterClass = adapterConfig.getAdapterClass();
         Class clazz = Class.forName(adapterClass);
         adapter = (Adapter)clazz.newInstance();
 
+        adapter.setPenroseConfig(penroseConfig);
+        adapter.setPenroseContext(penroseContext);
         adapter.setAdapterConfig(adapterConfig);
+        adapter.setPartition(partition);
         adapter.setConnection(this);
 
         adapter.init();
+    }
 
-        setStatus(STARTED);
+    public void start() throws Exception {
+        if (adapter != null) adapter.start();
     }
 
     public void stop() throws Exception {
-        if (adapter != null) adapter.dispose();
-        setStatus(STOPPED);
+        if (adapter != null) adapter.stop();
     }
 
-    public void restart() throws Exception {
-        stop();
-        start();
+    public void dispose() throws Exception {
+        if (adapter != null) adapter.dispose();
     }
 
     public ConnectionConfig getConnectionConfig() {
@@ -111,16 +107,12 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getParameter(name);
     }
 
-    public Map getParameters() {
+    public Map<String,String> getParameters() {
         return connectionConfig.getParameters();
     }
 
     public Collection getParameterNames() {
         return connectionConfig.getParameterNames();
-    }
-
-    public void setParameter(String name, String value) {
-        connectionConfig.setParameter(name, value);
     }
 
     public String removeParameter(String name) {
@@ -131,90 +123,193 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
-    public void bind(SourceConfig sourceConfig, Row pk, String password) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.INVALID_CREDENTIALS;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
-        counter.incBindCounter();
-        adapter.bind(sourceConfig, pk, password);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+
+        adapter.add(session, source, request, response);
     }
 
-    public void search(SourceConfig sourceConfig, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        if (adapter == null) {
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-            return;
-        }
-        counter.incSearchCounter();
-        adapter.search(sourceConfig, filter, sc, results);
+    public void add(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+
+        adapter.add(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
-    public void load(SourceConfig sourceConfig, Collection primaryKeys, Filter filter, PenroseSearchControls sc, PenroseSearchResults results) throws Exception {
-        if (adapter == null) {
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            return;
-        }
-        counter.incLoadCounter();
-        adapter.load(sourceConfig, primaryKeys, filter, sc, results);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        adapter.bind(session, source, request, response);
     }
 
-    public void add(SourceConfig sourceConfig, Row pk, AttributeValues sourceValues) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
-        counter.incAddCounter();
-        adapter.add(sourceConfig, pk, sourceValues);
+    public void bind(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        adapter.bind(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
-    public AttributeValues get(SourceConfig sourceConfig, Row pk) throws Exception {
-        if (adapter == null) return null;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        Filter filter = FilterTool.createFilter(pk);
-        PenroseSearchControls sc = new PenroseSearchControls();
-        PenroseSearchResults sr = new PenroseSearchResults();
+    public void delete(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
 
-        Collection pks = new ArrayList();
-        pks.add(pk);
-
-        counter.incLoadCounter();
-        adapter.load(sourceConfig, pks, filter, sc, sr);
-
-        if (!sr.hasNext()) return null;
-        return (AttributeValues)sr.next();
+        adapter.delete(session, source, request, response);
     }
 
-    public void modify(SourceConfig sourceConfig, Row pk, Collection modifications) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
-        counter.incModifyCounter();
-        adapter.modify(sourceConfig, pk, modifications);
+    public void delete(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+
+        adapter.delete(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
-    public void delete(SourceConfig sourceConfig, Row pk) throws LDAPException {
-        if (adapter == null) {
-            int rc = LDAPException.OPERATIONS_ERROR;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
-        }
-        counter.incDeleteCounter();
-        adapter.delete(sourceConfig, pk);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        adapter.modify(session, source, request, response);
     }
 
-    public int getLastChangeNumber(SourceConfig sourceConfig) throws Exception {
-        if (adapter == null) return -1;
-        return adapter.getLastChangeNumber(sourceConfig);
+    public void modify(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+
+        adapter.modify(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
-    public PenroseSearchResults getChanges(SourceConfig sourceConfig, int lastChangeNumber) throws Exception {
-        if (adapter == null) return null;
-        return adapter.getChanges(sourceConfig, lastChangeNumber);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modrdn(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        adapter.modrdn(session, source, request, response);
+    }
+
+    public void modrdn(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+
+        adapter.modrdn(session, entryMapping, sourceRefs, sourceValues, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void search(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            SearchRequest request,
+            SearchResponse<SearchResult> response
+    ) throws Exception {
+
+        adapter.search(session, source, request, response);
+    }
+
+    public void search(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            SearchRequest request,
+            SearchResponse<SearchResult> response
+    ) throws Exception {
+
+        adapter.search(session, entryMapping, sourceRefs, sourceValues, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Table
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void create(Source source) throws Exception {
+        adapter.create(source);
+    }
+
+    public void rename(Source oldSource, Source newSource) throws Exception {
+        adapter.rename(oldSource, newSource);
+    }
+
+    public void drop(Source source) throws Exception {
+        adapter.drop(source);
+    }
+
+    public void clean(Source source) throws Exception {
+        adapter.clean(source);
+    }
+
+    public void status(Source source) throws Exception {
+        adapter.status(source);
     }
 
     public Object openConnection() throws Exception {
-        if (adapter == null) return null;
         return adapter.openConnection();
     }
 
@@ -226,19 +321,27 @@ public class Connection implements ConnectionMBean {
         this.adapterConfig = adapterConfig;
     }
 
-    public String getStatus() {
-        return status;
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
     }
 
-    public ConnectionCounter getCounter() {
-        return counter;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setCounter(ConnectionCounter counter) {
-        this.counter = counter;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

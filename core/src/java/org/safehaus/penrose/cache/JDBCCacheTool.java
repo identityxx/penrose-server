@@ -18,8 +18,8 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -38,7 +38,7 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             Filter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
@@ -63,27 +63,23 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             SimpleFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
         String name = filter.getAttribute();
         String operator = filter.getOperator();
-        String value = filter.getValue();
+        Object value = filter.getValue();
 
         int i = name.indexOf(".");
         if (i >= 0) name = name.substring(i+1);
-
-        if (value.startsWith("'") && value.endsWith("'")) {
-            value = value.substring(1, value.length()-1);
-        }
 
         FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
         String fieldName = fieldConfig.getName();
 
         String t;
 
-        if (fieldConfig.isPK()) {
+        if (fieldConfig.isPrimaryKey()) {
             t = tableName;
         } else {
             t = tableName+"_"+fieldName;
@@ -122,11 +118,11 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             NotFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
 
         Filter f = filter.getFilter();
         convert(tableName, sourceConfig, f, parameters, sb2, tables);
@@ -143,15 +139,15 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             AndFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {
@@ -176,15 +172,15 @@ public class JDBCCacheTool {
             SourceConfig sourceConfig,
             OrFilter filter,
             Collection parameters,
-            StringBuffer sb,
+            StringBuilder sb,
             Collection tables)
             throws Exception {
 
-        StringBuffer sb2 = new StringBuffer();
+        StringBuilder sb2 = new StringBuilder();
         for (Iterator i = filter.getFilters().iterator(); i.hasNext();) {
             Filter f = (Filter) i.next();
 
-            StringBuffer sb3 = new StringBuffer();
+            StringBuilder sb3 = new StringBuilder();
             convert(tableName, sourceConfig, f, parameters, sb3, tables);
 
             if (sb2.length() > 0 && sb3.length() > 0) {

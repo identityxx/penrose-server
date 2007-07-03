@@ -17,35 +17,21 @@
  */
 package org.safehaus.penrose;
 
-import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
 
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.schema.*;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineManager;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.handler.HandlerManager;
-import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.thread.ThreadManager;
-import org.safehaus.penrose.event.EventManager;
+import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.connector.ConnectorContext;
 import org.safehaus.penrose.log4j.Log4jConfigReader;
 import org.safehaus.penrose.log4j.Log4jConfig;
-import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
-import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.cache.EntryCacheManager;
-import org.safehaus.penrose.cache.SourceCacheManager;
+import org.safehaus.penrose.log4j.LoggerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -56,15 +42,14 @@ public class Penrose {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    public static String PRODUCT_NAME;
-    public static String PRODUCT_VERSION;
-    public static String PRODUCT_VENDOR;
-    public static String PRODUCT_COPYRIGHT = "Copyright (c) 2000-2006, Identyx Corporation.";
-
-    public static String SPECIFICATION_VERSION;
+    public static String PRODUCT_NAME          = "Penrose";
+    public static String PRODUCT_VERSION       = "1.2";
+    public static String VENDOR_NAME           = "Identyx";
+    public static String PRODUCT_COPYRIGHT     = "Copyright (c) 2000-2007, Identyx Corporation.";
+    public static String SPECIFICATION_VERSION = "1.2";
 
     public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "12/15/2006";
+    public final static String RELEASE_DATE      = "03/01/2007";
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -72,26 +57,9 @@ public class Penrose {
     public final static String STOPPING = "STOPPING";
 
     private PenroseConfig      penroseConfig;
-
-    private ThreadManager      threadManager;
-    private SchemaManager      schemaManager;
-
-    private PartitionManager   partitionManager;
-    private PartitionValidator partitionValidator;
-
-    private ConnectionManager  connectionManager;
-    private SourceCacheManager sourceCacheManager;
-    private EntryCacheManager  entryCacheManager;
-    private SourceManager      sourceManager;
-    private ModuleManager      moduleManager;
-
-    private SessionManager     sessionManager;
-
-    private EngineManager      engineManager;
-    private EventManager       eventManager;
-    private HandlerManager     handlerManager;
-
-    private InterpreterManager interpreterManager;
+    private PenroseContext     penroseContext;
+    private ConnectorContext   connectorContext;
+    private SessionContext sessionContext;
 
     private String status = STOPPED;
 
@@ -99,11 +67,17 @@ public class Penrose {
         try {
             Package pkg = Penrose.class.getPackage();
 
-            PRODUCT_NAME    = pkg.getImplementationTitle();
-            PRODUCT_VERSION = pkg.getImplementationVersion();
-            PRODUCT_VENDOR     = pkg.getImplementationVendor();
+            String value = pkg.getImplementationTitle();
+            if (value != null) PRODUCT_NAME = value;
 
-            SPECIFICATION_VERSION = pkg.getSpecificationVersion();
+            value = pkg.getImplementationVersion();
+            if (value != null) PRODUCT_VERSION = value;
+
+            value = pkg.getImplementationVendor();
+            if (value != null) VENDOR_NAME = value;
+
+            value = pkg.getSpecificationVersion();
+            if (value != null) SPECIFICATION_VERSION = value;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,146 +109,6 @@ public class Penrose {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Initialize Penrose components
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    void init() throws Exception {
-        initLoggers();
-
-        initThreadManager();
-        initInterpreterManager();
-        initSchemaManager();
-        initSessionManager();
-
-        initConnectionManager();
-        initSourceCacheManager();
-        initSourceManager();
-        initEntryCacheManager();
-        initModuleManager();
-        initPartitionManager();
-
-        initEngineManager();
-        initEventManager();
-        initHandlerManager();
-    }
-
-    public void initLoggers() throws Exception {
-
-        String home = penroseConfig.getHome();
-
-        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
-        if (!log4jXml.exists()) return;
-
-        Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
-        Log4jConfig config = configReader.read();
-
-        log.debug("Appenders:");
-        for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
-            AppenderConfig appenderConfig = (AppenderConfig)i.next();
-            log.debug(" - "+appenderConfig.getName());
-        }
-
-        log.debug("Loggers:");
-        for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
-            LoggerConfig loggerConfig = (LoggerConfig)i.next();
-            log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
-        }
-    }
-
-    public void initThreadManager() throws Exception {
-        //String s = engineConfig.getParameter(EngineConfig.THREAD_POOL_SIZE);
-        //int threadPoolSize = s == null ? EngineConfig.DEFAULT_THREAD_POOL_SIZE : Integer.parseInt(s);
-
-        threadManager = new ThreadManager(20);
-    }
-
-    public void initSchemaManager() throws Exception {
-        schemaManager = new SchemaManager();
-    }
-
-    public void initSessionManager() throws Exception {
-        sessionManager = new SessionManager();
-        sessionManager.setPenroseConfig(penroseConfig);
-    }
-
-    public void initConnectionManager() throws Exception {
-        connectionManager = new ConnectionManager();
-    }
-
-    public void initSourceCacheManager() throws Exception {
-        sourceCacheManager = new SourceCacheManager();
-        sourceCacheManager.setConnectionManager(connectionManager);
-    }
-
-    public void initEntryCacheManager() throws Exception {
-        entryCacheManager = new EntryCacheManager();
-        entryCacheManager.setConnectionManager(connectionManager);
-        entryCacheManager.init();
-    }
-
-    public void initSourceManager() throws Exception {
-        sourceManager = new SourceManager();
-        sourceManager.setPenroseConfig(penroseConfig);
-        sourceManager.setConnectionManager(connectionManager);
-        sourceManager.init();
-    }
-
-    public void initModuleManager() throws Exception {
-        moduleManager = new ModuleManager();
-        moduleManager.setPenrose(this);
-    }
-
-    public void initPartitionManager() throws Exception {
-        partitionManager = new PartitionManager();
-        partitionManager.setPenroseConfig(penroseConfig);
-        partitionManager.setSchemaManager(schemaManager);
-        partitionManager.setInterpreterManager(interpreterManager);
-        partitionManager.setConnectionManager(connectionManager);
-        partitionManager.setSourceCacheManager(sourceCacheManager);
-        partitionManager.setSourceManager(sourceManager);
-        partitionManager.setEntryCacheManager(entryCacheManager);
-        partitionManager.setModuleManager(moduleManager);
-        partitionManager.init();
-
-        partitionValidator = new PartitionValidator();
-        partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setSchemaManager(schemaManager);
-    }
-
-    public void initInterpreterManager() throws Exception {
-        interpreterManager = new InterpreterManager();
-    }
-
-    public void initEngineManager() throws Exception {
-        engineManager = new EngineManager();
-        engineManager.setPenrose(this);
-        engineManager.setPenroseConfig(penroseConfig);
-        engineManager.setSchemaManager(schemaManager);
-        engineManager.setInterpreterFactory(interpreterManager);
-        engineManager.setConnectorManager(sourceManager);
-        engineManager.setConnectionManager(connectionManager);
-        engineManager.setPartitionManager(partitionManager);
-    }
-
-    public void initEventManager() throws Exception {
-        eventManager = new EventManager();
-        eventManager.setModuleManager(moduleManager);
-    }
-
-    public void initHandlerManager() throws Exception {
-        handlerManager = new HandlerManager();
-        handlerManager.setPenroseConfig(penroseConfig);
-        handlerManager.setSessionManager(sessionManager);
-        handlerManager.setSchemaManager(schemaManager);
-        handlerManager.setInterpreterFactory(interpreterManager);
-        handlerManager.setPartitionManager(partitionManager);
-        handlerManager.setEntryCacheManager(entryCacheManager);
-        handlerManager.setModuleManager(moduleManager);
-        handlerManager.setThreadManager(threadManager);
-        handlerManager.setPenrose(this);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Load Penrose Configurations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -289,94 +123,54 @@ public class Penrose {
         penroseConfig.setHome(home);
     }
 
-    public void load() throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Initialize Penrose components
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        loadSystemProperties();
+    void init() throws Exception {
 
-        loadInterpreter();
-        loadSchemas();
+        String home = penroseConfig.getHome();
 
-        loadEngine();
-        loadHandler();
+        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
 
-        loadPartitions();
-    }
+        if (log4jXml.exists()) {
+            Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
+            Log4jConfig config = configReader.read();
 
-    public void loadSystemProperties() throws Exception {
-        for (Iterator i=penroseConfig.getSystemPropertyNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = penroseConfig.getSystemProperty(name);
+            log.debug("Appenders:");
+            for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
+                AppenderConfig appenderConfig = (AppenderConfig)i.next();
+                log.debug(" - "+appenderConfig.getName());
+            }
 
-            System.setProperty(name, value);
-        }
-    }
-
-    public void loadInterpreter() throws Exception {
-        InterpreterConfig interpreterConfig = penroseConfig.getInterpreterConfig();
-        interpreterManager.init(interpreterConfig);
-    }
-
-    public void loadSchemas() throws Exception {
-        schemaManager.load(penroseConfig.getHome(), penroseConfig.getSchemaConfigs());
-    }
-
-    public void loadPartitions() throws Exception {
-
-        PartitionConfig partitionConfig = new PartitionConfig();
-        partitionConfig.setName("DEFAULT");
-
-        String conf = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+"conf";
-        partitionManager.load(conf, partitionConfig);
-
-        String partitions = (penroseConfig.getHome() == null ? "" : penroseConfig.getHome()+File.separator)+"partitions";
-        partitionManager.loadPartitions(partitions);
-
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            Collection results = partitionValidator.validate(partition);
-
-            for (Iterator j=results.iterator(); j.hasNext(); ) {
-                PartitionValidationResult resultPartition = (PartitionValidationResult)j.next();
-
-                if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
-                    log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
-                } else {
-                    log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
-                }
+            log.debug("Loggers:");
+            for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
+                LoggerConfig loggerConfig = (LoggerConfig)i.next();
+                log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
             }
         }
+
+        penroseContext = new PenroseContext();
+        penroseContext.init(penroseConfig);
+
+        connectorContext = new ConnectorContext();
+        connectorContext.setPenroseConfig(penroseConfig);
+        connectorContext.setPenroseContext(penroseContext);
+        connectorContext.init();
+
+        sessionContext = new SessionContext();
+        sessionContext.setPenroseConfig(penroseConfig);
+        sessionContext.setPenroseContext(penroseContext);
+        sessionContext.init();
     }
 
-    public void loadEngine() throws Exception {
-
-        Collection engineConfigs = penroseConfig.getEngineConfigs();
-
-        for (Iterator i=engineConfigs.iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
-            if (engineManager.getEngine(engineConfig.getName()) != null) continue;
-
-            engineManager.init(engineConfig);
-        }
+    public void load() throws Exception {
+        penroseContext.load();
+        sessionContext.load();
     }
-
-    public void loadHandler() throws Exception {
-
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        if (handlerManager.getHandler(handlerConfig.getName()) != null) return;
-
-        handlerManager.init(handlerConfig, engineManager);
-    }
-
 
     public void clear() throws Exception {
-        handlerManager.clear();
-        engineManager.clear();
-        sourceManager.clear();
-        interpreterManager.clear();
-        connectionManager.clear();
-        partitionManager.clear();
-        schemaManager.clear();
+        penroseContext.clear();
     }
 
     public void reload() throws Exception {
@@ -387,20 +181,7 @@ public class Penrose {
     }
 
     public void store() throws Exception {
-
-        String home = penroseConfig.getHome();
-        String filename = (home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml";
-        log.debug("Storing Penrose configuration into "+filename);
-
-        PenroseConfigWriter serverConfigWriter = new PenroseConfigWriter(filename);
-        serverConfigWriter.write(penroseConfig);
-
-        PartitionConfig partitionConfig = partitionManager.getPartitionConfig("DEFAULT");
-        String conf = (home == null ? "" : home +File.separator)+"conf";
-        partitionManager.store(conf, partitionConfig);
-
-        String partitions = (home == null ? "" : home+File.separator)+"partitions";
-        partitionManager.storePartitions(partitions);
+        penroseContext.store();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -411,44 +192,26 @@ public class Penrose {
 
         if (status != STOPPED) return;
 
-        try {
-            status = STARTING;
+        status = STARTING;
 
-            partitionManager.start();
-            engineManager.start();
-            sessionManager.start();
-            handlerManager.start();
+        penroseContext.start();
+        sessionContext.start();
 
-            status = STARTED;
-
-        } catch (Exception e) {
-            status = STOPPED;
-            log.error(e.getMessage(), e);
-            throw e;
-        }
+        status = STARTED;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Stop Penrose
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void stop() {
+    public void stop() throws Exception {
 
         if (status != STARTED) return;
 
-        try {
-            status = STOPPING;
+        status = STOPPING;
 
-            threadManager.stopRequestAllWorkers();
-
-            handlerManager.stop();
-            sessionManager.stop();
-            engineManager.stop();
-            partitionManager.stop();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
+        sessionContext.stop();
+        penroseContext.stop();
 
         status = STOPPED;
     }
@@ -457,39 +220,23 @@ public class Penrose {
     // Penrose Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public PenroseSession newSession() throws Exception {
-
-        PenroseSession session = sessionManager.newSession();
-        if (session == null) return null;
-
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        session.setHandler(handler);
-
-        session.setEventManager(eventManager);
-
-        return session;
+    public Session newSession() throws Exception {
+        SessionManager sessionManager = sessionContext.getSessionManager();
+        return sessionManager.newSession();
     }
 
-    public PenroseSession createSession(String sessionId) throws Exception {
-
-        PenroseSession session = sessionManager.createSession(sessionId);
-        if (session == null) return null;
-
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        Handler handler = handlerManager.getHandler(handlerConfig.getName());
-        session.setHandler(handler);
-
-        session.setEventManager(eventManager);
-
-        return session;
+    public Session createSession(Object sessionId) throws Exception {
+        SessionManager sessionManager = sessionContext.getSessionManager();
+        return sessionManager.createSession(sessionId);
     }
 
-    public PenroseSession getSession(String sessionId) throws Exception {
+    public Session getSession(String sessionId) throws Exception {
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.getSession(sessionId);
     }
 
-    public PenroseSession removeSession(String sessionId) throws Exception {
+    public Session removeSession(String sessionId) throws Exception {
+        SessionManager sessionManager = sessionContext.getSessionManager();
         return sessionManager.removeSession(sessionId);
     }
 
@@ -501,104 +248,27 @@ public class Penrose {
         return penroseConfig;
     }
 
-    public InterpreterManager getInterpreterFactory() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public Engine getEngine() {
-        return engineManager.getEngine("DEFAULT");
-    }
-
-    public Handler getHandler() {
-        HandlerConfig handlerConfig = penroseConfig.getHandlerConfig();
-        return handlerManager.getHandler(handlerConfig.getName());
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public ModuleManager getModuleManager() {
-        return moduleManager;
+    public ConnectorContext getConnectorContext() {
+        return connectorContext;
     }
 
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
+    public void setConnectorContext(ConnectorContext connectorContext) {
+        this.connectorContext = connectorContext;
     }
 
-    public SessionManager getSessionManager() {
-        return sessionManager;
+    public SessionContext getSessionContext() {
+        return sessionContext;
     }
 
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
-    }
-
-    public EventManager getEventManager() {
-        return eventManager;
-    }
-
-    public void setEventManager(EventManager eventManager) {
-        this.eventManager = eventManager;
-    }
-
-    public SourceManager getSourceManager() {
-        return sourceManager;
-    }
-
-    public void setSourceManager(SourceManager sourceManager) {
-        this.sourceManager = sourceManager;
-    }
-
-    public EntryCacheManager getEntryCacheManager() {
-        return entryCacheManager;
-    }
-
-    public void setEntryCacheManager(EntryCacheManager entryCacheManager) {
-        this.entryCacheManager = entryCacheManager;
-    }
-
-    public SourceCacheManager getSourceCacheManager() {
-        return sourceCacheManager;
-    }
-
-    public void setSourceCacheManager(SourceCacheManager sourceCacheManager) {
-        this.sourceCacheManager = sourceCacheManager;
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

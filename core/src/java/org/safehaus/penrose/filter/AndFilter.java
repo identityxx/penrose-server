@@ -23,17 +23,18 @@ import java.util.Collection;
 
 public class AndFilter extends Filter {
 	
-	Collection filters = new ArrayList();
+	Collection<Filter> filters = new ArrayList<Filter>();
 
 	public AndFilter() {
 	}
 
-	public Collection getFilters() {
+	public Collection<Filter> getFilters() {
 		return filters;
 	}
 
 	public void addFilter(Filter filter) {
-		this.filters.add(filter);
+        if (filter == null) return;
+        this.filters.add(filter);
 	}
 
     public boolean containsFilter(Filter filter) {
@@ -65,12 +66,11 @@ public class AndFilter extends Filter {
     }
 
 	public String toString() {
-		StringBuffer sb = new StringBuffer("(&");
-		for (Iterator i=filters.iterator(); i.hasNext(); ) {
-            Filter filter = (Filter)i.next();
-			sb.append(filter);
-		}
-		sb.append(")");
+		StringBuilder sb = new StringBuilder("(&");
+        for (Filter filter : filters) {
+            sb.append(filter);
+        }
+        sb.append(")");
 		return sb.toString();
 	}
 }

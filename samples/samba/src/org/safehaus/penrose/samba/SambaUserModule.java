@@ -4,14 +4,12 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,10 +27,9 @@ public class SambaUserModule extends Module {
 
     public void init() throws Exception {
         log.debug("Initializing SambaUserModule.");
-        for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : getParameterNames()) {
             String value = getParameter(name);
-            log.debug(" - "+name+": "+value);
+            log.debug(" - " + name + ": " + value);
         }
     }
 
@@ -40,34 +37,32 @@ public class SambaUserModule extends Module {
 
         if (event.getReturnCode() != LDAPException.SUCCESS) return;
 
-        String dn = event.getDn();
+        BindRequest bindRequest = event.getRequest();
+        DN dn = bindRequest.getDn();
         log.debug("Checking NT Password and LM Password for "+dn+".");
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
 
-        PenroseSession session = event.getSession();
-        session.search(
-                dn,
-                "(objectClass=*)",
-                sc,
-                results);
+        Session session = event.getSession();
+        session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult)results.next();
-        Attributes attributes = entry.getAttributes();
+        SearchResult result = searchResponse.next();
+        Attributes attributes = result.getAttributes();
 
         if (attributes.get("sambaNTPassword") == null ||
                 attributes.get("sambaLMPassword") == null) {
 
             log.debug("Adding NT Password and LM Password.");
 
-            Collection modifications = new ArrayList();
+            Collection<Modification> modifications = new ArrayList<Modification>();
 
-            Attribute attribute = new BasicAttribute("userPassword", event.getPassword());
-
-            ModificationItem modification = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("userPassword", bindRequest.getPassword());
+            Modification modification = new Modification(Modification.REPLACE, attribute);
             modifications.add(modification);
 
             session.modify(dn, modifications);
@@ -78,15 +73,16 @@ public class SambaUserModule extends Module {
     }
 
     public boolean beforeAdd(AddEvent event) throws Exception {
-        Attributes attributes = event.getAttributes();
+        AddRequest request = event.getRequest();
 
-        String dn = event.getDn();
+        String dn = request.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String username = dn.substring(i+1, j);
 
         log.debug("Checking Samba attributes before adding \""+dn+"\".");
 
+        Attributes attributes = request.getAttributes();
         if (attributes.get("uidNumber") == null ||
                 attributes.get("gidNumber") == null ||
                 attributes.get("sambaSID") == null ||
@@ -142,20 +138,11 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Attribute set = new BasicAttribute("uidNumber", uid);
-            attributes.put(set);
-
-            set = new BasicAttribute("gidNumber", gid);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaSID", userSID);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaPrimaryGroupSID", groupSID);
-            attributes.put(set);
-
-            set = new BasicAttribute("sambaAcctFlags", flags);
-            attributes.put(set);
+            attributes.setValue("uidNumber", uid);
+            attributes.setValue("gidNumber", gid);
+            attributes.setValue("sambaSID", userSID);
+            attributes.setValue("sambaPrimaryGroupSID", groupSID);
+            attributes.setValue("sambaAcctFlags", flags);
         }
 
         return true;
@@ -163,28 +150,27 @@ public class SambaUserModule extends Module {
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
 
-        String dn = event.getDn();
-        int i = dn.indexOf("=");
-        int j = dn.indexOf(",", i);
-        String username = dn.substring(i+1, j);
+        ModifyRequest modifyRequest = event.getRequest();
+
+        DN dn = modifyRequest.getDn();
+        RDN rdn = dn.getRdn();
+        String username = (String)rdn.get("uid");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
 
-        session.search(
-                dn,
-                "(objectClass=*)",
-                sc,
-                results);
+        session.search(searchRequest, searchResponse);
 
-        SearchResult entry = (SearchResult)results.next();
-        Attributes attributes = entry.getAttributes();
+        SearchResult result = searchResponse.next();
+        Attributes attributes = result.getAttributes();
 
         if (attributes.get("uidNumber") == null ||
                 attributes.get("gidNumber") == null ||
@@ -242,26 +228,26 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Collection modifications = event.getModifications();
+            Collection<Modification> modifications = modifyRequest.getModifications();
 
-            Attribute attribute = new BasicAttribute("uidNumber", uid);
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("uidNumber", uid);
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("gidNumber", gid);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("gidNumber", gid);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaSID", userSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaSID", userSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaPrimaryGroupSID", groupSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaPrimaryGroupSID", groupSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaAcctFlags", flags);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaAcctFlags", flags);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 

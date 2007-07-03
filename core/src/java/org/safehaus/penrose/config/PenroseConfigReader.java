@@ -23,8 +23,6 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.ProxyEngine;
 
 import java.io.Reader;
 import java.io.FileReader;
@@ -74,18 +72,6 @@ public class PenroseConfigReader implements EntityResolver {
         digester.setClassLoader(cl);
 		digester.push(penroseConfig);
 		digester.parse(reader);
-
-        EngineConfig defaultEngineConfig = penroseConfig.getEngineConfig("DEFAULT");
-        if (defaultEngineConfig == null) {
-            defaultEngineConfig = new EngineConfig("DEFAULT", ProxyEngine.class.getName());
-            penroseConfig.addEngineConfig(defaultEngineConfig);
-        }
-
-        EngineConfig proxyEngineConfig = penroseConfig.getEngineConfig("PROXY");
-        if (proxyEngineConfig == null) {
-            proxyEngineConfig = new EngineConfig("PROXY", ProxyEngine.class.getName());
-            penroseConfig.addEngineConfig(proxyEngineConfig);
-        }
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {

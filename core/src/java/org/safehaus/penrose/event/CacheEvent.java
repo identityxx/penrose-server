@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 
 
 /**

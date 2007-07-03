@@ -1,0 +1,61 @@
+<project name="posix" default="build">
+
+    <target name="build">
+        <mkdir dir="target"/>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-group.c"/>
+            <arg line="-o target/test-group"/>
+        </exec>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-netgroup.c"/>
+            <arg line="-o target/test-netgroup"/>
+        </exec>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-rpc.c"/>
+            <arg line="-o target/test-rpc"/>
+        </exec>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-shadow.c"/>
+            <arg line="-o target/test-shadow"/>
+        </exec>
+        <exec executable="/usr/bin/gcc">
+            <arg line="src/test-user.c"/>
+            <arg line="-o target/test-user"/>
+        </exec>
+    </target>
+
+    <target name="test-group">
+        <exec executable="target/test-group">
+            <arg line="test"/>
+        </exec>
+    </target>
+
+    <target name="test-netgroup">
+        <exec executable="target/test-netgroup">
+            <arg line="nightfly"/>
+        </exec>
+    </target>
+
+    <target name="test-rpc">
+        <exec executable="target/test-rpc">
+            <arg line="nfs"/>
+        </exec>
+    </target>
+
+    <target name="test-shadow">
+        <exec executable="target/test-shadow">
+            <arg line="test"/>
+        </exec>
+    </target>
+
+    <target name="test-user">
+        <exec executable="target/test-user">
+            <arg line="test"/>
+        </exec>
+    </target>
+
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+
+</project>

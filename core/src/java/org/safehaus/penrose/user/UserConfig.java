@@ -17,35 +17,52 @@
  */
 package org.safehaus.penrose.user;
 
+import org.safehaus.penrose.ldap.DN;
+
+import java.util.Arrays;
+
 /**
  * @author Endi S. Dewata
  */
 public class UserConfig implements Cloneable {
 
-    private String dn;
-    private String password;
+    private DN dn;
+    private byte[] password;
 
     public UserConfig() {
     }
 
     public UserConfig(String dn, String password) {
-        this.dn = dn;
-        this.password = password;
+        this.dn = new DN(dn);
+        this.password = password.getBytes();
     }
 
-    public String getDn() {
+    public UserConfig(DN dn, String password) {
+        this.dn = dn;
+        this.password = password.getBytes();
+    }
+
+    public DN getDn() {
         return dn;
     }
 
     public void setDn(String dn) {
+        this.dn = new DN(dn);
+    }
+
+    public void setDn(DN dn) {
         this.dn = dn;
     }
 
-    public String getPassword() {
+    public byte[] getPassword() {
         return password;
     }
 
     public void setPassword(String password) {
+        this.password = password == null ? null : password.getBytes();
+    }
+
+    public void setPassword(byte[] password) {
         this.password = password;
     }
 
@@ -65,20 +82,20 @@ public class UserConfig implements Cloneable {
 
         UserConfig userConfig = (UserConfig)object;
         if (!equals(dn, userConfig.dn)) return false;
-        if (!equals(password, userConfig.password)) return false;
+        if (!Arrays.equals(password, userConfig.password)) return false;
 
         return true;
     }
 
     public void copy(UserConfig userConfig) {
         dn = userConfig.dn;
-        password = userConfig.password;
+        password = userConfig.password.clone();
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         UserConfig userConfig = new UserConfig();
         userConfig.copy(this);
-
         return userConfig;
     }
 }

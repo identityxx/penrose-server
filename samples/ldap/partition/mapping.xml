@@ -136,14 +136,11 @@
       <expression foreach="g.uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=LDAP,dc=Example,dc=com";
       </expression>
     </at>
     <source name="g">
       <source-name>groups</source-name>
-      <field name="cn" primaryKey="true">
-        <variable>rdn.cn</variable>
-      </field>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -151,7 +148,7 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
         <expression foreach="uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",dc=my-domain,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=my-domain,dc=com";
         </expression>
       </field>
     </source>
@@ -176,7 +173,7 @@ return "uid="+um.substring(i+1, j)+",dc=my-domain,dc=com";
       <expression foreach="g.uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=LDAP,dc=Example,dc=com";
       </expression>
     </at>
     <source name="g">
@@ -188,7 +185,7 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
         <expression foreach="uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",dc=my-domain,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=my-domain,dc=com";
         </expression>
       </field>
     </source>

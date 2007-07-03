@@ -17,6 +17,10 @@
  */
 package org.safehaus.penrose.interpreter;
 
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.apache.log4j.Logger;
+
 import java.util.TreeMap;
 import java.util.Map;
 
@@ -25,12 +29,20 @@ import java.util.Map;
  */
 public class InterpreterManager {
 
+    public Logger log = Logger.getLogger(getClass());
+
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+
     Map interpreters = new TreeMap();
 
     public InterpreterManager() {
     }
 
     public void init(InterpreterConfig interpreterConfig) {
+
+        log.debug("Initializing interpreter "+interpreterConfig.getName()+".");
+
         interpreters.put(interpreterConfig.getName(), interpreterConfig);
     }
 
@@ -47,5 +59,21 @@ public class InterpreterManager {
 
         Class clazz = Class.forName(interpreterConfig.getInterpreterClass());
         return (Interpreter)clazz.newInstance();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

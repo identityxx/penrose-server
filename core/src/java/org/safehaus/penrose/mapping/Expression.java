@@ -17,12 +17,10 @@
  */
 package org.safehaus.penrose.mapping;
 
-import java.io.Serializable;
-
 /**
  * @author Endi S. Dewata
  */
-public class Expression implements Cloneable, Serializable {
+public class Expression implements Cloneable {
 
     private String foreach;
     private String var;

@@ -1,143 +1,224 @@
-/**
- * Copyright (c) 2000-2006, Identyx Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- */
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connection.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.AttributeMapping;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceManager implements SourceManagerMBean {
+public class SourceManager {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
-    Map sources = new TreeMap();
+    public final static Collection<String> EMPTY_STRINGS = new ArrayList<String>();
+    public final static Collection<Source> EMPTY_SOURCES = new ArrayList<Source>();
+    public final static Collection<SourceRef> EMPTY_SOURCEREFS = new ArrayList<SourceRef>();
 
     private PenroseConfig penroseConfig;
-    private ConnectionManager connectionManager;
+    private PenroseContext penroseContext;
 
-    public SourceManager() {
-    }
+    public Map<String,Map<String,Source>> sources = new LinkedHashMap<String,Map<String,Source>>();
 
-    public void init() throws Exception {
-    }
+    public Map<String,Map<String,Map<String,SourceRef>>> sourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
+    public Map<String,Map<String,Map<String,SourceRef>>> primarySourceRefs = new LinkedHashMap<String,Map<String,Map<String,SourceRef>>>();
 
-    public Source create(Partition partition, SourceConfig sourceConfig) throws Exception {
+    public Source createSource(
+            Partition partition,
+            SourceConfig sourceConfig,
+            Connection connection
+    ) throws Exception {
 
-        Source source = new Source();
-        source.setSourceManager(this);
-        source.setPartition(partition);
-        source.setSourceConfig(sourceConfig);
-
-        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+        Source source = new Source(partition, sourceConfig);
         source.setConnection(connection);
-
-        source.init();
-
-        Map map = (Map)sources.get(partition.getName());
-        if (map == null) {
-            map = new TreeMap();
-            sources.put(partition.getName(), map);
-        }
-        map.put(sourceConfig.getName(), source);
 
         return source;
     }
 
-    public Source getSource(String partitionName, String sourceName) {
-        Map map = (Map)sources.get(partitionName);
+    public Source init(
+            Partition partition,
+            SourceConfig sourceConfig
+    ) throws Exception {
+
+        Source source = getSource(partition, sourceConfig.getName());
+        if (source != null) return source;
+
+        log.debug("Initializing source "+sourceConfig.getName()+".");
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+
+        if (connection == null) throw new Exception("Connection "+sourceConfig.getConnectionName()+" not found.");
+
+        source = createSource(partition, sourceConfig, connection);
+
+        addSource(partition, source);
+
+        return source;
+    }
+
+    public void init(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
+            init(partition, entryMapping, sourceMapping);
+        }
+
+        EntryMapping em = entryMapping;
+
+        while (em != null) {
+
+            String primarySourceName = null;
+            Collection<AttributeMapping> rdnAttributeMappings = em.getRdnAttributeMappings();
+            for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
+                String variable = rdnAttributeMapping.getVariable();
+                if (variable == null) continue;
+
+                int i = variable.indexOf('.');
+                if (i < 0) continue;
+
+                primarySourceName = variable.substring(0, i);
+                break;
+            }
+
+            if (primarySourceName != null) {
+                SourceRef primarySourceRef = getSourceRef(partition.getName(), em, primarySourceName);
+                if (primarySourceRef == null) throw new Exception("Unknown source "+primarySourceName);
+                
+                addPrimarySourceRef(partition.getName(), entryMapping, primarySourceRef);
+            }
+
+            em = partition.getParent(em);
+        }
+    }
+
+    public void init(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping) throws Exception {
+
+        SourceRef sourceRef = getSourceRef(partition.getName(), entryMapping, sourceMapping.getName());
+        if (sourceRef != null) return;
+
+        log.debug("Initializing source mapping "+sourceMapping.getName()+".");
+
+        Source source = getSource(partition, sourceMapping.getSourceName());
+
+        if (source == null) throw new Exception("Unknown source "+sourceMapping.getSourceName()+".");
+        
+        sourceRef = new SourceRef(source, sourceMapping);
+
+        addSourceRef(partition.getName(), entryMapping, sourceRef);
+    }
+
+    public void addSourceRef(String partitionName, EntryMapping entryMapping, SourceRef sourceRef) {
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partitionName);
+        if (entryMappings == null) {
+            entryMappings = new LinkedHashMap<String,Map<String,SourceRef>>();
+            sourceRefs.put(partitionName, entryMappings);
+        }
+
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
+        if (map == null) {
+            map = new LinkedHashMap<String,SourceRef>();
+            entryMappings.put(entryMapping.getId(), map);
+        }
+
+        map.put(sourceRef.getAlias(), sourceRef);
+    }
+
+    public void addPrimarySourceRef(String partitionName, EntryMapping entryMapping, SourceRef sourceRef) {
+
+        Map<String,Map<String,SourceRef>> primaryEntryMappings = primarySourceRefs.get(partitionName);
+        if (primaryEntryMappings == null) {
+            primaryEntryMappings = new LinkedHashMap<String,Map<String,SourceRef>>();
+            primarySourceRefs.put(partitionName, primaryEntryMappings);
+        }
+
+        Map<String,SourceRef> primaryMap = primaryEntryMappings.get(entryMapping.getId());
+        if (primaryMap == null) {
+            primaryMap = new LinkedHashMap<String,SourceRef>();
+            primaryEntryMappings.put(entryMapping.getId(), primaryMap);
+        }
+
+        primaryMap.put(sourceRef.getAlias(), sourceRef);
+    }
+
+    public Collection<SourceRef> getPrimarySourceRefs(String partitionName, EntryMapping entryMapping) {
+        Map<String,Map<String,SourceRef>> primaryEntryMappings = primarySourceRefs.get(partitionName);
+        if (primaryEntryMappings == null) return EMPTY_SOURCEREFS;
+
+        Map<String,SourceRef> primaryMap = primaryEntryMappings.get(entryMapping.getId());
+        if (primaryMap == null) return EMPTY_SOURCEREFS;
+
+        return primaryMap.values();
+    }
+
+    public Collection<String> getSourceRefNames(Partition partition, EntryMapping entryMapping) {
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partition.getName());
+        if (entryMappings == null) return EMPTY_STRINGS;
+
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
+        if (map == null) return EMPTY_STRINGS;
+
+        return new ArrayList<String>(map.keySet()); // return Serializable list
+    }
+
+    public Collection<SourceRef> getSourceRefs(Partition partition, EntryMapping entryMapping) {
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partition.getName());
+        if (entryMappings == null) return EMPTY_SOURCEREFS;
+
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
+        if (map == null) return EMPTY_SOURCEREFS;
+
+        return map.values();
+    }
+
+    public SourceRef getSourceRef(String partitionName, EntryMapping entryMapping, String sourceName) {
+        Map<String,Map<String,SourceRef>> entryMappings = sourceRefs.get(partitionName);
+        if (entryMappings == null) return null;
+
+        Map<String,SourceRef> map = entryMappings.get(entryMapping.getId());
         if (map == null) return null;
-        return (Source)map.get(sourceName);
+
+        return map.get(sourceName);
     }
 
-    public void clear() {
-        sources.clear();
-    }
-
-    public void start() throws Exception {
-        for (Iterator i=sources.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map)sources.get(partitionName);
-
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String sourceName = (String)j.next();
-                Source source = (Source)map.get(sourceName);
-                source.start();
-            }
+    public void addSource(Partition partition, Source source) {
+        Map<String,Source> map = sources.get(partition.getName());
+        if (map == null) {
+            map = new LinkedHashMap<String,Source>();
+            sources.put(partition.getName(), map);
         }
+        map.put(source.getName(), source);
     }
 
-    public void start(String partitionName, String sourceName) throws Exception {
-        Source source = getSource(partitionName, sourceName);
-        if (source == null) return;
-        source.start();
+    public Collection<String> getSourceNames(String partitionName) {
+        Map<String,Source> map = sources.get(partitionName);
+        if (map == null) return EMPTY_STRINGS;
+        return new ArrayList<String>(map.keySet()); // return Serializable list
     }
 
-    public void stop() throws Exception {
-        for (Iterator i=sources.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map)sources.get(partitionName);
-
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String sourceName = (String)j.next();
-                Source source = (Source)map.get(sourceName);
-                source.stop();
-            }
-        }
+    public Collection<Source> getSources(Partition partition) {
+        Map<String,Source> map = sources.get(partition.getName());
+        if (map == null) return EMPTY_SOURCES;
+        return map.values();
     }
 
-    public void stop(String partitionName, String sourceName) throws Exception {
-        Source source = getSource(partitionName, sourceName);
-        if (source == null) return;
-        source.stop();
+    public Source getSource(Partition partition, String sourceName) {
+        return getSource(partition.getName(), sourceName);
     }
 
-    public void restart() throws Exception {
-        stop();
-        start();
-    }
-
-    public void restart(String partitionName, String sourceName) throws Exception {
-        stop(partitionName, sourceName);
-        start(partitionName, sourceName);
-    }
-
-    public String getStatus(String partitionName, String sourceName) throws Exception {
-        Source source = getSource(partitionName, sourceName);
-        if (source == null) return null;
-        return source.getStatus();
-    }
-
-    public Collection getPartitionNames() {
-        return new ArrayList(sources.keySet()); // return Serializable list
-    }
-
-    public Collection getSourceNames(String partitionName) {
-        Map map = (Map)sources.get(partitionName);
-        if (map == null) return new ArrayList();
-        return new ArrayList(map.keySet()); // return Serializable list
+    public Source getSource(String partitionName, String sourceName) {
+        Map<String,Source> map = sources.get(partitionName);
+        if (map == null) return null;
+        return map.get(sourceName);
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -148,11 +229,11 @@ public class SourceManager implements SourceManagerMBean {
         this.penroseConfig = penroseConfig;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

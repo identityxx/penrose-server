@@ -8,6 +8,149 @@
     <property name="test.port" value="10389"/>
     <property name="test.bindDn" value="uid=admin,ou=system"/>
     <property name="test.password" value="secret"/>
+    <property name="test.baseDn" value="dc=JDBC,dc=Example,dc=com"/>
+
+    <target name="test-add-user">
+        <exec executable="ldapadd">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/add-user.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-delete-user">
+        <exec executable="ldapdelete">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="uid=test,ou=Users,${test.baseDn}"/>
+        </exec>
+    </target>
+
+    <target name="test-modify-user">
+        <exec executable="ldapmodify">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modify-user.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-modrdn-user1">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-r"/>
+            <arg line="uid=test,ou=Users,${test.baseDn}"/>
+            <arg line="uid=newTest"/>
+        </exec>
+    </target>
+
+    <target name="test-modrdn-user2">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-r"/>
+            <arg line="uid=newTest,ou=Users,${test.baseDn}"/>
+            <arg line="uid=test"/>
+        </exec>
+    </target>
+
+    <target name="test-search-user">
+        <exec executable="ldapsearch">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-s sub"/>
+            <arg line="-b ou=Users,${test.baseDn}"/>
+        </exec>
+    </target>
+
+    <target name="test-add-group">
+        <exec executable="ldapadd">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/add-group.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-delete-group">
+        <exec executable="ldapdelete">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="cn=test,ou=Groups,${test.baseDn}"/>
+        </exec>
+    </target>
+
+    <target name="test-modify-group">
+        <exec executable="ldapmodify">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-f ldif/modify-group.ldif"/>
+        </exec>
+    </target>
+
+    <target name="test-modrdn-group1">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-r"/>
+            <arg line="cn=test,ou=Groups,${test.baseDn}"/>
+            <arg line="cn=newTest"/>
+        </exec>
+    </target>
+
+    <target name="test-modrdn-group2">
+        <exec executable="ldapmodrdn">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-r"/>
+            <arg line="cn=newTest,ou=Groups,${test.baseDn}"/>
+            <arg line="cn=test"/>
+        </exec>
+    </target>
+
+    <target name="test-search-group">
+        <exec executable="ldapsearch">
+            <arg line="-h ${test.hostname}"/>
+            <arg line="-p ${test.port}"/>
+            <arg line="-D ${test.bindDn}"/>
+            <arg line="-w ${test.password}"/>
+            <arg line="-x"/>
+            <arg line="-s sub"/>
+            <arg line="-b ou=Groups,${test.baseDn}"/>
+        </exec>
+    </target>
 
     <target name="test-search">
         <exec executable="ldapsearch">
@@ -17,40 +160,7 @@
             <arg line="-w ${test.password}"/>
             <arg line="-x"/>
             <arg line="-s sub"/>
-            <arg line="-b dc=JDBC,dc=Example,dc=com"/>
-        </exec>
-    </target>
-
-    <target name="test-modify">
-        <exec executable="ldapmodify">
-            <arg line="-h ${test.hostname}"/>
-            <arg line="-p ${test.port}"/>
-            <arg line="-D ${test.bindDn}"/>
-            <arg line="-w ${test.password}"/>
-            <arg line="-x"/>
-            <arg line="-f ldif/modify.ldif"/>
-        </exec>
-    </target>
-
-    <target name="test-delete">
-        <exec executable="ldapdelete">
-            <arg line="-h ${test.hostname}"/>
-            <arg line="-p ${test.port}"/>
-            <arg line="-D ${test.bindDn}"/>
-            <arg line="-w ${test.password}"/>
-            <arg line="-x"/>
-            <arg line="-f ldif/delete.ldif"/>
-        </exec>
-    </target>
-
-    <target name="test-add">
-        <exec executable="ldapadd">
-            <arg line="-h ${test.hostname}"/>
-            <arg line="-p ${test.port}"/>
-            <arg line="-D ${test.bindDn}"/>
-            <arg line="-w ${test.password}"/>
-            <arg line="-x"/>
-            <arg line="-f ldif/add.ldif"/>
+            <arg line="-b ${test.baseDn}"/>
         </exec>
     </target>
 

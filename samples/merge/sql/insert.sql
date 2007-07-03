@@ -9,3 +9,10 @@ insert into users2 (username, firstName, lastName, encPassword, password) values
 insert into users2 (username, firstName, lastName, encPassword, password) values ('ajones', 'Anthony', 'Jones', 'e7beca51ea8907ea427f538c73638058401ff795', '4j0n3s');
 insert into users2 (username, firstName, lastName, encPassword, password) values ('smoore', 'Samantha', 'Moore', 'ed7369e175739f26aa2f421a67e3d8a66d753bdd', 'sm00r3');
 insert into users2 (username, firstName, lastName, encPassword, password) values ('amiller', 'Ashley', 'Taylor', '545308e67a464b01c7b56d12b21b46d41e88d99b', 'at4yl0r');
+
+insert into usergroups values ('manager', 'jstockton');
+insert into usergroups values ('administrator', 'swhite');
+insert into usergroups values ('user', 'jstockton');
+insert into usergroups values ('user', 'swhite');
+insert into usergroups values ('user', 'alange');
+insert into usergroups values ('user', 'lwalker');

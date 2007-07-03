@@ -346,15 +346,12 @@ if (method == null) {
     <source name="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
-        <variable>cn</variable>
+        <variable>g.groupname</variable>
       </field>
       <field name="username">
         <variable>memberUid</variable>
       </field>
     </source>
-    <relationship>
-      <expression>g.groupname = ug.groupname</expression>
-    </relationship>
   </entry>
 
 </mapping>

@@ -18,14 +18,15 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.Row;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.TreeMap;
-import java.util.Map;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -34,21 +35,20 @@ public class SchemaManager implements SchemaManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Map schemas = new TreeMap();
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+
+    private Map<String,Schema> schemas = new TreeMap<String,Schema>();
     private Schema allSchema = new Schema();
 
-    public SchemaManager() {
+    public SchemaManager() throws Exception {
     }
 
-    public void load(String home, Collection schemaConfigs) throws Exception {
-
-        for (Iterator i=schemaConfigs.iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
-            load(home, schemaConfig);
-        }
+    public void init(SchemaConfig schemaConfig) throws Exception {
+        init(penroseConfig.getHome(), schemaConfig);
     }
 
-    public void load(String home, SchemaConfig schemaConfig) throws Exception {
+    public void init(String home, SchemaConfig schemaConfig) throws Exception {
 
         Schema schema = getSchema(schemaConfig.getName());
         if (schema != null) return;
@@ -65,7 +65,7 @@ public class SchemaManager implements SchemaManagerMBean {
     }
 
     public void removeSchema(String name) {
-        Schema schema = (Schema)schemas.remove(name);
+        Schema schema = schemas.remove(name);
         allSchema.remove(schema);
     }
 
@@ -75,26 +75,18 @@ public class SchemaManager implements SchemaManagerMBean {
     }
 
     public Schema getSchema(String name) {
-        return (Schema)schemas.get(name);
+        return schemas.get(name);
     }
 
     public Schema getAllSchema() {
         return allSchema;
     }
 
-    public String normalize(String dn) throws Exception {
-        return allSchema.normalize(dn);
-    }
-
-    public Row normalize(Row row) throws Exception {
-        return allSchema.normalize(row);
-    }
-
-    public Collection getObjectClasses() {
+    public Collection<ObjectClass> getObjectClasses() {
         return allSchema.getObjectClasses();
     }
 
-    public Collection getObjectClassNames() {
+    public Collection<String> getObjectClassNames() {
         return allSchema.getObjectClassNames();
     }
 
@@ -102,23 +94,23 @@ public class SchemaManager implements SchemaManagerMBean {
         return allSchema.getObjectClass(ocName);
     }
 
-    public Collection getAllObjectClasses(String ocName) {
+    public Collection<ObjectClass> getAllObjectClasses(String ocName) {
         return allSchema.getAllObjectClasses(ocName);
     }
     
-    public Collection getAllObjectClassNames(String ocName) {
+    public Collection<String> getAllObjectClassNames(String ocName) {
         return allSchema.getAllObjectClassNames(ocName);
     }
 
-    public Collection getObjectClasses(EntryMapping entryMapping) {
+    public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
         return allSchema.getObjectClasses(entryMapping);
     }
 
-    public Collection getAttributeTypes() {
+    public Collection<AttributeType> getAttributeTypes() {
         return allSchema.getAttributeTypes();
     }
 
-    public Collection getAttributeTypeNames() {
+    public Collection<String> getAttributeTypeNames() {
         return allSchema.getAttributeTypeNames();
     }
 
@@ -126,11 +118,113 @@ public class SchemaManager implements SchemaManagerMBean {
         return allSchema.getAttributeType(attributeName);
     }
 
-    public String getNormalizedAttributeName(String attributeName) {
+    public String normalizeAttributeName(String attributeName) {
 
         AttributeType attributeType = getAttributeType(attributeName);
         if (attributeType == null) return attributeName;
 
         return attributeType.getName();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public RDN normalize(RDN rdn) {
+        RDNBuilder rb = new RDNBuilder();
+
+        for (String name : rdn.getNames()) {
+            Object value = rdn.get(name);
+            rb.set(normalizeAttributeName(name), value);
+        }
+
+        return rb.toRdn();
+    }
+
+    public DN normalize(DN dn) {
+        DNBuilder db = new DNBuilder();
+        RDNBuilder rb = new RDNBuilder();
+
+        for (RDN rdn : dn.getRdns()) {
+
+            rb.clear();
+            for (String name : rdn.getNames()) {
+                Object value = rdn.get(name);
+                rb.set(normalizeAttributeName(name), value);
+            }
+            db.append(rb.toRdn());
+        }
+
+        return db.toDn();
+    }
+
+    public Collection<String> normalize(Collection<String> attributeNames) {
+        if (attributeNames == null) return null;
+
+        Collection<String> list = new ArrayList<String>();
+        for (String name : attributeNames) {
+            list.add(normalizeAttributeName(name));
+        }
+
+        return list;
+    }
+
+    public Attributes normalize(Attributes attributes) throws Exception{
+
+        Collection<String> names = new ArrayList<String>(attributes.getNames());
+
+        for (String name : names) {
+
+            Collection values = attributes.getValues(name);
+            attributes.remove(name);
+
+            name = normalizeAttributeName(name);
+            attributes.setValues(name, values);
+        }
+
+        return attributes;
+    }
+
+    public Collection<Modification> normalizeModifications(Collection<Modification> modifications) throws Exception {
+        Collection<Modification> normalizedModifications = new ArrayList<Modification>();
+
+        for (Modification modification : modifications) {
+
+            int type = modification.getType();
+            Attribute attribute = modification.getAttribute();
+            String name = normalizeAttributeName(attribute.getName());
+
+            switch (type) {
+                case Modification.ADD:
+                    log.debug("add: " + name);
+                    break;
+                case Modification.DELETE:
+                    log.debug("delete: " + name);
+                    break;
+                case Modification.REPLACE:
+                    log.debug("replace: " + name);
+                    break;
+            }
+
+            Attribute normalizedAttribute = new Attribute(name);
+            normalizedAttribute.addValues(attribute.getValues());
+
+            Modification normalizedModification = new Modification(type, normalizedAttribute);
+            normalizedModifications.add(normalizedModification);
+        }
+
+        return normalizedModifications;
     }
 }

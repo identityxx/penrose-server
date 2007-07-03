@@ -18,12 +18,11 @@
 package org.safehaus.penrose.engine;
 
 import java.util.*;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class EngineConfig implements Cloneable, Serializable {
+public class EngineConfig implements Cloneable {
 
     public final static String ALLOW_CONCURRENCY   = "allowConcurrency";
 
@@ -36,7 +35,7 @@ public class EngineConfig implements Cloneable, Serializable {
     private String engineClass = "org.safehaus.penrose.engine.DefaultEngine";
     private String description;
 
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     public EngineConfig() {
     }
@@ -55,19 +54,19 @@ public class EngineConfig implements Cloneable, Serializable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.setProperty(name, value);
+        parameters.put(name, value);
     }
 
     public void removeParameter(String name) {
         parameters.remove(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
     public String getName() {
@@ -111,7 +110,8 @@ public class EngineConfig implements Cloneable, Serializable {
         return true;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         EngineConfig engineConfig = new EngineConfig();
         engineConfig.copy(this);
         return engineConfig;

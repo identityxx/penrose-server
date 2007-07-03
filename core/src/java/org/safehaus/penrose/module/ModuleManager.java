@@ -17,9 +17,12 @@
  */
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -32,31 +35,29 @@ public class ModuleManager implements ModuleManagerMBean {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    private Penrose penrose;
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
-    private Map modules = new LinkedHashMap();
+    private Map<String,Map<String,Module>> modules = new LinkedHashMap<String,Map<String,Module>>();
 
-    public void create(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public void init(Partition partition, ModuleConfig moduleConfig) throws Exception {
 
         Module module = getModule(partition.getName(), moduleConfig.getName());
-        if (module != null) {
-            log.debug("Module "+moduleConfig.getName()+" alread exists");
-            return;
-        }
+        if (module != null) return;
         
-        if (!moduleConfig.isEnabled()) {
-            log.debug("Module "+moduleConfig.getName()+" is disabled");
-            return;
-        }
+        if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Initializing module "+moduleConfig.getName());
+        log.debug("Initializing module "+moduleConfig.getName()+".");
         
         Class clazz = Class.forName(moduleConfig.getModuleClass());
         module = (Module)clazz.newInstance();
 
         module.setModuleConfig(moduleConfig);
         module.setPartition(partition);
-        module.setPenrose(penrose);
+        module.setPenroseConfig(penroseConfig);
+        module.setPenroseContext(penroseContext);
+        module.setSessionContext(sessionContext);
         module.init();
 
         addModule(partition.getName(), module);
@@ -65,17 +66,15 @@ public class ModuleManager implements ModuleManagerMBean {
     public void start() throws Exception {
         log.debug("Starting modules...");
 
-        for (Iterator i=modules.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map)modules.get(partitionName);
+        for (String partitionName : modules.keySet()) {
+            Map<String, Module> map = modules.get(partitionName);
 
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String moduleName = (String)j.next();
-                Module module = (Module)map.get(moduleName);
+            for (String moduleName : map.keySet()) {
+                Module module = map.get(moduleName);
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
                 if (!moduleConfig.isEnabled()) {
-                    log.debug("Module "+moduleConfig.getName()+" is disabled");
+                    log.debug("Module " + moduleConfig.getName() + " is disabled");
                     continue;
                 }
 
@@ -92,7 +91,7 @@ public class ModuleManager implements ModuleManagerMBean {
         if (module == null) {
             log.debug("Module "+moduleName+" not found");
             return;
-         }
+        }
 
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) {
@@ -107,17 +106,15 @@ public class ModuleManager implements ModuleManagerMBean {
     public void stop() throws Exception {
         log.debug("Stopping modules...");
 
-        for (Iterator i=modules.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map)modules.get(partitionName);
+        for (String partitionName : modules.keySet()) {
+            Map<String,Module> map = modules.get(partitionName);
 
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String moduleName = (String)j.next();
-                Module module = (Module)map.get(moduleName);
+            for (String moduleName : map.keySet()) {
+                Module module = map.get(moduleName);
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
                 if (!moduleConfig.isEnabled()) {
-                    log.debug("Module "+moduleConfig.getName()+" is disabled");
+                    log.debug("Module " + moduleConfig.getName() + " is disabled");
                     continue;
                 }
 
@@ -146,16 +143,6 @@ public class ModuleManager implements ModuleManagerMBean {
         module.stop();
     }
 
-    public void restart() throws Exception {
-        stop();
-        start();
-    }
-
-    public void restart(String partitionName, String moduleName) throws Exception {
-        stop(partitionName, moduleName);
-        start(partitionName, moduleName);
-    }
-
     public String getStatus(String partitionName, String moduleName) throws Exception {
         Module module = getModule(partitionName, moduleName);
         if (module == null) throw new Exception(moduleName +" not found.");
@@ -163,9 +150,9 @@ public class ModuleManager implements ModuleManagerMBean {
     }
 
     public void addModule(String partitionName, Module module) {
-        Map map = (Map)modules.get(partitionName);
+        Map<String,Module> map = modules.get(partitionName);
         if (map == null) {
-            map = new TreeMap();
+            map = new TreeMap<String,Module>();
             modules.put(partitionName, map);
         }
         map.put(module.getName(), module);
@@ -177,20 +164,14 @@ public class ModuleManager implements ModuleManagerMBean {
         return (Module)map.get(moduleName);
     }
 
-    public ModuleConfig getModuleConfig(String partitionName, String name) {
-        Module module = getModule(partitionName, name);
-        if (module == null) return null;
-        return module.getModuleConfig();
-    }
-    
-    public Collection getPartitionNames() {
-        return new ArrayList(modules.keySet()); // return Serializable list
+    public Collection<String> getPartitionNames() {
+        return new ArrayList<String>(modules.keySet()); // return Serializable list
     }
 
-    public Collection getModuleNames(String partitionName) {
-        Map map = (Map)modules.get(partitionName);
-        if (map == null) return new ArrayList();
-        return new ArrayList(map.keySet()); // return Serializable list
+    public Collection<String> getModuleNames(String partitionName) {
+        Map<String,Module> map = modules.get(partitionName);
+        if (map == null) return new ArrayList<String>();
+        return new ArrayList<String>(map.keySet()); // return Serializable list
     }
 
     public Module removeModule(String partitionName, String moduleName) {
@@ -203,35 +184,25 @@ public class ModuleManager implements ModuleManagerMBean {
         modules.clear();
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
-    public Collection getModules(String dn) throws Exception {
+    public Collection<Module> getModules(DN dn) throws Exception {
 
         //log.debug("Finding matching modules for \""+dn+"\".");
 
-        Collection list = new ArrayList();
+        Collection<Module> list = new ArrayList<Module>();
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
-        Partition partition = partitionManager.getPartitionByDn(dn);
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partition partition = partitionManager.getPartition(dn);
         
         if (partition == null) return list;
 
-        for (Iterator i = partition.getModuleMappings().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
+        for (Collection<ModuleMapping> moduleMappings : partition.getModuleMappings()) {
 
-            for (Iterator j=c.iterator(); j.hasNext(); ) {
-                ModuleMapping moduleMapping = (ModuleMapping)j.next();
+            for (Iterator j = moduleMappings.iterator(); j.hasNext();) {
+                ModuleMapping moduleMapping = (ModuleMapping) j.next();
                 if (!moduleMapping.match(dn)) continue;
 
                 String moduleName = moduleMapping.getModuleName();
                 Module module = getModule(partition.getName(), moduleName);
-                if (!Module.STARTED.equals(module.getStatus())) continue;
 
                 //log.debug(" - "+moduleName);
                 list.add(module);
@@ -243,4 +214,27 @@ public class ModuleManager implements ModuleManagerMBean {
         return list;
     }
 
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
+    }
 }

@@ -19,9 +19,12 @@ package org.safehaus.penrose.operationalAttribute;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 
-import javax.naming.directory.*;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,24 +43,25 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Adding "+event.getDn()+" at "+timestamp);
+        AddRequest request = event.getRequest();
+        System.out.println("#### Adding "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        Session session = event.getSession();
+        DN bindDn = session.getBindDn();
 
-        Attributes attributes = event.getAttributes();
+        Attributes attributes = request.getAttributes();
 
-        Attribute creatorsName = new BasicAttribute("creatorsName", bindDn);
-        attributes.put(creatorsName);
+        if (bindDn != null) {
+            attributes.setValue("creatorsName", bindDn.toString());
+        }
 
-        Attribute createTimestamp = new BasicAttribute("createTimestamp", timestamp);
-        attributes.put(createTimestamp);
+        attributes.setValue("createTimestamp", timestamp);
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        attributes.put(modifiersName);
+        if (bindDn != null) {
+            attributes.setValue("modifiersName", bindDn.toString());
+        }
 
-        Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        attributes.put(modifyTimestamp);
+        attributes.setValue("modifyTimestamp", timestamp);
 
         return true;
     }
@@ -67,19 +71,22 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Modifying "+event.getDn()+" at "+timestamp);
+        ModifyRequest request = event.getRequest();
+        System.out.println("#### Modifying "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        Session session = event.getSession();
+        DN bindDn = session.getBindDn();
 
-        Collection modifications = event.getModifications();
+        Collection<Modification> modifications = request.getModifications();
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
-        modifications.add(mi);
+        if (bindDn != null) {
+            Attribute modifiersName = new Attribute("modifiersName", bindDn.toString());
+            Modification mi = new Modification(Modification.REPLACE, modifiersName);
+            modifications.add(mi);
+        }
 
-        Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
+        Attribute modifyTimestamp = new Attribute("modifyTimestamp", timestamp);
+        Modification mi = new Modification(Modification.REPLACE, modifyTimestamp);
         modifications.add(mi);
 
         return true;
@@ -90,22 +97,25 @@ public class OperationalAttributeModule extends Module {
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        System.out.println("#### Renaming "+event.getDn()+" at "+timestamp);
+        ModRdnRequest request = event.getRequest();
+        System.out.println("#### Renaming "+request.getDn()+" at "+timestamp);
 
-        PenroseSession session = event.getSession();
-        String bindDn = session.getBindDn();
+        Session session = event.getSession();
+        DN bindDn = session.getBindDn();
 
-        Collection modifications = new ArrayList();
+        Collection<Modification> modifications = new ArrayList<Modification>();
 
-        Attribute modifiersName = new BasicAttribute("modifiersName", bindDn);
-        ModificationItem mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifiersName);
+        if (bindDn != null) {
+            Attribute modifiersName = new Attribute("modifiersName", bindDn.toString());
+            Modification mi = new Modification(Modification.REPLACE, modifiersName);
+            modifications.add(mi);
+        }
+
+        Attribute modifyTimestamp = new Attribute("modifyTimestamp", timestamp);
+        Modification mi = new Modification(Modification.REPLACE, modifyTimestamp);
         modifications.add(mi);
 
-        Attribute modifyTimestamp = new BasicAttribute("modifyTimestamp", timestamp);
-        mi = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, modifyTimestamp);
-        modifications.add(mi);
-
-        String dn = event.getDn();
+        DN dn = request.getDn();
         session.modify(dn, modifications);
     }
 }

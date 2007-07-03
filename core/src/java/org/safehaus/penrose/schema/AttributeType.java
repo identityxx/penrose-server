@@ -38,7 +38,7 @@ public class AttributeType implements Cloneable, Comparable {
 	/**
 	 * Name.
 	 */
-	public Collection names = new ArrayList();
+	public Collection<String> names = new ArrayList<String>();
 	
 	/**
 	 * Description.
@@ -95,8 +95,9 @@ public class AttributeType implements Cloneable, Comparable {
 	 * Default: userApplications.
 	 */
 	public String usage = USER_APPLICATIONS;
-	
-	public boolean isCollective() {
+    public boolean operational;
+
+    public boolean isCollective() {
 		return collective;
 	}
 
@@ -130,7 +131,7 @@ public class AttributeType implements Cloneable, Comparable {
 
     public String getName() {
     	if (names.isEmpty()) return null;
-        return (String)names.iterator().next();
+        return names.iterator().next();
     }
 
     public void setName(String name) {
@@ -142,12 +143,14 @@ public class AttributeType implements Cloneable, Comparable {
         names.add(name);
     }
 
-	public Collection getNames() {
+	public Collection<String> getNames() {
 		return names;
 	}
 
-	public void setNames(Collection names) {
-		this.names = names;
+	public void setNames(Collection<String> names) {
+        if (this.names == names) return;
+        this.names.clear();
+        this.names.addAll(names);
 	}
 
     public void removeNames() {
@@ -208,7 +211,8 @@ public class AttributeType implements Cloneable, Comparable {
 
 	public void setUsage(String usage) {
 		this.usage = usage;
-	}
+        operational = DIRECTORY_OPERATION.equals(usage);
+    }
 
 	public boolean isObsolete() {
 		return obsolete;
@@ -219,19 +223,7 @@ public class AttributeType implements Cloneable, Comparable {
 	}
 
     public int hashCode() {
-        return (oid == null ? 0 : oid.hashCode()) +
-                (names == null ? 0 : names.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (obsolete ? 0 : 1) +
-                (superClass == null ? 0 : superClass.hashCode()) +
-                (equality == null ? 0 : equality.hashCode()) +
-                (ordering == null ? 0 : ordering.hashCode()) +
-                (substring == null ? 0 : substring.hashCode()) +
-                (syntax == null ? 0 : syntax.hashCode()) +
-                (singleValued ? 0 : 1) +
-                (collective ? 0 : 1) +
-                (modifiable ? 0 : 1) +
-                (usage == null ? 0 : usage.hashCode());
+        return oid == null ? 0 : oid.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -279,9 +271,11 @@ public class AttributeType implements Cloneable, Comparable {
         collective = at.collective;
         modifiable = at.modifiable;
         usage = at.usage;
+        operational = at.operational;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         AttributeType at = new AttributeType();
         at.copy(this);
         return at;
@@ -313,9 +307,8 @@ public class AttributeType implements Cloneable, Comparable {
         } else if (names.size() > 1) {
             if (multiLine) out.print("   ");
             out.print(" NAME ( ");
-            for (Iterator i=names.iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
-                out.print("'"+name+"' ");
+            for (String name : names) {
+                out.print("'" + name + "' ");
             }
             out.print(")");
             if (multiLine) out.println();
@@ -393,12 +386,12 @@ public class AttributeType implements Cloneable, Comparable {
     }
 
     public static String escape(String s) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int i=0; i<s.length(); i++) {
             char c = s.charAt(i);
             if (c == '\'' || c == '\\') {
-                sb.append("\\");
+                sb.append('\\');
                 sb.append(toHex(c));
             } else {
                 sb.append(c);
@@ -410,6 +403,14 @@ public class AttributeType implements Cloneable, Comparable {
 
     public static String toHex(char c) {
         String s = Integer.toHexString(c);
-        return s.length() == 1 ? "0"+s : s;
+        return s.length() == 1 ? '0'+s : s;
+    }
+
+    public boolean isOperational() {
+        return operational;
+    }
+
+    public void setOperational(boolean operational) {
+        this.operational = operational;
     }
 }

@@ -18,9 +18,15 @@
 package org.safehaus.penrose.event;
 
 import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.SessionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.ArrayList;
 
 /**
@@ -28,23 +34,36 @@ import java.util.ArrayList;
  */
 public class EventManager {
 
-    private ModuleManager moduleManager;
+    Logger log = LoggerFactory.getLogger(getClass());
 
-    public Collection addListeners = new ArrayList();
-    public Collection bindListeners = new ArrayList();
-    public Collection compareListeners = new ArrayList();
-    public Collection deleteListeners = new ArrayList();
-    public Collection modifyListeners = new ArrayList();
-    public Collection modrdnListeners = new ArrayList();
-    public Collection searchListeners = new ArrayList();
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
-    public boolean postEvent(String dn, AddEvent event) throws Exception {
+    public Collection<AddListener> addListeners         = new ArrayList<AddListener>();
+    public Collection<BindListener> bindListeners       = new ArrayList<BindListener>();
+    public Collection<CompareListener> compareListeners = new ArrayList<CompareListener>();
+    public Collection<DeleteListener> deleteListeners   = new ArrayList<DeleteListener>();
+    public Collection<ModifyListener> modifyListeners   = new ArrayList<ModifyListener>();
+    public Collection<ModRdnListener> modrdnListeners   = new ArrayList<ModRdnListener>();
+    public Collection<SearchListener> searchListeners   = new ArrayList<SearchListener>();
+    public Collection<UnbindListener> unbindListeners   = new ArrayList<UnbindListener>();
 
-        Collection listeners = moduleManager.getModules(dn);
+    public boolean postEvent(AddEvent event) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        AddRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+
+        Collection<AddListener> listeners = new ArrayList<AddListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(addListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            AddListener listener = (AddListener)i.next();
+        for (AddListener listener : listeners) {
 
             switch (event.getType()) {
                 case AddEvent.BEFORE_ADD:
@@ -61,13 +80,20 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, BindEvent event) throws Exception {
+    public boolean postEvent(BindEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        BindRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<BindListener> listeners = new ArrayList<BindListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(bindListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            BindListener listener = (BindListener)i.next();
+        for (BindListener listener : listeners) {
 
             switch (event.getType()) {
                 case BindEvent.BEFORE_BIND:
@@ -78,28 +104,26 @@ public class EventManager {
                 case BindEvent.AFTER_BIND:
                     listener.afterBind(event);
                     break;
-
-                case BindEvent.BEFORE_UNBIND:
-                    b = listener.beforeUnbind(event);
-                    if (!b) return false;
-                    break;
-
-                case BindEvent.AFTER_UNBIND:
-                    listener.afterUnbind((BindEvent)event);
-                    break;
             }
         }
 
         return true;
     }
 
-    public boolean postEvent(String dn, CompareEvent event) throws Exception {
+    public boolean postEvent(CompareEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        CompareRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<CompareListener> listeners = new ArrayList<CompareListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(compareListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            CompareListener listener = (CompareListener)i.next();
+        for (CompareListener listener : listeners) {
 
             switch (event.getType()) {
                 case CompareEvent.BEFORE_COMPARE:
@@ -116,22 +140,29 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, DeleteEvent event) throws Exception {
+    public boolean postEvent(DeleteEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        DeleteRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(deleteListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            DeleteListener listener = (DeleteListener)i.next();
+        for (DeleteListener listener : listeners) {
 
             switch (event.getType()) {
                 case DeleteEvent.BEFORE_DELETE:
-                    boolean b = listener.beforeDelete((DeleteEvent)event);
+                    boolean b = listener.beforeDelete(event);
                     if (!b) return false;
                     break;
 
                 case DeleteEvent.AFTER_DELETE:
-                    listener.afterDelete((DeleteEvent)event);
+                    listener.afterDelete(event);
                     break;
             }
         }
@@ -139,59 +170,80 @@ public class EventManager {
         return true;
     }
 
-    public boolean postEvent(String dn, ModifyEvent event) throws Exception {
+    public boolean postEvent(ModifyEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        ModifyRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(modifyListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            ModifyListener listener = (ModifyListener)i.next();
+        for (ModifyListener listener : listeners) {
 
             switch (event.getType()) {
-            case ModifyEvent.BEFORE_MODIFY:
-                boolean b = listener.beforeModify(event);
-                if (!b) return false;
-                break;
+                case ModifyEvent.BEFORE_MODIFY:
+                    boolean b = listener.beforeModify(event);
+                    if (!b) return false;
+                    break;
 
-            case ModifyEvent.AFTER_MODIFY:
-                listener.afterModify(event);
-                break;
+                case ModifyEvent.AFTER_MODIFY:
+                    listener.afterModify(event);
+                    break;
             }
         }
 
         return true;
     }
 
-    public boolean postEvent(String dn, ModRdnEvent event) throws Exception {
+    public boolean postEvent(ModRdnEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        ModRdnRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(modrdnListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            ModRdnListener listener = (ModRdnListener)i.next();
+        for (ModRdnListener listener : listeners) {
 
             switch (event.getType()) {
-            case ModRdnEvent.BEFORE_MODRDN:
-                boolean b = listener.beforeModRdn(event);
-                if (!b) return false;
-                break;
+                case ModRdnEvent.BEFORE_MODRDN:
+                    boolean b = listener.beforeModRdn(event);
+                    if (!b) return false;
+                    break;
 
-            case ModRdnEvent.AFTER_MODRDN:
-                listener.afterModRdn(event);
-                break;
+                case ModRdnEvent.AFTER_MODRDN:
+                    listener.afterModRdn(event);
+                    break;
             }
         }
 
         return true;
     }
 
-    public boolean postEvent(String dn, SearchEvent event) throws Exception {
+    public boolean postEvent(SearchEvent event) throws Exception {
 
-        Collection listeners = moduleManager.getModules(dn);
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        SearchRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<SearchListener> listeners = new ArrayList<SearchListener>();
+        listeners.addAll(moduleManager.getModules(dn));
         listeners.addAll(searchListeners);
 
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            SearchListener listener = (SearchListener)i.next();
+        for (SearchListener listener : listeners) {
 
             switch (event.getType()) {
                 case SearchEvent.BEFORE_SEARCH:
@@ -208,12 +260,34 @@ public class EventManager {
         return true;
     }
 
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
+    public boolean postEvent(UnbindEvent event) throws Exception {
 
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Firing "+event+" event.");
+
+        UnbindRequest request = event.getRequest();
+        DN dn = request.getDn();
+
+        ModuleManager moduleManager = sessionContext.getModuleManager();
+        Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
+        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(unbindListeners);
+
+        for (UnbindListener listener : listeners) {
+
+            switch (event.getType()) {
+                case UnbindEvent.BEFORE_UNBIND:
+                    boolean b = listener.beforeUnbind(event);
+                    if (!b) return false;
+                    break;
+
+                case UnbindEvent.AFTER_UNBIND:
+                    listener.afterUnbind(event);
+                    break;
+            }
+        }
+
+        return true;
     }
 
     public void addAddListener(AddListener listener) {
@@ -230,6 +304,14 @@ public class EventManager {
 
     public void removeBindListener(BindListener listener) {
         bindListeners.remove(listener);
+    }
+
+    public void addUnbindListener(UnbindListener listener) {
+        if (!unbindListeners.contains(listener)) unbindListeners.add(listener);
+    }
+
+    public void removeUnbindListener(UnbindListener listener) {
+        unbindListeners.remove(listener);
     }
 
     public void addCompareListener(CompareListener listener) {
@@ -272,4 +354,27 @@ public class EventManager {
         searchListeners.remove(listener);
     }
 
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
+    }
 }

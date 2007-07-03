@@ -12,10 +12,6 @@
       <param-value>ou=Users,dc=my-domain,dc=com</param-value>
     </parameter>
     <parameter>
-      <param-name>scope</param-name>
-      <param-value>SUBTREE</param-value>
-    </parameter>
-    <parameter>
       <param-name>filter</param-name>
       <param-value>(objectClass=*)</param-value>
     </parameter>
@@ -26,10 +22,6 @@
     <parameter>
       <param-name>baseDn</param-name>
       <param-value>ou=Groups,dc=my-domain,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>scope</param-name>
-      <param-value>SUBTREE</param-value>
     </parameter>
     <parameter>
       <param-name>filter</param-name>

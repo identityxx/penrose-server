@@ -297,7 +297,7 @@ return BinaryUtil.encode("BigInteger", bytes);
       </field>
     </source>
 
-    <source name="m" required="false">
+    <source name="m">
       <source-name>relationships</source-name>
       <field name="manager">
         <expression>
@@ -308,14 +308,14 @@ return manager.substring(i+1, j);
         </expression>
       </field>
       <field name="report">
-        <variable>username</variable>
+        <variable>u.username</variable>
       </field>
     </source>
 
-    <source name="r" required="false">
+    <source name="r">
       <source-name>relationships</source-name>
       <field name="manager">
-        <variable>username</variable>
+        <variable>u.username</variable>
       </field>
       <field name="report">
         <expression foreach="reports" var="report">
@@ -325,14 +325,6 @@ return report.substring(i+1, j);
         </expression>
       </field>
     </source>
-
-    <relationship>
-      <expression>u.username = m.report</expression>
-    </relationship>
-
-    <relationship>
-      <expression>u.username = r.manager</expression>
-    </relationship>
 
   </entry>
 

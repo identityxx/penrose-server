@@ -118,7 +118,7 @@ public class PenroseServer {
         for (int i = 0; i < numThreads; i++) {
             // Get thread
             Thread thread = threads[i];
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int j=0; j<level; j++) sb.append("  ");
             sb.append(thread.toString());
             log.debug(sb.toString());
@@ -189,7 +189,7 @@ public class PenroseServer {
             }
 
             if (parameters.contains("--version")) {
-                System.out.println(Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
+                System.out.println(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
                 System.out.println(Penrose.PRODUCT_COPYRIGHT);
                 System.exit(0);
             }
@@ -226,7 +226,7 @@ public class PenroseServer {
                 BasicConfigurator.configure(appender);
             }
 
-            log.warn("Starting "+Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION+".");
+            log.warn("Starting "+Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION+".");
 
             String javaVersion = System.getProperty("java.version");
             log.info("Java version: "+javaVersion);
@@ -237,15 +237,20 @@ public class PenroseServer {
             String javaHome = System.getProperty("java.home");
             log.info("Java home: "+javaHome);
 
+            String userDir = System.getProperty("user.dir");
+            log.info("Current directory: "+userDir);
+
+            log.info("Penrose home: "+homeDirectory);
+
             PenroseServer server = new PenroseServer(homeDirectory);
             server.start();
 
-            log.warn("Server is ready.");
+            log.fatal("Server is ready.");
 
         } catch (Exception e) {
             String name = e.getClass().getName();
             name = name.substring(name.lastIndexOf(".")+1);
-            log.debug(name, e);
+            log.debug(e.getMessage(), e);
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }

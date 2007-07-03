@@ -125,4 +125,36 @@ return cn.substring(i+1);
     </source>
   </entry>
 
+  <entry dn="ou=Groups,dc=Merge,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,dc=Merge,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <variable>ug.groupname</variable>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="ug.username" var="username">
+return "uid="+username+",ou=Users,dc=Merge,dc=Example,dc=com";
+      </expression>
+    </at>
+    <source name="ug">
+      <source-name>usergroups</source-name>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+      <field name="username">
+        <expression foreach="uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return um.substring(i+1, j);
+        </expression>
+      </field>
+    </source>
+  </entry>
+
 </mapping>

@@ -22,8 +22,8 @@ package org.safehaus.penrose.pipeline;
  */
 public interface PipelineListener {
 
-    public void objectAdded(PipelineEvent event);
-    public void objectRemoved(PipelineEvent event);
-    public void pipelineClosed(PipelineEvent event);
+    public void objectAdded(PipelineEvent event) throws Exception;
+    public void objectRemoved(PipelineEvent event) throws Exception;
+    public void pipelineClosed(PipelineEvent event) throws Exception;
 
 }

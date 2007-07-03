@@ -3,26 +3,18 @@ package org.safehaus.penrose.example.listener;
 import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.*;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
 import javax.naming.NoPermissionException;
 import java.util.Iterator;
-import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -55,23 +47,16 @@ public class DemoListener implements SearchListener {
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.addSearchListener(this);
 
         session.bind("uid=admin,ou=system", "secret");
 
-        PenroseSearchResults results = new PenroseSearchResults();
-        PenroseSearchControls sc = new PenroseSearchControls();
+        SearchResponse<SearchResult> response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
 
-        session.search(
-                DemoListener.SUFFIX,
-                "(objectClass=*)",
-                sc,
-                results);
-
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult)i.next();
-            System.out.println(toString(entry));
+        while (response.hasNext()) {
+            SearchResult searchResult = (SearchResult) response.next();
+            System.out.println(toString(searchResult));
         }
 
         session.unbind();
@@ -81,17 +66,17 @@ public class DemoListener implements SearchListener {
         penrose.stop();
     }
 
-    public String toString(SearchResult entry) throws Exception {
+    public String toString(SearchResult result) throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getName()+"\n");
+        sb.append("dn: "+result.getDn()+"\n");
 
-        Attributes attributes = entry.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+        Attributes attributes = result.getAttributes();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
+            String name = attribute.getName();
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 sb.append(name+": "+value+"\n");
             }
@@ -101,22 +86,23 @@ public class DemoListener implements SearchListener {
     }
 
     public boolean beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+        SearchRequest request = event.getRequest();
+        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
-        if (event.getFilter().equalsIgnoreCase("(ou=*)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(ou=*)")) {
             return false;
         }
 
-        if (event.getFilter().equalsIgnoreCase("(ou=secret)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(ou=secret)")) {
             throw new NoPermissionException();
         }
 
-        PenroseSearchResults results = event.getSearchResults();
+        SearchResponse<SearchResult> response = event.getResponse();
 
-        results.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                SearchResult entry = (SearchResult)event.getObject();
-                System.out.println("#### Returning "+entry.getName());
+        response.addListener(new SearchResponseAdapter() {
+            public void postAdd(SearchResponseEvent event) {
+                SearchResult result = (SearchResult)event.getObject();
+                System.out.println("#### Returning "+result.getDn());
             }
         });
 

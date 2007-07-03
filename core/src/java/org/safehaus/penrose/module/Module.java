@@ -18,8 +18,10 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -28,7 +30,16 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Module implements AddListener, BindListener, CompareListener, DeleteListener, ModifyListener, ModRdnListener, SearchListener, ModuleMBean {
+public class Module implements
+        AddListener,
+        BindListener,
+        CompareListener,
+        DeleteListener,
+        ModifyListener,
+        ModRdnListener,
+        SearchListener,
+        UnbindListener
+{
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -37,7 +48,10 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public final static String STARTING = "STARTING";
     public final static String STARTED  = "STARTED";
 
-    public Penrose penrose;
+    public PenroseConfig penroseConfig;
+    public PenroseContext penroseContext;
+    public SessionContext sessionContext;
+
     public Partition partition;
     public ModuleConfig moduleConfig;
 
@@ -51,7 +65,7 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
         return moduleConfig.getParameter(name);
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return moduleConfig.getParameterNames();
     }
 
@@ -66,11 +80,6 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
         setStatus(STOPPED);
     }
 
-    public void restart() throws Exception {
-        stop();
-        start();
-    }
-
     public boolean beforeBind(BindEvent event) throws Exception {
         return true;
     }
@@ -78,11 +87,11 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public void afterBind(BindEvent event) throws Exception {
     }
 
-    public boolean beforeUnbind(BindEvent event) throws Exception {
+    public boolean beforeUnbind(UnbindEvent event) throws Exception {
         return true;
     }
 
-    public void afterUnbind(BindEvent event) throws Exception {
+    public void afterUnbind(UnbindEvent event) throws Exception {
     }
 
     public boolean beforeCompare(CompareEvent event) throws Exception {
@@ -127,14 +136,6 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
     public void afterSearch(SearchEvent event) throws Exception {
     }
 
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
-    }
-
     public void setModuleConfig(ModuleConfig moduleConfig) {
         this.moduleConfig = moduleConfig;
     }
@@ -157,5 +158,29 @@ public class Module implements AddListener, BindListener, CompareListener, Delet
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

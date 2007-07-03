@@ -19,28 +19,34 @@ package org.safehaus.penrose.sql;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
 public class SQLOrExpr {
 
-    Collection children = new ArrayList();
+    Collection<SQLAndExpr> children = new ArrayList<SQLAndExpr>();
 
-    public void addChild(Object object) {
-        children.add(object);
+    public void addChild(SQLAndExpr andExpr) {
+        children.add(andExpr);
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        for (Iterator i=children.iterator(); i.hasNext(); ) {
-            Object child = i.next();
-            if (sb.length() > 0) sb.append(" or ");
-            sb.append("(");
+        StringBuilder sb = new StringBuilder();
+
+        boolean first = true;
+
+        for (SQLAndExpr child : children) {
+            
+            if (first) {
+                first = false;
+            } else {
+                sb.append(" or ");
+            }
+
             sb.append(child);
-            sb.append(")");
         }
+
         return sb.toString();
     }
 }

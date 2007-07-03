@@ -63,8 +63,7 @@ echo.
 
 :runPenrose
 
-set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar;%CLASSPATH%
-
+set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext;%LOCALLIBPATH%
 set LOCALLIBPATH=%PENROSE_HOME%\lib;%LOCALLIBPATH%
 set LOCALLIBPATH=%PENROSE_HOME%\lib\ext;%LOCALLIBPATH%
 set LOCALLIBPATH=%PENROSE_HOME%\server\lib;%LOCALLIBPATH%
@@ -72,7 +71,8 @@ set LOCALLIBPATH=%PENROSE_HOME%\server\lib\ext;%LOCALLIBPATH%
 
 cd %PENROSE_HOME%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.cache.CacheManager %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+set JAVA_OPTS=%PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%"
+"%_JAVACMD%" %JAVA_OPTS% org.safehaus.penrose.cache.CacheUtil %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 

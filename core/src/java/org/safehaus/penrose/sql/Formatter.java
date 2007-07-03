@@ -22,7 +22,7 @@ package org.safehaus.penrose.sql;
  */
 public class Formatter {
 
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
 
     public void align() {}
     public void outalign() {}

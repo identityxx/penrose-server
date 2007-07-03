@@ -18,7 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -60,7 +60,7 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
         log.debug("Authenticating "+bindDn);
 
         try {
-            PenroseSession session = null;
+            Session session = null;
             int rc = LDAPException.SUCCESS;
             try {
                 session = penrose.newSession();

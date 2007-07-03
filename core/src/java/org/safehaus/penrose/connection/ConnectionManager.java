@@ -17,8 +17,11 @@
  */
 package org.safehaus.penrose.connection;
 
+import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -31,129 +34,147 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public Map connections = new TreeMap();
+    private PenroseConfig penroseConfig;
+    private PenroseContext penroseContext;
 
-    public String getStatus(String partitionName, String connectionName) throws Exception {
+    public Map<String,Map<String,Connection>> connections = new TreeMap<String,Map<String,Connection>>();
 
-        Map map = (Map)connections.get(partitionName);
+    public Connection createConnection(Partition partition, ConnectionConfig connectionConfig) throws Exception {
+
+        String adapterName = connectionConfig.getAdapterName();
+        if (adapterName == null) throw new Exception("Missing adapter name.");
+
+        AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName+".");
+
+        Connection connection = new Connection(partition, connectionConfig, adapterConfig);
+        connection.setPenroseConfig(penroseConfig);
+        connection.setPenroseContext(penroseContext);
+        connection.init();
+
+        return connection;
+    }
+
+    public Connection init(Partition partition, ConnectionConfig connectionConfig) throws Exception {
+
+        Connection connection = getConnection(partition, connectionConfig.getName());
+        if (connection != null) return connection;
+
+        log.debug("Initializing connection "+connectionConfig.getName()+".");
+
+        connection = createConnection(partition, connectionConfig);
+        addConnection(partition.getName(), connection);
+
+        return connection;
+    }
+
+    public void start() throws Exception {
+        for (String partitionName : connections.keySet()) {
+            Map<String,Connection> map = connections.get(partitionName);
+
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
+
+                log.debug("Starting " + name + " connection.");
+                try {
+                    connection.start();
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    public void stop() throws Exception {
+        for (String partitionName : connections.keySet()) {
+            Map<String, Connection> map = connections.get(partitionName);
+
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
+
+                log.debug("Stopping " + name + " connection.");
+                try {
+                    connection.stop();
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    public void dispose() throws Exception {
+        for (String partitionName : connections.keySet()) {
+            Map<String, Connection> map = connections.get(partitionName);
+
+            for (String name : map.keySet()) {
+                Connection connection = map.get(name);
+
+                log.debug("Removing " + name + " connection.");
+                try {
+                    connection.dispose();
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    public void addConnection(String partitionName, Connection connection) {
+        Map<String,Connection> map = connections.get(partitionName);
         if (map == null) {
-            log.debug("Partition "+partitionName+" not found");
-            return null;
+            map = new TreeMap<String,Connection>();
+            connections.put(partitionName, map);
         }
+        map.put(connection.getName(), connection);
+    }
 
-        Connection connection = (Connection)map.get(connectionName);
-        if (connection == null) {
-            log.debug("Connection "+connectionName+" not found");
-            return null;
-        }
+    public Connection getConnection(Partition partition, String connectionName) throws Exception {
+        Map<String,Connection> map = connections.get(partition.getName());
+        if (map == null) return null;
+        return map.get(connectionName);
+    }
 
-        return connection.getStatus();
+    public Collection<String> getPartitionNames() {
+        return new ArrayList<String>(connections.keySet()); // return Serializable list
+    }
+
+    public Collection getConnectionNames(String partitionName) {
+        Map<String,Connection> map = connections.get(partitionName);
+        if (map == null) return new ArrayList();
+        return new ArrayList<String>(map.keySet()); // return Serializable list
+    }
+
+    public Connection removeConnection(String partitionName, String connectionName) {
+        Map<String,Connection> map = connections.get(partitionName);
+        if (map == null) return null;
+        return map.remove(connectionName);
     }
 
     public void clear() {
         connections.clear();
     }
 
-    public Connection addConnection(Partition partition, ConnectionConfig connectionConfig, AdapterConfig adapterConfig) throws Exception {
-
-        String name = partition.getName()+"/"+connectionConfig.getName();
-        log.info("Adding connection "+name+".");
-
-        Connection connection = new Connection(connectionConfig, adapterConfig);
-
-        Map map = (Map)connections.get(partition.getName());
-        if (map == null) {
-            map = new TreeMap();
-            connections.put(partition.getName(), map);
-        }
-        map.put(connectionConfig.getName(), connection);
-
-        return connection;
-    }
-
-    public void start(String partitionName, String connectionName) throws Exception {
-        Map map = (Map)connections.get(partitionName);
-        if (map == null) {
-            log.debug("Partition "+partitionName+" not found");
-            return;
-        }
-
-        Connection connection = (Connection)map.get(connectionName);
-        if (connection == null) {
-            log.debug("Connection "+connectionName+" not found");
-            return;
-        }
-
-        log.info("Starting connection "+connectionName+".");
-        connection.start();
-    }
-
-    public void stop(String partitionName, String connectionName) throws Exception {
-        Map map = (Map)connections.get(partitionName);
-        if (map == null) {
-            log.debug("Partition "+partitionName+" not found");
-            return;
-        }
-
-        Connection connection = (Connection)map.get(connectionName);
-        if (connection == null) {
-            log.debug("Connection "+connectionName+" not found");
-            return;
-        }
-
-        log.info("Stopping connection "+connectionName+".");
-        connection.stop();
-    }
-
-    public void restart(String partitionName, String connectionName) throws Exception {
-        Map map = (Map)connections.get(partitionName);
-        if (map == null) {
-            log.debug("Partition "+partitionName+" not found");
-            return;
-        }
-
-        Connection connection = (Connection)map.get(connectionName);
-        if (connection == null) {
-            log.debug("Connection "+connectionName+" not found");
-            return;
-        }
-
-        log.info("Stopping connection "+connectionName+".");
-        connection.stop();
-
-        log.info("Starting connection "+connectionName+".");
-        connection.start();
-    }
-
-    public Connection getConnection(Partition partition, String connectionName) throws Exception {
-        String partitionName = partition == null ? "DEFAULT" : partition.getName();
-        return getConnection(partitionName, connectionName);
-    }
-
-    public Connection getConnection(String partitionName, String connectionName) throws Exception {
-        Map map = (Map)connections.get(partitionName);
-        if (map == null) return null;
-        return (Connection)map.get(connectionName);
-    }
-
-    public ConnectionConfig getConnectionConfig(String partitionName, String connectionName) throws Exception {
-        Connection connection = getConnection(partitionName, connectionName);
-        if (connection == null) return null;
-        return connection.getConnectionConfig();
-    }
-
-    public Collection getPartitionNames() {
-        return new ArrayList(connections.keySet()); // return Serializable list
-    }
-
-    public Collection getConnectionNames(String partitionName) {
-        Map map = (Map)connections.get(partitionName);
-        if (map == null) return new ArrayList();
-        return new ArrayList(map.keySet()); // return Serializable list
-    }
-
     public Object openConnection(Partition partition, String connectionName) throws Exception {
         Connection connection = getConnection(partition, connectionName);
         return connection.openConnection();
+    }
+
+    public PenroseConfig getPenroseConfig() {
+        return penroseConfig;
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
+    }
+
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 }

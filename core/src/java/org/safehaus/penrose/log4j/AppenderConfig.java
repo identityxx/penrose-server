@@ -20,12 +20,11 @@ package org.safehaus.penrose.log4j;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class AppenderConfig implements Cloneable, Serializable {
+public class AppenderConfig {
 
     private String name;
     private String appenderClass;
@@ -76,46 +75,5 @@ public class AppenderConfig implements Cloneable, Serializable {
 
     public void setAppenderClass(String appenderClass) {
         this.appenderClass = appenderClass;
-    }
-
-    public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (appenderClass == null ? 0 : appenderClass.hashCode()) +
-                (layoutConfig == null ? 0 : layoutConfig.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
-    }
-
-    boolean equals(Object o1, Object o2) {
-        if (o1 == null && o2 == null) return true;
-        if (o1 != null) return o1.equals(o2);
-        return o2.equals(o1);
-    }
-
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
-
-        AppenderConfig appenderConfig = (AppenderConfig)object;
-        if (!equals(name, appenderConfig.name)) return false;
-        if (!equals(appenderClass, appenderConfig.appenderClass)) return false;
-        if (!equals(layoutConfig, appenderConfig.layoutConfig)) return false;
-        if (!equals(parameters, appenderConfig.parameters)) return false;
-
-        return true;
-    }
-
-    public void copy(AppenderConfig appenderConfig) {
-        name = appenderConfig.name;
-        appenderClass = appenderConfig.appenderClass;
-        layoutConfig = (LayoutConfig)appenderConfig.layoutConfig.clone();
-
-        parameters.clear();
-        parameters.putAll(appenderConfig.parameters);
-    }
-
-    public Object clone() {
-        AppenderConfig appenderConfig = new AppenderConfig();
-        appenderConfig.copy(this);
-        return appenderConfig;
     }
 }

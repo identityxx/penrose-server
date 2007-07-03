@@ -6,7 +6,7 @@
 
     <property file="../../build.properties"/>
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${product.name}-server-${product.version}"/>
 
     <property name="test.hostname" value="localhost"/>
     <property name="test.port" value="10389"/>

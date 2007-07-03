@@ -2,15 +2,11 @@ package org.safehaus.penrose.example.module;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.pipeline.PipelineAdapter;
-import org.safehaus.penrose.pipeline.PipelineEvent;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
-
-import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -22,33 +18,36 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeBind(BindEvent event) throws Exception {
-        System.out.println("#### Binding as "+event.getDn()+" with password "+event.getPassword()+".");
+        BindRequest request = event.getRequest();
+        System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
         return true;
     }
 
     public void afterBind(BindEvent event) throws Exception {
+        BindRequest request = event.getRequest();
         int rc = event.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
-            System.out.println("#### Bound as "+event.getDn()+".");
+            System.out.println("#### Bound as "+request.getDn()+".");
         } else {
-            System.out.println("#### Failed to bind as "+event.getDn()+". RC="+rc);
+            System.out.println("#### Failed to bind as "+request.getDn()+". RC="+rc);
         }
     }
 
     public boolean beforeSearch(SearchEvent event) throws Exception {
-        System.out.println("#### Searching "+event.getBaseDn()+" with filter "+event.getFilter()+".");
+        SearchRequest request = event.getRequest();
+        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
-        if (event.getFilter().equalsIgnoreCase("(cn=secret)")) {
+        if (request.getFilter().toString().equalsIgnoreCase("(cn=secret)")) {
             return false;
         }
 
-        PenroseSearchResults results = event.getSearchResults();
+        SearchResponse<SearchResult> response = event.getResponse();
 
         // register result listener
-        results.addListener(new PipelineAdapter() {
-            public void objectAdded(PipelineEvent event) {
-                SearchResult sr = (SearchResult)event.getObject();
-                String dn = sr.getName();
+        response.addListener(new SearchResponseAdapter() {
+            public void postAdd(SearchResponseEvent event) {
+                SearchResult result = (SearchResult)event.getObject();
+                DN dn = result.getDn();
                 System.out.println("Returning "+dn+".");
             }
         });
@@ -66,23 +65,20 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeAdd(AddEvent event) throws Exception {
-        System.out.println("#### Adding "+event.getDn()+":");
+        AddRequest request = event.getRequest();
+        System.out.println("#### Adding "+request.getDn()+":");
 
-        Attributes attributes = event.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
-            Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                System.out.println(" - "+name+": "+value);
+        Attributes attributes = request.getAttributes();
+        for (Attribute attribute : attributes.getAll()) {
+            String name = attribute.getName();
+            for (Object value : attribute.getValues()) {
+                System.out.println(" - " + name + ": " + value);
             }
         }
 
         // change sn attribute to upper case
-        Attribute sn = attributes.get("sn");
-        String value = (String)sn.get();
-        sn.clear();
-        sn.add(value.toUpperCase());
+        String sn = (String)attributes.getValue("sn");
+        attributes.setValue("sn", sn.toUpperCase());
 
         return true;
     }
@@ -97,29 +93,29 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
-        System.out.println("#### Modifying "+event.getDn()+":");
+        ModifyRequest request = event.getRequest();
+        System.out.println("#### Modifying "+request.getDn()+":");
 
-        Collection modifications = event.getModifications();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            ModificationItem mi = (ModificationItem)i.next();
+        for (Modification mi : request.getModifications()) {
+
+            int type = mi.getType();
             Attribute attribute = mi.getAttribute();
-            String name = attribute.getID();
+            String name = attribute.getName();
 
-            switch (mi.getModificationOp()) {
-                case DirContext.ADD_ATTRIBUTE:
-                    System.out.println(" - add: "+name);
+            switch (type) {
+                case Modification.ADD:
+                    System.out.println(" - add: " + name);
                     break;
-                case DirContext.REMOVE_ATTRIBUTE:
-                    System.out.println(" - delete: "+name);
+                case Modification.DELETE:
+                    System.out.println(" - delete: " + name);
                     break;
-                case DirContext.REPLACE_ATTRIBUTE:
-                    System.out.println(" - replace: "+name);
+                case Modification.REPLACE:
+                    System.out.println(" - replace: " + name);
                     break;
             }
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
-                Object value = j.next();
-                System.out.println("   "+name+": "+value);
+            for (Object value : attribute.getValues()) {
+                System.out.println("   " + name + ": " + value);
             }
         }
 
@@ -136,7 +132,8 @@ public class DemoModule extends Module {
     }
 
     public boolean beforeDelete(DeleteEvent event) throws Exception {
-        System.out.println("#### Deleting "+event.getDn());
+        DeleteRequest request = event.getRequest();
+        System.out.println("#### Deleting "+request.getDn());
         return true;
     }
 

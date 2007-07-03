@@ -18,7 +18,7 @@
   </service>
 
   <service name="LDAP">
-    <service-class>org.safehaus.penrose.ldap.PenroseLDAPService</service-class>
+    <service-class>org.safehaus.penrose.ldap.DefaultLDAPService</service-class>
     <parameter>
       <param-name>ldapPort</param-name>
       <param-value>10389</param-value>
@@ -63,16 +63,26 @@
   </engine>
 
   <engine name="PROXY">
-    <engine-class>org.safehaus.penrose.engine.ProxyEngine</engine-class>
+    <engine-class>org.safehaus.penrose.engine.proxy.ProxyEngine</engine-class>
   </engine>
-    
+
+  <handler name="DEFAULT">
+    <handler-class>org.safehaus.penrose.handler.DefaultHandler</handler-class>
+  </handler>
+
+  <handler name="PROXY">
+    <handler-class>org.safehaus.penrose.handler.proxy.ProxyHandler</handler-class>
+  </handler>
+
   <adapter name="JDBC">
-    <adapter-class>org.safehaus.penrose.jdbc.JDBCAdapter</adapter-class>
+    <adapter-class>org.safehaus.penrose.adapter.jdbc.JDBCAdapter</adapter-class>
   </adapter>
 
   <adapter name="LDAP">
-    <adapter-class>org.safehaus.penrose.ldap.LDAPAdapter</adapter-class>
+    <adapter-class>org.safehaus.penrose.adapter.ldap.LDAPAdapter</adapter-class>
   </adapter>
+
+  <partition name="DEFAULT" path="conf"/>
 
   <root>
     <root-dn>uid=admin,ou=system</root-dn>

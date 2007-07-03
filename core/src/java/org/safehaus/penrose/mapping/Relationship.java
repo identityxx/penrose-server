@@ -22,7 +22,6 @@ import Zql.ZExpression;
 import Zql.ZExp;
 
 import java.io.ByteArrayInputStream;
-import java.io.Serializable;
 import java.util.*;
 
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,9 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class Relationship implements Cloneable, Serializable {
+public class Relationship implements Cloneable {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     private String operator = "=";
     private List operands = new ArrayList();
@@ -39,12 +40,12 @@ public class Relationship implements Cloneable, Serializable {
     public Relationship() {
     }
 
-    public Relationship(String expression) throws Exception {
+    public Relationship(String expression) {
         setExpression(expression);
     }
 
     public String getExpression() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (Iterator i=operands.iterator(); i.hasNext(); ) {
             String operand = i.next().toString();
             if (sb.length() > 0) {
@@ -57,28 +58,45 @@ public class Relationship implements Cloneable, Serializable {
         return sb.toString();
     }
 
-    public void setExpression(String expression) throws Exception {
-        //System.out.println("EXPRESSION: "+expression);
+    public void setExpression(String expression) {
+        try {
+            //System.out.println("EXPRESSION: "+expression);
 
-        ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
+            ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
 
-        ZExpression exp = (ZExpression)parser.readExpression();
-        //System.out.println("Operator: "+exp.getOperator());
-        operator = exp.getOperator();
+            ZExpression exp = (ZExpression)parser.readExpression();
+            //System.out.println("Operator: "+exp.getOperator());
+            operator = exp.getOperator();
 
-        operands.clear();
-        for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
-            ZExp operand = (ZExp)i.next();
-            //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
-            operands.add(operand);
+            operands.clear();
+            for (Iterator i=exp.getOperands().iterator(); i.hasNext(); ) {
+                ZExp operand = (ZExp)i.next();
+                //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
+                operands.add(operand);
+            }
+
+            //System.out.println("Polish: "+exp.toReversePolish());
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
-
-        //System.out.println("Polish: "+exp.toReversePolish());
     }
 
     public String getLhs() {
         if (operands.size() < 1) return null;
         return operands.get(0).toString();
+    }
+
+    public String getLeftSource() {
+        String lhs = getLhs();
+        int i = lhs.indexOf(".");
+        return lhs.substring(0, i);
+    }
+
+    public String getLeftField() {
+        String lhs = getLhs();
+        int i = lhs.indexOf(".");
+        return lhs.substring(i+1);
     }
 
     public void setLhs(String lhs) {
@@ -96,6 +114,18 @@ public class Relationship implements Cloneable, Serializable {
     public String getRhs() {
         if (operands.size() < 2) return null;
         return operands.get(1).toString();
+    }
+
+    public String getRightSource() {
+        String rhs = getRhs();
+        int i = rhs.indexOf(".");
+        return rhs.substring(0, i);
+    }
+
+    public String getRightField() {
+        String rhs = getRhs();
+        int i = rhs.indexOf(".");
+        return rhs.substring(i+1);
     }
 
     public void setRhs(String rhs) {

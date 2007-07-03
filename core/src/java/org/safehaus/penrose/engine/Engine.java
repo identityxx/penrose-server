@@ -19,30 +19,35 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.thread.MRSWLock;
-import org.safehaus.penrose.thread.Queue;
+import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.util.EntryUtil;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.util.*;
+import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.Attributes;
 import java.util.*;
 
 /**
@@ -52,34 +57,35 @@ public abstract class Engine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public Penrose penrose;
-    public EngineConfig engineConfig;
     public PenroseConfig penroseConfig;
+    public PenroseContext penroseContext;
+    public SessionContext sessionContext;
+
+    public EngineConfig engineConfig;
 
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
-    public SourceManager sourceManager;
+    public ConnectorManager connectorManager;
     public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
 
     public boolean stopping = false;
 
-    public EngineFilterTool engineFilterTool;
+    protected Analyzer analyzer;
 
-    private FilterTool filterTool;
+    public Collection<String> getParameterNames() {
+        return engineConfig.getParameterNames();
+    }
 
-    public Map locks = new HashMap();
-    public Queue queue = new Queue();
-
-    public LoadEngine loadEngine;
-    public JoinEngine joinEngine;
-    public MergeEngine mergeEngine;
-
-    public TransformEngine transformEngine;
+    public String getParameter(String name) {
+        return engineConfig.getParameter(name);
+    }
 
     public void init() throws Exception {
-        filterTool = new FilterTool();
-        filterTool.setSchemaManager(schemaManager);
+
+        analyzer = new Analyzer();
+        analyzer.setPartitionManager(partitionManager);
+        analyzer.setInterpreterManager(interpreterManager);
     }
 
     public EngineConfig getEngineConfig() {
@@ -106,12 +112,18 @@ public abstract class Engine {
         return interpreterManager;
     }
 
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
+    public void setInterpreterManager(InterpreterManager interpreterManager) {
         this.interpreterManager = interpreterManager;
     }
 
-    public Source getSource(Partition partition, SourceConfig sourceConfig) {
-        return sourceManager.getSource(partition.getName(), sourceConfig.getName());
+    public Connector getConnector(SourceRef sourceRef) {
+        Source source = sourceRef.getSource();
+        return getConnector(source.getSourceConfig());
+    }
+
+    public Connector getConnector(SourceConfig sourceConfig) {
+        String connectorName = sourceConfig.getParameter("connectorName");
+        return connectorManager.getConnector(connectorName);
     }
 
     public ConnectionManager getConnectionManager() {
@@ -130,97 +142,42 @@ public abstract class Engine {
         this.partitionManager = partitionManager;
     }
 
-    public AttributeValues computeAttributeValues(
-            EntryMapping entryMapping,
-            Interpreter interpreter
-            ) throws Exception {
-
-        return computeAttributeValues(entryMapping, null, interpreter);
+    public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
+        return analyzer.getPrimarySource(entryMapping);
     }
 
-    public AttributeValues computeAttributeValues(
+    public Attributes createAttributes(
             EntryMapping entryMapping,
-            AttributeValues sourceValues,
+            SourceValues sourceValues,
             Interpreter interpreter
             ) throws Exception {
 
-        return computeAttributeValues(entryMapping, sourceValues, null, interpreter);
-    }
+        Attributes attributes = new Attributes();
 
-    /**
-     * Compute attribute values of an entry given the source values or row values
-     * @param entryMapping
-     * @param sourceValues
-     * @param rows
-     * @param interpreter
-     * @return attribute values
-     * @throws Exception
-     */
-    public AttributeValues computeAttributeValues(
-            EntryMapping entryMapping,
-            AttributeValues sourceValues,
-            Collection rows,
-            Interpreter interpreter
-            ) throws Exception {
+        if (sourceValues != null) interpreter.set(sourceValues);
 
-        log.debug("Generating attributes with source values:");
-        if (sourceValues != null) {
-            for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-                String name = (String)i.next();
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        for (AttributeMapping attributeMapping : attributeMappings) {
 
-                for (Iterator j=sourceValues.get(name).iterator(); j.hasNext(); ) {
-                    Object value = j.next();
-                    String className = value.getClass().getName();
-                    className = className.substring(className.lastIndexOf(".")+1);
-                    log.debug(" - "+name+": "+value+" ("+className+")");
-                }
-            }
-        }
-
-        AttributeValues attributeValues = new AttributeValues();
-
-        if (sourceValues != null) interpreter.set(sourceValues, rows);
-
-        Collection attributeMappings = entryMapping.getAttributeMappings();
-        for (Iterator j=attributeMappings.iterator(); j.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)j.next();
+            Object value = interpreter.eval(attributeMapping);
+            if (value == null) continue;
 
             String name = attributeMapping.getName();
-            Object value = interpreter.eval(entryMapping, attributeMapping);
-            if (value == null) {
-                if (attributeMapping.isPK()) {
-                    log.debug(" - "+name+" (PK): null");
-                    return null;
-                }
-
-                log.debug(" - "+name+": null");
-                continue;
-            }
-
-            attributeValues.add(name, value);
-
-            String className = value.getClass().getName();
-            className = className.substring(className.lastIndexOf(".")+1);
-            log.debug(" - "+name+": "+value+" ("+className+")");
+            attributes.addValue(name, value);
         }
 
         interpreter.clear();
 
-        Collection objectClasses = entryMapping.getObjectClasses();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String objectClass = (String)i.next();
-            attributeValues.add("objectClass", objectClass);
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        for (String objectClass : objectClasses) {
+            attributes.addValue("objectClass", objectClass);
         }
 
-        return attributeValues;
+        return attributes;
     }
 
-    public TransformEngine getTransformEngine() {
-        return transformEngine;
-    }
-
-    public void setTransformEngine(TransformEngine transformEngine) {
-        this.transformEngine = transformEngine;
+    public Graph getGraph(EntryMapping entryMapping) throws Exception {
+        return analyzer.getGraph(entryMapping);
     }
 
     public void start() throws Exception {
@@ -233,7 +190,7 @@ public abstract class Engine {
     public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
 
         log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
-
+/*
         Collection relationships = entryMapping.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
@@ -255,7 +212,7 @@ public abstract class Engine {
 
             }
         }
-
+*/
         Iterator i = entryMapping.getSourceMappings().iterator();
         if (!i.hasNext()) return null;
 
@@ -269,8 +226,8 @@ public abstract class Engine {
 
         Filter filter = null;
         for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
+            RDN rdn = (RDN)i.next();
+            log.debug(" - "+rdn);
 
             Filter subFilter = null;
 
@@ -291,7 +248,7 @@ public abstract class Engine {
                 String name = lhs.substring(index+1);
 
                 log.debug("   - "+rhs+" ==> ("+name+" "+operator+" ?)");
-                Object value = row.get(rhs);
+                Object value = rdn.get(rhs);
                 if (value == null) continue;
 
                 SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
@@ -306,7 +263,11 @@ public abstract class Engine {
         return filter;
     }
 
-    public Filter generateFilter(SourceMapping toSource, Collection relationships, AttributeValues sv) throws Exception {
+    public Filter generateFilter(
+            SourceMapping toSource,
+            Collection relationships,
+            SourceValues sv
+    ) throws Exception {
 /*
         log.debug("Generating filters using source values:");
         for (Iterator i=sv.getNames().iterator(); i.hasNext(); ) {
@@ -341,7 +302,7 @@ public abstract class Engine {
 
             //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
 
-            Collection v = sv.get(rhs);
+            Collection v = null; //sv.get(rhs);
             //log.debug("   - found "+v);
             if (v == null) continue;
 
@@ -362,29 +323,10 @@ public abstract class Engine {
         return filter;
     }
 
-    public MergeEngine getMergeEngine() {
-        return mergeEngine;
-    }
-
-    public void setMergeEngine(MergeEngine mergeEngine) {
-        this.mergeEngine = mergeEngine;
-    }
-
-    public JoinEngine getJoinEngine() {
-        return joinEngine;
-    }
-
-    public void setJoinEngine(JoinEngine joinEngine) {
-        this.joinEngine = joinEngine;
-    }
-
     public boolean isStopping() {
         return stopping;
     }
 
-    /**
-     * Check whether the entry uses no sources and all attributes are constants.
-     */
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
@@ -401,360 +343,417 @@ public abstract class Engine {
         return isStatic(partition, parentMapping);
     }
 
-    public EngineFilterTool getEngineFilterTool() {
-        return engineFilterTool;
+    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
+        return analyzer.isUnique(partition, entryMapping);
     }
-
-    public void setEngineFilterTool(EngineFilterTool engineFilterTool) {
-        this.engineFilterTool = engineFilterTool;
-    }
-
-    public void load(
-            Partition partition,
-            EntryMapping entryMapping,
-            PenroseSearchResults entriesToLoad,
-            PenroseSearchResults loadedEntries)
-            throws Exception {
-
-        loadEngine.load(partition, entryMapping, entriesToLoad, loadedEntries);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Bind
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public abstract void bind(
-            PenroseSession session,
-            Partition partition,
-            EntryMapping entryMapping,
-            String dn,
-            String password
-    ) throws LDAPException;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void add(
-            PenroseSession session,
+            Session session,
             Partition partition,
-            Entry parent,
             EntryMapping entryMapping,
-            String dn,
-            Attributes attributes
-    ) throws LDAPException;
+            AddRequest request,
+            AddResponse response
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        byte[] password = request.getPassword();
+
+        SearchResult searchResult = find(session, partition, entryMapping, dn);
+
+        Attributes attributes = searchResult.getAttributes();
+        Attribute attribute = attributes.get("userPassword");
+
+        if (attribute == null) {
+            log.debug("Attribute userPassword not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        }
+
+        Collection<Object> userPasswords = attribute.getValues();
+        for (Object userPassword : userPasswords) {
+            if (debug) log.debug("userPassword: " + userPassword);
+            if (PasswordUtil.comparePassword(password, userPassword)) return;
+        }
+
+        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+        String attributeName = request.getAttributeName();
+        Object attributeValue = request.getAttributeValue();
+
+        SearchResult searchResult = find(session, partition, entryMapping, dn);
+
+        Attributes attributes = searchResult.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) {
+            if (debug) log.debug("Attribute "+attributeName+" not found.");
+            return false;
+        }
+
+        Collection<Object> values = attribute.getValues();
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        if (debug) log.debug("Comparing values:");
+        for (Object value : values) {
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            if (debug) log.debug(" - [" + value + "] => " + b);
+
+            if (b) return true;
+
+        }
+
+        return false;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void delete(
-            PenroseSession session,
+            Session session,
             Partition partition,
-            Entry entry
-    ) throws LDAPException;
+            EntryMapping entryMapping,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SearchResult find(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+
+        search(
+                session,
+                partition,
+                entryMapping,
+                request,
+                response
+        );
+
+        if (!response.hasNext()) {
+            if (debug) log.debug("Entry "+dn+" not found");
+            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+        }
+
+        return response.next();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void modify(
-            PenroseSession session,
+            Session session,
             Partition partition,
-            Entry entry,
-            Collection modifications
-    ) throws LDAPException;
+            EntryMapping entryMapping,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRDN
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public abstract void modrdn(
-            PenroseSession session,
+            Session session,
             Partition partition,
-            Entry entry,
-            String newRdn,
-            boolean deleteOldRdn
-    ) throws LDAPException;
+            EntryMapping entryMapping,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public List find(
+    public void search(
+            Session session,
             Partition partition,
-            AttributeValues sourceValues,
             EntryMapping entryMapping,
-            List rdns,
-            int position
+            SearchRequest request,
+            SearchResponse<SearchResult> response
     ) throws Exception {
-        return new ArrayList();
+
+        search(
+                session,
+                partition,
+                entryMapping,
+                entryMapping,
+                request,
+                response
+        );
     }
 
-    public abstract int search(
-            PenroseSession session,
+    public abstract void search(
+            Session session,
             Partition partition,
-            AttributeValues sourceValues,
+            EntryMapping baseMapping,
             EntryMapping entryMapping,
-            String baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results
+            SearchRequest request,
+            SearchResponse<SearchResult> response
     ) throws Exception;
 
-    public abstract int expand(
-            PenroseSession session,
-            Partition partition,
-            AttributeValues sourceValues,
-            EntryMapping entryMapping,
-            String baseDn,
-            Filter filter,
-            PenroseSearchControls sc,
-            PenroseSearchResults results
-    ) throws Exception;
-
-    public synchronized MRSWLock getLock(String dn) {
-
-		MRSWLock lock = (MRSWLock)locks.get(dn);
-
-		if (lock == null) lock = new MRSWLock(queue);
-		locks.put(dn, lock);
-
-		return lock;
-	}
-
-    public void merge(
-            Partition partition,
-            EntryMapping entryMapping,
-            PenroseSearchResults loadedEntries,
-            PenroseSearchResults newEntries)
-            throws Exception {
-
-        mergeEngine.merge(partition, entryMapping, loadedEntries, newEntries);
-    }
-
-    public Relationship getConnectingRelationship(Partition partition, EntryMapping entryMapping) throws Exception {
-
-        // log.debug("Searching the connecting relationship for "+entryMapping;
-
-        Collection relationships = partition.getEffectiveRelationships(entryMapping);
-
-        for (Iterator i=relationships.iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            // log.debug(" - checking "+relationship);
-
-            String lhs = relationship.getLhs();
-            String rhs = relationship.getRhs();
-
-            int lindex = lhs.indexOf(".");
-            String lsourceName = lindex < 0 ? lhs : lhs.substring(0, lindex);
-            SourceMapping lsource = entryMapping.getSourceMapping(lsourceName);
-
-            int rindex = rhs.indexOf(".");
-            String rsourceName = rindex < 0 ? rhs : rhs.substring(0, rindex);
-            SourceMapping rsource = entryMapping.getSourceMapping(rsourceName);
-
-            if (lsource == null && rsource != null || lsource != null && rsource == null) {
-                return relationship;
-            }
-        }
-
-        return null;
-    }
-
-    public Filter createFilter(SourceMapping sourceMapping, Collection pks) throws Exception {
-
-        Collection normalizedFilters = null;
-        if (pks != null) {
-            normalizedFilters = new TreeSet();
-            for (Iterator i=pks.iterator(); i.hasNext(); ) {
-                Row filter = (Row)i.next();
-
-                Row f = new Row();
-                for (Iterator j=filter.getNames().iterator(); j.hasNext(); ) {
-                    String name = (String)j.next();
-                    if (!name.startsWith(sourceMapping.getName()+".")) continue;
-
-                    String newName = name.substring(sourceMapping.getName().length()+1);
-                    f.set(newName, filter.get(name));
-                }
-
-                if (f.isEmpty()) continue;
-
-                Row normalizedFilter = schemaManager.normalize(f);
-                normalizedFilters.add(normalizedFilter);
-            }
-        }
-
-        Filter filter = null;
-        if (pks != null) {
-            filter = FilterTool.createFilter(normalizedFilters);
-        }
-
-        return filter;
-    }
-
-    public Row createFilter(
+    public RDN createFilter(
             Partition partition,
             Interpreter interpreter,
             SourceMapping sourceMapping,
             EntryMapping entryMapping,
-            Row rdn) throws Exception {
+            RDN rdn
+    ) throws Exception {
 
         if (sourceMapping == null) {
-            return new Row();
+            return new RDN();
         }
 
-        Collection fields = partition.getSearchableFields(sourceMapping);
+        Collection<FieldMapping> fields = partition.getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
-        Row filter = new Row();
-        for (Iterator j=fields.iterator(); j.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)j.next();
+        RDNBuilder rb = new RDNBuilder();
+        for (FieldMapping fieldMapping : fields) {
             String name = fieldMapping.getName();
 
-            Object value = interpreter.eval(entryMapping, fieldMapping);
+            Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
             //log.debug("   ==> "+field.getName()+"="+value);
-            //filter.set(source.getName()+"."+name, value);
-            filter.set(name, value);
+            //rb.set(source.getName()+"."+name, value);
+            rb.set(name, value);
         }
 
-        //if (filter.isEmpty()) return null;
+        //if (rb.isEmpty()) return null;
 
         interpreter.clear();
 
-        return filter;
+        return rb.toRdn();
     }
 
-    public Collection computeDns(
+    public Collection<DN> computeDns(
             Partition partition,
             Interpreter interpreter,
-            EntryMapping entryMapping,
-            AttributeValues sourceValues)
-            throws Exception {
+            EntryMapping entryMapping
+    ) throws Exception {
 
-        interpreter.set(sourceValues);
-
-        Collection results = new ArrayList();
-        results.addAll(computeDns(partition, interpreter, entryMapping));
-
-        interpreter.clear();
-
-        return results;
-    }
-
-    public Collection computeDns(Partition partition, Interpreter interpreter, EntryMapping entryMapping) throws Exception {
-
-        EntryMapping parentMapping = partition.getParent(entryMapping);
-
-        Collection parentDns;
-        if (parentMapping != null) {
-            parentDns = computeDns(partition, interpreter, parentMapping);
-        } else {
-            parentDns = new ArrayList();
-            if (entryMapping.getParentDn() != null) {
-                parentDns.add(entryMapping.getParentDn());
-            }
-        }
-
-        Collection rdns = computeRdn(interpreter, entryMapping);
-
-        log.debug("Computing DNs for \""+entryMapping.getDn()+"\"");
-        Collection dns = new ArrayList();
-        if (parentDns.isEmpty()) {
-            String dn = entryMapping.getDn();
-            log.debug(" - "+dn);
-            dns.add(dn);
-            return dns;
-        }
-
-        for (Iterator i=parentDns.iterator(); i.hasNext(); ) {
-            String parentDn = (String)i.next();
-            //log.info(" - parent dn: "+parentDn);
-            for (Iterator j=rdns.iterator(); j.hasNext(); ) {
-                Row rdn = (Row)j.next();
-                //log.info("   - rdn: "+rdn);
-
-                String s = rdn.toString(); //.trim();
-                //s = LDAPDN.escapeRDN(s);
-                //log.info("     => rdn: "+rdn);
-
-                String dn = EntryUtil.append(s, parentDn);
-
-                log.debug(" - "+dn);
-                dns.add(dn);
-            }
-        }
-
+        Collection<DN> dns = new ArrayList<DN>();
+        computeDns(partition, interpreter, entryMapping, dns);
         return dns;
     }
 
-    public Collection computeRdn(
+    public void computeDns(
+            Partition partition,
+            Interpreter interpreter,
+            EntryMapping entryMapping,
+            Collection<DN> dns
+    ) throws Exception {
+
+        EntryMapping parentMapping = partition.getParent(entryMapping);
+
+        Collection<DN> parentDns = new ArrayList<DN>();
+        if (parentMapping != null) {
+            computeDns(partition, interpreter, parentMapping, parentDns);
+
+        } else if (!entryMapping.getParentDn().isEmpty()) {
+            parentDns.add(entryMapping.getParentDn());
+        }
+
+        if (parentDns.isEmpty()) {
+            DN dn = entryMapping.getDn();
+            log.debug("DN: "+dn);
+            dns.add(dn);
+
+        } else {
+            Collection<RDN> rdns = computeRdns(interpreter, entryMapping);
+
+            DNBuilder db = new DNBuilder();
+
+            for (RDN rdn : rdns) {
+                //log.info("Processing RDN: "+rdn);
+
+                for (DN parentDn : parentDns) {
+                    //log.debug("Appending parent DN: "+parentDn);
+
+                    db.set(rdn);
+                    db.append(parentDn);
+                    DN dn = db.toDn();
+
+                    log.debug("DN: " + dn);
+                    dns.add(dn);
+                }
+            }
+        }
+    }
+
+    public Collection<RDN> computeRdns(
             Interpreter interpreter,
             EntryMapping entryMapping
-            ) throws Exception {
+    ) throws Exception {
 
         //log.debug("Computing RDNs:");
-        AttributeValues rdns = new AttributeValues();
+        Attributes rdns = new Attributes();
 
-        Collection rdnAttributes = entryMapping.getRdnAttributeNames();
-        for (Iterator i=rdnAttributes.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection<AttributeMapping> rdnAttributes = entryMapping.getRdnAttributeMappings();
+        for (AttributeMapping attributeMapping : rdnAttributes) {
             String name = attributeMapping.getName();
 
-            Object value = interpreter.eval(entryMapping, attributeMapping);
-            //log.debug(" - "+name+": "+value);
-
+            Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
-            if (value instanceof Collection && AttributeMapping.RDN_FIRST.equals(attributeMapping.getRdn())) {
-                Collection c = (Collection)value;
-                if (c.size() > 0) rdns.add(name, c.iterator().next());
-            } else {
-                rdns.add(name, value);
-            }
+            rdns.addValue(name, value);
         }
 
         return TransformEngine.convert(rdns);
-    }
-
-    public LoadEngine getLoadEngine() {
-        return loadEngine;
-    }
-
-    public void setLoadEngine(LoadEngine loadEngine) {
-        this.loadEngine = loadEngine;
     }
 
     public PenroseConfig getServerConfig() {
         return penroseConfig;
     }
 
-    public FilterTool getFilterTool() {
-        return filterTool;
+    public ConnectorManager getConnectorManager() {
+        return connectorManager;
     }
 
-    public void setFilterTool(FilterTool filterTool) {
-        this.filterTool = filterTool;
+    public void setConnectorManager(ConnectorManager connectorManager) {
+        this.connectorManager = connectorManager;
     }
 
-    public SourceManager getSourceManager() {
-        return sourceManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setSourceManager(SourceManager sourceManager) {
-        this.sourceManager = sourceManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
+
+        schemaManager = penroseContext.getSchemaManager();
+        interpreterManager = penroseContext.getInterpreterManager();
+        connectorManager = penroseContext.getConnectorManager();
+        connectionManager =penroseContext.getConnectionManager();
+        partitionManager = penroseContext.getPartitionManager();
     }
 
-    public Penrose getPenrose() {
-        return penrose;
+    public List<Collection<SourceRef>> getGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+
+        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Connection lastConnection = null;
+
+        for (EntryMapping em : partition.getPath(entryMapping)) {
+
+            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
+
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+                Adapter adapter = connection.getAdapter();
+
+                if (lastConnection == null) {
+                    lastConnection = connection;
+
+                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                    results.add(list);
+                    list = new ArrayList<SourceRef>();
+                    lastConnection = connection;
+                }
+
+                list.add(sourceRef);
+            }
+        }
+
+        if (!list.isEmpty()) results.add(list);
+        
+        return results;
     }
 
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public List<Collection<SourceRef>> getLocalGroupsOfSources(Partition partition, EntryMapping entryMapping, EntryMapping baseMapping) throws Exception {
+
+        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Connection lastConnection = null;
+
+        for (EntryMapping em : partition.getRelativePath(baseMapping, entryMapping)) {
+            if (em == baseMapping) continue;
+            
+            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
+
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+                Adapter adapter = connection.getAdapter();
+
+                if (lastConnection == null) {
+                    lastConnection = connection;
+
+                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                    results.add(list);
+                    list = new ArrayList<SourceRef>();
+                    lastConnection = connection;
+                }
+
+                list.add(sourceRef);
+            }
+        }
+
+        if (!list.isEmpty()) results.add(list);
+
+        return results;
+    }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }
 

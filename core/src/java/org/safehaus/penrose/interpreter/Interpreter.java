@@ -18,10 +18,14 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.source.Field;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.Iterator;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,19 +39,32 @@ public abstract class Interpreter {
 
     Collection rows;
 
-    public void set(Row row) throws Exception {
-        for (Iterator i=row.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = row.get(name);
+    public void set(RDN rdn) throws Exception {
+        for (String name : rdn.getNames()) {
+            Object value = rdn.get(name);
             set(name, value);
         }
     }
 
-    public void set(AttributeValues av) throws Exception {
-        for (Iterator i=av.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection list = av.get(name);
-            //set(name, list);
+    public void set(SourceValues av) throws Exception {
+        for (String sourceName : av.getNames()) {
+            Attributes attributes = av.get(sourceName);
+
+            for (String fieldName : attributes.getNames()) {
+                Attribute attribute = attributes.get(fieldName);
+
+                if (attribute.getSize() == 1) {
+                    set(sourceName+"."+fieldName, attribute.getValue());
+                } else {
+                    set(sourceName+"."+fieldName, attribute.getValues());
+                }
+            }
+        }
+    }
+
+    public void set(Attributes attributes) throws Exception {
+        for (String name : attributes.getNames()) {
+            Collection list = attributes.getValues(name);
 
             Object value;
             if (list.size() == 1) {
@@ -57,11 +74,6 @@ public abstract class Interpreter {
             }
             set(name, value);
         }
-    }
-
-    public void set(AttributeValues av, Collection rows) throws Exception {
-        set(av);
-        this.rows = rows;
     }
 
     public abstract Collection parseVariables(String script) throws Exception;
@@ -74,31 +86,62 @@ public abstract class Interpreter {
 
     public abstract void clear() throws Exception;
 
-    public Object eval(EntryMapping entryMapping, AttributeMapping attributeMapping) throws Exception {
+    public Object eval(AttributeMapping attributeMapping) throws Exception {
         try {
-            if (attributeMapping.getConstant() != null) {
-                return attributeMapping.getConstant();
+            Object constant = attributeMapping.getConstant();
+            if (constant != null) {
+                return constant;
+            }
 
-            } else if (attributeMapping.getVariable() != null) {
-                String name = attributeMapping.getVariable();
-                Object value = get(name);
-                if (value == null && name.startsWith("primaryKey.")) {
-                    value = get(name.substring(11));
+            String variable = attributeMapping.getVariable();
+            if (variable != null) {
+                Object value = get(variable);
+                if (value == null && variable.startsWith("primaryKey.")) {
+                    value = get(variable.substring(11));
                 }
                 return value;
 
-            } else if (attributeMapping.getExpression() != null) {
-                return eval(entryMapping, attributeMapping.getExpression());
+            }
+
+            Expression expression = attributeMapping.getExpression();
+            if (expression != null) {
+                return eval(expression);
+
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage());
+            throw e;
+        }
+    }
+
+    public Object eval(Field field) throws Exception {
+        try {
+            if (field.getConstant() != null) {
+                return field.getConstant();
+
+            } else if (field.getVariable() != null) {
+                String name = field.getVariable();
+                Object value = get(name);
+                if (value == null && name.startsWith("rdn.")) {
+                    value = get(name.substring(4));
+                }
+                return value;
+
+            } else if (field.getExpression() != null) {
+                return eval(field.getExpression());
 
             } else {
                 return null;
             }
         } catch (Exception e) {
-            throw new Exception("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage(), e);
+            throw new Exception("Error evaluating field "+field.getName(), e);
         }
     }
 
-    public Object eval(EntryMapping entryMapping, FieldMapping fieldMapping) throws Exception {
+    public Object eval(FieldMapping fieldMapping) throws Exception {
         try {
             if (fieldMapping.getConstant() != null) {
                 return fieldMapping.getConstant();
@@ -112,7 +155,7 @@ public abstract class Interpreter {
                 return value;
 
             } else if (fieldMapping.getExpression() != null) {
-                return eval(entryMapping, fieldMapping.getExpression());
+                return eval(fieldMapping.getExpression());
 
             } else {
                 return null;
@@ -122,7 +165,7 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(EntryMapping entryMapping, Expression expression) throws Exception {
+    public Object eval(Expression expression) throws Exception {
 
         String foreach = expression.getForeach();
         String var = expression.getVar();
@@ -139,56 +182,19 @@ public abstract class Interpreter {
             Object v = get(foreach);
             //log.debug("Values: "+v);
 
-            Collection newValues = new HashSet();
+            Collection<Object> newValues = new HashSet<Object>();
 
-            if (entryMapping.getSourceMapping(foreach) != null) { // process each row in source
+            if (v != null) {
 
-                //log.debug("Rows:");
-                for (Iterator i=rows.iterator(); i.hasNext(); ) {
-                    AttributeValues row = (AttributeValues)i.next();
-                    //log.debug(" - "+row);
-
-                    for (Iterator j=row.getNames().iterator(); j.hasNext(); ) {
-                        String name = (String)j.next();
-                        Collection values = row.get(name);
-
-                        if (values.size() == 1) {
-                            value = values.iterator().next();
-
-                        } else if (values.size() > 1) {
-                            value = values;
-                        }
-
-                        int k = name.indexOf(".");
-                        if (k < 0) {
-                            //log.debug("setting "+var+"."+name+" = "+value);
-                            set(var+"."+name, value);
-
-                        } else if (foreach.equals(name.substring(0, k))) {
-                            //log.debug("setting "+var+"."+name.substring(k+1)+" = "+value);
-                            set(var+"."+name.substring(k+1), value);
-                        }
-                    }
-
-                    value = eval(script);
-                    if (value == null) continue;
-
-                    //log.debug(" - "+value);
-                    newValues.add(value);
-                }
-
-            } else if (v != null) {
-
-                Collection values;
+                Collection<Object> values;
                 if (v instanceof Collection) {
-                    values = (Collection)v;
+                    values = (Collection<Object>)v;
                 } else {
-                    values = new ArrayList();
+                    values = new ArrayList<Object>();
                     values.add(v);
                 }
 
-                for (Iterator i=values.iterator(); i.hasNext(); ) {
-                    Object o = i.next();
+                for (Object o : values) {
                     set(var, o);
                     value = eval(script);
                     if (value == null) continue;

@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -35,7 +35,7 @@ public class ModuleMapping implements Cloneable {
     private String moduleName;
     private ModuleConfig moduleConfig;
 
-    private String baseDn;
+    private DN baseDn;
     private String filter;
     private String scope;
 
@@ -47,14 +47,17 @@ public class ModuleMapping implements Cloneable {
         this.moduleName = moduleName;
     }
 
-    public String getBaseDn() {
+    public DN getBaseDn() {
         return baseDn;
     }
 
-    public void setBaseDn(String dnPattern) {
-        this.baseDn = dnPattern;
+    public void setBaseDn(String baseDn) {
+        setBaseDn(new DN(baseDn));
     }
-
+    
+    public void setBaseDn(DN baseDn) {
+        this.baseDn = baseDn;
+    }
 
     public String getFilter() {
         return filter;
@@ -69,44 +72,22 @@ public class ModuleMapping implements Cloneable {
         this.scope = scope;
     }
 
-    public boolean match(String dn) throws Exception {
+    public boolean match(DN dn) throws Exception {
 
         if ("OBJECT".equals(scope)) {
 
             //log.debug("Matching object ["+baseDn+"] with ["+dn+"]");
-            if (EntryUtil.match(baseDn, dn)) return true;
+            if (baseDn.matches(dn)) return true;
 
         } else if ("ONELEVEL".equals(scope)) {
 
             //log.debug("Matching onelevel ["+baseDn+"] with ["+dn+"]");
-            String parent = EntryUtil.getParentDn(dn);
-            if (EntryUtil.match(baseDn, parent)) return true;
+            DN parentDn = dn.getParentDn();
+            if (baseDn.matches(parentDn)) return true;
 
         } else if ("SUBTREE".equals(scope)) {
 
-            //log.debug("Matching subtree ["+baseDn+"] with ["+dn+"]");
-            String a = baseDn;
-            String b = dn;
-
-            int i;
-            int j;
-
-            do {
-                i = a.lastIndexOf(",");
-                j = b.lastIndexOf(",");
-
-                String c = a.substring(i+1);
-                String d = b.substring(j+1);
-
-                if (!EntryUtil.match(c, d)) return false;
-
-                if (i >= 0) a = a.substring(0, i);
-                if (j >= 0) b = b.substring(0, j);
-
-            } while (i >=0 && j >= 0);
-
-            // if basedn has been exhausted => true
-            return i < 0;
+            return dn.endsWith(baseDn);
         }
 
         return false;
@@ -143,7 +124,8 @@ public class ModuleMapping implements Cloneable {
         return true;
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         ModuleMapping mapping = new ModuleMapping();
         mapping.moduleName = moduleName;
         mapping.moduleConfig = moduleConfig == null ? null : (ModuleConfig)moduleConfig.clone();

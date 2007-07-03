@@ -11,25 +11,23 @@
     <property name="iscc.path" value="ISCC.exe"/>
     <property name="cygwin.home" value="c:/cygwin"/>
 
-    <property name="module.name" value="penrose-server"/>
+    <property name="module.name" value="${product.name}-server"/>
     <property name="project.dist" value="dist"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
-    <tstamp/>
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
 
     <path id="lib.path">
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="../shared/lib">
-            <include name="*.jar"/>
-        </fileset>
         <fileset dir="../lib">
             <include name="*.jar"/>
         </fileset>
-        <pathelement location="../shared/target/classes"/>
         <pathelement location="../core/target/classes"/>
     </path>
 
@@ -63,11 +61,6 @@
 
     <target name="compile" depends="init">
         <echo message="Compiling ${product.title}."/>
-        <javacc
-            target="src/java/org/safehaus/penrose/openldap/config/SlapdParser.jj"
-            javacchome="../lib/javacc"
-            outputdirectory="src/java/org/safehaus/penrose/openldap/config"
-        />
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -75,8 +68,8 @@
             classpathref="lib.path"
             debug="on"
             debuglevel="lines,vars,source"
-            source="1.4"
-            target="1.4"
+            source="1.5"
+            target="1.5"
         />
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
@@ -92,7 +85,7 @@
               <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
-              <attribute name="Build-Date" value="${DSTAMP}"/>
+              <attribute name="Build-Date" value="${TIMESTAMP}"/>
             </manifest>
         </jar>
     </target>
@@ -136,7 +129,14 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+        <copy todir="target/dist/config">
+            <fileset dir="config" includes="**/*"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
         <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
+        <mkdir dir="target/dist/db"/>
         <copy todir="target/dist/docs">
             <fileset dir="../docs" includes="*.url"/>
         </copy>
@@ -144,12 +144,12 @@
             <fileset dir="target/javadoc"/>
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
-            <fileset dir="../shared/lib" includes="*"/>
             <fileset dir="../lib" includes="*"/>
-            <fileset dir="../shared/dist" includes="penrose-shared-${product.version}.jar"/>
             <fileset dir="../core/dist" includes="penrose-${product.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
+        <mkdir dir="target/dist/locks"/>
+        <mkdir dir="target/dist/logs"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
             <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
@@ -246,7 +246,7 @@
         <exec executable="server/tools/pkg-dmg">
             <arg line="- -source target/${module.name}-${product.version}.dmg"/>
             <arg line="- -target ${module.name}-${product.version}.dmg"/>
-            <arg line="- -volname &quot;${product.title} ${product.version}&quot;"/>
+            <arg line="- -volname &quot;Penrose Server ${product.version}&quot;"/>
             <arg line="- -mkdir /.background"/>
             <arg line="- -icon images/PenroseDMG.icns"/>
             <arg line="- -license target/LICENSE.txt"/>
@@ -274,35 +274,9 @@
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.spec" value="${module.name}.spec"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.i386.rpm"/>
         </antcall>
-    </target>
-
-    <target name="rpm" depends="rpm-check,rpm-build">
-    </target>
-
-    <target name="rpm-check" depends="init">
-        <echo message="Checking ${rpm.builder}"/>
-        <condition property="hasRpmBuilder">
-            <available file="${rpm.builder}"/>
-        </condition>
-    </target>
-
-    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
-        <copy todir="target" file="installer/${module.name}.spec">
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
-        </copy>
-        <exec executable="${rpm.builder}">
-            <arg line="-bb target/${module.name}.spec"/>
-        </exec>
-        <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${rpm.name}">
-        </copy>
     </target>
 
     <target name="dist-win32" depends="docs,dist" if="isWindows">
@@ -320,8 +294,36 @@
             <param name="rpm.prefix" value="${cygwin.home}"/>
             <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
             <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.spec" value="${module.name}.spec"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.cygwin.i386.rpm"/>
         </antcall>
+    </target>
+
+    <target name="rpm" depends="rpm-check,rpm-build">
+    </target>
+
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
+    </target>
+
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+        <copy todir="target" file="installer/${rpm.spec}">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-bb target/${rpm.spec}"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/i386/${rpm.name}">
+        </copy>
     </target>
 
     <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">

@@ -22,8 +22,8 @@ package org.safehaus.penrose.event;
  */
 public abstract class Event {
 
-    private Object source;
-    private int type;
+    protected Object source;
+    protected int type;
 
     public Event(Object source, int type) {
         this.source = source;

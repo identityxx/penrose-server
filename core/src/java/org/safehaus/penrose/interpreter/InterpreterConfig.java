@@ -17,8 +17,9 @@
  */
 package org.safehaus.penrose.interpreter;
 
-import java.util.Properties;
 import java.util.Collection;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author Endi S. Dewata
@@ -29,7 +30,15 @@ public class InterpreterConfig implements Cloneable {
     private String interpreterClass = DefaultInterpreter.class.getName();
     private String description;
 
-    private Properties parameters = new Properties();
+    private Map<String,String> parameters = new LinkedHashMap<String,String>();
+
+    public InterpreterConfig() {
+    }
+
+    public InterpreterConfig(String name, String interpreterClass) {
+        this.name = name;
+        this.interpreterClass = interpreterClass;
+    }
 
     public String getInterpreterClass() {
         return interpreterClass;
@@ -39,16 +48,16 @@ public class InterpreterConfig implements Cloneable {
         this.interpreterClass = interpreterClass;
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return parameters.keySet();
     }
 
     public void setParameter(String name, String value) {
-       parameters.setProperty(name, value);
+       parameters.put(name, value);
     }
 
     public String getParameter(String name) {
-        return parameters.getProperty(name);
+        return parameters.get(name);
     }
 
     public String getName() {
@@ -102,7 +111,8 @@ public class InterpreterConfig implements Cloneable {
         parameters.putAll(interpreterConfig.parameters);
     }
 
-    public Object clone() {
+    public Object clone() throws CloneNotSupportedException {
+        super.clone();
         InterpreterConfig interpreterConfig = new InterpreterConfig();
         interpreterConfig.copy(this);
 

@@ -65,8 +65,6 @@ if $cygwin ; then
     PENROSE_HOME=`cygpath --unix "$PENROSE_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
-  [ -n "$CLASSPATH" ] &&
-    CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
 
 if [ -z "$JAVACMD" ] ; then
@@ -91,12 +89,65 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-if [ -n "$CLASSPATH" ] ; then
-  LOCALCLASSPATH="$CLASSPATH"
-fi
+# Configure the appropriate LOCALCLASSPATH.
+LOCALCLASSPATH=$PENROSE_HOME/conf
 
-LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
+for i in "$PENROSE_HOME"/lib/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
 
+for i in "$PENROSE_HOME"/lib/ext/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
+
+for i in "$PENROSE_HOME"/server/lib/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
+
+for i in "$PENROSE_HOME"/server/lib/ext/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
+
+for i in "$PENROSE_HOME"/schema/ext/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
+
+LOCALLIBPATH="$JAVA_HOME/jre/lib/ext:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/lib:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/lib/ext:$LOCALLIBPATH"
 LOCALLIBPATH="$PENROSE_HOME/server/lib:$LOCALLIBPATH"
@@ -107,10 +158,12 @@ LOCALLIBPATH="$PENROSE_HOME/schema/ext:$LOCALLIBPATH"
 if $cygwin; then
   PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
-  CYGHOME=`cygpath --windows "$HOME"`
 fi
+
+CLASSPATH=$LOCALCLASSPATH
+export CLASSPATH
 
 cd "$PENROSE_HOME"
 mkdir -p "$PENROSE_HOME/var"
@@ -124,9 +177,8 @@ if [ "$1" = "start" ] ; then
   else
     shift
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
-    -classpath "$LOCALCLASSPATH" \
-    -Djava.ext.dirs="$LOCALLIBPATH" \
     -Djava.library.path="$LOCALLIBPATH" \
+    -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
     >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
@@ -155,9 +207,8 @@ elif [ "$1" = "status" ] ; then
 else
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
-  -classpath "$LOCALCLASSPATH" \
-  -Djava.ext.dirs="$LOCALLIBPATH" \
   -Djava.library.path="$LOCALLIBPATH" \
+  -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 

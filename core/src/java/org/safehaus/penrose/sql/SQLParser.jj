@@ -292,20 +292,26 @@ SQLCompareExpr SQLCompareExpr() :
   String rs = "", ts;
   SQLCompareExpr compareExpr = new SQLCompareExpr();
   SQLCompareExprRight compareExprRight;
+  SQLSelect select;
+  SQLIsClause isClause;
 }
 {
   (
-    LOOKAHEAD (SQLSelect()) ts = SQLSelect()
+    LOOKAHEAD (SQLSelect())
+    select = SQLSelect()
+    {
+      ts = select.toString();
+      rs = rs + ts;
+      compareExpr.addChild(select);
+    }
+  | LOOKAHEAD (SQLColRef() <IS>)
+    ts = SQLIsClause()
     {
       rs = rs + ts;
       compareExpr.addChild(ts);
     }
-  | LOOKAHEAD (SQLColRef() <IS>) ts = SQLIsClause()
-    {
-      rs = rs + ts;
-      compareExpr.addChild(ts);
-    }
-  | LOOKAHEAD (<EXISTS>) ts = SQLExistsClause()
+  | LOOKAHEAD (<EXISTS>)
+    ts = SQLExistsClause()
     {
       rs = rs + ts;
       compareExpr.addChild(ts);
@@ -332,13 +338,15 @@ SQLCompareExprRight SQLCompareExprRight() :
   String rs = "", ts;
   SQLCompareExprRight compareExprRight = new SQLCompareExprRight();
   SQLCompareOp compareOp;
+  SQLLikeClause likeClause;
 }
 {
   (
-    LOOKAHEAD(2) ts = SQLLikeClause()
+    LOOKAHEAD(2)
+    likeClause = SQLLikeClause()
     {
-      rs = rs + ts;
-      compareExprRight.addChild(ts);
+      rs = rs + likeClause.toString();
+      compareExprRight.addChild(likeClause);
     }
   | LOOKAHEAD(2) ts = SQLInClause()
     {
@@ -445,8 +453,10 @@ String SQLCursorClose() :
 }
 
 void SQLCursorDeclare() :
-{Token x, y;
- String rs = new String(""), ts;
+{
+  Token x, y;
+  String rs = new String(""), ts;
+  SQLSelect select;
 }
 {
   "cursor" x = <ID>
@@ -461,42 +471,48 @@ void SQLCursorDeclare() :
         }
   [ ts = SQLCursorArgs() { rs = rs + fout.println(); } ]
 //  [ ts = SQLFunctionArgs() { rs = rs + ts; } ]
-  "is" ts = SQLSelect() ";"
-        {
-		  rs = rs + fout.print(ts); 
-          rs = rs + fout.println(";");
-          fout.outdent();
-          fout.outdent();
-          fout.outdent();
-		  fout.print(rs); // out
-        }
+  "is" select = SQLSelect() ";"
+  {
+    ts = select.toString();
+    rs = rs + fout.print(ts);
+    rs = rs + fout.println(";");
+    fout.outdent();
+    fout.outdent();
+    fout.outdent();
+	fout.print(rs); // out
+  }
 }
 
 String SQLCursorFetch() :
-{ String rs = new String(""), ts;}
+{
+  String rs = new String(""), ts;
+  SQLSelectCols selectCols;
+}
 {
   <FETCH>
-        {
-	    rs = rs + fout.print("Exec SQL FETCH ");
-	    fout.align();
-	    inSelect = true;
-        }
-  ts = SQLSelectCols()
-	{
-	  rs = rs + ts;
-	  inSelect = false; 
-	}
+  {
+    rs = rs + fout.print("Exec SQL FETCH ");
+    fout.align();
+    inSelect = true;
+  }
+  selectCols = SQLSelectCols()
+  {
+    ts = selectCols.toString();
+    rs = rs + ts;
+    inSelect = false;
+  }
   [ <INTO>
         {
 	  inSQL = true;
 	  rs = rs + fout.println();
           rs = rs + fout.printRj("INTO ");
         }
-    ts = SQLSelectCols()
-        {
+    selectCols = SQLSelectCols()
+    {
+      ts = selectCols.toString();
 	  rs = rs + ts;
 	  fout.outalign();
-        }
+    }
   ]
 	{ inSQL = false ; return rs; }
 }
@@ -538,37 +554,62 @@ DataType SQLDataType() :
 }
 
 String SQLDelete() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLWhere where;
+}
 {
   <DELETE> <FROM>
-        { 
-	  if (inProcedure) rs = rs + fout.print("Exec SQL ");
-	  rs = rs + fout.print("DELETE FROM ");
-          fout.align();
-	  inSQL = true;
-        }
-  ts = SQLTableList() { rs = rs + ts; }
-  [ ts = SQLWhere() { rs = rs + ts; } ]
-        { fout.outalign();
-	  inSQL = false;
-	}
-  { return rs; }
+  {
+	if (inProcedure) rs = rs + fout.print("Exec SQL ");
+	rs = rs + fout.print("DELETE FROM ");
+    fout.align();
+	inSQL = true;
+  }
+  tableList = SQLTableList()
+  {
+    ts = tableList.toString();
+    rs = rs + ts;
+  }
+  [
+    where = SQLWhere()
+    {
+      ts = where.toString();
+      rs = rs + ts;
+    }
+  ]
+  {
+    fout.outalign();
+	inSQL = false;
+  }
+  {
+    return rs;
+  }
 }
 
 String SQLExistsClause() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLSelect select;
+}
 {
   <EXISTS> 
-	{
-	  rs = rs + fout.print("EXISTS (");
-	  fout.align();
-	}
-  "(" ts = SQLSelect() { rs = rs + ts; } ")"
-	{
-	  rs = rs + fout.print(")");
-	  fout.outalign();
-	  return rs;
-	}
+  {
+    rs = rs + fout.print("EXISTS (");
+    fout.align();
+  }
+  "(" select = SQLSelect()
+  {
+    ts = select.toString();
+    rs = rs + ts;
+  }
+  ")"
+  {
+    rs = rs + fout.print(")");
+    fout.outalign();
+    return rs;
+  }
 }
 
 String SQLFunction() :
@@ -654,7 +695,11 @@ String SQLInClause() :
 }
 
 String SQLInsert() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLSelectCols selectCols;
+}
 {
   <INSERT> <INTO> 
         { 
@@ -662,14 +707,22 @@ String SQLInsert() :
 	    rs = rs + fout.print("INSERT INTO ");
           fout.align();
         }
-  ts = SQLTableList() { rs = rs + ts; }
+  tableList = SQLTableList()
+  {
+    ts = tableList.toString();
+    rs = rs + ts;
+  }
   [
     "(" 
 	{
 	  rs = rs + fout.print("(");
 	  inSelect = true;
 	} 
-    ts = SQLSelectCols() { rs = rs + ts; }
+    selectCols = SQLSelectCols()
+    {
+      ts = selectCols.toString();
+      rs = rs + ts;
+    }
     ")" 
 	{ 
 	  rs = rs + fout.print(")");
@@ -685,12 +738,16 @@ String SQLInsert() :
 	  rs = rs + fout.print(" (");
 	  inSQL = true;
 	}
-  ts = SQLSelectCols() { rs = rs + ts; }
+  selectCols = SQLSelectCols()
+  {
+    ts = selectCols.toString();
+    rs = rs + ts;
+  }
   ")"
 	{ 
 	  rs = rs + fout.print(")");
 	  inSelect = false;
-        fout.outalign();
+      fout.outalign();
 	  return rs;
 	}
 }
@@ -721,13 +778,30 @@ String SQLLeftJoinClause() :
   { return rs; }
 }
 
-String SQLLikeClause() :
-{ String rs = new String(""), ts;}
+SQLLikeClause SQLLikeClause() :
 {
-  [ <NOT> { rs = rs + fout.print(" NOT"); } ]
-  <LIKE> { rs = rs + fout.print(" LIKE "); }
-  ts = SQLPattern() { rs = rs + ts; }
-  { return rs; }
+  SQLLikeClause likeClause = new SQLLikeClause();
+  String rs = "";
+  String ts;
+}
+{
+  [
+    <NOT>
+    {
+      rs = rs + fout.print(" NOT");
+      likeClause.setNot(true);
+    }
+  ]
+  <LIKE>
+  {
+    rs = rs + fout.print(" LIKE ");
+  }
+  ts = SQLPattern()
+  {
+    rs = rs + ts;
+    likeClause.setPattern(ts);
+    return likeClause;
+  }
 }
 
 String SQLLiteral() :
@@ -946,47 +1020,111 @@ String SQLRightJoinClause() :
   { return rs; }
 }
 
-String SQLSelect() :
-{ String rs = new String(""), ts; }
+SQLSelect SQLSelect() :
+{
+  String rs = new String(""), ts;
+  SQLSelect select = new SQLSelect();
+  SQLSelectCols selectCols;
+  SQLTableList tableList;
+  SQLWhere where;
+}
 {
   <SELECT>
-        { 
-	  if (inProcedure) rs = rs + fout.print("Exec SQL ");
-	  rs = rs + fout.print("SELECT ");
-	  fout.align();
-	  inSelect = true;
-        }
-  ts = SQLSelectCols()
-	{ rs = rs + ts; inSelect = false; }
+  {
+	if (inProcedure) rs = rs + fout.print("Exec SQL ");
+	rs = rs + fout.print("SELECT ");
+	fout.align();
+	inSelect = true;
+  }
+  selectCols = SQLSelectCols()
+  {
+    ts = selectCols.toString();
+    rs = rs + ts;
+    inSelect = false;
+  }
   [ <INTO>
-        { rs = rs + fout.println();
-          rs = rs + fout.printRj("INTO ");
+    {
+      rs = rs + fout.println();
+      rs = rs + fout.printRj("INTO ");
 	  inSQL = true;
-        }
-    ts = SQLSelectCols()
-	{ rs = rs + ts; inSQL = false; }
+    }
+    selectCols = SQLSelectCols()
+	{
+	  ts = selectCols.toString();
+	  rs = rs + ts;
+	  inSQL = false;
+	}
   ]
   <FROM>
-        { rs = rs + fout.println();
-          rs = rs + fout.printRj("FROM ");
-        }
-  ts = SQLTableList() { rs = rs + ts; }
-  [ ts = SQLWhere()   { rs = rs + ts; } ]
-  [ ts = SQLGroupBy() { rs = rs + ts; } ]
-  [ ts = SQLOrderBy() { rs = rs + ts; } ]
-        { 
-	  fout.outalign();
-	  return rs;
-	}
+  {
+    rs = rs + fout.println();
+    rs = rs + fout.printRj("FROM ");
+  }
+  tableList = SQLTableList()
+  {
+    ts = tableList.toString();
+    rs = rs + ts;
+    select.setTableList(tableList);
+  }
+  [
+    where = SQLWhere()
+    {
+      ts = where.toString();
+      rs = rs + ts;
+      select.setWhere(where);
+    }
+  ]
+  [
+    ts = SQLGroupBy()
+    {
+      rs = rs + ts;
+    }
+  ]
+  [
+    ts = SQLOrderBy()
+    {
+      rs = rs + ts;
+    }
+  ]
+  {
+    fout.outalign();
+    select.setString(rs);
+    return select;
+  }
 }
 
-String SQLSelectCols() :
-{ String rs = new String(""), ts;}
+SQLSelectCols SQLSelectCols() :
 {
-  ( <ALL> { rs = rs + fout.print("ALL "); }
-  | <DISTINCT> { rs = rs + fout.print("DISTINCT "); }
-  )* [ "*" { rs = rs + fout.print("*"); } | ts = SQLSelectList() { rs = rs + ts; } ]
-  { return rs; }
+  String rs = new String(""), ts;
+  SQLSelectCols selectCols = new SQLSelectCols();
+}
+{
+  (
+    <ALL>
+    {
+      rs = rs + fout.print("ALL ");
+    }
+  |
+    <DISTINCT>
+    {
+      rs = rs + fout.print("DISTINCT ");
+    }
+  )*
+  [
+    "*"
+    {
+      rs = rs + fout.print("*");
+    }
+    |
+      ts = SQLSelectList()
+      {
+        rs = rs + ts;
+      }
+  ]
+  {
+    selectCols.setString(rs);
+    return selectCols;
+  }
 }
 
 String SQLSelectList() :
@@ -1002,10 +1140,17 @@ String SQLSelectList() :
 }
 
 String SQLStatement() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLSelect select;
+}
 {
   ( 
-    ts = SQLSelect() { rs = rs + ts; }
+    select = SQLSelect()
+    {
+      ts = select.toString();
+      rs = rs + ts;
+    }
   | ts = SQLInsert() { rs = rs + ts; }
   | ts = SQLUpdate() { rs = rs + ts; }
   | ts = SQLDelete() { rs = rs + ts; }
@@ -1050,56 +1195,104 @@ String SQLSumExpr() :
   { return rs; }
 }
 
-String SQLTableList() :
-{ String rs = new String(""), ts; }
+SQLTableList SQLTableList() :
 {
-  ts = SQLTableRef() { rs = rs + ts; }
-  ( LOOKAHEAD(2) "," { rs = rs + fout.println(", "); }
-                                ts = SQLTableRef() { rs = rs + ts; } )*
-  { return rs; }
+  String rs = new String(""), ts;
+  SQLTableList tableList = new SQLTableList();
+  SQLTableRef tableRef;
+}
+{
+  tableRef = SQLTableRef()
+  {
+    ts = tableRef.toString();
+    rs = rs + ts;
+    tableList.addTableRef(tableRef);
+  }
+  ( LOOKAHEAD(2) ","
+    {
+      rs = rs + fout.println(", ");
+    }
+    tableRef = SQLTableRef()
+    {
+      ts = tableRef.toString();
+      rs = rs + ts;
+      tableList.addTableRef(tableRef);
+    }
+  )*
+  {
+    tableList.setString(rs);
+    return tableList;
+  }
 }
 
 
-String SQLTableRef() :
-{Token tableName, aliasName;
- String rs = new String("");
+SQLTableRef SQLTableRef() :
+{
+  Token tableName, aliasName;
+  String rs = new String("");
+  SQLTableRef tableRef = new SQLTableRef();
 }
 {
   tableName = <ID>
-        { rs = rs + fout.print(TitleCaseString.fixCase(tableName.image));
-        }
+  {
+    rs = rs + fout.print(TitleCaseString.fixCase(tableName.image));
+    tableRef.setTableName(tableName.image);
+  }
   [ aliasName = <ID>
-        { rs = rs + fout.print(" ");
-          rs = rs + fout.print(TitleCaseString.fixCase(aliasName.image));
-        }
+    {
+      rs = rs + fout.print(" ");
+      rs = rs + fout.print(TitleCaseString.fixCase(aliasName.image));
+      tableRef.setAliasName(aliasName.image);
+    }
   ]
-  { return rs; }
+  {
+    return tableRef;
+  }
 }
 
 String SQLTerm() :
-{ Token other; 
+{
+  Token other;
   String rs = new String(""), ts;
   SQLOrExpr orExpr;
 }
 {
   (
-    "(" { rs = rs + fout.print("(");
-          fout.align();
-        }
+    "("
+    {
+      rs = rs + fout.print("(");
+      fout.align();
+    }
     orExpr = SQLOrExpr()
     {
       ts = orExpr.toString();
       rs = rs + ts;
     }
-    ")" { rs = rs + fout.print(")");
-          fout.outalign();
-        }
-  | ts = SQLColRef() { rs = rs + ts; }
-  | ts = SQLLiteral() { rs = rs + ts; }
-  | ts = SQLFunction() { rs = rs + ts; }
+    ")"
+    {
+      rs = rs + fout.print(")");
+      fout.outalign();
+    }
+  |
+    ts = SQLColRef()
+    {
+      rs = rs + ts;
+    }
+  |
+    ts = SQLLiteral()
+    {
+      rs = rs + ts;
+    }
+  |
+    ts = SQLFunction()
+    {
+      rs = rs + ts;
+    }
 //  | (other = <ID> { rs = rs + fout.print("<<<" + other.image + ">>>"); })+
   )
-  { return rs; }
+  {
+    return rs;
+  }
 }
 
 String SQLUnaryExpr() :
@@ -1113,7 +1306,11 @@ String SQLUnaryExpr() :
 }
 
 String SQLUpdate() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLTableList tableList;
+  SQLWhere where;
+}
 {
   <UPDATE>
         { 
@@ -1121,7 +1318,11 @@ String SQLUpdate() :
 	  rs = rs + fout.print("UPDATE ");
           fout.align();
         }
-  ts = SQLTableList() { rs = rs + ts; }
+  tableList = SQLTableList()
+  {
+    ts = tableList.toString();
+    rs = rs + ts;
+  }
   <SET>
         { 
 	  inSQL = true;
@@ -1139,10 +1340,17 @@ String SQLUpdate() :
     ] 
   )+
 
-  [ ts = SQLWhere() { rs = rs + ts; } ]
-        { fout.outalign();
-	  inSQL = false;
-	}
+  [
+    where = SQLWhere()
+    {
+      ts = where.toString();
+      rs = rs + ts;
+    }
+  ]
+  {
+    fout.outalign();
+	inSQL = false;
+  }
   { return rs; }
 }
 
@@ -1164,12 +1372,23 @@ String SQLUpdateAssignment() :
 }
 
 String SQLLValueElement() :
-{ String rs = new String(""), ts; }
+{
+  String rs = new String(""), ts;
+  SQLSelect select;
+}
 {
   ( <NULL> { rs = rs + fout.print("NULL"); }
   | ts = SQLSumExpr() { rs = rs + ts; }
-  | ts = SQLSelect() { rs = rs + ts; } )
-  { return rs; }
+  |
+    select = SQLSelect()
+    {
+      ts = select.toString();
+      rs = rs + ts;
+    }
+  )
+  {
+    return rs;
+  }
 }
 
 String SQLLValueList() :
@@ -1186,9 +1405,10 @@ String SQLLValueList() :
   { return rs; }
 }
 
-String SQLWhere() :
+SQLWhere SQLWhere() :
 {
   String rs = new String(""), ts;
+  SQLWhere where = new SQLWhere();
   SQLOrExpr orExpr;
 }
 {
@@ -1201,6 +1421,9 @@ String SQLWhere() :
   orExpr = SQLOrExpr()
   {
     ts = orExpr.toString();
-    rs = rs + ts; inSQL = false; return rs;
+    rs = rs + ts;
+    inSQL = false;
+    where.setExpression(orExpr);
+    return where;
   }
 }

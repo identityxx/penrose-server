@@ -19,6 +19,8 @@
             <fileset dir="samples/jboss" includes="META-INF/*"/>
             <fileset dir="lib" includes="*.jar" excludes="bsh-2.0b4.jar"/>
             <fileset dir="lib/ext" includes="*.jar"/>
+            <fileset dir="server/lib" includes="*.jar"/>
+            <fileset dir="server/lib/ext" includes="*.jar"/>
             <fileset dir="schema/ext" includes="*.jar"/>
         </jar>
     </target>

@@ -17,163 +17,45 @@
  */
 package org.safehaus.penrose.pipeline;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
-import java.util.*;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
  */
-public class Pipeline implements Iterator {
+public class Pipeline extends SearchResponse {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    public SearchResponse parent;
 
-    List list = new ArrayList();
-    int totalCount;
-    boolean done = false;
-
-    Collection listeners = new LinkedHashSet();
-
-    public void addListener(PipelineListener listener) {
-        listeners.add(listener);
+    public Pipeline(SearchResponse parent) {
+        this.parent = parent;
     }
 
-    public void removeListener(PipelineListener listener) {
-        listeners.remove(listener);
+    public void add(Object object) throws Exception {
+        parent.add(object);
     }
 
-    public void fireEvent(final PipelineEvent event) {
-        for (Iterator i=listeners.iterator(); i.hasNext(); ) {
-            PipelineListener listener = (PipelineListener)i.next();
-            switch (event.getType()) {
-                case PipelineEvent.OBJECT_ADDED:
-                    listener.objectAdded(event);
-                    break;
-                case PipelineEvent.OBJECT_REMOVED:
-                    listener.objectRemoved(event);
-                    break;
-                case PipelineEvent.PIPELINE_CLOSED:
-                    listener.pipelineClosed(event);
-                    break;
-            }
-        }
+    public long getTotalCount() throws Exception {
+        return parent.getTotalCount();
     }
 
-    public synchronized void add(Object object) {
-        list.add(object);
-        totalCount++;
-        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
-
-        notifyAll();
+    public void setException(Exception e) {
+        parent.setException(e);
     }
 
-    public synchronized void addAll(Collection collection) {
-        for (Iterator i=collection.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-            list.add(object);
-            totalCount++;
-            fireEvent(new PipelineEvent(PipelineEvent.OBJECT_ADDED, object));
-        }
-
-        notifyAll();
+    public LDAPException getException() {
+        return parent.getException();
     }
 
-    public synchronized boolean hasNext() {
-        while (!done && list.size() == 0) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return list.size() > 0;
+    public void close() throws Exception {
+        // don't close parent
     }
 
-    public synchronized Object next() {
-        while (!done && list.size() == 0) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        if (list.size() == 0) return null;
-
-        Object object = list.remove(0);
-        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_REMOVED, object));
-
-        return object;
+    public SearchResponse getParent() {
+        return parent;
     }
 
-    public void remove() {
-        while (!done && list.size() == 0) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        if (list.size() == 0) return;
-
-        Object object = list.remove(0);
-        fireEvent(new PipelineEvent(PipelineEvent.OBJECT_REMOVED, object));
-    }
-
-    public synchronized void close() {
-        done = true;
-        fireEvent(new PipelineEvent(PipelineEvent.PIPELINE_CLOSED));
-        notifyAll();
-    }
-
-    public synchronized Collection getAll() {
-        while (!done) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return list;
-    }
-
-    public synchronized boolean isEmpty() {
-        while (!done) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return list.isEmpty();
-    }
-
-    public synchronized int size() {
-        while (!done) {
-            try {
-                wait();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return list.size();
-    }
-
-    public int getTotalCount() {
-        return totalCount;
-    }
-    
-    public Iterator iterator() {
-        return this;
-    }
-
-    public boolean isClosed() {
-        return done;
+    public void setParent(SearchResponse parent) {
+        this.parent = parent;
     }
 }

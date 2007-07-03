@@ -3,13 +3,11 @@ package org.safehaus.penrose.samba;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import javax.naming.directory.*;
 import java.util.Map;
 import java.util.Collection;
 import java.util.TreeMap;
@@ -38,15 +36,16 @@ public class SambaGroupModule extends Module {
     }
 
     public boolean beforeAdd(AddEvent event) throws Exception {
-        Attributes attributes = event.getAttributes();
+        AddRequest request = event.getRequest();
 
-        String dn = event.getDn();
+        String dn = request.getDn().toString();
         int i = dn.indexOf("=");
         int j = dn.indexOf(",", i);
         String groupname = dn.substring(i+1, j);
 
         log.debug("Checking Samba attributes before adding \""+dn+"\".");
 
+        Attributes attributes = request.getAttributes();
         if (attributes.get("sambaSID") == null || attributes.get("gidNumber") == null) {
 
             log.debug("Generating Group SID and GID ...");
@@ -84,16 +83,13 @@ public class SambaGroupModule extends Module {
             log.debug("Group SID: "+groupSID);
             log.debug("GID: "+gid);
 
-            Attribute attribute = new BasicAttribute("gidNumber", gid);
-            attributes.put(attribute);
+            attributes.setValue("gidNumber", gid);
 
-            attribute = new BasicAttribute("sambaSID", groupSID);
-            attributes.put(attribute);
+            attributes.setValue("sambaSID", groupSID);
         }
 
         if (attributes.get("sambaGroupType") == null) {
-            Attribute attribute = new BasicAttribute("sambaGroupType", "2");
-            attributes.put(attribute);
+            attributes.setValue("sambaGroupType", "2");
         }
 
         return true;
@@ -101,30 +97,29 @@ public class SambaGroupModule extends Module {
 
     public boolean beforeModify(ModifyEvent event) throws Exception {
 
-        String dn = event.getDn();
-        int i = dn.indexOf("=");
-        int j = dn.indexOf(",", i);
-        String groupname = dn.substring(i+1, j);
+        ModifyRequest modifyRequest = event.getRequest();
+
+        DN dn = modifyRequest.getDn();
+        RDN rdn = dn.getRdn();
+        String groupname = (String)rdn.get("cn");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
 
-        PenroseSession session = event.getSession();
+        Session session = event.getSession();
 
-        PenroseSearchResults results = new PenroseSearchResults();
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        PenroseSearchControls sc = new PenroseSearchControls();
-        sc.setScope(PenroseSearchControls.SCOPE_BASE);
+        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
-        session.search(
-                dn,
-                "(objectClass=*)",
-                sc,
-                results);
+        session.search(searchRequest, response);
 
-        SearchResult entry = (SearchResult)results.next();
-        Attributes values = entry.getAttributes();
+        SearchResult result = (SearchResult) response.next();
+        Attributes values = result.getAttributes();
 
-        Collection modifications = event.getModifications();
+        Collection<Modification> modifications = modifyRequest.getModifications();
 
         if (values.get("sambaSID") == null || values.get("gidNumber") == null) {
 
@@ -163,18 +158,18 @@ public class SambaGroupModule extends Module {
             log.debug("Group SID: "+groupSID);
             log.debug("GID: "+gid);
 
-            Attribute attribute = new BasicAttribute("gidNumber", gid);
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("gidNumber", gid);
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
 
-            attribute = new BasicAttribute("sambaSID", groupSID);
-            modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            attribute = new Attribute("sambaSID", groupSID);
+            modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 
         if (values.get("sambaGroupType") == null) {
-            Attribute attribute = new BasicAttribute("sambaGroupType", "2");
-            ModificationItem modification = new ModificationItem(DirContext.ADD_ATTRIBUTE, attribute);
+            Attribute attribute = new Attribute("sambaGroupType", "2");
+            Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
 

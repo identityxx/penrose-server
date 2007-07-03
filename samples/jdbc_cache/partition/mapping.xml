@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="dc=JDBC Cache,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>JDBC Cache</constant>
+    </at>
+    <at name="o">
+      <constant>JDBC Cache</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=JDBC Cache,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=JDBC Cache,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>u.username</variable>
+    </at>
+    <at name="cn">
+      <expression>
+if (u == void || u == null) return null;
+return u.firstName+" "+u.lastName;
+      </expression>
+    </at>
+    <at name="sn">
+      <variable>u.lastName</variable>
+    </at>
+    <at name="userPassword">
+      <variable>u.password</variable>
+    </at>
+    <source name="u">
+      <source-name>users_cache</source-name>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
+      <field name="firstName">
+        <expression>
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return null;
+return cn.substring(0, i);
+        </expression>
+      </field>
+      <field name="lastName">
+        <expression>
+if (sn != void &amp;&amp; sn != null) return sn;
+if (cn == void || cn == null) return null;
+int i = cn.lastIndexOf(" ");
+if (i &lt; 0) return cn;
+return cn.substring(i+1);
+        </expression>
+      </field>
+      <field name="password">
+        <variable>userPassword</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=JDBC Cache,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,dc=JDBC Cache,dc=Example,dc=com">
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <variable>g.groupname</variable>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="ug.username" var="username">
+return "uid="+username+",ou=Users,dc=JDBC Cache,dc=Example,dc=com";
+      </expression>
+    </at>
+    <source name="g">
+      <source-name>groups_cache</source-name>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+    </source>
+    <source name="ug">
+      <source-name>usergroups_cache</source-name>
+      <field name="groupname">
+        <variable>g.groupname</variable>
+      </field>
+      <field name="username">
+        <expression foreach="uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return um.substring(i+1, j);
+        </expression>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

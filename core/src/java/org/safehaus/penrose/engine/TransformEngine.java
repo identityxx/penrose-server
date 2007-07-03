@@ -22,9 +22,14 @@ import java.util.*;
 
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.entry.*;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -47,29 +52,33 @@ public class TransformEngine {
     /**
      * Convert attribute values into rows.
      *
-     * Input: AttributeValues(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     * Output: List(Row(value1=a, value2=1), Row(value1=a, value2=2), ... )
+     * Input: Attributes(attr1=[a, b, c], attr2=[1, 2, 3])
+     * Output: List(RDN(attr1=a, attr2=1), RDN(attr1=a, attr2=2), ... )
      *
      * @param attributes
      * @return collection of Rows
      */
-    public static Collection convert(AttributeValues attributes) {
-        return convert(attributes.getValues());
+    public static Collection<RDN> convert(Attributes attributes) {
+        Map<String,Collection> map = new HashMap<String,Collection>();
+        for (Attribute attribute : attributes.getAll()) {
+            map.put(attribute.getName(), attribute.getValues());
+        }
+        return convert(map);
     }
-
+    
     /**
      * Convert map of values into rows.
      *
      * Input: Map(value1=Collection(a, b, c), value2=Collection(1, 2, 3))
-     * Output: List(Row(value1=a, value2=1), Row(value1=a, value2=2), ... )
+     * Output: List(RDN(value1=a, value2=1), RDN(value1=a, value2=2), ... )
      *
      * @param values Map of collections.
      * @return collection of Rows
      */
-    public static Collection convert(Map values) {
-        List names = new ArrayList(values.keySet());
-        List results = new ArrayList();
-        Map temp = new HashMap();
+    public static Collection<RDN> convert(Map<String,Collection> values) {
+        List<String> names = new ArrayList<String>(values.keySet());
+        List<RDN> results = new ArrayList<RDN>();
+        Map<String,Object> temp = new HashMap<String,Object>();
 
         if (crossProductDebug >= 65535) {
             log.debug("Generating cross product:");
@@ -81,7 +90,13 @@ public class TransformEngine {
         return results;
     }
 
-    public static void convert(Map values, List names, int pos, Map temp, Collection results) {
+    public static void convert(
+            Map<String,Collection> values,
+            List names,
+            int pos,
+            Map<String,Object> temp,
+            Collection<RDN> results
+    ) {
 
         if (pos < names.size()) {
 
@@ -108,11 +123,11 @@ public class TransformEngine {
 
         } else if (!temp.isEmpty()) {
 
-            Row map = new Row(temp);
-            results.add(map);
+            RDN rdn = new RDN(temp);
+            results.add(rdn);
 
             //if (crossProductDebug >= 65535) {
-                //log.debug("Generated: "+map);
+                //log.debug("Generated: "+rdn);
             //}
 
         } else {
@@ -122,151 +137,97 @@ public class TransformEngine {
         }
     }
 
-    public Row translate(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues input, AttributeValues output) throws Exception {
+    public void translate(
+            Partition partition,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            DN dn,
+            SourceValues input,
+            SourceValues output
+    ) throws Exception {
 
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
+        boolean debug = log.isDebugEnabled();
+        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
+/*
+        Collection relationships = entryMapping.getRelationships();
+        if (relationships.size() > 0) {
+            Relationship relationship = (Relationship)relationships.iterator().next();
 
+            String lhs = relationship.getLhs();
+            int lindex = lhs.indexOf(".");
+            String lsource = lhs.substring(0, lindex);
+            String lfield = lhs.substring(lindex+1);
+
+            String rhs = relationship.getRhs();
+            int rindex = rhs.indexOf(".");
+            String rsource = rhs.substring(0, rindex);
+            String rfield = rhs.substring(rindex+1);
+
+            String parentSource = lsource;
+            String parentField = lfield;
+            String fieldName = rfield;
+            String sourceName = rsource;
+
+            if (entryMapping.getSourceMapping(lsource) != null) {
+                parentSource = rsource;
+                parentField = rfield;
+                fieldName = lfield;
+                sourceName = lsource;
+            }
+
+            EntryMapping parentMapping = partition.getParent(entryMapping);
+            if (parentMapping != null && parentMapping.getSourceMapping(parentSource) != null) {
+                DN parentDn = dn.getParentDn();
+                RDN parentRdn = parentDn.getRdn();
+
+                SourceMapping parentSourceMapping = parentMapping.getSourceMapping(parentSource);
+
+                Object value = null;
+
+                Collection fieldMappings = parentSourceMapping.getFieldMappings(parentField);
+                for (Iterator i=fieldMappings.iterator(); i.hasNext(); ) {
+                    FieldMapping fieldMapping = (FieldMapping)i.next();
+                    if (fieldMapping.getVariable() == null) continue;
+
+                    String variable = fieldMapping.getVariable();
+                    value = parentRdn.get(variable);
+                    break;
+                }
+
+                if (debug) log.debug("Translating "+parentSource+"."+parentField+" => "+sourceName+"."+fieldName+": "+value);
+
+                FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
+
+                if (fieldConfig.isPrimaryKey()) {
+                    output.set("primaryKey."+fieldName, value);
+                }
+
+                output.set(fieldName, value);
+            }
+        }
+*/
         Interpreter interpreter = engine.getInterpreterManager().newInstance();
         interpreter.set(input);
 
-        log.debug("Translating attributes:");
-        for (Iterator i=input.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = input.get(name);
-            log.debug(" - "+name+": "+values);
-        }
-
-        log.debug("into source "+sourceMapping.getName()+":");
         Collection fields = sourceMapping.getFieldMappings();
-        Row pk = new Row();
         for (Iterator i =fields.iterator(); i.hasNext(); ) {
             FieldMapping fieldMapping = (FieldMapping)i.next();
-            String name = fieldMapping.getName();
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(name);
+            String fieldName = fieldMapping.getName();
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
 
-            Object newValues = interpreter.eval(entryMapping, fieldMapping);
-            log.debug(" - "+name+": "+newValues+(fieldConfig.isPK() ? " (pk)" : ""));
-
+            Object newValues = interpreter.eval(fieldMapping);
             if (newValues == null) {
-                if (fieldConfig.isPK()) pk = null;
+                if (debug) log.debug("Field "+fieldName+" is empty.");
                 continue;
             }
 
-/*
-            if (field.getEncryption() != null) {
-                // if field encryption is enabled
-
-                String encryptionMethod = PasswordUtil.getEncryptionMethod(value);
-                String encodingMethod = PasswordUtil.getEncodingMethod(value);
-                String encryptedPassword = PasswordUtil.getEncryptedPassword(value);
-
-                if (encryptionMethod == null) {
-                    // if value is not encryption then encrypt value
-
-                    value = PasswordUtil.encrypt(field.getEncryption(), field.getEncoding(), value);
-                    log.debug("TRANSLATE - encrypt with "+field.getEncryption()+": "+value);
-
-                } else if (field.getEncryption().equals(encryptionMethod)) {
-                    // if field encryption is equal to value encryption
-
-                    value = encryptedPassword;
-                    log.debug("TRANSLATE - already encrypted: "+value);
-
-                } else {
-                	log.debug("TRANSLATE - unchanged: "+value);
-                }
-            }
-*/
-
-            //log.debug("   => "+newValues);
-/*
-            if (fieldConfig.isPK()) {
-                if (pk != null) pk.set(name, newValues);
-            }
-*/
-            if (fieldConfig.isPK()) {
-                if (pk != null) pk.set(name, newValues);
-                output.set("primaryKey."+name, newValues);
+            if (fieldConfig.isPrimaryKey()) {
+                //output.set("primaryKey."+fieldName, newValues);
             }
 
-            output.add(name, newValues);
+            //output.add(fieldName, newValues);
         }
-
-        log.debug("PK: "+pk);
 
         interpreter.clear();
-
-        return pk;
     }
-
-    public static Collection getPrimaryKeys(SourceConfig sourceConfig, AttributeValues sourceValues) throws Exception {
-
-        Collection list = new ArrayList();
-        Row pk = new Row();
-
-        for (Iterator i=sourceValues.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            if (!name.startsWith("primaryKey.")) continue;
-
-            Collection values = sourceValues.get(name);
-            if (values == null || values.isEmpty()) return list;
-
-            String targetName = name.substring("primaryKey.".length());
-            Object value = values.iterator().next();
-            pk.set(targetName, value);
-        }
-
-        list.add(pk);
-/*
-        AttributeValues pkValues = new AttributeValues();
-        Collection pkFields = sourceConfig.getPrimaryKeyFieldConfigs();
-        for (Iterator i =pkFields.iterator(); i.hasNext(); ) {
-            FieldConfig fieldConfig = (FieldConfig)i.next();
-
-            Collection values = sourceValues.get(fieldConfig.getName());
-            if (values == null) {
-                return new ArrayList();
-            }
-
-            pkValues.set(fieldConfig.getName(), values);
-        }
-
-        return convert(pkValues);
-*/
-        return list;
-    }
-
-    public Map split(Partition partition, EntryMapping entryMapping, SourceMapping sourceMapping, AttributeValues entry) throws Exception {
-
-        SourceConfig sourceConfig = partition.getSourceConfig(sourceMapping.getSourceName());
-
-        Collection fields = sourceConfig.getPrimaryKeyFieldConfigs();
-
-        AttributeValues output = new AttributeValues();
-        Row m = translate(partition, entryMapping, sourceMapping, entry, output);
-        log.debug("PKs: "+m);
-        log.debug("Output: "+output);
-
-        Collection rows = convert(output);
-        Map map = new TreeMap();
-
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            Row row = (Row)i.next();
-            log.debug(" - "+row);
-
-            AttributeValues av = new AttributeValues();
-            av.add(row);
-
-            Row pk = new Row();
-            for (Iterator j=fields.iterator(); j.hasNext(); ) {
-                FieldConfig fieldConfig = (FieldConfig)j.next();
-                pk.set(fieldConfig.getName(), row.get(fieldConfig.getName()));
-            }
-
-            map.put(pk, av);
-        }
-
-        return map;
-    }
-
 }

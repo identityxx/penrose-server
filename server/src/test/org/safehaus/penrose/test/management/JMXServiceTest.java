@@ -23,7 +23,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.service.ServiceManager;
-import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.management.PenroseJMXService;
 
 /**

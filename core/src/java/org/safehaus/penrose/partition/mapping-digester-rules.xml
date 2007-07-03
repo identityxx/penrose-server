@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<!--
+
+Copyright (c) 2000-2006, Identyx Corporation.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+<!DOCTYPE digester-rules PUBLIC
+  "-//Jakarta Apache //DTD digester-rules XML V1.0//EN"
+  "digester-rules.dtd">
+  
+-->
+<digester-rules>
+<!--
+    <pattern value="mapping">
+-->
+        <pattern value="*/entry">
+
+            <object-create-rule classname="org.safehaus.penrose.mapping.EntryMapping" />
+
+            <set-properties-rule>
+                <alias attr-name="dn" prop-name="stringDn" />
+            </set-properties-rule>
+
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+
+            <call-method-rule pattern="oc" methodname="addObjectClass" paramcount="0" />
+
+            <pattern value="at">
+
+                <object-create-rule classname="org.safehaus.penrose.mapping.AttributeMapping" />
+                <set-properties-rule />
+
+                <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />
+                <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />
+                <call-method-rule pattern="variable" methodname="setVariable" paramcount="0" />
+
+                <pattern value="expression">
+                    <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
+                    <set-properties-rule />
+
+                    <call-method-rule methodname="setScript" paramcount="0" />
+
+                    <set-next-rule methodname="setExpression" />
+                </pattern>
+
+                <set-next-rule methodname="addAttributeMapping" />
+
+            </pattern>
+
+            <pattern value="source">
+
+                <object-create-rule classname="org.safehaus.penrose.mapping.SourceMapping" />
+                <set-properties-rule />
+                <call-method-rule pattern="source-name" methodname="setSourceName" paramcount="0" />
+
+                <pattern value="field">
+                    <object-create-rule classname="org.safehaus.penrose.mapping.FieldMapping" />
+                    <set-properties-rule>
+                        <alias attr-name="operations" prop-name="stringOperations" />
+                    </set-properties-rule>
+
+                    <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />
+                    <call-method-rule pattern="constant" methodname="setConstant" paramcount="0" />
+                    <call-method-rule pattern="variable" methodname="setVariable" paramcount="0" />
+
+                    <pattern value="expression">
+                        <object-create-rule classname="org.safehaus.penrose.mapping.Expression" />
+                        <set-properties-rule />
+
+                        <call-method-rule methodname="setScript" paramcount="0" />
+
+                        <set-next-rule methodname="setExpression" />
+                    </pattern>
+
+                    <set-next-rule methodname="addFieldMapping" />
+                </pattern>
+
+                <pattern value="parameter">
+                    <call-method-rule methodname="setParameter" paramcount="2" />
+                    <call-param-rule pattern="param-name" paramnumber="0"/>
+                    <call-param-rule pattern="param-value" paramnumber="1"/>
+                </pattern>
+
+                <set-next-rule methodname="addSourceMapping" />
+
+            </pattern>
+
+            <pattern value="link">
+
+                <object-create-rule classname="org.safehaus.penrose.mapping.Link" />
+                <set-properties-rule />
+                <call-method-rule pattern="dn" methodname="setDn" paramcount="0" />
+                <call-method-rule pattern="partition" methodname="setPartitionName" paramcount="0" />
+                <set-next-rule methodname="setLink" />
+
+            </pattern>
+
+            <call-method-rule pattern="handler" methodname="setHandlerName" paramcount="0" />
+            <call-method-rule pattern="engine" methodname="setEngineName" paramcount="0" />
+
+            <pattern value="aci">
+
+                <object-create-rule classname="org.safehaus.penrose.acl.ACI" />
+                <set-properties-rule />
+                <call-method-rule pattern="dn" methodname="setDn" paramcount="0" />
+                <call-method-rule pattern="target" methodname="setTarget" paramcount="0" />
+                <call-method-rule pattern="attributes" methodname="setAttributes" paramcount="0" />
+                <call-method-rule pattern="scope" methodname="setScope" paramcount="0" />
+                <call-method-rule pattern="action" methodname="setAction" paramcount="0" />
+                <call-method-rule pattern="permission" methodname="setPermission" paramcount="0" />
+                <set-next-rule methodname="addACI" />
+
+            </pattern>
+
+            <pattern value="parameter">
+                <call-method-rule methodname="setParameter" paramcount="2" />
+                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-value" paramnumber="1"/>
+            </pattern>
+
+            <set-next-rule methodname="addEntryMapping" />
+
+        </pattern>
+<!--
+    </pattern>
+-->
+</digester-rules>

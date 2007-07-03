@@ -29,15 +29,17 @@
   </entry>
 
   <entry dn="ou=Users,dc=Proxy,dc=Example,dc=com">
-    <source name="users" engine="PROXY">
+    <source name="users">
       <source-name>users</source-name>
     </source>
+    <handler>PROXY</handler>
   </entry>
 
   <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
-    <source name="groups" engine="PROXY">
+    <source name="groups">
       <source-name>groups</source-name>
     </source>
+    <handler>PROXY</handler>
   </entry>
 
 </mapping>

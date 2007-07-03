@@ -17,7 +17,9 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.session.PenroseSession;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.ldap.CompareResponse;
+import org.safehaus.penrose.ldap.CompareRequest;
 
 /**
  * @author Endi S. Dewata
@@ -27,52 +29,26 @@ public class CompareEvent extends Event {
     public final static int BEFORE_COMPARE = 0;
     public final static int AFTER_COMPARE  = 1;
 
-    private PenroseSession session;
-    private String dn;
-    private String attributeName;
-    private Object attributeValue;
+    protected Session session;
+    protected int returnCode;
 
-    private int returnCode;
+    protected CompareRequest request;
+    protected CompareResponse response;
 
-    public CompareEvent(Object source, int type, PenroseSession session, String dn, String attributeName, Object attributeValue) {
+    public CompareEvent(Object source, int type, Session session, CompareRequest request, CompareResponse response) {
         super(source, type);
 
         this.session = session;
-        this.dn = dn;
-        this.attributeName = attributeName;
-        this.attributeValue = attributeValue;
+        this.request = request;
+        this.response = response;
     }
 
-    public PenroseSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(PenroseSession session) {
+    public void setSession(Session session) {
         this.session = session;
-    }
-
-    public String getDn() {
-        return dn;
-    }
-
-    public void setDn(String dn) {
-        this.dn = dn;
-    }
-
-    public String getAttributeName() {
-        return attributeName;
-    }
-
-    public void setAttributeName(String attributeName) {
-        this.attributeName = attributeName;
-    }
-
-    public Object getAttributeValue() {
-        return attributeValue;
-    }
-
-    public void setAttributeValue(Object attributeValue) {
-        this.attributeValue = attributeValue;
     }
 
     public int getReturnCode() {
@@ -81,5 +57,25 @@ public class CompareEvent extends Event {
 
     public void setReturnCode(int returnCode) {
         this.returnCode = returnCode;
+    }
+
+    public CompareRequest getRequest() {
+        return request;
+    }
+
+    public void setRequest(CompareRequest request) {
+        this.request = request;
+    }
+
+    public CompareResponse getResponse() {
+        return response;
+    }
+
+    public void setResponse(CompareResponse response) {
+        this.response = response;
+    }
+
+    public String toString() {
+        return (type == BEFORE_COMPARE ? "Before" : "After")+"Compare";
     }
 }

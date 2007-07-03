@@ -20,12 +20,11 @@ package org.safehaus.penrose.log4j;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.Collection;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class LoggerConfig implements Cloneable, Serializable {
+public class LoggerConfig {
 
     private String name;
     private boolean additivity;
@@ -60,7 +59,7 @@ public class LoggerConfig implements Cloneable, Serializable {
     public Collection getAppenders() {
         return appenders;
     }
-
+    
     public void addAppender(String appenderName) {
         appenders.add(appenderName);
     }
@@ -72,46 +71,5 @@ public class LoggerConfig implements Cloneable, Serializable {
     public void setAppenders(Collection appenderNames) {
         appenders.clear();
         appenders.addAll(appenderNames);
-    }
-
-    public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (additivity ? 0 : 1) +
-                (level == null ? 0 : level.hashCode()) +
-                (appenders == null ? 0 : appenders.hashCode());
-    }
-
-    boolean equals(Object o1, Object o2) {
-        if (o1 == null && o2 == null) return true;
-        if (o1 != null) return o1.equals(o2);
-        return o2.equals(o1);
-    }
-
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
-
-        LoggerConfig loggerConfig = (LoggerConfig)object;
-        if (!equals(name, loggerConfig.name)) return false;
-        if (additivity != loggerConfig.additivity) return false;
-        if (!equals(level, loggerConfig.level)) return false;
-        if (!equals(appenders, loggerConfig.appenders)) return false;
-
-        return true;
-    }
-
-    public void copy(LoggerConfig loggerConfig) {
-        name = loggerConfig.name;
-        additivity = loggerConfig.additivity;
-        level = loggerConfig.level;
-
-        appenders.clear();
-        appenders.addAll(loggerConfig.appenders);
-    }
-
-    public Object clone() {
-        LoggerConfig loggerConfig = new LoggerConfig();
-        loggerConfig.copy(this);
-        return loggerConfig;
     }
 }

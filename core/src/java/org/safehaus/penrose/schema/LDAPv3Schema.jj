@@ -291,7 +291,7 @@ String AttributeUsage() :
 String numericoid() : 
 {
 	Token t;
-	StringBuffer sb = new StringBuffer();
+	StringBuilder sb = new StringBuilder();
 }
 {
 	t = <DIGIT> { sb.append(t.toString()); }

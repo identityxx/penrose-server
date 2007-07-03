@@ -17,16 +17,10 @@
  */
 package org.safehaus.penrose.filter;
 
-
 import java.util.*;
 import java.io.StringReader;
 
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
-import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
-import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
-import org.safehaus.penrose.mapping.*;
+import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -37,162 +31,10 @@ public class FilterTool {
 
     public static Logger log = LoggerFactory.getLogger(FilterTool.class);
 
-    private SchemaManager schemaManager;
-
-    public int debug = 0;
-
-    public FilterTool() throws Exception {
-    }
-
     public static Filter parseFilter(String filter) throws Exception {
         StringReader in = new StringReader(filter);
         FilterParser parser = new FilterParser(in);
         return parser.parse();
-    }
-
-    public boolean checkFilter(Entry sr, Filter filter) throws Exception {
-        log.debug("Checking filter on "+sr.getDn());
-        return isValid(sr, filter);
-    }
-
-    public boolean isValid(Entry entry, Filter filter) throws Exception {
-        //log.debug("Checking filter "+filter);
-        boolean result = false;
-
-        if (filter == null) {
-            result = true;
-
-        } else if (filter instanceof NotFilter) {
-            result = isValid(entry, (NotFilter)filter);
-
-        } else if (filter instanceof AndFilter) {
-            result = isValid(entry, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValid(entry, (OrFilter)filter);
-
-        } else if (filter instanceof SubstringFilter) {
-            result = isValid(entry, (SubstringFilter)filter);
-
-        } else if (filter instanceof PresentFilter) {
-            result = isValid(entry, (PresentFilter)filter);
-
-        } else if (filter instanceof SimpleFilter) {
-            result = isValid(entry, (SimpleFilter)filter);
-        }
-
-        //log.debug(" - "+filter+" -> "+(result ? "ok" : "false"));
-
-        return result;
-    }
-
-    public boolean isValid(Entry entry, SubstringFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
-
-        AttributeValues values = entry.getAttributeValues();
-        Collection set = values.get(attributeName);
-        if (set == null) return false;
-
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        String substring = attributeType == null ? null : attributeType.getSubstring();
-        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
-
-        for (Iterator i=set.iterator(); i.hasNext(); ) {
-            String value = i.next().toString();
-
-            boolean b = substringsMatchingRule.compare(value, substrings);
-            log.debug(" - ["+value+"] => "+b);
-
-            if (b) return true;
-        }
-
-        return false;
-    }
-
-
-    public boolean isValid(Entry entry, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        if (attributeName.equalsIgnoreCase("objectclass")) {
-            return true;
-        } else {
-            AttributeValues values = entry.getAttributeValues();
-            return values.contains(attributeName);
-        }
-    }
-
-    public boolean isValid(Entry entry, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
-
-        if (attributeName.equalsIgnoreCase("objectclass")) {
-            return entry.getEntryMapping().containsObjectClass(attributeValue);
-        }
-
-        AttributeValues values = entry.getAttributeValues();
-        Collection set = values.get(attributeName);
-        if (set == null) return false;
-
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        if ("=".equals(operator)) {
-            String equality = attributeType == null ? null : attributeType.getEquality();
-            EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
-
-            for (Iterator i=set.iterator(); i.hasNext(); ) {
-                String value = i.next().toString();
-
-                boolean b = equalityMatchingRule.compare(value, attributeValue);
-                //log.debug(" - ["+value+"] => "+b);
-
-                if (b) return true;
-            }
-
-        } else if ("<=".equals(operator) || ">=".equals(operator)) {
-            String ordering = attributeType == null ? null : attributeType.getOrdering();
-            OrderingMatchingRule orderingMatchingRule = OrderingMatchingRule.getInstance(ordering);
-
-            for (Iterator i=set.iterator(); i.hasNext(); ) {
-                String value = i.next().toString();
-
-                int c = orderingMatchingRule.compare(value, attributeValue);
-                log.debug(" - ["+value+"] => "+c);
-
-                if ("<=".equals(operator) && c <= 0) return true;
-                if (">=".equals(operator) && c >= 0) return true;
-            }
-
-        } else {
-            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
-        }
-
-        return false;
-    }
-
-    public boolean isValid(Entry entry, NotFilter filter) throws Exception {
-        Filter f = filter.getFilter();
-        boolean result = isValid(entry, f);
-        return !result;
-    }
-
-    public boolean isValid(Entry entry, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(entry, f);
-            if (!result) return false;
-        }
-        return true;
-    }
-
-    public boolean isValid(Entry entry, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(entry, f);
-            if (result) return true;
-        }
-        return false;
     }
 
     public boolean containsAttribute(List filterTree, String attributeName) throws Exception {
@@ -237,7 +79,7 @@ public class FilterTool {
         Filter filter = null;
 
         for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            Row pk = (Row)i.next();
+            RDN pk = (RDN)i.next();
 
             Filter f = createFilter(pk, includeValues);
             filter = appendOrFilter(filter, f);
@@ -246,17 +88,17 @@ public class FilterTool {
         return filter;
     }
 
-    public static Filter createFilter(Row row) {
-        return createFilter(row, true);
+    public static Filter createFilter(RDN rdn) {
+        return createFilter(rdn, true);
     }
 
-    public static Filter createFilter(Row row, boolean includeValues) {
+    public static Filter createFilter(RDN rdn, boolean includeValues) {
 
         Filter f = null;
 
-        for (Iterator i =row.getNames().iterator(); i.hasNext(); ) {
+        for (Iterator i =rdn.getNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            Object value = row.get(name);
+            Object value = rdn.get(name);
             if (value == null) continue;
 
             String strVal;
@@ -329,372 +171,23 @@ public class FilterTool {
         return filter;
     }
 
-    public boolean isValid(EntryMapping entryMapping, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
-
-        boolean result = false;
-
-        if (filter == null) {
-            result = true;
-
-        } else if (filter instanceof NotFilter) {
-            result = isValid(entryMapping, (NotFilter)filter);
-
-        } else if (filter instanceof AndFilter) {
-            result = isValid(entryMapping, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValid(entryMapping, (OrFilter)filter);
-
-        } else if (filter instanceof SimpleFilter) {
-            result = isValid(entryMapping, (SimpleFilter)filter);
-
-        } else if (filter instanceof PresentFilter) {
-            result = isValid(entryMapping, (PresentFilter)filter);
-
-        } else if (filter instanceof SubstringFilter) {
-            result = isValid(entryMapping, (SubstringFilter)filter);
-        }
-
-        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
-
-        return result;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
-
-        if (attributeName.equalsIgnoreCase("objectclass") && entryMapping.containsObjectClass(attributeValue)) return true;
-
-        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
-        if (attributeMapping == null) return false;
-
-        Object value = attributeMapping.getConstant();
-        if (value == null) return true;
-
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        if ("=".equals(operator)) {
-            String equality = attributeType == null ? null : attributeType.getEquality();
-            EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
-
-            boolean b = equalityMatchingRule.compare(value, attributeValue);
-            log.debug(" - ["+value+"] => "+b);
-
-            if (b) return true;
-
-        } else if ("<=".equals(operator) || ">=".equals(operator)) {
-            String ordering = attributeType == null ? null : attributeType.getOrdering();
-            OrderingMatchingRule orderingMatchingRule = OrderingMatchingRule.getInstance(ordering);
-
-            int c = orderingMatchingRule.compare(value, attributeValue);
-            log.debug(" - ["+value+"] => "+c);
-
-            if ("<=".equals(operator) && c > 0) return true;
-            if (">=".equals(operator) && c < 0) return true;
-
-        } else {
-            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
-        }
-
-        return false;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-
-        if (attributeName.equalsIgnoreCase("objectclass")) return true;
-
-        return entryMapping.getAttributeMapping(attributeName) != null;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, SubstringFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
-
-        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
-        if (attributeMapping == null) return false;
-
-        Object value = attributeMapping.getConstant();
-        if (value == null) return true;
-
-        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
-
-        String substring = attributeType == null ? null : attributeType.getSubstring();
-        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
-
-        boolean b = substringsMatchingRule.compare(value, substrings);
-        log.debug(" - ["+value+"] => "+b);
-
-        if (b) return true;
-
-        return false;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, NotFilter filter) throws Exception {
-        Filter f = filter.getFilter();
-        boolean result = isValid(entryMapping, f);
-        return result;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(entryMapping, f);
-            if (!result) return false;
-        }
-        return true;
-    }
-
-    public boolean isValid(EntryMapping entryMapping, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(entryMapping, f);
-            if (result) return true;
-        }
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, Filter filter) throws Exception {
-        //log.debug("Checking filter "+filter);
-
-        boolean result = false;
-
-        if (filter == null) {
-            result = true;
-
-        } else if (filter instanceof NotFilter) {
-            result = isValid(attributeValues, (NotFilter)filter);
-
-        } else if (filter instanceof AndFilter) {
-            result = isValid(attributeValues, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValid(attributeValues, (OrFilter)filter);
-
-        } else if (filter instanceof SimpleFilter) {
-            result = isValid(attributeValues, (SimpleFilter)filter);
-
-        } else if (filter instanceof PresentFilter) {
-            result = isValid(attributeValues, (PresentFilter)filter);
-
-        } else if (filter instanceof SubstringFilter) {
-            result = isValid(attributeValues, (SubstringFilter)filter);
-        }
-
-        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
-
-        return result;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, SubstringFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        Collection substrings = filter.getSubstrings();
-
-        SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(null);
-
-        Collection values = attributeValues.get(attributeName);
-
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            String value = i.next().toString().toLowerCase();
-            log.debug("Comparing "+substrings+" with "+value);
-
-            boolean b = substringsMatchingRule.compare(value, substrings);
-            log.debug(" - ["+value+"] => "+b);
-
-            if (b) return true;
-        }
-
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue().toLowerCase();
-        log.debug("Checking "+attributeName+" "+operator+" "+attributeValue);
-
-        Collection values = attributeValues.get(attributeName);
-        if (values == null) return false;
-
-        for (Iterator i=values.iterator(); i.hasNext(); ) {
-            String value = i.next().toString().toLowerCase();
-            log.debug("Comparing "+attributeValue+" with "+value);
-
-            int c = attributeValue.compareTo(value);
-
-            if ("=".equals(operator)) {
-                if (c == 0) return true;
-
-            } else if ("<".equals(operator)) {
-                if (c < 0) return true;
-
-            } else if ("<=".equals(operator)) {
-                if (c <= 0) return true;
-
-            } else if (">".equals(operator)) {
-                if (c > 0) return true;
-
-            } else if (">=".equals(operator)) {
-                if (c >= 0) return true;
-
-            } else {
-                throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-
-        if (attributeName.equalsIgnoreCase("objectclass")) return true;
-
-        return attributeValues.contains(attributeName);
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, NotFilter filter) throws Exception {
-        Filter f = filter.getFilter();
-        return isValid(attributeValues, f);
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(attributeValues, f);
-            if (!result) return false;
-        }
-        return true;
-    }
-
-    public static boolean isValid(AttributeValues attributeValues, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(attributeValues, f);
-            if (result) return true;
-        }
-        return false;
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
-    public static boolean isValid(Row row, SimpleFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-        String operator = filter.getOperator();
-        String attributeValue = filter.getValue();
-
-        Object value = row.get(attributeName);
-        if (value == null) return false;
-
-        int c = attributeValue.toString().compareTo(value.toString());
-
-        if ("=".equals(operator)) {
-            if (c != 0) return false;
-
-        } else if ("<".equals(operator)) {
-            if (c >= 0) return false;
-
-        } else if ("<=".equals(operator)) {
-            if (c > 0) return false;
-
-        } else if (">".equals(operator)) {
-            if (c <= 0) return false;
-
-        } else if (">=".equals(operator)) {
-            if (c < 0) return false;
-
-        } else {
-            throw new Exception("Unsupported operator \""+operator+"\" in \""+filter+"\"");
-        }
-
-        return true;
-    }
-
-    public static boolean isValid(Row row, PresentFilter filter) throws Exception {
-        String attributeName = filter.getAttribute();
-
-        if (attributeName.equalsIgnoreCase("objectclass")) return true;
-
-        return row.contains(attributeName);
-    }
-
-    public static boolean isValid(Row row, AndFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(row, f);
-            if (!result) return false;
-        }
-        return true;
-    }
-
-    public static boolean isValid(Row row, OrFilter filter) throws Exception {
-        for (Iterator i=filter.getFilters().iterator(); i.hasNext(); ) {
-            Filter f = (Filter)i.next();
-            boolean result = isValid(row, f);
-            if (result) return true;
-        }
-        return false;
-    }
-
-    public static boolean isValid(Row row, NotFilter filter) throws Exception {
-        Filter f = filter.getFilter();
-        return isValid(row, f);
-    }
-
-    public static boolean isValid(Row row, Filter filter) throws Exception {
-        log.debug("Checking filter "+filter);
-
-        boolean result = false;
-
-        if (filter == null) {
-            result = true;
-
-        } else if (filter instanceof NotFilter) {
-            result = isValid(row, (NotFilter)filter);
-
-        } else if (filter instanceof AndFilter) {
-            result = isValid(row, (AndFilter)filter);
-
-        } else if (filter instanceof OrFilter) {
-            result = isValid(row, (OrFilter)filter);
-
-        } else if (filter instanceof SimpleFilter) {
-            result = isValid(row, (SimpleFilter)filter);
-
-        } else if (filter instanceof PresentFilter) {
-            result = isValid(row, (PresentFilter)filter);
-        }
-
-        // log.debug("=> "+filter+" ("+filter.getClass().getName()+"): "+result);
-
-        return result;
-    }
-
     public static String escape(String value) {
 
-        StringBuffer sb = new StringBuffer(value);
-        int i = 0;
-        while (i<sb.length()) {
-            char c = sb.charAt(i);
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
+
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
 
             if (c == '*' || c == '(' || c == ')' || c == '\\') {
                 String hex = Integer.toHexString(c);
-                if (hex.length() < 2) hex = "0"+hex;
-                sb.replace(i, i+1, "\\"+hex);
-                i += 3;
-                continue;
-            }
+                sb.append('\\');
+                if (hex.length() < 2) sb.append('0');
+                sb.append(hex);
 
-            i++;
+            } else {
+                sb.append(c);
+            }
         }
 
         return sb.toString();
@@ -702,15 +195,37 @@ public class FilterTool {
 
     public static String unescape(String value) {
 
-        StringBuffer sb = new StringBuffer(value);
-        int i = sb.indexOf("\\");
-        while (i >= 0) {
-            String hex = sb.substring(i+1, i+3);
-            int dec = Integer.parseInt(hex, 16);
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
 
-            sb.setCharAt(i, (char)dec);
-            sb.delete(i+1, i+3);
-            i = sb.indexOf("\\", i+1);
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
+
+            if (c == '\\') {
+                int h1 = chars[++i];
+                if (h1 >= '0' && h1 <= '9') {
+                    h1 = h1 - '0';
+                } else if (h1 >= 'a' && h1 <= 'f') {
+                    h1 = h1 - 'a' + 10;
+                } else { // 'A' - 'F'
+                    h1 = h1 - 'A' + 10;
+                }
+
+                int h0 = chars[++i];
+                if (h0 >= '0' && h0 <= '9') {
+                    h0 = h0 - '0';
+                } else if (h0 >= 'a' && h0 <= 'f') {
+                    h0 = h0 - 'a' + 10;
+                } else { // 'A' - 'F'
+                    h0 = h0 - 'A' + 10;
+                }
+
+                int dec = h1 * 16 + h0;
+                sb.append((char)dec);
+
+            } else {
+                sb.append(c);
+            }
         }
 
         return sb.toString();

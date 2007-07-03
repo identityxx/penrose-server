@@ -21,7 +21,10 @@ import org.safehaus.penrose.server.PenroseServer;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -45,7 +48,7 @@ public class ServiceManager implements ServiceManagerMBean {
 
         Service service = getService(serviceConfig.getName());
         if (service != null) return;
-
+        
         Class clazz = Class.forName(serviceConfig.getServiceClass());
         service = (Service)clazz.newInstance();
 
@@ -60,11 +63,7 @@ public class ServiceManager implements ServiceManagerMBean {
         //log.debug("Starting services...");
         for (Iterator i=getServiceNames().iterator(); i.hasNext(); ) {
             String name = (String)i.next();
-            try {
-                start(name);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
+            start(name);
         }
     }
 
@@ -86,11 +85,7 @@ public class ServiceManager implements ServiceManagerMBean {
 
         for (int i=names.length-1; i>=0; i--) {
             String name = names[i];
-            try {
-                stop(name);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
+            stop(name);
         }
     }
 
@@ -104,16 +99,6 @@ public class ServiceManager implements ServiceManagerMBean {
 
         log.debug("Stopping "+name+".");
         service.stop();
-    }
-
-    public void restart() throws Exception {
-        stop();
-        start();
-    }
-
-    public void restart(String name) throws Exception {
-        stop(name);
-        start(name);
     }
 
     public String getStatus(String name) throws Exception {
@@ -130,14 +115,8 @@ public class ServiceManager implements ServiceManagerMBean {
         return (Service)services.get(name);
     }
 
-    public ServiceConfig getServiceConfig(String name) {
-        Service service = getService(name);
-        if (service == null) return null;
-        return service.getServiceConfig();
-    }
-
     public Collection getServiceNames() {
-        return new ArrayList(services.keySet()); // return Serializable list
+        return services.keySet();
     }
 
     public Collection getServices() {

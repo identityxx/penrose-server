@@ -18,45 +18,53 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.StringTokenizer;
 
 /**
  * @author Endi S. Dewata
  */
-public class FieldMapping implements Cloneable, Serializable {
+public class FieldMapping implements Cloneable {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";
 
-    public final static String DEFAULT_TYPE   = "VARCHAR";
+    public final static String DEFAULT_TYPE   = VARIABLE;
 
-    /**
-     * Name.
-     */
+    public final static String ADD     = "add";
+    public final static String BIND    = "bind";
+    public final static String COMPARE = "compare";
+    public final static String DELETE  = "delete";
+    public final static String MODIFY  = "modify";
+    public final static String MODRDN  = "modrdn";
+    public final static String SEARCH  = "search";
+
     private String name;
+    private String type;
 
-    private String type   = DEFAULT_TYPE;
-
-    /**
-     * Expression.
-     */
     private Object constant;
     private String variable;
-    private Expression expression;
+	private Expression expression;
+
+    private HashSet<String> operations = new HashSet<String>();
 
     public FieldMapping() {
     }
-
+    
     public FieldMapping(String name) {
         this.name = name;
     }
 
     public FieldMapping(String name, String type, String value) {
         this.name = name;
-        this.type = type;
 
         if (CONSTANT.equals(type)) {
             this.constant = value;
@@ -69,34 +77,31 @@ public class FieldMapping implements Cloneable, Serializable {
         }
     }
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public Expression getExpression() {
-        return expression;
-    }
+	public Expression getExpression() {
+		return expression;
+	}
 
-    public void setExpression(Expression expression) {
-        this.type = EXPRESSION;
-        this.expression = expression;
-    }
+	public void setExpression(Expression expression) {
+		this.expression = expression;
+	}
 
     public byte[] getBinary() {
         return (byte[])constant;
     }
 
     public void setBinary(byte[] bytes) {
-        this.type = CONSTANT;
         constant = bytes;
     }
 
     public void setBinary(String encodedData) throws Exception {
-        this.type = CONSTANT;
         constant = BinaryUtil.decode(BinaryUtil.BASE64, encodedData);
     }
 
@@ -105,7 +110,6 @@ public class FieldMapping implements Cloneable, Serializable {
     }
 
     public void setConstant(Object constant) {
-        this.type = CONSTANT;
         this.constant = constant;
     }
 
@@ -114,16 +118,11 @@ public class FieldMapping implements Cloneable, Serializable {
     }
 
     public void setVariable(String variable) {
-        this.type = VARIABLE;
         this.variable = variable;
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
-                (constant == null ? 0 : constant.hashCode()) +
-                (variable == null ? 0 : variable.hashCode()) +
-                (expression == null ? 0 : expression.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -148,6 +147,7 @@ public class FieldMapping implements Cloneable, Serializable {
 
         if (!equals(variable, fieldMapping.variable)) return false;
         if (!equals(expression, fieldMapping.expression)) return false;
+        if (!equals(operations, fieldMapping.operations)) return false;
 
         return true;
     }
@@ -164,10 +164,11 @@ public class FieldMapping implements Cloneable, Serializable {
 
         variable = fieldMapping.variable;
         expression = fieldMapping.expression == null ? null : (Expression)fieldMapping.expression.clone();
+        operations = (HashSet<String>)fieldMapping.operations.clone();
     }
 
-    public Object clone() {
-        FieldMapping fieldMapping = new FieldMapping();
+    public Object clone() throws CloneNotSupportedException {
+        FieldMapping fieldMapping = (FieldMapping)super.clone();
         fieldMapping.copy(this);
         return fieldMapping;
     }
@@ -178,5 +179,23 @@ public class FieldMapping implements Cloneable, Serializable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Collection<String> getOperations() {
+        return operations;
+    }
+
+    public void setOperations(Collection<String> operations) {
+        if (this.operations == operations) return;
+        this.operations.clear();
+        this.operations.addAll(operations);
+    }
+    
+    public void setStringOperations(String operations) {
+        StringTokenizer st = new StringTokenizer(operations, ",");
+        while (st.hasMoreTokens()) {
+            String operation = st.nextToken();
+            this.operations.add(operation);
+        }
     }
 }

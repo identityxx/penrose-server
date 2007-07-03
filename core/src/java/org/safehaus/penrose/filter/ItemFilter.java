@@ -24,5 +24,5 @@ public abstract class ItemFilter extends Filter {
 
     public abstract String getAttribute();
     public abstract void setAttribute(String attribute);
-
+    
 }

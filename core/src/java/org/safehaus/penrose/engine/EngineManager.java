@@ -17,13 +17,9 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.session.SessionContext;
 import org.apache.log4j.Logger;
 
 import java.util.TreeMap;
@@ -36,16 +32,12 @@ import java.util.Iterator;
 public class EngineManager {
 
     Logger log = Logger.getLogger(getClass());
-    
-    Map engines = new TreeMap();
 
-    private Penrose penrose;
     private PenroseConfig penroseConfig;
-    private SchemaManager schemaManager;
-    private InterpreterManager interpreterManager;
-    private SourceManager sourceManager;
-    private ConnectionManager connectionManager;
-    private PartitionManager partitionManager;
+    private PenroseContext penroseContext;
+    private SessionContext sessionContext;
+
+    Map engines = new TreeMap();
 
     public EngineManager() {
     }
@@ -55,18 +47,11 @@ public class EngineManager {
         log.debug("Initializing engine "+engineConfig.getName()+".");
 
         Class clazz = Class.forName(engineConfig.getEngineClass());
-
         Engine engine = (Engine)clazz.newInstance();
 
         engine.setEngineConfig(engineConfig);
-        engine.setPenrose(penrose);
         engine.setPenroseConfig(penroseConfig);
-        engine.setSchemaManager(schemaManager);
-        engine.setInterpreterFactory(interpreterManager);
-        engine.setSourceManager(sourceManager);
-        engine.setConnectionManager(connectionManager);
-        engine.setPartitionManager(partitionManager);
-
+        engine.setPenroseContext(penroseContext);
         engine.init();
 
         engines.put(engineConfig.getName(), engine);
@@ -102,51 +87,19 @@ public class EngineManager {
         this.penroseConfig = penroseConfig;
     }
 
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
+    public PenroseContext getPenroseContext() {
+        return penroseContext;
     }
 
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
+    public void setPenroseContext(PenroseContext penroseContext) {
+        this.penroseContext = penroseContext;
     }
 
-    public InterpreterManager getInterpreterFactory() {
-        return interpreterManager;
+    public SessionContext getSessionContext() {
+        return sessionContext;
     }
 
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
-    }
-
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
-    }
-
-    public SourceManager getConnectorManager() {
-        return sourceManager;
-    }
-
-    public void setConnectorManager(SourceManager sourceManager) {
-        this.sourceManager = sourceManager;
-    }
-
-    public Penrose getPenrose() {
-        return penrose;
-    }
-
-    public void setPenrose(Penrose penrose) {
-        this.penrose = penrose;
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }

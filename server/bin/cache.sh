@@ -91,79 +91,74 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-if [ -n "$CLASSPATH" ] ; then
-  LOCALCLASSPATH="$CLASSPATH"
-fi
+# Configure the appropriate LOCALCLASSPATH.
+LOCALCLASSPATH=$PENROSE_HOME/conf
 
-LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
-
-# add in the required dependency .jar files
 for i in "$PENROSE_HOME"/lib/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the optional dependency .jar files
 for i in "$PENROSE_HOME"/lib/ext/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the required dependency .jar files
 for i in "$PENROSE_HOME"/server/lib/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-# add in the optional dependency .jar files
 for i in "$PENROSE_HOME"/server/lib/ext/*.jar
 do
-  # if the directory is empty, then it will return the input string
-  # this is stupid, so case for it
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
       LOCALCLASSPATH="$i"
     else
-      LOCALCLASSPATH="$i":"$LOCALCLASSPATH"
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
     fi
   fi
 done
 
-LOCALCLASSPATH="$PENROSE_HOME/conf:$LOCALCLASSPATH"
+LOCALLIBPATH="$JAVA_HOME/jre/lib/ext:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/lib:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/lib/ext:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/server/lib:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/server/lib/ext:$LOCALLIBPATH"
+LOCALLIBPATH="$PENROSE_HOME/schema/ext:$LOCALLIBPATH"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
-  CYGHOME=`cygpath --windows "$HOME"`
 fi
+
+CLASSPATH=$LOCALCLASSPATH
+export CLASSPATH
 
 cd "$PENROSE_HOME"
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS -classpath "$LOCALCLASSPATH" -Dpenrose.home="$PENROSE_HOME" org.safehaus.penrose.cache.CacheManager $PENROSE_ARGS "$@"
+exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+  -Djava.library.path="$LOCALLIBPATH" \
+  -Dpenrose.home="$PENROSE_HOME" \
+  org.safehaus.penrose.cache.CacheUtil $PENROSE_ARGS "$@"

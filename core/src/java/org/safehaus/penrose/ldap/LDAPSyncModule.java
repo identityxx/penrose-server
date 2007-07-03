@@ -18,25 +18,20 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.mapping.Entry;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.cache.EntryCacheManager;
+import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.EntryCacheListener;
 import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSession;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.util.EntryUtil;
+import org.safehaus.penrose.handler.HandlerManager;
+import org.safehaus.penrose.entry.*;
 
 import javax.naming.directory.*;
-import javax.naming.NamingEnumeration;
-import java.util.ArrayList;
-import java.util.Iterator;
+import javax.naming.directory.Attributes;
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -45,44 +40,42 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
     public final static String CONNECTION = "connection";
 
-    public PartitionManager partitionManager;
-    public ConnectionManager connectionManager;
-
     public String connectionName;
 
     public void init() throws Exception {
 
         connectionName = getParameter(CONNECTION);
 
-        partitionManager = penrose.getPartitionManager();
-        connectionManager = penrose.getConnectionManager();
+        HandlerManager handlerManager = sessionContext.getHandlerManager();
+        Handler handler = handlerManager.getHandler(partition);
+        EntryCache entryCache = handler.getEntryCache();
 
-        EntryCacheManager entryCacheManager = penrose.getEntryCacheManager();
-
-        entryCacheManager.addListener(this);
+        entryCache.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {
+
+        ConnectionManager connectionManager = penroseContext.getConnectionManager();
+
         LDAPClient client = (LDAPClient)connectionManager.openConnection(partition, connectionName);
-        return client.getContext();
+        return client.open();
     }
 
     public void cacheAdded(EntryCacheEvent event) throws Exception {
 
         Entry entry = (Entry)event.getSource();
-        EntryMapping entryMapping = entry.getEntryMapping();
 
-        if (!partition.containsEntryMapping(entryMapping)) return;
+        if (!partition.contains(entry.getDn())) return;
 
         DirContext ctx = null;
 
         try {
             ctx = getConnection();
 
-            String baseDn = entry.getDn();
+            DN baseDn = entry.getDn();
             log.debug("Adding "+baseDn);
 
-            SearchResult searchResult = EntryUtil.toSearchResult(entry);
+            javax.naming.directory.SearchResult searchResult = createSearchResult(entry);
             Attributes attributes = searchResult.getAttributes();
             ctx.createSubcontext(searchResult.getName(), attributes);
 
@@ -94,11 +87,48 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         }
     }
 
+    public javax.naming.directory.SearchResult createSearchResult(Entry entry) {
+
+        //log.debug("Converting "+entry.getDn());
+
+        org.safehaus.penrose.ldap.Attributes attributes = entry.getAttributes();
+        javax.naming.directory.Attributes attrs = new javax.naming.directory.BasicAttributes();
+
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
+            Attribute attribute = (Attribute)i.next();
+
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
+
+            javax.naming.directory.Attribute attr = new javax.naming.directory.BasicAttribute(name);
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
+                Object value = j.next();
+
+                //String className = value.getClass().getName();
+                //className = className.substring(className.lastIndexOf(".")+1);
+                //log.debug(" - "+name+": "+value+" ("+className+")");
+
+                if (value instanceof byte[]) {
+                    attr.add(value);
+
+                } else {
+                    attr.add(value.toString());
+                }
+            }
+
+            attrs.put(attr);
+        }
+
+        return new javax.naming.directory.SearchResult(entry.getDn().toString(), entry, attrs);
+    }
+
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
-        String baseDn = (String)event.getSource();
-        Partition partition = partitionManager.findPartition(baseDn);
-        Collection entryMappings = partitionManager.findEntryMappings(partition, baseDn);
+        DN baseDn = (DN)event.getSource();
+
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partition partition = partitionManager.getPartition(baseDn);
+        Collection entryMappings = partition.findEntryMappings(baseDn);
 
         if (entryMappings == null || entryMappings.isEmpty()) return;
 
@@ -108,7 +138,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             ctx = getConnection();
 
             log.debug("Removing "+baseDn);
-            ctx.destroySubcontext(baseDn);
+            ctx.destroySubcontext(baseDn.toString());
 
         } catch (Exception e) {
             log.error(e.getMessage());

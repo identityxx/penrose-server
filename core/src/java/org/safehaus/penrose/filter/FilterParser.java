@@ -19,6 +19,8 @@
 package org.safehaus.penrose.filter;
 
 import java.util.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * LDAP Filter Parser.
@@ -80,6 +82,8 @@ import java.util.*;
  */
 
 public class FilterParser implements FilterParserConstants {
+
+  public Logger log = LoggerFactory.getLogger(getClass());
 
   Filter parsedFilter;
 
@@ -216,7 +220,7 @@ public class FilterParser implements FilterParserConstants {
         Token item;
     item = jj_consume_token(ITEM);
         String expression = item.toString();
-        //System.out.println("Expression: "+expression);
+        log.debug("Parsing filter \""+expression+"\"");
 
         int p = expression.indexOf("=");
         char c = expression.charAt(p-1);
@@ -230,13 +234,13 @@ public class FilterParser implements FilterParserConstants {
         String attr = expression.substring(0, p);
         String type = expression.substring(p, p+length);
         String value = expression.substring(p+length);
-        //System.out.println("Expression: ["+attr+"] ["+type+"] ["+value+"]");
+        log.debug("Filter: ["+attr+"] ["+type+"] ["+value+"]");
 
         if (!"=".equals(type.toString())) {
             filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
-            filter = new PresentFilter(attr);
+            filter = attr.equalsIgnoreCase("objectClass") ? null : new PresentFilter(attr);
 
         } else if (value.indexOf('*') < 0) {
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
@@ -254,7 +258,9 @@ public class FilterParser implements FilterParserConstants {
             }
             filter = new SubstringFilter(attr, values);
         }
-          {if (true) return filter;}
+
+        log.debug("Parsed filter: "+filter);
+            {if (true) return filter;}
     throw new Error("Missing return statement in function");
   }
 
@@ -340,36 +346,6 @@ public class FilterParser implements FilterParserConstants {
     try { return !jj_3_12(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(11, xla); }
-  }
-
-  final private boolean jj_3R_11() {
-    if (jj_scan_token(NOT)) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_11()) { jj_scanpos = xsp; break; }
-    }
-    if (jj_3R_13()) return true;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_12()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  final private boolean jj_3_4() {
-    if (jj_3R_12()) return true;
-    return false;
-  }
-
-  final private boolean jj_3_7() {
-    if (jj_3R_13()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3_6()) { jj_scanpos = xsp; break; }
-    }
-    return false;
   }
 
   final private boolean jj_3_9() {
@@ -477,6 +453,36 @@ public class FilterParser implements FilterParserConstants {
 
   final private boolean jj_3_6() {
     if (jj_scan_token(SPACE)) return true;
+    return false;
+  }
+
+  final private boolean jj_3R_11() {
+    if (jj_scan_token(NOT)) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_11()) { jj_scanpos = xsp; break; }
+    }
+    if (jj_3R_13()) return true;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_12()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  final private boolean jj_3_4() {
+    if (jj_3R_12()) return true;
+    return false;
+  }
+
+  final private boolean jj_3_7() {
+    if (jj_3R_13()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3_6()) { jj_scanpos = xsp; break; }
+    }
     return false;
   }
 

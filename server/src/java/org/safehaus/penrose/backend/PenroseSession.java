@@ -1,248 +1,301 @@
 package org.safehaus.penrose.backend;
 
-import java.util.Collection;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchControls;
-
-import com.identyx.javabackend.Results;
-import com.identyx.javabackend.Session;
-import org.safehaus.penrose.session.PenroseSearchControls;
-import org.safehaus.penrose.session.PenroseSearchResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.ldap.*;
 
-import org.ietf.ldap.LDAPException;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Iterator;
 
-public class PenroseSession implements Session {
+public class PenroseSession implements com.identyx.javabackend.Session {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    org.safehaus.penrose.session.PenroseSession session;
-    
-    public PenroseSession(org.safehaus.penrose.session.PenroseSession session) {
-        this.session = session;        
-    }
-    
-    public void setSession(org.safehaus.penrose.session.PenroseSession session) {
+    Session session;
+
+    public PenroseSession(Session session) {
         this.session = session;
     }
-    
-    public org.safehaus.penrose.session.PenroseSession getSession() {
+
+    public void setSession(Session session) {
+        this.session = session;
+    }
+
+    public Session getSession() {
         return session;
     }
-    
+
     public void close() throws Exception {
         session.close();
     }
-    
-    /**
-     * Performs bind operation.
-     *
-     * @param dn
-     * @param password
-     * @return return code
-     * @throws Exception
-     */
-    public int bind(String dn, String password) throws Exception {
 
-        log.debug("bind(\""+dn+", \""+password+"\")");
-
-        try {
-            session.bind(dn, password);
-            return LDAPException.SUCCESS;
-
-        } catch (LDAPException e) {
-            return e.getResultCode();
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+    public com.identyx.javabackend.DN getBindDn() {
+        return session.getBindDn() == null ? null : new PenroseDN(session.getBindDn());
     }
 
-    /**
-     * Performs unbind operation.
-     * 
-     * @return return value
-     * @throws Exception
-     */
-    public int unbind() throws Exception {
-
-        log.debug("unbind()");
-
-        try {
-            session.unbind();
-            return LDAPException.SUCCESS;
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+    public boolean isAnonymous() {
+        return session.getBindDn() == null;
     }
 
-    /**
-     * Performs search operation.
-     *
-     * @param baseDn
-     * @param filter
-     * @return search result
-     * @throws Exception
-     */
-    public Results search(
-            String baseDn,
-            String filter,
-            SearchControls sc)
-    throws Exception {
-
-        log.debug("search(\""+baseDn+"\", \""+filter+"\", sc)");
-
-        PenroseSearchResults results = new PenroseSearchResults();
-
-        try {
-            PenroseSearchControls psc = new PenroseSearchControls();
-            psc.setScope(sc.getSearchScope());
-            psc.setSizeLimit(sc.getCountLimit());
-            psc.setTimeLimit(sc.getTimeLimit());
-            psc.setDereference(PenroseSearchControls.DEREF_ALWAYS);
-            psc.setAttributes(sc.getReturningAttributes());
-
-            int rc = session.search(baseDn, filter, psc, results);
-            results.setReturnCode(rc);
-
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-
-            results.setReturnCode(LDAPException.OPERATIONS_ERROR);
-            results.close();
-        }
-
-        return new PenroseResults(results);
+    public boolean isRoot() {
+        return session.isRootUser();
     }
 
-    /**
-     * Performs add operation.
-     * 
-     * @param dn
-     * @param attributes
-     * @return return code
-     * @throws Exception
-     */
-    public int add(
-            String dn,
-            Attributes attributes)
-    throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.Attributes attributes
+    ) throws Exception {
 
         log.debug("add("+dn+")");
 
-        try {
-            session.add(dn, attributes);
-            return LDAPException.SUCCESS;
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        Attributes penroseAttributes = ((PenroseAttributes)attributes).getAttributes();
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.add(penroseDn, penroseAttributes);
     }
 
-    /**
-     * Performs delete operation.
-     * 
-     * @param dn
-     * @return return code
-     * @throws Exception
-     */
-    public int delete(
-            String dn)
-    throws Exception {
+    public void add(
+            com.identyx.javabackend.AddRequest request,
+            com.identyx.javabackend.AddResponse response
+    ) throws Exception {
 
-        log.debug("delete("+dn+")");
+        log.debug("add("+request.getDn()+")");
 
-        try {
-            session.delete(dn);
-            return LDAPException.SUCCESS;
+        AddRequest penroseRequest = ((PenroseAddRequest)request).getAddRequest();
+        AddResponse penroseResponse = ((PenroseAddResponse)response).getAddResponse();
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.add(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs modify operation.
-     * 
-     * @param dn
-     * @param modifications
-     * @return return code
-     * @throws Exception
-     */
-    public int modify(
-            String dn,
-            Collection modifications)
-    throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            com.identyx.javabackend.DN dn,
+            String password
+    ) throws Exception {
+
+        log.debug("bind(\""+dn+", \""+password+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.bind(penroseDn, password);
+    }
+
+    public void bind(
+            com.identyx.javabackend.DN dn,
+            byte[] password
+    ) throws Exception {
+
+        log.debug("bind(\""+dn+", \""+password+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.bind(penroseDn, password);
+    }
+
+    public void bind(
+            com.identyx.javabackend.BindRequest request,
+            com.identyx.javabackend.BindResponse response
+    ) throws Exception {
+
+        byte[] password = request.getPassword();
+        log.debug("bind(\""+request.getDn()+"\", "+(password == null ? null : "\""+new String(password)+"\"")+")");
+
+        BindRequest penroseRequest = ((PenroseBindRequest)request).getBindRequest();
+        BindResponse penroseResponse = ((PenroseBindResponse)response).getBindResponse();
+
+        session.bind(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            com.identyx.javabackend.DN dn,
+            String attributeName,
+            Object attributeValue
+    ) throws Exception {
+
+        log.debug("compare(\""+dn+", \""+attributeName+"\", \""+attributeValue+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        return session.compare(penroseDn, attributeName, attributeValue);
+    }
+
+    public boolean compare(
+            com.identyx.javabackend.CompareRequest request,
+            com.identyx.javabackend.CompareResponse response
+    ) throws Exception {
+
+        log.debug("compare("+request.getDn()+", "+request.getAttributeName()+", "+request.getAttributeValue()+")");
+
+        CompareRequest penroseRequest = ((PenroseCompareRequest)request).getCompareRequest();
+        CompareResponse penroseResponse = ((PenroseCompareResponse)response).getCompareResponse();
+
+        return session.compare(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            com.identyx.javabackend.DN dn
+    ) throws Exception {
+
+        log.debug("delete(\""+dn+")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+
+        session.delete(penroseDn);
+    }
+
+    public void delete(
+            com.identyx.javabackend.DeleteRequest request,
+            com.identyx.javabackend.DeleteResponse response
+    ) throws Exception {
+
+        log.debug("delete("+request.getDn()+")");
+
+        DeleteRequest penroseRequest = ((PenroseDeleteRequest)request).getDeleteRequest();
+        DeleteResponse penroseResponse = ((PenroseDeleteResponse)response).getDeleteResponse();
+
+        session.delete(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            com.identyx.javabackend.DN dn,
+            Collection modifications
+    ) throws Exception {
 
         log.debug("modify("+dn+")");
 
-        try {
-            session.modify(dn, modifications);
-            return LDAPException.SUCCESS;
+        DN penroseDn = ((PenroseDN)dn).getDn();
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
+        Collection<Modification> penroseModifications = new ArrayList<Modification>();
+        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
+            PenroseModification modification = (PenroseModification)i.next();
+            penroseModifications.add(modification.getModification());
         }
+
+        session.modify(penroseDn, penroseModifications);
     }
 
-    /**
-     * Performs modrdn operation.
-     *
-     * @param dn
-     * @param newrdn
-     * @return return code
-     * @throws Exception
-     */
-    public int modrdn(
-            String dn,
-            String newrdn,
-            boolean deleteOldRdn)
-    throws Exception {
+    public void modify(
+            com.identyx.javabackend.ModifyRequest request,
+            com.identyx.javabackend.ModifyResponse response
+    ) throws Exception {
 
-        log.debug("modrdn(\""+dn+"\", \""+newrdn+"\")");
+        log.debug("modify("+request.getDn()+")");
 
-        try {
-            session.modrdn(dn, newrdn, deleteOldRdn);
-            return LDAPException.SUCCESS;
+        ModifyRequest penroseRequest = ((PenroseModifyRequest)request).getModifyRequest();
+        ModifyResponse penroseResponse = ((PenroseModifyResponse)response).getModifyResponse();
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        session.modify(penroseRequest, penroseResponse);
     }
 
-    /**
-     * Performs compare operation.
-     * 
-     * @param dn
-     * @param attributeName
-     * @param attributeValue
-     * @return return code
-     * @throws Exception
-     */
-    public int compare(
-            String dn,
-            String attributeName,
-            Object attributeValue)
-    throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRdn
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        log.debug("compare("+dn+", "+attributeName+", "+attributeValue+")");        
+    public void modrdn(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
 
-        try {
-            boolean b = session.compare(dn, attributeName, attributeValue);
-            return b ? LDAPException.COMPARE_TRUE : LDAPException.COMPARE_FALSE;
+        log.debug("modrdn(\""+dn+"\", \""+newRdn+"\")");
 
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
-            return LDAPException.OPERATIONS_ERROR;
-        }
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        RDN penroseNewRdn = ((PenroseRDN)newRdn).getRdn();
+
+        session.modrdn(penroseDn, penroseNewRdn, deleteOldRdn);
+    }
+
+    public void modrdn(
+            com.identyx.javabackend.ModRdnRequest request,
+            com.identyx.javabackend.ModRdnResponse response
+    ) throws Exception {
+
+        log.debug("modrdn(\""+request.getDn()+"\", \""+request.getNewRdn()+"\")");
+
+        ModRdnRequest penroseRequest = ((PenroseModRdnRequest)request).getModRdnRequest();
+        ModRdnResponse penroseResponse = ((PenroseModRdnResponse)response).getModRdnResponse();
+
+        session.modrdn(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public com.identyx.javabackend.SearchResponse search(
+            com.identyx.javabackend.DN dn,
+            com.identyx.javabackend.Filter filter,
+            int scope
+    ) throws Exception {
+
+        log.debug("search(\""+dn+"\", \""+filter+"\")");
+
+        DN penroseDn = ((PenroseDN)dn).getDn();
+        Filter penroseFilter = ((PenroseFilter)filter).getFilter();
+
+        return new PenroseSearchResponse(session.search(penroseDn, penroseFilter, scope));
+    }
+
+    public void search(
+            com.identyx.javabackend.SearchRequest request,
+            com.identyx.javabackend.SearchResponse response
+    ) throws Exception {
+
+        log.debug("search(\""+request.getDn()+"\", \""+request.getFilter()+"\")");
+
+        SearchRequest penroseRequest = ((PenroseSearchRequest)request).getSearchRequest();
+        SearchResponse<SearchResult> penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
+
+        session.search(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unbind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void unbind(
+    ) throws Exception {
+
+        log.debug("unbind()");
+
+        session.unbind();
+    }
+
+    public void unbind(
+            com.identyx.javabackend.UnbindRequest request,
+            com.identyx.javabackend.UnbindResponse response
+    ) throws Exception {
+
+        log.debug("unbind()");
+
+        UnbindRequest penroseRequest = ((PenroseUnbindRequest)request).getUnbindRequest();
+        UnbindResponse penroseResponse = ((PenroseUnbindResponse)response).getUnbindResponse();
+
+        session.unbind(penroseRequest, penroseResponse);
     }
 }

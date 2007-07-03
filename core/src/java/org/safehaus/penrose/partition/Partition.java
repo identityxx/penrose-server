@@ -18,213 +18,230 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
-import java.io.Serializable;
 
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.source.Sources;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 /**
  * @author Endi S. Dewata
  */
-public class Partition implements PartitionMBean, Serializable {
+public class Partition {
 
-    public final static String STOPPING = "STOPPING";
-    public final static String STOPPED  = "STOPPED";
-    public final static String STARTING = "STARTING";
-    public final static String STARTED  = "STARTED";
+    Logger log = LoggerFactory.getLogger(getClass());
+
+    public final static Collection<EntryMapping> EMPTY = new ArrayList<EntryMapping>();
 
     private PartitionConfig partitionConfig;
 
-    private Map entryMappings = new LinkedHashMap();
-    private Collection rootEntryMappings = new ArrayList();
-    private Map childrenMap = new LinkedHashMap();
+    private Map<String,EntryMapping> entryMappingsById = new LinkedHashMap<String,EntryMapping>();
+    private Map<String,Collection<EntryMapping>> entryMappingsByDn = new LinkedHashMap<String,Collection<EntryMapping>>();
+    private Map<String,Collection<EntryMapping>> entryMappingsBySource = new LinkedHashMap<String,Collection<EntryMapping>>();
+    private Map<String,Collection<EntryMapping>> entryMappingsByParentId = new LinkedHashMap<String,Collection<EntryMapping>>();
 
-    private Map connectionConfigs = new LinkedHashMap();
-    private Map sourceConfigs = new LinkedHashMap();
+    private Collection<DN> suffixes = new ArrayList<DN>();
+    private Collection<EntryMapping> rootEntryMappings = new ArrayList<EntryMapping>();
 
-    private Map moduleConfigs = new LinkedHashMap();
-    private Map moduleMappings = new LinkedHashMap();
+    private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+    private Sources sources = new Sources();
 
-    private String status = STOPPED;
+    private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
+    private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
-    }
-
-    public void start() throws Exception {
-        setStatus(STARTED);
-    }
-
-    public void stop() throws Exception {
-        setStatus(STOPPED);
-    }
-
-    public void restart() throws Exception {
-        stop();
-        start();
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public String getName() {
         return partitionConfig.getName();
     }
 
-    public boolean isEnabled() {
-        return partitionConfig.isEnabled();
+    public String getHandlerName() {
+        return partitionConfig.getHandlerName();
     }
 
-    public boolean containsEntryMapping(EntryMapping entryMapping) {
-        return entryMappings.containsKey(entryMapping.getDn().toLowerCase());
+    public String getEngineName() {
+        return partitionConfig.getEngineName();
     }
 
-    public Collection getEntryMappings(String dn) {
-        if (dn == null) return null;
+    public boolean contains(DN dn) {
+        for (EntryMapping rootEntryMapping : rootEntryMappings) {
+            DN suffix = rootEntryMapping.getDn();
 
-        Collection list = (Collection)entryMappings.get(dn.toLowerCase());
-        if (list == null) return null;
-
-        return new ArrayList(list);
-    }
-
-    public Collection getEntryMappings(SourceConfig sourceConfig) {
-        Collection list = new ArrayList();
-
-        for (Iterator i=rootEntryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            getEntryMappings(entryMapping, sourceConfig, list);
-        }
-
-        return list;
-    }
-
-    public void getEntryMappings(EntryMapping entryMapping, SourceConfig sourceConfig, Collection list) {
-
-        //log.debug("Checking "+entryMapping.getDn());
-
-        Collection sourceMappings = entryMapping.getSourceMappings();
-        for (Iterator i=sourceMappings.iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
-            if (sourceMapping.getSourceName().equals(sourceConfig.getName())) {
-                list.add(entryMapping);
-                return;
+            if (suffix.isEmpty() && dn.isEmpty() // Root DSE
+                    || dn.endsWith(suffix)) {
+                return true;
             }
         }
 
-        Collection children = getChildren(entryMapping);
-        for (Iterator i=children.iterator(); i.hasNext(); ) {
-            EntryMapping childMapping = (EntryMapping)i.next();
-            getEntryMappings(childMapping, sourceConfig, list);
-        }
+        return false;
+    }
+
+    public boolean contains(EntryMapping entryMapping) {
+        return entryMappingsById.containsKey(entryMapping.getId());
+    }
+
+    public Collection<EntryMapping> getEntryMappings(String dn) {
+        return getEntryMappings(new DN(dn));
+    }
+
+    public Collection<EntryMapping> getEntryMappings(DN dn) {
+        if (dn == null) return EMPTY;
+
+        Collection<EntryMapping> list = entryMappingsByDn.get(dn.getNormalizedDn());
+        if (list == null) return EMPTY;
+
+        return new ArrayList<EntryMapping>(list);
+    }
+
+    public Collection<EntryMapping> getEntryMappings(SourceConfig sourceConfig) {
+        String sourceName = sourceConfig.getName();
+        Collection<EntryMapping> list = entryMappingsBySource.get(sourceName);
+        if (list == null) return EMPTY;
+        return list;
     }
 
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
-        String dn = entryMapping.getDn();
+        String dn = entryMapping.getDn().getNormalizedDn();
+        //if (log.isDebugEnabled()) log.debug("Adding entry "+dn);
 
-        Collection c = (Collection)entryMappings.get(dn.toLowerCase());
-        if (c == null) {
-            c = new ArrayList();
-            entryMappings.put(dn.toLowerCase(), c);
+        String id = entryMapping.getId();
+        if (id == null) {
+            id = ""+ entryMappingsById.size();
+            entryMapping.setId(id);
         }
-        //if (entryMappings.get(dn) != null) throw new Exception("Entry "+dn+" already exists.");
+        //if (log.isDebugEnabled()) log.debug("ID: "+id);
+
+        // lookup by id
+        entryMappingsById.put(id, entryMapping);
+
+        // lookup by dn
+        Collection<EntryMapping> c = entryMappingsByDn.get(dn);
+        if (c == null) {
+            c = new ArrayList<EntryMapping>();
+            entryMappingsByDn.put(dn, c);
+        }
         c.add(entryMapping);
 
-
-        EntryMapping parent = getParent(entryMapping);
-
-        if (parent != null) { // parent found
-            //System.out.println("Found parent "+parentDn+".");
-            addChildren(parent, entryMapping);
-        } else {
-            rootEntryMappings.add(entryMapping);
+        // lookup by source
+        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+        for (SourceMapping sourceMapping : sourceMappings) {
+            String sourceName = sourceMapping.getSourceName();
+            c = entryMappingsBySource.get(sourceName);
+            if (c == null) {
+                c = new ArrayList<EntryMapping>();
+                entryMappingsBySource.put(sourceName, c);
+            }
+            c.add(entryMapping);
         }
 
-        //entryMappings.put(dn, entryMapping);
+        EntryMapping parent = null;
+
+        String parentId = entryMapping.getParentId();
+        if (parentId == null) {
+            DN parentDn = entryMapping.getParentDn();
+            if (!parentDn.isEmpty()) {
+                c = getEntryMappings(parentDn);
+                if (c != null && !c.isEmpty()) {
+                    parent = c.iterator().next();
+                    parentId = parent.getId();
+                    entryMapping.setParentId(parentId);
+                }
+            }
+
+        } else {
+            parent = getEntryMappingById(parentId);
+        }
+
+        if (parent == null) {
+        	//if (log.isDebugEnabled()) log.debug("Suffix: "+dn);
+            rootEntryMappings.add(entryMapping);
+            suffixes.add(entryMapping.getDn());
+        } else {
+        	//if (log.isDebugEnabled()) log.debug("Parent ID: "+parentId);
+            addChildren(parent, entryMapping);
+        }
     }
 
-    public void modifyEntryMapping(EntryMapping oldEntry, EntryMapping newEntry) {
+    public EntryMapping getEntryMappingById(String id) {
+        return entryMappingsById.get(id);
+    }
+
+    public void modifyEntryMapping(EntryMapping oldEntry, EntryMapping newEntry) throws Exception {
         oldEntry.copy(newEntry);
     }
 
     public void removeEntryMapping(EntryMapping entryMapping) {
+        entryMappingsById.remove(entryMapping.getId());
+
         EntryMapping parent = getParent(entryMapping);
         if (parent == null) {
             rootEntryMappings.remove(entryMapping);
+            suffixes.remove(entryMapping.getDn());
 
         } else {
             Collection children = getChildren(parent);
             if (children != null) children.remove(entryMapping);
         }
 
-        Collection c = (Collection)entryMappings.get(entryMapping.getDn().toLowerCase());
+        Collection<EntryMapping> c = entryMappingsByDn.get(entryMapping.getDn().getNormalizedDn());
         if (c == null) return;
 
         c.remove(entryMapping);
         if (c.isEmpty()) {
-            entryMappings.remove(entryMapping.getDn().toLowerCase());
+            entryMappingsByDn.remove(entryMapping.getDn().getNormalizedDn());
         }
     }
 
-    public void renameEntryMapping(EntryMapping entryMapping, String newDn) {
+    public void renameEntryMapping(EntryMapping entryMapping, DN newDn) {
         if (entryMapping == null) return;
         if (entryMapping.getDn().equals(newDn)) return;
 
         EntryMapping oldParent = getParent(entryMapping);
-        String oldDn = entryMapping.getDn();
+        DN oldDn = entryMapping.getDn();
 
-        Logger log = LoggerFactory.getLogger(getClass());
+        if (log.isDebugEnabled()) log.debug("Renaming "+oldDn+" to "+newDn);
 
-        log.debug("Renaming "+oldDn+" to "+newDn);
-
-        Collection c = (Collection)entryMappings.get(oldDn.toLowerCase());
+        Collection<EntryMapping> c = entryMappingsByDn.get(oldDn.getNormalizedDn());
         if (c == null) {
-            log.debug("Entry "+oldDn+" not found.");
+        	if (log.isDebugEnabled()) log.debug("Entry "+oldDn+" not found.");
             return;
         }
 
         c.remove(entryMapping);
         if (c.isEmpty()) {
-            log.debug("Last "+oldDn);
-            entryMappings.remove(oldDn.toLowerCase());
+        	if (log.isDebugEnabled()) log.debug("Last "+oldDn);
+            entryMappingsByDn.remove(oldDn.getNormalizedDn());
         }
 
         entryMapping.setDn(newDn);
-        Collection newList = (Collection)entryMappings.get(newDn.toLowerCase());
+        Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.getNormalizedDn());
         if (newList == null) {
-            log.debug("First "+newDn);
-            newList = new ArrayList();
-            entryMappings.put(newDn.toLowerCase(), newList);
+        	if (log.isDebugEnabled()) log.debug("First "+newDn);
+            newList = new ArrayList<EntryMapping>();
+            entryMappingsByDn.put(newDn.getNormalizedDn(), newList);
         }
         newList.add(entryMapping);
 
         EntryMapping newParent = getParent(entryMapping);
-        log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
+        if (log.isDebugEnabled()) log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
 
         if (newParent != null) {
             addChildren(newParent, entryMapping);
         }
 
-        Collection children = getChildren(entryMapping);
+        Collection<EntryMapping> children = getChildren(entryMapping);
 
         if (children != null) {
             //addChildren(newDn, children);
 
-            for (Iterator i=children.iterator(); i.hasNext(); ) {
-                EntryMapping child = (EntryMapping)i.next();
-                String childNewDn = child.getRdn()+","+newDn;
+            for (EntryMapping child : children) {
+                String childNewDn = child.getRdn() + "," + newDn;
                 //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
 
                 renameChildren(child, childNewDn);
@@ -244,37 +261,34 @@ public class Partition implements PartitionMBean, Serializable {
         if (entryMapping == null) return;
         if (newDn.equals(entryMapping.getDn())) return;
 
-        Logger log = LoggerFactory.getLogger(getClass());
-
-        String oldDn = entryMapping.getDn();
-        log.debug("Renaming "+oldDn+" to "+newDn);
+        DN oldDn = entryMapping.getDn();
+        if (log.isDebugEnabled()) log.debug("Renaming "+oldDn+" to "+newDn);
 
         Collection c = getEntryMappings(oldDn);
         if (c == null) return;
 
         c.remove(entryMapping);
         if (c.isEmpty()) {
-            log.debug("Last "+oldDn);
-            entryMappings.remove(oldDn.toLowerCase());
+        	if (log.isDebugEnabled()) log.debug("Last "+oldDn);
+            entryMappingsByDn.remove(oldDn.getNormalizedDn());
         }
 
-        entryMapping.setDn(newDn);
-        Collection newList = (Collection)entryMappings.get(newDn.toLowerCase());
+        entryMapping.setStringDn(newDn);
+        Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.toLowerCase());
         if (newList == null) {
-            log.debug("First "+newDn);
-            newList = new ArrayList();
-            entryMappings.put(newDn.toLowerCase(), newList);
+        	if (log.isDebugEnabled()) log.debug("First "+newDn);
+            newList = new ArrayList<EntryMapping>();
+            entryMappingsByDn.put(newDn.toLowerCase(), newList);
         }
         newList.add(entryMapping);
 
-        Collection children = getChildren(entryMapping);
+        Collection<EntryMapping> children = getChildren(entryMapping);
 
         if (children != null) {
             //addChildren(newDn, children);
 
-            for (Iterator i=children.iterator(); i.hasNext(); ) {
-                EntryMapping child = (EntryMapping)i.next();
-                String childNewDn = child.getRdn()+","+newDn;
+            for (EntryMapping child : children) {
+                String childNewDn = child.getRdn() + "," + newDn;
                 //System.out.println(" - renaming child "+child.getDn()+" to "+childNewDn);
 
                 renameChildren(child, childNewDn);
@@ -284,51 +298,67 @@ public class Partition implements PartitionMBean, Serializable {
         }
     }
 
+    public List<EntryMapping> getPath(EntryMapping entryMapping) {
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
+        
+        while (entryMapping != null) {
+            path.add(0, entryMapping);
+            entryMapping = getParent(entryMapping);
+        }
+
+        return path;
+    }
+
+    public List<EntryMapping> getRelativePath(EntryMapping baseMapping, EntryMapping entryMapping) {
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
+
+        while (entryMapping != null) {
+            path.add(0, entryMapping);
+            if (entryMapping == baseMapping) break;
+            
+            entryMapping = getParent(entryMapping);
+        }
+
+        return path;
+    }
+
     public EntryMapping getParent(EntryMapping entryMapping) {
         if (entryMapping == null) return null;
 
-        String parentDn = entryMapping.getParentDn();
-        if (parentDn == null) return null;
-
-        Collection c = getEntryMappings(parentDn);
-        if (c == null || c.isEmpty()) return null;
-
-        return (EntryMapping)c.iterator().next();
+        return entryMappingsById.get(entryMapping.getParentId());
     }
 
-    public Collection getChildren(EntryMapping entryMapping) {
-        Collection children = (Collection)childrenMap.get(entryMapping);
-        if (children == null) return new ArrayList();
+    public Collection<EntryMapping> getChildren(EntryMapping parentMapping) {
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
+        if (children == null) return EMPTY;
         return children;
     }
 
-    public void addChildren(EntryMapping parentMapping, Collection newChildren) {
-        Collection children = (Collection)childrenMap.get(parentMapping);
+    public void addChildren(EntryMapping parentMapping, Collection<EntryMapping> newChildren) {
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
-            children = new ArrayList();
-            childrenMap.put(parentMapping, children);
+            children = new ArrayList<EntryMapping>();
+            entryMappingsByParentId.put(parentMapping.getId(), children);
         }
-        for (Iterator i=newChildren.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
-            children.add(entryMapping);
-        }
+        children.addAll(newChildren);
     }
 
     public void addChildren(EntryMapping parentMapping, EntryMapping entryMapping) {
-        Collection children = (Collection)childrenMap.get(parentMapping);
+    	//if (log.isDebugEnabled()) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
+        Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
-            children = new ArrayList();
-            childrenMap.put(parentMapping, children);
+            children = new ArrayList<EntryMapping>();
+            entryMappingsByParentId.put(parentMapping.getId(), children);
         }
         children.add(entryMapping);
     }
 
-    public Collection removeChildren(EntryMapping entryMapping) {
-        return (Collection)childrenMap.remove(entryMapping);
+    public Collection<EntryMapping> removeChildren(EntryMapping parentMapping) {
+        return entryMappingsByParentId.remove(parentMapping.getId());
     }
 
-   public Collection getEffectiveSourceMappings(EntryMapping entryMapping) {
-        Collection list = new ArrayList();
+   public Collection<SourceMapping> getEffectiveSourceMappings(EntryMapping entryMapping) {
+        Collection<SourceMapping> list = new ArrayList<SourceMapping>();
         list.addAll(entryMapping.getSourceMappings());
 
         EntryMapping parent = getParent(entryMapping);
@@ -338,7 +368,7 @@ public class Partition implements PartitionMBean, Serializable {
     }
 
     public SourceMapping getEffectiveSourceMapping(EntryMapping entryMapping, String name) {
-        SourceMapping sourceMapping = (SourceMapping)entryMapping.getSourceMapping(name);
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(name);
         if (sourceMapping != null) return sourceMapping;
 
         EntryMapping parent = getParent(entryMapping);
@@ -347,32 +377,22 @@ public class Partition implements PartitionMBean, Serializable {
         return null;
     }
 
-    public Collection getEffectiveRelationships(EntryMapping entryMapping) {
-        Collection relationships = new ArrayList();
-        relationships.addAll(entryMapping.getRelationships());
-
-        EntryMapping parent = getParent(entryMapping);
-        if (parent != null) relationships.addAll(getEffectiveRelationships(parent));
-
-        return relationships;
-    }
-
     public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
         moduleConfigs.put(moduleConfig.getName(), moduleConfig);
     }
 
     public ModuleConfig getModuleConfig(String name) {
-        return (ModuleConfig)moduleConfigs.get(name);
+        return moduleConfigs.get(name);
     }
 
-    public Collection getModuleMappings(String name) {
-        return (Collection)moduleMappings.get(name);
+    public Collection<ModuleMapping> getModuleMappings(String name) {
+        return moduleMappings.get(name);
     }
 
     public void addModuleMapping(ModuleMapping mapping) throws Exception {
-        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c == null) {
-            c = new ArrayList();
+            c = new ArrayList<ModuleMapping>();
             moduleMappings.put(mapping.getModuleName(), c);
         }
         c.add(mapping);
@@ -399,109 +419,154 @@ public class Partition implements PartitionMBean, Serializable {
     }
 
     public void modifyConnectionConfig(String name, ConnectionConfig newConnectionConfig) {
-        ConnectionConfig connectionConfig = (ConnectionConfig)connectionConfigs.get(name);
+        ConnectionConfig connectionConfig = connectionConfigs.get(name);
         connectionConfig.copy(newConnectionConfig);
     }
 
     public ConnectionConfig removeConnectionConfig(String connectionName) {
-        return (ConnectionConfig)connectionConfigs.remove(connectionName);
+        return connectionConfigs.remove(connectionName);
     }
 
     public ConnectionConfig getConnectionConfig(String name) {
-        return (ConnectionConfig)connectionConfigs.get(name);
+        return connectionConfigs.get(name);
     }
 
-    public void addSourceConfig(SourceConfig sourceConfig) {
-        sourceConfigs.put(sourceConfig.getName(), sourceConfig);
-    }
-
-    public SourceConfig removeSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.remove(name);
-    }
-
-    public SourceConfig getSourceConfig(String name) {
-        return (SourceConfig)sourceConfigs.get(name);
-    }
-
-    public Collection getSourceConfigs() {
-        return sourceConfigs.values();
-    }
-
-    public void renameSourceConfig(SourceConfig sourceConfig, String newName) {
-        if (sourceConfig == null) return;
-        if (sourceConfig.getName().equals(newName)) return;
-
-        sourceConfigs.remove(sourceConfig.getName());
-        sourceConfigs.put(newName, sourceConfig);
-    }
-
-    public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
-        SourceConfig sourceConfig = (SourceConfig)sourceConfigs.get(name);
-        sourceConfig.copy(newSourceConfig);
-    }
-
-    public Collection getEntryMappings() {
-        Collection list = new ArrayList();
-        for (Iterator i=entryMappings.values().iterator(); i.hasNext(); ) {
-            Collection c = (Collection)i.next();
+    public Collection<EntryMapping> getEntryMappings() {
+        Collection<EntryMapping> list = new ArrayList<EntryMapping>();
+        for (Collection<EntryMapping> c : entryMappingsByDn.values()) {
             list.addAll(c);
         }
         return list;
     }
 
-    public Collection getConnectionConfigs() {
+    public Collection<EntryMapping> findEntryMappings(String targetDn) throws Exception {
+        if (targetDn == null) return null;
+        return findEntryMappings(new DN(targetDn));
+    }
+
+    public Collection<EntryMapping> findEntryMappings(DN dn) throws Exception {
+        if (dn == null) return EMPTY;
+        //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
+
+        // search for static mappings
+        Collection<EntryMapping> results = entryMappingsByDn.get(dn.getNormalizedDn());
+        if (results != null) {
+            //log.debug("Found "+results.size()+" mapping(s).");
+            return results;
+        }
+
+        // can't find exact match -> search for parent mappings
+
+        DN parentDn = dn.getParentDn();
+
+        results = new ArrayList<EntryMapping>();
+        Collection<EntryMapping> list;
+
+        // if dn has no parent, check against root entries
+        if (parentDn.isEmpty()) {
+            //log.debug("Check root mappings");
+            list = rootEntryMappings;
+
+        } else {
+            if (log.isDebugEnabled()) log.debug("Search parent mappings for \""+parentDn+"\"");
+            Collection<EntryMapping> parentMappings = findEntryMappings(parentDn);
+
+            // if no parent mappings found, the entry doesn't exist in this partition
+            if (parentMappings == null || parentMappings.isEmpty()) {
+            	if (log.isDebugEnabled()) log.debug("Entry mapping \""+parentDn+"\" not found");
+                return null;
+            }
+
+            list = new ArrayList<EntryMapping>();
+
+            // for each parent mapping found
+            for (EntryMapping parentMapping : parentMappings) {
+                if (log.isDebugEnabled()) log.debug("Found parent " + parentMapping.getDn());
+
+                String handlerName = parentMapping.getHandlerName();
+                if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
+                    results.add(parentMapping);
+
+                } else { // otherwise check for matching siblings
+                    Collection<EntryMapping> children = getChildren(parentMapping);
+                    list.addAll(children);
+                }
+            }
+        }
+
+        // check against each mapping in the list
+        for (EntryMapping entryMapping : list) {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Checking DN pattern:");
+                log.debug(" - " + dn);
+                log.debug(" - " + entryMapping.getDn());
+            }
+            if (!dn.matches(entryMapping.getDn())) continue;
+
+            if (log.isDebugEnabled()) log.debug("Found " + entryMapping.getDn());
+            results.add(entryMapping);
+        }
+
+        return results;
+    }
+
+    public Collection<ConnectionConfig> getConnectionConfigs() {
         return connectionConfigs.values();
     }
 
-    public void setConnectionConfigs(Map connectionConfigs) {
+    public void setConnectionConfigs(Map<String,ConnectionConfig> connectionConfigs) {
         this.connectionConfigs = connectionConfigs;
     }
 
-    public Collection getModuleMappings() {
+    public Collection<Collection<ModuleMapping>> getModuleMappings() {
         return moduleMappings.values();
     }
-    public Collection getRootEntryMappings() {
+    public Collection<EntryMapping> getRootEntryMappings() {
         return rootEntryMappings;
     }
 
+    public Collection getSuffixes() {
+        return suffixes;
+    }
+    
     public ModuleConfig removeModuleConfig(String moduleName) {
-        return (ModuleConfig)moduleConfigs.remove(moduleName);
+        return moduleConfigs.remove(moduleName);
     }
 
-    public Collection getModuleConfigs() {
+    public Collection<ModuleConfig> getModuleConfigs() {
         return moduleConfigs.values();
     }
 
-    public Collection removeModuleMapping(String moduleName) {
-        return (Collection)moduleMappings.remove(moduleName);
+    public Collection<ModuleMapping> removeModuleMapping(String moduleName) {
+        return moduleMappings.remove(moduleName);
     }
 
     public void removeModuleMapping(ModuleMapping mapping) {
         if (mapping == null) return;
         if (mapping.getModuleName() == null) return;
 
-        Collection c = (Collection)moduleMappings.get(mapping.getModuleName());
+        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c != null) c.remove(mapping);
     }
 
-    public void setModuleConfigs(Map moduleConfigs) {
+    public void setModuleConfigs(Map<String,ModuleConfig> moduleConfigs) {
         this.moduleConfigs = moduleConfigs;
     }
 
-    public void setModuleMappings(Map moduleMappings) {
+    public void setModuleMappings(Map<String,Collection<ModuleMapping>> moduleMappings) {
         this.moduleMappings = moduleMappings;
     }
 
-    public void setRootEntryMappings(Collection rootEntryMappings) {
+    public void setRootEntryMappings(Collection<EntryMapping> rootEntryMappings) {
         this.rootEntryMappings = rootEntryMappings;
     }
 
-    public Collection getSearchableFields(SourceMapping sourceMapping) {
-        SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
+    public Collection<FieldMapping> getSearchableFields(SourceMapping sourceMapping) {
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
-        Collection results = new ArrayList();
-        for (Iterator i=sourceMapping.getFieldMappings().iterator(); i.hasNext(); ) {
-            FieldMapping fieldMapping = (FieldMapping)i.next();
+        Collection<FieldMapping> results = new ArrayList<FieldMapping>();
+        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
             FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
             if (fieldConfig == null) continue;
             if (!fieldConfig.isSearchable()) continue;
@@ -532,11 +597,15 @@ public class Partition implements PartitionMBean, Serializable {
         this.partitionConfig = partitionConfig;
     }
 
-    public boolean isProxy(EntryMapping entryMapping) {
-        Collection sourceMappings = entryMapping.getSourceMappings();
-        if (sourceMappings.size() != 1) return false;
+    public String toString() {
+        return partitionConfig.getName();
+    }
 
-        SourceMapping sourceMapping = (SourceMapping)sourceMappings.iterator().next();
-        return "PROXY".equals(sourceMapping.getEngine());
+    public Sources getSources() {
+        return sources;
+    }
+
+    public void setSources(Sources sources) {
+        this.sources = sources;
     }
 }

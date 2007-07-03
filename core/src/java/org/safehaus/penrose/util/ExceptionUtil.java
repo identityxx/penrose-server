@@ -32,6 +32,8 @@ public class ExceptionUtil {
 
     public static int getReturnCode(Throwable t) {
 
+        if (t instanceof LDAPException) return ((LDAPException)t).getResultCode();
+
         if (t instanceof CommunicationException) return LDAPException.PROTOCOL_ERROR;
         if (t instanceof TimeLimitExceededException) return LDAPException.TIME_LIMIT_EXCEEDED;
         if (t instanceof SizeLimitExceededException) return LDAPException.SIZE_LIMIT_EXCEEDED;
@@ -46,5 +48,28 @@ public class ExceptionUtil {
         if (t instanceof ContextNotEmptyException) return LDAPException.NOT_ALLOWED_ON_NONLEAF;
 
         return LDAPException.OPERATIONS_ERROR;
+    }
+
+    public static LDAPException createLDAPException(Exception e) {
+        if (e instanceof LDAPException) return (LDAPException)e;
+
+        int rc = getReturnCode(e);
+        return createLDAPException(rc, e.getMessage(), e);
+    }
+
+    public static LDAPException createLDAPException(int rc) {
+        return createLDAPException(rc, LDAPException.resultCodeToString(rc), null);
+    }
+    
+    public static LDAPException createLDAPException(int rc, Exception e) {
+        return createLDAPException(rc, e.getMessage(), e);
+    }
+
+    public static LDAPException createLDAPException(int rc, String message) {
+        return createLDAPException(rc, message, null);
+    }
+
+    public static LDAPException createLDAPException(int rc, String message, Exception exception) {
+        return new LDAPException(LDAPException.resultCodeToString(rc), rc, message, exception);
     }
 }

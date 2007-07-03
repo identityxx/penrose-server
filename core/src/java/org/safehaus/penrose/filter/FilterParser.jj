@@ -29,6 +29,8 @@ PARSER_BEGIN(FilterParser)
 package org.safehaus.penrose.filter;
 
 import java.util.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * LDAP Filter Parser.
@@ -90,6 +92,8 @@ import java.util.*;
  */
 
 public class FilterParser {
+
+  public Logger log = LoggerFactory.getLogger(getClass());
 
   Filter parsedFilter;
   
@@ -214,7 +218,7 @@ Filter Item() :
     item = <ITEM>
     {
         String expression = item.toString();
-        //System.out.println("Expression: "+expression);
+        log.debug("Parsing filter \""+expression+"\"");
 
         int p = expression.indexOf("=");
         char c = expression.charAt(p-1);
@@ -228,13 +232,13 @@ Filter Item() :
         String attr = expression.substring(0, p);
         String type = expression.substring(p, p+length);
         String value = expression.substring(p+length);
-        //System.out.println("Expression: ["+attr+"] ["+type+"] ["+value+"]");
+        log.debug("Filter: ["+attr+"] ["+type+"] ["+value+"]");
 
         if (!"=".equals(type.toString())) {
             filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
-            filter = new PresentFilter(attr);
+            filter = attr.equalsIgnoreCase("objectClass") ? null : new PresentFilter(attr);
 
         } else if (value.indexOf('*') < 0) {
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
@@ -252,6 +256,8 @@ Filter Item() :
             }
             filter = new SubstringFilter(attr, values);
         }
-    }
-	{ return filter; }
+        
+        log.debug("Parsed filter: "+filter);
+  	    return filter;
+	}
 }

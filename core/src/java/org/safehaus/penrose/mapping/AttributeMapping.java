@@ -18,14 +18,17 @@
 package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.util.BinaryUtil;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Arrays;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class AttributeMapping implements Cloneable, Serializable {
+public class AttributeMapping implements Cloneable {
+
+    Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
@@ -35,18 +38,14 @@ public class AttributeMapping implements Cloneable, Serializable {
     public final static int DEFAULT_LENGTH    = 50;
     public final static int DEFAULT_PRECISION = 0;
 
-    public final static String RDN_TRUE  = "true";
-    public final static String RDN_FIRST = "first";
-    public final static String RDN_FALSE = "false";
+	/**
+	 * Name. This refers to AttributeType's name.
+	 */
+	private String name;
 
-    /**
-     * Name. This refers to AttributeType's name.
-     */
-    private String name;
-
-    /**
-     * Values.
-     */
+	/**
+	 * Values.
+	 */
     private Object constant;
     private String variable;
     private Expression expression;
@@ -54,9 +53,7 @@ public class AttributeMapping implements Cloneable, Serializable {
     /**
      * This attribute is used in RDN.
      */
-    private String rdn = RDN_FALSE;
-
-    private boolean operational;
+    private boolean rdn;
 
     /**
      * Encryption method used to encrypt the value
@@ -78,7 +75,7 @@ public class AttributeMapping implements Cloneable, Serializable {
     public AttributeMapping(String name, String type, Object value) {
         this(name, type, value, false);
     }
-
+    
     public AttributeMapping(String name, String valueType, Object value, boolean rdn) {
         this.name = name;
 
@@ -92,12 +89,12 @@ public class AttributeMapping implements Cloneable, Serializable {
             this.expression = (Expression)value;
         }
 
-        this.rdn = rdn ? RDN_TRUE : RDN_FALSE;
+        this.rdn = rdn;
     }
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
     public void setName(String name) {
         this.name = name;
@@ -111,16 +108,12 @@ public class AttributeMapping implements Cloneable, Serializable {
         this.expression = expression;
     }
 
-    public boolean isPK() {
-        return !RDN_FALSE.equals(rdn);
-    }
-
-    public String getRdn() {
+    public boolean isRdn() {
         return rdn;
     }
 
-    public void setRdn(String rdn) {
-        this.rdn = rdn;
+    public void setRdn(boolean rdn) {
+    	this.rdn = rdn;
     }
 
     public byte[] getBinary() {
@@ -192,17 +185,7 @@ public class AttributeMapping implements Cloneable, Serializable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (constant == null ? 0 : constant.hashCode()) +
-                (variable == null ? 0 : variable.hashCode()) +
-                (expression == null ? 0 : expression.hashCode()) +
-                (rdn == null ? 0 : rdn.hashCode()) +
-                (operational ? 0 : 1) +
-                (encryption == null ? 0 : encryption.hashCode()) +
-                (encoding == null ? 0 : encoding.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
-                (length) +
-                (precision);
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -213,7 +196,8 @@ public class AttributeMapping implements Cloneable, Serializable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         AttributeMapping attributeMapping = (AttributeMapping)object;
         if (!equals(name, attributeMapping.name)) return false;
@@ -226,8 +210,7 @@ public class AttributeMapping implements Cloneable, Serializable {
 
         if (!equals(variable, attributeMapping.variable)) return false;
         if (!equals(expression, attributeMapping.expression)) return false;
-        if (!equals(rdn, attributeMapping.rdn)) return false;
-        if (operational != attributeMapping.operational) return false;
+        if (rdn != attributeMapping.rdn) return false;
         if (!equals(encryption, attributeMapping.encryption)) return false;
         if (!equals(encoding, attributeMapping.encoding)) return false;
         if (!equals(type, attributeMapping.type)) return false;
@@ -249,7 +232,6 @@ public class AttributeMapping implements Cloneable, Serializable {
         variable = attributeMapping.variable;
         expression = attributeMapping.expression == null ? null : (Expression)attributeMapping.expression.clone();
         rdn = attributeMapping.rdn;
-        operational = attributeMapping.operational;
         encryption = attributeMapping.encryption;
         encoding = attributeMapping.encoding;
         type = attributeMapping.type;
@@ -263,13 +245,5 @@ public class AttributeMapping implements Cloneable, Serializable {
         AttributeMapping attributeMapping = new AttributeMapping();
         attributeMapping.copy(this);
         return attributeMapping;
-    }
-
-    public boolean isOperational() {
-        return operational;
-    }
-
-    public void setOperational(boolean operational) {
-        this.operational = operational;
     }
 }

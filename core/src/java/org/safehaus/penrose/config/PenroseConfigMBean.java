@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.config;
 
+import org.safehaus.penrose.ldap.DN;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -28,19 +30,17 @@ public interface PenroseConfigMBean {
     public String getHome() throws Exception;
     public void setHome(String home) throws Exception;
 
-    public Map getSystemProperties() throws Exception;
+    public Map<String,String> getSystemProperties() throws Exception;
     public String getSystemProperty(String name) throws Exception;
     public void setSystemProperty(String name, String value) throws Exception;
     public String removeSystemProperty(String name) throws Exception;
 
-    public Collection getServiceNames() throws Exception;
+    public Collection<String> getServiceNames() throws Exception;
 
-    public Collection getAdapterNames() throws Exception;
-    public Collection getSchemaNames() throws Exception;
+    public Collection<String> getAdapterNames() throws Exception;
+    public Collection<String> getSchemaNames() throws Exception;
+    public Collection<String> getPartitionNames() throws Exception;
 
-    public String getRootDn() throws Exception;
-    public void setRootDn(String rootDn) throws Exception;
-
-    public String getRootPassword() throws Exception;
-    public void setRootPassword(String rootPassword) throws Exception;
+    public DN getRootDn() throws Exception;
+    public void setRootDn(DN rootDn) throws Exception;
 }

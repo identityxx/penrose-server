@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 /**
  * @author Endi S. Dewata
  */
-public class GenericAdapter
-        implements BindListener, AddListener, ModifyListener, ModRdnListener,
-        DeleteListener, SearchListener, CompareListener
+public class GenericAdapter implements
+        AddListener, BindListener, CompareListener, DeleteListener,
+        ModifyListener, ModRdnListener, SearchListener, UnbindListener
     {
 
     Logger log = LoggerFactory.getLogger(getClass());
@@ -43,12 +43,12 @@ public class GenericAdapter
         log.debug("GenericAdapter.afterBind()");
     }
 
-    public boolean beforeUnbind(BindEvent e) throws Exception {
+    public boolean beforeUnbind(UnbindEvent e) throws Exception {
         log.debug("GenericAdapter.beforeUnbind()");
         return true;
     }
 
-    public void afterUnbind(BindEvent e) throws Exception {
+    public void afterUnbind(UnbindEvent e) throws Exception {
         log.debug("GenericAdapter.afterUnbind()");
     }
 

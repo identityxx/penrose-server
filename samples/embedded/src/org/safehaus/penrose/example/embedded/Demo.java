@@ -5,20 +5,20 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.session.PenroseSession;
-import org.safehaus.penrose.session.PenroseSearchResults;
-import org.safehaus.penrose.session.PenroseSearchControls;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.Attribute;
-import javax.naming.NamingEnumeration;
 import java.util.Iterator;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -49,7 +49,7 @@ public class Demo {
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("dc");
         attribute.setConstant("Example");
-        attribute.setRdn(AttributeMapping.RDN_TRUE);
+        attribute.setRdn(true);
 
         entryMapping.addAttributeMapping(attribute);
 
@@ -72,7 +72,7 @@ public class Demo {
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("ou");
         attribute.setConstant("Users");
-        attribute.setRdn(AttributeMapping.RDN_TRUE);
+        attribute.setRdn(true);
 
         entryMapping.addAttributeMapping(attribute);
 
@@ -97,11 +97,13 @@ public class Demo {
         log.warn("Configuring Penrose.");
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
+        penroseConfig.removePartitionConfig("DEFAULT");
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PenroseContext penroseContext = penrose.getPenroseContext();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
         partitionManager.addPartition(partition);
 
         log.warn("Starting Penrose.");
@@ -110,39 +112,34 @@ public class Demo {
 
         log.warn("Connecting to Penrose.");
 
-        PenroseSession session = penrose.newSession();
+        Session session = penrose.newSession();
         session.bind("uid=admin,ou=system", "secret");
 
         log.warn("Searching all entries.");
 
-        PenroseSearchResults results = new PenroseSearchResults();
-        PenroseSearchControls sc = new PenroseSearchControls();
+        SearchResponse<SearchResult> response = session.search("dc=Example,dc=com", "(objectClass=*)");
 
-        session.search(
-                "dc=Example,dc=com",
-                "(objectClass=*)",
-                sc,
-                results);
-
-        for (Iterator i = results.iterator(); i.hasNext();) {
-            SearchResult entry = (SearchResult)i.next();
-            log.warn("Entry:\n"+toString(entry));
+        while (response.hasNext()) {
+            SearchResult searchResult = (SearchResult) response.next();
+            log.warn("Entry:\n"+toString(searchResult));
         }
 
         penrose.stop();
     }
 
-    public String toString(SearchResult entry) throws Exception {
+    public String toString(SearchResult searchResult) throws Exception {
 
         StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+entry.getName()+"\n");
+        sb.append("dn: "+searchResult.getDn()+"\n");
 
-        Attributes attributes = entry.getAttributes();
-        for (NamingEnumeration i=attributes.getAll(); i.hasMore(); ) {
+        Attributes attributes = searchResult.getAttributes();
+        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
             Attribute attribute = (Attribute)i.next();
-            String name = attribute.getID();
 
-            for (NamingEnumeration j=attribute.getAll(); j.hasMore(); ) {
+            String name = attribute.getName();
+            Collection values = attribute.getValues();
+
+            for (Iterator j=values.iterator(); j.hasNext(); ) {
                 Object value = j.next();
                 sb.append(name+": "+value+"\n");
             }

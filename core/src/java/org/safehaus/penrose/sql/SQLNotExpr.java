@@ -23,9 +23,9 @@ package org.safehaus.penrose.sql;
 public class SQLNotExpr {
 
     boolean not;
-    Object child;
+    SQLCompareExpr child;
 
-    public void setChild(Object child) {
+    public void setChild(SQLCompareExpr child) {
         this.child = child;
     }
 
@@ -38,16 +38,14 @@ public class SQLNotExpr {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
+
         if (not) {
-            sb.append("(not ");
+            sb.append("not ");
         }
-        sb.append("(");
+
         sb.append(child);
-        sb.append(")");
-        if (not) {
-            sb.append(")");
-        }
+
         return sb.toString();
     }
 }

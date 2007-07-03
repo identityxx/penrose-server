@@ -19,6 +19,8 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
@@ -53,7 +55,7 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public String getProductName() {
-        return Penrose.PRODUCT_NAME+" Server";
+        return Penrose.PRODUCT_NAME;
     }
 
     public String getProductVersion() {
@@ -80,9 +82,38 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
+    public void start() throws Exception {
+        try {
+            penroseServer.start();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void stop() throws Exception {
+        try {
+            penroseServer.stop();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
     public void reload() throws Exception {
         try {
             penroseServer.reload();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void restart() throws Exception {
+        try {
+            penroseServer.stop();
+            penroseServer.reload();
+            penroseServer.start();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -98,17 +129,30 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void renameEntryMapping(String oldDn, String newDn) throws Exception {
+    public Collection getServiceNames() throws Exception {
+        try {
+            Collection serviceNames = new ArrayList();
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceNames.addAll(serviceManager.getServiceNames());
+            return serviceNames;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void renameEntryMapping(DN oldDn, DN newDn) throws Exception {
         try {
             log.debug("Renaming "+oldDn+" to "+newDn);
 
             Penrose penrose = penroseServer.getPenrose();
-            PartitionManager partitionManager = penrose.getPartitionManager();
+            PenroseContext penroseContext = penrose.getPenroseContext();
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
 
-            Partition partition = partitionManager.findPartition(oldDn);
+            Partition partition = partitionManager.getPartition(oldDn);
             if (partition == null) return;
 
-            Collection c = partitionManager.findEntryMappings(partition, oldDn);
+            Collection c = partition.findEntryMappings(oldDn);
             Collection entryMappings = new ArrayList();
             if (c != null) entryMappings.addAll(c);
 
@@ -118,6 +162,36 @@ public class PenroseService implements PenroseServiceMBean {
                 partition.renameEntryMapping(entryMapping, newDn);
             }
 
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void start(String serviceName) throws Exception {
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceManager.start(serviceName);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void stop(String serviceName) throws Exception {
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            serviceManager.stop(serviceName);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public String getStatus(String serviceName) throws Exception {
+        try {
+            ServiceManager serviceManager = penroseServer.getServiceManager();
+            return serviceManager.getStatus(serviceName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
