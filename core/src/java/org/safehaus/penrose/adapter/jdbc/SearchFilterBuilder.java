@@ -25,6 +25,7 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -37,6 +38,7 @@ public class SearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    Partition partition;
     EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
@@ -48,16 +50,19 @@ public class SearchFilterBuilder {
 
     public SearchFilterBuilder(
             Interpreter interpreter,
+            Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues
     ) throws Exception {
 
+        this.partition = partition;
         this.entryMapping = entryMapping;
 
         Set<String> aliases = new HashSet<String>();
 
         for (SourceRef sourceRef : sourceRefs) {
+
             String alias = sourceRef.getAlias();
             aliases.add(alias);
 
@@ -298,7 +303,21 @@ public class SearchFilterBuilder {
         return sourceFilter;
     }
 
+    public boolean isPrimarySource(String sourceName) {
+        EntryMapping em = entryMapping;
+
+        while (em != null) {
+            SourceMapping sourceMapping = em.getSourceMapping(0);
+            if (sourceMapping != null && sourceMapping.getName().equals(sourceName)) return true;
+            em = partition.getParent(em);
+        }
+
+        return false;
+    }
+
     public String createTableAlias(String sourceName) {
+        if (isPrimarySource(sourceName)) return sourceName;
+
         int counter = 2;
         String alias = sourceName+counter;
 
@@ -311,6 +330,8 @@ public class SearchFilterBuilder {
     }
 
     public void setTableAlias(String sourceName, String alias) {
+        if (isPrimarySource(sourceName)) return;
+
         SourceRef sourceRef = sourceRefs.get(sourceName);
         sourceAliases.put(alias, sourceRef);
     }

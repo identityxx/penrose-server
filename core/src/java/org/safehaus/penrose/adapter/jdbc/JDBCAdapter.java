@@ -893,6 +893,7 @@ public class JDBCAdapter extends Adapter {
 
             SearchRequestBuilder builder = new SearchRequestBuilder(
                     interpreter,
+                    partition,
                     entryMapping,
                     sourceRefs,
                     sourceValues,

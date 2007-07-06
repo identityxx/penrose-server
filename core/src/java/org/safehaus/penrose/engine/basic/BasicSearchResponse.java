@@ -83,7 +83,12 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
 
         SourceValues sv = new SourceValues();
         sv.add(sourceValues);
-        sv.add(result.getSourceValues());
+        sv.set(result.getSourceValues());
+
+        if (debug) {
+            log.debug("Source values:");
+            sv.print();
+        }
 
         interpreter.set(sv);
         EngineTool.propagateDown(partition, em, sv, interpreter);
@@ -137,6 +142,21 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         }
     }
 
+    public void close() throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (lastDn != null) {
+            if (debug) log.debug("Returning entry " + lastDn);
+            SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
+            searchResult.setEntryMapping(lastEntryMapping);
+            searchResult.setSourceValues(lastSourceValues);
+            response.add(searchResult);
+        }
+
+        response.close();
+    }
+
     public boolean searchSecondarySources(
             EntryMapping em,
             SourceValues sv
@@ -186,20 +206,5 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         }
 
         return true;
-    }
-
-    public void close() throws Exception {
-
-        boolean debug = log.isDebugEnabled();
-
-        if (lastDn != null) {
-            if (debug) log.debug("Returning entry " + lastDn);
-            SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-            searchResult.setEntryMapping(lastEntryMapping);
-            searchResult.setSourceValues(lastSourceValues);
-            response.add(searchResult);
-        }
-
-        response.close();
     }
 }

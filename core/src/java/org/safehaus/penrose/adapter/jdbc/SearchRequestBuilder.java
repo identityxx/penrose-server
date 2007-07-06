@@ -19,6 +19,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.partition.Partition;
 
 import java.util.*;
 
@@ -27,6 +28,7 @@ import java.util.*;
  */
 public class SearchRequestBuilder extends RequestBuilder {
 
+    Partition partition;
     EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
@@ -41,6 +43,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
     public SearchRequestBuilder(
             Interpreter interpreter,
+            Partition partition,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
@@ -48,6 +51,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             SearchResponse<SearchResult> response
     ) throws Exception {
 
+        this.partition = partition;
         this.entryMapping = entryMapping;
 
         for (SourceRef sourceRef : sourceRefs) {
@@ -63,6 +67,7 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         filterBuilder = new SearchFilterBuilder(
                 interpreter,
+                partition,
                 entryMapping,
                 sourceRefs,
                 sourceValues

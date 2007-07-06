@@ -265,7 +265,11 @@ public class EntryMapping implements Cloneable {
     }
 
     public SourceMapping getSourceMapping(int index) {
-        return sourceMappings.get(index);
+        try {
+            return sourceMappings.get(index);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public SourceMapping removeSourceMapping(String name) {

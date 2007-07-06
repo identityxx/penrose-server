@@ -201,15 +201,22 @@ public class EngineTool {
         Attributes lattributes = sourceValues.get(lsourceName);
         Attributes rattributes = sourceValues.get(rsourceName);
 
-        Attribute attribute = rattributes.get(rfieldName);
+        Attribute lattribute = lattributes.get(lfieldName);
 
-        if (attribute == null) {
+        if (lattribute != null && !lattribute.isEmpty()) {
             if (debug) log.debug("Skipping field " + lhs);
             return;
         }
 
-        lattributes.setValues(lfieldName, attribute.getValues());
-        if (debug) log.debug("Propagating field " + lhs + ": " + attribute.getValues());
+        Attribute rattribute = rattributes.get(rfieldName);
+
+        if (rattribute == null) {
+            if (debug) log.debug("Skipping field " + lhs);
+            return;
+        }
+
+        lattributes.setValues(lfieldName, rattribute.getValues());
+        if (debug) log.debug("Propagating field " + lhs + ": " + rattribute.getValues());
     }
 
 }

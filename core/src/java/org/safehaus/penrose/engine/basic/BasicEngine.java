@@ -31,27 +31,15 @@ public class BasicEngine extends Engine {
     public final static String  FETCH         = "fetch";
     public final static boolean DEFAULT_FETCH = false;
 
-    BasicSearchEngine searchEngine;
-
     boolean fetch = DEFAULT_FETCH;
 
     public void init() throws Exception {
         super.init();
 
-        searchEngine = new BasicSearchEngine(this);
-
         String s = getParameter(FETCH);
         if (s != null) fetch = Boolean.valueOf(s);
 
         log.debug("Default engine initialized.");
-    }
-
-    public BasicSearchEngine getSearchEngine() {
-        return searchEngine;
-    }
-
-    public void setSearchEngine(BasicSearchEngine searchEngine) {
-        this.searchEngine = searchEngine;
     }
 
     public void start() throws Exception {
@@ -568,7 +556,7 @@ public class BasicEngine extends Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
+
     public SearchResult find(
             Session session,
             Partition partition,
@@ -597,7 +585,7 @@ public class BasicEngine extends Engine {
         SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
 
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
-        final Interpreter interpreter = getInterpreterManager().newInstance();
+        Interpreter interpreter = getInterpreterManager().newInstance();
 
         if (groupsOfSources.isEmpty()) {
             if (debug) log.debug("Returning static entry "+entryMapping.getDn());
@@ -638,8 +626,6 @@ public class BasicEngine extends Engine {
                 sr
         );
 
-        response.close();
-
         if (!response.hasNext()) {
             if (debug) log.debug("Entry "+dn+" not found");
             throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
@@ -647,7 +633,7 @@ public class BasicEngine extends Engine {
 
         return response.next();
     }
-*/
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -664,6 +650,7 @@ public class BasicEngine extends Engine {
         boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
+        int scope = request.getScope();
 
         SourceValues sourceValues = new SourceValues();
 
@@ -675,6 +662,16 @@ public class BasicEngine extends Engine {
         if (fetchEntry) {
             SearchResult entry = find(session, partition, baseMapping, dn);
             sourceValues.add(entry.getSourceValues());
+
+            if (entryMapping == baseMapping) {
+
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+                    response.add(entry);
+                    response.close();
+                    return;
+                }
+            }
+            
         } else {
            extractSourceValues(partition, baseMapping, dn, sourceValues);
         }
@@ -696,20 +693,62 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        try {
-            searchEngine.search(
-                    session,
-                    partition,
-                    baseMapping,
-                    entryMapping,
-                    sourceValues,
-                    request,
-                    response
-            );
+/*
+        searchEngine.search(
+                session,
+                partition,
+                baseMapping,
+                entryMapping,
+                sourceValues,
+                request,
+                response
+        );
+*/
+        //List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, baseMapping, entryMapping);
+        Interpreter interpreter = getInterpreterManager().newInstance();
 
-        } finally {
+        if (groupsOfSources.isEmpty()) {
+            if (debug) log.debug("Returning static entry "+entryMapping.getDn());
+
+            interpreter.set(sourceValues);
+            Attributes attributes = computeAttributes(interpreter, entryMapping);
+            interpreter.clear();
+
+            SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
+            searchResult.setEntryMapping(entryMapping);
+            searchResult.setSourceValues(sourceValues);
+            response.add(searchResult);
+
             response.close();
+
+            return;
         }
+
+        Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
+        Connector connector = getConnector(sourceRefs.iterator().next());
+
+        BasicSearchResponse sr = new BasicSearchResponse(
+                session,
+                partition,
+                this,
+                entryMapping,
+                groupsOfSources,
+                sourceValues,
+                interpreter,
+                request,
+                response
+        );
+
+        connector.search(
+                session,
+                partition,
+                entryMapping,
+                sourceRefs,
+                sourceValues,
+                request,
+                sr
+        );
     }
 
     public Attributes computeAttributes(

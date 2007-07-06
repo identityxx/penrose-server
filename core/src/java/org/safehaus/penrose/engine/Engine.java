@@ -679,7 +679,10 @@ public abstract class Engine {
         partitionManager = penroseContext.getPartitionManager();
     }
 
-    public List<Collection<SourceRef>> getGroupsOfSources(Partition partition, EntryMapping entryMapping) throws Exception {
+    public List<Collection<SourceRef>> getGroupsOfSources(
+            Partition partition,
+            EntryMapping entryMapping
+    ) throws Exception {
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
@@ -713,7 +716,15 @@ public abstract class Engine {
         return results;
     }
 
-    public List<Collection<SourceRef>> getLocalGroupsOfSources(Partition partition, EntryMapping entryMapping, EntryMapping baseMapping) throws Exception {
+    public List<Collection<SourceRef>> getLocalGroupsOfSources(
+            Partition partition,
+            EntryMapping baseMapping,
+            EntryMapping entryMapping
+    ) throws Exception {
+
+        if (entryMapping == baseMapping) {
+            return getGroupsOfSources(partition, entryMapping);
+        }
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
