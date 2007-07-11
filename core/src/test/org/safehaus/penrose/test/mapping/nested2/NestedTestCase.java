@@ -53,7 +53,7 @@ public class NestedTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partition.addConnectionConfig(connectionConfig);
+        partition.getConnections().addConnectionConfig(connectionConfig);
 
         SourceConfig parentsSource = new SourceConfig();
         parentsSource.setName("parents");

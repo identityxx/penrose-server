@@ -82,7 +82,7 @@
     <adapter-class>org.safehaus.penrose.adapter.ldap.LDAPAdapter</adapter-class>
   </adapter>
 
-  <partition name="DEFAULT" path="conf"/>
+  <partition name="ROOT" path="partitions/ROOT"/>
 
   <root>
     <root-dn>uid=admin,ou=system</root-dn>

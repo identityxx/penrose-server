@@ -58,7 +58,7 @@ public class BasicTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", getUrl());
         connectionConfig.setParameter("user", getUser());
         connectionConfig.setParameter("password", getPassword());
-        partition.addConnectionConfig(connectionConfig);
+        partition.getConnections().addConnectionConfig(connectionConfig);
 
         SourceConfig sourceConfig = new SourceConfig();
         sourceConfig.setName("groups");

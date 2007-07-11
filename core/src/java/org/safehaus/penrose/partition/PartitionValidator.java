@@ -101,7 +101,7 @@ public class PartitionValidator {
                 continue;
             }
 
-            ConnectionConfig connectionConfig = partition.getConnectionConfig(connectionName);
+            ConnectionConfig connectionConfig = partition.getConnections().getConnectionConfig(connectionName);
             if (connectionConfig == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: " + connectionName, partition.getName() + ": " + sourceName, sourceConfig));
             }
@@ -316,7 +316,7 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateModuleConfigs(Partition partition) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (Iterator i=partition.getModuleConfigs().iterator(); i.hasNext(); ) {
+        for (Iterator i=partition.getModules().getModuleConfigs().iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
             //log.debug("Validating module "+moduleConfig.getName());
 

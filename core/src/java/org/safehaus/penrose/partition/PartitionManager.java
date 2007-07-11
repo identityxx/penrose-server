@@ -127,7 +127,7 @@ public class PartitionManager implements PartitionManagerMBean {
         String connectionName = sourceConfig.getConnectionName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            if (partition.getConnectionConfig(connectionName) != null) return partition;
+            if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }
@@ -139,7 +139,7 @@ public class PartitionManager implements PartitionManagerMBean {
         String connectionName = connectionConfig.getName();
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
-            if (partition.getConnectionConfig(connectionName) != null) return partition;
+            if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }

@@ -435,7 +435,7 @@ public class PenroseJMXService extends Service {
 
     public void registerModules(Partition partition) throws Exception {
 
-        Collection moduleConfigs = partition.getModuleConfigs();
+        Collection moduleConfigs = partition.getModules().getModuleConfigs();
         for (Iterator i=moduleConfigs.iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
 
@@ -446,7 +446,7 @@ public class PenroseJMXService extends Service {
 
     public void unregisterModules(Partition partition) throws Exception {
 
-        Collection moduleConfigs = partition.getModuleConfigs();
+        Collection moduleConfigs = partition.getModules().getModuleConfigs();
         for (Iterator i=moduleConfigs.iterator(); i.hasNext(); ) {
             ModuleConfig moduleConfig = (ModuleConfig)i.next();
 

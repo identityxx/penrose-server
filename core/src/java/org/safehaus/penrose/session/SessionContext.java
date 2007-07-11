@@ -151,7 +151,7 @@ public class SessionContext {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
-            for (Iterator j=partition.getModuleConfigs().iterator(); j.hasNext(); ) {
+            for (Iterator j=partition.getModules().getModuleConfigs().iterator(); j.hasNext(); ) {
                 ModuleConfig moduleConfig = (ModuleConfig)j.next();
                 moduleManager.init(partition, moduleConfig);
             }

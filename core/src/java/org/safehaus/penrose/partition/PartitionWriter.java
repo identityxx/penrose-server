@@ -175,13 +175,13 @@ public class PartitionWriter {
         Element modulesElement = new DefaultElement("modules");
 
         // module
-        for (ModuleConfig moduleConfig : partition.getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
             Element moduleElement = toElement(moduleConfig);
             modulesElement.add(moduleElement);
         }
 
         // module-mapping
-        for (Collection<ModuleMapping> moduleMappings : partition.getModuleMappings()) {
+        for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
 
             for (ModuleMapping moduleMapping : moduleMappings) {
                 Element mappingElement = toElement(moduleMapping);

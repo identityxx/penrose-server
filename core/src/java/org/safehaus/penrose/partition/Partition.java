@@ -19,11 +19,11 @@ package org.safehaus.penrose.partition;
 
 import java.util.*;
 
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.Modules;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.connection.Connections;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -46,11 +46,9 @@ public class Partition {
     private Collection<DN> suffixes = new ArrayList<DN>();
     private Collection<EntryMapping> rootEntryMappings = new ArrayList<EntryMapping>();
 
-    private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+    private Connections connections = new Connections();
     private Sources sources = new Sources();
-
-    private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-    private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
+    private Modules modules = new Modules();
 
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
@@ -377,58 +375,12 @@ public class Partition {
         return null;
     }
 
-    public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
-        moduleConfigs.put(moduleConfig.getName(), moduleConfig);
+    public Modules getModules() {
+        return modules;
     }
 
-    public ModuleConfig getModuleConfig(String name) {
-        return moduleConfigs.get(name);
-    }
-
-    public Collection<ModuleMapping> getModuleMappings(String name) {
-        return moduleMappings.get(name);
-    }
-
-    public void addModuleMapping(ModuleMapping mapping) throws Exception {
-        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
-        if (c == null) {
-            c = new ArrayList<ModuleMapping>();
-            moduleMappings.put(mapping.getModuleName(), c);
-        }
-        c.add(mapping);
-
-        String moduleName = mapping.getModuleName();
-        if (moduleName == null) throw new Exception("Missing module name");
-
-        ModuleConfig moduleConfig = getModuleConfig(moduleName);
-        if (moduleConfig == null) throw new Exception("Undefined module "+moduleName);
-
-        mapping.setModuleConfig(moduleConfig);
-    }
-
-    public void addConnectionConfig(ConnectionConfig connectionConfig) {
-        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
-    }
-
-    public void renameConnectionConfig(ConnectionConfig connectionConfig, String newName) {
-        if (connectionConfig == null) return;
-        if (connectionConfig.getName().equals(newName)) return;
-
-        connectionConfigs.remove(connectionConfig.getName());
-        connectionConfigs.put(newName, connectionConfig);
-    }
-
-    public void modifyConnectionConfig(String name, ConnectionConfig newConnectionConfig) {
-        ConnectionConfig connectionConfig = connectionConfigs.get(name);
-        connectionConfig.copy(newConnectionConfig);
-    }
-
-    public ConnectionConfig removeConnectionConfig(String connectionName) {
-        return connectionConfigs.remove(connectionName);
-    }
-
-    public ConnectionConfig getConnectionConfig(String name) {
-        return connectionConfigs.get(name);
+    public Connections getConnections() {
+        return connections;
     }
 
     public Collection<EntryMapping> getEntryMappings() {
@@ -512,16 +464,9 @@ public class Partition {
     }
 
     public Collection<ConnectionConfig> getConnectionConfigs() {
-        return connectionConfigs.values();
+        return connections.getConnectionConfigs();
     }
 
-    public void setConnectionConfigs(Map<String,ConnectionConfig> connectionConfigs) {
-        this.connectionConfigs = connectionConfigs;
-    }
-
-    public Collection<Collection<ModuleMapping>> getModuleMappings() {
-        return moduleMappings.values();
-    }
     public Collection<EntryMapping> getRootEntryMappings() {
         return rootEntryMappings;
     }
@@ -530,34 +475,6 @@ public class Partition {
         return suffixes;
     }
     
-    public ModuleConfig removeModuleConfig(String moduleName) {
-        return moduleConfigs.remove(moduleName);
-    }
-
-    public Collection<ModuleConfig> getModuleConfigs() {
-        return moduleConfigs.values();
-    }
-
-    public Collection<ModuleMapping> removeModuleMapping(String moduleName) {
-        return moduleMappings.remove(moduleName);
-    }
-
-    public void removeModuleMapping(ModuleMapping mapping) {
-        if (mapping == null) return;
-        if (mapping.getModuleName() == null) return;
-
-        Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
-        if (c != null) c.remove(mapping);
-    }
-
-    public void setModuleConfigs(Map<String,ModuleConfig> moduleConfigs) {
-        this.moduleConfigs = moduleConfigs;
-    }
-
-    public void setModuleMappings(Map<String,Collection<ModuleMapping>> moduleMappings) {
-        this.moduleMappings = moduleMappings;
-    }
-
     public void setRootEntryMappings(Collection<EntryMapping> rootEntryMappings) {
         this.rootEntryMappings = rootEntryMappings;
     }

@@ -50,7 +50,7 @@ public class JoinTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partition.addConnectionConfig(connectionConfig);
+        partition.getConnections().addConnectionConfig(connectionConfig);
 
         SourceConfig groupsSource = new SourceConfig();
         groupsSource.setName("groups");

@@ -67,7 +67,7 @@ public class Sources {
     }
 
     public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
-        SourceConfig sourceConfig = (SourceConfig)sourceConfigs.get(name);
+        SourceConfig sourceConfig = sourceConfigs.get(name);
         sourceConfig.copy(newSourceConfig);
     }
 

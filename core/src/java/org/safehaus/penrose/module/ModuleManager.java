@@ -195,7 +195,7 @@ public class ModuleManager implements ModuleManagerMBean {
         
         if (partition == null) return list;
 
-        for (Collection<ModuleMapping> moduleMappings : partition.getModuleMappings()) {
+        for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
 
             for (Iterator j = moduleMappings.iterator(); j.hasNext();) {
                 ModuleMapping moduleMapping = (ModuleMapping) j.next();
