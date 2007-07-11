@@ -18,33 +18,14 @@ public class SourceReader implements EntityResolver {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    String home;
-
-    public SourceReader(String home) {
-        this.home = home;
+    public SourceReader() {
     }
 
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
-    }
-
-    public void read(String path, Sources sources) throws Exception {
-        if (path == null) {
-            path = home;
-        } else if (home != null) {
-            path = home+ File.separator+path;
-        }
-        String filename = (path == null ? "" : path+File.separator)+"sources.xml";
+    public void read(String filename, Sources sources) throws Exception {
         log.debug("Loading "+filename);
 
         File file = new File(filename);
         if (!file.exists()) return;
-
-		//log.debug("Loading source configuration from: "+file.getAbsolutePath());
 
         ClassLoader cl = getClass().getClassLoader();
         URL url = cl.getResource("org/safehaus/penrose/source/sources-digester-rules.xml");

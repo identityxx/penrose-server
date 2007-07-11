@@ -63,11 +63,6 @@ public class EntryMapping implements Cloneable {
 
     private boolean enabled = true;
 
-	/**
-	 * Children. Each element is of type org.safehaus.penrose.mapping.EntryMapping.
-	 */
-    private Collection<MappingRule> childMappings = new ArrayList<MappingRule>();
-
     /**
      * Object classes. Each element is of type String.
      */
@@ -236,10 +231,6 @@ public class EntryMapping implements Cloneable {
         objectClasses.clear();
     }
 
-    public void addEntryMapping(MappingRule mappingRule) {
-        childMappings.add(mappingRule);
-    }
-    
     public void addSourceMapping(SourceMapping sourceMapping) {
         sourceMappings.add(sourceMapping);
     }
@@ -361,14 +352,6 @@ public class EntryMapping implements Cloneable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Collection<MappingRule> getChildMappings() {
-        return childMappings;
-    }
-
-    public void setChildMappings(Collection<MappingRule> childMappings) {
-        this.childMappings = childMappings;
     }
 
     public void addACI(ACI aci) {

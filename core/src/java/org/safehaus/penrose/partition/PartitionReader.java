@@ -27,12 +27,16 @@ import org.safehaus.penrose.module.Modules;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import java.io.File;
+
 /**
  * @author Endi S. Dewata
  */
 public class PartitionReader {
 
     Logger log = LoggerFactory.getLogger(getClass());
+
+    String home;
 
     ConnectionReader connectionReader;
     SourceReader sourceReader;
@@ -44,10 +48,12 @@ public class PartitionReader {
     }
 
     public PartitionReader(String home) {
-        connectionReader = new ConnectionReader(home);
-        sourceReader = new SourceReader(home);
-        mappingReader = new MappingReader(home);
-        moduleReader = new ModuleReader(home);
+        this.home = home;
+
+        connectionReader = new ConnectionReader();
+        sourceReader = new SourceReader();
+        mappingReader = new MappingReader();
+        moduleReader = new ModuleReader();
     }
 
     public Partition read(PartitionConfig partitionConfig) throws Exception {
@@ -57,16 +63,26 @@ public class PartitionReader {
     public Partition read(PartitionConfig partitionConfig, String path) throws Exception {
         Partition partition = new Partition(partitionConfig);
 
+        if (path == null) {
+            path = home;
+        } else if (home != null) {
+            path = home+ File.separator+path;
+        }
+
+        String connectionsFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"connections.xml";
         Connections connections = partition.getConnections();
-        connectionReader.read(path, connections);
+        connectionReader.read(connectionsFile, connections);
 
+        String sourcesFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"sources.xml";
         Sources sources = partition.getSources();
-        sourceReader.read(path, sources);
+        sourceReader.read(sourcesFile, sources);
 
-        mappingReader.read(path, partition);
+        String mappingFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"mapping.xml";
+        mappingReader.read(mappingFile, partition);
 
+        String modulesFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"modules.xml";
         Modules modules = partition.getModules();
-        moduleReader.read(path, modules);
+        moduleReader.read(modulesFile, modules);
 
         return partition;
     }

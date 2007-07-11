@@ -23,36 +23,13 @@ public class MappingReader implements EntityResolver {
 
     Logger log = LoggerFactory.getLogger(getClass());
 
-    String home;
-
-    public MappingReader(String home) {
-        this.home = home;
+    public MappingReader() {
     }
 
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
-    }
-
-    public void read(String path, Partition partition) throws Exception {
-        if (path == null) {
-            path = home;
-        } else if (home != null) {
-            path = home+ File.separator+path;
-        }
-        String filename = (path == null ? "" : path+File.separator)+"mapping.xml";
+    public void read(String filename, Partition partition) throws Exception {
         log.debug("Loading "+filename);
 
-        MappingRule mappingRule = new MappingRule();
-        mappingRule.setFile(filename);
-        loadMappingConfig(null, null, mappingRule, partition);
-    }
-
-    public void loadMappingConfig(File dir, String baseDn, MappingRule mappingRule, Partition partition) throws Exception {
-        File file = new File(dir, mappingRule.getFile());
+        File file = new File(filename);
         if (!file.exists()) return;
 
         ClassLoader cl = getClass().getClassLoader();
@@ -63,43 +40,6 @@ public class MappingReader implements EntityResolver {
         digester.setClassLoader(cl);
 		digester.push(partition);
 		digester.parse(file);
-/*
-        if (mappingRule.getBaseDn() != null) {
-            baseDn = mappingRule.getBaseDn();
-        }
-
-        Collection contents = mappingRule.getContents();
-        for (Iterator i=contents.iterator(); i.hasNext(); ) {
-            Object object = i.next();
-
-            if (object instanceof MappingRule) {
-
-                MappingRule mr = (MappingRule)object;
-                read(file.getParentFile(), baseDn, mr, partition);
-
-            } else if (object instanceof EntryMapping) {
-
-                EntryMapping ed = (EntryMapping)object;
-                if (ed.getDn() == null) {
-                    ed.setDn(baseDn);
-
-                } else if (baseDn != null) {
-                    String parentDn = ed.getParentDn();
-                    ed.setParentDn(parentDn == null ? baseDn : parentDn+","+baseDn);
-                }
-
-                convert(ed);
-
-                partition.addEntryMapping(ed);
-
-                Collection childDefinitions = ed.getChildMappings();
-                for (Iterator j=childDefinitions.iterator(); j.hasNext(); ) {
-                    MappingRule mr = (MappingRule)j.next();
-                    read(file.getParentFile(), ed.getDn(), mr, partition);
-                }
-            }
-        }
-*/
     }
 
     public void convert(EntryMapping ed) throws Exception {
