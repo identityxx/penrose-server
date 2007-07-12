@@ -378,7 +378,8 @@ public class Session {
 
                 Object value;
                 if (attributeValue instanceof byte[]) {
-                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue);
+                    //value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])attributeValue);
+                    value = new String((byte[])attributeValue);
                 } else {
                     value = attributeValue;
                 }

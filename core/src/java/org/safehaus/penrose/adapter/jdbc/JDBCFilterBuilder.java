@@ -73,7 +73,18 @@ public class JDBCFilterBuilder {
         String operator = filter.getOperator();
         Object value = filter.getValue();
 
-        log.debug("Simple Filter: "+name+" "+operator+" "+value);
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            String v;
+            if (value instanceof byte[]) {
+                v = new String((byte[])value);
+            } else {
+                v = value.toString();
+            }
+            
+            log.debug("Simple Filter: "+name+" "+operator+" "+v);
+        }
 
         Field lField;
         String lhs;

@@ -323,6 +323,7 @@ public abstract class Adapter {
         CompareRequest newRequest = (CompareRequest)request.clone();
         newRequest.setDn(dn);
 
+        interpreter.clear();
         interpreter.set(request.getAttributeName(), request.getAttributeValue());
 
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
@@ -330,21 +331,32 @@ public abstract class Adapter {
             Collection<String> operations = fieldRef.getOperations();
             if (!operations.isEmpty() && !operations.contains(FieldMapping.COMPARE)) continue;
 
-            String fieldName = fieldRef.getName();
-
             FieldMapping fieldMapping = fieldRef.getFieldMapping();
             Object value = interpreter.eval(fieldMapping);
             if (value == null) continue;
 
-            if (debug) log.debug(" => Comparing field " + fieldName + ": " + value);
-
-            newRequest.setAttributeName(fieldRef.getOriginalName());
             if (value instanceof Collection) {
                 Collection list = (Collection)value;
-                newRequest.setAttributeValue(list.iterator().next());
-            } else {
-                newRequest.setAttributeValue(value);
+                value = list.iterator().next();
             }
+
+            String fieldName = fieldRef.getOriginalName();
+
+            if (debug) {
+                String v;
+                if (value instanceof byte[]) {
+                    v = new String((byte[])value);
+                } else {
+                    v = value.toString();
+                }
+
+                log.debug("Comparing field " + fieldName + " = [" + v + "]");
+            }
+
+            newRequest.setAttributeName(fieldName);
+            newRequest.setAttributeValue(value);
+
+            break;
         }
 
         return compare(session, source, newRequest, response);

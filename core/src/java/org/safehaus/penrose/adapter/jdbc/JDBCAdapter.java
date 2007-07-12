@@ -456,6 +456,8 @@ public class JDBCAdapter extends Adapter {
             final CompareResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(request.getDn());
         newRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -467,7 +469,11 @@ public class JDBCAdapter extends Adapter {
 
         search(session, source, newRequest, newResponse);
 
-        return newResponse.hasNext();
+        boolean b = newResponse.hasNext();
+
+        if (debug) log.debug("Compare operation completed ["+b+"].");
+
+        return b;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

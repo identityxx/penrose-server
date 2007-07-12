@@ -444,7 +444,15 @@ public class JDBCClient {
                 for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
                     Assignment assignment = (Assignment)j.next();
                     Object value = assignment.getValue();
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
+
+                    String v;
+                    if (value instanceof byte[]) {
+                        v = new String((byte[])value);
+                    } else {
+                        v = value.toString();
+                    }
+
+                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+v, 80));
                 }
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
            }
