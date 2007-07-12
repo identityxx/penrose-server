@@ -22,8 +22,6 @@ public class ModuleReader implements EntityResolver {
     }
 
     public void read(String filename, Modules modules) throws Exception {
-        log.debug("Loading "+filename);
-
         File file = new File(filename);
         if (!file.exists()) return;
 

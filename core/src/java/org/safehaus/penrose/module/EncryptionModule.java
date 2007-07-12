@@ -36,14 +36,13 @@ public class EncryptionModule extends Module {
 
         Security.addProvider(new BouncyCastleProvider());
 
-        verbose = new Boolean(getParameter("verbose")).booleanValue();
+        verbose = Boolean.parseBoolean(getParameter("verbose"));
 
         if (verbose) {
             Provider[] providers = Security.getProviders();
 
-            for (int i = 0; i < providers.length; i++) {
-                Provider provider = providers[i];
-                System.out.println("[EncryptionModule] "+provider.getName()+" "+provider.getVersion()+" security provider available.");
+            for (Provider provider : providers) {
+                System.out.println("[EncryptionModule] " + provider.getName() + " " + provider.getVersion() + " security provider available.");
             }
         }
 

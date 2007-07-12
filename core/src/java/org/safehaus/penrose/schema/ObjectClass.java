@@ -303,8 +303,7 @@ public class ObjectClass implements Cloneable, Comparable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        ObjectClass oc = new ObjectClass();
+        ObjectClass oc = (ObjectClass)super.clone();
         oc.copy(this);
         return oc;
     }

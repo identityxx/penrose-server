@@ -1,6 +1,5 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.mapping.Expression;
 
 /**

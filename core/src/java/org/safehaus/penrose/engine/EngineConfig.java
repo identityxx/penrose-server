@@ -111,8 +111,7 @@ public class EngineConfig implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        EngineConfig engineConfig = new EngineConfig();
+        EngineConfig engineConfig = (EngineConfig)super.clone();
         engineConfig.copy(this);
         return engineConfig;
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.source;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -63,24 +63,15 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
-	/**
-	 * Name.
-	 */
 	private String name;
 
     private String connectionName;
 
     private String description;
 
-    /**
-     * Parameters.
-     */
     private Map<String,String> parameters = new HashMap<String,String>();
 
-    /**
-     * Fields. Each element is of type org.safehaus.penrose.partition.FieldConfig.
-     */
-    private Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+    private Map<String, FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
     private Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
 
     private Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();
@@ -261,7 +252,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         return true;
     }
 
-    public void copy(SourceConfig sourceConfig) {
+    public void copy(SourceConfig sourceConfig) throws CloneNotSupportedException {
         name = sourceConfig.name;
         connectionName = sourceConfig.connectionName;
         description = sourceConfig.description;
@@ -277,8 +268,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        SourceConfig sourceConfig = new SourceConfig();
+        SourceConfig sourceConfig = (SourceConfig)super.clone();
         sourceConfig.copy(this);
         return sourceConfig;
     }

@@ -5,7 +5,6 @@ import org.safehaus.penrose.module.Module;
 import java.util.StringTokenizer;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata

@@ -2,7 +2,7 @@ package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.partition.ConnectionConfig;
+import org.safehaus.penrose.adapter.AdapterConfig;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -15,7 +15,20 @@ public class Connections {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    private Map<String, AdapterConfig> adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+
+    public void addAdapterConfig(AdapterConfig adapterConfig) {
+        adapterConfigs.put(adapterConfig.getName(), adapterConfig);
+    }
+
+    public AdapterConfig getAdapterConfig(String name) {
+        return adapterConfigs.get(name);
+    }
+
+    public Collection<AdapterConfig> getAdapterConfigs() {
+        return adapterConfigs.values();
+    }
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) {
         connectionConfigs.put(connectionConfig.getName(), connectionConfig);

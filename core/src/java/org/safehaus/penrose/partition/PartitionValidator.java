@@ -25,12 +25,14 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 /**
@@ -74,7 +76,12 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing adapter name.", partition.getName() + ": " + connectionName, connectionConfig));
 
             } else if (penroseConfig != null) {
-                AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+                AdapterConfig adapterConfig = partition.getConnections().getAdapterConfig(adapterName);
+
+                if (adapterConfig == null) {
+                    adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+                }
+
                 if (adapterConfig == null) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid adapter name: " + adapterName, partition.getName() + ": " + connectionName, connectionConfig));
                 }
@@ -106,8 +113,7 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: " + connectionName, partition.getName() + ": " + sourceName, sourceConfig));
             }
 
-            for (Iterator k = sourceConfig.getFieldConfigs().iterator(); k.hasNext();) {
-                FieldConfig fieldConfig = (FieldConfig) k.next();
+            for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
 
                 String fieldName = fieldConfig.getName();
                 if (fieldName == null || "".equals(fieldName)) {
@@ -126,8 +132,7 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateEntryMappings(Partition partition) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (Iterator i=partition.getEntryMappings().iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
+        for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
             //log.debug("Validating entry "+entryMapping;
 
             DN dn = entryMapping.getDn();
@@ -148,26 +153,24 @@ public class PartitionValidator {
 
         //log.debug("Validating entry "+entryMapping"'s object classes");
 
-        Collection missingObjectClasses = new TreeSet();
+        Collection<String> missingObjectClasses = new TreeSet<String>();
 
-        Collection objectClasses = entryMapping.getObjectClasses();
+        Collection<String> objectClasses = entryMapping.getObjectClasses();
         //System.out.println("Checking "+entryMapping" object classes "+objectClasses);
 
         SchemaManager schemaManager = penroseContext.getSchemaManager();
 
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            String ocName = (String)i.next();
+        for (String ocName : objectClasses) {
 
             ObjectClass objectClass = schemaManager.getObjectClass(ocName);
             if (objectClass == null) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Object class "+ocName+" is not defined in the schema.", entryMapping.getDn(), entryMapping));
+                results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Object class " + ocName + " is not defined in the schema.", entryMapping.getDn(), entryMapping));
             }
 
-            Collection scNames = schemaManager.getAllObjectClassNames(ocName);
-            for (Iterator j=scNames.iterator(); j.hasNext(); ) {
-                String scName = (String)j.next();
+            Collection<String> scNames = schemaManager.getAllObjectClassNames(ocName);
+            for (String scName : scNames) {
                 if ("top".equals(scName)) continue;
-                
+
                 if (!objectClasses.contains(scName)) {
                     //System.out.println(" - ["+scName+"] not found in "+objectClasses);
                     missingObjectClasses.add(scName);
@@ -175,9 +178,8 @@ public class PartitionValidator {
             }
         }
 
-        for (Iterator i=missingObjectClasses.iterator(); i.hasNext(); ) {
-            String scName = (String)i.next();
-            results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Missing object class "+scName+".", entryMapping.getDn(), entryMapping));
+        for (String scName : missingObjectClasses) {
+            results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Missing object class " + scName + ".", entryMapping.getDn(), entryMapping));
         }
 
         return results;
@@ -189,8 +191,7 @@ public class PartitionValidator {
         //log.debug("Validating entry "+entryMapping"'s attributes");
         SchemaManager schemaManager = penroseContext.getSchemaManager();
 
-        for (Iterator i=entryMapping.getAttributeMappings().iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        for (AttributeMapping attributeMapping : entryMapping.getAttributeMappings()) {
 
             String name = attributeMapping.getName();
             if (name == null || "".equals(name)) {
@@ -215,23 +216,23 @@ public class PartitionValidator {
 
                 int j = variable.indexOf(".");
                 String sourceAlias = variable.substring(0, j);
-                String fieldName = variable.substring(j+1);
+                String fieldName = variable.substring(j + 1);
 
                 SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
                 if (sourceMapping == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source mapping: "+sourceAlias, entryMapping.getDn(), entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source mapping: " + sourceAlias, entryMapping.getDn(), entryMapping));
                     continue;
                 }
 
                 SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
                 if (sourceConfig == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: "+sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: " + sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
                     continue;
                 }
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
                 if (fieldConfig == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field: "+variable, entryMapping.getDn(), entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown field: " + variable, entryMapping.getDn(), entryMapping));
                     continue;
                 }
             }
@@ -241,17 +242,15 @@ public class PartitionValidator {
             results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryMapping.getDn(), entryMapping));
         }
 
-        Collection objectClasses = schemaManager.getObjectClasses(entryMapping);
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            ObjectClass objectClass = (ObjectClass)i.next();
+        Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(entryMapping);
+        for (ObjectClass objectClass : objectClasses) {
 
-            Collection requiredAttributes = objectClass.getRequiredAttributes();
-            for (Iterator j=requiredAttributes.iterator(); j.hasNext(); ) {
-                String atName = (String)j.next();
+            Collection<String> requiredAttributes = objectClass.getRequiredAttributes();
+            for (String atName : requiredAttributes) {
 
                 Collection attributeMappings = entryMapping.getAttributeMappings(atName);
                 if (attributeMappings == null || attributeMappings.isEmpty()) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Attribute "+atName+" is required by "+objectClass.getName()+" object class.", entryMapping.getDn(), entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Attribute " + atName + " is required by " + objectClass.getName() + " object class.", entryMapping.getDn(), entryMapping));
                 }
             }
         }
@@ -262,8 +261,7 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateSourceMappings(Partition partition, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (Iterator i=entryMapping.getSourceMappings().iterator(); i.hasNext(); ) {
-            SourceMapping sourceMapping = (SourceMapping)i.next();
+        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
             //log.debug("Validating entry "+entryMapping"'s sourceMapping "+sourceMapping.getName());
 
             String alias = sourceMapping.getName();
@@ -274,23 +272,22 @@ public class PartitionValidator {
 
             String sourceName = sourceMapping.getSourceName();
             if (sourceName == null || "".equals(sourceName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", entryMapping.getDn()+"/"+alias, entryMapping));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", entryMapping.getDn() + "/" + alias, entryMapping));
             }
 
             SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceName);
             if (sourceConfig == null) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: "+sourceName, entryMapping.getDn()+"/"+alias, entryMapping));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: " + sourceName, entryMapping.getDn() + "/" + alias, entryMapping));
                 continue;
 
             }
 
-            for (Iterator j=sourceMapping.getFieldMappings().iterator(); j.hasNext(); ) {
-                FieldMapping fieldMapping = (FieldMapping)j.next();
+            for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
                 //log.debug("Validating entry "+entryMapping"'s fieldMapping "+source.getName()+"."+fieldMapping.getName());
 
                 String fieldName = fieldMapping.getName();
                 if (fieldName == null || "".equals(fieldName)) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", entryMapping.getDn()+"/"+alias, entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing field name.", entryMapping.getDn() + "/" + alias, entryMapping));
                     continue;
                 }
 
@@ -299,13 +296,13 @@ public class PartitionValidator {
                     String foreach = expression.getForeach();
                     String var = expression.getVar();
                     if (foreach != null && (var == null || "".equals(var))) {
-                        results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing variable name.", entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
+                        results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing variable name.", entryMapping.getDn() + "/" + alias + "." + fieldName, entryMapping));
                     }
                 }
 
                 FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldName);
                 if (fieldConfig == null) {
-                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid field name: "+fieldName, entryMapping.getDn()+"/"+alias+"."+fieldName, entryMapping));
+                    results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid field name: " + fieldName, entryMapping.getDn() + "/" + alias + "." + fieldName, entryMapping));
                 }
             }
         }
@@ -316,24 +313,24 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateModuleConfigs(Partition partition) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (Iterator i=partition.getModules().getModuleConfigs().iterator(); i.hasNext(); ) {
-            ModuleConfig moduleConfig = (ModuleConfig)i.next();
+        for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
             //log.debug("Validating module "+moduleConfig.getName());
 
             String moduleName = moduleConfig.getName();
             if (moduleName == null || "".equals(moduleName)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module name.", partition.getName()+":", moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module name.", partition.getName() + ":", moduleConfig));
             }
 
             String moduleClass = moduleConfig.getModuleClass();
             if (moduleClass == null || "".equals(moduleClass)) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module class name.", partition.getName()+": "+moduleName, moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing module class name.", partition.getName() + ": " + moduleName, moduleConfig));
             }
 
             try {
-                Class.forName(moduleClass);
+                ClassLoader cl = partition.getClassLoader();
+                cl.loadClass(moduleClass);
             } catch (Exception e) {
-                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Module class not found: "+moduleClass, partition.getName()+": "+moduleName, moduleConfig));
+                results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Module class not found: " + moduleClass, partition.getName() + ": " + moduleName, moduleConfig));
             }
         }
 

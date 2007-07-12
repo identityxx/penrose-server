@@ -128,8 +128,7 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        ModuleConfig moduleConfig = new ModuleConfig();
+        ModuleConfig moduleConfig = (ModuleConfig)super.clone();
         moduleConfig.copy(this);
         return moduleConfig;
     }

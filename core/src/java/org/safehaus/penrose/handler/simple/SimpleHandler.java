@@ -7,9 +7,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
@@ -79,10 +77,8 @@ public class SimpleHandler extends Handler {
         int scope = request.getScope();
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
-                || scope == SearchRequest.SCOPE_ONE && partition.getParent(entryMapping) == baseMapping
+                || scope == SearchRequest.SCOPE_ONE && partition.getMappings().getParent(entryMapping) == baseMapping
                 ) {
-
-            Engine engine = getEngine(partition, entryMapping);
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
                  public void add(SearchResult searchResult) throws Exception {
@@ -90,7 +86,7 @@ public class SimpleHandler extends Handler {
                  }
              };
 
-            engine.search(
+            super.performSearch(
                     session,
                     partition,
                     baseMapping,
@@ -103,7 +99,7 @@ public class SimpleHandler extends Handler {
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            Collection<EntryMapping> children = partition.getChildren(entryMapping);
+            Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
 
             for (EntryMapping childMapping : children) {
                 Handler handler = handlerManager.getHandler(partition, childMapping);

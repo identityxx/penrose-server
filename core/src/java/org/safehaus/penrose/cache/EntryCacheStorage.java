@@ -23,7 +23,7 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;

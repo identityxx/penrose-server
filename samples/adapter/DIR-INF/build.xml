@@ -2,41 +2,32 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="modules" default="dist">
-
-    <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose"/>
+<project name="adapters" default="build">
 
     <property name="test.hostname" value="localhost"/>
     <property name="test.port" value="10389"/>
     <property name="test.bindDn" value="uid=admin,ou=system"/>
     <property name="test.password" value="secret"/>
-    <property name="test.baseDn" value="dc=Module,dc=Example,dc=com"/>
 
     <path id="lib.path">
-        <fileset dir="../../lib">
+        <fileset dir="../../../lib">
             <include name="**/*.jar"/>
         </fileset>
-        <pathelement location="../../core/target/classes"/>
     </path>
 
     <target name="build">
-        <mkdir dir="target/classes"/>
+        <mkdir dir="classes"/>
         <javac
             srcdir="src"
-            destdir="target/classes"
+            destdir="classes"
             classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
         />
     </target>
 
-    <target name="dist" depends="build">
-        <jar jarfile="target/penrose-example-module.jar">
-            <fileset dir="target/classes"/>
-        </jar>
-    </target>
-
-    <target name="install" depends="dist">
-        <copy todir="${penrose.home}/lib/ext" file="target/penrose-example-module.jar"/>
+    <target name="clean">
+        <delete dir="classes" failonerror="false"/>
     </target>
 
     <target name="test-search">
@@ -47,7 +38,7 @@
             <arg line="-w ${test.password}"/>
             <arg line="-x"/>
             <arg line="-s sub"/>
-            <arg line="-b ${test.baseDn}"/>
+            <arg line="-b dc=Adapter,dc=Example,dc=com"/>
         </exec>
     </target>
 
@@ -82,11 +73,6 @@
             <arg line="-x"/>
             <arg line="-f ldif/add.ldif"/>
         </exec>
-    </target>
-
-    <target name="clean">
-        <delete dir="dist" failonerror="false"/>
-        <delete dir="target" failonerror="false"/>
     </target>
 
 </project>

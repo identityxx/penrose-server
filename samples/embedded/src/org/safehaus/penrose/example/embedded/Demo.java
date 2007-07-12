@@ -89,10 +89,10 @@ public class Demo {
         Partition partition = new Partition(partitionConfig);
 
         EntryMapping rootEntry = createRootEntry();
-        partition.addEntryMapping(rootEntry);
+        partition.getMappings().addEntryMapping(rootEntry);
 
         EntryMapping usersEntry = createUsersEntry();
-        partition.addEntryMapping(usersEntry);
+        partition.getMappings().addEntryMapping(usersEntry);
 
         log.warn("Configuring Penrose.");
 

@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class CompareRequest extends Request {
+public class CompareRequest extends Request implements Cloneable {
 
     protected DN dn;
     protected String attributeName;
@@ -39,5 +39,17 @@ public class CompareRequest extends Request {
 
     public void setAttributeValue(Object attributeValue) {
         this.attributeValue = attributeValue;
+    }
+
+    public void copy(CompareRequest request) {
+        dn = request.dn;
+        attributeName = request.attributeName;
+        attributeValue = request.attributeValue;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        CompareRequest request = (CompareRequest)super.clone();
+        request.copy(this);
+        return request;
     }
 }

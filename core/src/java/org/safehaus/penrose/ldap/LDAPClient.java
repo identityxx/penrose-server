@@ -221,6 +221,43 @@ public class LDAPClient {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        DN targetDn = request.getDn();
+
+        DNBuilder db = new DNBuilder();
+        db.set(targetDn);
+        db.append(suffix);
+        DN dn = db.toDn();
+
+        String filter = "("+request.getAttributeName()+"={0})";
+        Object args[] = new Object[] { request.getAttributeValue() };
+
+        log.debug("Comparing "+dn);
+
+        javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
+        sc.setReturningAttributes(new String[] {});
+        sc.setSearchScope(SearchControls.OBJECT_SCOPE);
+
+        javax.naming.ldap.LdapContext context = null;
+
+        try {
+            context = open();
+            NamingEnumeration ne = context.search(dn.toString(), filter, args, sc);
+            return ne.hasMore();
+
+        } finally {
+            if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

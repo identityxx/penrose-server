@@ -22,6 +22,8 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -151,7 +153,7 @@ public class PartitionManager implements PartitionManagerMBean {
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
-            if (partition.contains(entryMapping)) {
+            if (partition.getMappings().contains(entryMapping)) {
                 return partition;
             }
         }
@@ -169,7 +171,7 @@ public class PartitionManager implements PartitionManagerMBean {
         for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
-            Collection suffixes = partition.getSuffixes();
+            Collection suffixes = partition.getMappings().getSuffixes();
             for (Iterator j=suffixes.iterator(); j.hasNext(); ) {
                 DN suffix = (DN)j.next();
 

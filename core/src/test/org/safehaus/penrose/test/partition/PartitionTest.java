@@ -29,23 +29,23 @@ public class PartitionTest extends TestCase {
 
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
-        partition.addEntryMapping(rootEntry);
+        partition.getMappings().addEntryMapping(rootEntry);
 
         EntryMapping usersEntry = new EntryMapping("cn=Users,dc=Example,dc=com");
         usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
-        partition.addEntryMapping(usersEntry);
+        partition.getMappings().addEntryMapping(usersEntry);
 
         EntryMapping users1Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users1Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "users.cn", true));
-        partition.addEntryMapping(users1Mapping);
+        partition.getMappings().addEntryMapping(users1Mapping);
 
         EntryMapping users2Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
-        partition.addEntryMapping(users2Mapping);
+        partition.getMappings().addEntryMapping(users2Mapping);
 
         EntryMapping proxyMapping = new EntryMapping("cn=Proxy,dc=Example,dc=com");
         proxyMapping.addSourceMapping(new SourceMapping("DEFAULT", "source"));
-        partition.addEntryMapping(proxyMapping);
+        partition.getMappings().addEntryMapping(proxyMapping);
     }
 
     public void tearDown() throws Exception {
@@ -57,7 +57,7 @@ public class PartitionTest extends TestCase {
     }
 */
     public void testFindingRootEntry() throws Exception {
-        Collection entryMappings = partition.getEntryMappings("dc=Example,dc=com");
+        Collection entryMappings = partition.getMappings().getEntryMappings("dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -66,7 +66,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingStaticEntry() throws Exception {
-        Collection entryMappings = partition.getEntryMappings("cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partition.getMappings().getEntryMappings("cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -75,7 +75,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        Collection entryMappings = partition.getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partition.getMappings().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -85,7 +85,7 @@ public class PartitionTest extends TestCase {
 
     public void print(Partition partition) throws Exception {
         log.debug("Entries:");
-        Collection c = partition.getRootEntryMappings();
+        Collection c = partition.getMappings().getRootEntryMappings();
         print(partition, c, 0);
     }
 
@@ -97,7 +97,7 @@ public class PartitionTest extends TestCase {
             for (int l=0; l<level; l++) System.out.print("  ");
             log.debug(" - "+entryMapping.getRdn());
 
-            Collection children = partition.getChildren(entryMapping);
+            Collection children = partition.getMappings().getChildren(entryMapping);
             print(partition, children, level+1);
         }
     }

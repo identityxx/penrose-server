@@ -65,7 +65,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         Entry entry = (Entry)event.getSource();
 
-        if (!partition.contains(entry.getDn())) return;
+        if (!partition.getMappings().contains(entry.getDn())) return;
 
         DirContext ctx = null;
 
@@ -128,7 +128,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition partition = partitionManager.getPartition(baseDn);
-        Collection entryMappings = partition.findEntryMappings(baseDn);
+        Collection entryMappings = partition.getMappings().findEntryMappings(baseDn);
 
         if (entryMappings == null || entryMappings.isEmpty()) return;
 

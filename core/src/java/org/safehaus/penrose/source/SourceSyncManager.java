@@ -58,7 +58,6 @@ public class SourceSyncManager {
         String syncClassName = adapter.getSyncClassName();
         Class clazz = Class.forName(syncClassName);
 
-        //Class clazz = Class.forName(sourceSyncConfig.getClassName());
         sourceSync = (SourceSync)clazz.newInstance();
 
         sourceSync.setSourceSyncConfig(sourceSyncConfig);

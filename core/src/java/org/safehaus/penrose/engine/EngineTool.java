@@ -33,7 +33,7 @@ public class EngineTool {
 
         while (entryMapping != null) {
             mappings.add(entryMapping);
-            entryMapping = partition.getParent(entryMapping);
+            entryMapping = partition.getMappings().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -49,7 +49,7 @@ public class EngineTool {
 
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
-            entryMapping = partition.getParent(entryMapping);
+            entryMapping = partition.getMappings().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -116,7 +116,7 @@ public class EngineTool {
 
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
-            entryMapping = partition.getParent(entryMapping);
+            entryMapping = partition.getMappings().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues, interpreter);

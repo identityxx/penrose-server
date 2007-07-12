@@ -22,8 +22,6 @@ public class SourceReader implements EntityResolver {
     }
 
     public void read(String filename, Sources sources) throws Exception {
-        log.debug("Loading "+filename);
-
         File file = new File(filename);
         if (!file.exists()) return;
 

@@ -145,7 +145,7 @@ public class ACLManager {
             }
         }
 
-        EntryMapping parentEntryMapping = partition.getParent(entryMapping);
+        EntryMapping parentEntryMapping = partition.getMappings().getParent(entryMapping);
         if (parentEntryMapping == null) {
         	if (log.isDebugEnabled()) {
         		log.debug("Parent entry for "+entryMapping.getDn()+" not found.");
@@ -311,7 +311,7 @@ public class ACLManager {
 
         if (entryMapping == null) return;
 
-        EntryMapping parentMapping = partition.getParent(entryMapping);
+        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
         getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         if (log.isDebugEnabled()) log.debug("Checking ACL in "+entryMapping.getDn()+":");

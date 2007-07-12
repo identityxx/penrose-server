@@ -111,8 +111,7 @@ public class ConnectorConfig implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        ConnectorConfig connectorConfig = new ConnectorConfig();
+        ConnectorConfig connectorConfig = (ConnectorConfig)super.clone();
         connectorConfig.copy(this);
         return connectorConfig;
     }

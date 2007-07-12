@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class Request {
+public class Request implements Cloneable {
 
     protected Collection<Control> controls = new ArrayList<Control>();
 
@@ -55,5 +55,16 @@ public class Request {
         if (!equals(controls, request.controls)) return false;
 
         return true;
+    }
+
+    public void copy(Request request) {
+        controls.clear();
+        controls.addAll(request.controls);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Request request = (Request)super.clone();
+        request.copy(this);
+        return request;
     }
 }

@@ -298,6 +298,51 @@ public class LDAPAdapter extends Adapter {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Source source,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Compare "+ source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        LDAPClient client = getClient(session, partition, source);
+
+        try {
+            String baseDn = source.getParameter(BASE_DN);
+
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+            db.append(baseDn);
+            DN dn = db.toDn();
+
+            CompareRequest newRequest = (CompareRequest)request.clone();
+            newRequest.setDn(dn);
+
+            if (debug) log.debug("Comparing entry "+dn);
+
+            boolean b = client.compare(newRequest, response);
+
+            log.debug("Compare operation completed ["+b+"].");
+
+            return b;
+
+        } finally {
+            closeClient(session, partition, source, client);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -452,7 +497,7 @@ public class LDAPAdapter extends Adapter {
 
             DN dn = new DN(source.getParameter(BASE_DN));
 
-            SearchRequest newRequest = new SearchRequest(request);
+            SearchRequest newRequest = (SearchRequest)request.clone();
             newRequest.setDn(dn);
 
             String scope = source.getParameter(SCOPE);

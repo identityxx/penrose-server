@@ -119,8 +119,7 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        HandlerConfig sessionConfig = new HandlerConfig();
+        HandlerConfig sessionConfig = (HandlerConfig)super.clone();
         sessionConfig.copy(this);
         return sessionConfig;
     }

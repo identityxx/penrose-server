@@ -132,8 +132,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        ServiceConfig serviceConfig = new ServiceConfig();
+        ServiceConfig serviceConfig = (ServiceConfig)super.clone();
         serviceConfig.copy(this);
         return serviceConfig;
     }

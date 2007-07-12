@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -97,7 +96,7 @@ public class SourceManager {
                 addPrimarySourceRef(partition.getName(), entryMapping, primarySourceRef);
             }
 
-            em = partition.getParent(em);
+            em = partition.getMappings().getParent(em);
         }
     }
 

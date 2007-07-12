@@ -187,13 +187,20 @@
             <fileset dir="../core/src" includes="**/*.dtd"/>
         </copy>
         <copy todir="target/dist/samples">
-            <fileset dir="../samples"/>
+            <fileset dir="../samples">
+                <exclude name="**/*.jar"/>
+            </fileset>
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
+        <copy todir="target/dist/samples">
+            <fileset dir="../samples">
+                <include name="**/*.jar"/>
+            </fileset>
+        </copy>
         <mkdir dir="target/dist/partitions"/>
-        <copy todir="target/dist/partitions" overwrite="false">
+        <copy todir="target/dist/partitions">
             <fileset dir="../partitions"/>
             <filterchain>
                 <expandproperties/>
@@ -362,7 +369,6 @@
         </delete>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">
-                <include name="**/*"/>
                 <exclude name="conf/**/*"/>
             </fileset>
         </copy>

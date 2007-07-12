@@ -1,7 +1,5 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.SourceConfig;
-
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Collection;
@@ -18,7 +16,7 @@ public class SourceSyncConfig implements Cloneable {
     /**
 	 * Parameters.
 	 */
-	public Map parameters = new TreeMap();
+	public Map<String,String> parameters = new TreeMap<String,String>();
 
 	public Collection getParameterNames() {
 		return parameters.keySet();
@@ -28,7 +26,7 @@ public class SourceSyncConfig implements Cloneable {
         parameters.put(name, value);
     }
 
-    public void setParameters(Map parameters) {
+    public void setParameters(Map<String,String> parameters) {
         this.parameters.clear();
         this.parameters.putAll(parameters);
     }
@@ -38,7 +36,7 @@ public class SourceSyncConfig implements Cloneable {
     }
 
     public String getParameter(String name) {
-        return (String)parameters.get(name);
+        return parameters.get(name);
     }
 
     public String getName() {
@@ -78,8 +76,8 @@ public class SourceSyncConfig implements Cloneable {
         parameters.putAll(sourceSyncConfig.parameters);
     }
 
-    public Object clone() {
-        SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
+    public Object clone() throws CloneNotSupportedException {
+        SourceSyncConfig sourceSyncConfig = (SourceSyncConfig)super.clone();
         sourceSyncConfig.copy(this);
         return sourceSyncConfig;
     }

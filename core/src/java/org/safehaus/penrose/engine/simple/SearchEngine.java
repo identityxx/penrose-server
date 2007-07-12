@@ -171,7 +171,7 @@ public class SearchEngine {
                 args.add(value);
             }
 
-            em = partition.getParent(em);
+            em = partition.getMappings().getParent(em);
         }
     }
 

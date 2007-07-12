@@ -1,7 +1,7 @@
 package org.safehaus.penrose.source.jdbc;
 
 import org.safehaus.penrose.changelog.ChangeLogUtil;
-import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.source.FieldConfig;
 
 import java.util.Collection;
 import java.util.Iterator;

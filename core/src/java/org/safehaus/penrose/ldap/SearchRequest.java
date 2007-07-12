@@ -27,7 +27,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class SearchRequest extends Request {
+public class SearchRequest extends Request implements Cloneable {
 
     public final static int SCOPE_BASE      = 0;
     public final static int SCOPE_ONE       = 1;
@@ -53,20 +53,6 @@ public class SearchRequest extends Request {
     public SearchRequest() {
     }
 
-    public SearchRequest(SearchRequest request) throws Exception {
-        super(request);
-
-        dn          = request.dn;
-        filter      = request.filter;
-        scope       = request.scope;
-    	dereference = request.dereference;
-    	typesOnly   = request.typesOnly;
-    	sizeLimit   = request.sizeLimit;
-    	timeLimit   = request.timeLimit;
-
-        attributes.addAll(request.attributes);
-    }
-    
     public int getDereference() {
         return dereference;
     }
@@ -181,5 +167,24 @@ public class SearchRequest extends Request {
         if (!equals(attributes, searchRequest.attributes)) return false;
 
         return true;
+    }
+
+    public void copy(SearchRequest request) {
+        dn          = request.dn;
+        filter      = request.filter;
+        scope       = request.scope;
+    	dereference = request.dereference;
+    	typesOnly   = request.typesOnly;
+    	sizeLimit   = request.sizeLimit;
+    	timeLimit   = request.timeLimit;
+
+        attributes.clear();
+        attributes.addAll(request.attributes);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SearchRequest request = (SearchRequest)super.clone();
+        request.copy(this);
+        return request;
     }
 }

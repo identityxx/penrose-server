@@ -93,8 +93,7 @@ public class UserConfig implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        UserConfig userConfig = new UserConfig();
+        UserConfig userConfig = (UserConfig)super.clone();
         userConfig.copy(this);
         return userConfig;
     }

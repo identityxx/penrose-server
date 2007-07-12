@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.connection;
 
 import java.util.*;
 
@@ -124,11 +124,8 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-
-        ConnectionConfig connectionConfig = new ConnectionConfig();
+        ConnectionConfig connectionConfig = (ConnectionConfig)super.clone();
         connectionConfig.copy(this);
-
         return connectionConfig;
     }
 }

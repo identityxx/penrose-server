@@ -147,9 +147,15 @@ public class SourceValues implements Cloneable {
         return map.equals(av.map);
     }
 
+    public void copy(SourceValues sv) {
+        map.clear();
+        map.putAll(sv.map);
+    }
+
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        return new SourceValues(this);
+        SourceValues sv = (SourceValues)super.clone();
+        sv.copy(this);
+        return sv;
     }
 /*
     public int compareTo(Object object) {

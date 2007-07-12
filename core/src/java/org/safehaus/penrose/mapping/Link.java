@@ -66,7 +66,8 @@ public class Link {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        return new Link(this);
+        Link link = (Link)super.clone();
+        link.copy(this);
+        return link;
     }
 }

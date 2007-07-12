@@ -87,8 +87,7 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        SessionConfig sessionConfig = new SessionConfig();
+        SessionConfig sessionConfig = (SessionConfig)super.clone();
         sessionConfig.copy(this);
         return sessionConfig;
     }

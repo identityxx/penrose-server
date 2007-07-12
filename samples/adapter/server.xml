@@ -1,7 +1,0 @@
-<server>
-
-  <adapter name="Demo">
-    <adapter-class>org.safehaus.penrose.example.adapter.DemoAdapter</adapter-class>
-  </adapter>
-
-</server>

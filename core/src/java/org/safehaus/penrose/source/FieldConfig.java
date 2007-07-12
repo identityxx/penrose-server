@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.util.BinaryUtil;
@@ -260,8 +260,8 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         expression = fieldConfig.expression == null ? null : (Expression)fieldConfig.expression.clone();
     }
 
-    public Object clone() {
-        FieldConfig fieldConfig = new FieldConfig();
+    public Object clone() throws CloneNotSupportedException {
+        FieldConfig fieldConfig = (FieldConfig)super.clone();
         fieldConfig.copy(this);
         return fieldConfig;
     }

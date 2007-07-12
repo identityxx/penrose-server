@@ -366,8 +366,7 @@ public class Schema implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        Schema schema = new Schema();
+        Schema schema = (Schema)super.clone();
         schema.copy(this);
         return schema;
     }

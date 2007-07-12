@@ -421,8 +421,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        PenroseConfig penroseConfig = new PenroseConfig();
+        PenroseConfig penroseConfig = (PenroseConfig)super.clone();
         penroseConfig.copy(this);
         return penroseConfig;
     }

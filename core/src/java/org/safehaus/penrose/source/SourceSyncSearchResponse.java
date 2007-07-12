@@ -63,7 +63,7 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
                 }
 
                 if (value instanceof Collection) {
-                    Collection list = (Collection) value;
+                    Collection<Object> list = (Collection<Object>) value;
                     newAttributes.addValues(fieldName, list);
                     if (field.isPrimaryKey()) newRdns.addValues(fieldName, list);
                 } else {

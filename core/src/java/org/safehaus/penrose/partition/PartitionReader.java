@@ -28,6 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.net.URLClassLoader;
+import java.net.URL;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -69,20 +74,59 @@ public class PartitionReader {
             path = home+ File.separator+path;
         }
 
-        String connectionsFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"connections.xml";
+        String base = (path == null ? "" : path+File.separator)+"DIR-INF";
+
+        String connectionsFile = base+File.separator+"connections.xml";
+        log.debug("Loading "+connectionsFile);
+
         Connections connections = partition.getConnections();
         connectionReader.read(connectionsFile, connections);
 
-        String sourcesFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"sources.xml";
+        String sourcesFile = base+File.separator+"sources.xml";
+        log.debug("Loading "+sourcesFile);
+
         Sources sources = partition.getSources();
         sourceReader.read(sourcesFile, sources);
 
-        String mappingFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"mapping.xml";
-        mappingReader.read(mappingFile, partition);
+        String mappingFile = base+File.separator+"mapping.xml";
+        log.debug("Loading "+mappingFile);
 
-        String modulesFile = (path == null ? "" : path+File.separator)+"DIR-INF"+File.separator+"modules.xml";
+        Mappings mappings = partition.getMappings();
+        mappingReader.read(mappingFile, mappings);
+
+        String modulesFile = base+File.separator+"modules.xml";
+        log.debug("Loading "+modulesFile);
+
         Modules modules = partition.getModules();
         moduleReader.read(modulesFile, modules);
+
+        log.debug("Classpath:");
+        List<URL> urls = new ArrayList<URL>();
+
+        File classesDir = new File(base+File.separator+"classes");
+        if (classesDir.exists()) {
+            URL url = classesDir.toURL();
+            log.debug(" - "+url);
+            urls.add(url);
+        }
+
+        File libDir = new File(base+File.separator+"lib");
+        if (libDir.isDirectory()) {
+            File files[] = libDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.toLowerCase().endsWith(".jar");
+                }
+            });
+
+            for (File file : files) {
+                URL url = file.toURL();
+                log.debug(" - "+url);
+                urls.add(url);
+            }
+        }
+
+        URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]));
+        partition.setClassLoader(classLoader);
 
         return partition;
     }

@@ -23,8 +23,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.adapter.Adapter;
@@ -39,13 +39,12 @@ import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.ietf.ldap.LDAPException;
 import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.commons.dbcp.ConnectionFactory;
-import org.apache.commons.dbcp.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp.PoolableConnectionFactory;
-import org.apache.commons.dbcp.PoolingDataSource;
+import org.apache.commons.dbcp.*;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.util.*;
 
 /**
@@ -91,6 +90,7 @@ public class JDBCAdapter extends Adapter {
     public GenericObjectPool connectionPool;
     public DataSource ds;
 
+    private Driver driver;
     private JDBCClient client;
 
     public void init() throws Exception {
@@ -101,7 +101,11 @@ public class JDBCAdapter extends Adapter {
         String driver = (String)properties.remove(DRIVER);
         String url = (String)properties.remove(URL);
 
-        Class.forName(driver);
+        ClassLoader cl = partition.getClassLoader();
+        Class clazz = cl.loadClass(driver);
+
+        this.driver = (Driver)clazz.newInstance();
+        DriverManager.registerDriver(this.driver);
 
         String s = (String)properties.remove(INITIAL_SIZE);
         int initialSize = s == null ? 1 : Integer.parseInt(s);
@@ -146,7 +150,7 @@ public class JDBCAdapter extends Adapter {
 
         String validationQuery = (String)properties.remove(VALIDATION_QUERY);
 
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(url, properties);
+        ConnectionFactory connectionFactory = new DriverConnectionFactory(this.driver, url, properties);
 
         //PoolableConnectionFactory poolableConnectionFactory =
                 new PoolableConnectionFactory(
@@ -171,7 +175,7 @@ public class JDBCAdapter extends Adapter {
 
         ds = new PoolingDataSource(connectionPool);
 
-        client = new JDBCClient(getParameters());
+        client = new JDBCClient(driver, getParameters());
     }
 
     public void stop() throws Exception {
@@ -235,7 +239,7 @@ public class JDBCAdapter extends Adapter {
                 if (session == null || session.isRootUser()) {
                     if (debug) log.debug("Creating new connection.");
 
-                    client = new JDBCClient(connection.getParameters());
+                    client = new JDBCClient(driver, connection.getParameters());
 
                 } else {
                     if (debug) log.debug("Missing credentials.");
@@ -442,6 +446,31 @@ public class JDBCAdapter extends Adapter {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            final Session session,
+            final Source source,
+            final CompareRequest request,
+            final CompareResponse response
+    ) throws Exception {
+
+        SearchRequest newRequest = new SearchRequest();
+        newRequest.setDn(request.getDn());
+        newRequest.setScope(SearchRequest.SCOPE_BASE);
+
+        SimpleFilter filter = new SimpleFilter(request.getAttributeName(), "=", request.getAttributeValue());
+        newRequest.setFilter(filter);
+
+        SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>();
+
+        search(session, source, newRequest, newResponse);
+
+        return newResponse.hasNext();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -526,8 +555,8 @@ public class JDBCAdapter extends Adapter {
             );
 
             Collection<Request> requests = builder.generate();
-            for (Iterator i=requests.iterator(); i.hasNext(); ) {
-                UpdateRequest updateRequest = (UpdateRequest)i.next();
+            for (Request req : requests) {
+                UpdateRequest updateRequest = (UpdateRequest) req;
                 UpdateResponse updateResponse = new UpdateResponse();
 
                 client.executeUpdate(updateRequest, updateResponse);
@@ -650,8 +679,8 @@ public class JDBCAdapter extends Adapter {
             );
 
             Collection<Request> requests = builder.generate();
-            for (Iterator i=requests.iterator(); i.hasNext(); ) {
-                UpdateRequest updateRequest = (UpdateRequest)i.next();
+            for (Request req : requests) {
+                UpdateRequest updateRequest = (UpdateRequest) req;
                 UpdateResponse updateResponse = new UpdateResponse();
 
                 client.executeUpdate(updateRequest, updateResponse);
@@ -759,8 +788,8 @@ public class JDBCAdapter extends Adapter {
             );
 
             Collection<Request> requests = builder.generate();
-            for (Iterator i=requests.iterator(); i.hasNext(); ) {
-                UpdateRequest updateRequest = (UpdateRequest)i.next();
+            for (Request req : requests) {
+                UpdateRequest updateRequest = (UpdateRequest) req;
                 UpdateResponse updateResponse = new UpdateResponse();
 
                 client.executeUpdate(updateRequest, updateResponse);

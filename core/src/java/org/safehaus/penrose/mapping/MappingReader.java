@@ -1,6 +1,5 @@
 package org.safehaus.penrose.mapping;
 
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Token;
 import org.apache.commons.digester.Digester;
@@ -26,9 +25,7 @@ public class MappingReader implements EntityResolver {
     public MappingReader() {
     }
 
-    public void read(String filename, Partition partition) throws Exception {
-        log.debug("Loading "+filename);
-
+    public void read(String filename, Mappings mappings) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
 
@@ -38,7 +35,7 @@ public class MappingReader implements EntityResolver {
         digester.setEntityResolver(this);
         digester.setValidating(true);
         digester.setClassLoader(cl);
-		digester.push(partition);
+		digester.push(mappings);
 		digester.parse(file);
     }
 

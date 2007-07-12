@@ -167,6 +167,7 @@ public class ProxyEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -213,6 +214,7 @@ public class ProxyEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -252,6 +254,51 @@ public class ProxyEngine extends Engine {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            SourceValues sourceValues,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+
+        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+
+        SourceManager sourceManager = penroseContext.getSourceManager();
+        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+
+        LDAPClient client = createClient(session, partition, source);
+
+        try {
+            DN proxyDn = entryMapping.getDn();
+            DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
+            DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
+
+            if (debug) log.debug("Comparing via proxy entry \""+targetDn +"\"");
+
+            CompareRequest newRequest = (CompareRequest)request.clone();
+            newRequest.setDn(targetDn);
+
+            return client.compare(newRequest, response);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw ExceptionUtil.createLDAPException(e);
+
+        } finally {
+            storeClient(session, partition, source, client);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -259,6 +306,7 @@ public class ProxyEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -279,7 +327,7 @@ public class ProxyEngine extends Engine {
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
-            if (debug) log.debug("Deleting via proxy as \""+targetDn+"\"");
+            if (debug) log.debug("Deleting via proxy entry \""+targetDn+"\"");
 
             DeleteRequest newRequest = new DeleteRequest();
             newRequest.setDn(targetDn);
@@ -303,6 +351,7 @@ public class ProxyEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -324,7 +373,7 @@ public class ProxyEngine extends Engine {
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
-            if (debug) log.debug("Modifying via proxy as \""+targetDn+"\"");
+            if (debug) log.debug("Modifying \""+targetDn+"\"");
 
             ModifyRequest newRequest = new ModifyRequest();
             newRequest.setDn(targetDn);
@@ -349,6 +398,7 @@ public class ProxyEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -371,7 +421,7 @@ public class ProxyEngine extends Engine {
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
-            if (debug) log.debug("Renaming via proxy as \""+targetDn+"\"");
+            if (debug) log.debug("Renaming \""+targetDn+"\"");
 
             ModRdnRequest newRequest = new ModRdnRequest();
             newRequest.setDn(targetDn);
@@ -437,7 +487,7 @@ public class ProxyEngine extends Engine {
 
             if (debug) log.debug("Result: "+found);
 
-            SearchRequest newRequest = new SearchRequest(request);
+            SearchRequest newRequest = (SearchRequest)request.clone();
             newRequest.setFilter(filter);
             newRequest.setScope(scope);
             //newRequest.addControl(new Control("2.16.840.1.113730.3.4.2", null, true));
@@ -472,7 +522,7 @@ public class ProxyEngine extends Engine {
                 }
             };
 
-            if (debug) log.debug("Searching proxy for \""+targetDn+"\" with filter="+filter+" attrs="+attributes);
+            if (debug) log.debug("Searching for \""+targetDn+"\" with filter="+filter+" attrs="+attributes);
 
             client.search(newRequest, sr);
 

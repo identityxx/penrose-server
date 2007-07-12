@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -44,7 +43,12 @@ public class ConnectionManager implements ConnectionManagerMBean {
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
-        AdapterConfig adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+        AdapterConfig adapterConfig = partition.getConnections().getAdapterConfig(adapterName);
+
+        if (adapterConfig == null) {
+            adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+        }
+
         if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName+".");
 
         Connection connection = new Connection(partition, connectionConfig, adapterConfig);

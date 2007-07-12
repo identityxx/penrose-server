@@ -8,6 +8,9 @@ import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
@@ -71,7 +74,7 @@ public class BasicTestCase extends JDBCTestCase {
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partition.addEntryMapping(ou);
+        partition.getMappings().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -85,7 +88,7 @@ public class BasicTestCase extends JDBCTestCase {
         sourceMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(sourceMapping);
 
-        partition.addEntryMapping(groups);
+        partition.getMappings().addEntryMapping(groups);
 
         partitionManager.addPartition(partition);
 

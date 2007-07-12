@@ -189,9 +189,9 @@ public class DefaultHandler extends Handler {
         PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
 
-        Collection<EntryMapping> c = p.getEntryMappings(dn == null ? entryMapping.getDn() : dn);
+        Collection<EntryMapping> c = p.getMappings().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
 
-        SearchRequest newRequest = new SearchRequest(request);
+        SearchRequest newRequest = (SearchRequest)request.clone();
 
         for (EntryMapping em : c) {
 
@@ -224,7 +224,7 @@ public class DefaultHandler extends Handler {
 
         if (scope != SearchRequest.SCOPE_BASE
                 && scope != SearchRequest.SCOPE_SUB
-                && (scope != SearchRequest.SCOPE_ONE || partition.getParent(entryMapping) != baseMapping)
+                && (scope != SearchRequest.SCOPE_ONE || partition.getMappings().getParent(entryMapping) != baseMapping)
         ) {
             // if not searching for base or subtree or immediate children) then skip
             return;
@@ -306,9 +306,7 @@ public class DefaultHandler extends Handler {
             }
         };
 
-        Engine engine = getEngine(partition, entryMapping);
-
-        engine.search(
+        super.performSearch(
                 session,
                 partition,
                 baseMapping,
@@ -336,9 +334,9 @@ public class DefaultHandler extends Handler {
             return;
         }
 
-        Collection children = partition.getChildren(entryMapping);
+        Collection children = partition.getMappings().getChildren(entryMapping);
 
-        SearchRequest newRequest = new SearchRequest(request);
+        SearchRequest newRequest = (SearchRequest)request.clone();
         if (scope == SearchRequest.SCOPE_ONE) {
             newRequest.setScope(SearchRequest.SCOPE_BASE);
         }

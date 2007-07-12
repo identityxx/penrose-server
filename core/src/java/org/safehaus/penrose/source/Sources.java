@@ -1,13 +1,14 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.FieldMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi S. Dewata
@@ -66,7 +67,7 @@ public class Sources {
         sourceConfigs.put(newName, sourceConfig);
     }
 
-    public void modifySourceConfig(String name, SourceConfig newSourceConfig) {
+    public void modifySourceConfig(String name, SourceConfig newSourceConfig) throws Exception {
         SourceConfig sourceConfig = sourceConfigs.get(name);
         sourceConfig.copy(newSourceConfig);
     }
@@ -86,4 +87,19 @@ public class Sources {
     public Collection<SourceSyncConfig> getSourceSyncConfigs() {
         return sourceSyncConfigs.values();
     }
+
+    public Collection<FieldMapping> getSearchableFields(SourceMapping sourceMapping) {
+        SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
+
+        Collection<FieldMapping> results = new ArrayList<FieldMapping>();
+        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+            if (fieldConfig == null) continue;
+            if (!fieldConfig.isSearchable()) continue;
+            results.add(fieldMapping);
+        }
+
+        return results;
+    }
+
 }

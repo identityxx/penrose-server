@@ -5,6 +5,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
@@ -13,6 +14,7 @@ import org.safehaus.penrose.config.PenroseConfigWriter;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSyncConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.FilterEvaluator;
 
@@ -204,7 +206,7 @@ public class PenroseContext {
                 sourceSyncManager.init(partition, sourceSyncConfig);
             }
 
-            for (EntryMapping entryMapping : partition.getEntryMappings()) {
+            for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
                 sourceManager.init(partition, entryMapping);
             }
         }

@@ -14,7 +14,6 @@ import org.safehaus.penrose.session.*;
 import org.ietf.ldap.LDAPException;
 
 import javax.naming.NoPermissionException;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -55,7 +54,7 @@ public class DemoListener implements SearchListener {
         SearchResponse<SearchResult> response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
 
         while (response.hasNext()) {
-            SearchResult searchResult = (SearchResult) response.next();
+            SearchResult searchResult = response.next();
             System.out.println(toString(searchResult));
         }
 
@@ -68,17 +67,20 @@ public class DemoListener implements SearchListener {
 
     public String toString(SearchResult result) throws Exception {
 
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+result.getDn()+"\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append("dn: ");
+        sb.append(result.getDn());
+        sb.append("\n");
 
         Attributes attributes = result.getAttributes();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
             String name = attribute.getName();
 
-            for (Iterator j=attribute.getValues().iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                sb.append(name+": "+value+"\n");
+            for (Object value : attribute.getValues()) {
+                sb.append(name);
+                sb.append(": ");
+                sb.append(value);
+                sb.append("\n");
             }
         }
 

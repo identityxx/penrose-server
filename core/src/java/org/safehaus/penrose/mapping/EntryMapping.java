@@ -461,8 +461,7 @@ public class EntryMapping implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        EntryMapping entryMapping = new EntryMapping();
+        EntryMapping entryMapping = (EntryMapping)super.clone();
         entryMapping.copy(this);
         return entryMapping;
     }

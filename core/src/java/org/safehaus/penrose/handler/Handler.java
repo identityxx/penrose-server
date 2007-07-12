@@ -19,28 +19,32 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.acl.ACLManager;
-import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
+import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.interpreter.InterpreterManager;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.cache.CacheManager;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -53,6 +57,9 @@ public abstract class Handler {
     public final static String STARTING = "STARTING";
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
+
+    public final static String  FETCH         = "fetch";
+    public final static boolean DEFAULT_FETCH = false;
 
     protected PenroseConfig      penroseConfig;
     protected PenroseContext     penroseContext;
@@ -73,6 +80,7 @@ public abstract class Handler {
     protected EntryCache         entryCache;
 
     protected String status = STOPPED;
+    protected boolean fetch = DEFAULT_FETCH;
 
     public Handler() throws Exception {
     }
@@ -144,6 +152,10 @@ public abstract class Handler {
         this.status = status;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void add(
             Session session,
             Partition partition,
@@ -152,10 +164,42 @@ public abstract class Handler {
             AddResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        boolean debug = log.isDebugEnabled();
 
-        engine.add(session, partition, entryMapping, request, response);
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+            DN parentDn = dn.getParentDn();
+
+            SearchResult parent = find(session, partition, parentMapping, parentDn);
+            sourceValues.add(parent.getSourceValues());
+
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.add(session, partition, entryMapping, sourceValues, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
             Session session,
@@ -165,10 +209,79 @@ public abstract class Handler {
             BindResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        boolean debug = log.isDebugEnabled();
 
-        engine.bind(session, partition, entryMapping, request, response);
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            SearchResult entry = find(null, partition, entryMapping, dn);
+            sourceValues.add(entry.getSourceValues());
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.bind(session, partition, entryMapping, sourceValues, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            SearchResult entry = find(null, partition, entryMapping, dn);
+            sourceValues.add(entry.getSourceValues());
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        return engine.compare(session, partition, entryMapping, sourceValues, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unbind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void unbind(
             Session session,
@@ -183,6 +296,10 @@ public abstract class Handler {
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public SearchResult find(
             Session session,
             Partition partition,
@@ -190,43 +307,13 @@ public abstract class Handler {
             DN dn
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
-        SearchRequest request = new SearchRequest();
-        request.setDn(dn);
-        request.setFilter((Filter)null);
-        request.setScope(SearchRequest.SCOPE_BASE);
-
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
-
-        search(
-                session,
-                partition,
-                entryMapping,
-                request,
-                response
-        );
-
-        if (response.hasNext()) {
-            if (debug) log.debug("Entry "+dn+" not found");
-            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-        }
-
-        return response.next();
-    }
-
-    public boolean compare(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            CompareRequest request,
-            CompareResponse response
-    ) throws Exception {
-
         Engine engine = getEngine(partition, entryMapping);
-
-        return engine.compare(session, partition, entryMapping, request, response);
+        return engine.find(session, partition, entryMapping, dn);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
             Session session,
@@ -236,10 +323,38 @@ public abstract class Handler {
             DeleteResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        boolean debug = log.isDebugEnabled();
 
-        engine.delete(session, partition, entryMapping, request, response);
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            SearchResult entry = find(session, partition, entryMapping, dn);
+            sourceValues.add(entry.getSourceValues());
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.delete(session, partition, entryMapping, sourceValues, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
             Session session,
@@ -249,10 +364,38 @@ public abstract class Handler {
             ModifyResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        boolean debug = log.isDebugEnabled();
 
-        engine.modify(session, partition, entryMapping, request, response);
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            SearchResult entry = find(session, partition, entryMapping, dn);
+            sourceValues.add(entry.getSourceValues());
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.modify(session, partition, entryMapping, sourceValues, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRDN
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
             Session session,
@@ -262,10 +405,38 @@ public abstract class Handler {
             ModRdnResponse response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        boolean debug = log.isDebugEnabled();
 
-        engine.modrdn(session, partition, entryMapping, request, response);
+        DN dn = request.getDn();
+
+        SourceValues sourceValues = new SourceValues();
+
+        boolean fetchEntry = fetch;
+
+        String s = entryMapping.getParameter(FETCH);
+        if (s != null) fetchEntry = Boolean.valueOf(s);
+
+        if (fetchEntry) {
+            SearchResult entry = find(session, partition, entryMapping, dn);
+            sourceValues.add(entry.getSourceValues());
+        } else {
+            extractSourceValues(partition, entryMapping, dn, sourceValues);
+        }
+
+        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+
+        if (debug) {
+            log.debug("Source values:");
+            sourceValues.print();
+        }
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.modrdn(session, partition, entryMapping, sourceValues, request, response);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
             Session session,
@@ -293,6 +464,30 @@ public abstract class Handler {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception;
+
+    public void performSearch(
+            final Session session,
+            final Partition partition,
+            final EntryMapping baseMapping,
+            final EntryMapping entryMapping,
+            final SearchRequest request,
+            final SearchResponse<SearchResult> response
+    ) throws Exception {
+
+        Engine engine = getEngine(partition, entryMapping);
+        engine.search(
+                session,
+                partition,
+                baseMapping,
+                entryMapping,
+                request,
+                response
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscelleanous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PenroseConfig getPenroseConfig() {
         return penroseConfig;
@@ -375,5 +570,100 @@ public abstract class Handler {
     public void setSessionContext(SessionContext sessionContext) {
         this.sessionContext = sessionContext;
     }
+
+    public void extractSourceValues(
+            Partition partition,
+            EntryMapping entryMapping,
+            DN dn,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        Interpreter interpreter = interpreterManager.newInstance();
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Extracting source values from "+dn);
+
+        extractSourceValues(
+                partition,
+                interpreter,
+                dn,
+                entryMapping,
+                sourceValues
+        );
+    }
+
+    public void extractSourceValues(
+            Partition partition,
+            Interpreter interpreter,
+            DN dn,
+            EntryMapping entryMapping,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        DN parentDn = dn.getParentDn();
+        EntryMapping em = partition.getMappings().getParent(entryMapping);
+
+        if (parentDn != null && em != null) {
+            extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
+        }
+
+        RDN rdn = dn.getRdn();
+        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+
+        //if (sourceMappings.isEmpty()) return;
+        //SourceMapping sourceMapping = sourceMappings.iterator().next();
+
+        //interpreter.set(sourceValues);
+        interpreter.set(rdn);
+
+        for (SourceMapping sourceMapping : sourceMappings) {
+            extractSourceValues(
+                    partition,
+                    interpreter,
+                    rdn,
+                    entryMapping,
+                    sourceMapping,
+                    sourceValues
+            );
+        }
+
+        interpreter.clear();
+    }
+
+    public void extractSourceValues(
+            Partition partition,
+            Interpreter interpreter,
+            RDN rdn,
+            EntryMapping entryMapping,
+            SourceMapping sourceMapping,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
+
+        Attributes attributes = sourceValues.get(sourceMapping.getName());
+
+        Sources sources = partition.getSources();
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
+
+        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+        for (FieldMapping fieldMapping : fieldMappings) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+
+            Object value = interpreter.eval(fieldMapping);
+            if (value == null) continue;
+
+            if ("INTEGER".equals(fieldConfig.getType()) && value instanceof String) {
+                value = Integer.parseInt((String)value);
+            }
+
+            attributes.addValue(fieldMapping.getName(), value);
+
+            String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
+            if (debug) log.debug(" => " + fieldName + ": " + value);
+        }
+    }
+
 }
 

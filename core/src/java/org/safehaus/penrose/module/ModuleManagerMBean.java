@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.module;
 
-import java.util.Collection;
-
 /**
  * @author Endi S. Dewata
  */

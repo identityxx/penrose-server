@@ -1,8 +1,6 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.partition.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.FieldConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
@@ -32,6 +30,9 @@ public class Source implements Cloneable {
 
     protected Collection<String> indexFieldNames = new ArrayList<String>();
     protected Collection<Field> indexFields = new ArrayList<Field>();
+
+    public Source() {
+    }
 
     public Source(Partition partition, SourceConfig sourceConfig) {
         this.partition = partition;
@@ -344,10 +345,35 @@ public class Source implements Cloneable {
         connection.status(this);
     }
 
+    public void copy(Source source) {
+        name = source.name;
+
+        parameters.clear();
+        parameters.putAll(source.parameters);
+
+        partition = source.partition;
+        sourceConfig = source.sourceConfig;
+        connection = source.connection;
+
+        fields.clear();
+        fields.putAll(source.fields);
+
+        primaryKeyNames.clear();
+        primaryKeyNames.addAll(source.primaryKeyNames);
+
+        primaryKeyFields.clear();
+        primaryKeyFields.addAll(source.primaryKeyFields);
+
+        indexFieldNames.clear();
+        indexFieldNames.addAll(source.indexFieldNames);
+
+        indexFields.clear();
+        indexFields.addAll(source.indexFields);
+    }
+
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        Source source = new Source(partition, sourceConfig);
-        source.setConnection(connection);
+        Source source = (Source)super.clone();
+        source.copy(this);
         return source;
     }
 }

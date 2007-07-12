@@ -112,10 +112,8 @@ public class InterpreterConfig implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        InterpreterConfig interpreterConfig = new InterpreterConfig();
+        InterpreterConfig interpreterConfig = (InterpreterConfig)super.clone();
         interpreterConfig.copy(this);
-
         return interpreterConfig;
     }
 }

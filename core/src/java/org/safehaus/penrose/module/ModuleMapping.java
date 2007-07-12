@@ -124,14 +124,17 @@ public class ModuleMapping implements Cloneable {
         return true;
     }
 
+    public void copy(ModuleMapping mapping) throws CloneNotSupportedException {
+        moduleName = mapping.moduleName;
+        moduleConfig = mapping.moduleConfig == null ? null : (ModuleConfig)mapping.moduleConfig.clone();
+        baseDn = mapping.baseDn;
+        filter = mapping.filter;
+        scope = mapping.scope;
+    }
+
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        ModuleMapping mapping = new ModuleMapping();
-        mapping.moduleName = moduleName;
-        mapping.moduleConfig = moduleConfig == null ? null : (ModuleConfig)moduleConfig.clone();
-        mapping.baseDn = baseDn;
-        mapping.filter = filter;
-        mapping.scope = scope;
+        ModuleMapping mapping = (ModuleMapping)super.clone();
+        mapping.copy(this);
         return mapping;
     }
 }

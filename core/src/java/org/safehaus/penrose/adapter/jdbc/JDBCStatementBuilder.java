@@ -83,9 +83,7 @@ public class JDBCStatementBuilder {
         Source source = sourceRef.getSource();
         String table = getTableName(source);
 
-        if (quote != null) sb.append(quote);
         sb.append(table);
-        if (quote != null) sb.append(quote);
 
         sb.append(" ");
         sb.append(alias);
@@ -105,9 +103,7 @@ public class JDBCStatementBuilder {
             sb.append(joinType);
 
             sb.append(" ");
-            if (quote != null) sb.append(quote);
             sb.append(table);
-            if (quote != null) sb.append(quote);
 
             sb.append(" ");
             sb.append(alias);
@@ -222,9 +218,7 @@ public class JDBCStatementBuilder {
         Source source = statement.getSource();
         String table = getTableName(source);
 
-        if (quote != null) sb.append(quote);
         sb.append(table);
-        if (quote != null) sb.append(quote);
 
         StringBuilder sb1 = new StringBuilder();
         StringBuilder sb2 = new StringBuilder();
@@ -268,9 +262,7 @@ public class JDBCStatementBuilder {
         Source source = statement.getSource();
         String table = getTableName(source);
 
-        if (quote != null) sb.append(quote);
         sb.append(table);
-        if (quote != null) sb.append(quote);
 
         sb.append(" set ");
 
@@ -321,9 +313,7 @@ public class JDBCStatementBuilder {
         Source source = statement.getSource();
         String table = getTableName(source);
 
-        if (quote != null) sb.append(quote);
         sb.append(table);
-        if (quote != null) sb.append(quote);
 
         Filter filter = statement.getFilter();
 

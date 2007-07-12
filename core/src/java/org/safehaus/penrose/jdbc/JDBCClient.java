@@ -20,10 +20,8 @@ package org.safehaus.penrose.jdbc;
 import java.sql.*;
 import java.util.*;
 
-import javax.sql.DataSource;
-
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.partition.TableConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.TableConfig;
 import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
@@ -68,20 +66,55 @@ public class JDBCClient {
     public Properties properties = new Properties();
     public String quote;
 
+    Driver driver;
+    String url;
     Connection connection;
 
     public JDBCClient(Map<String,?> properties) throws Exception {
+
         for (String key : properties.keySet()) {
             Object value = properties.get(key);
 
             if (QUOTE.equals(key)) {
                 quote = (String)value;
+
+            } else if (DRIVER.equals(key)) {
+                String driver = (String)properties.get(DRIVER);
+                Class clazz = Class.forName(driver);
+                this.driver = (Driver)clazz.newInstance();
+
+            } else if (URL.equals(key)) {
+                url = (String)properties.get(URL);
+
             } else {
                 this.properties.put(key, value);
             }
         }
 
-        connect();
+        connection = this.driver.connect(url, this.properties);
+    }
+
+    public JDBCClient(Driver driver, Map<String,?> properties) throws Exception {
+
+        this.driver = driver;
+
+        for (String key : properties.keySet()) {
+            Object value = properties.get(key);
+
+            if (QUOTE.equals(key)) {
+                quote = (String)value;
+
+            } else if (DRIVER.equals(key)) {
+
+            } else if (URL.equals(key)) {
+                url = (String)properties.get(URL);
+
+            } else {
+                this.properties.put(key, value);
+            }
+        }
+
+        connection = this.driver.connect(url, this.properties);
     }
 
     public JDBCClient(
@@ -91,12 +124,31 @@ public class JDBCClient {
             String password
     ) throws Exception {
 
-        properties.put(DRIVER, driver);
-        properties.put(URL, url);
+        Class clazz = Class.forName(driver);
+        this.driver = (Driver)clazz.newInstance();
+
+        this.url = url;
+
         properties.put(USER, username);
         properties.put(PASSWORD, password);
 
-        connect();
+        connection = this.driver.connect(url, this.properties);
+    }
+
+    public JDBCClient(
+            Driver driver,
+            String url,
+            String username,
+            String password
+    ) throws Exception {
+
+        this.driver = driver;
+        this.url = url;
+
+        properties.put(USER, username);
+        properties.put(PASSWORD, password);
+
+        connection = this.driver.connect(url, this.properties);
     }
 
     public JDBCClient(
@@ -104,21 +156,6 @@ public class JDBCClient {
     ) throws Exception {
 
         this.connection = connection;
-    }
-
-    public void connect() throws Exception {
-
-        if (connection != null) return;
-
-        String driver = (String)properties.remove(DRIVER);
-        String url = (String)properties.remove(URL);
-
-        Class clazz = Class.forName(driver);
-
-        Driver driverInstance = (Driver)clazz.newInstance();
-        DriverManager.registerDriver(driverInstance);
-
-        connection = DriverManager.getConnection(url, properties);
     }
 
     public Connection getConnection() throws Exception {

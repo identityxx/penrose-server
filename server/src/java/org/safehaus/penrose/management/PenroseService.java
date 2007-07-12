@@ -152,14 +152,14 @@ public class PenroseService implements PenroseServiceMBean {
             Partition partition = partitionManager.getPartition(oldDn);
             if (partition == null) return;
 
-            Collection c = partition.findEntryMappings(oldDn);
+            Collection c = partition.getMappings().findEntryMappings(oldDn);
             Collection entryMappings = new ArrayList();
             if (c != null) entryMappings.addAll(c);
 
             log.debug("Found "+entryMappings.size()+" entries.");
             for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
-                partition.renameEntryMapping(entryMapping, newDn);
+                partition.getMappings().renameEntryMapping(entryMapping, newDn);
             }
 
         } catch (Exception e) {

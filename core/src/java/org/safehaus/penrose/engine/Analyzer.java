@@ -21,8 +21,8 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.SourceConfig;
-import org.safehaus.penrose.partition.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ public class Analyzer {
         boolean unique = isUnique(partition, entryMapping);
         if (log.isDebugEnabled()) log.debug("Unique: "+unique);
 
-        Collection children = partition.getChildren(entryMapping);
+        Collection children = partition.getMappings().getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
             analyze(partition, childMapping);
@@ -79,7 +79,7 @@ public class Analyzer {
 
         Graph graph = new Graph();
 
-        Collection sources = partition.getEffectiveSourceMappings(entryMapping);
+        Collection sources = partition.getMappings().getEffectiveSourceMappings(entryMapping);
         //if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -302,7 +302,7 @@ public class Analyzer {
         b = new Boolean(checkUniqueness(partition, entryMapping));
 
         if (b.booleanValue()) { // check parent mapping
-            EntryMapping parentMapping = partition.getParent(entryMapping);
+            EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
 
             if (parentMapping != null) b = new Boolean(isUnique(partition, parentMapping));
         }

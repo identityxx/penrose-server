@@ -28,6 +28,8 @@ import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -63,7 +65,7 @@ public class SimpleEngine extends Engine {
         for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
             Partition partition = (Partition)i.next();
 
-            for (Iterator j=partition.getRootEntryMappings().iterator(); j.hasNext(); ) {
+            for (Iterator j=partition.getMappings().getRootEntryMappings().iterator(); j.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)j.next();
                 analyzer.analyze(partition, entryMapping);
             }
@@ -110,7 +112,7 @@ public class SimpleEngine extends Engine {
                 );
             }
 
-            entryMapping = partition.getParent(entryMapping);
+            entryMapping = partition.getMappings().getParent(entryMapping);
         }
     }
 
@@ -158,6 +160,7 @@ public class SimpleEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -173,7 +176,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
-
+/*
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
@@ -181,7 +184,7 @@ public class SimpleEngine extends Engine {
             log.debug("Source values:");
             sourceValues.print();
         }
-
+*/
         Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
@@ -209,6 +212,7 @@ public class SimpleEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -224,7 +228,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
-
+/*
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
@@ -232,7 +236,7 @@ public class SimpleEngine extends Engine {
             log.debug("Source values:");
             sourceValues.print();
         }
-
+*/
         Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
@@ -255,7 +259,7 @@ public class SimpleEngine extends Engine {
         } catch (LDAPException e) {
             if (e.getResultCode() == LDAPException.INVALID_CREDENTIALS) {
                 log.debug("Calling default bind operation.");
-                super.bind(session, partition, entryMapping, request, response);
+                super.bind(session, partition, entryMapping, sourceValues, request, response);
             } else {
                 throw e;
             }
@@ -270,7 +274,7 @@ public class SimpleEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
-            DeleteRequest request,
+            SourceValues sourceValues, DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
@@ -285,7 +289,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
-
+/*
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
@@ -293,7 +297,7 @@ public class SimpleEngine extends Engine {
             log.debug("Source values:");
             sourceValues.print();
         }
-
+*/
         Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
@@ -321,6 +325,7 @@ public class SimpleEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -336,7 +341,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
-
+/*
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
@@ -344,7 +349,7 @@ public class SimpleEngine extends Engine {
             log.debug("Source values:");
             sourceValues.print();
         }
-
+*/
         Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();
@@ -372,6 +377,7 @@ public class SimpleEngine extends Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -387,7 +393,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
-
+/*
         SourceValues sourceValues = new SourceValues();
         extractSourceValues(partition, entryMapping, dn, sourceValues);
 
@@ -395,7 +401,7 @@ public class SimpleEngine extends Engine {
             log.debug("Source values:");
             sourceValues.print();
         }
-
+*/
         Collection groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
         Iterator iterator = groupsOfSources.iterator();

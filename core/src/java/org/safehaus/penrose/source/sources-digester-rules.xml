@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="source">
 
-            <object-create-rule classname="org.safehaus.penrose.partition.SourceConfig" />
+            <object-create-rule classname="org.safehaus.penrose.source.SourceConfig" />
             <set-properties-rule />
 
             <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             <pattern value="field">
 
-                <object-create-rule classname="org.safehaus.penrose.partition.FieldConfig" />
+                <object-create-rule classname="org.safehaus.penrose.source.FieldConfig" />
                 <set-properties-rule />
 
                 <call-method-rule pattern="binary" methodname="setBinary" paramcount="0" />

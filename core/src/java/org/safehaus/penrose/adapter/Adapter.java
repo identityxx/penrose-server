@@ -255,6 +255,102 @@ public abstract class Adapter {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Source source,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+    }
+
+    public boolean compare(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+
+        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        interpreter.set(sourceValues);
+
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
+
+            interpreter.set(attributeName, attributeValue);
+        }
+
+        Attributes sv = sourceValues.get(sourceRef.getAlias());
+        RDNBuilder rb = new RDNBuilder();
+
+        if (debug) log.debug("Target values:");
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            if (!fieldRef.isPrimaryKey()) continue;
+
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.DELETE)) continue;
+
+            Field field = fieldRef.getField();
+
+            Attribute attribute = sv == null ? null : sv.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(fieldRef.getFieldMapping());
+            }
+
+            if (value == null) continue;
+
+            String fieldName = field.getOriginalName();
+            if (debug) log.debug(" - "+fieldName+": "+value);
+
+            rb.set(fieldName, value);
+        }
+
+        DN dn = new DN(rb.toRdn());
+
+        CompareRequest newRequest = (CompareRequest)request.clone();
+        newRequest.setDn(dn);
+
+        interpreter.set(request.getAttributeName(), request.getAttributeValue());
+
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+            Collection<String> operations = fieldRef.getOperations();
+            if (!operations.isEmpty() && !operations.contains(FieldMapping.COMPARE)) continue;
+
+            String fieldName = fieldRef.getName();
+
+            FieldMapping fieldMapping = fieldRef.getFieldMapping();
+            Object value = interpreter.eval(fieldMapping);
+            if (value == null) continue;
+
+            if (debug) log.debug(" => Comparing field " + fieldName + ": " + value);
+
+            newRequest.setAttributeName(fieldRef.getOriginalName());
+            if (value instanceof Collection) {
+                Collection list = (Collection)value;
+                newRequest.setAttributeValue(list.iterator().next());
+            } else {
+                newRequest.setAttributeValue(value);
+            }
+        }
+
+        return compare(session, source, newRequest, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -635,7 +731,7 @@ public abstract class Adapter {
         filter = filterBuilder.getFilter();
         if (debug) log.debug("Added search filter: "+filter);
 
-        SearchRequest newRequest = new SearchRequest(request);
+        SearchRequest newRequest = (SearchRequest)request.clone();
         newRequest.setFilter(filter);
 
         SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {

@@ -49,8 +49,10 @@ public class ModuleManager implements ModuleManagerMBean {
         if (!moduleConfig.isEnabled()) return;
 
         log.debug("Initializing module "+moduleConfig.getName()+".");
-        
-        Class clazz = Class.forName(moduleConfig.getModuleClass());
+
+        String moduleClass = moduleConfig.getModuleClass();
+        ClassLoader cl = partition.getClassLoader();
+        Class clazz = cl.loadClass(moduleClass);
         module = (Module)clazz.newInstance();
 
         module.setModuleConfig(moduleConfig);
@@ -159,7 +161,7 @@ public class ModuleManager implements ModuleManagerMBean {
     }
 
     public Module getModule(String partitionName, String moduleName) {
-        Map map = (Map)modules.get(partitionName);
+        Map map = modules.get(partitionName);
         if (map == null) return null;
         return (Module)map.get(moduleName);
     }
@@ -175,7 +177,7 @@ public class ModuleManager implements ModuleManagerMBean {
     }
 
     public Module removeModule(String partitionName, String moduleName) {
-        Map map = (Map)modules.get(partitionName);
+        Map map = modules.get(partitionName);
         if (map == null) return null;
         return (Module)map.remove(moduleName);
     }
@@ -197,8 +199,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
         for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
 
-            for (Iterator j = moduleMappings.iterator(); j.hasNext();) {
-                ModuleMapping moduleMapping = (ModuleMapping) j.next();
+            for (ModuleMapping moduleMapping : moduleMappings) {
                 if (!moduleMapping.match(dn)) continue;
 
                 String moduleName = moduleMapping.getModuleName();

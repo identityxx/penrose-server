@@ -44,7 +44,7 @@ public class StaticTestCase extends TestCase {
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partition.addEntryMapping(ou);
+        partition.getMappings().addEntryMapping(ou);
 
         EntryMapping group = new EntryMapping("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
@@ -54,7 +54,7 @@ public class StaticTestCase extends TestCase {
         group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member2"));
         group.addAttributeMapping(new AttributeMapping("creatorsName", AttributeMapping.CONSTANT, penroseConfig.getRootDn().toString()));
         
-        partition.addEntryMapping(group);
+        partition.getMappings().addEntryMapping(group);
 
         EntryMapping member1 = new EntryMapping("uid=member1,cn=group,"+baseDn);
         member1.addObjectClass("person");
@@ -63,7 +63,7 @@ public class StaticTestCase extends TestCase {
         member1.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member1", true));
         member1.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partition.addEntryMapping(member1);
+        partition.getMappings().addEntryMapping(member1);
         
         EntryMapping member2 = new EntryMapping("uid=member2,cn=group,"+baseDn);
         member2.addObjectClass("person");
@@ -72,7 +72,7 @@ public class StaticTestCase extends TestCase {
         member2.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member2", true));
         member2.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partition.addEntryMapping(member2);
+        partition.getMappings().addEntryMapping(member2);
 
         partitionManager.addPartition(partition);
 

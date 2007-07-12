@@ -23,6 +23,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.ldap.*;
@@ -159,6 +160,34 @@ public class Connector {
         connection.bind(
                 session,
                 entryMapping, 
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Partition partition,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+
+        return connection.compare(
+                session,
+                entryMapping,
                 sourceRefs,
                 sourceValues,
                 request,

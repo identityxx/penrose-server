@@ -22,8 +22,6 @@ public class ConnectionReader implements EntityResolver {
     }
 
     public void read(String filename, Connections connections) throws Exception {
-        log.debug("Loading "+filename);
-
         File file = new File(filename);
         if (!file.exists()) return;
 

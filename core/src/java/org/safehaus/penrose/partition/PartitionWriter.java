@@ -35,6 +35,9 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -144,7 +147,7 @@ public class PartitionWriter {
     public Element toMappingXmlElement(Partition partition) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
-        for (EntryMapping entryMapping : partition.getRootEntryMappings()) {
+        for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
             toElement(partition, entryMapping, mappingElement);
         }
 
@@ -359,7 +362,7 @@ public class PartitionWriter {
             entryElement.add(parameterElement);
         }
 
-        Collection<EntryMapping> children = partition.getChildren(entryMapping);
+        Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
         for (EntryMapping child : children) {
             toElement(partition, child, configElement);
         }

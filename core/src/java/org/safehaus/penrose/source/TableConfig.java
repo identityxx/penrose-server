@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.partition;
+package org.safehaus.penrose.source;
 
 /**
  * @author Endi S. Dewata
@@ -93,8 +93,8 @@ public class TableConfig implements Comparable, Cloneable {
         type = fieldConfig.type;
     }
 
-    public Object clone() {
-        TableConfig fieldConfig = new TableConfig();
+    public Object clone() throws CloneNotSupportedException {
+        TableConfig fieldConfig = (TableConfig)super.clone();
         fieldConfig.copy(this);
         return fieldConfig;
     }

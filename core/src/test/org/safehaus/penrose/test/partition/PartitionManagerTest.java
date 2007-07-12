@@ -89,7 +89,7 @@ public class PartitionManagerTest extends TestCase {
         entryMapping.setDn("ou=Test,dc=Example,dc=com");
         entryMapping.addObjectClass("organizationalUnit");
         entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
-        partition.addEntryMapping(entryMapping);
+        partition.getMappings().addEntryMapping(entryMapping);
 
         partitionManager.addPartition(partition);
 

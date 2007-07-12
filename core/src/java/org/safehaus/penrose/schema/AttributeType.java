@@ -275,8 +275,7 @@ public class AttributeType implements Cloneable, Comparable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        AttributeType at = new AttributeType();
+        AttributeType at = (AttributeType)super.clone();
         at.copy(this);
         return at;
     }

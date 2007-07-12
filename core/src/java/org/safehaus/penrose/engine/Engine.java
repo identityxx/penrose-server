@@ -29,7 +29,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.filter.Filter;
@@ -221,123 +221,20 @@ public abstract class Engine {
         return sourceMapping.getName();
     }
 
-    public Filter generateFilter(SourceMapping sourceMapping, Collection relationships, Collection rows) throws Exception {
-        log.debug("Generating filters for source "+sourceMapping.getName());
-
-        Filter filter = null;
-        for (Iterator i=rows.iterator(); i.hasNext(); ) {
-            RDN rdn = (RDN)i.next();
-            log.debug(" - "+rdn);
-
-            Filter subFilter = null;
-
-            for (Iterator j=relationships.iterator(); j.hasNext(); ) {
-                Relationship relationship = (Relationship)j.next();
-
-                String lhs = relationship.getLhs();
-                String operator = relationship.getOperator();
-                String rhs = relationship.getRhs();
-
-                if (rhs.startsWith(sourceMapping.getName()+".")) {
-                    String exp = lhs;
-                    lhs = rhs;
-                    rhs = exp;
-                }
-
-                int index = lhs.indexOf(".");
-                String name = lhs.substring(index+1);
-
-                log.debug("   - "+rhs+" ==> ("+name+" "+operator+" ?)");
-                Object value = rdn.get(rhs);
-                if (value == null) continue;
-
-                SimpleFilter sf = new SimpleFilter(name, operator, value.toString());
-                log.debug("     --> "+sf);
-
-                subFilter = FilterTool.appendAndFilter(subFilter, sf);
-            }
-
-            filter = FilterTool.appendOrFilter(filter, subFilter);
-        }
-
-        return filter;
-    }
-
-    public Filter generateFilter(
-            SourceMapping toSource,
-            Collection relationships,
-            SourceValues sv
-    ) throws Exception {
-/*
-        log.debug("Generating filters using source values:");
-        for (Iterator i=sv.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Collection values = sv.get(name);
-            log.debug(" - "+name+": "+values);
-        }
-*/
-        Filter filter = null;
-
-        for (Iterator j=relationships.iterator(); j.hasNext(); ) {
-            Relationship relationship = (Relationship)j.next();
-            //log.debug("Relationship "+relationship);
-
-            String lhs = relationship.getLhs();
-            String operator = relationship.getOperator();
-            String rhs = relationship.getRhs();
-
-            if (rhs.startsWith(toSource.getName()+".")) {
-                String exp = lhs;
-                lhs = rhs;
-                rhs = exp;
-            }
-
-            int lindex = lhs.indexOf(".");
-            //String lsourceName = lhs.substring(0, lindex);
-            String lname = lhs.substring(lindex+1);
-
-            //int rindex = rhs.indexOf(".");
-            //String rsourceName = rhs.substring(0, rindex);
-            //String rname = rhs.substring(rindex+1);
-
-            //log.debug("   converting "+rhs+" ==> ("+lname+" "+operator+" ?)");
-
-            Collection v = null; //sv.get(rhs);
-            //log.debug("   - found "+v);
-            if (v == null) continue;
-
-            Filter orFilter = null;
-            for (Iterator k=v.iterator(); k.hasNext(); ) {
-                Object value = k.next();
-
-                SimpleFilter sf = new SimpleFilter(lname, operator, value.toString());
-                //log.debug("   - "+sf);
-
-                orFilter = FilterTool.appendOrFilter(orFilter, sf);
-            }
-            log.debug("   - "+orFilter);
-
-            filter = FilterTool.appendAndFilter(filter, orFilter);
-        }
-
-        return filter;
-    }
-
     public boolean isStopping() {
         return stopping;
     }
 
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
-        Collection effectiveSources = partition.getEffectiveSourceMappings(entryMapping);
+        Collection effectiveSources = partition.getMappings().getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
-        Collection attributeDefinitions = entryMapping.getAttributeMappings();
-        for (Iterator i=attributeDefinitions.iterator(); i.hasNext(); ) {
-            AttributeMapping attributeMapping = (AttributeMapping)i.next();
+        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        for (AttributeMapping attributeMapping : attributeMappings) {
             if (attributeMapping.getConstant() == null) return false;
         }
 
-        EntryMapping parentMapping = partition.getParent(entryMapping);
+        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
         if (parentMapping == null) return true;
 
         return isStatic(partition, parentMapping);
@@ -355,6 +252,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception;
@@ -367,6 +265,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -403,6 +302,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
@@ -448,6 +348,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception;
@@ -495,6 +396,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception;
@@ -507,6 +409,7 @@ public abstract class Engine {
             Session session,
             Partition partition,
             EntryMapping entryMapping,
+            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception;
@@ -542,6 +445,10 @@ public abstract class Engine {
             SearchResponse<SearchResult> response
     ) throws Exception;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscelleanous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public RDN createFilter(
             Partition partition,
             Interpreter interpreter,
@@ -554,7 +461,7 @@ public abstract class Engine {
             return new RDN();
         }
 
-        Collection<FieldMapping> fields = partition.getSearchableFields(sourceMapping);
+        Collection<FieldMapping> fields = partition.getSources().getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
@@ -595,7 +502,7 @@ public abstract class Engine {
             Collection<DN> dns
     ) throws Exception {
 
-        EntryMapping parentMapping = partition.getParent(entryMapping);
+        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
 
         Collection<DN> parentDns = new ArrayList<DN>();
         if (parentMapping != null) {
@@ -690,7 +597,7 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        for (EntryMapping em : partition.getPath(entryMapping)) {
+        for (EntryMapping em : partition.getMappings().getPath(entryMapping)) {
 
             for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
 
@@ -732,7 +639,7 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        for (EntryMapping em : partition.getRelativePath(baseMapping, entryMapping)) {
+        for (EntryMapping em : partition.getMappings().getRelativePath(baseMapping, entryMapping)) {
             if (em == baseMapping) continue;
             
             for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {

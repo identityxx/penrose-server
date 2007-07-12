@@ -18,8 +18,8 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.partition.FieldConfig;
-import org.safehaus.penrose.partition.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

@@ -18,7 +18,6 @@
 package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.partition.ConnectionConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.adapter.Adapter;
@@ -63,7 +62,8 @@ public class Connection implements ConnectionMBean {
     public void init() throws Exception {
 
         String adapterClass = adapterConfig.getAdapterClass();
-        Class clazz = Class.forName(adapterClass);
+        ClassLoader cl = partition.getClassLoader();
+        Class clazz = cl.loadClass(adapterClass);
         adapter = (Adapter)clazz.newInstance();
 
         adapter.setPenroseConfig(penroseConfig);
@@ -175,6 +175,33 @@ public class Connection implements ConnectionMBean {
     ) throws Exception {
 
         adapter.bind(session, entryMapping, sourceRefs, sourceValues, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public boolean compare(
+            Session session,
+            Source source,
+            SourceValues sourceValues,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        return adapter.compare(session, source, request, response);
+    }
+
+    public boolean compare(
+            Session session,
+            EntryMapping entryMapping,
+            Collection<SourceRef> sourceRefs,
+            SourceValues sourceValues,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+
+        return adapter.compare(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

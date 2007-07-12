@@ -119,8 +119,7 @@ public class AdapterConfig implements Cloneable, AdapterConfigMBean {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        super.clone();
-        AdapterConfig adapterConfig = new AdapterConfig();
+        AdapterConfig adapterConfig = (AdapterConfig)super.clone();
         adapterConfig.copy(this);
         return adapterConfig;
     }

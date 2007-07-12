@@ -8,7 +8,6 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 
 /**
@@ -41,15 +40,13 @@ public class ProxyHandler extends DefaultHandler {
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
-        Engine engine = getEngine(partition, entryMapping);
-
         SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
             public void add(SearchResult result) throws Exception {
                 response.add(result);
             }
         };
 
-        engine.search(
+        super.performSearch(
                 session,
                 partition,
                 baseMapping,
