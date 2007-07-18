@@ -107,7 +107,7 @@ public class InterpreterConfig implements Cloneable {
         interpreterClass = interpreterConfig.interpreterClass;
         description = interpreterConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(interpreterConfig.parameters);
     }
 

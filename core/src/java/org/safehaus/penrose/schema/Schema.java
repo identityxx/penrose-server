@@ -342,24 +342,18 @@ public class Schema implements Cloneable {
     }
 
     public void copy(Schema schema) throws CloneNotSupportedException {
-        if (schema.schemaConfig != null) {
-            if (schemaConfig == null) {
-                schemaConfig = (SchemaConfig)schema.schemaConfig.clone();
-            } else {
-                schemaConfig.copy(schema.schemaConfig);
-            }
-        }
+        schemaConfig = schema.schemaConfig == null ? null : (SchemaConfig)schema.schemaConfig.clone();
 
-        attributeTypesByName.clear();
-        attributeTypesByOid.clear();
-        attributeTypes.clear();
+        attributeTypes = new TreeMap<String,AttributeType>();
+        attributeTypesByName = new TreeMap<String,AttributeType>();
+        attributeTypesByOid = new TreeMap<String,AttributeType>();
         for (AttributeType attributeType : schema.getAttributeTypes()) {
             addAttributeType((AttributeType) attributeType.clone());
         }
 
-        objectClassesByName.clear();
-        objectClassesByOid.clear();
-        objectClasses.clear();
+        objectClasses = new TreeMap<String,ObjectClass>();
+        objectClassesByName = new TreeMap<String,ObjectClass>();
+        objectClassesByOid = new TreeMap<String,ObjectClass>();
         for (ObjectClass objectClass : schema.getObjectClasses()) {
             addObjectClass((ObjectClass) objectClass.clone());
         }

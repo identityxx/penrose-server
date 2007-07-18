@@ -58,7 +58,7 @@ public class Request implements Cloneable {
     }
 
     public void copy(Request request) {
-        controls.clear();
+        controls = new ArrayList<Control>();
         controls.addAll(request.controls);
     }
 

@@ -121,7 +121,7 @@ public class ConnectorConfig implements Cloneable {
         connectorClass = connectorConfig.connectorClass;
         description = connectorConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(connectorConfig.parameters);
     }
 

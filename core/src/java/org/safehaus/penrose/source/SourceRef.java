@@ -2,6 +2,8 @@ package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -10,6 +12,8 @@ import java.util.*;
  */
 public class SourceRef {
 
+    public Logger log = LoggerFactory.getLogger(getClass());
+
     private Source source;
 
     private String alias;
@@ -17,13 +21,12 @@ public class SourceRef {
     Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
     Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
 
-    private String search;
-    private String bind;
-
     private String add;
+    private String bind;
     private String delete;
     private String modify;
     private String modrdn;
+    private String search;
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -32,8 +35,13 @@ public class SourceRef {
 
         this.alias = source.getName();
 
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
+
         for (Field field : source.getFields()) {
             String fieldName = field.getName();
+            if (debug) log.debug(" - field "+fieldName);
 
             FieldRef fieldRef = new FieldRef(field, alias, null);
             fieldRefs.put(fieldName, fieldRef);
@@ -46,11 +54,15 @@ public class SourceRef {
         this.source = source;
 
         this.alias = sourceMapping.getName();
-        this.parameters.putAll(sourceMapping.getParameters());
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
         for (FieldMapping fieldMapping : fieldMappings) {
             String fieldName = fieldMapping.getName();
+            if (debug) log.debug(" - field "+fieldName);
 
             Field field = source.getField(fieldName);
             if (field == null) throw new Exception("Unknown field: " + fieldName);
@@ -61,8 +73,14 @@ public class SourceRef {
             if (field.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
         }
 
-        search = sourceMapping.getSearch();
+        add = sourceMapping.getAdd();
         bind = sourceMapping.getBind();
+        delete = sourceMapping.getDelete();
+        modify = sourceMapping.getModify();
+        modrdn = sourceMapping.getModrdn();
+        search = sourceMapping.getSearch();
+
+        this.parameters.putAll(sourceMapping.getParameters());
     }
 
     public Collection<FieldRef> getPrimaryKeyFieldRefs() {

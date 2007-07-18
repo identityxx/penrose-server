@@ -257,7 +257,7 @@ public class AttributeType implements Cloneable, Comparable {
     public void copy(AttributeType at) {
         oid = at.oid;
 
-        names.clear();
+        names = new ArrayList<String>();
         names.addAll(at.names);
 
         description = at.description;

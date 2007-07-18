@@ -122,15 +122,19 @@ public class ACI implements Cloneable {
         this.dn = dn;
     }
 
-    public Object clone() {
-        ACI aci = new ACI();
-        aci.subject    = subject;
-        aci.dn         = dn;
-        aci.target     = target;
-        aci.attributes = attributes;
-        aci.scope      = scope;
-        aci.action     = action;
-        aci.permission = permission;
+    public void copy(ACI aci) {
+        subject    = aci.subject;
+        dn         = aci.dn;
+        target     = aci.target;
+        attributes = aci.attributes;
+        scope      = aci.scope;
+        action     = aci.action;
+        permission = aci.permission;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        ACI aci = (ACI)super.clone();
+        aci.copy(this);
         return aci;
     }
 

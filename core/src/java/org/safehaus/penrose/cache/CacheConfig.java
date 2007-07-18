@@ -108,12 +108,12 @@ public class CacheConfig implements Cloneable {
         cacheClass = cacheConfig.cacheClass;
         description = cacheConfig.description;
 
-        parameters.clear();
+        parameters = new TreeMap();
         parameters.putAll(cacheConfig.parameters);
     }
 
-    public Object clone() {
-        CacheConfig cacheConfig = new CacheConfig();
+    public Object clone() throws CloneNotSupportedException {
+        CacheConfig cacheConfig = (CacheConfig)super.clone();
         cacheConfig.copy(this);
         return cacheConfig;
     }

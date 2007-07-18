@@ -178,7 +178,7 @@ public class SearchRequest extends Request implements Cloneable {
     	sizeLimit   = request.sizeLimit;
     	timeLimit   = request.timeLimit;
 
-        attributes.clear();
+        attributes = new ArrayList<String>();
         attributes.addAll(request.attributes);
     }
 

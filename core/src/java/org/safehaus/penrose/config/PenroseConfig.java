@@ -363,47 +363,56 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void copy(PenroseConfig penroseConfig) throws CloneNotSupportedException {
-        clear();
 
         home = penroseConfig.home;
 
+        systemProperties = new LinkedHashMap<String,String>();
         systemProperties.putAll(penroseConfig.systemProperties);
+
+        properties = new LinkedHashMap<String,String>();
         properties.putAll(penroseConfig.properties);
 
+        serviceConfigs = new LinkedHashMap<String,ServiceConfig>();
         for (ServiceConfig serviceConfig : penroseConfig.serviceConfigs.values()) {
             addServiceConfig((ServiceConfig) serviceConfig.clone());
         }
 
+        schemaConfigs = new LinkedHashMap<String,SchemaConfig>();
         for (SchemaConfig schemaConfig : penroseConfig.schemaConfigs.values()) {
             addSchemaConfig((SchemaConfig) schemaConfig.clone());
         }
 
+        adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
         for (AdapterConfig adapterConfig : penroseConfig.adapterConfigs.values()) {
             addAdapterConfig((AdapterConfig) adapterConfig.clone());
         }
 
+        partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
         for (PartitionConfig partitionConfig : penroseConfig.partitionConfigs.values()) {
             addPartitionConfig((PartitionConfig) partitionConfig.clone());
         }
 
+        engineConfigs = new LinkedHashMap<String,EngineConfig>();
         for (EngineConfig engineConfig : penroseConfig.engineConfigs.values()) {
             addEngineConfig((EngineConfig) engineConfig.clone());
         }
 
+        handlerConfigs = new LinkedHashMap<String,HandlerConfig>();
         for (HandlerConfig handlerConfig : penroseConfig.handlerConfigs.values()) {
             addHandlerConfig((HandlerConfig) handlerConfig.clone());
         }
 
+        interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
         for (InterpreterConfig interpreterConfig : penroseConfig.interpreterConfigs.values()) {
             addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
         }
 
-        entryCacheConfig.copy(entryCacheConfig);
+        entryCacheConfig = (CacheConfig)penroseConfig.entryCacheConfig.clone();
 
-        sessionConfig.copy(sessionConfig);
-        connectorConfig.copy(connectorConfig);
+        sessionConfig = (SessionConfig)penroseConfig.sessionConfig.clone();
+        connectorConfig = (ConnectorConfig)penroseConfig.connectorConfig.clone();
 
-        rootUserConfig.copy(rootUserConfig);
+        rootUserConfig = (UserConfig)penroseConfig.rootUserConfig.clone();
     }
 
     public void clear() {

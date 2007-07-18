@@ -8,7 +8,7 @@ import org.safehaus.penrose.mapping.Expression;
  */
 public class ExpressionTest extends TestCase {
 
-    public void testClone() {
+    public void testClone() throws Exception {
         Expression e1 = new Expression();
         e1.setForeach("foreach");
         e1.setScript("script");

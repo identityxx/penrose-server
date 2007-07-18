@@ -97,8 +97,8 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         engineName = partitionConfig.engineName;
     }
 
-    public Object clone() {
-        PartitionConfig partitionConfig = new PartitionConfig();
+    public Object clone() throws CloneNotSupportedException {
+        PartitionConfig partitionConfig = (PartitionConfig)super.clone();
         partitionConfig.copy(this);
         return partitionConfig;
     }

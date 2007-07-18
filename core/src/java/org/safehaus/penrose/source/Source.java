@@ -348,26 +348,26 @@ public class Source implements Cloneable {
     public void copy(Source source) {
         name = source.name;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(source.parameters);
 
         partition = source.partition;
         sourceConfig = source.sourceConfig;
         connection = source.connection;
 
-        fields.clear();
+        fields = new LinkedHashMap<String,Field>();
         fields.putAll(source.fields);
 
-        primaryKeyNames.clear();
+        primaryKeyNames = new ArrayList<String>();
         primaryKeyNames.addAll(source.primaryKeyNames);
 
-        primaryKeyFields.clear();
+        primaryKeyFields = new ArrayList<Field>();
         primaryKeyFields.addAll(source.primaryKeyFields);
 
-        indexFieldNames.clear();
+        indexFieldNames = new ArrayList<String>();
         indexFieldNames.addAll(source.indexFieldNames);
 
-        indexFields.clear();
+        indexFields = new ArrayList<Field>();
         indexFields.addAll(source.indexFields);
     }
 

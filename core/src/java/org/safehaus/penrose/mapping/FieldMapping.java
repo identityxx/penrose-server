@@ -152,7 +152,7 @@ public class FieldMapping implements Cloneable {
         return true;
     }
 
-    public void copy(FieldMapping fieldMapping) {
+    public void copy(FieldMapping fieldMapping) throws CloneNotSupportedException {
         name = fieldMapping.name;
         type = fieldMapping.type;
 
@@ -164,7 +164,9 @@ public class FieldMapping implements Cloneable {
 
         variable = fieldMapping.variable;
         expression = fieldMapping.expression == null ? null : (Expression)fieldMapping.expression.clone();
-        operations = (HashSet<String>)fieldMapping.operations.clone();
+
+        operations = new HashSet<String>();
+        operations.addAll(fieldMapping.operations);
     }
 
     public Object clone() throws CloneNotSupportedException {

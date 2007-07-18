@@ -24,7 +24,14 @@ public class Sources {
 
         String sourceName = sourceConfig.getName();
 
-        log.debug("Adding source "+sourceName);
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) {
+            log.debug("Source "+sourceName+":");
+            for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+                log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType());
+            }
+        }
 
         sourceConfigs.put(sourceName, sourceConfig);
 

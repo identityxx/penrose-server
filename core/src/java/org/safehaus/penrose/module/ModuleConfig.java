@@ -123,7 +123,7 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
         moduleClass = moduleConfig.moduleClass;
         description = moduleConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(moduleConfig.parameters);
     }
 

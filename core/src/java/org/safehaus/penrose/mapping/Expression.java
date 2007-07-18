@@ -87,11 +87,15 @@ public class Expression implements Cloneable {
         return true;
     }
 
-    public Object clone() {
-        Expression expression = new Expression();
-        expression.foreach = foreach;
-        expression.var     = var;
-        expression.script  = script;
+    public void copy(Expression expression) {
+        foreach = expression.foreach;
+        var     = expression.var;
+        script  = expression.script;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Expression expression = (Expression)super.clone();
+        expression.copy(this);
         return expression;
     }
 

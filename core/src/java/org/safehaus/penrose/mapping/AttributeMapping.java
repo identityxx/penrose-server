@@ -220,7 +220,7 @@ public class AttributeMapping implements Cloneable {
         return true;
     }
 
-    public Object copy(AttributeMapping attributeMapping) {
+    public Object copy(AttributeMapping attributeMapping) throws CloneNotSupportedException {
         name = attributeMapping.name;
 
         if (attributeMapping.constant instanceof byte[]) {
@@ -241,8 +241,8 @@ public class AttributeMapping implements Cloneable {
         return attributeMapping;
     }
 
-    public Object clone() {
-        AttributeMapping attributeMapping = new AttributeMapping();
+    public Object clone() throws CloneNotSupportedException {
+        AttributeMapping attributeMapping = (AttributeMapping)super.clone();
         attributeMapping.copy(this);
         return attributeMapping;
     }

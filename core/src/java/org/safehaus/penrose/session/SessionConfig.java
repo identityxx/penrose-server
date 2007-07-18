@@ -95,7 +95,7 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
     public void copy(SessionConfig sessionConfig) {
         description = sessionConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(sessionConfig.parameters);
     }
 }

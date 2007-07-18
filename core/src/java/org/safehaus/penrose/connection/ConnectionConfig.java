@@ -30,7 +30,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 
 	public String description;
 
-	public Map<String,String> parameters = new HashMap<String,String>();
+	public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
 	public ConnectionConfig() {
 	}
@@ -120,6 +120,8 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         name = connectionConfig.name;
         adapterName = connectionConfig.adapterName;
         description = connectionConfig.description;
+
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(connectionConfig.parameters);
     }
 

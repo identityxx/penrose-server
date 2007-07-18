@@ -114,7 +114,7 @@ public class AdapterConfig implements Cloneable, AdapterConfigMBean {
         adapterClass = adapterConfig.adapterClass;
         description = adapterConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(adapterConfig.parameters);
     }
 

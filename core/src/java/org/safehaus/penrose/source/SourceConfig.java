@@ -179,7 +179,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         fieldConfigs.put(newName, fieldConfig);
     }
 
-    public void modifySourceConfig(String name, FieldConfig newFieldConfig) {
+    public void modifySourceConfig(String name, FieldConfig newFieldConfig) throws Exception {
         FieldConfig fieldConfig = fieldConfigs.get(name);
         fieldConfig.copy(newFieldConfig);
     }
@@ -257,13 +257,15 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         connectionName = sourceConfig.connectionName;
         description = sourceConfig.description;
 
-        fieldConfigs.clear();
-        for (FieldConfig fieldConfig1 : sourceConfig.fieldConfigs.values()) {
-            FieldConfig fieldConfig = (FieldConfig) ((FieldConfig) fieldConfig1).clone();
+        fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+        fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
+        pkFieldConfigs = new ArrayList<FieldConfig>();
+        nonPkFieldConfigs = new ArrayList<FieldConfig>();
+        for (FieldConfig fieldConfig : sourceConfig.fieldConfigs.values()) {
             addFieldConfig((FieldConfig) fieldConfig.clone());
         }
 
-        parameters.clear();
+        parameters = new HashMap<String,String>();
         parameters.putAll(sourceConfig.parameters);
     }
 

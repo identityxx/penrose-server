@@ -36,24 +36,12 @@ public class SourceMapping implements Cloneable {
 
     public final static String FILTER     = "filter";
 
-	/**
-	 * Name.
-	 */
 	private String name = "DEFAULT";
 
-    /**
-     * Source name.
-     */
     private String sourceName;
 
-	/**
-	 * Fields.
-	 */
 	private Map<String,Collection<FieldMapping>> fieldMappings = new LinkedHashMap<String,Collection<FieldMapping>>();
 
-    /**
-     * Parameters.
-     */
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     private boolean readOnly = false;
@@ -204,14 +192,14 @@ public class SourceMapping implements Cloneable {
         name = sourceMapping.name;
         sourceName = sourceMapping.sourceName;
 
-        removeFieldMappings();
+        fieldMappings = new LinkedHashMap<String,Collection<FieldMapping>>();
         for (Collection<FieldMapping> list : sourceMapping.fieldMappings.values()) {
             for (FieldMapping fieldMapping : list) {
                 addFieldMapping((FieldMapping) fieldMapping.clone());
             }
         }
 
-        removeParameters();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(sourceMapping.parameters);
 
         readOnly = sourceMapping.readOnly;

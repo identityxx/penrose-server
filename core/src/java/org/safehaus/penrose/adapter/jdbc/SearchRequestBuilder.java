@@ -215,6 +215,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             if (debug) log.debug("Processing source " + alias);
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                if (debug) log.debug(" - field " + fieldRef.getName());
                 statement.addFieldRef(fieldRef);
             }
 

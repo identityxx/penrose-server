@@ -154,10 +154,15 @@ public class Relationship implements Cloneable {
         return true;
     }
 
-    public Object clone() {
-        Relationship relationship = new Relationship();
-        relationship.operator = operator;
-        relationship.operands = operands;
+    public void copy(Relationship relationship) {
+        operator = relationship.operator;
+        operands = new ArrayList();
+        operands.addAll(relationship.operands);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Relationship relationship = (Relationship)super.clone();
+        relationship.copy(this);
         return relationship;
     }
 

@@ -8,7 +8,7 @@ import org.safehaus.penrose.mapping.AttributeMapping;
  */
 public class AttributeMappingTest extends TestCase {
 
-    public void testClone() {
+    public void testClone() throws Exception {
         AttributeMapping a1 = new AttributeMapping();
         a1.setName("name");
         a1.setType(AttributeMapping.CONSTANT);

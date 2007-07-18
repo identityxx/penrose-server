@@ -284,21 +284,21 @@ public class ObjectClass implements Cloneable, Comparable {
     public void copy(ObjectClass oc) {
         oid = oc.oid;
 
-        names.clear();
+        names = new ArrayList<String>();
         names.addAll(oc.names);
 
         description = oc.description;
         obsolete = oc.obsolete;
 
-        superClasses.clear();
+        superClasses = new ArrayList<String>();
         superClasses.addAll(oc.superClasses);
 
         type = oc.type;
 
-        requiredAttributes.clear();
+        requiredAttributes = new ArrayList<String>();
         requiredAttributes.addAll(oc.requiredAttributes);
 
-        optionalAttributes.clear();
+        optionalAttributes = new ArrayList<String>();
         optionalAttributes.addAll(oc.optionalAttributes);
     }
 

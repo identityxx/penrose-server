@@ -121,7 +121,7 @@ public class EngineConfig implements Cloneable {
         engineClass = engineConfig.engineClass;
         description = engineConfig.description;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(engineConfig.parameters);
     }
 }

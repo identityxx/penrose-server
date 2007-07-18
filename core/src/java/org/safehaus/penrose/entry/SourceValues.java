@@ -148,7 +148,7 @@ public class SourceValues implements Cloneable {
     }
 
     public void copy(SourceValues sv) {
-        map.clear();
+        map = new TreeMap<String,Attributes>();
         map.putAll(sv.map);
     }
 

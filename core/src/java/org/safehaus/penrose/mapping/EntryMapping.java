@@ -56,45 +56,28 @@ public class EntryMapping implements Cloneable {
     private String id;
     private String parentId;
 
-    /**
-     * Distinguished name.
-     */
     private DN dn;
 
     private boolean enabled = true;
 
-    /**
-     * Object classes. Each element is of type String.
-     */
     private Collection<String> objectClasses = new TreeSet<String>();
-    
+
     private String description;
 
-    /**
-     * Attributes. The keys are the attribute names (java.lang.String). Each value is of type org.safehaus.penrose.mapping.AttributeMapping.
-     */
+    private boolean staticRdn = true;
+
     public Collection<AttributeMapping> attributeMappings = new ArrayList<AttributeMapping>();
     private Map<String,Collection<AttributeMapping>> attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
-    private boolean staticRdn = true;
     private Collection<AttributeMapping> rdnAttributeMappings = new ArrayList<AttributeMapping>();
 
-    /**
-     * Sources. Each element is of type org.safehaus.penrose.mapping.Source.
-     */
     private List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
     
-    /**
-     * Relationship. Each element is of type org.safehaus.penrose.mapping.Relationship.
-     */
     private Collection<Relationship> relationships = new ArrayList<Relationship>();
 
     private Link link;
     private String handlerName;
     private String engineName;
 
-    /**
-     * Access Control Instruction. Each element is of type org.safehaus.penrose.acl.ACI.
-     */
     private Collection<ACI> acl = new ArrayList<ACI>();
 
     private Map<String,String> parameters = new TreeMap<String,String>();
@@ -427,36 +410,38 @@ public class EntryMapping implements Cloneable {
         enabled = entryMapping.enabled;
         description = entryMapping.description;
 
-        removeObjectClasses();
+        objectClasses = new TreeSet<String>();
         for (String objectClass : entryMapping.objectClasses) {
             addObjectClass(objectClass);
         }
 
-        removeAttributeMappings();
+        attributeMappings = new ArrayList<AttributeMapping>();
+        attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
+        rdnAttributeMappings = new ArrayList<AttributeMapping>();
         for (AttributeMapping attributeMapping : entryMapping.attributeMappings) {
             addAttributeMapping((AttributeMapping) attributeMapping.clone());
         }
 
-        removeSourceMappings();
+        sourceMappings = new ArrayList<SourceMapping>();
         for (SourceMapping sourceMapping : entryMapping.sourceMappings) {
             addSourceMapping((SourceMapping) sourceMapping.clone());
         }
 
-        removeRelationships();
+        relationships = new ArrayList<Relationship>();
         for (Relationship relationship : entryMapping.relationships) {
             addRelationship((Relationship) relationship.clone());
         }
 
-        link = entryMapping.link == null ? null : new Link(entryMapping.link);
+        link = entryMapping.link == null ? null : (Link)entryMapping.link.clone();
         handlerName = entryMapping.handlerName;
         engineName = entryMapping.engineName;
 
-        removeACL();
+        acl = new ArrayList<ACI>();
         for (ACI aci : entryMapping.acl) {
             addACI((ACI) aci.clone());
         }
 
-        parameters.clear();
+        parameters = new TreeMap<String,String>();
         parameters.putAll(entryMapping.parameters);
     }
 

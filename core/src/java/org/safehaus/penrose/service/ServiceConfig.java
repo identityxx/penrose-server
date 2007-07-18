@@ -127,7 +127,7 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
         serviceClass = serviceConfig.serviceClass;
         description = serviceConfig.description;
 
-        parameters.clear();
+        parameters = new TreeMap<String,String>();
         parameters.putAll(serviceConfig.parameters);
     }
 

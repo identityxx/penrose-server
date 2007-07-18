@@ -238,7 +238,7 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
         return name.compareTo(fd.name);
     }
 
-    public void copy(FieldConfig fieldConfig) {
+    public void copy(FieldConfig fieldConfig) throws CloneNotSupportedException {
         name = fieldConfig.name;
         originalName = fieldConfig.originalName;
         primaryKey = fieldConfig.primaryKey;

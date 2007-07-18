@@ -114,7 +114,7 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
         description = handlerConfig.description;
         handlerClass = handlerConfig.handlerClass;
 
-        parameters.clear();
+        parameters = new LinkedHashMap<String,String>();
         parameters.putAll(handlerConfig.parameters);
     }
 

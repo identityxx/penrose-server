@@ -83,10 +83,9 @@ public class SchemaConfig implements Cloneable, SchemaConfigMBean {
         path = schemaConfig.path;
     }
 
-    public Object clone() {
-        SchemaConfig schemaConfig = new SchemaConfig();
+    public Object clone() throws CloneNotSupportedException {
+        SchemaConfig schemaConfig = (SchemaConfig)super.clone();
         schemaConfig.copy(this);
-
         return schemaConfig;
     }
 }
