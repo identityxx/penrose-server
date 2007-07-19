@@ -36,8 +36,9 @@ public class SessionManager implements SessionManagerMBean {
 
     private SessionConfig sessionConfig;
 
-    public Map sessions = new LinkedHashMap();
+    public Map<Object,Session> sessions = new LinkedHashMap<Object,Session>();
 
+    public long sessionCounter;
     private int maxSessions;
     private int maxIdleTime; // minutes
 
@@ -91,7 +92,7 @@ public class SessionManager implements SessionManagerMBean {
         purge();
 
         log.debug("Retrieving session "+sessionId);
-        return (Session)sessions.get(sessionId);
+        return sessions.get(sessionId);
     }
 
     public synchronized Session removeSession(Object sessionId) {
@@ -99,28 +100,31 @@ public class SessionManager implements SessionManagerMBean {
         purge();
 
         log.debug("Removing session "+sessionId);
-        return (Session)sessions.remove(sessionId);
+        return sessions.remove(sessionId);
     }
 
     public Object createSessionId() {
+        Long sessionId = sessionCounter;
+        sessionCounter++;
+        return sessionId;
+/*
         StringBuilder sb = new StringBuilder();
         for (int i=0; i<64; i++) {
             int index = (int)(SESSION_ID_CHARS.length()*Math.random());
             sb.append(SESSION_ID_CHARS.charAt(index));
         }
         return sb.toString();
+*/
     }
 
     public synchronized void purge() {
-        Collection expiredSessions = new ArrayList();
+        Collection<Object> expiredSessions = new ArrayList<Object>();
 
-        for (Iterator i=sessions.values().iterator(); i.hasNext(); ) {
-            Session session = (Session)i.next();
+        for (Session session : sessions.values()) {
             if (isExpired(session)) expiredSessions.add(session.getSessionId());
         }
 
-        for (Iterator i=expiredSessions.iterator(); i.hasNext(); ) {
-            String sessionId = (String)i.next();
+        for (Object sessionId : expiredSessions) {
             //log.debug("Removing session "+sessionId);
             sessions.remove(sessionId);
         }

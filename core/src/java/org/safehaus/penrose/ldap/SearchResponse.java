@@ -33,16 +33,12 @@ import java.util.*;
  */
 public class SearchResponse<E> extends Response {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-
     protected LinkedList<E> buffer = new LinkedList<E>();
 
     protected long bufferSize;
     protected long sizeLimit;
     protected long totalCount;
     protected boolean closed = false;
-
-    protected LDAPException exception;
 
     protected boolean eventsEnabled = true;
     protected List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
@@ -136,7 +132,7 @@ public class SearchResponse<E> extends Response {
             }
         }
 
-        return exception == null ? LDAPException.SUCCESS : exception.getResultCode();
+        return super.getReturnCode();
     }
 
     public synchronized void addReferral(Object referral) {
@@ -151,14 +147,6 @@ public class SearchResponse<E> extends Response {
 
     public synchronized List getReferrals() {
         return referrals;
-    }
-
-    public LDAPException getException() {
-        return exception;
-    }
-
-    public void setException(LDAPException exception) {
-        this.exception = exception;
     }
 
     public synchronized void add(E object) throws Exception {
@@ -209,7 +197,7 @@ public class SearchResponse<E> extends Response {
                 log.error(e.getMessage(), e);
             }
         }
-        if (buffer.size() == 0 && exception != null) throw exception;
+        if (buffer.size() == 0 && exception.getResultCode() != LDAPException.SUCCESS) throw exception;
 
         return buffer.size() > 0;
     }
@@ -221,7 +209,7 @@ public class SearchResponse<E> extends Response {
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
-            if (exception != null) throw exception;
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
         }
 
         if (buffer.size() == 0) return null;
@@ -262,12 +250,8 @@ public class SearchResponse<E> extends Response {
         notifyAll();
     }
 
-    public long getTotalCount() throws Exception {
+    public long getTotalCount() {
         return totalCount;
-    }
-
-    public void setException(Exception e) {
-        exception = ExceptionUtil.createLDAPException(e);
     }
 
     public long getSizeLimit() {

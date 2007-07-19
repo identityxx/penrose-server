@@ -166,8 +166,8 @@ CLASSPATH=$LOCALCLASSPATH
 export CLASSPATH
 
 cd "$PENROSE_HOME"
-mkdir -p "$PENROSE_HOME/var"
-PENROSE_PID="$PENROSE_HOME/var/penrose.pid"
+mkdir -p "$PENROSE_HOME/logs"
+PENROSE_PID="$PENROSE_HOME/logs/penrose.pid"
 
 if [ "$1" = "start" ] ; then
 
@@ -181,7 +181,7 @@ if [ "$1" = "start" ] ; then
     -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
-    >> "$PENROSE_HOME/var/penrose.out" 2>&1 &
+    >> "$PENROSE_HOME/logs/penrose.out" 2>&1 &
 
     echo $! > "$PENROSE_PID"
   fi

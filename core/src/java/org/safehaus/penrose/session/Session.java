@@ -27,7 +27,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -35,6 +34,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.logs.Access;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -158,14 +158,12 @@ public class Session {
 
     public void add(Partition partition, AddRequest request, AddResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
             
-            if (log.isWarnEnabled()) {
-                log.warn("Add entry \""+request.getDn()+"\".");
-            }
-
             boolean debug = log.isDebugEnabled();
 
             if (debug) {
@@ -200,9 +198,14 @@ public class Session {
                 	eventManager.postEvent(afterModifyEvent);
                 }
             }
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -234,13 +237,11 @@ public class Session {
 
     public void bind(BindRequest request, BindResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Bind \""+request.getDn()+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -312,7 +313,11 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -357,13 +362,11 @@ public class Session {
 
     public boolean compare(Partition partition, CompareRequest request, CompareResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Compare attribute "+request.getAttributeName()+" in \""+request.getDn()+"\" with \""+request.getAttributeValue()+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -414,11 +417,18 @@ public class Session {
                 	eventManager.postEvent(afterCompareEvent);
                 }
             }
+
+            response.setReturnCode(result ? LDAPException.COMPARE_TRUE : LDAPException.COMPARE_FALSE);
+            
             return result;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -461,13 +471,11 @@ public class Session {
 
     public void delete(Partition partition, DeleteRequest request, DeleteResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Delete entry \""+request.getDn()+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -506,7 +514,11 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -550,13 +562,11 @@ public class Session {
 
     public void modify(Partition partition, ModifyRequest request, ModifyResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Modify entry \""+request.getDn()+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -606,7 +616,11 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -651,13 +665,11 @@ public class Session {
 
     public void modrdn(Partition partition, ModRdnRequest request, ModRdnResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("ModRDN \""+request.getDn()+"\" to \""+request.getNewRdn()+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -698,7 +710,11 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 
@@ -750,13 +766,11 @@ public class Session {
             final SearchResponse<SearchResult> response
     ) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Search \""+request.getDn() +"\" with scope "+LDAPUtil.getScope(request.getScope())+" and filter \""+request.getFilter()+"\"");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -865,15 +879,14 @@ public class Session {
                     }
                     public void close() throws Exception {
                         response.close();
+                        Access.log(session, response);
 
                         lastActivityDate.setTime(System.currentTimeMillis());
 
                         SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, request, response);
 
                         LDAPException exception = response.getException();
-                        if (exception != null) {
-                            afterSearchEvent.setReturnCode(exception.getResultCode());
-                        }
+                        afterSearchEvent.setReturnCode(exception.getResultCode());
 
                         eventManager.postEvent(afterSearchEvent);
                     }
@@ -884,7 +897,9 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            Access.log(this, response);
+            throw response.getException();
         }
     }
 
@@ -903,13 +918,11 @@ public class Session {
 
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
         try {
+            Access.log(this, request);
+
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            if (log.isWarnEnabled()) {
-                log.warn("Unbind \""+bindDn+"\".");
-            }
 
             boolean debug = log.isDebugEnabled();
 
@@ -963,7 +976,11 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
         }
     }
 

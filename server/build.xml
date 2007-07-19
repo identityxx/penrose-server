@@ -206,7 +206,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <mkdir dir="target/dist/var"/>
+        <mkdir dir="target/dist/logs"/>
         <mkdir dir="${project.dist}"/>
         <zip destfile="${project.dist}/${module.name}-${product.version}.zip"
             basedir="target/dist"/>
@@ -219,10 +219,10 @@
             <zipfileset dir="..">
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
-                <exclude name="server/var/**"/>
+                <exclude name="server/logs/**"/>
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
-                <exclude name="var/**"/>
+                <exclude name="logs/**"/>
             </zipfileset>
         </zip>
         <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
@@ -231,10 +231,10 @@
             <tarfileset dir=".." prefix="${module.name}-${product.version}">
                 <exclude name="server/dist/**"/>
                 <exclude name="server/target/**"/>
-                <exclude name="server/var/**"/>
+                <exclude name="server/logs/**"/>
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
-                <exclude name="var/**"/>
+                <exclude name="logs/**"/>
             </tarfileset>
         </tar>
     </target>

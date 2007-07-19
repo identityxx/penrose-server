@@ -323,28 +323,24 @@ public class BasicEngine extends Engine {
 
         Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
 
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
+        for (Collection<SourceRef> sourceRefs : groupsOfSources) {
 
-        Collection<SourceRef> sourceRefs = iterator.next();
-        Connector connector = getConnector(sourceRefs.iterator().next());
+            SourceRef sourceRef = sourceRefs.iterator().next();
+            Connector connector = getConnector(sourceRef);
 
-        Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
-
-        for (SourceRef sourceRef : sourceRefs) {
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) != null) {
-                localSourceRefs.add(sourceRef);
-            }
+            return connector.compare(
+                    session,
+                    partition,
+                    entryMapping,
+                    sourceRefs,
+                    sourceValues,
+                    request,
+                    response
+            );
         }
 
-        return connector.compare(
-                session,
-                partition,
-                entryMapping,
-                localSourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+        log.debug("Calling default compare operation.");
+        return super.compare(session, partition, entryMapping, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

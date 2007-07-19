@@ -17,12 +17,24 @@
     </layout>
   </appender> 
 
+  <appender name="access" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="logs/access.log"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+    </layout>
+  </appender>
+
   <logger name="org.safehaus.penrose" additivity="false">
     <level value="WARN"/> 
     <appender-ref ref="timestamp"/>
   </logger> 
 
-  <root> 
+  <logger name="org.safehaus.penrose.logs.Access" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="access"/>
+  </logger>
+
+  <root>
     <level value="OFF"/>
   </root> 
 

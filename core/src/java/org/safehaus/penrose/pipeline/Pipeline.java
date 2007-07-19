@@ -35,7 +35,7 @@ public class Pipeline extends SearchResponse {
         parent.add(object);
     }
 
-    public long getTotalCount() throws Exception {
+    public long getTotalCount() {
         return parent.getTotalCount();
     }
 
