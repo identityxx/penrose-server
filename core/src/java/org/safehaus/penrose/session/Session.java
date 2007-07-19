@@ -806,6 +806,7 @@ public class Session {
 
 	            if (!b) {
 	                response.close();
+                    Access.log(session, response);
 	                throw ExceptionUtil.createLDAPException(LDAPException.UNWILLING_TO_PERFORM);
 	            }
             }
@@ -837,6 +838,7 @@ public class Session {
 
                     response.add(result);
                     response.close();
+                    Access.log(session, response);
                     return;
 
                 } else if (baseDn.equals(HandlerManager.SCHEMA_DN)) {
@@ -858,11 +860,13 @@ public class Session {
 
                     response.add(result);
                     response.close();
+                    Access.log(session, response);
                     return;
 
                 } else {
                     log.debug("Partition for entry "+baseDn+" not found.");
                     response.close();
+                    Access.log(session, response);
                     throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
                 }
             }
