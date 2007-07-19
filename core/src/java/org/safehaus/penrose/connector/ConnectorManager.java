@@ -33,7 +33,7 @@ import java.util.Iterator;
  */
 public class ConnectorManager {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
     
     Map connectors = new TreeMap();
 

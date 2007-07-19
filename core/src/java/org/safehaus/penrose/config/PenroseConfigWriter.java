@@ -46,7 +46,7 @@ import org.slf4j.Logger;
  */
 public class PenroseConfigWriter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     File file;
 

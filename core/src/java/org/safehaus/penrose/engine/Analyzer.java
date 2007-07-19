@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class Analyzer {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PartitionManager partitionManager;
     private InterpreterManager interpreterManager;

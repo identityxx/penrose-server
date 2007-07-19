@@ -17,7 +17,7 @@ import com.identyx.javabackend.DN;
  */
 public class CompareHandler implements MessageHandler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     MinaHandler handler;
 

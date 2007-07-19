@@ -18,7 +18,7 @@ import java.util.ArrayList;
  */
 public class JDBCStatementBuilder {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     protected String sql;
     protected Collection<Assignment> assigments = new ArrayList<Assignment>();

@@ -40,7 +40,7 @@ import org.slf4j.Logger;
  */
 public class Penrose {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public static String PRODUCT_NAME          = "Penrose";
     public static String PRODUCT_VERSION       = "1.2";

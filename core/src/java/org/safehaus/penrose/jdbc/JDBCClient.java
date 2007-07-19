@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 
 public class JDBCClient {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String DRIVER       = "driver";
     public final static String URL          = "url";

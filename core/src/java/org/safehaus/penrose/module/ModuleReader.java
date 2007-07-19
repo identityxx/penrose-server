@@ -16,7 +16,7 @@ import java.net.URL;
  */
 public class ModuleReader implements EntityResolver {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public ModuleReader() {
     }

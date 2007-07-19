@@ -30,7 +30,7 @@ import java.io.File;
  */
 public class SchemaReader {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
 

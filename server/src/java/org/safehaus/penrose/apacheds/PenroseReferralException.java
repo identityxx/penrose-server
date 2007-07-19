@@ -18,7 +18,7 @@ import java.util.ArrayList;
  */
 public class PenroseReferralException extends ReferralException {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private final List refs;
 

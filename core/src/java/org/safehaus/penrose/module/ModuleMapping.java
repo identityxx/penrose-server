@@ -30,7 +30,7 @@ public class ModuleMapping implements Cloneable {
     public final static String ONELEVEL = "ONELEVEL";
     public final static String SUBTREE  = "SUBTREE";
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String moduleName;
     private ModuleConfig moduleConfig;

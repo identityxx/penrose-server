@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class ClassRegistry extends ClassLoader {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Map classes = new TreeMap();
 

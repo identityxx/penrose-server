@@ -21,7 +21,7 @@ import java.util.*;
  */
 public class FilterBuilder {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Partition partition;
     EntryMapping entryMapping;

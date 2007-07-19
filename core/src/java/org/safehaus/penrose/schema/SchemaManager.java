@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class SchemaManager implements SchemaManagerMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;

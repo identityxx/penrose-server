@@ -20,7 +20,7 @@ import java.util.Collection;
  */
 public class MappingReader implements EntityResolver {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public MappingReader() {
     }

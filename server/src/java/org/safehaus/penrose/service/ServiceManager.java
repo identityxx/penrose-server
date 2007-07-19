@@ -31,7 +31,7 @@ import java.util.Collection;
  */
 public class ServiceManager implements ServiceManagerMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseServer penroseServer;
 

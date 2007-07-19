@@ -33,7 +33,7 @@ import java.net.URL;
  */
 public class Log4jConfigReader implements EntityResolver {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     URL log4jDtdUrl;
     Reader reader;

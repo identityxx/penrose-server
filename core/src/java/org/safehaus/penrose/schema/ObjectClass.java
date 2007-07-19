@@ -28,7 +28,7 @@ import java.io.StringWriter;
 
 public class ObjectClass implements Cloneable, Comparable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";

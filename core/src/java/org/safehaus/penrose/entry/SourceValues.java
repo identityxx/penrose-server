@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class SourceValues implements Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public Map<String,Attributes> map = new TreeMap<String,Attributes>();
 

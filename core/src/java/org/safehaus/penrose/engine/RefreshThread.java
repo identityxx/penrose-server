@@ -25,7 +25,7 @@ import org.slf4j.Logger;
  */
 public class RefreshThread implements Runnable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private Engine engine;
 

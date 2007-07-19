@@ -37,7 +37,7 @@ import java.util.*;
  */
 public class JDBCCache {
 
-    static Logger log = LoggerFactory.getLogger(JDBCCache.class);
+    public static Logger log = LoggerFactory.getLogger(JDBCCache.class);
 
     JDBCCacheTool tool = new JDBCCacheTool();
 

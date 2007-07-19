@@ -27,7 +27,7 @@ import java.util.*;
  */
 public class SourceConfig implements SourceConfigMBean, Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     //public final static String AUTO_REFRESH            = "autoRefresh";
 

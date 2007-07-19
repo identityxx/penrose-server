@@ -38,7 +38,7 @@ import org.slf4j.Logger;
  */
 public class TransformEngine {
 
-    static Logger log = LoggerFactory.getLogger(TransformEngine.class);
+    public static Logger log = LoggerFactory.getLogger(TransformEngine.class);
 
     public Engine engine;
 

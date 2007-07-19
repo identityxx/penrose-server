@@ -33,7 +33,7 @@ public class ThreadManager {
     public final static String MAX_THREADS      = "maxThreads";
     public final static int DEFAULT_MAX_THREADS = 20;
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;

@@ -38,7 +38,7 @@ import java.util.*;
  */
 public class Connector {
 
-    static Logger log = LoggerFactory.getLogger(Connector.class);
+    public static Logger log = LoggerFactory.getLogger(Connector.class);
 
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;

@@ -37,7 +37,7 @@ import java.util.Collection;
  */
 public class EngineFilterTool {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public Engine engine;
 

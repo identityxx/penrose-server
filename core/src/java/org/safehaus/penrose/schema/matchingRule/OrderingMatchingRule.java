@@ -28,7 +28,7 @@ import java.util.TreeMap;
  */
 public class OrderingMatchingRule {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CASE_IGNORE        = "caseIgnoreOrderingMatch";
     public final static String CASE_EXACT         = "caseExactOrderingMatch";

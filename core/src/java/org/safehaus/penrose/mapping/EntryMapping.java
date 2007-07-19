@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class EntryMapping implements Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
     public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";

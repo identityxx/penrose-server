@@ -28,7 +28,7 @@ public class GenericAdapter implements
         ModifyListener, ModRdnListener, SearchListener, UnbindListener
     {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public GenericAdapter() {
         log.debug("GenericAdapter.<init>()");

@@ -35,7 +35,7 @@ import java.io.File;
  */
 public class PartitionManager implements PartitionManagerMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -58,15 +58,13 @@ public class PartitionManager implements PartitionManagerMBean {
         PartitionReader partitionReader = new PartitionReader(dir);
         Partition partition = partitionReader.read(partitionConfig);
 
-        Collection results = partitionValidator.validate(partition);
+        Collection<PartitionValidationResult> results = partitionValidator.validate(partition);
 
-        for (Iterator i=results.iterator(); i.hasNext(); ) {
-            PartitionValidationResult resultPartition = (PartitionValidationResult)i.next();
-
-            if (resultPartition.getType().equals(PartitionValidationResult.ERROR)) {
-                log.error("ERROR: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+        for (PartitionValidationResult result : results) {
+            if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                log.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
             } else {
-                log.warn("WARNING: "+resultPartition.getMessage()+" ["+resultPartition.getSource()+"]");
+                log.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
             }
         }
 
@@ -75,9 +73,8 @@ public class PartitionManager implements PartitionManagerMBean {
         return partition;
     }
 
-    public void store(String home, Collection partitionConfigs) throws Exception {
-        for (Iterator i=partitionConfigs.iterator(); i.hasNext(); ) {
-            PartitionConfig partitionConfig = (PartitionConfig)i.next();
+    public void store(String home, Collection<PartitionConfig> partitionConfigs) throws Exception {
+        for (PartitionConfig partitionConfig : partitionConfigs) {
             store(home, partitionConfig);
         }
     }
@@ -99,7 +96,7 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public Partition removePartition(String name) throws Exception {
-        return (Partition)partitions.remove(name);
+        return partitions.remove(name);
     }
 
     public void clear() throws Exception {
@@ -107,7 +104,7 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public Partition getPartition(String name) throws Exception {
-        return (Partition)partitions.get(name);
+        return partitions.get(name);
     }
 
     public Partition getPartition(SourceMapping sourceMapping) throws Exception {
@@ -115,8 +112,7 @@ public class PartitionManager implements PartitionManagerMBean {
         if (sourceMapping == null) return null;
 
         String sourceName = sourceMapping.getSourceName();
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Partition partition : partitions.values()) {
             if (partition.getSources().getSourceConfig(sourceName) != null) return partition;
         }
         return null;
@@ -127,8 +123,7 @@ public class PartitionManager implements PartitionManagerMBean {
         if (sourceConfig == null) return null;
 
         String connectionName = sourceConfig.getConnectionName();
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Partition partition : partitions.values()) {
             if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
@@ -139,8 +134,7 @@ public class PartitionManager implements PartitionManagerMBean {
         if (connectionConfig == null) return null;
 
         String connectionName = connectionConfig.getName();
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Partition partition : partitions.values()) {
             if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
@@ -150,9 +144,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
         if (entryMapping == null) return null;
 
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
+        for (Partition partition : partitions.values()) {
             if (partition.getMappings().contains(entryMapping)) {
                 return partition;
             }
@@ -168,15 +160,12 @@ public class PartitionManager implements PartitionManagerMBean {
         Partition p = null;
         DN s = null;
 
-        for (Iterator i=partitions.values().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
+        for (Partition partition : partitions.values()) {
 
-            Collection suffixes = partition.getMappings().getSuffixes();
-            for (Iterator j=suffixes.iterator(); j.hasNext(); ) {
-                DN suffix = (DN)j.next();
-
+            Collection<DN> suffixes = partition.getMappings().getSuffixes();
+            for (DN suffix : suffixes) {
                 if (suffix.isEmpty() && dn.isEmpty() // Root DSE
-                    || dn.endsWith(suffix)) {
+                        || dn.endsWith(suffix)) {
 
                     if (s == null || s.getSize() < suffix.getSize()) {
                         p = partition;

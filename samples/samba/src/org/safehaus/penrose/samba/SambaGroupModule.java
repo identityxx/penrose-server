@@ -20,7 +20,7 @@ import java.io.BufferedReader;
  */
 public class SambaGroupModule extends Module {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String SSH_CLIENT   = "ssh.client";
     public final static String SAMBA_ADMIN  = "samba.admin";

@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class ModuleManager implements ModuleManagerMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;

@@ -33,7 +33,7 @@ import java.util.regex.Matcher;
  */
 public class SubstringsMatchingRule {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String CASE_IGNORE      = "caseIgnoreSubstringsMatch";
     public final static String CASE_EXACT       = "caseExactSubstringsMatch";

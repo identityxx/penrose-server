@@ -32,7 +32,7 @@ import java.security.Principal;
  */
 public class PenroseJMXAuthenticator implements JMXAuthenticator {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private Penrose penrose;
 

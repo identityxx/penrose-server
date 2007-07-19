@@ -34,7 +34,7 @@ import java.util.ArrayList;
  */
 public class EventManager {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;

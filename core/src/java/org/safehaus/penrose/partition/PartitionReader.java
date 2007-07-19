@@ -39,7 +39,7 @@ import java.util.ArrayList;
  */
 public class PartitionReader {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     String home;
 

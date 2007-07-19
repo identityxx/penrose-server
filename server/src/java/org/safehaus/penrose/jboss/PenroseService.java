@@ -35,7 +35,7 @@ import java.io.FileOutputStream;
  */
 public class PenroseService implements PenroseServiceMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
     PenroseServer penroseServer;

@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class SearchEngine {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private Engine engine;
 

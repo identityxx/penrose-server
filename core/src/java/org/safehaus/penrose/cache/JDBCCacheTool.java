@@ -31,7 +31,7 @@ import java.util.Collection;
  */
 public class JDBCCacheTool {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     boolean convert(
             String tableName,

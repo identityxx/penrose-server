@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
  */
 public class CacheManager {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private int size;
     private int expiration;

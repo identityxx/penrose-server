@@ -35,7 +35,7 @@ import java.util.HashSet;
  */
 public abstract class Interpreter {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Collection rows;
 

@@ -33,7 +33,7 @@ import org.safehaus.penrose.connection.ConnectionConfig;
  */
 public class Partition {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PartitionConfig partitionConfig;
 

@@ -43,7 +43,7 @@ import org.slf4j.Logger;
 
 public class LDAPClient {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public String[] BINARY_ATTRIBUTES = new String[] {
         "photo", "personalSignature", "audio", "jpegPhoto", "javaSerializedData",

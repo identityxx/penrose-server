@@ -38,7 +38,7 @@ import com.identyx.javabackend.*;
  */
 public class PenroseAuthenticator extends AbstractAuthenticator {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Backend backend;
 

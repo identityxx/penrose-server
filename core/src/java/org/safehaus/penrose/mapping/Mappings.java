@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Mappings {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static Collection<EntryMapping> EMPTY = new ArrayList<EntryMapping>();
 
@@ -343,7 +343,7 @@ public class Mappings {
         return entryMappingsByParentId.remove(parentMapping.getId());
     }
 
-    public Collection getSuffixes() {
+    public Collection<DN> getSuffixes() {
         return suffixes;
     }
 

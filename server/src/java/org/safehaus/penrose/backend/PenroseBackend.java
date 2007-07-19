@@ -41,7 +41,7 @@ import org.slf4j.Logger;
  */
 public class PenroseBackend implements com.identyx.javabackend.Backend {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public String home;
 

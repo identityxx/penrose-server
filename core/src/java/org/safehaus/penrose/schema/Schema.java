@@ -29,7 +29,7 @@ import java.util.*;
  */
 public class Schema implements Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private SchemaConfig schemaConfig;
 

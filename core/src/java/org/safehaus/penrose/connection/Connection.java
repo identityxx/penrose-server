@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class Connection implements ConnectionMBean {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     protected PenroseConfig penroseConfig;
     protected PenroseContext penroseContext;

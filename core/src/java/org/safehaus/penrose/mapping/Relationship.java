@@ -32,7 +32,7 @@ import org.slf4j.Logger;
  */
 public class Relationship implements Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String operator = "=";
     private List operands = new ArrayList();

@@ -27,7 +27,7 @@ import java.util.*;
  */
 public class SourceMapping implements Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String REQUIRED   = "required";
     public final static String REQUISITE  = "requisite";

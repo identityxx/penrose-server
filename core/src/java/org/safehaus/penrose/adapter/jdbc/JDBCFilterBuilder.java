@@ -15,7 +15,7 @@ import java.util.*;
  */
 public class JDBCFilterBuilder {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     protected Source source;
     protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order

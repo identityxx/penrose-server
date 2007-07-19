@@ -15,7 +15,7 @@ import java.util.Iterator;
 
 public class PenroseSession implements com.identyx.javabackend.Session {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     Session session;
 

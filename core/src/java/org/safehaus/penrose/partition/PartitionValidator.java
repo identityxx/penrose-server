@@ -40,7 +40,7 @@ import java.util.TreeSet;
  */
 public class PartitionValidator {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;

@@ -43,7 +43,7 @@ import org.slf4j.Logger;
  */
 public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String home;
 

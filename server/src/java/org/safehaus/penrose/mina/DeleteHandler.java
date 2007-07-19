@@ -17,7 +17,7 @@ import com.identyx.javabackend.Session;
  */
 public class DeleteHandler implements MessageHandler {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     MinaHandler handler;
 

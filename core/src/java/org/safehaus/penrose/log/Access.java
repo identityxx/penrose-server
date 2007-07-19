@@ -1,4 +1,4 @@
-package org.safehaus.penrose.logs;
+package org.safehaus.penrose.log;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -37,7 +37,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -54,7 +54,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -71,7 +71,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -94,7 +94,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -113,7 +113,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -130,7 +130,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -147,7 +147,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -164,7 +164,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -181,7 +181,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -198,7 +198,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -219,7 +219,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -236,7 +236,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -272,7 +272,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -293,7 +293,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 
@@ -308,7 +308,7 @@ public class Access {
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("sessionId=\"");
+            sb.append("session=\"");
             sb.append(session.getSessionId());
             sb.append("\" - ");
 

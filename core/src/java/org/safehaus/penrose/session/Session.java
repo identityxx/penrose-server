@@ -34,7 +34,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.logs.Access;
+import org.safehaus.penrose.log.Access;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -46,7 +46,7 @@ import java.util.*;
  */
 public class Session {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String EVENTS_ENABLED              = "eventsEnabled";
     public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";

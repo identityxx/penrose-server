@@ -30,7 +30,7 @@ import java.util.Arrays;
  */
 public class EqualityMatchingRule {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String BOOLEAN            = "booleanMatch";
     public final static String CASE_IGNORE        = "caseIgnoreMatch";

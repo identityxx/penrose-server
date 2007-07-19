@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
  */
 public class LRUCache {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     private int size;
     private LinkedHashMap map = new LinkedHashMap();
