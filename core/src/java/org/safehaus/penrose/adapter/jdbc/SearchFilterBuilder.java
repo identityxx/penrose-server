@@ -37,6 +37,7 @@ import java.util.*;
 public class SearchFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     Partition partition;
     EntryMapping entryMapping;
@@ -72,7 +73,6 @@ public class SearchFilterBuilder {
 
         this.interpreter = interpreter;
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
         for (String sourceName : sourceValues.getNames()) {
@@ -160,7 +160,6 @@ public class SearchFilterBuilder {
             SimpleFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -204,7 +203,6 @@ public class SearchFilterBuilder {
             SubstringFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -247,7 +245,6 @@ public class SearchFilterBuilder {
             PresentFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();

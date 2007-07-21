@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Attributes {
+public class Attributes implements Cloneable {
 
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
@@ -17,10 +17,6 @@ public class Attributes {
     protected Map<String,Attribute> attributes = new LinkedHashMap<String,Attribute>();
 
     public Attributes() {
-    }
-
-    public Attributes(Attributes attributes) {
-        add(attributes);
     }
 
     public Collection<String> getNames() {
@@ -97,21 +93,13 @@ public class Attributes {
     }
 
     public void add(Attributes attributes) {
-        add(null, attributes);
-    }
-
-    public void add(String prefix, Attributes attributes) {
         for (Attribute attribute : attributes.getAll()) {
-            add(prefix, attribute);
+            add(attribute);
         }
     }
     
     public void add(Attribute attribute) {
-        add(null, attribute);
-    }
-
-    public void add(String prefix, Attribute attribute) {
-        String name = prefix == null ? attribute.getName() : prefix+"."+attribute.getName();
+        String name = attribute.getName();
         String normalizedName = name.toLowerCase();
 
         names.add(name);
@@ -122,6 +110,21 @@ public class Attributes {
             attributes.put(normalizedName, attr);
         }
         attr.addValues(attribute.getValues());
+    }
+
+    /**
+     * Set an attribute.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param attribute Attribute
+     */
+    public void set(Attribute attribute) {
+        String name = attribute.getName();
+        String normalizedName = name.toLowerCase();
+
+        names.add(name);
+        attributes.put(normalizedName, attribute);
     }
 
     public Attribute get(String name) {
@@ -156,6 +159,21 @@ public class Attributes {
 
     public boolean isEmpty() {
         return names.isEmpty();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Attributes object = (Attributes)super.clone();
+
+        object.names = new LinkedHashSet<String>();
+        object.names.addAll(names);
+
+        object.attributes = new LinkedHashMap<String,Attribute>();
+        for (String normalizedName : attributes.keySet()) {
+            Attribute attribute = attributes.get(normalizedName);
+            object.attributes.put(normalizedName, (Attribute)attribute.clone());
+        }
+
+        return object;
     }
 
     public void print() throws Exception {

@@ -16,6 +16,7 @@ import java.util.*;
 public class JDBCFilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected Source source;
     protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
@@ -72,8 +73,6 @@ public class JDBCFilterBuilder {
         String name = filter.getAttribute();
         String operator = filter.getOperator();
         Object value = filter.getValue();
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             String v;

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 public class EngineTool {
 
     public static Logger log = LoggerFactory.getLogger(EngineTool.class);
+    public static boolean debug = log.isDebugEnabled();
 
     public static void propagateUp(
             Partition partition,
@@ -56,8 +57,6 @@ public class EngineTool {
     }
 
     public static void propagate(Collection<EntryMapping> mappings, SourceValues sourceValues) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         for (EntryMapping entryMapping : mappings) {
 
@@ -112,25 +111,23 @@ public class EngineTool {
             Interpreter interpreter
     ) throws Exception {
 
-        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
 
         while (entryMapping != null) {
-            mappings.add(0, entryMapping);
+            path.add(0, entryMapping);
             entryMapping = partition.getMappings().getParent(entryMapping);
         }
 
-        propagate(mappings, sourceValues, interpreter);
+        propagate(path, sourceValues, interpreter);
     }
 
     public static void propagate(
-            Collection<EntryMapping> mappings,
+            Collection<EntryMapping> path,
             SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
-        for (EntryMapping entryMapping : mappings) {
+        for (EntryMapping entryMapping : path) {
 
             Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
             for (SourceMapping sourceMapping : sourceMappings) {
@@ -183,15 +180,12 @@ public class EngineTool {
             String variable
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String lsourceName = sourceMapping.getName();
         String lfieldName = fieldMapping.getName();
-        String lhs = lsourceName + "." + lfieldName;
 
         int p = variable.indexOf(".");
         if (p < 0) {
-            if (debug) log.debug("Skipping field " + lhs);
+            if (debug) log.debug("Skipping field " + lsourceName + "." + lfieldName);
             return;
         }
 
@@ -204,19 +198,19 @@ public class EngineTool {
         Attribute lattribute = lattributes.get(lfieldName);
 
         if (lattribute != null && !lattribute.isEmpty()) {
-            if (debug) log.debug("Skipping field " + lhs);
+            if (debug) log.debug("Skipping field " + lsourceName + "." + lfieldName);
             return;
         }
 
         Attribute rattribute = rattributes.get(rfieldName);
 
         if (rattribute == null) {
-            if (debug) log.debug("Skipping field " + lhs);
+            if (debug) log.debug("Skipping field " + lsourceName + "." + lfieldName);
             return;
         }
 
         lattributes.setValues(lfieldName, rattribute.getValues());
-        if (debug) log.debug("Propagating field " + lhs + ": " + rattribute.getValues());
+        if (debug) log.debug("Propagating field " + lsourceName + "." + lfieldName + ": " + rattribute.getValues());
     }
 
 }

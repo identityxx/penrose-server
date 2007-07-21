@@ -42,7 +42,8 @@ import java.util.*;
  */
 public class HandlerManager {
 
-    Logger log = LoggerFactory.getLogger(getClass());
+    public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static DN ROOT_DSE_DN = new DN("");
     public final static DN SCHEMA_DN   = new DN("cn=Subschema");
@@ -158,8 +159,6 @@ public class HandlerManager {
             AddResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
@@ -206,8 +205,6 @@ public class HandlerManager {
             BindResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
@@ -231,8 +228,6 @@ public class HandlerManager {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -276,8 +271,6 @@ public class HandlerManager {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
@@ -317,8 +310,6 @@ public class HandlerManager {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -363,8 +354,6 @@ public class HandlerManager {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
@@ -407,8 +396,6 @@ public class HandlerManager {
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN baseDn = request.getDn();
         Collection<String> requestedAttributes = request.getAttributes();
@@ -537,8 +524,6 @@ public class HandlerManager {
             UnbindResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN bindDn = request.getDn();
 
         Collection<EntryMapping> entryMappings = partition.getMappings().findEntryMappings(bindDn);
@@ -613,7 +598,6 @@ public class HandlerManager {
         Attributes attributes = searchResult.getAttributes();
         Collection<String> attributeNames = attributes.getNames();
 
-        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Attribute names: "+attributeNames);
         }
@@ -704,7 +688,6 @@ public class HandlerManager {
         DN bindDn = session.getBindDn();
         aclManager.getReadableAttributes(bindDn, partition, entryMapping, dn, null, attributeNames, grants, denies);
 
-        boolean debug = log.isDebugEnabled();
         if (debug) {
             log.debug("Returned: "+attributeNames);
             log.debug("Granted: "+grants);

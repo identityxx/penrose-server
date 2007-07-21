@@ -43,6 +43,7 @@ import com.identyx.javabackend.SearchResult;
 public class PenroseInterceptor extends BaseInterceptor {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     Backend backend;
 
@@ -146,8 +147,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             Attributes attrs
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
-
         log.debug("===============================================================================");
 
         try {
@@ -194,8 +193,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             Object value
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
-
         log.debug("===============================================================================");
 
         try {
@@ -225,8 +222,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
-
         log.debug("===============================================================================");
 
         try {
@@ -253,7 +248,6 @@ public class PenroseInterceptor extends BaseInterceptor {
     }
 
     public LdapDN getMatchedName(NextInterceptor next, LdapDN dn) throws NamingException {
-        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         if (debug) log.debug("getMatchedName(\""+dn+"\")");
         return next.getMatchedName(dn);
@@ -266,14 +260,12 @@ public class PenroseInterceptor extends BaseInterceptor {
     }
 
     public LdapDN getSuffix(NextInterceptor next, LdapDN dn) throws NamingException {
-        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         if (debug) log.debug("getSuffix(\""+dn+"\")");
         return next.getSuffix(dn);
     }
 
     public boolean isSuffix(NextInterceptor next, LdapDN name) throws NamingException {
-        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         if (debug) log.debug("isSuffix(\""+name+"\")");
         return next.isSuffix(name);
@@ -289,8 +281,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             LdapDN name
     ) throws NamingException {
-
-        boolean debug = log.isDebugEnabled();
 
         log.debug("===============================================================================");
 
@@ -328,8 +318,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             LdapDN name
     ) throws NamingException {
-
-        boolean debug = log.isDebugEnabled();
 
         log.debug("===============================================================================");
 
@@ -376,7 +364,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             DN dn = backend.createDn(name.getUpName());
             log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
-            boolean debug = log.isDebugEnabled();
             if (debug) log.debug("lookup(\""+dn+"\", "+Arrays.asList(attrIds)+")");
 
             if (!backend.contains(dn)) {
@@ -413,8 +400,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             NextInterceptor next,
             LdapDN name
     ) throws NamingException {
-
-        boolean debug = log.isDebugEnabled();
 
         log.debug("===============================================================================");
 
@@ -459,8 +444,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             ExprNode filter,
             SearchControls searchControls
     ) throws NamingException {
-
-        boolean debug = log.isDebugEnabled();
 
         log.debug("===============================================================================");
 
@@ -526,8 +509,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             Attributes attributes
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
-
         log.debug("===============================================================================");
 
         try {
@@ -573,8 +554,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN name,
             ModificationItem[] modificationItems
     ) throws NamingException {
-
-        boolean debug = log.isDebugEnabled();
 
         log.debug("===============================================================================");
 
@@ -625,8 +604,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             boolean deleteOldDn
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
-
         log.debug("===============================================================================");
 
         try {
@@ -662,7 +639,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             boolean deleteOldRn
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
         if (debug) log.debug("move(\""+dn+"\")");
@@ -675,7 +651,6 @@ public class PenroseInterceptor extends BaseInterceptor {
             LdapDN newParentName
     ) throws NamingException {
 
-        boolean debug = log.isDebugEnabled();
         log.debug("===============================================================================");
         String dn = oriChildName.getUpName();
         if (debug) log.debug("move(\""+dn+"\")");

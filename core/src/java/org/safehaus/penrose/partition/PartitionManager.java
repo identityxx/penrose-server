@@ -36,6 +36,7 @@ import java.io.File;
 public class PartitionManager implements PartitionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -62,9 +63,9 @@ public class PartitionManager implements PartitionManagerMBean {
 
         for (PartitionValidationResult result : results) {
             if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                log.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
             } else {
-                log.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
             }
         }
 

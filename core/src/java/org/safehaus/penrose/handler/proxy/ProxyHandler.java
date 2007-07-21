@@ -31,8 +31,6 @@ public class ProxyHandler extends DefaultHandler {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         final DN baseDn = request.getDn();
 
         if (debug) {

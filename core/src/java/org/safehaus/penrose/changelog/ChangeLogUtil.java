@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 public abstract class ChangeLogUtil {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected Source source;
     protected Source destination;
@@ -21,8 +22,6 @@ public abstract class ChangeLogUtil {
     protected String user;
 
     public void update() throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         Number changeNumber = getLastChangeNumber();
 
@@ -65,8 +64,6 @@ public abstract class ChangeLogUtil {
     public abstract ChangeLog createChangeLog(SearchResult changeLogEntry) throws Exception;
 
     public Number getLastChangeNumber() throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("sourceName", source.getName());
@@ -122,8 +119,6 @@ public abstract class ChangeLogUtil {
     }
 
     public void execute(ChangeLog changeLog) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (user != null && user.equals(changeLog.getChangeUser())) {
             if (debug) log.debug("Ignore changes from "+user);

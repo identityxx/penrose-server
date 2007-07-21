@@ -38,29 +38,17 @@ public class SourceValues implements Cloneable {
     public SourceValues() {
     }
 
-    public SourceValues(SourceValues sourceValues) {
-        add(sourceValues);
-    }
-
-    public void set(SourceValues sourceValues) {
+    public void set(SourceValues sourceValues) throws Exception {
         if (sourceValues == null) return;
 
         for (String sourceName : sourceValues.map.keySet()) {
-            Attributes newAttributes = sourceValues.map.get(sourceName);
-            set(sourceName, newAttributes);
+            Attributes attributes = sourceValues.map.get(sourceName);
+            set(sourceName, attributes);
         }
     }
 
     public void set(String sourceName, Attributes newAttributes) {
-
-        Attributes attributes = map.get(sourceName);
-
-        if (attributes == null) {
-            attributes = new Attributes();
-            map.put(sourceName, attributes);
-        }
-
-        attributes.set(newAttributes);
+        map.put(sourceName, newAttributes);
     }
 
     public void add(String sourceName, Attributes newAttributes) {
@@ -83,14 +71,14 @@ public class SourceValues implements Cloneable {
         }
     }
 
-    public void remove(String name) {
-        if (name == null) return;
+    public void remove(String sourceName) {
+        if (sourceName == null) return;
 
         Collection<String> list = new ArrayList<String>();
         list.addAll(map.keySet());
 
         for (String s : list) {
-            if (s.equals(name) || s.startsWith(name + ".")) {
+            if (s.equals(sourceName) || s.startsWith(sourceName + ".")) {
                 map.remove(s);
             }
         }
@@ -147,15 +135,17 @@ public class SourceValues implements Cloneable {
         return map.equals(av.map);
     }
 
-    public void copy(SourceValues sv) {
-        map = new TreeMap<String,Attributes>();
-        map.putAll(sv.map);
-    }
-
     public Object clone() throws CloneNotSupportedException {
-        SourceValues sv = (SourceValues)super.clone();
-        sv.copy(this);
-        return sv;
+        SourceValues object = (SourceValues)super.clone();
+
+        object.map = new TreeMap<String,Attributes>();
+
+        for (String sourceName : map.keySet()) {
+            Attributes attributes = map.get(sourceName);
+            object.map.put(sourceName, (Attributes)attributes.clone());
+        }
+
+        return object;
     }
 /*
     public int compareTo(Object object) {

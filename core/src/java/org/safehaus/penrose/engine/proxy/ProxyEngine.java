@@ -75,8 +75,6 @@ public class ProxyEngine extends Engine {
 
     public LDAPClient createClient(Session session, Partition partition, Source source) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String authentication = source.getParameter(AUTHENTICATON);
         //if (debug) log.debug("Authentication: "+authentication);
 
@@ -92,8 +90,6 @@ public class ProxyEngine extends Engine {
     }
 
     public void storeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String authentication = source.getParameter(AUTHENTICATON);
         //if (debug) log.debug("Authentication: "+authentication);
@@ -112,8 +108,6 @@ public class ProxyEngine extends Engine {
 
     public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
 
-        //boolean debug = log.isDebugEnabled();
-
         String authentication = source.getParameter(AUTHENTICATON);
         //if (debug) log.debug("Authentication: "+authentication);
 
@@ -123,8 +117,6 @@ public class ProxyEngine extends Engine {
     }
 
     public LDAPClient getClient(Session session, Partition partition, Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String authentication = source.getParameter(AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
@@ -172,8 +164,6 @@ public class ProxyEngine extends Engine {
             AddResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
         Attributes attributes = request.getAttributes();
 
@@ -218,8 +208,6 @@ public class ProxyEngine extends Engine {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
         byte[] password = request.getPassword();
@@ -266,8 +254,6 @@ public class ProxyEngine extends Engine {
             CompareResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
@@ -311,8 +297,6 @@ public class ProxyEngine extends Engine {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
@@ -355,8 +339,6 @@ public class ProxyEngine extends Engine {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
         Collection<Modification> modifications = request.getModifications();
@@ -402,8 +384,6 @@ public class ProxyEngine extends Engine {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
         RDN newRdn = request.getNewRdn();
@@ -452,7 +432,6 @@ public class ProxyEngine extends Engine {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        final boolean debug = log.isDebugEnabled();
         final DN baseDn = request.getDn();
         final Filter filter = request.getFilter();
         int scope = request.getScope();
@@ -514,7 +493,7 @@ public class ProxyEngine extends Engine {
                     DN dn = convertDn(result.getDn(), proxyBaseDn, proxyDn);
                     if (debug) log.debug("Entry "+dn);
 
-                    Attributes attributes = new Attributes(result.getAttributes());
+                    Attributes attributes = (Attributes)result.getAttributes().clone();
 
                     SearchResult searchResult = new SearchResult(dn, attributes);
                     searchResult.setEntryMapping(entryMapping);

@@ -19,29 +19,58 @@ public class SearchResult {
     private EntryMapping entryMapping;
 
     private DN dn;
-    private Attributes attributes = new Attributes();
+    private Attributes attributes;
 
     private SourceValues sourceValues = new SourceValues();
 
-    private Collection<Control> controls = new ArrayList<Control>();
+    private Collection<Control> controls;
 
     public SearchResult() {
+        attributes = new Attributes();
+        controls = new ArrayList<Control>();
     }
 
+    /**
+     * Create a search result with the given DN and attributes.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param dn DN
+     * @param attributes Attributes
+     */
     public SearchResult(String dn, Attributes attributes) {
         this.dn = new DN(dn);
-        this.attributes.add(attributes);
+        this.attributes = attributes;
+        controls = new ArrayList<Control>();
     }
 
+    /**
+     * Create a search result with the given DN and attributes.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param dn DN
+     * @param attributes Attributes
+     */
     public SearchResult(DN dn, Attributes attributes) {
         this.dn = dn;
-        this.attributes.add(attributes);
+        this.attributes = attributes;
+        controls = new ArrayList<Control>();
     }
 
+    /**
+     * Create a search result with the given DN, attributes, and controls.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param dn DN
+     * @param attributes Attributes
+     * @param controls Controls
+     */
     public SearchResult(DN dn, Attributes attributes, Collection<Control> controls) {
         this.dn = dn;
-        this.attributes.add(attributes);
-        this.controls.addAll(controls);
+        this.attributes = attributes;
+        this.controls = controls;
     }
 
     public DN getDn() {
@@ -56,20 +85,30 @@ public class SearchResult {
         return attributes;
     }
 
+    /**
+     * Set the attributes of this search result.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param attributes Attributes
+     */
     public void setAttributes(Attributes attributes) {
-        if (this.attributes == attributes) return;
-        this.attributes.clear();
-        this.attributes.add(attributes);
+        this.attributes = attributes;
     }
 
     public Collection<Control> getControls() {
         return controls;
     }
 
+    /**
+     * Set the controls of this search result.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param controls Controls
+     */
     public void setControls(Collection<Control> controls) {
-        if (this.controls == controls) return;
-        this.controls.clear();
-        if (controls != null) this.controls.addAll(controls);
+        this.controls = controls;
     }
 
     public EntryMapping getEntryMapping() {
@@ -84,16 +123,15 @@ public class SearchResult {
         return sourceValues;
     }
     
-    public void addSourceValues(SourceValues sourceValues) {
-        this.sourceValues.add(sourceValues);
-    }
-
+    /**
+     * Set the source values of this search result.
+     *
+     * This object will take the ownership of the parameters.
+     *
+     * @param sourceValues Source values
+     */
     public void setSourceValues(SourceValues sourceValues) {
-        this.sourceValues.set(sourceValues);
-    }
-
-    public void setSourceValues(String sourceName, Attributes attributes) {
-        sourceValues.set(sourceName, attributes);
+        this.sourceValues = sourceValues;
     }
 
     public void print() throws Exception {

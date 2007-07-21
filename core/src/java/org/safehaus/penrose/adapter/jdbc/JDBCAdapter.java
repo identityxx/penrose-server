@@ -220,8 +220,6 @@ public class JDBCAdapter extends Adapter {
 
     public JDBCClient getClient(Session session, Partition partition, Source source) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
@@ -256,8 +254,6 @@ public class JDBCAdapter extends Adapter {
 
     public void closeClient(Session session, Partition partition, Source source, JDBCClient client) throws Exception {
 
-        //boolean debug = log.isDebugEnabled();
-
         //String authentication = source.getParameter(AUTHENTICATON);
         //if (debug) log.debug("Authentication: "+authentication);
     }
@@ -267,8 +263,6 @@ public class JDBCAdapter extends Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void create(Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -281,8 +275,6 @@ public class JDBCAdapter extends Adapter {
 
     public void rename(Source oldSource, Source newSource) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Rename "+oldSource.getName()+" to "+newSource.getName(), 80));
@@ -293,8 +285,6 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void drop(Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -307,8 +297,6 @@ public class JDBCAdapter extends Adapter {
 
     public void clean(Source source) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Clean "+source.getName(), 80));
@@ -319,8 +307,6 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void status(Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -341,8 +327,6 @@ public class JDBCAdapter extends Adapter {
             final AddRequest request,
             final AddResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -406,8 +390,6 @@ public class JDBCAdapter extends Adapter {
             AddResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Add "+ sourceRefs, 80));
@@ -456,8 +438,6 @@ public class JDBCAdapter extends Adapter {
             final CompareResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(request.getDn());
         newRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -486,8 +466,6 @@ public class JDBCAdapter extends Adapter {
             final DeleteRequest request,
             final DeleteResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -536,8 +514,6 @@ public class JDBCAdapter extends Adapter {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Delete "+ sourceRefs, 80));
@@ -585,8 +561,6 @@ public class JDBCAdapter extends Adapter {
             final ModifyRequest request,
             final ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -660,8 +634,6 @@ public class JDBCAdapter extends Adapter {
             ModifyResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Modify "+ sourceRefs, 80));
@@ -709,8 +681,6 @@ public class JDBCAdapter extends Adapter {
             final ModRdnRequest request,
             final ModRdnResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -769,8 +739,6 @@ public class JDBCAdapter extends Adapter {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("ModRdn "+ sourceRefs, 80));
@@ -818,8 +786,6 @@ public class JDBCAdapter extends Adapter {
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -905,8 +871,6 @@ public class JDBCAdapter extends Adapter {
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
-
-        final boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -1000,10 +964,10 @@ public class JDBCAdapter extends Adapter {
         RDNBuilder rb = new RDNBuilder();
 
         int column = 1;
-        for (Iterator i= source.getFields().iterator(); i.hasNext(); column++) {
-            Field field = (Field)i.next();
 
-            Object value = rs.getObject(column);
+        for (Field field : source.getFields()) {
+
+            Object value = rs.getObject(column++);
             if (value == null) continue;
 
             String fieldName = field.getName();
@@ -1026,6 +990,7 @@ public class JDBCAdapter extends Adapter {
         SearchResult searchResult = new SearchResult();
         searchResult.setEntryMapping(entryMapping);
 
+        SourceValues sourceValues = new SourceValues();
         RDNBuilder rb = new RDNBuilder();
 
         SourceManager sourceManager = penroseContext.getSourceManager();
@@ -1037,12 +1002,11 @@ public class JDBCAdapter extends Adapter {
             String alias = sourceRef.getAlias();
             boolean primarySource = primarySourceRefs.contains(sourceRef);
 
-            Attributes sourceValues = new Attributes();
+            Attributes fields = new Attributes();
 
-            for (Iterator j = sourceRef.getFieldRefs().iterator(); j.hasNext(); column++) {
-                FieldRef fieldRef = (FieldRef) j.next();
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
 
-                Object value = rs.getObject(column);
+                Object value = rs.getObject(column++);
 
                 String fieldName = fieldRef.getName();
                 String name = alias + "." + fieldName;
@@ -1050,16 +1014,17 @@ public class JDBCAdapter extends Adapter {
                 if (primarySource && fieldRef.isPrimaryKey()) {
                     if (value == null) return null;
                     rb.set(name, value);
-                    sourceValues.addValue("primaryKey." + fieldName, value);
+                    fields.addValue("primaryKey." + fieldName, value);
                 }
 
                 if (value == null) continue;
-                sourceValues.addValue(fieldName, value);
+                fields.addValue(fieldName, value);
             }
 
-            searchResult.setSourceValues(alias, sourceValues);
+            sourceValues.set(alias, fields);
         }
 
+        searchResult.setSourceValues(sourceValues);
         searchResult.setDn(new DN(rb.toRdn()));
 
         return searchResult;

@@ -217,8 +217,6 @@ public class DefaultHandler extends Handler {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        final boolean debug = log.isDebugEnabled();
-
         int scope = request.getScope();
         final Filter filter = request.getFilter();
 

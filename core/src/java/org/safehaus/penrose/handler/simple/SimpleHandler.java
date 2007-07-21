@@ -65,8 +65,6 @@ public class SimpleHandler extends Handler {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN baseDn = request.getDn();
 
         if (debug) {

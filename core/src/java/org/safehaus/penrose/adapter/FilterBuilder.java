@@ -22,6 +22,7 @@ import java.util.*;
 public class FilterBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     Partition partition;
     EntryMapping entryMapping;
@@ -49,7 +50,6 @@ public class FilterBuilder {
 
         this.interpreter = interpreter;
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Creating filters:");
 
         for (String sourceName : sourceValues.getNames()) {
@@ -144,7 +144,6 @@ public class FilterBuilder {
             SimpleFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -184,7 +183,6 @@ public class FilterBuilder {
             SubstringFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();
@@ -218,7 +216,6 @@ public class FilterBuilder {
             PresentFilter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter);
 
         String attributeName = filter.getAttribute();

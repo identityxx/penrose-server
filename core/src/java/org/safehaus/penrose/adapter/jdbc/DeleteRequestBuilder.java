@@ -71,8 +71,6 @@ public class DeleteRequestBuilder extends RequestBuilder {
             SourceRef sourceRef
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
 
@@ -105,8 +103,6 @@ public class DeleteRequestBuilder extends RequestBuilder {
     public void generateSecondaryRequests(
             SourceRef sourceRef
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);

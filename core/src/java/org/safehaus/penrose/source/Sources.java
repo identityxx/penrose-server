@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class Sources {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private Map<String,SourceConfig> sourceConfigs = new LinkedHashMap<String,SourceConfig>();
     private Map<String,SourceSyncConfig> sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
@@ -23,8 +24,6 @@ public class Sources {
     public void addSourceConfig(SourceConfig sourceConfig) {
 
         String sourceName = sourceConfig.getName();
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug("Source "+sourceName+":");

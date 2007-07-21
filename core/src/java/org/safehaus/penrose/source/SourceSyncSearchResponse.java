@@ -31,8 +31,6 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
 
     public void add(SearchResult result) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = result.getDn();
         Attributes attributes = result.getAttributes();
 

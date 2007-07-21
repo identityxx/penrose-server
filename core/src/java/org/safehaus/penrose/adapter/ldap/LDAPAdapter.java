@@ -70,8 +70,6 @@ public class LDAPAdapter extends Adapter {
 
     public LDAPClient createClient(Session session, Partition partition, Source source) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
@@ -88,8 +86,6 @@ public class LDAPAdapter extends Adapter {
     }
 
     public void storeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
@@ -108,8 +104,6 @@ public class LDAPAdapter extends Adapter {
     }
 
     public LDAPClient getClient(Session session, Partition partition, Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
@@ -147,8 +141,6 @@ public class LDAPAdapter extends Adapter {
 
     public void closeClient(Session session, Partition partition, Source source, LDAPClient client) throws Exception {
 
-        //boolean debug = log.isDebugEnabled();
-
         String authentication = source.getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
 
@@ -163,8 +155,6 @@ public class LDAPAdapter extends Adapter {
 
     public void create(Source source) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Create "+source.getName(), 80));
@@ -176,8 +166,6 @@ public class LDAPAdapter extends Adapter {
 
     public void rename(Source source, String name) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Create "+source.getName(), 80));
@@ -188,8 +176,6 @@ public class LDAPAdapter extends Adapter {
     }
 
     public void drop(Source source) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -210,8 +196,6 @@ public class LDAPAdapter extends Adapter {
             AddRequest request,
             AddResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -236,8 +220,8 @@ public class LDAPAdapter extends Adapter {
                 ocAttribute.addValue(objectClass);
             }
 
-            Attributes attributes = new Attributes(request.getAttributes());
-            attributes.add(ocAttribute);
+            Attributes attributes = (Attributes)request.getAttributes().clone();
+            attributes.set(ocAttribute);
 
             AddRequest newRequest = new AddRequest(request);
             newRequest.setDn(dn);
@@ -264,8 +248,6 @@ public class LDAPAdapter extends Adapter {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -307,8 +289,6 @@ public class LDAPAdapter extends Adapter {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -353,8 +333,6 @@ public class LDAPAdapter extends Adapter {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("Delete "+ source.getName(), 80));
@@ -395,8 +373,6 @@ public class LDAPAdapter extends Adapter {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -439,8 +415,6 @@ public class LDAPAdapter extends Adapter {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("ModRdn "+source.getName(), 80));
@@ -481,8 +455,6 @@ public class LDAPAdapter extends Adapter {
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws Exception {
-
-        final boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -569,7 +541,7 @@ public class LDAPAdapter extends Adapter {
         Attributes newAttributes;
 
         if (source.getFields().isEmpty()) {
-            newAttributes = new Attributes(attributes);
+            newAttributes = (Attributes)attributes.clone();
 
         } else {
             newAttributes = new Attributes();

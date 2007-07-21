@@ -14,15 +14,12 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.session.Session;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class BasicSearchResponse extends SearchResponse<SearchResult> {
-
-    boolean debug = log.isDebugEnabled();
 
     Session session;
     Partition partition;
@@ -40,6 +37,8 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     Attributes lastAttributes;
     EntryMapping lastEntryMapping;
     SourceValues lastSourceValues;
+
+    Map<String,Collection<EntryMapping>> paths = new HashMap<String,Collection<EntryMapping>>();
 
     public BasicSearchResponse(
             Session session,
@@ -77,12 +76,28 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         }
     }
 
+    public Collection<EntryMapping> createPath(EntryMapping entryMapping) {
+        List<EntryMapping> path = new ArrayList<EntryMapping>();
+
+        while (entryMapping != null) {
+            path.add(0, entryMapping);
+            entryMapping = partition.getMappings().getParent(entryMapping);
+        }
+
+        return path;
+    }
+
     public void add(SearchResult result) throws Exception {
 
         EntryMapping em = result.getEntryMapping();
 
-        SourceValues sv = new SourceValues();
-        sv.add(sourceValues);
+        Collection<EntryMapping> path = paths.get(em.getId());
+        if (path == null) {
+            path = createPath(em);
+            paths.put(em.getId(), path);
+        }
+
+        SourceValues sv = (SourceValues)sourceValues.clone();
         sv.set(result.getSourceValues());
 
         if (debug) {
@@ -91,7 +106,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         }
 
         interpreter.set(sv);
-        EngineTool.propagateDown(partition, em, sv, interpreter);
+        EngineTool.propagate(path, sv, interpreter);
         interpreter.clear();
 
         if (debug) {
@@ -143,8 +158,6 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     }
 
     public void close() throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (lastDn != null) {
             if (debug) log.debug("Returning entry " + lastDn);

@@ -47,6 +47,7 @@ import java.util.*;
 public class Session {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static String EVENTS_ENABLED              = "eventsEnabled";
     public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";
@@ -164,8 +165,6 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
             
-            boolean debug = log.isDebugEnabled();
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
@@ -242,8 +241,6 @@ public class Session {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            boolean debug = log.isDebugEnabled();
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -368,8 +365,6 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            boolean debug = log.isDebugEnabled();
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
@@ -477,8 +472,6 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            boolean debug = log.isDebugEnabled();
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
@@ -567,8 +560,6 @@ public class Session {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            boolean debug = log.isDebugEnabled();
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -671,8 +662,6 @@ public class Session {
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
-            boolean debug = log.isDebugEnabled();
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
@@ -771,8 +760,6 @@ public class Session {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            boolean debug = log.isDebugEnabled();
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -927,8 +914,6 @@ public class Session {
             if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
-
-            boolean debug = log.isDebugEnabled();
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");

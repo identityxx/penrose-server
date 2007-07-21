@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 /**
  * @author Endi S. Dewata
  */
-public class Attribute {
+public class Attribute implements Cloneable {
 
     protected String name;
     protected Collection<Object> values = new LinkedHashSet<Object>();
@@ -75,5 +75,16 @@ public class Attribute {
 
     public int getSize() {
         return values.size();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Attribute attribute = (Attribute)super.clone();
+
+        attribute.name = name;
+
+        attribute.values = new LinkedHashSet<Object>();
+        attribute.values.addAll(values);
+
+        return attribute;
     }
 }

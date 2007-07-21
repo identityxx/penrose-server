@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 public class JDBCClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static String DRIVER       = "driver";
     public final static String URL          = "url";
@@ -365,8 +366,6 @@ public class JDBCClient {
             UpdateResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
             Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
@@ -427,8 +426,6 @@ public class JDBCClient {
             Collection<Assignment> parameters,
             QueryResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));

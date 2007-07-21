@@ -68,8 +68,6 @@ public class AddRequestBuilder extends RequestBuilder {
             SourceRef sourceRef
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
 
@@ -111,8 +109,6 @@ public class AddRequestBuilder extends RequestBuilder {
     public void generateSecondaryRequests(
             SourceRef sourceRef
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);
@@ -161,8 +157,6 @@ public class AddRequestBuilder extends RequestBuilder {
             SourceRef sourceRef,
             Map<String,Object> values
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String sourceName = sourceRef.getAlias();
 

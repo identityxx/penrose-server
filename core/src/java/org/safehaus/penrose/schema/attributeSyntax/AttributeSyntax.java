@@ -30,12 +30,11 @@ import java.io.InputStreamReader;
 public class AttributeSyntax {
 
     public static Logger log = LoggerFactory.getLogger(AttributeSyntax.class);
+    public static boolean debug = log.isDebugEnabled();
 
     public static Map<String,AttributeSyntax> attributeSyntaxes = new TreeMap<String,AttributeSyntax>();
 
     static {
-
-        boolean debug = log.isDebugEnabled();
 
         try {
             if (debug) log.debug("Attribute syntaxes:");

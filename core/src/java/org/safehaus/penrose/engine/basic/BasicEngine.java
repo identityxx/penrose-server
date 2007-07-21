@@ -80,7 +80,6 @@ public class BasicEngine extends Engine {
 
         Interpreter interpreter = interpreterManager.newInstance();
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
         extractSourceValues(
@@ -139,7 +138,6 @@ public class BasicEngine extends Engine {
             SourceValues sourceValues
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
@@ -176,8 +174,6 @@ public class BasicEngine extends Engine {
             SourceValues sourceValues, AddRequest request,
             AddResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -227,8 +223,6 @@ public class BasicEngine extends Engine {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -309,8 +303,6 @@ public class BasicEngine extends Engine {
             CompareResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         if (debug) {
@@ -355,8 +347,6 @@ public class BasicEngine extends Engine {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -407,8 +397,6 @@ public class BasicEngine extends Engine {
             ModifyResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         if (debug) {
@@ -458,8 +446,6 @@ public class BasicEngine extends Engine {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         if (debug) {
@@ -506,8 +492,6 @@ public class BasicEngine extends Engine {
             EntryMapping entryMapping,
             DN dn
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -589,8 +573,6 @@ public class BasicEngine extends Engine {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
         int scope = request.getScope();

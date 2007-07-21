@@ -39,6 +39,7 @@ import grid.security.MD5Crypt;
 public class PasswordUtil {
 
     public static Logger log = LoggerFactory.getLogger(PasswordUtil.class);
+    public static boolean debug = log.isDebugEnabled();
 
     protected final static boolean DEBUG = true;
 
@@ -81,8 +82,6 @@ public class PasswordUtil {
     public static byte[] encrypt(String method, byte[] salt, byte[] bytes) throws Exception {
         if (method == null) return bytes;
         if (bytes == null) return null;
-
-        boolean debug = log.isDebugEnabled();
 
         if ("crypt".equalsIgnoreCase(method)) {
             String password = new String(bytes);

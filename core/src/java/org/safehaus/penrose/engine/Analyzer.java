@@ -36,6 +36,7 @@ import java.util.*;
 public class Analyzer {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private PartitionManager partitionManager;
     private InterpreterManager interpreterManager;
@@ -46,7 +47,7 @@ public class Analyzer {
 
     public void analyze(Partition partition, EntryMapping entryMapping) throws Exception {
 
-    	if (log.isDebugEnabled()) log.debug("Analyzing entry "+entryMapping.getDn()+".");
+    	if (debug) log.debug("Analyzing entry "+entryMapping.getDn()+".");
 
         SourceMapping sourceMapping = computePrimarySource(entryMapping);
         if (sourceMapping != null) {
@@ -62,7 +63,7 @@ public class Analyzer {
         }
 
         boolean unique = isUnique(partition, entryMapping);
-        if (log.isDebugEnabled()) log.debug("Unique: "+unique);
+        if (debug) log.debug("Unique: "+unique);
 
         Collection children = partition.getMappings().getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
@@ -229,7 +230,7 @@ public class Analyzer {
 
             if (attributeMapping.getExpression() == null) continue;
 
-            if (log.isDebugEnabled()) log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
+            if (debug) log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
             return false;
         }
 
@@ -241,7 +242,7 @@ public class Analyzer {
         }
 
         if (rdnSources.size() > 1) {
-        	if (log.isDebugEnabled()) log.debug("RDN uses multiple sources: "+rdnSources);
+        	if (debug) log.debug("RDN uses multiple sources: "+rdnSources);
             return false;
         }
 
@@ -273,7 +274,7 @@ public class Analyzer {
                 continue;
             }
 
-            if (log.isDebugEnabled()) log.debug("RDN uses non-unique field: "+fieldName);
+            if (debug) log.debug("RDN uses non-unique field: "+fieldName);
             return false;
         }
 
@@ -287,7 +288,7 @@ public class Analyzer {
         //log.debug("Source PK fields: "+list);
 
         if (!pkFields.equals(list)) {
-        	if (log.isDebugEnabled()) log.debug("RDN doesn't use all primary keys of "+sourceConfig.getName());
+        	if (debug) log.debug("RDN doesn't use all primary keys of "+sourceConfig.getName());
             return false;
         }
 

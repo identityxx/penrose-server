@@ -37,6 +37,7 @@ import java.util.*;
 public class SearchEngine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private Engine engine;
 
@@ -54,7 +55,6 @@ public class SearchEngine {
     ) throws Exception {
 
         try {
-            final boolean debug = log.isDebugEnabled();
             Collection sourceMappings = entryMapping.getSourceMappings();
 
             if (sourceMappings.size() == 0) {

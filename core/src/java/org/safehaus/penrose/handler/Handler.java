@@ -52,6 +52,7 @@ import java.util.Collection;
 public abstract class Handler {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
@@ -164,8 +165,6 @@ public abstract class Handler {
             AddResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
@@ -209,8 +208,6 @@ public abstract class Handler {
             BindResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
@@ -249,8 +246,6 @@ public abstract class Handler {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -323,8 +318,6 @@ public abstract class Handler {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
@@ -364,8 +357,6 @@ public abstract class Handler {
             ModifyResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
@@ -404,8 +395,6 @@ public abstract class Handler {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -580,7 +569,6 @@ public abstract class Handler {
 
         Interpreter interpreter = interpreterManager.newInstance();
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
         extractSourceValues(
@@ -639,7 +627,6 @@ public abstract class Handler {
             SourceValues sourceValues
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());

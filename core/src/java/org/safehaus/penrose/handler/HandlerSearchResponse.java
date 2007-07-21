@@ -21,6 +21,7 @@ import java.util.*;
 public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     SearchResponse<SearchResult> response;
 
@@ -65,8 +66,6 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
     public void add(SearchResult searchResult) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = searchResult.getDn();
         EntryMapping entryMapping = searchResult.getEntryMapping();
         Attributes attributes = searchResult.getAttributes();
@@ -108,8 +107,6 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
     }
 
     public void close() throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         int count = entryMappings.size() - results.size();
 

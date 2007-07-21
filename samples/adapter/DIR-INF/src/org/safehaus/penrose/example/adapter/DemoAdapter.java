@@ -243,7 +243,7 @@ public class DemoAdapter extends Adapter {
             }
 
             System.out.println("Found entry " + rdn + ".");
-            response.add(new SearchResult(new DN(rdn), attributes));
+            response.add(new SearchResult(new DN(rdn), (Attributes)attributes.clone()));
         }
 
         response.close();

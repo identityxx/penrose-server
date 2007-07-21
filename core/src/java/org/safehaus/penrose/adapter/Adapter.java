@@ -43,6 +43,7 @@ import java.util.ArrayList;
 public abstract class Adapter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected PenroseConfig penroseConfig;
     protected PenroseContext penroseContext;
@@ -117,8 +118,6 @@ public abstract class Adapter {
             AddResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-        
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -200,8 +199,6 @@ public abstract class Adapter {
             BindResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -275,8 +272,6 @@ public abstract class Adapter {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
@@ -384,8 +379,6 @@ public abstract class Adapter {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -455,8 +448,6 @@ public abstract class Adapter {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
@@ -625,8 +616,6 @@ public abstract class Adapter {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -721,8 +710,6 @@ public abstract class Adapter {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
@@ -752,7 +739,10 @@ public abstract class Adapter {
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(result.getDn());
                 searchResult.setEntryMapping(entryMapping);
-                searchResult.setSourceValues(sourceRef.getAlias(), result.getAttributes());
+
+                SourceValues sourceValues = new SourceValues();
+                sourceValues.set(sourceRef.getAlias(), result.getAttributes());
+                searchResult.setSourceValues(sourceValues);
 
                 response.add(searchResult);
             }

@@ -36,6 +36,11 @@ public class PenroseAttributes implements com.identyx.javabackend.Attributes {
         attributes.add(penroseAttribute.getAttribute());
     }
 
+    public void set(com.identyx.javabackend.Attribute attribute) throws Exception {
+        PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
+        attributes.set(penroseAttribute.getAttribute());
+    }
+
     public com.identyx.javabackend.Attribute get(String name) throws Exception {
         Attribute attribute = attributes.get(name);
         return new PenroseAttribute(attribute);

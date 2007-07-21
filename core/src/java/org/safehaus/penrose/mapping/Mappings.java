@@ -13,6 +13,7 @@ import java.util.*;
 public class Mappings {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static Collection<EntryMapping> EMPTY = new ArrayList<EntryMapping>();
 
@@ -27,14 +28,14 @@ public class Mappings {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn().getNormalizedDn();
-        //if (log.isDebugEnabled()) log.debug("Adding entry "+dn);
+        //if (debug) log.debug("Adding entry "+dn);
 
         String id = entryMapping.getId();
         if (id == null) {
             id = ""+ entryMappingsById.size();
             entryMapping.setId(id);
         }
-        //if (log.isDebugEnabled()) log.debug("ID: "+id);
+        //if (debug) log.debug("ID: "+id);
 
         // lookup by id
         entryMappingsById.put(id, entryMapping);
@@ -78,11 +79,11 @@ public class Mappings {
         }
 
         if (parent == null) {
-        	//if (log.isDebugEnabled()) log.debug("Suffix: "+dn);
+        	//if (debug) log.debug("Suffix: "+dn);
             rootEntryMappings.add(entryMapping);
             suffixes.add(entryMapping.getDn());
         } else {
-        	//if (log.isDebugEnabled()) log.debug("Parent ID: "+parentId);
+        	//if (debug) log.debug("Parent ID: "+parentId);
             addChildren(parent, entryMapping);
         }
     }
@@ -147,12 +148,12 @@ public class Mappings {
             list = rootEntryMappings;
 
         } else {
-            if (log.isDebugEnabled()) log.debug("Search parent mappings for \""+parentDn+"\"");
+            if (debug) log.debug("Search parent mappings for \""+parentDn+"\"");
             Collection<EntryMapping> parentMappings = findEntryMappings(parentDn);
 
             // if no parent mappings found, the entry doesn't exist in this partition
             if (parentMappings == null || parentMappings.isEmpty()) {
-            	if (log.isDebugEnabled()) log.debug("Entry mapping \""+parentDn+"\" not found");
+            	if (debug) log.debug("Entry mapping \""+parentDn+"\" not found");
                 return EMPTY;
             }
 
@@ -160,7 +161,7 @@ public class Mappings {
 
             // for each parent mapping found
             for (EntryMapping parentMapping : parentMappings) {
-                if (log.isDebugEnabled()) log.debug("Found parent " + parentMapping.getDn());
+                if (debug) log.debug("Found parent " + parentMapping.getDn());
 
                 String handlerName = parentMapping.getHandlerName();
                 if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
@@ -176,14 +177,14 @@ public class Mappings {
         // check against each mapping in the list
         for (EntryMapping entryMapping : list) {
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug("Checking DN pattern:");
                 log.debug(" - " + dn);
                 log.debug(" - " + entryMapping.getDn());
             }
             if (!dn.matches(entryMapping.getDn())) continue;
 
-            if (log.isDebugEnabled()) log.debug("Found " + entryMapping.getDn());
+            if (debug) log.debug("Found " + entryMapping.getDn());
             results.add(entryMapping);
         }
 
@@ -212,21 +213,21 @@ public class Mappings {
         if (newDn.equals(entryMapping.getDn())) return;
 
         DN oldDn = entryMapping.getDn();
-        if (log.isDebugEnabled()) log.debug("Renaming "+oldDn+" to "+newDn);
+        if (debug) log.debug("Renaming "+oldDn+" to "+newDn);
 
         Collection c = getEntryMappings(oldDn);
         if (c == null) return;
 
         c.remove(entryMapping);
         if (c.isEmpty()) {
-        	if (log.isDebugEnabled()) log.debug("Last "+oldDn);
+        	if (debug) log.debug("Last "+oldDn);
             entryMappingsByDn.remove(oldDn.getNormalizedDn());
         }
 
         entryMapping.setStringDn(newDn);
         Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.toLowerCase());
         if (newList == null) {
-        	if (log.isDebugEnabled()) log.debug("First "+newDn);
+        	if (debug) log.debug("First "+newDn);
             newList = new ArrayList<EntryMapping>();
             entryMappingsByDn.put(newDn.toLowerCase(), newList);
         }
@@ -255,31 +256,31 @@ public class Mappings {
         EntryMapping oldParent = getParent(entryMapping);
         DN oldDn = entryMapping.getDn();
 
-        if (log.isDebugEnabled()) log.debug("Renaming "+oldDn+" to "+newDn);
+        if (debug) log.debug("Renaming "+oldDn+" to "+newDn);
 
         Collection<EntryMapping> c = entryMappingsByDn.get(oldDn.getNormalizedDn());
         if (c == null) {
-        	if (log.isDebugEnabled()) log.debug("Entry "+oldDn+" not found.");
+        	if (debug) log.debug("Entry "+oldDn+" not found.");
             return;
         }
 
         c.remove(entryMapping);
         if (c.isEmpty()) {
-        	if (log.isDebugEnabled()) log.debug("Last "+oldDn);
+        	if (debug) log.debug("Last "+oldDn);
             entryMappingsByDn.remove(oldDn.getNormalizedDn());
         }
 
         entryMapping.setDn(newDn);
         Collection<EntryMapping> newList = entryMappingsByDn.get(newDn.getNormalizedDn());
         if (newList == null) {
-        	if (log.isDebugEnabled()) log.debug("First "+newDn);
+        	if (debug) log.debug("First "+newDn);
             newList = new ArrayList<EntryMapping>();
             entryMappingsByDn.put(newDn.getNormalizedDn(), newList);
         }
         newList.add(entryMapping);
 
         EntryMapping newParent = getParent(entryMapping);
-        if (log.isDebugEnabled()) log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
+        if (debug) log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
 
         if (newParent != null) {
             addChildren(newParent, entryMapping);
@@ -324,7 +325,7 @@ public class Mappings {
     }
 
     public void addChildren(EntryMapping parentMapping, EntryMapping entryMapping) {
-    	//if (log.isDebugEnabled()) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
+    	//if (debug) log.debug("Adding "+entryMapping.getDn()+" under "+parentMapping.getDn());
         Collection<EntryMapping> children = entryMappingsByParentId.get(parentMapping.getId());
         if (children == null) {
             children = new ArrayList<EntryMapping>();

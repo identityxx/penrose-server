@@ -36,6 +36,7 @@ import java.util.*;
 public class ACLManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     PenroseConfig penroseConfig;
     PenroseContext penroseContext;
@@ -147,7 +148,7 @@ public class ACLManager {
 
         EntryMapping parentEntryMapping = partition.getMappings().getParent(entryMapping);
         if (parentEntryMapping == null) {
-        	if (log.isDebugEnabled()) {
+        	if (debug) {
         		log.debug("Parent entry for "+entryMapping.getDn()+" not found.");
         	}
             return false;
@@ -164,7 +165,7 @@ public class ACLManager {
             String permission
     ) throws Exception {
     	
-        if (log.isDebugEnabled()) log.debug("Checking object \""+permission+"\" permission");
+        if (debug) log.debug("Checking object \""+permission+"\" permission");
 
         int rc = LDAPException.SUCCESS;
         if (session == null) {
@@ -242,13 +243,13 @@ public class ACLManager {
     public boolean checkSubject(DN bindDn, DN targetDn, ACI aci) throws Exception {
 
         String subject = aci.getSubject();
-        if (log.isDebugEnabled()) log.debug("   Checking bind DN ["+bindDn+"] with "+subject);
+        if (debug) log.debug("   Checking bind DN ["+bindDn+"] with "+subject);
 
         if (subject.equals(ACI.SUBJECT_USER)) {
 
             DN dn = aci.getDn();
             if (dn == null) throw new Exception("Missing dn in ACI");
-            if (log.isDebugEnabled()) log.debug("   Comparing with ["+dn+"]");
+            if (debug) log.debug("   Comparing with ["+dn+"]");
 
             if (dn.matches(bindDn)) {
                 log.debug("   ==> matching user");
@@ -260,7 +261,7 @@ public class ACLManager {
 
         if (subject.equals(ACI.SUBJECT_SELF) ) {
 
-        	if (log.isDebugEnabled()) log.debug("   Comparing with ["+targetDn+"]");
+        	if (debug) log.debug("   Comparing with ["+targetDn+"]");
 
             if (targetDn.matches(bindDn)) {
                 log.debug("   ==> matching self");
@@ -314,7 +315,7 @@ public class ACLManager {
         EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
         getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
-        if (log.isDebugEnabled()) log.debug("Checking ACL in "+entryMapping.getDn()+":");
+        if (debug) log.debug("Checking ACL in "+entryMapping.getDn()+":");
 
         List acls = new ArrayList();
         for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
@@ -324,20 +325,20 @@ public class ACLManager {
 
         for (Iterator i=acls.iterator(); i.hasNext(); ) {
             ACI aci = (ACI)i.next();
-            log.debug(" - "+aci);
+            if (debug) log.debug(" - "+aci);
 
             if (!checkSubject(bindDn, targetDn, aci)) {
-            	if (log.isDebugEnabled()) log.debug("   ==> subject "+bindDn+" doesn't match");
+            	if (debug) log.debug("   ==> subject "+bindDn+" doesn't match");
                 continue;
             }
 
             if (scope != null && !scope.equals(aci.getScope())) {
-            	if (log.isDebugEnabled()) log.debug("   ==> scope "+scope+" doesn't match "+aci.getScope());
+            	if (debug) log.debug("   ==> scope "+scope+" doesn't match "+aci.getScope());
                 continue;
             }
 
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
-            	if (log.isDebugEnabled()) log.debug("   ==> read permission not defined");
+            	if (debug) log.debug("   ==> read permission not defined");
                 continue;
             }
 
@@ -345,12 +346,12 @@ public class ACLManager {
                 Collection attributes = getAttributes(aci.getAttributes());
 
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                	if (log.isDebugEnabled()) log.debug("   ==> Granting read access to attributes "+attributes);
+                	if (debug) log.debug("   ==> Granting read access to attributes "+attributes);
                     grants.addAll(attributes);
                     denies.removeAll(attributes);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                	if (log.isDebugEnabled()) log.debug("   ==> Denying read access to attributes "+attributes);
+                	if (debug) log.debug("   ==> Denying read access to attributes "+attributes);
                     grants.removeAll(attributes);
                     denies.addAll(attributes);
                 }
@@ -360,12 +361,12 @@ public class ACLManager {
 
             if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                	if (log.isDebugEnabled()) log.debug("   ==> Granting read access to attributes "+attributeNames);
+                	if (debug) log.debug("   ==> Granting read access to attributes "+attributeNames);
                     grants.addAll(attributeNames);
                     denies.removeAll(attributeNames);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                	if (log.isDebugEnabled()) log.debug("   ==> Denying read access to attributes "+attributeNames);
+                	if (debug) log.debug("   ==> Denying read access to attributes "+attributeNames);
                     grants.removeAll(attributeNames);
                     denies.addAll(attributeNames);
                 }

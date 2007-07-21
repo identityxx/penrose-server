@@ -15,6 +15,7 @@ import java.util.ArrayList;
 public class Response {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected Collection<Control> controls   = new ArrayList<Control>();
 

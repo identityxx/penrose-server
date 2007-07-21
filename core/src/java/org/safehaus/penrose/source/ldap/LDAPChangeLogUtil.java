@@ -44,8 +44,6 @@ public class LDAPChangeLogUtil extends ChangeLogUtil {
 
     public ChangeLog createChangeLog(SearchResult changeLogEntry) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         Attributes changeLogAttributes = changeLogEntry.getAttributes();
 
         if (debug) {

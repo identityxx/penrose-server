@@ -32,6 +32,7 @@ import java.util.*;
 public class ConnectionManager implements ConnectionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -66,10 +67,17 @@ public class ConnectionManager implements ConnectionManagerMBean {
 
         log.debug("Initializing connection "+connectionConfig.getName()+".");
 
-        connection = createConnection(partition, connectionConfig);
-        addConnection(partition.getName(), connection);
+        try {
+            connection = createConnection(partition, connectionConfig);
+            addConnection(partition.getName(), connection);
 
-        return connection;
+            return connection;
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            errorLog.error("ERROR: Unable to initialize "+partition.getName()+"/"+connectionConfig.getName()+" connection.");
+            throw e;
+        }
     }
 
     public void start() throws Exception {
@@ -79,12 +87,13 @@ public class ConnectionManager implements ConnectionManagerMBean {
             for (String name : map.keySet()) {
                 Connection connection = map.get(name);
 
-                log.debug("Starting " + name + " connection.");
+                log.debug("Starting "+partitionName+"/"+name+" connection.");
                 try {
                     connection.start();
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                    errorLog.error("ERROR: Unable to start "+partitionName+"/"+name+" connection.");
                 }
             }
         }
@@ -97,12 +106,13 @@ public class ConnectionManager implements ConnectionManagerMBean {
             for (String name : map.keySet()) {
                 Connection connection = map.get(name);
 
-                log.debug("Stopping " + name + " connection.");
+                log.debug("Stopping "+partitionName+"/"+name+" connection.");
                 try {
                     connection.stop();
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                    errorLog.error("ERROR: Unable to stop "+partitionName+"/"+name+" connection.");
                 }
             }
         }
@@ -115,12 +125,13 @@ public class ConnectionManager implements ConnectionManagerMBean {
             for (String name : map.keySet()) {
                 Connection connection = map.get(name);
 
-                log.debug("Removing " + name + " connection.");
+                log.debug("Removing "+partitionName+"/"+name+" connection.");
                 try {
                     connection.dispose();
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                    errorLog.error("ERROR: Unable to remove "+partitionName+"/"+name+" connection.");
                 }
             }
         }

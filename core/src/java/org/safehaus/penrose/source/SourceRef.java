@@ -13,6 +13,7 @@ import java.util.*;
 public class SourceRef {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private Source source;
 
@@ -35,8 +36,6 @@ public class SourceRef {
 
         this.alias = source.getName();
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 
         for (Field field : source.getFields()) {
@@ -54,8 +53,6 @@ public class SourceRef {
         this.source = source;
 
         this.alias = sourceMapping.getName();
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 

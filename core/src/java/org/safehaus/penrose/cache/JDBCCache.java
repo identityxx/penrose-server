@@ -38,6 +38,7 @@ import java.util.*;
 public class JDBCCache {
 
     public static Logger log = LoggerFactory.getLogger(JDBCCache.class);
+    public static boolean debug = log.isDebugEnabled();
 
     JDBCCacheTool tool = new JDBCCacheTool();
 
@@ -113,7 +114,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -144,7 +145,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -177,7 +178,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -208,7 +209,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -239,7 +240,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -270,7 +271,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(sql, 80));
                 log.debug(Formatter.displaySeparator(80));
@@ -304,7 +305,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 log.debug(Formatter.displayLine(create+" (", 80));
                 log.debug(Formatter.displayLine("    "+columns.toString(), 80));
@@ -594,7 +595,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -660,7 +661,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -736,7 +737,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -807,7 +808,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -870,7 +871,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -919,7 +920,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -966,7 +967,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {
@@ -1006,7 +1007,7 @@ public class JDBCCache {
         try {
             con = getConnection();
 
-            if (log.isDebugEnabled()) {
+            if (debug) {
                 log.debug(Formatter.displaySeparator(80));
                 Collection lines = Formatter.split(sql, 80);
                 for (Iterator i=lines.iterator(); i.hasNext(); ) {

@@ -95,7 +95,6 @@ public class SimpleEngine extends Engine {
             SourceValues sourceValues
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source values from "+dn);
 
         for (Iterator i=dn.getRdns().iterator(); i.hasNext() && entryMapping != null; ) {
@@ -123,7 +122,6 @@ public class SimpleEngine extends Engine {
             SourceValues sourceValues
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
@@ -164,8 +162,6 @@ public class SimpleEngine extends Engine {
             AddRequest request,
             AddResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -216,8 +212,6 @@ public class SimpleEngine extends Engine {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -278,8 +272,6 @@ public class SimpleEngine extends Engine {
             DeleteResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         if (debug) {
@@ -329,8 +321,6 @@ public class SimpleEngine extends Engine {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
 
@@ -382,8 +372,6 @@ public class SimpleEngine extends Engine {
             ModRdnResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
 
         if (debug) {
@@ -433,8 +421,6 @@ public class SimpleEngine extends Engine {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));

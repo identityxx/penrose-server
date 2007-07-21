@@ -38,6 +38,7 @@ import java.util.Collection;
 public class EngineFilterTool {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public Engine engine;
 
@@ -53,7 +54,6 @@ public class EngineFilterTool {
             Filter filter
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
         if (debug) log.debug("Converting filter "+filter+" for "+sourceMapping.getName());
 
         if (filter instanceof NotFilter) {
@@ -126,8 +126,6 @@ public class EngineFilterTool {
             SourceMapping sourceMapping,
             SubstringFilter filter)
             throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String attributeName = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();

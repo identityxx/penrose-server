@@ -56,6 +56,7 @@ import java.util.*;
 public abstract class Engine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public PenroseConfig penroseConfig;
     public PenroseContext penroseContext;
@@ -270,8 +271,6 @@ public abstract class Engine {
             BindResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
@@ -306,8 +305,6 @@ public abstract class Engine {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DN dn = request.getDn();
         String attributeName = request.getAttributeName();
@@ -363,8 +360,6 @@ public abstract class Engine {
             EntryMapping entryMapping,
             DN dn
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         SearchRequest request = new SearchRequest();
         request.setDn(dn);
@@ -514,7 +509,7 @@ public abstract class Engine {
 
         if (parentDns.isEmpty()) {
             DN dn = entryMapping.getDn();
-            log.debug("DN: "+dn);
+            if (debug) log.debug("DN: "+dn);
             dns.add(dn);
 
         } else {
@@ -532,7 +527,7 @@ public abstract class Engine {
                     db.append(parentDn);
                     DN dn = db.toDn();
 
-                    log.debug("DN: " + dn);
+                    if (debug) log.debug("DN: " + dn);
                     dns.add(dn);
                 }
             }

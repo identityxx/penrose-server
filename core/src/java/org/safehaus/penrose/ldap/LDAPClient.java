@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 public class LDAPClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public String[] BINARY_ATTRIBUTES = new String[] {
         "photo", "personalSignature", "audio", "jpegPhoto", "javaSerializedData",
@@ -138,7 +139,7 @@ public class LDAPClient {
 
     public javax.naming.ldap.LdapContext open(Hashtable parameters) throws Exception {
 
-        if (log.isDebugEnabled()) {
+        if (debug) {
             log.debug("Creating InitialLdapContext:");
 
             for (Object name : parameters.keySet()) {
@@ -295,8 +296,6 @@ public class LDAPClient {
             ModifyResponse response
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         DN targetDn = request.getDn();
         Collection<Modification> modifications = request.getModifications();
 
@@ -368,8 +367,6 @@ public class LDAPClient {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         DNBuilder db = new DNBuilder();
         db.set(request.getDn());
@@ -702,8 +699,6 @@ public class LDAPClient {
 
     public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         if (debug) log.debug("Search \""+ schemaDn +"\"");
 
         javax.naming.directory.SearchControls searchControls = new javax.naming.directory.SearchControls();
@@ -793,8 +788,6 @@ public class LDAPClient {
     }
 
     public void getActiveDirectoryObjectClasses(Schema schema, String schemaDn) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         if (debug) log.debug("Search \""+ schemaDn +"\"");
 
@@ -1198,8 +1191,6 @@ public class LDAPClient {
     }
 
     public javax.naming.directory.Attribute convertAttribute(Attribute attribute) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String name = attribute.getName();
         javax.naming.directory.Attribute attr = new BasicAttribute(name);

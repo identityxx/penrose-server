@@ -44,6 +44,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         this.sources = sources;
         this.sourceValues = sourceValues;
+        newSourceValues = (SourceValues)sourceValues.clone();
 
         this.interpreter = interpreter;
 
@@ -71,8 +72,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             SourceRef sourceRef
     ) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         String alias = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+alias);
 
@@ -89,8 +88,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
             interpreter.set(attributeName, attributeValue);
         }
-
-        newSourceValues.set(sourceValues);
 
         Attributes attributes = newSourceValues.get(alias);
 
@@ -141,8 +138,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
     public void generateSecondaryRequests(
             SourceRef sourceRef
     ) throws Exception {
-
-        boolean debug = log.isDebugEnabled();
 
         String sourceName = sourceRef.getAlias();
         if (debug) log.debug("Processing source "+sourceName);

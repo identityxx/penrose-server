@@ -19,6 +19,7 @@ import java.util.*;
 public class BasicSearchEngine {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private BasicEngine engine;
 
@@ -37,8 +38,6 @@ public class BasicSearchEngine {
     ) throws Exception {
 
         try {
-            final boolean debug = log.isDebugEnabled();
-
             //List<Collection<SourceRef>> groupsOfSources = engine.getLocalGroupsOfSources(partition, entryMapping, baseMapping);
             List<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entryMapping);
             final Interpreter interpreter = engine.getInterpreterManager().newInstance();
@@ -52,7 +51,7 @@ public class BasicSearchEngine {
 
                 SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
                 searchResult.setEntryMapping(entryMapping);
-                searchResult.setSourceValues(sourceValues);
+                searchResult.setSourceValues((SourceValues)sourceValues.clone());
                 response.add(searchResult);
 
                 return;

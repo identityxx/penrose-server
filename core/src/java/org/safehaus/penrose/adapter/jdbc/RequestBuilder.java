@@ -14,6 +14,7 @@ import java.util.List;
 public class RequestBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected List<Request> requests = new ArrayList<Request>();
 
