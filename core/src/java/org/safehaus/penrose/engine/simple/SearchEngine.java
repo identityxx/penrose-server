@@ -137,14 +137,14 @@ public class SearchEngine {
     ) throws Exception {
 
         Collection<Object> args = new ArrayList<Object>();
-        computeArguments(partition, entryMapping, sourceValues, args);
+        computeDnArguments(partition, entryMapping, sourceValues, args);
 
         DN dn = entryMapping.getDn();
 
         return new DN(dn.format(args));
     }
 
-    public void computeArguments(
+    public void computeDnArguments(
             Partition partition,
             EntryMapping entryMapping,
             SourceValues sourceValues,
@@ -167,6 +167,7 @@ public class SearchEngine {
 
                 Attributes attributes = sourceValues.get(sourceName);
                 Object value = attributes.getValue(fieldName);
+                value = RDN.escape(value.toString());
 
                 args.add(value);
             }

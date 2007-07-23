@@ -540,7 +540,7 @@ public abstract class Engine {
     ) throws Exception {
 
         //log.debug("Computing RDNs:");
-        Attributes rdns = new Attributes();
+        Attributes attributes = new Attributes();
 
         Collection<AttributeMapping> rdnAttributes = entryMapping.getRdnAttributeMappings();
         for (AttributeMapping attributeMapping : rdnAttributes) {
@@ -549,10 +549,10 @@ public abstract class Engine {
             Object value = interpreter.eval(attributeMapping);
             if (value == null) continue;
 
-            rdns.addValue(name, value);
+            attributes.addValue(name, value);
         }
 
-        return TransformEngine.convert(rdns);
+        return TransformEngine.convert(attributes);
     }
 
     public PenroseConfig getServerConfig() {
