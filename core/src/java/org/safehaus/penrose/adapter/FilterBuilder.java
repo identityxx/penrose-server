@@ -11,8 +11,7 @@ import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.ldap.LDAP;
 
 import java.util.*;
 
@@ -65,7 +64,7 @@ public class FilterBuilder {
                 FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
                 if (fieldRef == null) {
                     log.error("Unknown field "+fieldName);
-                    throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+                    throw LDAP.createException(LDAP.OPERATIONS_ERROR);
                 }
 
                 Collection<String> operations = fieldRef.getOperations();

@@ -79,7 +79,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -110,7 +110,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -141,7 +141,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -172,7 +172,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -203,7 +203,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -234,7 +234,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -265,7 +265,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 
@@ -296,7 +296,7 @@ public class EventManager {
             }
 
             LDAPException exception = response.getException();
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
     }
 

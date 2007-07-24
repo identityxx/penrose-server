@@ -19,10 +19,10 @@ package org.safehaus.penrose.ldap;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.ietf.ldap.LDAPException;
 
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.NamingEnumeration;
+import javax.naming.directory.*;
+import javax.naming.*;
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -32,6 +32,66 @@ import java.util.ArrayList;
 public class LDAP {
 
     public static Logger log = LoggerFactory.getLogger(LDAP.class);
+
+    public static final int SUCCESS = 0;
+    public static final int OPERATIONS_ERROR = 1;
+    public static final int PROTOCOL_ERROR = 2;
+    public static final int TIME_LIMIT_EXCEEDED = 3;
+    public static final int SIZE_LIMIT_EXCEEDED = 4;
+    public static final int COMPARE_FALSE = 5;
+    public static final int COMPARE_TRUE = 6;
+    public static final int AUTH_METHOD_NOT_SUPPORTED = 7;
+    public static final int STRONG_AUTH_REQUIRED = 8;
+    public static final int REFERRAL = 10;
+    public static final int ADMIN_LIMIT_EXCEEDED = 11;
+    public static final int UNAVAILABLE_CRITICAL_EXTENSION = 12;
+    public static final int CONFIDENTIALITY_REQUIRED = 13;
+    public static final int SASL_BIND_IN_PROGRESS = 14;
+    public static final int NO_SUCH_ATTRIBUTE = 16;
+    public static final int UNDEFINED_ATTRIBUTE_TYPE = 17;
+    public static final int INAPPROPRIATE_MATCHING = 18;
+    public static final int CONSTRAINT_VIOLATION = 19;
+    public static final int ATTRIBUTE_OR_VALUE_EXISTS = 20;
+    public static final int INVALID_ATTRIBUTE_SYNTAX = 21;
+    public static final int NO_SUCH_OBJECT = 32;
+    public static final int ALIAS_PROBLEM = 33;
+    public static final int INVALID_DN_SYNTAX = 34;
+    public static final int IS_LEAF = 35;
+    public static final int ALIAS_DEREFERENCING_PROBLEM = 36;
+    public static final int INAPPROPRIATE_AUTHENTICATION = 48;
+    public static final int INVALID_CREDENTIALS = 49;
+    public static final int INSUFFICIENT_ACCESS_RIGHTS = 50;
+    public static final int BUSY = 51;
+    public static final int UNAVAILABLE = 52;
+    public static final int UNWILLING_TO_PERFORM = 53;
+    public static final int LOOP_DETECT = 54;
+    public static final int NAMING_VIOLATION = 64;
+    public static final int OBJECT_CLASS_VIOLATION = 65;
+    public static final int NOT_ALLOWED_ON_NONLEAF = 66;
+    public static final int NOT_ALLOWED_ON_RDN = 67;
+    public static final int ENTRY_ALREADY_EXISTS = 68;
+    public static final int OBJECT_CLASS_MODS_PROHIBITED = 69;
+    public static final int AFFECTS_MULTIPLE_DSAS = 71;
+    public static final int OTHER = 80;
+    public static final int SERVER_DOWN = 81;
+    public static final int LOCAL_ERROR = 82;
+    public static final int ENCODING_ERROR = 83;
+    public static final int DECODING_ERROR = 84;
+    public static final int LDAP_TIMEOUT = 85;
+    public static final int AUTH_UNKNOWN = 86;
+    public static final int FILTER_ERROR = 87;
+    public static final int USER_CANCELLED = 88;
+    public static final int NO_MEMORY = 90;
+    public static final int CONNECT_ERROR = 91;
+    public static final int LDAP_NOT_SUPPORTED = 92;
+    public static final int CONTROL_NOT_FOUND = 93;
+    public static final int NO_RESULTS_RETURNED = 94;
+    public static final int MORE_RESULTS_TO_RETURN = 95;
+    public static final int CLIENT_LOOP = 96;
+    public static final int REFERRAL_LIMIT_EXCEEDED = 97;
+    public static final int INVALID_RESPONSE = 100;
+    public static final int AMBIGUOUS_RESPONSE = 101;
+    public static final int TLS_NOT_SUPPORTED = 112;
 
     public static boolean isBinary(javax.naming.directory.Attribute attribute) throws Exception {
 
@@ -229,5 +289,52 @@ public class LDAP {
         }
 
         return sb.toString();
+    }
+
+    public static int getReturnCode(Throwable t) {
+
+        if (t instanceof LDAPException) return ((LDAPException)t).getResultCode();
+
+        if (t instanceof CommunicationException) return PROTOCOL_ERROR;
+        if (t instanceof TimeLimitExceededException) return TIME_LIMIT_EXCEEDED;
+        if (t instanceof SizeLimitExceededException) return SIZE_LIMIT_EXCEEDED;
+        if (t instanceof AuthenticationException) return INVALID_CREDENTIALS;
+        if (t instanceof NoPermissionException) return INSUFFICIENT_ACCESS_RIGHTS;
+        if (t instanceof NoSuchAttributeException) return NO_SUCH_ATTRIBUTE;
+        if (t instanceof InvalidAttributeIdentifierException) return UNDEFINED_ATTRIBUTE_TYPE;
+        if (t instanceof InvalidSearchFilterException) return INAPPROPRIATE_MATCHING;
+        if (t instanceof AttributeInUseException) return ATTRIBUTE_OR_VALUE_EXISTS;
+        if (t instanceof NameNotFoundException) return NO_SUCH_OBJECT;
+        if (t instanceof NameAlreadyBoundException) return ENTRY_ALREADY_EXISTS;
+        if (t instanceof ContextNotEmptyException) return NOT_ALLOWED_ON_NONLEAF;
+
+        return OPERATIONS_ERROR;
+    }
+
+    public static String getMessage(int rc) {
+        return LDAPException.resultCodeToString(rc);
+    }
+
+    public static LDAPException createException(Exception e) {
+        if (e instanceof LDAPException) return (LDAPException)e;
+
+        int rc = getReturnCode(e);
+        return createException(rc, e.getMessage(), e);
+    }
+
+    public static LDAPException createException(int rc) {
+        return createException(rc, getMessage(rc), null);
+    }
+
+    public static LDAPException createException(int rc, Exception e) {
+        return createException(rc, e.getMessage(), e);
+    }
+
+    public static LDAPException createException(int rc, String message) {
+        return createException(rc, message, null);
+    }
+
+    public static LDAPException createException(int rc, String message, Exception exception) {
+        return new LDAPException(getMessage(rc), rc, message, exception);
     }
 }

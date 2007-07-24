@@ -17,15 +17,6 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.ldap.SearchResponseListener;
-import org.safehaus.penrose.ldap.SearchResponseEvent;
-import org.safehaus.penrose.ldap.ReferralListener;
-import org.safehaus.penrose.ldap.ReferralEvent;
-import org.ietf.ldap.LDAPException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 /**
@@ -152,7 +143,7 @@ public class SearchResponse<E> extends Response {
     public synchronized void add(E object) throws Exception {
 
         if (sizeLimit > 0 && totalCount >= sizeLimit) {
-            exception = ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+            exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
             throw exception;
         }
 
@@ -197,7 +188,7 @@ public class SearchResponse<E> extends Response {
                 log.error(e.getMessage(), e);
             }
         }
-        if (buffer.size() == 0 && exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        if (buffer.size() == 0 && exception.getResultCode() != LDAP.SUCCESS) throw exception;
 
         return buffer.size() > 0;
     }
@@ -209,7 +200,7 @@ public class SearchResponse<E> extends Response {
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
-            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+            if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
 
         if (buffer.size() == 0) return null;

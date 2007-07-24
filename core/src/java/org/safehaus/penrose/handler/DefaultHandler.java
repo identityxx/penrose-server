@@ -7,13 +7,11 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.cache.CacheKey;
 import org.safehaus.penrose.cache.CacheManager;
-import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -79,7 +77,7 @@ public class DefaultHandler extends Handler {
         }
 
         if (!childHasObjectClass) {
-            throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
+            throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
         }
 
         super.add(session, partition, entryMapping, request, response);

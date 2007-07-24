@@ -32,9 +32,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.entry.*;
@@ -46,7 +43,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -281,7 +277,7 @@ public abstract class Engine {
 
         if (attribute == null) {
             log.debug("Attribute userPassword not found");
-            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
         Collection<Object> userPasswords = attribute.getValues();
@@ -290,7 +286,7 @@ public abstract class Engine {
             if (PasswordUtil.comparePassword(password, userPassword)) return;
         }
 
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -377,7 +373,7 @@ public abstract class Engine {
 
         if (!response.hasNext()) {
             if (debug) log.debug("Entry "+dn+" not found");
-            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         return response.next();

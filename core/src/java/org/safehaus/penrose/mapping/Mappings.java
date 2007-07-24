@@ -251,7 +251,7 @@ public class Mappings {
 
     public void renameEntryMapping(EntryMapping entryMapping, DN newDn) {
         if (entryMapping == null) return;
-        if (entryMapping.getDn().equals(newDn)) return;
+        if (entryMapping.getDn().matches(newDn)) return;
 
         EntryMapping oldParent = getParent(entryMapping);
         DN oldDn = entryMapping.getDn();

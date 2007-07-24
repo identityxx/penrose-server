@@ -14,12 +14,10 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.ldap.*;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -555,7 +553,7 @@ public class BasicEngine extends Engine {
 
         if (!response.hasNext()) {
             if (debug) log.debug("Entry "+dn+" not found");
-            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         return response.next();

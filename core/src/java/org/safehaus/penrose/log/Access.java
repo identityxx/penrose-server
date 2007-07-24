@@ -6,7 +6,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.filter.Filter;
-import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi Sukma Dewata
@@ -79,7 +78,7 @@ public class Access {
             sb.append(response.getMessage());
             sb.append("\"");
 
-            if (response.getReturnCode() == LDAPException.SUCCESS && session.getBindDn() != null) {
+            if (response.getReturnCode() == LDAP.SUCCESS && session.getBindDn() != null) {
                 sb.append(" authDn=\"");
                 sb.append(session.getBindDn());
                 sb.append("\"");

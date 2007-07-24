@@ -7,9 +7,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.ldap.*;
-import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,7 +48,7 @@ public class SimpleHandler extends Handler {
         }
 
         if (!childHasObjectClass) {
-            throw ExceptionUtil.createLDAPException(LDAPException.OBJECT_CLASS_VIOLATION);
+            throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
         }
 
         super.add(session, partition, entryMapping, request, response);

@@ -1,7 +1,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -19,7 +18,7 @@ public class Response {
 
     protected Collection<Control> controls   = new ArrayList<Control>();
 
-    protected LDAPException exception = ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
+    protected LDAPException exception = LDAP.createException(LDAP.SUCCESS);
 
     public void addControl(Control control) {
         controls.add(control);
@@ -47,7 +46,7 @@ public class Response {
     }
 
     public void setException(Exception e) {
-        exception = ExceptionUtil.createLDAPException(e);
+        exception = LDAP.createException(e);
     }
 
     public int getReturnCode() {
@@ -55,7 +54,7 @@ public class Response {
     }
 
     public void setReturnCode(int returnCode) {
-        exception = ExceptionUtil.createLDAPException(returnCode);
+        exception = LDAP.createException(returnCode);
     }
 
     public String getMessage() {

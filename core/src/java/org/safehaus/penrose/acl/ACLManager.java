@@ -24,7 +24,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.DN;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.ldap.LDAP;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -167,7 +167,7 @@ public class ACLManager {
     	
         if (debug) log.debug("Checking object \""+permission+"\" permission");
 
-        int rc = LDAPException.SUCCESS;
+        int rc = LDAP.SUCCESS;
         if (session == null) {
             log.debug("No session => SUCCESS");
             return rc;
@@ -187,7 +187,7 @@ public class ACLManager {
         }
 
         log.debug("ACL evaluation => FAILED");
-        rc = LDAPException.INSUFFICIENT_ACCESS_RIGHTS;
+        rc = LDAP.INSUFFICIENT_ACCESS_RIGHTS;
         return rc;
     }
 

@@ -20,7 +20,6 @@ package org.safehaus.penrose.adapter;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -29,7 +28,6 @@ import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
-import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -77,23 +75,23 @@ public abstract class Adapter {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void create(Source source) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void rename(Source oldSource, Source newSource) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void drop(Source source) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void clean(Source source) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void status(Source source) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +104,7 @@ public abstract class Adapter {
             AddRequest request,
             AddResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void add(
@@ -187,7 +185,7 @@ public abstract class Adapter {
             BindRequest request,
             BindResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
     }
 
     public void bind(
@@ -240,7 +238,7 @@ public abstract class Adapter {
 
         if (rb.isEmpty()) {
             log.error("Empty RDN.");
-            throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
         }
 
         DN dn = new DN(rb.toRdn());
@@ -261,7 +259,7 @@ public abstract class Adapter {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public boolean compare(
@@ -367,7 +365,7 @@ public abstract class Adapter {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void delete(
@@ -437,7 +435,7 @@ public abstract class Adapter {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void modify(
@@ -604,7 +602,7 @@ public abstract class Adapter {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void modrdn(
@@ -698,7 +696,7 @@ public abstract class Adapter {
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) throws Exception {
-        throw ExceptionUtil.createLDAPException(LDAPException.OPERATIONS_ERROR);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     public void search(

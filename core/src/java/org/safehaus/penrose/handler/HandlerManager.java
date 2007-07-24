@@ -22,7 +22,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
@@ -33,7 +32,6 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.acl.ACLManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -176,9 +174,9 @@ public class HandlerManager {
             EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
             int rc = aclManager.checkAdd(session, partition, parentMapping, parentDn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to add " + dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                exception = LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
 
@@ -243,9 +241,9 @@ public class HandlerManager {
 
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to compare " + dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                exception = LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
 
@@ -282,9 +280,9 @@ public class HandlerManager {
 
             int rc = aclManager.checkDelete(session, partition, entryMapping, dn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to delete " + dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                exception = LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
 
@@ -325,9 +323,9 @@ public class HandlerManager {
 
             int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to modify " + dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                exception = LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
 
@@ -368,9 +366,9 @@ public class HandlerManager {
 
             int rc = aclManager.checkModify(session, partition, entryMapping, dn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to modify " + dn);
-                exception = ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+                exception = LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
                 continue;
             }
 
@@ -404,9 +402,11 @@ public class HandlerManager {
         boolean allOpAttributes = requestedAttributes.contains("+");
 
         if (debug) log.debug("Requested: "+request.getAttributes());
-/*
-        if (baseDn.equals(ROOT_DSE_DN)) {
-            if (request.getScope() == SearchRequest.SCOPE_BASE) {
+
+        if (partition == null) {
+
+            if (baseDn.matches(HandlerManager.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
+
                 SearchResult result = createRootDSE();
                 Attributes attrs = result.getAttributes();
                 if (debug) {
@@ -423,37 +423,39 @@ public class HandlerManager {
                 }
 
                 response.add(result);
+
+            } else if (baseDn.matches(HandlerManager.SCHEMA_DN)) {
+
+                SearchResult result = createSchema();
+                Attributes attrs = result.getAttributes();
+                if (debug) {
+                    log.debug("Before: "+result.getDn());
+                    attrs.print();
+                }
+
+                Collection<String> list = filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
+                removeAttributes(attrs, list);
+
+                if (debug) {
+                    log.debug("After: "+result.getDn());
+                    attrs.print();
+                }
+
+                response.add(result);
+
+            } else {
+                response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
             }
-            response.close();
-            return;
 
-        } else if (baseDn.equals(SCHEMA_DN)) {
-
-            SearchResult result = createSchema();
-            Attributes attrs = result.getAttributes();
-            if (debug) {
-                log.debug("Before: "+result.getDn());
-                attrs.print();
-            }
-
-            Collection<String> list = filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
-            removeAttributes(attrs, list);
-
-            if (debug) {
-                log.debug("After: "+result.getDn());
-                attrs.print();
-            }
-
-            response.add(result);
             response.close();
             return;
         }
-*/
+
         Collection<EntryMapping> entryMappings = partition.getMappings().findEntryMappings(baseDn);
 
         if (entryMappings.isEmpty()) {
             if (debug) log.debug("Base DN "+baseDn+" not found.");
-            throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         final HandlerSearchResponse sr = new HandlerSearchResponse(
@@ -473,9 +475,9 @@ public class HandlerManager {
 
             int rc = aclManager.checkSearch(session, partition, entryMapping, baseDn);
 
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to search " + baseDn);
-                sr.setResult(entryMapping, ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS));
+                sr.setResult(entryMapping, LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS));
                 sr.close();
                 continue;
             }
@@ -493,11 +495,11 @@ public class HandlerManager {
                                 sr
                         );
 
-                        sr.setResult(entryMapping, ExceptionUtil.createLDAPException(LDAPException.SUCCESS));
+                        sr.setResult(entryMapping, LDAP.createException(LDAP.SUCCESS));
 
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
-                        sr.setResult(entryMapping, ExceptionUtil.createLDAPException(e));
+                        sr.setResult(entryMapping, LDAP.createException(e));
 
                     } finally {
                         try {

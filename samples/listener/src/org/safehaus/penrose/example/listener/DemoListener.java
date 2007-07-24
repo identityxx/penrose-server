@@ -5,16 +5,12 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.session.*;
-import org.ietf.ldap.LDAPException;
-
-import javax.naming.NoPermissionException;
 
 /**
  * @author Endi S. Dewata
@@ -93,11 +89,11 @@ public class DemoListener implements SearchListener {
         System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
         if (request.getFilter().toString().equalsIgnoreCase("(ou=*)")) {
-            throw ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
         if (request.getFilter().toString().equalsIgnoreCase("(ou=secret)")) {
-            throw ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
         SearchResponse<SearchResult> response = event.getResponse();
@@ -113,7 +109,7 @@ public class DemoListener implements SearchListener {
     public void afterSearch(SearchEvent event) throws Exception {
         SearchResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Search succeded.");
         } else {
             System.out.println("#### Search failed. RC="+rc);

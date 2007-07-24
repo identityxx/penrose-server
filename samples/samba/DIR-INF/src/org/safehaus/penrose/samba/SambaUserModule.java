@@ -6,7 +6,6 @@ import org.safehaus.penrose.event.AddEvent;
 import org.safehaus.penrose.event.ModifyEvent;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.ldap.*;
-import org.ietf.ldap.LDAPException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -38,7 +37,7 @@ public class SambaUserModule extends Module {
         BindResponse response = event.getResponse();
         int rc = response.getReturnCode();
 
-        if (rc != LDAPException.SUCCESS) return;
+        if (rc != LDAP.SUCCESS) return;
 
         BindRequest bindRequest = event.getRequest();
         DN dn = bindRequest.getDn();

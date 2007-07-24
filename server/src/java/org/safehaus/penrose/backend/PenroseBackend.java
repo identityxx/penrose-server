@@ -85,7 +85,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
 
     public boolean contains(DN dn) throws Exception {
         PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        if (penroseConfig.getRootDn().equals(dn)) return true;
+        if (penroseConfig.getRootDn().matches(dn)) return true;
         
         Penrose penrose = penroseServer.getPenrose();
         PenroseContext penroseContext = penrose.getPenroseContext();

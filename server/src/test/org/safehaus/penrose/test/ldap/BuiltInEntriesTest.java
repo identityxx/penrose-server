@@ -27,7 +27,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.ldap.LDAP;
 
 /**
  * @author Endi S. Dewata
@@ -75,7 +75,7 @@ public class BuiltInEntriesTest extends TestCase {
         );
 
         assertEquals(0, response.getTotalCount());
-        assertEquals(LDAPException.NO_SUCH_OBJECT, response.getReturnCode());
+        assertEquals(LDAP.NO_SUCH_OBJECT, response.getReturnCode());
 
         session.unbind();
 

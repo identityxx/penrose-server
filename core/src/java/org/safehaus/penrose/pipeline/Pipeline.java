@@ -18,21 +18,22 @@
 package org.safehaus.penrose.pipeline;
 
 import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
  */
-public class Pipeline extends SearchResponse {
+public class Pipeline extends SearchResponse<SearchResult> {
 
-    public SearchResponse parent;
+    public SearchResponse<SearchResult> parent;
 
-    public Pipeline(SearchResponse parent) {
+    public Pipeline(SearchResponse<SearchResult> parent) {
         this.parent = parent;
     }
 
-    public void add(Object object) throws Exception {
-        parent.add(object);
+    public void add(SearchResult result) throws Exception {
+        parent.add(result);
     }
 
     public long getTotalCount() {
@@ -55,7 +56,7 @@ public class Pipeline extends SearchResponse {
         return parent;
     }
 
-    public void setParent(SearchResponse parent) {
+    public void setParent(SearchResponse<SearchResult> parent) {
         this.parent = parent;
     }
 }

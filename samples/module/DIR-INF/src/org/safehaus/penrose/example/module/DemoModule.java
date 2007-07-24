@@ -7,8 +7,6 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.util.ExceptionUtil;
-import org.ietf.ldap.LDAPException;
 
 /**
  * @author Endi S. Dewata
@@ -28,7 +26,7 @@ public class DemoModule extends Module {
         BindRequest request = event.getRequest();
         BindResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Bound as "+request.getDn()+".");
         } else {
             System.out.println("#### Failed to bind as "+request.getDn()+". RC="+rc);
@@ -41,7 +39,7 @@ public class DemoModule extends Module {
 
         Filter filter = request.getFilter();
         if (filter != null && filter.toString().equalsIgnoreCase("(cn=secret)")) {
-            throw ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
+            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
         SearchResponse<SearchResult> response = event.getResponse();
@@ -59,7 +57,7 @@ public class DemoModule extends Module {
     public void afterSearch(SearchEvent event) throws Exception {
         SearchResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Search succeded.");
         } else {
             System.out.println("#### Search failed. RC="+rc);
@@ -86,7 +84,7 @@ public class DemoModule extends Module {
     public void afterAdd(AddEvent event) throws Exception {
         AddResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Add succeded.");
         } else {
             System.out.println("#### Add failed. RC="+rc);
@@ -124,7 +122,7 @@ public class DemoModule extends Module {
     public void afterModify(ModifyEvent event) throws Exception {
         ModifyResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Modify succeded.");
         } else {
             System.out.println("#### Modify failed. RC="+rc);
@@ -139,7 +137,7 @@ public class DemoModule extends Module {
     public void afterDelete(DeleteEvent event) throws Exception {
         DeleteResponse response = event.getResponse();
         int rc = response.getReturnCode();
-        if (rc == LDAPException.SUCCESS) {
+        if (rc == LDAP.SUCCESS) {
             System.out.println("#### Delete succeded.");
         } else {
             System.out.println("#### Delete failed. RC="+rc);

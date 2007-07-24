@@ -18,7 +18,6 @@
 package org.safehaus.penrose.adapter.ldap;
 
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
@@ -33,7 +32,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -75,7 +73,7 @@ public class LDAPAdapter extends Adapter {
 
         if (AUTHENTICATION_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
-            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
         String connectionName = source.getConnectionName();
@@ -126,7 +124,7 @@ public class LDAPAdapter extends Adapter {
 
                 } else {
                     if (debug) log.debug("Missing credentials.");
-                    throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                    throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
                 }
             }
 

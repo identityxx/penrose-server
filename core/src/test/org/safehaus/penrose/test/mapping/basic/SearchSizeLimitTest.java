@@ -1,10 +1,7 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -46,7 +43,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
             response.hasNext();
             fail();
         } catch (LDAPException e) {
-            assertEquals(LDAPException.SIZE_LIMIT_EXCEEDED, e.getResultCode());
+            assertEquals(LDAP.SIZE_LIMIT_EXCEEDED, e.getResultCode());
         }
 
         session.close();
@@ -97,7 +94,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
             response.hasNext();
             fail();
         } catch (LDAPException e) {
-            assertEquals(LDAPException.SIZE_LIMIT_EXCEEDED, e.getResultCode());
+            assertEquals(LDAP.SIZE_LIMIT_EXCEEDED, e.getResultCode());
         }
 
         session.close();

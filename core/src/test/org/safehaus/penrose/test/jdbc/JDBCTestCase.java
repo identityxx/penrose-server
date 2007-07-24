@@ -1,7 +1,6 @@
 package org.safehaus.penrose.test.jdbc;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.Penrose;
 
 import java.sql.*;
 import java.util.*;

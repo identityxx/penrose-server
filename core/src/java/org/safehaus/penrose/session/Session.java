@@ -25,7 +25,6 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -122,39 +121,31 @@ public class Session {
     }
 
     public void add(DN dn, Attributes attributes) throws LDAPException {
-        try {
-            AddRequest request = new AddRequest();
-            request.setDn(dn);
-            request.setAttributes(attributes);
+        AddRequest request = new AddRequest();
+        request.setDn(dn);
+        request.setAttributes(attributes);
 
-            AddResponse response = new AddResponse();
+        AddResponse response = new AddResponse();
 
-            add(request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
-        }
+        add(request, response);
     }
     
     public void add(AddRequest request, AddResponse response) throws LDAPException {
+
+        Partition partition;
+
         try {
             DN dn = request.getDn();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Partition for entry "+dn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            add(partition, request, response);
+            partition = partitionManager.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
+
+        add(partition, request, response);
     }
 
     public void add(Partition partition, AddRequest request, AddResponse response) throws LDAPException {
@@ -261,11 +252,6 @@ public class Session {
             if (!isAnonymous && !isRoot) {
                 PartitionManager partitionManager = penroseContext.getPartitionManager();
                 partition = partitionManager.getPartition(dn);
-
-                if (partition == null) {
-                    log.debug("Partition for entry "+dn+" not found.");
-                    throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-                }
             }
 
             if (eventsEnabled) {
@@ -284,7 +270,7 @@ public class Session {
                 } else if (isRoot) {
                     if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
                         log.debug("Password doesn't match => BIND FAILED");
-                        throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
                     }
 
                     log.debug("Bound as root user.");
@@ -342,23 +328,21 @@ public class Session {
     }
 
     public boolean compare(CompareRequest request, CompareResponse response) throws LDAPException {
+
+        Partition partition;
+
         try {
             DN dn = request.getDn();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Partition for entry "+dn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            return compare(partition, request, response);
+            partition = partitionManager.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
+
+        return compare(partition, request, response);
     }
 
     public boolean compare(Partition partition, CompareRequest request, CompareResponse response) throws LDAPException {
@@ -412,7 +396,7 @@ public class Session {
                 }
             }
 
-            response.setReturnCode(result ? LDAPException.COMPARE_TRUE : LDAPException.COMPARE_FALSE);
+            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
             
             return result;
 
@@ -444,23 +428,21 @@ public class Session {
     }
 
     public void delete(DeleteRequest request, DeleteResponse response) throws LDAPException {
+
+        Partition partition;
+
         try {
             DN dn = request.getDn();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Partition for entry "+dn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            delete(partition, request, response);
+            partition = partitionManager.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
+
+        delete(partition, request, response);
     }
 
     public void delete(Partition partition, DeleteRequest request, DeleteResponse response) throws LDAPException {
@@ -529,23 +511,21 @@ public class Session {
     }
 
     public void modify(ModifyRequest request, ModifyResponse response) throws LDAPException {
+
+        Partition partition;
+
         try {
             DN dn = request.getDn();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Partition for entry "+dn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            modify(partition, request, response);
+            partition = partitionManager.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
+
+        modify(partition, request, response);
     }
 
     public void modify(Partition partition, ModifyRequest request, ModifyResponse response) throws LDAPException {
@@ -626,23 +606,21 @@ public class Session {
     }
 
     public void modrdn(ModRdnRequest request, ModRdnResponse response) throws LDAPException {
+
+        Partition partition;
+
         try {
             DN dn = request.getDn();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            if (partition == null) {
-                log.debug("Partition for entry "+dn+" not found.");
-                throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-            }
-
-            modrdn(partition, request, response);
+            partition = partitionManager.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
+
+        modrdn(partition, request, response);
     }
 
     public void modrdn(Partition partition, ModRdnRequest request, ModRdnResponse response) throws LDAPException {
@@ -715,7 +693,7 @@ public class Session {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
         }
     }
 
@@ -737,7 +715,26 @@ public class Session {
         return response;
     }
 
+    public void search(SearchRequest request, SearchResponse<SearchResult> response) throws LDAPException {
+
+        Partition partition;
+
+        try {
+            DN dn = request.getDn();
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            partition = partitionManager.getPartition(dn);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw LDAP.createException(e);
+        }
+
+        search(partition, request, response);
+    }
+
     public void search(
+            final Partition partition,
             final SearchRequest request,
             final SearchResponse<SearchResult> response
     ) throws LDAPException {
@@ -774,99 +771,38 @@ public class Session {
 
             final Session session = this;
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            final Partition partition = partitionManager.getPartition(baseDn);
-
             if (eventsEnabled) {
                 SearchEvent beforeSearchEvent = new SearchEvent(session, SearchEvent.BEFORE_SEARCH, this, partition, request, response);
 	           	eventManager.postEvent(beforeSearchEvent);
             }
 
-            if (partition == null) {
-
-                boolean allRegularAttributes = requestedAttributes.isEmpty() || requestedAttributes.contains("*");
-                boolean allOpAttributes = requestedAttributes.contains("+");
-
-                if (baseDn.equals(HandlerManager.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
-
-                    SearchResult result = handlerManager.createRootDSE();
-                    Attributes attrs = result.getAttributes();
-                    if (debug) {
-                        log.debug("Before: "+result.getDn());
-                        attrs.print();
-                    }
-
-                    Collection<String> list = handlerManager.filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
-                    handlerManager.removeAttributes(attrs, list);
-
-                    if (debug) {
-                        log.debug("After: "+result.getDn());
-                        attrs.print();
-                    }
-
-                    response.add(result);
-                    response.close();
-                    Access.log(session, response);
-                    return;
-
-                } else if (baseDn.equals(HandlerManager.SCHEMA_DN)) {
-
-                    SearchResult result = handlerManager.createSchema();
-                    Attributes attrs = result.getAttributes();
-                    if (debug) {
-                        log.debug("Before: "+result.getDn());
-                        attrs.print();
-                    }
-
-                    Collection<String> list = handlerManager.filterAttributes(session, partition, result, requestedAttributes, allRegularAttributes, allOpAttributes);
-                    handlerManager.removeAttributes(attrs, list);
-
-                    if (debug) {
-                        log.debug("After: "+result.getDn());
-                        attrs.print();
-                    }
-
-                    response.add(result);
-                    response.close();
-                    Access.log(session, response);
-                    return;
-
-                } else {
-                    log.debug("Partition for entry "+baseDn+" not found.");
-                    response.close();
-                    Access.log(session, response);
-                    throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
+            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+                public void add(SearchResult value) throws Exception {
+                    response.add(value);
                 }
-            }
+                public void setException(LDAPException exception) {
+                    response.setException(exception);
+                }
+                public void close() throws Exception {
+                    response.close();
 
-            SearchResponse<SearchResult> resultsToUse = response;
+                    lastActivityDate.setTime(System.currentTimeMillis());
 
-            if (eventsEnabled) {
-            	resultsToUse = new SearchResponse<SearchResult>() {
-                    public void add(SearchResult value) throws Exception {
-                        response.add(value);
-                    }
-                    public void setException(LDAPException exception) {
-                        response.setException(exception);
-                    }
-                    public void close() throws Exception {
-                        response.close();
-                        Access.log(session, response);
-
-                        lastActivityDate.setTime(System.currentTimeMillis());
-
+                    if (eventsEnabled) {
                         SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, partition, request, response);
                         eventManager.postEvent(afterSearchEvent);
                     }
-                };
-            }
 
-            handlerManager.search(this, partition, request, resultsToUse);
+                    Access.log(session, response);
+                }
+            };
+
+            handlerManager.search(this, partition, request, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             response.setException(e);
-            try { response.close(); } catch (Exception ex) {}
+            try { response.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
             Access.log(this, response);
             throw response.getException();
         }
@@ -886,6 +822,24 @@ public class Session {
     }
 
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
+
+        Partition partition = null;
+
+        try {
+            if (!rootUser && bindDn != null) {
+                PartitionManager partitionManager = penroseContext.getPartitionManager();
+                partition = partitionManager.getPartition(bindDn);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw LDAP.createException(e);
+        }
+
+        unbind(partition, request, response);
+    }
+
+    public void unbind(Partition partition, UnbindRequest request, UnbindResponse response) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -900,18 +854,6 @@ public class Session {
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
-            }
-
-            Partition partition = null;
-
-            if (!rootUser && bindDn != null) {
-                PartitionManager partitionManager = penroseContext.getPartitionManager();
-                partition = partitionManager.getPartition(bindDn);
-
-                if (partition == null) {
-                    log.debug("Partition for entry "+bindDn+" not found.");
-                    throw ExceptionUtil.createLDAPException(LDAPException.NO_SUCH_OBJECT);
-                }
             }
 
             if (eventsEnabled) {

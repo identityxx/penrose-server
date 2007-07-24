@@ -1,10 +1,7 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.*;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -90,7 +87,7 @@ public class SearchBaseTest extends BasicTestCase {
             fail();
         } catch (LDAPException e) {
             log.debug(e.getMessage(), e);
-            assertEquals(LDAPException.NO_SUCH_OBJECT, e.getResultCode());
+            assertEquals(LDAP.NO_SUCH_OBJECT, e.getResultCode());
         }
 
         session.close();

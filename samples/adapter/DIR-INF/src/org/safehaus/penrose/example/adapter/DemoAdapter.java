@@ -7,7 +7,6 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.session.Session;
-import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.Map;
@@ -56,8 +55,7 @@ public class DemoAdapter extends Adapter {
         RDN rdn = dn.getRdn();
 
         if (entries.containsKey(rdn)) {
-            int rc = LDAPException.ENTRY_ALREADY_EXISTS;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.ENTRY_ALREADY_EXISTS);
         }
 
         entries.put(rdn, attributes);
@@ -83,19 +81,16 @@ public class DemoAdapter extends Adapter {
 
         Attributes attributes = entries.get(rdn);
         if (attributes == null) {
-            int rc = LDAPException.NO_SUCH_OBJECT;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         Object userPassword = attributes.getValue("userPassword");
         if (userPassword == null) {
-            int rc = LDAPException.NO_SUCH_ATTRIBUTE;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.NO_SUCH_ATTRIBUTE);
         }
 
         if (!PasswordUtil.comparePassword(password, userPassword)) {
-            int rc = LDAPException.INVALID_CREDENTIALS;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
     }
 
@@ -116,8 +111,7 @@ public class DemoAdapter extends Adapter {
         RDN rdn = dn.getRdn();
 
         if (!entries.containsKey(rdn)) {
-            int rc = LDAPException.NO_SUCH_OBJECT;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         entries.remove(rdn);
@@ -142,8 +136,7 @@ public class DemoAdapter extends Adapter {
 
         Attributes attributes = entries.get(rdn);
         if (attributes == null) {
-            int rc = LDAPException.NO_SUCH_OBJECT;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         for (Modification modification : modifications) {
@@ -196,8 +189,7 @@ public class DemoAdapter extends Adapter {
 
         Attributes attributes = entries.remove(rdn);
         if (attributes == null) {
-            int rc = LDAPException.NO_SUCH_OBJECT;
-            throw new LDAPException(LDAPException.resultCodeToString(rc), rc, null);
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
         if (deleteOldRdn) {

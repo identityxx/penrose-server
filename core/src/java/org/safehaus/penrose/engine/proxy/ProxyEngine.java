@@ -23,13 +23,11 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -80,7 +78,7 @@ public class ProxyEngine extends Engine {
 
         if (AUTHENTICATON_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
-            throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
         String connectionName = source.getConnectionName();
@@ -138,7 +136,7 @@ public class ProxyEngine extends Engine {
 
                 } else {
                     if (debug) log.debug("Missing credentials.");
-                    throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                    throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
                 }
             }
 
@@ -189,7 +187,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, partition, source, client);
@@ -234,7 +232,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             storeClient(session, partition, source, client);
@@ -277,7 +275,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             storeClient(session, partition, source, client);
@@ -320,7 +318,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, partition, source, client);
@@ -365,7 +363,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, partition, source, client);
@@ -412,7 +410,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, partition, source, client);
@@ -507,7 +505,7 @@ public class ProxyEngine extends Engine {
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            throw ExceptionUtil.createLDAPException(e);
+            throw LDAP.createException(e);
 
         } finally {
             response.close();

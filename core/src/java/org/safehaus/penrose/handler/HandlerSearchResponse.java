@@ -1,14 +1,10 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLManager;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +70,7 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
             if (debug) log.debug("Checking read permission.");
             
             int rc = aclManager.checkRead(session, partition, entryMapping, dn);
-            if (rc != LDAPException.SUCCESS) {
+            if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Entry \""+searchResult.getDn()+"\" is not readable.");
                 return;
             }
@@ -126,11 +122,11 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
 
             int rc = ldapException.getResultCode();
             switch (rc) {
-                case LDAPException.SUCCESS:
+                case LDAP.SUCCESS:
                     successes = true;
                     break;
 
-                case LDAPException.NO_SUCH_OBJECT:
+                case LDAP.NO_SUCH_OBJECT:
                     noSuchObject = ldapException;
                     break;
 

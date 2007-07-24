@@ -18,7 +18,6 @@
 package org.safehaus.penrose.adapter.jdbc;
 
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -37,7 +36,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
-import org.ietf.ldap.LDAPException;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.dbcp.*;
 
@@ -241,7 +239,7 @@ public class JDBCAdapter extends Adapter {
 
                 } else {
                     if (debug) log.debug("Missing credentials.");
-                    throw ExceptionUtil.createLDAPException(LDAPException.INVALID_CREDENTIALS);
+                    throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
                 }
             }
 
@@ -836,7 +834,7 @@ public class JDBCAdapter extends Adapter {
                     ResultSet rs = (ResultSet)object;
 
                     if (sizeLimit > 0 && totalCount >= sizeLimit) {
-                        throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+                        throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
                     }
 
                     SearchResult searchResult = createSearchResult(source, rs);
@@ -909,7 +907,7 @@ public class JDBCAdapter extends Adapter {
                     ResultSet rs = (ResultSet)object;
 
                     if (sizeLimit > 0 && totalCount >= sizeLimit) {
-                        throw ExceptionUtil.createLDAPException(LDAPException.SIZE_LIMIT_EXCEEDED);
+                        throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
                     }
 
                     SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
