@@ -21,7 +21,7 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
@@ -429,7 +429,7 @@ public class SimpleEngine extends Engine {
             log.debug(Formatter.displayLine("Base Mapping  : "+baseMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Filter        : "+request.getFilter(), 80));
-            log.debug(Formatter.displayLine("Scope         : "+LDAPUtil.getScope(request.getScope()), 80));
+            log.debug(Formatter.displayLine("Scope         : "+ LDAP.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 

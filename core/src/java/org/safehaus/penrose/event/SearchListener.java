@@ -21,6 +21,6 @@ package org.safehaus.penrose.event;
  * @author Endi S. Dewata
  */
 public interface SearchListener {
-    public boolean beforeSearch(SearchEvent event) throws Exception;
+    public void beforeSearch(SearchEvent event) throws Exception;
     public void afterSearch(SearchEvent event) throws Exception;
 }

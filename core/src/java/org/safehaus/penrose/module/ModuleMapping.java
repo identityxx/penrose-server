@@ -74,23 +74,24 @@ public class ModuleMapping implements Cloneable {
 
     public boolean match(DN dn) throws Exception {
 
-        if ("OBJECT".equals(scope)) {
+        if (dn == null) {
+            return false;
+
+        } else if ("OBJECT".equals(scope)) {
 
             //log.debug("Matching object ["+baseDn+"] with ["+dn+"]");
-            if (baseDn.matches(dn)) return true;
+            return baseDn.matches(dn);
 
         } else if ("ONELEVEL".equals(scope)) {
 
             //log.debug("Matching onelevel ["+baseDn+"] with ["+dn+"]");
             DN parentDn = dn.getParentDn();
-            if (baseDn.matches(parentDn)) return true;
+            return baseDn.matches(parentDn);
 
-        } else if ("SUBTREE".equals(scope)) {
+        } else { // if ("SUBTREE".equals(scope)) {
 
             return dn.endsWith(baseDn);
         }
-
-        return false;
     }
 
     public ModuleConfig getModuleConfig() {
@@ -111,11 +112,12 @@ public class ModuleMapping implements Cloneable {
         return o2.equals(o1);
     }
 
-    public boolean equals(Object o) {
-        if (o == null) return false;
-        if (!(o instanceof ModuleMapping)) return false;
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
-        ModuleMapping mapping = (ModuleMapping)o;
+        ModuleMapping mapping = (ModuleMapping)object;
         if (!equals(moduleName, mapping.getModuleName())) return false;
         if (!equals(baseDn, mapping.getBaseDn())) return false;
         if (!equals(scope, mapping.getScope())) return false;

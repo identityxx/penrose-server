@@ -21,6 +21,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -31,7 +32,7 @@ public class SearchEvent extends Event {
     public final static int AFTER_SEARCH  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected SearchRequest request;
     protected SearchResponse<SearchResult> response;
@@ -40,11 +41,13 @@ public class SearchEvent extends Event {
             Object source,
             int type,
             Session session,
+            Partition partition,
             SearchRequest request,
             SearchResponse<SearchResult> response
     ) {
         super(source, type);
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
     }
@@ -57,12 +60,12 @@ public class SearchEvent extends Event {
         this.session = session;
     }
 
-    public int getReturnCode() {
-        return returnCode;
+    public Partition getPartition() {
+        return partition;
     }
 
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 
     public SearchRequest getRequest() {

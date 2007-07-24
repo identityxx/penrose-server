@@ -109,7 +109,8 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (object == null || object.getClass() != getClass()) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         ServiceConfig serviceConfig = (ServiceConfig)object;
         if (!equals(name, serviceConfig.name)) return false;

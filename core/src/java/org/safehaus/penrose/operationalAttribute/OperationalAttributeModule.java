@@ -38,7 +38,7 @@ public class OperationalAttributeModule extends Module {
         System.out.println("#### Initializing OperationalAttributeModule.");
     }
 
-    public boolean beforeAdd(AddEvent event) throws Exception {
+    public void beforeAdd(AddEvent event) throws Exception {
 
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
@@ -62,11 +62,9 @@ public class OperationalAttributeModule extends Module {
         }
 
         attributes.setValue("modifyTimestamp", timestamp);
-
-        return true;
     }
 
-    public boolean beforeModify(ModifyEvent event) throws Exception {
+    public void beforeModify(ModifyEvent event) throws Exception {
 
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
@@ -88,8 +86,6 @@ public class OperationalAttributeModule extends Module {
         Attribute modifyTimestamp = new Attribute("modifyTimestamp", timestamp);
         Modification mi = new Modification(Modification.REPLACE, modifyTimestamp);
         modifications.add(mi);
-
-        return true;
     }
 
     public void afterModRdn(ModRdnEvent event) throws Exception {

@@ -158,6 +158,13 @@ public class Source implements Cloneable {
     }
 
     public void add(
+            RDN rdn,
+            Attributes attributes
+    ) throws Exception {
+        add(new DN(rdn), attributes);
+    }
+
+    public void add(
             DN dn,
             Attributes attributes
     ) throws Exception {
@@ -191,6 +198,12 @@ public class Source implements Cloneable {
     }
 
     public void delete(
+            RDN rdn
+    ) throws Exception {
+        delete(new DN(rdn));
+    }
+
+    public void delete(
             DN dn
     ) throws Exception {
 
@@ -212,6 +225,26 @@ public class Source implements Cloneable {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SearchResult find(String dn) throws Exception {
+        return find(new DN(dn));
+    }
+
+    public SearchResult find(RDN rdn) throws Exception {
+        return find(new DN(rdn));
+    }
+
+    public SearchResult find(DN dn) throws Exception {
+        SearchResponse<SearchResult> response = search(dn, null, SearchRequest.SCOPE_BASE);
+
+        if (!response.hasNext()) return null;
+
+        return response.next();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,6 +253,13 @@ public class Source implements Cloneable {
             Collection<Modification> modifications
     ) throws Exception {
         modify(new DN(dn), modifications);
+    }
+
+    public void modify(
+            RDN rdn,
+            Collection<Modification> modifications
+    ) throws Exception {
+        modify(new DN(rdn), modifications);
     }
 
     public void modify(
@@ -258,6 +298,14 @@ public class Source implements Cloneable {
     }
 
     public void modrdn(
+            RDN rdn,
+            RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+        modrdn(new DN(rdn), newRdn, deleteOldRdn);
+    }
+
+    public void modrdn(
             DN dn,
             RDN newRdn,
             boolean deleteOldRdn
@@ -292,6 +340,14 @@ public class Source implements Cloneable {
             int scope
     ) throws Exception {
         return search(new DN(dn), FilterTool.parseFilter(filter), scope);
+    }
+
+    public SearchResponse<SearchResult> search(
+            RDN rdn,
+            Filter filter,
+            int scope
+    ) throws Exception {
+        return search(new DN(rdn), filter, scope);
     }
 
     public SearchResponse<SearchResult> search(

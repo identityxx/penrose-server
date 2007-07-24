@@ -37,6 +37,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
+    public boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -54,7 +55,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public Partition load(String dir, PartitionConfig partitionConfig) throws Exception {
 
-        log.debug("Loading "+partitionConfig.getName()+" partition.");
+        if (debug) log.debug("Loading "+partitionConfig.getName()+" partition.");
 
         PartitionReader partitionReader = new PartitionReader(dir);
         Partition partition = partitionReader.read(partitionConfig);
@@ -84,7 +85,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
         String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
 
-        log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
+        if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
         Partition partition = getPartition(partitionConfig.getName());
 
@@ -156,12 +157,18 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public Partition getPartition(DN dn) throws Exception {
 
-        if (dn == null) return null;
+        if (debug) log.debug("Finding partition for \""+dn+"\".");
+
+        if (dn == null) {
+            log.debug("DN is null.");
+            return null;
+        }
 
         Partition p = null;
         DN s = null;
 
         for (Partition partition : partitions.values()) {
+            if (debug) log.debug("Checking "+partition.getName()+" partition.");
 
             Collection<DN> suffixes = partition.getMappings().getSuffixes();
             for (DN suffix : suffixes) {
@@ -173,6 +180,14 @@ public class PartitionManager implements PartitionManagerMBean {
                         s = suffix;
                     }
                 }
+            }
+        }
+
+        if (debug) {
+            if (p == null) {
+                log.debug("Partition not found.");
+            } else {
+                log.debug("Found "+p.getName()+" partition.");
             }
         }
 

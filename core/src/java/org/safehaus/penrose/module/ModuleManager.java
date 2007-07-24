@@ -34,6 +34,7 @@ import java.util.*;
 public class ModuleManager implements ModuleManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -48,7 +49,7 @@ public class ModuleManager implements ModuleManagerMBean {
         
         if (!moduleConfig.isEnabled()) return;
 
-        log.debug("Initializing module "+moduleConfig.getName()+".");
+        if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
 
         String moduleClass = moduleConfig.getModuleClass();
         ClassLoader cl = partition.getClassLoader();
@@ -76,7 +77,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
                 if (!moduleConfig.isEnabled()) {
-                    log.debug("Module " + moduleConfig.getName() + " is disabled");
+                    if (debug) log.debug("Module " + moduleConfig.getName() + " is disabled");
                     continue;
                 }
 
@@ -91,17 +92,17 @@ public class ModuleManager implements ModuleManagerMBean {
 
         Module module = getModule(partitionName, moduleName);
         if (module == null) {
-            log.debug("Module "+moduleName+" not found");
+            if (debug) log.debug("Module "+moduleName+" not found");
             return;
         }
 
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) {
-            log.debug("Module "+moduleConfig.getName()+" is disabled");
+            if (debug) log.debug("Module "+moduleConfig.getName()+" is disabled");
             return;
         }
 
-        log.debug("Starting "+moduleName +" module.");
+        if (debug) log.debug("Starting "+moduleName +" module.");
         module.start();
     }
 
@@ -116,7 +117,7 @@ public class ModuleManager implements ModuleManagerMBean {
 
                 ModuleConfig moduleConfig = module.getModuleConfig();
                 if (!moduleConfig.isEnabled()) {
-                    log.debug("Module " + moduleConfig.getName() + " is disabled");
+                    if (debug) log.debug("Module " + moduleConfig.getName() + " is disabled");
                     continue;
                 }
 
@@ -131,17 +132,17 @@ public class ModuleManager implements ModuleManagerMBean {
 
         Module module = getModule(partitionName, moduleName);
         if (module == null) {
-            log.debug("Module "+moduleName+" not found");
+            if (debug) log.debug("Module "+moduleName+" not found");
             return;
         }
 
         ModuleConfig moduleConfig = module.getModuleConfig();
         if (!moduleConfig.isEnabled()) {
-            log.debug("Module "+moduleConfig.getName()+" is disabled");
+            if (debug) log.debug("Module "+moduleConfig.getName()+" is disabled");
             return;
         }
 
-        log.debug("Stopping "+moduleName +" module.");
+        if (debug) log.debug("Stopping "+moduleName +" module.");
         module.stop();
     }
 
@@ -186,31 +187,27 @@ public class ModuleManager implements ModuleManagerMBean {
         modules.clear();
     }
 
-    public Collection<Module> getModules(DN dn) throws Exception {
+    public Collection<Module> getModules(Partition partition, DN dn) throws Exception {
 
-        //log.debug("Finding matching modules for \""+dn+"\".");
+        if (debug) log.debug("Modules:");
 
         Collection<Module> list = new ArrayList<Module>();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        Partition partition = partitionManager.getPartition(dn);
-        
         if (partition == null) return list;
 
         for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
 
             for (ModuleMapping moduleMapping : moduleMappings) {
-                if (!moduleMapping.match(dn)) continue;
-
                 String moduleName = moduleMapping.getModuleName();
-                Module module = getModule(partition.getName(), moduleName);
 
-                //log.debug(" - "+moduleName);
+                boolean b = moduleMapping.match(dn);
+                if (debug) log.debug(" - "+moduleName+": "+b);
+
+                if (!b) continue;
+
+                Module module = getModule(partition.getName(), moduleName);
                 list.add(module);
             }
         }
-
-        //log.debug("Found "+list.size()+" module(s).");
 
         return list;
     }

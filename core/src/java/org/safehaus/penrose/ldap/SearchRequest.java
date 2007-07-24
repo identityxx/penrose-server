@@ -166,7 +166,7 @@ public class SearchRequest extends Request implements Cloneable {
         if (!equals(timeLimit, searchRequest.timeLimit)) return false;
         if (!equals(attributes, searchRequest.attributes)) return false;
 
-        return true;
+        return super.equals(object);
     }
 
     public void copy(SearchRequest request) {

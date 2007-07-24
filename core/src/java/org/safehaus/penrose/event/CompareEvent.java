@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.CompareResponse;
 import org.safehaus.penrose.ldap.CompareRequest;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,15 +31,15 @@ public class CompareEvent extends Event {
     public final static int AFTER_COMPARE  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected CompareRequest request;
     protected CompareResponse response;
 
-    public CompareEvent(Object source, int type, Session session, CompareRequest request, CompareResponse response) {
+    public CompareEvent(Object source, int type, Session session, Partition partition, CompareRequest request, CompareResponse response) {
         super(source, type);
-
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
     }
@@ -51,12 +52,12 @@ public class CompareEvent extends Event {
         this.session = session;
     }
 
-    public int getReturnCode() {
-        return returnCode;
+    public Partition getPartition() {
+        return partition;
     }
 
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 
     public CompareRequest getRequest() {

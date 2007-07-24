@@ -3,7 +3,7 @@ package org.safehaus.penrose.log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.filter.Filter;
 import org.ietf.ldap.LDAPException;
@@ -243,7 +243,7 @@ public class Access {
             sb.append("SEARCH base=\"");
             sb.append(request.getDn());
             sb.append("\" scope=\"");
-            sb.append(LDAPUtil.getScope(request.getScope()));
+            sb.append(LDAP.getScope(request.getScope()));
             sb.append("\" filter=\"");
 
             Filter filter = request.getFilter();

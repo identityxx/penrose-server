@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.DeleteRequest;
 import org.safehaus.penrose.ldap.DeleteResponse;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,15 +31,15 @@ public class DeleteEvent extends Event {
     public final static int AFTER_DELETE  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected DeleteRequest request;
     protected DeleteResponse response;
 
-    public DeleteEvent(Object source, int type, Session session, DeleteRequest request, DeleteResponse response) {
+    public DeleteEvent(Object source, int type, Session session, Partition partition, DeleteRequest request, DeleteResponse response) {
         super(source, type);
-
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
     }
@@ -51,12 +52,12 @@ public class DeleteEvent extends Event {
         this.session = session;
     }
 
-    public int getReturnCode() {
-        return returnCode;
+    public Partition getPartition() {
+        return partition;
     }
 
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 
     public DeleteRequest getRequest() {

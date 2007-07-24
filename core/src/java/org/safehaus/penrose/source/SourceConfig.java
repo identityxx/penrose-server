@@ -240,7 +240,8 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         SourceConfig sourceConfig = (SourceConfig)object;
         if (!equals(name, sourceConfig.name)) return false;

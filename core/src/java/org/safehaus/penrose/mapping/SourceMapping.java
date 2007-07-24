@@ -170,7 +170,8 @@ public class SourceMapping implements Cloneable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         SourceMapping sourceMapping = (SourceMapping)object;
         if (!equals(name, sourceMapping.name)) return false;

@@ -74,15 +74,14 @@ public class RDN implements Comparable {
         if (original != null) return original;
 
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : values.keySet()) {
             Object value = values.get(name);
             if (value == null) continue;
 
             if (sb.length() > 0) sb.append('+');
             sb.append(name);
             sb.append('=');
-            sb.append(escape(value.toString()));
+            sb.append(LDAP.escape(value.toString()));
         }
 
         original = sb.toString();
@@ -93,14 +92,13 @@ public class RDN implements Comparable {
         if (normalized != null) return normalized;
 
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : values.keySet()) {
             Object value = values.get(name);
 
             if (sb.length() > 0) sb.append('+');
             sb.append(name.toLowerCase());
             sb.append('=');
-            sb.append(escape(value.toString().toLowerCase()));
+            sb.append(LDAP.escape(value.toString().toLowerCase()));
         }
 
         normalized = sb.toString();
@@ -119,7 +117,8 @@ public class RDN implements Comparable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         RDN rdn = (RDN)object;
         if (!equals(getOriginal(), rdn.getOriginal())) return false;
@@ -148,8 +147,8 @@ public class RDN implements Comparable {
             Object value2 = rdn.values.get(name2);
 
             if (value1 instanceof Comparable && value2 instanceof Comparable) {
-                Comparable v1 = (Comparable)value1.toString();
-                Comparable v2 = (Comparable)value2.toString();
+                String v1 = value1.toString();
+                String v2 = value2.toString();
 
                 c = v1.compareTo(v2);
                 if (c != 0) return c;
@@ -174,9 +173,8 @@ public class RDN implements Comparable {
     public int createPattern(int counter) {
 
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            String value = (String)values.get(name);
+        for (String name : values.keySet()) {
+            String value = (String) values.get(name);
 
             if (sb.length() > 0) sb.append('+');
 
@@ -231,70 +229,5 @@ public class RDN implements Comparable {
         }
 
         return true;
-    }
-
-    public static String escape(String value) {
-
-        StringBuilder sb = new StringBuilder();
-        char chars[] = value.toCharArray();
-
-        boolean quote = chars[0] == ' ' || chars[chars.length-1] == ' ';
-        boolean space = false;
-
-        for (int i=0; i<chars.length; i++) {
-            char c = chars[i];
-
-            // checking special characters
-            if (c == ',' || c == '=' || c == '+'
-                    || c == '<' || c == '>'
-                    || c == '#' || c == ';'
-                    || c == '\\' || c == '"') {
-                sb.append('\\');
-            }
-
-            if (c == '\n') {
-                quote = true;
-            }
-
-            // checking double space
-            if (c == ' ') {
-                if (space) {
-                    quote = true;
-                } else {
-                    space = true;
-                }
-            } else {
-                space = false;
-            }
-
-            sb.append(c);
-        }
-
-        if (quote) {
-            sb.insert(0, '"');
-            sb.append('"');
-        }
-
-        return sb.toString();
-    }
-
-    public static String unescape(String value) {
-        char chars[] = value.toCharArray();
-
-        if (chars[0] == '"' && chars[chars.length-1] == '"') {
-            return value.substring(1, chars.length-1);
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i=0; i<chars.length; i++) {
-            char c = chars[i];
-            if (c == '\\') {
-                c = chars[++i];
-            }
-            sb.append(c);
-        }
-
-        return sb.toString();
     }
 }

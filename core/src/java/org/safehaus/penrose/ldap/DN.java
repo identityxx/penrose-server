@@ -205,7 +205,8 @@ public class DN implements Comparable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         DN dn = (DN)object;
         if (!equals(getOriginalDn(), dn.getOriginalDn())) return false;

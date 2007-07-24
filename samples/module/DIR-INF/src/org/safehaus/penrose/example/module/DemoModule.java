@@ -7,6 +7,7 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.util.ExceptionUtil;
 import org.ietf.ldap.LDAPException;
 
 /**
@@ -18,15 +19,15 @@ public class DemoModule extends Module {
         System.out.println("#### Initializing DemoModule.");
     }
 
-    public boolean beforeBind(BindEvent event) throws Exception {
+    public void beforeBind(BindEvent event) throws Exception {
         BindRequest request = event.getRequest();
         System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
-        return true;
     }
 
     public void afterBind(BindEvent event) throws Exception {
         BindRequest request = event.getRequest();
-        int rc = event.getReturnCode();
+        BindResponse response = event.getResponse();
+        int rc = response.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
             System.out.println("#### Bound as "+request.getDn()+".");
         } else {
@@ -34,13 +35,13 @@ public class DemoModule extends Module {
         }
     }
 
-    public boolean beforeSearch(SearchEvent event) throws Exception {
+    public void beforeSearch(SearchEvent event) throws Exception {
         SearchRequest request = event.getRequest();
         System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
 
         Filter filter = request.getFilter();
         if (filter != null && filter.toString().equalsIgnoreCase("(cn=secret)")) {
-            return false;
+            throw ExceptionUtil.createLDAPException(LDAPException.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
         SearchResponse<SearchResult> response = event.getResponse();
@@ -53,12 +54,11 @@ public class DemoModule extends Module {
                 System.out.println("Returning "+dn+".");
             }
         });
-
-        return true;
     }
 
     public void afterSearch(SearchEvent event) throws Exception {
-        int rc = event.getReturnCode();
+        SearchResponse response = event.getResponse();
+        int rc = response.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
             System.out.println("#### Search succeded.");
         } else {
@@ -66,7 +66,7 @@ public class DemoModule extends Module {
         }
     }
 
-    public boolean beforeAdd(AddEvent event) throws Exception {
+    public void beforeAdd(AddEvent event) throws Exception {
         AddRequest request = event.getRequest();
         System.out.println("#### Adding "+request.getDn()+":");
 
@@ -81,12 +81,11 @@ public class DemoModule extends Module {
         // change sn attribute to upper case
         String sn = (String)attributes.getValue("sn");
         attributes.setValue("sn", sn.toUpperCase());
-
-        return true;
     }
 
     public void afterAdd(AddEvent event) throws Exception {
-        int rc = event.getReturnCode();
+        AddResponse response = event.getResponse();
+        int rc = response.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
             System.out.println("#### Add succeded.");
         } else {
@@ -94,7 +93,7 @@ public class DemoModule extends Module {
         }
     }
 
-    public boolean beforeModify(ModifyEvent event) throws Exception {
+    public void beforeModify(ModifyEvent event) throws Exception {
         ModifyRequest request = event.getRequest();
         System.out.println("#### Modifying "+request.getDn()+":");
 
@@ -120,12 +119,11 @@ public class DemoModule extends Module {
                 System.out.println("   " + name + ": " + value);
             }
         }
-
-        return true;
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
-        int rc = event.getReturnCode();
+        ModifyResponse response = event.getResponse();
+        int rc = response.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
             System.out.println("#### Modify succeded.");
         } else {
@@ -133,14 +131,14 @@ public class DemoModule extends Module {
         }
     }
 
-    public boolean beforeDelete(DeleteEvent event) throws Exception {
+    public void beforeDelete(DeleteEvent event) throws Exception {
         DeleteRequest request = event.getRequest();
         System.out.println("#### Deleting "+request.getDn());
-        return true;
     }
 
     public void afterDelete(DeleteEvent event) throws Exception {
-        int rc = event.getReturnCode();
+        DeleteResponse response = event.getResponse();
+        int rc = response.getReturnCode();
         if (rc == LDAPException.SUCCESS) {
             System.out.println("#### Delete succeded.");
         } else {

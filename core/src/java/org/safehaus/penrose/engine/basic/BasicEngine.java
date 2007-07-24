@@ -13,7 +13,7 @@ import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.util.ExceptionUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
@@ -615,7 +615,7 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displayLine("Base Mapping  : "+baseMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
             log.debug(Formatter.displayLine("Filter        : "+request.getFilter(), 80));
-            log.debug(Formatter.displayLine("Scope         : "+LDAPUtil.getScope(request.getScope()), 80));
+            log.debug(Formatter.displayLine("Scope         : "+ LDAP.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 

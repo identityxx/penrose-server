@@ -105,7 +105,8 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (object == null || object.getClass() != getClass()) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         ModuleConfig moduleConfig = (ModuleConfig)object;
         if (!equals(name, moduleConfig.name)) return false;

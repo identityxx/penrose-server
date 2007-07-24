@@ -98,7 +98,9 @@ public class HandlerConfig implements HandlerConfigMBean, Cloneable {
     }
 
     public boolean equals(Object object) {
-        if((object == null) || (object.getClass() != getClass())) return false;
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         HandlerConfig handlerConfig = (HandlerConfig)object;
         if (!equals(name, handlerConfig.name)) return false;

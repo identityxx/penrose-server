@@ -331,7 +331,8 @@ public class Schema implements Cloneable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         Schema schema = (Schema)object;
         if (!equals(schemaConfig, schema.schemaConfig)) return false;

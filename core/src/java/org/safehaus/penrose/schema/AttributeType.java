@@ -234,7 +234,8 @@ public class AttributeType implements Cloneable, Comparable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if ((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         AttributeType at = (AttributeType)object;
         if (!equals(oid, at.oid)) return false;

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class Modules {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
     private Map<String, Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
@@ -35,15 +36,18 @@ public class Modules {
     }
 
     public void addModuleMapping(ModuleMapping mapping) throws Exception {
+
+        String moduleName = mapping.getModuleName();
+
+        if (debug) log.debug("Adding module mapping "+moduleName+" => "+mapping.getBaseDn());
+        if (moduleName == null) throw new Exception("Missing module name");
+
         Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c == null) {
             c = new ArrayList<ModuleMapping>();
             moduleMappings.put(mapping.getModuleName(), c);
         }
         c.add(mapping);
-
-        String moduleName = mapping.getModuleName();
-        if (moduleName == null) throw new Exception("Missing module name");
 
         ModuleConfig moduleConfig = getModuleConfig(moduleName);
         if (moduleConfig == null) throw new Exception("Undefined module "+moduleName);

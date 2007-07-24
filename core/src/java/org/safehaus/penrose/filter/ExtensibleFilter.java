@@ -70,7 +70,8 @@ public class ExtensibleFilter extends ItemFilter {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         ExtensibleFilter extensibleFilter = (ExtensibleFilter)object;
         if (!equals(attribute, extensibleFilter.attribute)) return false;

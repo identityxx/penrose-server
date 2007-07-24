@@ -156,7 +156,8 @@ public class ACI implements Cloneable {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         ACI aci = (ACI)object;
         if (!equals(subject, aci.subject)) return false;

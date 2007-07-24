@@ -22,6 +22,6 @@ package org.safehaus.penrose.event;
  */
 public interface ModifyListener {
     
-    public boolean beforeModify(ModifyEvent event) throws Exception;
+    public void beforeModify(ModifyEvent event) throws Exception;
     public void afterModify(ModifyEvent event) throws Exception;
 }

@@ -20,7 +20,6 @@ package org.safehaus.penrose.filter;
 import java.util.*;
 import java.io.StringReader;
 
-import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -32,6 +31,7 @@ public class FilterTool {
     public static Logger log = LoggerFactory.getLogger(FilterTool.class);
 
     public static Filter parseFilter(String filter) throws Exception {
+        if (filter == null) return null;
         StringReader in = new StringReader(filter);
         FilterParser parser = new FilterParser(in);
         return parser.parse();
@@ -70,51 +70,6 @@ public class FilterTool {
         return false;
     }
 
-    public static Filter createFilter(Collection keys) {
-        return createFilter(keys, true);
-    }
-
-    public static Filter createFilter(Collection keys, boolean includeValues) {
-
-        Filter filter = null;
-
-        for (Iterator i=keys.iterator(); i.hasNext(); ) {
-            RDN pk = (RDN)i.next();
-
-            Filter f = createFilter(pk, includeValues);
-            filter = appendOrFilter(filter, f);
-        }
-
-        return filter;
-    }
-
-    public static Filter createFilter(RDN rdn) {
-        return createFilter(rdn, true);
-    }
-
-    public static Filter createFilter(RDN rdn, boolean includeValues) {
-
-        Filter f = null;
-
-        for (Iterator i =rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
-            Object value = rdn.get(name);
-            if (value == null) continue;
-
-            String strVal;
-            if (includeValues) {
-                strVal = value == null ? null : value.toString();
-            } else {
-                strVal = "?";
-            }
-
-            SimpleFilter sf = new SimpleFilter(name, "=", strVal);
-            f = appendAndFilter(f, sf);
-        }
-
-        return f;
-    }
-
     public static Filter appendAndFilter(Filter filter, Filter newFilter) {
         if (newFilter == null || newFilter.equals(filter)) {
             // ignore
@@ -125,8 +80,7 @@ public class FilterTool {
         } else if (filter instanceof AndFilter) {
             AndFilter af = (AndFilter)filter;
             if (newFilter instanceof AndFilter) {
-                for (Iterator i=((AndFilter)newFilter).getFilters().iterator(); i.hasNext(); ) {
-                    Filter f = (Filter)i.next();
+                for (Filter f : ((AndFilter) newFilter).getFilters()) {
                     if (!af.containsFilter(f)) af.addFilter(f);
                 }
             } else {
@@ -153,8 +107,7 @@ public class FilterTool {
         } else if (filter instanceof OrFilter) {
             OrFilter of = (OrFilter)filter;
             if (newFilter instanceof OrFilter) {
-                for (Iterator i=((OrFilter)newFilter).getFilters().iterator(); i.hasNext(); ) {
-                    Filter f = (Filter)i.next();
+                for (Filter f : ((OrFilter) newFilter).getFilters()) {
                     if (!of.containsFilter(f)) of.addFilter(f);
                 }
             } else {
@@ -176,9 +129,7 @@ public class FilterTool {
         StringBuilder sb = new StringBuilder();
         char chars[] = value.toCharArray();
 
-        for (int i=0; i<chars.length; i++) {
-            char c = chars[i];
-
+        for (char c : chars) {
             if (c == '*' || c == '(' || c == ')' || c == '\\') {
                 String hex = Integer.toHexString(c);
                 sb.append('\\');

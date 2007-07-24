@@ -80,57 +80,49 @@ public class Module implements
         setStatus(STOPPED);
     }
 
-    public boolean beforeBind(BindEvent event) throws Exception {
-        return true;
+    public void beforeBind(BindEvent event) throws Exception {
     }
 
     public void afterBind(BindEvent event) throws Exception {
     }
 
-    public boolean beforeUnbind(UnbindEvent event) throws Exception {
-        return true;
+    public void beforeUnbind(UnbindEvent event) throws Exception {
     }
 
     public void afterUnbind(UnbindEvent event) throws Exception {
     }
 
-    public boolean beforeCompare(CompareEvent event) throws Exception {
-        return true;
+    public void beforeCompare(CompareEvent event) throws Exception {
     }
 
     public void afterCompare(CompareEvent event) throws Exception {
     }
 
-    public boolean beforeAdd(AddEvent event) throws Exception {
-        return true;
+    public void beforeAdd(AddEvent event) throws Exception {
     }
 
     public void afterAdd(AddEvent event) throws Exception {
     }
 
-    public boolean beforeModify(ModifyEvent event) throws Exception {
-        return true;
+    public void beforeModify(ModifyEvent event) throws Exception {
     }
 
     public void afterModify(ModifyEvent event) throws Exception {
     }
 
-    public boolean beforeModRdn(ModRdnEvent event) throws Exception {
-        return true;
+    public void beforeModRdn(ModRdnEvent event) throws Exception {
     }
 
     public void afterModRdn(ModRdnEvent event) throws Exception {
     }
 
-    public boolean beforeDelete(DeleteEvent event) throws Exception {
-        return true;
+    public void beforeDelete(DeleteEvent event) throws Exception {
     }
 
     public void afterDelete(DeleteEvent event) throws Exception {
     }
 
-    public boolean beforeSearch(SearchEvent event) throws Exception {
-        return true;
+    public void beforeSearch(SearchEvent event) throws Exception {
     }
 
     public void afterSearch(SearchEvent event) throws Exception {

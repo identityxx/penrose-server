@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.BindRequest;
 import org.safehaus.penrose.ldap.BindResponse;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,25 +31,18 @@ public class BindEvent extends Event {
     public final static int AFTER_BIND  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected BindRequest request;
     protected BindResponse response;
 
 
-    public BindEvent(Object source, int type, Session session, BindRequest request, BindResponse response) {
+    public BindEvent(Object source, int type, Session session, Partition partition, BindRequest request, BindResponse response) {
         super(source, type);
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public Session getSession() {
@@ -57,6 +51,14 @@ public class BindEvent extends Event {
 
     public void setSession(Session session) {
         this.session = session;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 
     public BindRequest getRequest() {

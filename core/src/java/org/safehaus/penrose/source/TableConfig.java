@@ -70,8 +70,9 @@ public class TableConfig implements Comparable, Cloneable {
     }
 
     public boolean equals(Object object) {
+        if (this == object) return true;
         if (object == null) return false;
-        if (!(object instanceof TableConfig)) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         TableConfig fieldConfig = (TableConfig)object;
         if (!equals(name, fieldConfig.name)) return false;

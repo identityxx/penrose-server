@@ -35,7 +35,10 @@ public class SambaUserModule extends Module {
 
     public void afterBind(BindEvent event) throws Exception {
 
-        if (event.getReturnCode() != LDAPException.SUCCESS) return;
+        BindResponse response = event.getResponse();
+        int rc = response.getReturnCode();
+
+        if (rc != LDAPException.SUCCESS) return;
 
         BindRequest bindRequest = event.getRequest();
         DN dn = bindRequest.getDn();
@@ -72,7 +75,7 @@ public class SambaUserModule extends Module {
         }
     }
 
-    public boolean beforeAdd(AddEvent event) throws Exception {
+    public void beforeAdd(AddEvent event) throws Exception {
         AddRequest request = event.getRequest();
 
         String dn = request.getDn().toString();
@@ -144,11 +147,9 @@ public class SambaUserModule extends Module {
             attributes.setValue("sambaPrimaryGroupSID", groupSID);
             attributes.setValue("sambaAcctFlags", flags);
         }
-
-        return true;
     }
 
-    public boolean beforeModify(ModifyEvent event) throws Exception {
+    public void beforeModify(ModifyEvent event) throws Exception {
 
         ModifyRequest modifyRequest = event.getRequest();
 
@@ -250,8 +251,6 @@ public class SambaUserModule extends Module {
             modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
-
-        return true;
     }
 
     public Map getServerInfo() throws Exception {

@@ -33,8 +33,6 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.util.PasswordUtil;
-import org.safehaus.penrose.util.LDAPUtil;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import org.ietf.ldap.*;
@@ -312,7 +310,7 @@ public class LDAPClient {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
-            if (debug) log.debug(" - "+LDAPUtil.getModificationOperations(type)+": "+attribute.getName());
+            if (debug) log.debug(" - "+ LDAP.getModificationOperations(type)+": "+attribute.getName());
 
             javax.naming.directory.Attribute attr = convertAttribute(attribute);
             list.add(new javax.naming.directory.ModificationItem(type, attr));
@@ -381,7 +379,7 @@ public class LDAPClient {
         if (debug) {
             log.debug("Searching "+baseDn);
             log.debug(" - filter: "+filter);
-            log.debug(" - scope: "+LDAPUtil.getScope(request.getScope()));
+            log.debug(" - scope: "+ LDAP.getScope(request.getScope()));
             log.debug(" - attributes: "+attributes);
             log.debug(" - sizeLimit: "+sizeLimit);
             log.debug(" - timeLimit: "+timeLimit);

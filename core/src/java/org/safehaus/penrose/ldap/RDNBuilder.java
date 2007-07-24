@@ -2,7 +2,6 @@ package org.safehaus.penrose.ldap;
 
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -32,19 +31,17 @@ public class RDNBuilder {
     }
 
     public void add(String prefix, RDN rdn) {
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
-            values.put(prefix == null ? name : prefix+"."+name, value);
+            values.put(prefix == null ? name : prefix + "." + name, value);
         }
     }
 
     public void set(String prefix, RDN rdn) {
         values.clear();
-        for (Iterator i=rdn.getNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
-            values.put(prefix == null ? name : prefix+"."+name, value);
+            values.put(prefix == null ? name : prefix + "." + name, value);
         }
     }
 
@@ -57,14 +54,13 @@ public class RDNBuilder {
     }
 
     public void normalize() {
-        for (Iterator i=values.keySet().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : values.keySet()) {
             Object value = values.get(name);
 
             if (value == null) continue;
 
             if (value instanceof String) {
-                value = ((String)value).toLowerCase();
+                value = ((String) value).toLowerCase();
             }
 
             values.put(name, value);

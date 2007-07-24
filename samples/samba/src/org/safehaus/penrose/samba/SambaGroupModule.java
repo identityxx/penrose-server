@@ -35,7 +35,7 @@ public class SambaGroupModule extends Module {
         }
     }
 
-    public boolean beforeAdd(AddEvent event) throws Exception {
+    public void beforeAdd(AddEvent event) throws Exception {
         AddRequest request = event.getRequest();
 
         String dn = request.getDn().toString();
@@ -91,11 +91,9 @@ public class SambaGroupModule extends Module {
         if (attributes.get("sambaGroupType") == null) {
             attributes.setValue("sambaGroupType", "2");
         }
-
-        return true;
     }
 
-    public boolean beforeModify(ModifyEvent event) throws Exception {
+    public void beforeModify(ModifyEvent event) throws Exception {
 
         ModifyRequest modifyRequest = event.getRequest();
 
@@ -172,8 +170,6 @@ public class SambaGroupModule extends Module {
             Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
-
-        return true;
     }
 
     public Map getServerInfo() throws Exception {

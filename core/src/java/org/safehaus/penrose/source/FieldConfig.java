@@ -203,8 +203,9 @@ public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
     }
 
     public boolean equals(Object object) {
+        if (this == object) return true;
         if (object == null) return false;
-        if (!(object instanceof FieldConfig)) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         FieldConfig fieldConfig = (FieldConfig)object;
         if (!equals(name, fieldConfig.name)) return false;

@@ -129,10 +129,14 @@ public class SourceValues implements Cloneable {
     }
 
     public boolean equals(Object object) {
+        if (this == object) return true;
         if (object == null) return false;
-        if (!(object instanceof SourceValues)) return false;
+        if (object.getClass() != this.getClass()) return false;
+
         SourceValues av = (SourceValues)object;
-        return map.equals(av.map);
+        if (!map.equals(av.map)) return false;
+
+        return true;
     }
 
     public Object clone() throws CloneNotSupportedException {

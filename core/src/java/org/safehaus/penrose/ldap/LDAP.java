@@ -15,28 +15,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.util;
+package org.safehaus.penrose.ldap;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.Modification;
 
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.NamingEnumeration;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class LDAPUtil {
+public class LDAP {
 
-    public static Logger log = LoggerFactory.getLogger(LDAPUtil.class);
+    public static Logger log = LoggerFactory.getLogger(LDAP.class);
 
     public static boolean isBinary(javax.naming.directory.Attribute attribute) throws Exception {
 
@@ -147,8 +142,7 @@ public class LDAPUtil {
         adds.addAll(newNames);
         adds.removeAll(oldNames);
 
-        for (Iterator i=adds.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : adds) {
             Attribute attribute = newAttributes.get(name);
             modifications.add(new Modification(Modification.ADD, attribute));
         }
@@ -157,8 +151,7 @@ public class LDAPUtil {
         deletes.addAll(oldNames);
         deletes.removeAll(newNames);
 
-        for (Iterator i=deletes.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : deletes) {
             Attribute attribute = oldAttributes.get(name);
             modifications.add(new Modification(Modification.DELETE, attribute));
         }
@@ -167,12 +160,74 @@ public class LDAPUtil {
         modifies.addAll(oldNames);
         modifies.retainAll(newNames);
 
-        for (Iterator i=modifies.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : modifies) {
             Attribute attribute = newAttributes.get(name);
             modifications.add(new Modification(Modification.REPLACE, attribute));
         }
 
         return modifications;
+    }
+
+    public static String escape(String value) {
+
+        StringBuilder sb = new StringBuilder();
+        char chars[] = value.toCharArray();
+
+        boolean quote = chars[0] == ' ' || chars[chars.length-1] == ' ';
+        boolean space = false;
+
+        for (char c : chars) {
+            // checking special characters
+            if (c == ',' || c == '=' || c == '+'
+                    || c == '<' || c == '>'
+                    || c == '#' || c == ';'
+                    || c == '\\' || c == '"') {
+                sb.append('\\');
+            }
+
+            if (c == '\n') {
+                quote = true;
+            }
+
+            // checking double space
+            if (c == ' ') {
+                if (space) {
+                    quote = true;
+                } else {
+                    space = true;
+                }
+            } else {
+                space = false;
+            }
+
+            sb.append(c);
+        }
+
+        if (quote) {
+            sb.insert(0, '"');
+            sb.append('"');
+        }
+
+        return sb.toString();
+    }
+
+    public static String unescape(String value) {
+        char chars[] = value.toCharArray();
+
+        if (chars[0] == '"' && chars[chars.length-1] == '"') {
+            return value.substring(1, chars.length-1);
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i=0; i<chars.length; i++) {
+            char c = chars[i];
+            if (c == '\\') {
+                c = chars[++i];
+            }
+            sb.append(c);
+        }
+
+        return sb.toString();
     }
 }

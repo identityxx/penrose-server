@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.AddRequest;
 import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,24 +31,17 @@ public class AddEvent extends Event {
     public final static int AFTER_ADD  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected AddRequest request;
     protected AddResponse response;
 
-    public AddEvent(Object source, int type, Session session, AddRequest request, AddResponse response) {
+    public AddEvent(Object source, int type, Session session, Partition partition, AddRequest request, AddResponse response) {
         super(source, type);
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public Session getSession() {
@@ -56,6 +50,14 @@ public class AddEvent extends Event {
 
     public void setSession(Session session) {
         this.session = session;
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 
     public AddRequest getRequest() {

@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.ModRdnRequest;
 import org.safehaus.penrose.ldap.ModRdnResponse;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,25 +31,17 @@ public class ModRdnEvent extends Event {
     public final static int AFTER_MODRDN  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected ModRdnRequest request;
     protected ModRdnResponse response;
 
-    public ModRdnEvent(Object source, int type, Session session, ModRdnRequest request, ModRdnResponse response) {
+    public ModRdnEvent(Object source, int type, Session session, Partition partition, ModRdnRequest request, ModRdnResponse response) {
         super(source, type);
-        
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public Session getSession() {
@@ -77,5 +70,13 @@ public class ModRdnEvent extends Event {
 
     public String toString() {
         return (type == BEFORE_MODRDN ? "Before" : "After")+"ModRdn";
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

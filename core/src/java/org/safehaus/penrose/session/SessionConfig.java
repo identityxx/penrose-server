@@ -77,7 +77,9 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
     }
 
     public boolean equals(Object object) {
-        if((object == null) || (object.getClass() != getClass())) return false;
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         SessionConfig sessionConfig = (SessionConfig)object;
         if (!equals(description, sessionConfig.description)) return false;

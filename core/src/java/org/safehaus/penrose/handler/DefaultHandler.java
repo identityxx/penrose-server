@@ -3,14 +3,12 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
-import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.util.ExceptionUtil;
-import org.safehaus.penrose.util.LDAPUtil;
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.cache.CacheKey;
@@ -229,7 +227,7 @@ public class DefaultHandler extends Handler {
         }
 
         if (debug) {
-            log.debug("Searching "+entryMapping.getDn()+" with scope "+ LDAPUtil.getScope(scope));
+            log.debug("Searching "+entryMapping.getDn()+" with scope "+ LDAP.getScope(scope));
         }
 
         final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();

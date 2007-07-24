@@ -99,7 +99,9 @@ public class EngineConfig implements Cloneable {
     }
 
     public boolean equals(Object object) {
-        if((object == null) || (object.getClass() != getClass())) return false;
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         EngineConfig engineConfig = (EngineConfig)object;
         if (!equals(name, engineConfig.name)) return false;

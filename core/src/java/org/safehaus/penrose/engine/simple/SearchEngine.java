@@ -167,7 +167,7 @@ public class SearchEngine {
 
                 Attributes attributes = sourceValues.get(sourceName);
                 Object value = attributes.getValue(fieldName);
-                value = RDN.escape(value.toString());
+                value = LDAP.escape(value.toString());
 
                 args.add(value);
             }

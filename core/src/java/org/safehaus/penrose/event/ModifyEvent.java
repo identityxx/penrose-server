@@ -20,6 +20,7 @@ package org.safehaus.penrose.event;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.ModifyRequest;
 import org.safehaus.penrose.ldap.ModifyResponse;
+import org.safehaus.penrose.partition.Partition;
 
 /**
  * @author Endi S. Dewata
@@ -30,25 +31,17 @@ public class ModifyEvent extends Event {
     public final static int AFTER_MODIFY  = 1;
 
     protected Session session;
-    protected int returnCode;
+    protected Partition partition;
 
     protected ModifyRequest request;
     protected ModifyResponse response;
 
-    public ModifyEvent(Object source, int type, Session session, ModifyRequest request, ModifyResponse response) {
+    public ModifyEvent(Object source, int type, Session session, Partition partition, ModifyRequest request, ModifyResponse response) {
         super(source, type);
-
         this.session = session;
+        this.partition = partition;
         this.request = request;
         this.response = response;
-    }
-
-    public int getReturnCode() {
-        return returnCode;
-    }
-
-    public void setReturnCode(int returnCode) {
-        this.returnCode = returnCode;
     }
 
     public Session getSession() {
@@ -77,5 +70,13 @@ public class ModifyEvent extends Event {
 
     public String toString() {
         return (type == BEFORE_MODIFY ? "Before" : "After")+"Modify";
+    }
+
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

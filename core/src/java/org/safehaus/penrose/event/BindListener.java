@@ -22,6 +22,6 @@ package org.safehaus.penrose.event;
  */
 public interface BindListener {
 
-    public boolean beforeBind(BindEvent event) throws Exception;
+    public void beforeBind(BindEvent event) throws Exception;
     public void afterBind(BindEvent event) throws Exception;
 }

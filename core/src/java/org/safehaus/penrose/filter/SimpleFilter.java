@@ -67,7 +67,8 @@ public class SimpleFilter extends ItemFilter {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         SimpleFilter simpleFilter = (SimpleFilter)object;
         if (!equals(attribute, simpleFilter.attribute)) return false;

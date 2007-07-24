@@ -25,6 +25,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -50,237 +51,253 @@ public class EventManager {
     public Collection<SearchListener> searchListeners   = new ArrayList<SearchListener>();
     public Collection<UnbindListener> unbindListeners   = new ArrayList<UnbindListener>();
 
-    public boolean postEvent(AddEvent event) throws Exception {
+    public void postEvent(AddEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         AddRequest request = event.getRequest();
+        AddResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
 
         Collection<AddListener> listeners = new ArrayList<AddListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(addListeners);
 
         for (AddListener listener : listeners) {
 
             switch (event.getType()) {
                 case AddEvent.BEFORE_ADD:
-                    boolean b = listener.beforeAdd(event);
-                    if (!b) return false;
+                    listener.beforeAdd(event);
                     break;
 
                 case AddEvent.AFTER_ADD:
                     listener.afterAdd(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(BindEvent event) throws Exception {
+    public void postEvent(BindEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         BindRequest request = event.getRequest();
+        BindResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<BindListener> listeners = new ArrayList<BindListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(bindListeners);
 
         for (BindListener listener : listeners) {
 
             switch (event.getType()) {
                 case BindEvent.BEFORE_BIND:
-                    boolean b = listener.beforeBind(event);
-                    if (!b) return false;
+                    listener.beforeBind(event);
                     break;
 
                 case BindEvent.AFTER_BIND:
                     listener.afterBind(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(CompareEvent event) throws Exception {
+    public void postEvent(CompareEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         CompareRequest request = event.getRequest();
+        CompareResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<CompareListener> listeners = new ArrayList<CompareListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(compareListeners);
 
         for (CompareListener listener : listeners) {
 
             switch (event.getType()) {
                 case CompareEvent.BEFORE_COMPARE:
-                    boolean b = listener.beforeCompare(event);
-                    if (!b) return false;
+                    listener.beforeCompare(event);
                     break;
 
                 case CompareEvent.AFTER_COMPARE:
                     listener.afterCompare(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(DeleteEvent event) throws Exception {
+    public void postEvent(DeleteEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         DeleteRequest request = event.getRequest();
+        DeleteResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(deleteListeners);
 
         for (DeleteListener listener : listeners) {
 
             switch (event.getType()) {
                 case DeleteEvent.BEFORE_DELETE:
-                    boolean b = listener.beforeDelete(event);
-                    if (!b) return false;
+                    listener.beforeDelete(event);
                     break;
 
                 case DeleteEvent.AFTER_DELETE:
                     listener.afterDelete(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(ModifyEvent event) throws Exception {
+    public void postEvent(ModifyEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         ModifyRequest request = event.getRequest();
+        ModifyResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(modifyListeners);
 
         for (ModifyListener listener : listeners) {
 
             switch (event.getType()) {
                 case ModifyEvent.BEFORE_MODIFY:
-                    boolean b = listener.beforeModify(event);
-                    if (!b) return false;
+                    listener.beforeModify(event);
                     break;
 
                 case ModifyEvent.AFTER_MODIFY:
                     listener.afterModify(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(ModRdnEvent event) throws Exception {
+    public void postEvent(ModRdnEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         ModRdnRequest request = event.getRequest();
+        ModRdnResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(modrdnListeners);
 
         for (ModRdnListener listener : listeners) {
 
             switch (event.getType()) {
                 case ModRdnEvent.BEFORE_MODRDN:
-                    boolean b = listener.beforeModRdn(event);
-                    if (!b) return false;
+                    listener.beforeModRdn(event);
                     break;
 
                 case ModRdnEvent.AFTER_MODRDN:
                     listener.afterModRdn(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(SearchEvent event) throws Exception {
+    public void postEvent(SearchEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         SearchRequest request = event.getRequest();
+        SearchResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<SearchListener> listeners = new ArrayList<SearchListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(searchListeners);
 
         for (SearchListener listener : listeners) {
 
             switch (event.getType()) {
                 case SearchEvent.BEFORE_SEARCH:
-                    boolean b = listener.beforeSearch(event);
-                    if (!b) return false;
+                    listener.beforeSearch(event);
                     break;
 
                 case SearchEvent.AFTER_SEARCH:
                     listener.afterSearch(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
-    public boolean postEvent(UnbindEvent event) throws Exception {
+    public void postEvent(UnbindEvent event) throws Exception {
 
         if (debug) log.debug("Firing "+event+" event.");
 
         UnbindRequest request = event.getRequest();
+        UnbindResponse response = event.getResponse();
+
         DN dn = request.getDn();
 
         ModuleManager moduleManager = sessionContext.getModuleManager();
         Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
-        listeners.addAll(moduleManager.getModules(dn));
+        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(unbindListeners);
 
         for (UnbindListener listener : listeners) {
 
             switch (event.getType()) {
                 case UnbindEvent.BEFORE_UNBIND:
-                    boolean b = listener.beforeUnbind(event);
-                    if (!b) return false;
+                    listener.beforeUnbind(event);
                     break;
 
                 case UnbindEvent.AFTER_UNBIND:
                     listener.afterUnbind(event);
                     break;
             }
-        }
 
-        return true;
+            LDAPException exception = response.getException();
+            if (exception.getResultCode() != LDAPException.SUCCESS) throw exception;
+        }
     }
 
     public void addAddListener(AddListener listener) {

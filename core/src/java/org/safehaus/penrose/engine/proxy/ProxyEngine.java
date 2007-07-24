@@ -443,7 +443,7 @@ public class ProxyEngine extends Engine {
             log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
-            log.debug(Formatter.displayLine("Scope: "+LDAPUtil.getScope(scope), 80));
+            log.debug(Formatter.displayLine("Scope: "+ LDAP.getScope(scope), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 

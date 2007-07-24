@@ -65,7 +65,8 @@ public class SubstringFilter extends ItemFilter {
 
     public boolean equals(Object object) {
         if (this == object) return true;
-        if((object == null) || (object.getClass() != this.getClass())) return false;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
 
         SubstringFilter substringFilter = (SubstringFilter)object;
         if (!equals(attribute, substringFilter.attribute)) return false;

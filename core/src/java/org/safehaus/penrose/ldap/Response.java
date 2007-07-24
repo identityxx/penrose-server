@@ -19,7 +19,7 @@ public class Response {
 
     protected Collection<Control> controls   = new ArrayList<Control>();
 
-    protected LDAPException exception = ExceptionUtil.createLDAPException(0);
+    protected LDAPException exception = ExceptionUtil.createLDAPException(LDAPException.SUCCESS);
 
     public void addControl(Control control) {
         controls.add(control);
