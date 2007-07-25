@@ -45,8 +45,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private String home;
-
     private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
     private Map<String,String> properties                    = new LinkedHashMap<String,String>();
     private Map<String,ServiceConfig> serviceConfigs         = new LinkedHashMap<String,ServiceConfig>();
@@ -201,14 +199,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         this.entryCacheConfig = entryCacheConfig;
     }
 
-    public String getHome() {
-        return home;
-    }
-
-    public void setHome(String home) {
-        this.home = home;
-    }
-
     public void addSchemaConfig(SchemaConfig schemaConfig) {
         schemaConfigs.put(schemaConfig.getName(), schemaConfig);
     }
@@ -311,8 +301,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public int hashCode() {
-        return (home == null ? 0 : home.hashCode()) +
-                (systemProperties == null ? 0 : systemProperties.hashCode()) +
+        return (systemProperties == null ? 0 : systemProperties.hashCode()) +
                 (properties == null ? 0 : properties.hashCode()) +
                 (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
@@ -340,8 +329,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         PenroseConfig penroseConfig = (PenroseConfig)object;
 
-        if (!equals(home, penroseConfig.home)) return false;
-
         if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
         if (!equals(properties, penroseConfig.properties)) return false;
         if (!equals(serviceConfigs, penroseConfig.serviceConfigs)) return false;
@@ -364,8 +351,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void copy(PenroseConfig penroseConfig) throws CloneNotSupportedException {
-
-        home = penroseConfig.home;
 
         systemProperties = new LinkedHashMap<String,String>();
         systemProperties.putAll(penroseConfig.systemProperties);

@@ -93,7 +93,7 @@ public class PenroseClient {
             String url = "jnp://"+host+":"+port;
             log.debug("Connecting to JBoss server at "+url);
 
-            Hashtable parameters = new Hashtable();
+            Hashtable<String,Object> parameters = new Hashtable<String,Object>();
             parameters.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
             parameters.put(Context.PROVIDER_URL, url);
             parameters.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
@@ -123,7 +123,7 @@ public class PenroseClient {
             credentials[0] = username;
             credentials[1] = password;
 
-            Hashtable parameters = new Hashtable();
+            Hashtable<String,Object> parameters = new Hashtable<String,Object>();
             parameters.put(JMXConnector.CREDENTIALS, credentials);
 
             connector = JMXConnectorFactory.connect(serviceURL, parameters);
@@ -178,8 +178,8 @@ public class PenroseClient {
         return (String)connection.getAttribute(name, "ProductVersion");
     }
 
-    public Collection getServiceNames() throws Exception {
-        return (Collection)connection.getAttribute(name, "ServiceNames");
+    public Collection<String> getServiceNames() throws Exception {
+        return (Collection<String>)connection.getAttribute(name, "ServiceNames");
     }
 
     public void start() throws Exception {
@@ -245,8 +245,8 @@ public class PenroseClient {
         );
     }
 
-    public Collection listFiles(String directory) throws Exception {
-        return (Collection)invoke("listFiles",
+    public Collection<String> listFiles(String directory) throws Exception {
+        return (Collection<String>)invoke("listFiles",
                 new Object[] { directory },
                 new String[] { String.class.getName() }
         );
@@ -266,8 +266,8 @@ public class PenroseClient {
         );
     }
 
-    public Collection getLoggerNames() throws Exception {
-        return (Collection)connection.getAttribute(name, "LoggerNames");
+    public Collection<String> getLoggerNames() throws Exception {
+        return (Collection<String>)connection.getAttribute(name, "LoggerNames");
     }
 
     public String getLoggerLevel(String name) throws Exception {
@@ -321,7 +321,7 @@ public class PenroseClient {
 
         Getopt getopt = new Getopt("PenroseClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
-        Collection parameters = new ArrayList();
+        Collection<String> parameters = new ArrayList<String>();
         int c;
         while ((c = getopt.getopt()) != -1) {
             switch (c) {
@@ -445,24 +445,22 @@ public class PenroseClient {
             }
 
         } else if ("list".equals(command)) {
-            Collection serviceNames = client.getServiceNames();
-            for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {
-                String serviceName = (String)i.next();
+            Collection<String> serviceNames = client.getServiceNames();
+            for (String serviceName : serviceNames) {
                 String status = client.getStatus(serviceName);
 
                 StringBuilder padding = new StringBuilder();
-                for (int j=0; j<20-serviceName.length(); j++) padding.append(" ");
+                for (int j = 0; j < 20 - serviceName.length(); j++) padding.append(" ");
 
-                System.out.println(serviceName+padding+"["+status+"]");
+                System.out.println(serviceName + padding + "[" + status + "]");
             }
 
         } else if ("loggers".equals(command)) {
-            Collection loggerNames = client.getLoggerNames();
-            for (Iterator i=loggerNames.iterator(); i.hasNext(); ) {
-                String loggerName = (String)i.next();
+            Collection<String> loggerNames = client.getLoggerNames();
+            for (String loggerName : loggerNames) {
                 String l = client.getLoggerLevel(loggerName);
 
-                System.out.println(loggerName+" ["+l +"]");
+                System.out.println(loggerName + " [" + l + "]");
             }
 
         } else if ("logger".equals(command)) {

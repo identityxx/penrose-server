@@ -11,7 +11,6 @@ import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.PenroseConfigWriter;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.FilterEvaluator;
@@ -23,9 +22,7 @@ import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -52,6 +49,7 @@ public class PenroseContext {
     public final static String SOURCE_MANAGER      = "java:comp/org/safehaus/penrose/source/SourceManager";
     public final static String MODULE_MANAGER      = "java:comp/org/safehaus/penrose/module/ModuleManager";
 
+    private String             home;
     private PenroseConfig      penroseConfig;
 
     private ThreadManager      threadManager;
@@ -71,7 +69,8 @@ public class PenroseContext {
 
     private PartitionValidator partitionValidator;
 
-    public PenroseContext() {
+    public PenroseContext(String home) {
+        this.home = home;
     }
 
     public ThreadManager getThreadManager() {
@@ -192,14 +191,9 @@ public class PenroseContext {
         moduleManager.setPenroseConfig(penroseConfig);
         moduleManager.setPenroseContext(this);
         moduleManager.setSessionContext(sessionContext);
-
     }
 
     public void load() throws Exception {
-        load(penroseConfig.getHome());
-    }
-
-    public void load(String dir) throws Exception {
 
         for (String name : penroseConfig.getSystemPropertyNames()) {
             String value = penroseConfig.getSystemProperty(name);
@@ -208,7 +202,7 @@ public class PenroseContext {
         }
 
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
-            schemaManager.init(dir, schemaConfig);
+            schemaManager.init(home, schemaConfig);
         }
 
         for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
@@ -221,7 +215,7 @@ public class PenroseContext {
     public void start() throws Exception {
         threadManager.start();
 
-        PartitionReader partitionReader = new PartitionReader(penroseConfig.getHome());
+        PartitionReader partitionReader = new PartitionReader(home);
 
         for (PartitionConfig partitionConfig : penroseConfig.getPartitionConfigs()) {
 
@@ -326,5 +320,13 @@ public class PenroseContext {
 
     public void setModuleManager(ModuleManager moduleManager) {
         this.moduleManager = moduleManager;
+    }
+
+    public String getHome() {
+        return home;
+    }
+
+    public void setHome(String home) {
+        this.home = home;
     }
 }

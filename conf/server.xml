@@ -5,46 +5,6 @@
 
 <server>
 
-  <service name="JMX">
-    <service-class>org.safehaus.penrose.management.PenroseJMXService</service-class>
-    <parameter>
-      <param-name>rmiPort</param-name>
-      <param-value>1099</param-value>
-    </parameter>
-    <parameter>
-      <param-name>rmiTransportPort</param-name>
-      <param-value>40888</param-value>
-    </parameter>
-  </service>
-
-  <service name="LDAP">
-    <service-class>org.safehaus.penrose.ldap.DefaultLDAPService</service-class>
-    <parameter>
-      <param-name>ldapPort</param-name>
-      <param-value>10389</param-value>
-    </parameter> 
-    <parameter>
-      <param-name>enableLdaps</param-name>
-      <param-value>false</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapsPort</param-name>
-      <param-value>10636</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapsCertificateFile</param-name>
-      <param-value>conf/penrose.keystore</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapsCertificatePassword</param-name>
-      <param-value>changeit</param-value>
-    </parameter>
-    <parameter>
-      <param-name>allowAnonymousAccess</param-name>
-      <param-value>true</param-value>
-    </parameter>
-  </service>
-
   <schema path="schema/autofs.schema"/>
   <schema path="schema/corba.schema"/>
   <schema path="schema/core.schema"/>

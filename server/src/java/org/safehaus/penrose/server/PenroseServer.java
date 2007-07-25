@@ -40,39 +40,49 @@ public class PenroseServer {
     private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
-        penroseConfig = new DefaultPenroseConfig();
-        loadConfig();
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose();
+
         init();
     }
 
     public PenroseServer(String home) throws Exception {
-        penroseConfig = new PenroseConfig();
-        penroseConfig.setHome(home);
-        loadConfig();
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(home);
+
+        init();
+    }
+
+    public PenroseServer(String home, PenroseConfig penroseConfig) throws Exception {
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(home, penroseConfig);
+
         init();
     }
 
     public PenroseServer(PenroseConfig penroseConfig) throws Exception {
-        this.penroseConfig = penroseConfig;
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(penroseConfig);
+
         init();
-    }
-
-    public void loadConfig() throws Exception {
-        String home = penroseConfig.getHome();
-
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        reader.read(penroseConfig);
     }
 
     public void init() throws Exception {
         
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
         penroseConfig = penrose.getPenroseConfig();
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
-        serviceManager.load(penroseConfig.getServiceConfigs());
+
+        String home = penrose.getHome();
+        String path = (home == null ? "" : home+File.separator) + "services";
+
+        serviceManager.loadServices(path);
+        //serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public void start() throws Exception {
@@ -89,6 +99,14 @@ public class PenroseServer {
         return penrose.getStatus();
     }
 
+    public String getHome() {
+        return penrose.getHome();
+    }
+
+    public void setHome(String home) {
+        penrose.setHome(home);
+    }
+    
     public void listAllThreads() {
         // Find the root thread group
         ThreadGroup root = Thread.currentThread().getThreadGroup();
@@ -103,9 +121,6 @@ public class PenroseServer {
         visit(root, 0);
     }
 
-    /**
-     * This method recursively visits all thread groups under `group'.
-     */
     private void visit(ThreadGroup group, int level) {
         //logger.debug(group.toString());
 
@@ -161,12 +176,10 @@ public class PenroseServer {
 
     public void reload() throws Exception {
 
-        loadConfig();
+        penrose.reload();
 
         serviceManager.clear();
-        serviceManager.load(penroseConfig.getServiceConfigs());
-
-        penrose.reload();
+        //serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public static void main( String[] args ) throws Exception {

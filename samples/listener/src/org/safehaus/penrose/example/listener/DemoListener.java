@@ -37,10 +37,9 @@ public class DemoListener implements SearchListener {
         logger.setLevel(Level.DEBUG);
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.setHome("../..");
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        Penrose penrose = penroseFactory.createPenrose(penroseConfig);
+        Penrose penrose = penroseFactory.createPenrose("../..");
         penrose.start();
 
         Session session = penrose.newSession();

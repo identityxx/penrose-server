@@ -1,0 +1,36 @@
+<service enabled="false">
+    
+  <service-name>LDAP</service-name>
+  <service-class>org.safehaus.penrose.apacheds.ApacheDSLDAPService</service-class>
+  
+  <parameter>
+    <param-name>ldapPort</param-name>
+    <param-value>10389</param-value>
+  </parameter>
+    
+  <parameter>
+    <param-name>enableLdaps</param-name>
+    <param-value>false</param-value>
+  </parameter>
+    
+  <parameter>
+    <param-name>ldapsPort</param-name>
+    <param-value>10636</param-value>
+  </parameter>
+    
+  <parameter>
+    <param-name>ldapsCertificateFile</param-name>
+    <param-value>conf/penrose.keystore</param-value>
+  </parameter>
+    
+  <parameter>
+    <param-name>ldapsCertificatePassword</param-name>
+    <param-value>changeit</param-value>
+  </parameter>
+    
+  <parameter>
+    <param-name>allowAnonymousAccess</param-name>
+    <param-value>true</param-value>
+  </parameter>
+    
+</service>

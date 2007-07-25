@@ -58,7 +58,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
 
     public PenroseBackend(PenroseServer penroseServer) {
         this.penroseServer = penroseServer;
-        home = penroseServer.getPenroseConfig().getHome();
+        home = penroseServer.getHome();
     }
 
     public void init() throws Exception {

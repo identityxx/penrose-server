@@ -59,15 +59,19 @@ public class PenroseFactory {
         return instance;
     }
 
-    public Penrose createPenrose(PenroseConfig penroseConfig) throws Exception {
-        return new Penrose(penroseConfig);
+    public Penrose createPenrose() throws Exception {
+        return new Penrose();
     }
 
     public Penrose createPenrose(String home) throws Exception {
         return new Penrose(home);
     }
 
-    public Penrose createPenrose() throws Exception {
-        return new Penrose();
+    public Penrose createPenrose(String home, PenroseConfig penroseConfig) throws Exception {
+        return new Penrose(home, penroseConfig);
+    }
+
+    public Penrose createPenrose(PenroseConfig penroseConfig) throws Exception {
+        return new Penrose(penroseConfig);
     }
 }

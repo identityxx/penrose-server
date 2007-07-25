@@ -55,6 +55,8 @@ public class Penrose {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
+    private String             home;
+
     private PenroseConfig      penroseConfig;
     private PenroseContext     penroseContext;
     private ConnectorContext   connectorContext;
@@ -83,23 +85,28 @@ public class Penrose {
         }
     }
 
-    protected Penrose(PenroseConfig penroseConfig) throws Exception {
-        this.penroseConfig = penroseConfig;
+    protected Penrose() throws Exception {
+        penroseConfig = loadConfig();
+
         init();
     }
 
     protected Penrose(String home) throws Exception {
-
-        penroseConfig = new PenroseConfig();
-        penroseConfig.setHome(home);
-        loadConfig();
+        this.home = home;
+        penroseConfig = loadConfig(home);
 
         init();
     }
 
-    protected Penrose() throws Exception {
-        penroseConfig = new PenroseConfig();
-        loadConfig();
+    protected Penrose(String home, PenroseConfig penroseConfig) throws Exception {
+        this.home = home;
+        this.penroseConfig = penroseConfig;
+
+        init();
+    }
+
+    protected Penrose(PenroseConfig penroseConfig) throws Exception {
+        this.penroseConfig = penroseConfig;
 
         init();
     }
@@ -108,15 +115,14 @@ public class Penrose {
     // Load Penrose Configurations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void loadConfig() throws Exception {
+    public PenroseConfig loadConfig() throws Exception {
+        return loadConfig(null);
+    }
 
-        String home = penroseConfig.getHome();
-
-        penroseConfig.clear();
-
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        reader.read(penroseConfig);
-        penroseConfig.setHome(home);
+    public PenroseConfig loadConfig(String dir) throws Exception {
+        String path = (dir == null ? "" : dir+File.separator)+"conf"+File.separator+"server.xml";
+        PenroseConfigReader reader = new PenroseConfigReader(path);
+        return reader.read();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,8 +130,6 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void init() throws Exception {
-
-        String home = penroseConfig.getHome();
 
         File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
 
@@ -144,12 +148,13 @@ public class Penrose {
             }
         }
 
-        penroseContext = new PenroseContext();
+        penroseContext = new PenroseContext(home);
         connectorContext = new ConnectorContext();
         sessionContext = new SessionContext();
 
         penroseContext.setSessionContext(sessionContext);
         penroseContext.init(penroseConfig);
+        penroseContext.load();
 
         connectorContext.setPenroseConfig(penroseConfig);
         connectorContext.setPenroseContext(penroseContext);
@@ -159,7 +164,6 @@ public class Penrose {
         sessionContext.setPenroseContext(penroseContext);
         sessionContext.init();
 
-        penroseContext.load();
         sessionContext.load();
     }
 
@@ -259,5 +263,14 @@ public class Penrose {
 
     public void setSessionContext(SessionContext sessionContext) {
         this.sessionContext = sessionContext;
+    }
+
+    public String getHome() {
+        return home;
+    }
+
+    public void setHome(String home) {
+        this.home = home;
+        penroseContext.setHome(home);
     }
 }

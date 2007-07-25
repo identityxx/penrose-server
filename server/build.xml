@@ -88,6 +88,7 @@
               <attribute name="Build-Date" value="${TIMESTAMP}"/>
             </manifest>
         </jar>
+        <ant dir="../services" target="build"/>
     </target>
 
     <target name="docs" depends="init">
@@ -205,6 +206,13 @@
             <filterchain>
                 <expandproperties/>
             </filterchain>
+        </copy>
+        <copy todir="target/dist/services">
+            <fileset dir="../services">
+                <exclude name="**/SERVICE-INF/build.xml"/>
+                <exclude name="**/SERVICE-INF/classes/**"/>
+                <exclude name="**/SERVICE-INF/src/**"/>
+            </fileset>
         </copy>
         <mkdir dir="target/dist/logs"/>
         <mkdir dir="${project.dist}"/>
@@ -390,6 +398,7 @@
     <target name="clean" depends="init">
         <delete dir="dist" failonerror="false"/>
         <delete dir="target" failonerror="false"/>
+        <ant dir="../services" target="clean"/>
     </target>
 
 </project>

@@ -44,10 +44,6 @@ public class SchemaManager implements SchemaManagerMBean {
     public SchemaManager() throws Exception {
     }
 
-    public void init(SchemaConfig schemaConfig) throws Exception {
-        init(penroseConfig.getHome(), schemaConfig);
-    }
-
     public void init(String home, SchemaConfig schemaConfig) throws Exception {
 
         Schema schema = getSchema(schemaConfig.getName());

@@ -301,13 +301,10 @@ public class CacheUtil {
             BasicConfigurator.configure(appender);
         }
 
-        PenroseConfig penroseConfig = new PenroseConfig();
-        penroseConfig.setHome(home);
-
         PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
-        reader.read(penroseConfig);
+        PenroseConfig penroseConfig = reader.read();
 
-        PenroseContext penroseContext = new PenroseContext();
+        PenroseContext penroseContext = new PenroseContext(home);
         penroseContext.init(penroseConfig);
         penroseContext.load();
         penroseContext.start();

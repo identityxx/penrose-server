@@ -1,0 +1,25 @@
+<project name="penrose-service" default="build">
+
+    <description>Penrose Service</description>
+
+    <property file="../build.properties"/>
+
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+
+    <target name="build">
+        <ant dir="apacheds/SERVICE-INF" target="build"/>
+        <ant dir="jmx/SERVICE-INF" target="build"/>
+        <ant dir="ldap/SERVICE-INF" target="build"/>
+        <ant dir="opends/SERVICE-INF" target="build"/>
+    </target>
+
+    <target name="clean">
+        <ant dir="apacheds/SERVICE-INF" target="clean"/>
+        <ant dir="jmx/SERVICE-INF" target="clean"/>
+        <ant dir="ldap/SERVICE-INF" target="clean"/>
+        <ant dir="opends/SERVICE-INF" target="clean"/>
+    </target>
+
+</project>

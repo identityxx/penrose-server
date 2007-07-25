@@ -80,7 +80,7 @@ set LOCALLIBPATH=%PENROSE_HOME%\schema\ext;%LOCALLIBPATH%
 
 cd %PENROSE_HOME%
 
-set JAVA_OPTS=%PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder -Dpenrose.home="%PENROSE_HOME%"
+set JAVA_OPTS=%PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%"
 "%_JAVACMD%" %JAVA_OPTS% org.safehaus.penrose.server.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 

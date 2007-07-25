@@ -178,7 +178,6 @@ if [ "$1" = "start" ] ; then
     shift
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
     -Djava.library.path="$LOCALLIBPATH" \
-    -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
     >> "$PENROSE_HOME/logs/penrose.out" 2>&1 &
@@ -208,7 +207,6 @@ else
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
   -Djava.library.path="$LOCALLIBPATH" \
-  -Djavax.management.builder.initial=mx4j.server.MX4JMBeanServerBuilder \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
 

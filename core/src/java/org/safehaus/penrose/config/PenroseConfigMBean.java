@@ -27,9 +27,6 @@ import java.util.Map;
  */
 public interface PenroseConfigMBean {
 
-    public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
-
     public Map<String,String> getSystemProperties() throws Exception;
     public String getSystemProperty(String name) throws Exception;
     public void setSystemProperty(String name, String value) throws Exception;

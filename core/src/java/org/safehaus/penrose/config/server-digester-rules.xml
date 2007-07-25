@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <!--
-
 Copyright (c) 2000-2006, Identyx Corporation.
 
 This program is free software; you can redistribute it and/or modify
@@ -163,6 +162,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <call-method-rule pattern="root-password" methodname="setPassword" paramcount="0" />
             <set-next-rule methodname="setRootUserConfig" />
 		</pattern>
-	</pattern>
+
+    </pattern>
 
 </digester-rules>
