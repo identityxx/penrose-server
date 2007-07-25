@@ -68,28 +68,6 @@ public class ConnectorManager {
         connectors.clear();
     }
 
-    public void start() throws Exception {
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-
-        for (Iterator i=connectors.values().iterator(); i.hasNext(); ) {
-            Connector connector = (Connector)i.next();
-
-            for (Iterator j=partitionManager.getPartitions().iterator(); j.hasNext(); ) {
-                Partition partition = (Partition)j.next();
-                connector.addPartition(partition);
-            }
-
-            connector.start();
-        }
-    }
-
-    public void stop() throws Exception {
-        for (Iterator i=connectors.values().iterator(); i.hasNext(); ) {
-            Connector connector = (Connector)i.next();
-            connector.stop();
-        }
-    }
-
     public PenroseConfig getPenroseConfig() {
         return penroseConfig;
     }

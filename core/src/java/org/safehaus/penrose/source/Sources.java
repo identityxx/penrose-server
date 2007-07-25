@@ -13,7 +13,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class Sources {
+public class Sources implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -108,4 +108,19 @@ public class Sources {
         return results;
     }
 
+    public Object clone() throws CloneNotSupportedException {
+        Sources sources = (Sources)super.clone();
+
+        sources.sourceConfigs = new LinkedHashMap<String,SourceConfig>();
+        for (SourceConfig sourceConfig : sourceConfigs.values()) {
+            sources.sourceConfigs.put(sourceConfig.getName(), (SourceConfig)sourceConfig.clone());
+        }
+
+        sources.sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
+        for (SourceSyncConfig sourceSyncConfig : sourceSyncConfigs.values()) {
+            sources.sourceSyncConfigs.put(sourceSyncConfig.getName(), (SourceSyncConfig)sourceSyncConfig.clone());
+        }
+
+        return sources;
+    }
 }

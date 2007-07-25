@@ -90,10 +90,6 @@ public class PenroseService implements PenroseServiceMBean {
         penroseServer.start();
     }
 
-    public void store() throws Exception {
-        penroseServer.store();
-    }
-
     public void destroy() {
     }
 

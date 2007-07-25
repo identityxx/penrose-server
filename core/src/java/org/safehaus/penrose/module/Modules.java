@@ -11,15 +11,15 @@ import java.util.ArrayList;
 /**
  * @author Endi Sukma Dewata
  */
-public class Modules {
+public class Modules implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
-    private Map<String, Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
+    private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
-    public void addModuleConfig(ModuleConfig moduleConfig) throws Exception {
+    public void addModuleConfig(ModuleConfig moduleConfig) {
         moduleConfigs.put(moduleConfig.getName(), moduleConfig);
     }
 
@@ -35,12 +35,11 @@ public class Modules {
         return moduleConfigs.remove(moduleName);
     }
 
-    public void addModuleMapping(ModuleMapping mapping) throws Exception {
+    public void addModuleMapping(ModuleMapping mapping) {
 
         String moduleName = mapping.getModuleName();
 
         if (debug) log.debug("Adding module mapping "+moduleName+" => "+mapping.getBaseDn());
-        if (moduleName == null) throw new Exception("Missing module name");
 
         Collection<ModuleMapping> c = moduleMappings.get(mapping.getModuleName());
         if (c == null) {
@@ -50,7 +49,6 @@ public class Modules {
         c.add(mapping);
 
         ModuleConfig moduleConfig = getModuleConfig(moduleName);
-        if (moduleConfig == null) throw new Exception("Undefined module "+moduleName);
 
         mapping.setModuleConfig(moduleConfig);
     }
@@ -73,6 +71,24 @@ public class Modules {
 
     public Collection<ModuleMapping> removeModuleMapping(String moduleName) {
         return moduleMappings.remove(moduleName);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Modules modules = (Modules)super.clone();
+
+        modules.moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
+        modules.moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
+
+        for (ModuleConfig moduleConfig : moduleConfigs.values()) {
+            modules.addModuleConfig((ModuleConfig)moduleConfig.clone());
+
+            Collection<ModuleMapping> list = moduleMappings.get(moduleConfig.getName());
+            for (ModuleMapping moduleMapping : list) {
+                modules.addModuleMapping((ModuleMapping)moduleMapping.clone());
+            }
+        }
+
+        return modules;
     }
 }
 

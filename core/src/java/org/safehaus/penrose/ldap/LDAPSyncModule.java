@@ -46,11 +46,11 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         connectionName = getParameter(CONNECTION);
 
-        HandlerManager handlerManager = sessionContext.getHandlerManager();
-        Handler handler = handlerManager.getHandler(partition);
-        EntryCache entryCache = handler.getEntryCache();
+        //HandlerManager handlerManager = sessionContext.getHandlerManager();
+        //Handler handler = handlerManager.getHandler(partition);
+        //EntryCache entryCache = handler.getEntryCache();
 
-        entryCache.addListener(this);
+        //entryCache.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {

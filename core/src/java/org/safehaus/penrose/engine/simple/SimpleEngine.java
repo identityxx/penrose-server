@@ -44,7 +44,7 @@ public class SimpleEngine extends Engine {
     public void init() throws Exception {
         super.init();
 
-        searchEngine     = new SearchEngine(this);
+        searchEngine = new SearchEngine(this);
 
         log.debug("Default engine initialized.");
     }
@@ -55,35 +55,6 @@ public class SimpleEngine extends Engine {
 
     public void setSearchEngine(SearchEngine searchEngine) {
         this.searchEngine = searchEngine;
-    }
-
-    public void start() throws Exception {
-        super.start();
-
-        //log.debug("Starting Engine...");
-
-        for (Partition partition : partitionManager.getPartitions()) {
-
-            for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
-                analyzer.analyze(partition, entryMapping);
-            }
-        }
-
-        //threadManager.execute(new RefreshThread(this));
-
-        //log.debug("Engine started.");
-    }
-
-    public void stop() throws Exception {
-        if (stopping) return;
-
-        log.debug("Stopping Engine...");
-        stopping = true;
-
-        // wait for all the worker threads to finish
-        //if (threadManager != null) threadManager.stopRequestAllWorkers();
-        log.debug("Engine stopped.");
-        super.stop();
     }
 
     public void extractSourceValues(

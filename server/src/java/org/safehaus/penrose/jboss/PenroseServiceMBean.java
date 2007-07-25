@@ -36,7 +36,6 @@ public interface PenroseServiceMBean extends Service {
     public void stop();
     public void reload() throws Exception;
     public void restart() throws Exception;
-    public void store() throws Exception;
 
     public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;

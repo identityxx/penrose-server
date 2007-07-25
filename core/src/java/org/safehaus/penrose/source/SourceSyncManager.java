@@ -44,9 +44,10 @@ public class SourceSyncManager {
     public SourceSyncManager() throws Exception {
     }
 
-    public void init(Partition partition, SourceSyncConfig sourceSyncConfig) throws Exception {
+    public SourceSync init(Partition partition, SourceSyncConfig sourceSyncConfig) throws Exception {
+        
         SourceSync sourceSync = getSourceSync(partition, sourceSyncConfig.getName());
-        if (sourceSync != null) return;
+        if (sourceSync != null) return sourceSync;
 
         log.debug("Initializing source sync "+sourceSyncConfig.getName()+".");
 
@@ -67,46 +68,8 @@ public class SourceSyncManager {
         sourceSync.init();
 
         addSourceSync(partition, sourceSync);
-    }
 
-    public void start() throws Exception {
-        for (Iterator i= sourceSyncs.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map map = (Map) sourceSyncs.get(partitionName);
-
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                SourceSync sourceSync = (SourceSync)map.get(name);
-
-                log.debug("Starting "+name+" source sync.");
-                try {
-                    sourceSync.start();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        }
-    }
-
-    public void stop() throws Exception {
-        for (Iterator i= sourceSyncs.keySet().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
-            Map<String,SourceSync> map = (Map<String,SourceSync>) sourceSyncs.get(partitionName);
-
-            for (Iterator j=map.keySet().iterator(); j.hasNext(); ) {
-                String name = (String)j.next();
-                SourceSync sourceSync = (SourceSync)map.get(name);
-
-                log.debug("Closing "+name+" source sync.");
-                try {
-                    sourceSync.stop();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        }
+        return sourceSync;
     }
 
     public Collection<SourceSync> getSourceSyncs(Partition partition) {

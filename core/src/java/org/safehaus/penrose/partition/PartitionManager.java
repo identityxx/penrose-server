@@ -49,32 +49,6 @@ public class PartitionManager implements PartitionManagerMBean {
     public PartitionManager() {
     }
 
-    public Partition load(PartitionConfig partitionConfig) throws Exception {
-        return load(penroseConfig.getHome(), partitionConfig);
-    }
-
-    public Partition load(String dir, PartitionConfig partitionConfig) throws Exception {
-
-        if (debug) log.debug("Loading "+partitionConfig.getName()+" partition.");
-
-        PartitionReader partitionReader = new PartitionReader(dir);
-        Partition partition = partitionReader.read(partitionConfig);
-
-        Collection<PartitionValidationResult> results = partitionValidator.validate(partition);
-
-        for (PartitionValidationResult result : results) {
-            if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-            } else {
-                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-            }
-        }
-
-        partitions.put(partition.getName(), partition);
-
-        return partition;
-    }
-
     public void store(String home, Collection<PartitionConfig> partitionConfigs) throws Exception {
         for (PartitionConfig partitionConfig : partitionConfigs) {
             store(home, partitionConfig);

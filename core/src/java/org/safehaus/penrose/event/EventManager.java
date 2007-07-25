@@ -60,7 +60,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
 
         Collection<AddListener> listeners = new ArrayList<AddListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
@@ -92,7 +92,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<BindListener> listeners = new ArrayList<BindListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(bindListeners);
@@ -123,7 +123,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<CompareListener> listeners = new ArrayList<CompareListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(compareListeners);
@@ -154,7 +154,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(deleteListeners);
@@ -185,7 +185,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(modifyListeners);
@@ -216,7 +216,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(modrdnListeners);
@@ -247,7 +247,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<SearchListener> listeners = new ArrayList<SearchListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(searchListeners);
@@ -278,7 +278,7 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = sessionContext.getModuleManager();
+        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
         listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
         listeners.addAll(unbindListeners);

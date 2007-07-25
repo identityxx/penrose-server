@@ -40,35 +40,6 @@ public class BasicEngine extends Engine {
         log.debug("Default engine initialized.");
     }
 
-    public void start() throws Exception {
-        super.start();
-
-        //log.debug("Starting Engine...");
-
-        for (Partition partition : partitionManager.getPartitions()) {
-
-            for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
-                analyzer.analyze(partition, entryMapping);
-            }
-        }
-
-        //threadManager.execute(new RefreshThread(this));
-
-        //log.debug("Engine started.");
-    }
-
-    public void stop() throws Exception {
-        if (stopping) return;
-
-        log.debug("Stopping Engine...");
-        stopping = true;
-
-        // wait for all the worker threads to finish
-        //if (threadManager != null) threadManager.stopRequestAllWorkers();
-        log.debug("Engine stopped.");
-        super.stop();
-    }
-
     public void extractSourceValues(
             Partition partition,
             EntryMapping entryMapping,

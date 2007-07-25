@@ -17,53 +17,6 @@ public class DemoModule extends Module {
         System.out.println("#### Initializing DemoModule.");
     }
 
-    public void beforeBind(BindEvent event) throws Exception {
-        BindRequest request = event.getRequest();
-        System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
-    }
-
-    public void afterBind(BindEvent event) throws Exception {
-        BindRequest request = event.getRequest();
-        BindResponse response = event.getResponse();
-        int rc = response.getReturnCode();
-        if (rc == LDAP.SUCCESS) {
-            System.out.println("#### Bound as "+request.getDn()+".");
-        } else {
-            System.out.println("#### Failed to bind as "+request.getDn()+". RC="+rc);
-        }
-    }
-
-    public void beforeSearch(SearchEvent event) throws Exception {
-        SearchRequest request = event.getRequest();
-        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
-
-        Filter filter = request.getFilter();
-        if (filter != null && filter.toString().equalsIgnoreCase("(cn=secret)")) {
-            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
-        }
-
-        SearchResponse<SearchResult> response = event.getResponse();
-
-        // register result listener
-        response.addListener(new SearchResponseAdapter() {
-            public void postAdd(SearchResponseEvent event) {
-                SearchResult result = (SearchResult)event.getObject();
-                DN dn = result.getDn();
-                System.out.println("Returning "+dn+".");
-            }
-        });
-    }
-
-    public void afterSearch(SearchEvent event) throws Exception {
-        SearchResponse response = event.getResponse();
-        int rc = response.getReturnCode();
-        if (rc == LDAP.SUCCESS) {
-            System.out.println("#### Search succeded.");
-        } else {
-            System.out.println("#### Search failed. RC="+rc);
-        }
-    }
-
     public void beforeAdd(AddEvent event) throws Exception {
         AddRequest request = event.getRequest();
         System.out.println("#### Adding "+request.getDn()+":");
@@ -88,6 +41,37 @@ public class DemoModule extends Module {
             System.out.println("#### Add succeded.");
         } else {
             System.out.println("#### Add failed. RC="+rc);
+        }
+    }
+
+    public void beforeBind(BindEvent event) throws Exception {
+        BindRequest request = event.getRequest();
+        System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
+    }
+
+    public void afterBind(BindEvent event) throws Exception {
+        BindRequest request = event.getRequest();
+        BindResponse response = event.getResponse();
+        int rc = response.getReturnCode();
+        if (rc == LDAP.SUCCESS) {
+            System.out.println("#### Bound as "+request.getDn()+".");
+        } else {
+            System.out.println("#### Failed to bind as "+request.getDn()+". RC="+rc);
+        }
+    }
+
+    public void beforeDelete(DeleteEvent event) throws Exception {
+        DeleteRequest request = event.getRequest();
+        System.out.println("#### Deleting "+request.getDn());
+    }
+
+    public void afterDelete(DeleteEvent event) throws Exception {
+        DeleteResponse response = event.getResponse();
+        int rc = response.getReturnCode();
+        if (rc == LDAP.SUCCESS) {
+            System.out.println("#### Delete succeded.");
+        } else {
+            System.out.println("#### Delete failed. RC="+rc);
         }
     }
 
@@ -129,18 +113,34 @@ public class DemoModule extends Module {
         }
     }
 
-    public void beforeDelete(DeleteEvent event) throws Exception {
-        DeleteRequest request = event.getRequest();
-        System.out.println("#### Deleting "+request.getDn());
+    public void beforeSearch(SearchEvent event) throws Exception {
+        SearchRequest request = event.getRequest();
+        System.out.println("#### Searching "+request.getDn()+".");
+
+        Filter filter = request.getFilter();
+        if (filter != null && filter.toString().equalsIgnoreCase("(cn=secret)")) {
+            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
+        }
+
+        SearchResponse<SearchResult> response = event.getResponse();
+
+        // register result listener
+        response.addListener(new SearchResponseAdapter() {
+            public void postAdd(SearchResponseEvent event) {
+                SearchResult result = (SearchResult)event.getObject();
+                DN dn = result.getDn();
+                System.out.println("#### Returning "+dn+".");
+            }
+        });
     }
 
-    public void afterDelete(DeleteEvent event) throws Exception {
-        DeleteResponse response = event.getResponse();
+    public void afterSearch(SearchEvent event) throws Exception {
+        SearchResponse response = event.getResponse();
         int rc = response.getReturnCode();
         if (rc == LDAP.SUCCESS) {
-            System.out.println("#### Delete succeded.");
+            System.out.println("#### Search returned "+response.getTotalCount()+" entries.");
         } else {
-            System.out.println("#### Delete failed. RC="+rc);
+            System.out.println("#### Search failed. RC="+rc);
         }
     }
 }

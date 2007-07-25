@@ -46,26 +46,11 @@ public class Connector {
     private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
 
-    private boolean stopping = false;
-
     public Connector() {
     }
 
     public void init() throws Exception {
     }
-
-    public void start() throws Exception {
-    }
-
-    public boolean isStopping() {
-        return stopping;
-    }
-
-    public void stop() throws Exception {
-        if (stopping) return;
-        stopping = true;
-    }
-
 
     public PartitionManager getPartitionManager() {
         return partitionManager;
@@ -73,18 +58,6 @@ public class Connector {
 
     public void setPartitionManager(PartitionManager partitionManager) throws Exception {
         this.partitionManager = partitionManager;
-    }
-
-    public void addPartition(Partition partition) throws Exception {
-
-        Collection<SourceConfig> sourceConfigs = partition.getSources().getSourceConfigs();
-        for (SourceConfig sourceConfig : sourceConfigs) {
-
-            String connectorName = sourceConfig.getParameter("connectorName");
-            connectorName = connectorName == null ? "DEFAULT" : connectorName;
-
-            if (!connectorConfig.getName().equals(connectorName)) continue;
-        }
     }
 
     public Connection getConnection(Partition partition, String name) throws Exception {

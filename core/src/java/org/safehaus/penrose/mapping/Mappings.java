@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class Mappings {
+public class Mappings implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -25,7 +25,7 @@ public class Mappings {
     private Collection<DN> suffixes = new ArrayList<DN>();
     private Collection<EntryMapping> rootEntryMappings = new ArrayList<EntryMapping>();
 
-    public void addEntryMapping(EntryMapping entryMapping) throws Exception {
+    public void addEntryMapping(EntryMapping entryMapping) {
 
         String dn = entryMapping.getDn().getNormalizedDn();
         //if (debug) log.debug("Adding entry "+dn);
@@ -435,4 +435,21 @@ public class Mappings {
         return isDynamic(parentMapping);
     }
 
+    public Object clone() throws CloneNotSupportedException {
+        Mappings mappings = (Mappings)super.clone();
+
+        mappings.entryMappingsById = new LinkedHashMap<String,EntryMapping>();
+        mappings.entryMappingsByDn = new LinkedHashMap<String,Collection<EntryMapping>>();
+        mappings.entryMappingsBySource = new LinkedHashMap<String,Collection<EntryMapping>>();
+        mappings.entryMappingsByParentId = new LinkedHashMap<String,Collection<EntryMapping>>();
+
+        mappings.suffixes = new ArrayList<DN>();
+        mappings.rootEntryMappings = new ArrayList<EntryMapping>();
+
+        for (EntryMapping entryMapping : getEntryMappings()) {
+            mappings.addEntryMapping((EntryMapping)entryMapping.clone());
+        }
+
+        return mappings;
+    }
 }

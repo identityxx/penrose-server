@@ -31,7 +31,6 @@ public class SessionContext {
     private ACLManager     aclManager;
 
     private EventManager   eventManager;
-    private ModuleManager  moduleManager;
 
     private HandlerManager handlerManager;
     private SessionManager sessionManager;
@@ -71,14 +70,6 @@ public class SessionContext {
         this.aclManager = aclManager;
     }
 
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
-    }
-
     public EventManager getEventManager() {
         return eventManager;
     }
@@ -114,11 +105,6 @@ public class SessionContext {
         aclManager.setPenroseConfig(penroseConfig);
         aclManager.setPenroseContext(penroseContext);
 
-        moduleManager = new ModuleManager();
-        moduleManager.setPenroseConfig(penroseConfig);
-        moduleManager.setPenroseContext(penroseContext);
-        moduleManager.setSessionContext(this);
-
         eventManager = new EventManager();
         eventManager.setPenroseConfig(penroseConfig);
         eventManager.setPenroseContext(penroseContext);
@@ -146,21 +132,10 @@ public class SessionContext {
             HandlerConfig handlerConfig = (HandlerConfig)i.next();
             handlerManager.init(handlerConfig);
         }
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        for (Iterator i=partitionManager.getPartitions().iterator(); i.hasNext(); ) {
-            Partition partition = (Partition)i.next();
-
-            for (Iterator j=partition.getModules().getModuleConfigs().iterator(); j.hasNext(); ) {
-                ModuleConfig moduleConfig = (ModuleConfig)j.next();
-                moduleManager.init(partition, moduleConfig);
-            }
-        }
     }
 
     public void start() throws Exception {
         engineManager.start();
-        moduleManager.start();
         handlerManager.start();
         sessionManager.start();
     }
@@ -168,7 +143,6 @@ public class SessionContext {
     public void stop() throws Exception {
         sessionManager.stop();
         handlerManager.stop();
-        moduleManager.stop();
         engineManager.stop();
     }
 

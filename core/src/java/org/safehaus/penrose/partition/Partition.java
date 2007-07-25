@@ -31,7 +31,7 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 /**
  * @author Endi S. Dewata
  */
-public class Partition {
+public class Partition implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -51,6 +51,10 @@ public class Partition {
 
     public String getName() {
         return partitionConfig.getName();
+    }
+
+    public void setName(String name) {
+        partitionConfig.setName(name);
     }
 
     public String getHandlerName() {
@@ -111,5 +115,20 @@ public class Partition {
 
     public void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Partition partition = (Partition)super.clone();
+
+        partition.partitionConfig = (PartitionConfig)partitionConfig.clone();
+
+        partition.connections = (Connections)connections.clone();
+        partition.sources = (Sources)sources.clone();
+        partition.mappings = (Mappings)mappings.clone();
+        partition.modules = (Modules)modules.clone();
+
+        partition.libraries = new ArrayList<String>();
+
+        return partition;
     }
 }

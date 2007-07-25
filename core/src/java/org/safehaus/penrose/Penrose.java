@@ -20,7 +20,6 @@ package org.safehaus.penrose;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Iterator;
 
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.session.Session;
@@ -59,7 +58,7 @@ public class Penrose {
     private PenroseConfig      penroseConfig;
     private PenroseContext     penroseContext;
     private ConnectorContext   connectorContext;
-    private SessionContext sessionContext;
+    private SessionContext     sessionContext;
 
     private String status = STOPPED;
 
@@ -87,7 +86,6 @@ public class Penrose {
     protected Penrose(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
         init();
-        load();
     }
 
     protected Penrose(String home) throws Exception {
@@ -97,7 +95,6 @@ public class Penrose {
         loadConfig();
 
         init();
-        load();
     }
 
     protected Penrose() throws Exception {
@@ -105,7 +102,6 @@ public class Penrose {
         loadConfig();
 
         init();
-        load();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,33 +134,31 @@ public class Penrose {
             Log4jConfig config = configReader.read();
 
             log.debug("Appenders:");
-            for (Iterator i=config.getAppenderConfigs().iterator(); i.hasNext(); ) {
-                AppenderConfig appenderConfig = (AppenderConfig)i.next();
-                log.debug(" - "+appenderConfig.getName());
+            for (AppenderConfig appenderConfig : config.getAppenderConfigs()) {
+                log.debug(" - " + appenderConfig.getName());
             }
 
             log.debug("Loggers:");
-            for (Iterator i=config.getLoggerConfigs().iterator(); i.hasNext(); ) {
-                LoggerConfig loggerConfig = (LoggerConfig)i.next();
-                log.debug(" - "+loggerConfig.getName()+": "+loggerConfig.getLevel()+" "+loggerConfig.getAppenders());
+            for (LoggerConfig loggerConfig : config.getLoggerConfigs()) {
+                log.debug(" - " + loggerConfig.getName() + ": " + loggerConfig.getLevel() + " " + loggerConfig.getAppenders());
             }
         }
 
         penroseContext = new PenroseContext();
+        connectorContext = new ConnectorContext();
+        sessionContext = new SessionContext();
+
+        penroseContext.setSessionContext(sessionContext);
         penroseContext.init(penroseConfig);
 
-        connectorContext = new ConnectorContext();
         connectorContext.setPenroseConfig(penroseConfig);
         connectorContext.setPenroseContext(penroseContext);
         connectorContext.init();
 
-        sessionContext = new SessionContext();
         sessionContext.setPenroseConfig(penroseConfig);
         sessionContext.setPenroseContext(penroseContext);
         sessionContext.init();
-    }
 
-    public void load() throws Exception {
         penroseContext.load();
         sessionContext.load();
     }
@@ -177,11 +171,6 @@ public class Penrose {
         clear();
         loadConfig();
         init();
-        load();
-    }
-
-    public void store() throws Exception {
-        penroseContext.store();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +179,7 @@ public class Penrose {
 
     public void start() throws Exception {
 
-        if (status != STOPPED) return;
+        if (!STOPPED.equals(status)) return;
 
         status = STARTING;
 
@@ -206,7 +195,7 @@ public class Penrose {
 
     public void stop() throws Exception {
 
-        if (status != STARTED) return;
+        if (!STARTED.equals(status)) return;
 
         status = STOPPING;
 

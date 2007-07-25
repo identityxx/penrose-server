@@ -74,7 +74,7 @@ public class SourceSyncConfig implements Cloneable {
         name = sourceSyncConfig.name;
         destinations = sourceSyncConfig.destinations;
 
-        parameters = new TreeMap();
+        parameters = new TreeMap<String,String>();
         parameters.putAll(sourceSyncConfig.parameters);
     }
 

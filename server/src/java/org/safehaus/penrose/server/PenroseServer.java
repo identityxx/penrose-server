@@ -169,10 +169,6 @@ public class PenroseServer {
         penrose.reload();
     }
 
-    public void store() throws Exception {
-        penrose.store();
-    }
-    
     public static void main( String[] args ) throws Exception {
 
         try {
@@ -196,13 +192,12 @@ public class PenroseServer {
 
             String homeDirectory = System.getProperty("penrose.home");
 
+            File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
+
             Logger rootLogger = Logger.getRootLogger();
             rootLogger.setLevel(Level.OFF);
 
             Logger logger = Logger.getLogger("org.safehaus.penrose");
-
-            File log4jProperties = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.properties");
-            File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
 
             if (parameters.contains("-d")) {
                 logger.setLevel(Level.DEBUG);
@@ -213,9 +208,6 @@ public class PenroseServer {
                 logger.setLevel(Level.INFO);
                 ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
                 BasicConfigurator.configure(appender);
-
-            } else if (log4jProperties.exists()) {
-                PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
 
             } else if (log4jXml.exists()) {
                 DOMConfigurator.configure(log4jXml.getAbsolutePath());

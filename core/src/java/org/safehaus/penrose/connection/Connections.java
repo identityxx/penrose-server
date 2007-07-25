@@ -11,11 +11,11 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class Connections {
+public class Connections implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private Map<String, AdapterConfig> adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
+    private Map<String,AdapterConfig> adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
 
     public void addAdapterConfig(AdapterConfig adapterConfig) {
@@ -59,4 +59,19 @@ public class Connections {
         connectionConfigs.put(newName, connectionConfig);
     }
 
+    public Object clone() throws CloneNotSupportedException {
+        Connections connections = (Connections)super.clone();
+
+        connections.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
+        for (AdapterConfig adapterConfig : adapterConfigs.values()) {
+            connections.adapterConfigs.put(adapterConfig.getName(), (AdapterConfig)adapterConfig.clone());
+        }
+
+        connections.connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
+        for (ConnectionConfig connectionConfig : connectionConfigs.values()) {
+            connections.connectionConfigs.put(connectionConfig.getName(), (ConnectionConfig)connectionConfig.clone());
+        }
+
+        return connections;
+    }
 }

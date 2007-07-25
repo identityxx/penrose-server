@@ -22,6 +22,4 @@ package org.safehaus.penrose.module;
  */
 public interface ModuleManagerMBean {
 
-    public void start() throws Exception;
-    public void stop() throws Exception;
 }

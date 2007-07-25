@@ -42,13 +42,13 @@ public class ModuleManager implements ModuleManagerMBean {
 
     private Map<String,Map<String,Module>> modules = new LinkedHashMap<String,Map<String,Module>>();
 
-    public void init(Partition partition, ModuleConfig moduleConfig) throws Exception {
+    public Module init(Partition partition, ModuleConfig moduleConfig) throws Exception {
+
+        if (!moduleConfig.isEnabled()) return null;
 
         Module module = getModule(partition.getName(), moduleConfig.getName());
-        if (module != null) return;
+        if (module != null) return module;
         
-        if (!moduleConfig.isEnabled()) return;
-
         if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
 
         String moduleClass = moduleConfig.getModuleClass();
@@ -64,86 +64,8 @@ public class ModuleManager implements ModuleManagerMBean {
         module.init();
 
         addModule(partition.getName(), module);
-    }
 
-    public void start() throws Exception {
-        log.debug("Starting modules...");
-
-        for (String partitionName : modules.keySet()) {
-            Map<String, Module> map = modules.get(partitionName);
-
-            for (String moduleName : map.keySet()) {
-                Module module = map.get(moduleName);
-
-                ModuleConfig moduleConfig = module.getModuleConfig();
-                if (!moduleConfig.isEnabled()) {
-                    if (debug) log.debug("Module " + moduleConfig.getName() + " is disabled");
-                    continue;
-                }
-
-                module.start();
-            }
-        }
-
-        log.debug("Modules started.");
-    }
-
-    public void start(String partitionName, String moduleName) throws Exception {
-
-        Module module = getModule(partitionName, moduleName);
-        if (module == null) {
-            if (debug) log.debug("Module "+moduleName+" not found");
-            return;
-        }
-
-        ModuleConfig moduleConfig = module.getModuleConfig();
-        if (!moduleConfig.isEnabled()) {
-            if (debug) log.debug("Module "+moduleConfig.getName()+" is disabled");
-            return;
-        }
-
-        if (debug) log.debug("Starting "+moduleName +" module.");
-        module.start();
-    }
-
-    public void stop() throws Exception {
-        log.debug("Stopping modules...");
-
-        for (String partitionName : modules.keySet()) {
-            Map<String,Module> map = modules.get(partitionName);
-
-            for (String moduleName : map.keySet()) {
-                Module module = map.get(moduleName);
-
-                ModuleConfig moduleConfig = module.getModuleConfig();
-                if (!moduleConfig.isEnabled()) {
-                    if (debug) log.debug("Module " + moduleConfig.getName() + " is disabled");
-                    continue;
-                }
-
-                module.stop();
-            }
-        }
-
-        log.debug("Modules stopped.");
-    }
-
-    public void stop(String partitionName, String moduleName) throws Exception {
-
-        Module module = getModule(partitionName, moduleName);
-        if (module == null) {
-            if (debug) log.debug("Module "+moduleName+" not found");
-            return;
-        }
-
-        ModuleConfig moduleConfig = module.getModuleConfig();
-        if (!moduleConfig.isEnabled()) {
-            if (debug) log.debug("Module "+moduleConfig.getName()+" is disabled");
-            return;
-        }
-
-        if (debug) log.debug("Stopping "+moduleName +" module.");
-        module.stop();
+        return module;
     }
 
     public String getStatus(String partitionName, String moduleName) throws Exception {
@@ -159,6 +81,10 @@ public class ModuleManager implements ModuleManagerMBean {
             modules.put(partitionName, map);
         }
         map.put(module.getName(), module);
+    }
+
+    public Module getModule(Partition partition, String moduleName) {
+        return getModule(partition.getName(), moduleName);
     }
 
     public Module getModule(String partitionName, String moduleName) {

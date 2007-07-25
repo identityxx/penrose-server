@@ -80,44 +80,6 @@ public class ConnectionManager implements ConnectionManagerMBean {
         }
     }
 
-    public void start() throws Exception {
-        for (String partitionName : connections.keySet()) {
-            Map<String,Connection> map = connections.get(partitionName);
-
-            for (String name : map.keySet()) {
-                Connection connection = map.get(name);
-
-                log.debug("Starting "+partitionName+"/"+name+" connection.");
-                try {
-                    connection.start();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    errorLog.error("ERROR: Unable to start "+partitionName+"/"+name+" connection.");
-                }
-            }
-        }
-    }
-
-    public void stop() throws Exception {
-        for (String partitionName : connections.keySet()) {
-            Map<String, Connection> map = connections.get(partitionName);
-
-            for (String name : map.keySet()) {
-                Connection connection = map.get(name);
-
-                log.debug("Stopping "+partitionName+"/"+name+" connection.");
-                try {
-                    connection.stop();
-
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    errorLog.error("ERROR: Unable to stop "+partitionName+"/"+name+" connection.");
-                }
-            }
-        }
-    }
-
     public void dispose() throws Exception {
         for (String partitionName : connections.keySet()) {
             Map<String, Connection> map = connections.get(partitionName);

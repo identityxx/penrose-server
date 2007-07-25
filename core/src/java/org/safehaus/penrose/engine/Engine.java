@@ -178,10 +178,21 @@ public abstract class Engine {
     }
 
     public void start() throws Exception {
+        for (Partition partition : partitionManager.getPartitions()) {
+
+            for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
+                analyzer.analyze(partition, entryMapping);
+            }
+        }
     }
 
     public void stop() throws Exception {
+        if (stopping) return;
 
+        log.debug("Stopping Engine...");
+        stopping = true;
+
+        log.debug("Engine stopped.");
     }
 
     public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {

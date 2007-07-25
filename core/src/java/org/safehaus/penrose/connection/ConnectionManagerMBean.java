@@ -25,7 +25,4 @@ import java.util.Collection;
 public interface ConnectionManagerMBean {
 
     public Collection getConnectionNames(String partitionName) throws Exception;
-
-    public void start() throws Exception;
-    public void stop() throws Exception;
 }

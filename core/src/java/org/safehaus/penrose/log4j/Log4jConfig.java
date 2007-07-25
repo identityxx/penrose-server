@@ -29,16 +29,16 @@ public class Log4jConfig {
 
     boolean debug;
 
-    Map appenderConfigs = new LinkedHashMap();
-    Map loggerConfigs = new LinkedHashMap();
+    Map<String,AppenderConfig> appenderConfigs = new LinkedHashMap<String,AppenderConfig>();
+    Map<String,LoggerConfig> loggerConfigs = new LinkedHashMap<String,LoggerConfig>();
 
     RootConfig rootConfig;
 
-    public Collection getAppenderConfigs() {
+    public Collection<AppenderConfig> getAppenderConfigs() {
         return appenderConfigs.values();
     }
 
-    public Collection getAppenderConfigNames() {
+    public Collection<String> getAppenderConfigNames() {
         return appenderConfigs.keySet();
     }
 
@@ -47,18 +47,18 @@ public class Log4jConfig {
     }
 
     public AppenderConfig getAppenderConfig(String name) {
-        return (AppenderConfig)appenderConfigs.get(name);
+        return appenderConfigs.get(name);
     }
 
     public AppenderConfig removeAppenderConfig(String name) {
-        return (AppenderConfig)appenderConfigs.remove(name);
+        return appenderConfigs.remove(name);
     }
 
-    public Collection getLoggerConfigs() {
+    public Collection<LoggerConfig> getLoggerConfigs() {
         return loggerConfigs.values();
     }
 
-    public Collection getLoggerConfigNames() {
+    public Collection<String> getLoggerConfigNames() {
         return loggerConfigs.keySet();
     }
 
@@ -67,11 +67,11 @@ public class Log4jConfig {
     }
 
     public LoggerConfig getLoggerConfig(String name) {
-        return (LoggerConfig)loggerConfigs.get(name);
+        return loggerConfigs.get(name);
     }
 
     public LoggerConfig removeLoggerConfig(String name) {
-        return (LoggerConfig)loggerConfigs.remove(name);
+        return loggerConfigs.remove(name);
     }
 
     public RootConfig getRootConfig() {

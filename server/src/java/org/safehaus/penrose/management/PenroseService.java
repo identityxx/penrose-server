@@ -120,15 +120,6 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void store() throws Exception {
-        try {
-            penroseServer.store();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
     public Collection getServiceNames() throws Exception {
         try {
             Collection serviceNames = new ArrayList();

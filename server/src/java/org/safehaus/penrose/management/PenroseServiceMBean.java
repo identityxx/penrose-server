@@ -33,7 +33,6 @@ public interface PenroseServiceMBean {
     public void stop() throws Exception;
     public void reload() throws Exception;
     public void restart() throws Exception;
-    public void store() throws Exception;
 
     public void renameEntryMapping(DN oldDn, DN newDn) throws Exception;
 

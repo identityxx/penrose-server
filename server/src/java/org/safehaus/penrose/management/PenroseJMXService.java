@@ -313,7 +313,7 @@ public class PenroseJMXService extends Service {
         register("Penrose:service=PartitionManager", penroseContext.getPartitionManager());
 
         SessionContext sessionContext = penrose.getSessionContext();
-        register("Penrose:service=ModuleManager", sessionContext.getModuleManager());
+        register("Penrose:service=ModuleManager", penroseContext.getModuleManager());
 
         register("Penrose:service=SessionManager", sessionContext.getSessionManager());
         register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
