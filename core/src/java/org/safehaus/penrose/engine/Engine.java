@@ -293,7 +293,7 @@ public abstract class Engine {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -312,7 +312,9 @@ public abstract class Engine {
         Attribute attribute = attributes.get(attributeName);
         if (attribute == null) {
             if (debug) log.debug("Attribute "+attributeName+" not found.");
-            return false;
+
+            response.setReturnCode(LDAP.COMPARE_FALSE);
+            return;
         }
 
         Collection<Object> values = attribute.getValues();
@@ -326,11 +328,14 @@ public abstract class Engine {
             boolean b = equalityMatchingRule.compare(value, attributeValue);
             if (debug) log.debug(" - [" + value + "] => " + b);
 
-            if (b) return true;
+            if (b) {
+                response.setReturnCode(LDAP.COMPARE_TRUE);
+                return;
+            }
 
         }
 
-        return false;
+        response.setReturnCode(LDAP.COMPARE_FALSE);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

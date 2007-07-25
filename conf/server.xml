@@ -75,11 +75,11 @@
   </handler>
 
   <adapter name="JDBC">
-    <adapter-class>org.safehaus.penrose.adapter.jdbc.JDBCAdapter</adapter-class>
+    <adapter-class>org.safehaus.penrose.jdbc.adapter.JDBCAdapter</adapter-class>
   </adapter>
 
   <adapter name="LDAP">
-    <adapter-class>org.safehaus.penrose.adapter.ldap.LDAPAdapter</adapter-class>
+    <adapter-class>org.safehaus.penrose.ldap.adapter.LDAPAdapter</adapter-class>
   </adapter>
 
   <partition name="static" path="samples/static"/>

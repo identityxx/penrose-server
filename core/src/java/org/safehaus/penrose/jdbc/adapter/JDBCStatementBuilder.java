@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,10 +180,8 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            if (count > 1) {
-                sb.append(fieldRef.getSourceName());
-                sb.append('.');
-            }
+            sb.append(fieldRef.getSourceName());
+            sb.append('.');
 
             if (quote != null) sb.append(quote);
             sb.append(fieldRef.getOriginalName());

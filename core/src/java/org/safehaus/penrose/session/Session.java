@@ -62,7 +62,6 @@ public class Session {
     private Object sessionId;
 
     private DN bindDn;
-    private byte[] bindPassword;
     private boolean rootUser;
 
     private Date createDate;
@@ -219,9 +218,32 @@ public class Session {
         BindResponse response = new BindResponse();
 
         bind(request, response);
+
+        LDAPException exception = response.getException();
+        if (exception.getResultCode() != LDAP.SUCCESS) {
+            throw exception;
+        }
     }
 
     public void bind(BindRequest request, BindResponse response) throws LDAPException {
+
+        Partition partition;
+
+        try {
+            DN dn = request.getDn();
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            partition = partitionManager.getPartition(dn);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw LDAP.createException(e);
+        }
+
+        bind(partition, request, response);
+    }
+
+    public void bind(Partition partition, BindRequest request, BindResponse response) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -239,20 +261,10 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            DN dn = request.getDn();
-            byte[] password = request.getPassword();
+            SchemaManager schemaManager = penroseContext.getSchemaManager();
 
-            DN rootDn = penroseConfig.getRootDn();
-
-            boolean isAnonymous = dn.isEmpty();
-            boolean isRoot = dn.matches(rootDn);
-
-            Partition partition = null;
-
-            if (!isAnonymous && !isRoot) {
-                PartitionManager partitionManager = penroseContext.getPartitionManager();
-                partition = partitionManager.getPartition(dn);
-            }
+            DN dn = schemaManager.normalize(request.getDn());
+            request.setDn(dn);
 
             if (eventsEnabled) {
             	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, partition, request, response);
@@ -260,31 +272,16 @@ public class Session {
         	}
             
             try {
-                if (isAnonymous) {
-                    log.debug("Anonymous bind.");
+                handlerManager.bind(this, partition, request, response);
 
-                    rootUser = false;
-                    bindDn = null;
-                    bindPassword = null;
+                if (response.getReturnCode() == LDAP.SUCCESS) {
+                    log.debug("Bound as "+dn);
+                    bindDn = (dn == null || dn.isEmpty()) ? null : dn;
 
-                } else if (isRoot) {
-                    if (!PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
-                        log.debug("Password doesn't match => BIND FAILED");
-                        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-                    }
-
-                    log.debug("Bound as root user.");
-
-                    rootUser = true;
-                    bindDn = dn;
-                    bindPassword = password;
-
+                    rootUser = dn.matches(penroseConfig.getRootDn());
+                    
                 } else {
-                    handlerManager.bind(this, partition, request, response);
-
-                    rootUser = false;
-                    bindDn = dn;
-                    bindPassword = password;
+                    log.debug("Bind failed.");
                 }
 
             } catch (LDAPException e) {
@@ -324,10 +321,12 @@ public class Session {
 
         CompareResponse response = new CompareResponse();
 
-        return compare(request, response);
+        compare(request, response);
+
+        return response.getReturnCode() == LDAP.COMPARE_TRUE;
     }
 
-    public boolean compare(CompareRequest request, CompareResponse response) throws LDAPException {
+    public void compare(CompareRequest request, CompareResponse response) throws LDAPException {
 
         Partition partition;
 
@@ -342,10 +341,10 @@ public class Session {
             throw LDAP.createException(e);
         }
 
-        return compare(partition, request, response);
+        compare(partition, request, response);
     }
 
-    public boolean compare(Partition partition, CompareRequest request, CompareResponse response) throws LDAPException {
+    public void compare(Partition partition, CompareRequest request, CompareResponse response) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -381,9 +380,8 @@ public class Session {
             	eventManager.postEvent(beforeCompareEvent);
             }
 
-            boolean result = false;
             try {
-                result = handlerManager.compare(this, partition, request, response);
+                handlerManager.compare(this, partition, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -395,10 +393,6 @@ public class Session {
                 	eventManager.postEvent(afterCompareEvent);
                 }
             }
-
-            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
-            
-            return result;
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -868,7 +862,6 @@ public class Session {
 
                 rootUser = false;
                 bindDn = null;
-                bindPassword = null;
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -993,18 +986,6 @@ public class Session {
 
     public Collection getAttributeNames() {
         return attributes.keySet();
-    }
-
-    public byte[] getBindPassword() {
-        return bindPassword;
-    }
-
-    public void setBindPassword(String bindPassword) {
-        this.bindPassword = bindPassword == null ? null : bindPassword.getBytes();
-    }
-
-    public void setBindPassword(byte[] bindPassword) {
-        this.bindPassword = bindPassword;
     }
 
     public boolean isRootUser() {

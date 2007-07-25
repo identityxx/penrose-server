@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.FieldMapping;

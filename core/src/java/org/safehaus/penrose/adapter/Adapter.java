@@ -253,7 +253,7 @@ public abstract class Adapter {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Source source,
             CompareRequest request,
@@ -262,7 +262,7 @@ public abstract class Adapter {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
-    public boolean compare(
+    public void compare(
             Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -352,7 +352,7 @@ public abstract class Adapter {
             break;
         }
 
-        return compare(session, source, newRequest, response);
+        compare(session, source, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

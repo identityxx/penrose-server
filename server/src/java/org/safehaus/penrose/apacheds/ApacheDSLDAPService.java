@@ -36,6 +36,8 @@ import java.io.File;
 import java.util.*;
 
 import com.identyx.javabackend.Backend;
+import com.identyx.javabackend.apacheds.JavaBackendAuthenticator;
+import com.identyx.javabackend.apacheds.JavaBackendInterceptor;
 
 /**
  * @author Endi S. Dewata
@@ -103,7 +105,7 @@ public class ApacheDSLDAPService extends LDAPService {
 
         // Register Penrose authenticator
 
-        PenroseAuthenticator authenticator = new PenroseAuthenticator();
+        JavaBackendAuthenticator authenticator = new JavaBackendAuthenticator();
         authenticator.setBackend(backend);
 
         MutableAuthenticatorConfiguration authenticatorConfig = new MutableAuthenticatorConfiguration();
@@ -124,7 +126,7 @@ public class ApacheDSLDAPService extends LDAPService {
         }
 
         // Register Penrose interceptor
-        PenroseInterceptor interceptor = new PenroseInterceptor();
+        JavaBackendInterceptor interceptor = new JavaBackendInterceptor();
         interceptor.setBackend(backend);
 
         MutableInterceptorConfiguration interceptorConfig = new MutableInterceptorConfiguration();

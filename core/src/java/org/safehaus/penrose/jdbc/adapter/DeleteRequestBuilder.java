@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.SourceValues;
@@ -16,7 +16,6 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.DeleteRequest;
 import org.safehaus.penrose.ldap.DeleteResponse;
 import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.*;
 

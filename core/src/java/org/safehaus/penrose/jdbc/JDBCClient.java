@@ -22,7 +22,7 @@ import java.util.*;
 
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.TableConfig;
-import org.safehaus.penrose.adapter.jdbc.JDBCStatementBuilder;
+import org.safehaus.penrose.jdbc.adapter.JDBCStatementBuilder;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.Formatter;

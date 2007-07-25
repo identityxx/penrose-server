@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

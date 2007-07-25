@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,12 +113,16 @@ public class JDBCFilterBuilder {
 
         } else {
             int i = name.indexOf('.');
+            String sourceName = source.getName();
             String fieldName = i >= 0 ? name.substring(i+1) : name;
 
             lField = source.getField(fieldName);
             if (lField == null) throw new Exception("Unknown field: "+name);
 
             StringBuilder sb1 = new StringBuilder();
+            sb1.append(sourceName);
+            sb1.append(".");
+
             if (quote != null) sb1.append(quote);
             sb1.append(lField.getOriginalName());
             if (quote != null) sb1.append(quote);
@@ -159,12 +163,16 @@ public class JDBCFilterBuilder {
 
             } else {
                 int i = rhs.indexOf('.');
+                String sourceName = source.getName();
                 String fieldName = i >= 0 ? rhs.substring(i+1) : rhs;
 
                 rField = source.getField(fieldName);
                 if (rField == null) throw new Exception("Unknown field: "+rhs);
 
                 StringBuilder sb1 = new StringBuilder();
+                sb1.append(sourceName);
+                sb1.append(".");
+
                 if (quote != null) sb1.append(quote);
                 sb1.append(rField.getOriginalName());
                 if (quote != null) sb1.append(quote);

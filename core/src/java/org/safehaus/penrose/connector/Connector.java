@@ -171,7 +171,7 @@ public class Connector {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -185,7 +185,7 @@ public class Connector {
         Source source = sourceRef.getSource();
         Connection connection = source.getConnection();
 
-        return connection.compare(
+        connection.compare(
                 session,
                 entryMapping,
                 sourceRefs,

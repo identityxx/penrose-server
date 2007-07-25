@@ -3,7 +3,7 @@ package org.safehaus.penrose.test.mapping.join;
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
+import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.partition.*;

@@ -2,10 +2,10 @@ package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.Response;
 import org.safehaus.penrose.control.Control;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -36,21 +36,24 @@ public class PenroseResponse implements com.identyx.javabackend.Response {
         response.removeControl(penroseControl.getControl());
     }
 
-    public void setControls(Collection controls) throws Exception {
+    public void setControls(Collection<com.identyx.javabackend.Control> controls) throws Exception {
         Collection<Control> list = new ArrayList<Control>();
-        for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            PenroseControl control = (PenroseControl)i.next();
-            list.add(control.getControl());
+        for (com.identyx.javabackend.Control control : controls) {
+            PenroseControl penroseControl = (PenroseControl) control;
+            list.add(penroseControl.getControl());
         }
         response.setControls(list);
     }
 
-    public Collection getControls() throws Exception {
-        Collection list = new ArrayList();
-        for (Iterator i= response.getControls().iterator(); i.hasNext(); ) {
-            Control control = (Control)i.next();
+    public Collection<com.identyx.javabackend.Control> getControls() throws Exception {
+        Collection<com.identyx.javabackend.Control> list = new ArrayList<com.identyx.javabackend.Control>();
+        for (Control control : response.getControls()) {
             list.add(new PenroseControl(control));
         }
         return list;
+    }
+
+    public LDAPException getException() {
+        return response.getException();
     }
 }

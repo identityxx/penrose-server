@@ -186,7 +186,6 @@ public class ProxyEngine extends Engine {
             client.add(newRequest, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -231,7 +230,6 @@ public class ProxyEngine extends Engine {
             client.bind(newRequest, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -243,7 +241,7 @@ public class ProxyEngine extends Engine {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -271,10 +269,11 @@ public class ProxyEngine extends Engine {
             CompareRequest newRequest = (CompareRequest)request.clone();
             newRequest.setDn(targetDn);
 
-            return client.compare(newRequest, response);
+            boolean result = client.compare(newRequest, response);
+
+            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -317,7 +316,6 @@ public class ProxyEngine extends Engine {
             client.delete(newRequest, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -362,7 +360,6 @@ public class ProxyEngine extends Engine {
             client.modify(newRequest, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -409,7 +406,6 @@ public class ProxyEngine extends Engine {
             client.modrdn(newRequest, response);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {
@@ -504,7 +500,6 @@ public class ProxyEngine extends Engine {
             client.search(newRequest, sr);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
             throw LDAP.createException(e);
 
         } finally {

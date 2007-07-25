@@ -292,7 +292,7 @@ public class BasicEngine extends Engine {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -318,7 +318,7 @@ public class BasicEngine extends Engine {
             SourceRef sourceRef = sourceRefs.iterator().next();
             Connector connector = getConnector(sourceRef);
 
-            return connector.compare(
+            connector.compare(
                     session,
                     partition,
                     entryMapping,
@@ -327,10 +327,12 @@ public class BasicEngine extends Engine {
                     request,
                     response
             );
+
+            return;
         }
 
         log.debug("Calling default compare operation.");
-        return super.compare(session, partition, entryMapping, sourceValues, request, response);
+        super.compare(session, partition, entryMapping, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

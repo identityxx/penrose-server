@@ -20,6 +20,7 @@ import edu.emory.mathcs.backport.java.util.concurrent.TimeUnit;
 import edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue;
 import edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor;
 import com.identyx.javabackend.Backend;
+import com.identyx.javabackend.mina.MinaHandler;
 
 /**
  * @author Endi S. Dewata
@@ -29,7 +30,7 @@ public class MinaLDAPService extends LDAPService {
     SocketAcceptorConfig acceptorConfig;
     SocketAcceptor acceptor;
 
-    PenroseProtocolCodecFactory codecFactory;
+    MinaProtocolCodecFactory codecFactory;
     MinaHandler handler;
 
     ExecutorThreadModel threadModel;
@@ -89,7 +90,7 @@ public class MinaLDAPService extends LDAPService {
         Hashtable<Object,Object> env = new Hashtable<Object,Object>();
         env.put("java.naming.ldap.attributes.binary", binaryAttributes);
 
-        codecFactory = new PenroseProtocolCodecFactory(env);
+        codecFactory = new MinaProtocolCodecFactory(env);
         handler = new MinaHandler(backend, codecFactory);
 
         threadPoolExecutor = new ThreadPoolExecutor(

@@ -239,7 +239,7 @@ public abstract class Handler {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             EntryMapping entryMapping,
@@ -271,7 +271,7 @@ public abstract class Handler {
         }
 
         Engine engine = getEngine(partition, entryMapping);
-        return engine.compare(session, partition, entryMapping, sourceValues, request, response);
+        engine.compare(session, partition, entryMapping, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
@@ -429,7 +429,7 @@ public class JDBCAdapter extends Adapter {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             final Session session,
             final Source source,
             final CompareRequest request,
@@ -447,11 +447,10 @@ public class JDBCAdapter extends Adapter {
 
         search(session, source, newRequest, newResponse);
 
-        boolean b = newResponse.hasNext();
+        boolean result = newResponse.hasNext();
 
-        if (debug) log.debug("Compare operation completed ["+b+"].");
-
-        return b;
+        if (debug) log.debug("Compare operation completed ["+result+"].");
+        response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

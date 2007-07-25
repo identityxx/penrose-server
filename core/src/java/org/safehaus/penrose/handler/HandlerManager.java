@@ -27,6 +27,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.acl.ACLManager;
@@ -157,6 +158,11 @@ public class HandlerManager {
             AddResponse response
     ) throws Exception {
 
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
+
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
@@ -203,8 +209,35 @@ public class HandlerManager {
             BindResponse response
     ) throws Exception {
 
-        DN dn = schemaManager.normalize(request.getDn());
-        request.setDn(dn);
+        DN dn = request.getDn();
+        byte[] password = request.getPassword();
+
+        boolean isAnonymous = dn.isEmpty();
+
+        DN rootDn = penroseConfig.getRootDn();
+        boolean isRoot = dn.matches(rootDn);
+
+        if (isAnonymous) {
+            log.debug("Bound as anonymous user.");
+            return;
+        }
+
+        if (isRoot) {
+            if (PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
+                log.debug("Bound as root user.");
+
+            } else {
+                log.debug("Root password doesn't match.");
+                response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
+            }
+            return;
+        }
+
+        if (partition == null) {
+            log.debug("User not found.");
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         Collection<EntryMapping> entryMappings = partition.getMappings().findEntryMappings(dn);
 
@@ -220,12 +253,17 @@ public class HandlerManager {
     // COMPARE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Partition partition,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
+
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -249,7 +287,10 @@ public class HandlerManager {
 
             try {
                 Handler handler = getHandler(partition, entryMapping);
-                return handler.compare(session, partition, entryMapping, request, response);
+                handler.compare(session, partition, entryMapping, request, response);
+
+                return;
+
             } catch (Exception e) {
                 exception = e;
             }
@@ -268,6 +309,11 @@ public class HandlerManager {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
+
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -308,6 +354,11 @@ public class HandlerManager {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
+
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -351,6 +402,11 @@ public class HandlerManager {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
+
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
@@ -525,6 +581,11 @@ public class HandlerManager {
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
+
+        if (partition == null) {
+            response.setException(LDAP.createException(LDAP.NO_SUCH_OBJECT));
+            return;
+        }
 
         DN bindDn = request.getDn();
 

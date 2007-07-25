@@ -36,7 +36,7 @@
     <appender-ref ref="error"/>
   </logger>
 
-  <logger name="org.safehaus.penrose.log.Debug" additivity="false">
+  <logger name="org.safehaus.penrose" additivity="false">
     <level value="WARN"/>
     <appender-ref ref="debug"/>
   </logger>

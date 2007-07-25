@@ -181,7 +181,7 @@ public class Connection implements ConnectionMBean {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Source source,
             SourceValues sourceValues,
@@ -189,10 +189,10 @@ public class Connection implements ConnectionMBean {
             CompareResponse response
     ) throws Exception {
 
-        return adapter.compare(session, source, request, response);
+        adapter.compare(session, source, request, response);
     }
 
-    public boolean compare(
+    public void compare(
             Session session,
             EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
@@ -201,7 +201,7 @@ public class Connection implements ConnectionMBean {
             CompareResponse response
     ) throws Exception {
 
-        return adapter.compare(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.compare(session, entryMapping, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

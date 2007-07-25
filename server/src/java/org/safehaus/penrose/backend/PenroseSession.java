@@ -146,7 +146,9 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         CompareRequest penroseRequest = ((PenroseCompareRequest)request).getCompareRequest();
         CompareResponse penroseResponse = ((PenroseCompareResponse)response).getCompareResponse();
 
-        return session.compare(penroseRequest, penroseResponse);
+        session.compare(penroseRequest, penroseResponse);
+
+        return penroseResponse.getReturnCode() == LDAP.COMPARE_TRUE;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

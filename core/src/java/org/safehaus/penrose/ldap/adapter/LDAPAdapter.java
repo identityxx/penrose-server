@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.adapter.ldap;
+package org.safehaus.penrose.ldap.adapter;
 
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.adapter.Adapter;
@@ -281,7 +281,7 @@ public class LDAPAdapter extends Adapter {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public void compare(
             Session session,
             Source source,
             CompareRequest request,
@@ -309,11 +309,10 @@ public class LDAPAdapter extends Adapter {
 
             if (debug) log.debug("Comparing entry "+dn);
 
-            boolean b = client.compare(newRequest, response);
+            boolean result = client.compare(newRequest, response);
 
-            log.debug("Compare operation completed ["+b+"].");
-
-            return b;
+            log.debug("Compare operation completed ["+result+"].");
+            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } finally {
             closeClient(session, partition, source, client);

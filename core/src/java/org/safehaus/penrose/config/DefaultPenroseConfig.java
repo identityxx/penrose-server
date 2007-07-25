@@ -18,8 +18,8 @@
 package org.safehaus.penrose.config;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.adapter.jdbc.JDBCAdapter;
-import org.safehaus.penrose.adapter.ldap.LDAPAdapter;
+import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
+import org.safehaus.penrose.ldap.adapter.LDAPAdapter;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.engine.EngineConfig;

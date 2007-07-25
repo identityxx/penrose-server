@@ -1,4 +1,4 @@
-package org.safehaus.penrose.adapter.jdbc;
+package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.entry.SourceValues;
