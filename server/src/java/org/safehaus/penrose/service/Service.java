@@ -35,10 +35,12 @@ public class Service {
     public final static String STARTING = "STARTING";
     public final static String STARTED  = "STARTED";
 
-    private PenroseServer penroseServer;
-    private ServiceConfig serviceConfig;
+    protected PenroseServer penroseServer;
+    protected ServiceConfig serviceConfig;
 
-    private String status = STOPPED;
+    protected String status = STOPPED;
+
+    protected ClassLoader classLoader;
 
     public String getParameter(String name) {
         return serviceConfig.getParameter(name);
@@ -47,7 +49,6 @@ public class Service {
     public Collection getParameterNames() {
         return serviceConfig.getParameterNames();
     }
-
 
     public void init() throws Exception {
     }
@@ -82,5 +83,13 @@ public class Service {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 }

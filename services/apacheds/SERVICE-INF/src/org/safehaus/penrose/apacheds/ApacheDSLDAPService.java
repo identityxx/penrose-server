@@ -80,17 +80,16 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setWorkingDirectory(new File(workingDirectory));
 
         // Configure bootstrap schemas
-        Set bootstrapSchemas = new HashSet();
-        for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+        Set<Object> bootstrapSchemas = new HashSet<Object>();
+        for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
 
             String name = schemaConfig.getName();
-            String className = "org.apache.directory.server.core.schema.bootstrap."+
-                    name.substring(0, 1).toUpperCase()+name.substring(1)+
+            String className = "org.apache.directory.server.core.schema.bootstrap." +
+                    name.substring(0, 1).toUpperCase() + name.substring(1) +
                     "Schema";
 
-            log.debug("Loading "+className);
-            Class clazz = Class.forName(className);
+            log.debug("Loading " + className);
+            Class clazz = classLoader.loadClass(className);
             Object object = clazz.newInstance();
             bootstrapSchemas.add(object);
         }
@@ -98,7 +97,7 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setBootstrapSchemas(bootstrapSchemas);
 
         // Configure extended operation handlers
-        Set extendedOperationHandlers = new HashSet();
+        Set<Object> extendedOperationHandlers = new HashSet<Object>();
         extendedOperationHandlers.add(new GracefulShutdownHandler());
         extendedOperationHandlers.add(new LaunchDiagnosticUiHandler());
         configuration.setExtendedOperationHandlers(extendedOperationHandlers);
@@ -112,7 +111,7 @@ public class ApacheDSLDAPService extends LDAPService {
         authenticatorConfig.setName("Penrose");
         authenticatorConfig.setAuthenticator(authenticator);
 
-        Set authenticators = new LinkedHashSet();
+        Set<AuthenticatorConfiguration> authenticators = new LinkedHashSet<AuthenticatorConfiguration>();
         authenticators.add(authenticatorConfig);
         authenticators.addAll(configuration.getAuthenticatorConfigurations());
         //Set authenticators = configuration.getAuthenticatorConfigurations();
@@ -120,9 +119,8 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setAuthenticatorConfigurations(authenticators);
 
         log.debug("Authenticators:");
-        for (Iterator i=authenticators.iterator(); i.hasNext(); ) {
-            AuthenticatorConfiguration ac = (AuthenticatorConfiguration)i.next();
-            log.debug(" - "+ac.getName());
+        for (AuthenticatorConfiguration ac : authenticators) {
+            log.debug(" - " + ac.getName());
         }
 
         // Register Penrose interceptor
@@ -133,19 +131,18 @@ public class ApacheDSLDAPService extends LDAPService {
         interceptorConfig.setName("penroseService");
         interceptorConfig.setInterceptor(interceptor);
 
-        List interceptors = new ArrayList();
+        List<InterceptorConfiguration> interceptors = new ArrayList<InterceptorConfiguration>();
         interceptors.add(interceptorConfig);
         interceptors.addAll(configuration.getInterceptorConfigurations());
         configuration.setInterceptorConfigurations(interceptors);
 
         log.debug("Interceptors:");
-        for (Iterator i=interceptors.iterator(); i.hasNext(); ) {
-            InterceptorConfiguration ic = (InterceptorConfiguration)i.next();
-            log.debug(" - "+ic.getName());
+        for (InterceptorConfiguration ic : interceptors) {
+            log.debug(" - " + ic.getName());
         }
 
         // Initialize ApacheDS
-        final Hashtable env = new Hashtable();
+        final Hashtable<String,Object> env = new Hashtable<String,Object>();
         env.put(Context.PROVIDER_URL, "ou=system");
         env.put(Context.INITIAL_CONTEXT_FACTORY, ServerContextFactory.class.getName() );
         env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());
@@ -170,7 +167,16 @@ public class ApacheDSLDAPService extends LDAPService {
 
         env.putAll(configuration.toJndiEnvironment());
 
-        new InitialDirContext(env);
+        ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+
+        try {
+            Thread.currentThread().setContextClassLoader(classLoader);
+
+            new InitialDirContext(env);
+
+        } finally {
+            Thread.currentThread().setContextClassLoader(currentClassLoader);
+        }
 
         log.warn("Listening to port "+ldapPort+" (LDAP).");
 
@@ -213,7 +219,7 @@ public class ApacheDSLDAPService extends LDAPService {
         Penrose penrose = getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
-        Hashtable env = new ShutdownConfiguration().toJndiEnvironment();
+        Hashtable<String,Object> env = new ShutdownConfiguration().toJndiEnvironment();
         env.put(Context.INITIAL_CONTEXT_FACTORY, CoreContextFactory.class.getName());
         env.put(Context.PROVIDER_URL, "ou=system");
         env.put(Context.SECURITY_PRINCIPAL, penroseConfig.getRootDn().toString());

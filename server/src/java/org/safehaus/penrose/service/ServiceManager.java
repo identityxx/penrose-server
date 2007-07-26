@@ -64,7 +64,7 @@ public class ServiceManager implements ServiceManagerMBean {
         if (!serviceConfig.isEnabled()) return;
 
         log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading service "+serviceConfig.getName());
+        log.debug("Loading service "+serviceConfig.getName()+".");
 
         log.debug("Classpath:");
         List<URL> urls = new ArrayList<URL>();
@@ -97,6 +97,8 @@ public class ServiceManager implements ServiceManagerMBean {
 
         Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
         Service service = (Service)clazz.newInstance();
+
+        service.setClassLoader(classLoader);
 
         service.setPenroseServer(penroseServer);
         service.setServiceConfig(serviceConfig);

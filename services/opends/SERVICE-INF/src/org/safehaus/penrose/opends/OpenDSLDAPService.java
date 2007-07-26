@@ -1,6 +1,5 @@
 package org.safehaus.penrose.opends;
 
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.backend.PenroseBackend;
 import org.safehaus.penrose.ldap.LDAPService;
 import org.safehaus.penrose.server.PenroseServer;
@@ -23,17 +22,22 @@ import com.identyx.javabackend.opends.JavaBackendPlugin;
  */
 public class OpenDSLDAPService extends LDAPService {
 
-    public void start() throws Exception {
+    String configClass = ConfigFileHandler.class.getName();
+    String configFile;
+
+    public void init() throws Exception {
 
         PenroseServer penroseServer = getPenroseServer();
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
         System.setProperty("org.opends.server.ServerRoot", penroseServer.getHome());
-        
-        String configClass = ConfigFileHandler.class.getName();
-        String configFile = penroseServer.getHome()+File.separator+"config"+File.separator+"config.ldif";
+
+        String home = penroseServer.getHome();
+        //String home = penroseServer.getHome()+File.separator+"services"+File.separator+"opends";
+
+        configFile = home+File.separator+"config"+File.separator+"config.ldif";
+        log.debug("Config file: "+configFile);
 
         try {
-            String logs = penroseServer.getHome()+File.separator+"logs";
+            String logs = home+File.separator+"logs";
             String pidFilePath = logs+File.separator+"server.pid";
             String startingFilePath = logs+File.separator+"server.starting";
 
@@ -51,10 +55,12 @@ public class OpenDSLDAPService extends LDAPService {
             log.error(e.getMessage(), e);
         }
 
+    }
+
+    public void start() throws Exception {
+
         DirectoryServer directoryServer = DirectoryServer.getInstance();
         directoryServer.bootstrapServer();
-
-        log.debug("Config file: "+configFile);
 
         directoryServer.initializeConfiguration(
                 configClass,

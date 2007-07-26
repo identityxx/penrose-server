@@ -506,7 +506,7 @@ objectClass: ds-cfg-file-based-access-logger
 cn: File-Based Access Logger
 ds-cfg-logger-class: org.opends.server.loggers.TextAccessLogPublisher
 ds-cfg-logger-enabled: true
-ds-cfg-log-file: logs/access
+ds-cfg-log-file: services/opends/logs/access
 ds-cfg-log-file-mode: 640
 ds-cfg-suppress-internal-operations: true
 ds-cfg-asynchronous-writes: true
@@ -522,7 +522,7 @@ objectClass: ds-cfg-file-based-access-logger
 cn: File-Based Audit Logger
 ds-cfg-logger-class: org.opends.server.loggers.TextAuditLogPublisher
 ds-cfg-logger-enabled: false
-ds-cfg-log-file: logs/audit
+ds-cfg-log-file: services/opends/logs/audit
 ds-cfg-log-file-mode: 640
 ds-cfg-suppress-internal-operations: true
 ds-cfg-asynchronous-writes: true
@@ -538,7 +538,7 @@ objectClass: ds-cfg-file-based-error-logger
 cn: File-Based Error Logger
 ds-cfg-logger-class: org.opends.server.loggers.TextErrorLogPublisher
 ds-cfg-logger-enabled: true
-ds-cfg-log-file: logs/error
+ds-cfg-log-file: services/opends/logs/error
 ds-cfg-log-file-mode: 640
 ds-cfg-default-severity: severe-warning
 ds-cfg-default-severity: severe-error
@@ -557,7 +557,7 @@ objectClass: ds-cfg-file-based-debug-logger
 cn: File-Based Debug Logger
 ds-cfg-logger-class: org.opends.server.loggers.debug.TextDebugLogPublisher
 ds-cfg-logger-enabled: false
-ds-cfg-log-file: logs/debug
+ds-cfg-log-file: services/opends/logs/debug
 ds-cfg-log-file-mode: 640
 ds-cfg-default-debug-level: error
 ds-cfg-asynchronous-writes: false
@@ -1288,7 +1288,7 @@ ds-cfg-plugin-enabled: true
 ds-cfg-plugin-class: org.opends.server.plugins.profiler.ProfilerPlugin
 ds-cfg-plugin-type: startup
 ds-cfg-enable-profiling-on-startup: false
-ds-cfg-profile-directory: logs
+ds-cfg-profile-directory: services/opends/logs
 ds-cfg-profile-sample-interval: 10 milliseconds
 
 dn: cn=Root DNs,cn=config
