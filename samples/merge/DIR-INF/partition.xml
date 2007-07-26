@@ -5,6 +5,6 @@
 
 <partition>
 
-    <partition-name>ACL</partition-name>
+    <partition-name>Merge</partition-name>
 
 </partition>

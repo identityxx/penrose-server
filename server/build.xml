@@ -347,7 +347,7 @@
         </copy>
     </target>
 
-    <target name="pre-install">
+    <target name="check-install">
         <mkdir dir="${penrose.home}"/>
         <condition property="penrose.conf.missing">
           <not>
@@ -356,7 +356,8 @@
         </condition>
     </target>
 
-    <target name="copy-penrose-conf" if="penrose.conf.missing">
+    <target name="install-conf" if="penrose.conf.missing">
+        <echo message="Installing configuration files."/>
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">
                 <include name="conf/**/*"/>
@@ -364,7 +365,7 @@
         </copy>
     </target>
 
-    <target name="install" depends="init,pre-install,copy-penrose-conf">
+    <target name="install" depends="init,check-install,install-conf">
         <delete failonerror="false">
             <fileset dir="${penrose.home}" includes="lib/*"/>
             <fileset dir="${penrose.home}" includes="server/lib/*"/>
@@ -372,8 +373,11 @@
         <copy todir="${penrose.home}">
             <fileset dir="target/dist">
                 <exclude name="conf/**/*"/>
+                <exclude name="services/**/*"/>
             </fileset>
         </copy>
+        <ant dir="../services" target="install"/>
+        <chmod dir="${penrose.home}" perm="ugo+rw" includes="**/*"/>
         <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 

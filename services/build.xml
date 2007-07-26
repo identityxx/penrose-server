@@ -4,18 +4,40 @@
 
     <property file="../build.properties"/>
 
+    <property name="prefix" value=""/>
+    <property name="module.name" value="${product.name}-server"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
+
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
 
-    <target name="build">
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <target name="build" depends="init">
         <ant dir="apacheds/SERVICE-INF" target="build"/>
         <ant dir="jmx/SERVICE-INF" target="build"/>
         <ant dir="ldap/SERVICE-INF" target="build"/>
         <ant dir="opends/SERVICE-INF" target="build"/>
     </target>
 
-    <target name="dist">
+    <target name="dist" depends="init">
         <copy todir="../server/target/dist/services">
             <fileset dir=".">
                 <include name="**/SERVICE-INF/service.xml"/>
@@ -26,6 +48,7 @@
         </copy>
         <copy todir="../server/target/dist/services">
             <fileset dir=".">
+                <exclude name="build.xml"/>
                 <exclude name="**/SERVICE-INF/build.xml"/>
                 <exclude name="**/SERVICE-INF/service.xml"/>
                 <exclude name="**/SERVICE-INF/classes/**"/>
@@ -36,6 +59,27 @@
         <ant dir="jmx/SERVICE-INF" target="build"/>
         <ant dir="ldap/SERVICE-INF" target="build"/>
         <ant dir="opends/SERVICE-INF" target="build"/>
+    </target>
+
+    <target name="check-install">
+        <mkdir dir="${penrose.home}"/>
+        <condition property="penrose.services.missing">
+          <not>
+            <available file="${penrose.home}/services/ldap/SERVICE-INF/service.xml"/>
+          </not>
+        </condition>
+    </target>
+
+    <target name="install-services" if="penrose.services.missing">
+        <echo message="Installing service files."/>
+        <copy todir="${penrose.home}/services">
+            <fileset dir="../server/target/dist">
+                <include name="services/**/*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="install" depends="init,check-install,install-services">
     </target>
 
     <target name="clean">

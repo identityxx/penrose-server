@@ -5,6 +5,9 @@
 
 <partition>
 
-    <partition-name>ACL</partition-name>
+    <partition-name>Simple</partition-name>
+
+    <handler-name>SIMPLE</handler-name>
+    <engine-name>SIMPLE</engine-name>
 
 </partition>
