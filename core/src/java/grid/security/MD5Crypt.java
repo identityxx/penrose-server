@@ -36,7 +36,7 @@ public class MD5Crypt
      */
     static private final String to64( long v, int size )
     {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
 
         while ( --size >= 0 )
         {
@@ -71,7 +71,7 @@ public class MD5Crypt
      */
     static public final String crypt(String password) 
     {
-        StringBuffer salt = new StringBuffer();
+        StringBuilder salt = new StringBuilder();
         java.util.Random rnd = new java.util.Random();
         
         // build a random 8 chars salt        
@@ -237,7 +237,7 @@ public class MD5Crypt
 
         /* Now make the output string */
 
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
 
         result.append( magic );
         result.append( salt );

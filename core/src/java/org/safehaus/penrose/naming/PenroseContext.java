@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -66,8 +67,6 @@ public class PenroseContext {
 
     private SessionContext     sessionContext;
     private ModuleManager      moduleManager;
-
-    private PartitionValidator partitionValidator;
 
     public PenroseContext(String home) {
         this.home = home;
@@ -148,10 +147,6 @@ public class PenroseContext {
     public void init(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
 
-        partitionValidator = new PartitionValidator();
-        partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setPenroseContext(this);
-
         threadManager = new ThreadManager();
         threadManager.setPenroseConfig(penroseConfig);
         threadManager.setPenroseContext(this);
@@ -171,10 +166,6 @@ public class PenroseContext {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setPenroseContext(this);
 
-        partitionManager = new PartitionManager();
-        partitionManager.setPenroseConfig(penroseConfig);
-        partitionManager.setPenroseContext(this);
-
         connectionManager = new ConnectionManager();
         connectionManager.setPenroseConfig(penroseConfig);
         connectionManager.setPenroseContext(this);
@@ -191,6 +182,15 @@ public class PenroseContext {
         moduleManager.setPenroseConfig(penroseConfig);
         moduleManager.setPenroseContext(this);
         moduleManager.setSessionContext(sessionContext);
+
+        partitionManager = new PartitionManager();
+        partitionManager.setPenroseConfig(penroseConfig);
+        partitionManager.setPenroseContext(this);
+
+        partitionManager.setConnectionManager(connectionManager);
+        partitionManager.setSourceManager(sourceManager);
+        partitionManager.setSourceSyncManager(sourceSyncManager);
+        partitionManager.setModuleManager(moduleManager);
     }
 
     public void load() throws Exception {
@@ -215,78 +215,12 @@ public class PenroseContext {
     public void start() throws Exception {
         threadManager.start();
 
-        PartitionReader partitionReader = new PartitionReader(home);
-
-        for (PartitionConfig partitionConfig : penroseConfig.getPartitionConfigs()) {
-
-            if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
-                log.debug("Loading "+partitionConfig.getName()+" partition.");
-            }
-
-            Partition partition = partitionReader.read(partitionConfig);
-
-            Collection<PartitionValidationResult> results = partitionValidator.validate(partition);
-
-            for (PartitionValidationResult result : results) {
-                if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                    errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-                } else {
-                    errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-                }
-            }
-
-            for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
-                Connection connection = connectionManager.init(partition, connectionConfig);
-                if (connection != null) connection.start();
-            }
-
-            for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
-                sourceManager.init(partition, sourceConfig);
-            }
-
-            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
-                SourceSync sourceSync = sourceSyncManager.init(partition, sourceSyncConfig);
-                if (sourceSync != null) sourceSync.start();
-            }
-
-            for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
-                sourceManager.init(partition, entryMapping);
-            }
-
-            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
-                Module module = moduleManager.init(partition, moduleConfig);
-                if (module != null) module.start();
-            }
-
-            partitionManager.addPartition(partition);
-        }
-
-        log.debug("----------------------------------------------------------------------------------");
+        String dir = (home == null ? "" : home+ File.separator)+"partitions";
+        partitionManager.loadPartitions(dir);
     }
 
     public void stop() throws Exception {
-
-        for (Partition partition : partitionManager.getPartitions()) {
-
-            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
-                Module module = moduleManager.getModule(partition, moduleConfig.getName());
-                if (module != null) module.stop();
-            }
-
-            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
-                SourceSync sourceSync = sourceSyncManager.getSourceSync(partition, sourceSyncConfig.getName());
-                if (sourceSync != null) sourceSync.stop();
-            }
-
-            for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
-                Connection connection = connectionManager.getConnection(partition, connectionConfig.getName());
-                if (connection != null) connection.stop();
-            }
-        }
-
         partitionManager.clear();
-
         threadManager.stop();
     }
 

@@ -38,7 +38,7 @@ public class StaticTestCase extends TestCase {
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
         Partition partition = new Partition(partitionConfig);
 
         EntryMapping ou = new EntryMapping(baseDn);

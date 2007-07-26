@@ -18,26 +18,34 @@ public class ConnectionReader implements EntityResolver {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    URL dtdUrl;
+    URL digesterUrl;
+
+    Digester digester;
+
     public ConnectionReader() {
+
+        ClassLoader cl = getClass().getClassLoader();
+
+        dtdUrl = cl.getResource("org/safehaus/penrose/connection/connections.dtd");
+        digesterUrl = cl.getResource("org/safehaus/penrose/connection/connections-digester-rules.xml");
+
+        digester = DigesterLoader.createDigester(digesterUrl);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
+        digester.setClassLoader(cl);
     }
 
     public void read(String filename, Connections connections) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
 
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/connection/connections-digester-rules.xml");
-		Digester digester = DigesterLoader.createDigester(url);
-        digester.setEntityResolver(this);
-        digester.setValidating(true);
-        digester.setClassLoader(cl);
         digester.push(connections);
         digester.parse(file);
-	}
+        digester.pop();
+    }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/connection/connections.dtd");
-        return new InputSource(url.openStream());
+        return new InputSource(dtdUrl.openStream());
     }
 }

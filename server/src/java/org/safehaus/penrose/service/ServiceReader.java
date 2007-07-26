@@ -55,17 +55,7 @@ public class ServiceReader implements EntityResolver {
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
-        //log.debug("Resolving "+publicId+" "+systemId);
-
-        int i = systemId.lastIndexOf("/");
-        String file = systemId.substring(i+1);
-        //log.debug("=> "+file);
-
-        if ("service.dtd".equals(file)) {
-            return new InputSource(dtdUrl.openStream());
-        }
-
-        return null;
+        return new InputSource(dtdUrl.openStream());
     }
 }
 

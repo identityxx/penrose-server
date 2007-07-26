@@ -62,7 +62,7 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateConnectionConfigs(Partition partition) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
+        for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
             //log.debug("Validating connection "+connectionConfig.getName());
 
             String connectionName = connectionConfig.getName();

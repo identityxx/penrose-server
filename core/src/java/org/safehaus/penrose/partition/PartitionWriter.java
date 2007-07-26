@@ -32,12 +32,15 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.module.Modules;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.connection.Connections;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -58,10 +61,31 @@ public class PartitionWriter {
     public void write(Partition partition) throws Exception {
         directory.mkdirs();
 
+        storePartitionConfig(partition);
         storeMappingConfig(partition);
         storeConnectionsConfig(partition);
         storeSourcesConfig(partition);
         storeModulesConfig(partition);
+    }
+
+    public void storePartitionConfig(Partition partition) throws Exception {
+        File file = new File(directory, "partition.xml");
+
+        FileWriter fw = new FileWriter(file);
+        OutputFormat format = OutputFormat.createPrettyPrint();
+        format.setTrimText(false);
+
+        XMLWriter writer = new XMLWriter(fw, format);
+        writer.startDocument();
+
+        writer.startDTD(
+                "partition",
+                "-//Penrose/DTD Partition "+Penrose.SPECIFICATION_VERSION+"//EN",
+                "http://penrose.safehaus.org/dtd/partition.dtd"
+        );
+
+        writer.write(createElement(partition.getPartitionConfig()));
+        writer.close();
     }
 
     public void storeMappingConfig(Partition partition) throws Exception {
@@ -80,7 +104,7 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
-        writer.write(toMappingXmlElement(partition));
+        writer.write(createElement(partition.getMappings()));
         writer.close();
     }
 
@@ -100,7 +124,7 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-        writer.write(toConnectionsXmlElement(partition));
+        writer.write(createElement(partition.getConnections()));
         writer.close();
     }
 
@@ -120,7 +144,7 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
-        writer.write(toSourcesXmlElement(partition));
+        writer.write(createElement(partition.getSources()));
         writer.close();
     }
 
@@ -140,51 +164,84 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-        writer.write(toModulesXmlElement(partition));
+        writer.write(createElement(partition.getModules()));
         writer.close();
     }
 
-    public Element toMappingXmlElement(Partition partition) throws Exception {
+    public Element createElement(PartitionConfig partitionConfig)  {
+        Element element = new DefaultElement("partition");
+
+        if (!partitionConfig.isEnabled()) element.addAttribute("enabled", "false");
+
+        Element partitionName = new DefaultElement("partition-name");
+        partitionName.add(new DefaultText(partitionConfig.getName()));
+        element.add(partitionName);
+
+        String s = partitionConfig.getDescription();
+        if (s != null && !"".equals(s)) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(s));
+            element.add(description);
+        }
+
+        s = partitionConfig.getHandlerName();
+        if (s != null && !"".equals(s)) {
+            Element handlerName = new DefaultElement("handler-name");
+            handlerName.add(new DefaultText(s));
+            element.add(handlerName);
+        }
+
+        s = partitionConfig.getEngineName();
+        if (s != null && !"".equals(s)) {
+            Element engineName = new DefaultElement("engine-name");
+            engineName.add(new DefaultText(s));
+            element.add(engineName);
+        }
+
+        return element;
+    }
+
+    public Element createElement(Mappings mappings) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
-        for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
-            toElement(partition, entryMapping, mappingElement);
+        for (EntryMapping entryMapping : mappings.getRootEntryMappings()) {
+            toElement(mappings, entryMapping, mappingElement);
         }
 
         return mappingElement;
     }
 
-    public Element toConnectionsXmlElement(Partition partition) {
+    public Element createElement(Connections connections) {
         Element element = new DefaultElement("connections");
 
-        for (ConnectionConfig connectionConfig : partition.getConnectionConfigs()) {
+        for (ConnectionConfig connectionConfig : connections.getConnectionConfigs()) {
             element.add(toElement(connectionConfig));
         }
 
         return element;
     }
 
-    public Element toSourcesXmlElement(Partition partition) throws Exception {
+    public Element createElement(Sources sources) throws Exception {
         Element element = new DefaultElement("sources");
 
-        for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
+        for (SourceConfig sourceConfig : sources.getSourceConfigs()) {
             element.add(toElement(sourceConfig));
         }
 
         return element;
     }
 
-    public Element toModulesXmlElement(Partition partition) {
+    public Element createElement(Modules modules) {
         Element modulesElement = new DefaultElement("modules");
 
         // module
-        for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : modules.getModuleConfigs()) {
             Element moduleElement = toElement(moduleConfig);
             modulesElement.add(moduleElement);
         }
 
         // module-mapping
-        for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
+        for (Collection<ModuleMapping> moduleMappings : modules.getModuleMappings()) {
 
             for (ModuleMapping moduleMapping : moduleMappings) {
                 Element mappingElement = toElement(moduleMapping);
@@ -284,7 +341,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(Partition partition, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element toElement(Mappings mappings, EntryMapping entryMapping, Element configElement) throws Exception {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));
@@ -357,9 +414,9 @@ public class PartitionWriter {
             entryElement.add(parameterElement);
         }
 
-        Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
+        Collection<EntryMapping> children = mappings.getChildren(entryMapping);
         for (EntryMapping child : children) {
-            toElement(partition, child, configElement);
+            toElement(mappings, child, configElement);
         }
 
         return entryElement;

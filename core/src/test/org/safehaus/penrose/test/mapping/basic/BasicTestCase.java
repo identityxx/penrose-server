@@ -51,7 +51,7 @@ public class BasicTestCase extends JDBCTestCase {
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
         Partition partition = new Partition(partitionConfig);
 
         ConnectionConfig connectionConfig = new ConnectionConfig();

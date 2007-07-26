@@ -24,7 +24,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void setUp() throws Exception {
-        PartitionConfig partitionConfig = new PartitionConfig("example", "target/example");
+        PartitionConfig partitionConfig = new PartitionConfig("example");
         partition = new Partition(partitionConfig);
 
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");

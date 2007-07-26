@@ -15,26 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.config;
-
-import org.safehaus.penrose.ldap.DN;
-
-import java.util.Collection;
-import java.util.Map;
+package org.safehaus.penrose.partition;
 
 /**
- * @author Endi S. Dewata
+ * @author Endi Sukma Dewata
  */
-public interface PenroseConfigMBean {
+public interface PartitionMBean {
 
-    public Map<String,String> getSystemProperties() throws Exception;
-    public String getSystemProperty(String name) throws Exception;
-    public void setSystemProperty(String name, String value) throws Exception;
-    public String removeSystemProperty(String name) throws Exception;
+    public String getName() throws Exception;
+    public void setName(String name) throws Exception;
 
-    public Collection<String> getAdapterNames() throws Exception;
-    public Collection<String> getSchemaNames() throws Exception;
-
-    public DN getRootDn() throws Exception;
-    public void setRootDn(DN rootDn) throws Exception;
+    public String getDescription() throws Exception;
+    public void setDescription(String description) throws Exception;
 }

@@ -14,12 +14,15 @@ import java.util.Collection;
 public class Connections implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private Map<String,AdapterConfig> adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
 
     public void addAdapterConfig(AdapterConfig adapterConfig) {
-        adapterConfigs.put(adapterConfig.getName(), adapterConfig);
+        String name = adapterConfig.getName();
+        if (debug) log.debug("Adding adapter "+name+".");
+        adapterConfigs.put(name, adapterConfig);
     }
 
     public AdapterConfig getAdapterConfig(String name) {
@@ -31,7 +34,9 @@ public class Connections implements Cloneable {
     }
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) {
-        connectionConfigs.put(connectionConfig.getName(), connectionConfig);
+        String name = connectionConfig.getName();
+        if (debug) log.debug("Adding connection "+name+".");
+        connectionConfigs.put(name, connectionConfig);
     }
 
     public ConnectionConfig getConnectionConfig(String name) {

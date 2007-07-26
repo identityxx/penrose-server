@@ -20,7 +20,6 @@ package org.safehaus.penrose.config;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
 import org.safehaus.penrose.ldap.adapter.LDAPAdapter;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.proxy.ProxyEngine;
@@ -50,7 +49,5 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addAdapterConfig(new AdapterConfig("LDAP", LDAPAdapter.class.getName()));
 
         addEngineConfig(new EngineConfig("PROXY", ProxyEngine.class.getName()));
-
-        addPartitionConfig(new PartitionConfig("DEFAULT", "conf"));
     }
 }

@@ -28,7 +28,7 @@ public class Mappings implements Cloneable {
     public void addEntryMapping(EntryMapping entryMapping) {
 
         String dn = entryMapping.getDn().getNormalizedDn();
-        //if (debug) log.debug("Adding entry "+dn);
+        if (debug) log.debug("Adding entry "+dn+".");
 
         String id = entryMapping.getId();
         if (id == null) {

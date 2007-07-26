@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!ELEMENT partition (partition-name, description?, handler-name?, engine-name?, parameter*)>
+<!ATTLIST partition enabled CDATA #IMPLIED>
+
+<!ELEMENT partition-name (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT handler-name (#PCDATA)>
+<!ELEMENT engine-name (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

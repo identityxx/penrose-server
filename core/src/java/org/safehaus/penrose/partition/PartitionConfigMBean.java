@@ -25,6 +25,6 @@ public interface PartitionConfigMBean {
     public String getName() throws Exception;
     public void setName(String name) throws Exception;
 
-    public String getPath() throws Exception;
-    public void setPath(String path) throws Exception;
+    public String getDescription() throws Exception;
+    public void setDescription(String description) throws Exception;
 }

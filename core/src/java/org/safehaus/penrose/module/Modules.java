@@ -20,7 +20,9 @@ public class Modules implements Cloneable {
     private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();
 
     public void addModuleConfig(ModuleConfig moduleConfig) {
-        moduleConfigs.put(moduleConfig.getName(), moduleConfig);
+        String name = moduleConfig.getName();
+        if (debug) log.debug("Adding module "+name+".");
+        moduleConfigs.put(name, moduleConfig);
     }
 
     public ModuleConfig getModuleConfig(String name) {

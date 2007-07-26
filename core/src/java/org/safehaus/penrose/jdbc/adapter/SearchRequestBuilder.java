@@ -185,7 +185,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             return sourceMappingFilter;
 
         } else {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
             sb.append("(");
             sb.append(sourceFilter);

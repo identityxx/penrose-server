@@ -257,9 +257,9 @@ public class PenroseJMXService extends Service {
             register("Penrose Config:name=" + adapterConfig.getName() + ",type=AdapterConfig", adapterConfig);
         }
 
-        Collection<PartitionConfig> partitionConfigs = penroseConfig.getPartitionConfigs();
-        for (PartitionConfig partitionConfig : partitionConfigs) {
-            register("Penrose Config:name=" + partitionConfig.getName() + ",type=PartitionConfig", partitionConfig);
+        PartitionManager partitionManager = penrose.getPenroseContext().getPartitionManager();
+        for (Partition partition : partitionManager.getPartitions()) {
+            register("Penrose Config:name=" + partition.getName() + ",type=Partition", partition);
         }
     }
 
@@ -268,9 +268,9 @@ public class PenroseJMXService extends Service {
         Penrose penrose = getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
-        Collection<PartitionConfig> partitionConfigs = penroseConfig.getPartitionConfigs();
-        for (PartitionConfig partitionConfig : partitionConfigs) {
-            unregister("Penrose Config:name=" + partitionConfig.getName() + ",type=PartitionConfig");
+        PartitionManager partitionManager = penrose.getPenroseContext().getPartitionManager();
+        for (Partition partition : partitionManager.getPartitions()) {
+            unregister("Penrose Config:name=" + partition.getName() + ",type=Partition");
         }
 
         Collection<AdapterConfig> adapterConfigs = penroseConfig.getAdapterConfigs();
@@ -349,7 +349,7 @@ public class PenroseJMXService extends Service {
 
     public void registerConnections(Partition partition) throws Exception {
 
-        Collection<ConnectionConfig> connectionConfigs = partition.getConnectionConfigs();
+        Collection<ConnectionConfig> connectionConfigs = partition.getConnections().getConnectionConfigs();
         for (ConnectionConfig connectionConfig : connectionConfigs) {
 
             String name = "Penrose Config:name=" + connectionConfig.getName() + ",partition=" + partition.getName() + ",type=ConnectionConfig";
@@ -359,7 +359,7 @@ public class PenroseJMXService extends Service {
 
     public void unregisterConnections(Partition partition) throws Exception {
 
-        Collection<ConnectionConfig> connectionConfigs = partition.getConnectionConfigs();
+        Collection<ConnectionConfig> connectionConfigs = partition.getConnections().getConnectionConfigs();
         for (ConnectionConfig connectionConfig : connectionConfigs) {
 
             String name = "Penrose Config:name=" + connectionConfig.getName() + ",partition=" + partition.getName() + ",type=ConnectionConfig";

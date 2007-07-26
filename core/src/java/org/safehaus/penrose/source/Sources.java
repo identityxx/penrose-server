@@ -26,7 +26,7 @@ public class Sources implements Cloneable {
         String sourceName = sourceConfig.getName();
 
         if (debug) {
-            log.debug("Source "+sourceName+":");
+            log.debug("Adding source "+sourceName+":");
             for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
                 log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType());
             }
@@ -37,7 +37,7 @@ public class Sources implements Cloneable {
         String sync = sourceConfig.getParameter("sync");
         if (sync != null) {
 
-            log.debug("Sync source with "+sync);
+            log.debug("Sync source with "+sync+".");
 
             SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
             sourceSyncConfig.setName(sourceName);

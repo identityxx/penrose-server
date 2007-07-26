@@ -31,7 +31,6 @@ import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.Penrose;
@@ -127,10 +126,6 @@ public class PenroseConfigWriter {
 
         for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
             element.add(toElement(adapterConfig));
-        }
-
-        for (PartitionConfig partitionConfig : penroseConfig.getPartitionConfigs()) {
-            element.add(toElement(partitionConfig));
         }
 
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
@@ -318,29 +313,6 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(PartitionConfig partitionConfig)  {
-        Element element = new DefaultElement("partition");
-
-        if (partitionConfig.getName() != null) element.addAttribute("name", partitionConfig.getName());
-        if (partitionConfig.getPath() != null) element.addAttribute("path", partitionConfig.getPath());
-
-        String s = partitionConfig.getHandlerName();
-        if (s != null && !"".equals(s)) {
-            Element handlerName = new DefaultElement("handler-name");
-            handlerName.add(new DefaultText(s));
-            element.add(handlerName);
-        }
-
-        s = partitionConfig.getEngineName();
-        if (s != null && !"".equals(s)) {
-            Element engineName = new DefaultElement("engine-name");
-            engineName.add(new DefaultText(s));
-            element.add(engineName);
-        }
-
-        return element;
-    }
-    
     public Element toElement(ConnectorConfig connectorConfig) {
         Element element = new DefaultElement("connector");
 /*

@@ -17,23 +17,34 @@
  */
 package org.safehaus.penrose.partition;
 
+import org.safehaus.penrose.connection.Connections;
+import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.mapping.Mappings;
+import org.safehaus.penrose.module.Modules;
+
 /**
  * @author Endi S. Dewata
  */
 public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
+    private boolean enabled = true;
+
     private String name;
-    private String path;
+    private String description;
 
     private String handlerName;
     private String engineName;
 
+    private Connections connections = new Connections();
+    private Sources sources = new Sources();
+    private Mappings mappings = new Mappings();
+    private Modules modules = new Modules();
+
     public PartitionConfig() {
     }
 
-    public PartitionConfig(String name, String path) {
+    public PartitionConfig(String name) {
         this.name = name;
-        this.path = path;
     }
 
     public String getName() {
@@ -42,14 +53,6 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public String getHandlerName() {
@@ -84,24 +87,64 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         PartitionConfig partitionConfig = (PartitionConfig)object;
+        if (enabled != partitionConfig.enabled) return false;
+
         if (!equals(name, partitionConfig.name)) return false;
-        if (!equals(path, partitionConfig.path)) return false;
+        if (!equals(description, partitionConfig.description)) return false;
+
         if (!equals(handlerName, partitionConfig.handlerName)) return false;
         if (!equals(engineName, partitionConfig.engineName)) return false;
 
         return true;
     }
 
-    public void copy(PartitionConfig partitionConfig) {
-        name = partitionConfig.name;
-        path = partitionConfig.path;
-        handlerName = partitionConfig.handlerName;
-        engineName = partitionConfig.engineName;
-    }
-
     public Object clone() throws CloneNotSupportedException {
         PartitionConfig partitionConfig = (PartitionConfig)super.clone();
-        partitionConfig.copy(this);
+
+        partitionConfig.name = name;
+        partitionConfig.enabled = enabled;
+        partitionConfig.description = description;
+
+        partitionConfig.handlerName = handlerName;
+        partitionConfig.engineName = engineName;
+
+        partitionConfig.connections = (Connections)connections.clone();
+        partitionConfig.sources = (Sources)sources.clone();
+        partitionConfig.mappings = (Mappings)mappings.clone();
+        partitionConfig.modules = (Modules)modules.clone();
+
         return partitionConfig;
+    }
+
+    public Connections getConnections() {
+        return connections;
+    }
+
+    public Sources getSources() {
+        return sources;
+    }
+
+    public Mappings getMappings() {
+        return mappings;
+    }
+
+    public Modules getModules() {
+        return modules;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

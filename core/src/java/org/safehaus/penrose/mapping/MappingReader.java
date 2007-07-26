@@ -22,32 +22,42 @@ public class MappingReader implements EntityResolver {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    URL dtdUrl;
+    URL digesterUrl;
+
+    Digester digester;
+
     public MappingReader() {
+
+        ClassLoader cl = getClass().getClassLoader();
+
+        dtdUrl = cl.getResource("org/safehaus/penrose/mapping/mapping.dtd");
+        digesterUrl = cl.getResource("org/safehaus/penrose/mapping/mapping-digester-rules.xml");
+
+        digester = DigesterLoader.createDigester(digesterUrl);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
+        digester.setClassLoader(cl);
     }
 
     public void read(String filename, Mappings mappings) throws Exception {
         File file = new File(filename);
         if (!file.exists()) return;
 
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/mapping/mapping-digester-rules.xml");
-		Digester digester = DigesterLoader.createDigester(url);
-        digester.setEntityResolver(this);
-        digester.setValidating(true);
-        digester.setClassLoader(cl);
 		digester.push(mappings);
 		digester.parse(file);
+        digester.pop();
     }
 
-    public void convert(EntryMapping ed) throws Exception {
+    public void convert(EntryMapping entryMapping) throws Exception {
         DefaultInterpreter interpreter = new DefaultInterpreter();
 
-        for (AttributeMapping ad : ed.getAttributeMappings()) {
+        for (AttributeMapping attributeMapping : entryMapping.getAttributeMappings()) {
 
-            if (ad.getConstant() != null) continue;
-            if (ad.getVariable() != null) continue;
+            if (attributeMapping.getConstant() != null) continue;
+            if (attributeMapping.getVariable() != null) continue;
 
-            Expression expression = ad.getExpression();
+            Expression expression = attributeMapping.getExpression();
             if (expression.getForeach() != null) continue;
             if (expression.getVar() != null) continue;
 
@@ -60,8 +70,8 @@ public class MappingReader implements EntityResolver {
                 if (token.getType() != Token.STRING_LITERAL) continue;
 
                 String constant = script.substring(1, script.length() - 1);
-                ad.setConstant(constant);
-                ad.setExpression(null);
+                attributeMapping.setConstant(constant);
+                attributeMapping.setExpression(null);
 
                 //log.debug("Converting "+script+" into constant.");
 
@@ -77,14 +87,14 @@ public class MappingReader implements EntityResolver {
                 Token fieldName = (Token) iterator.next();
                 if (fieldName.getType() != Token.IDENTIFIER) continue;
 
-                ad.setVariable(sourceName.getImage() + "." + fieldName.getImage());
-                ad.setExpression(null);
+                attributeMapping.setVariable(sourceName.getImage() + "." + fieldName.getImage());
+                attributeMapping.setExpression(null);
 
                 //log.debug("Converting "+script+" into variable.");
             }
         }
 
-        for (SourceMapping sourceMapping : ed.getSourceMappings()) {
+        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
 
             for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
 
@@ -121,8 +131,6 @@ public class MappingReader implements EntityResolver {
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/mapping/mapping.dtd");
-        return new InputSource(url.openStream());
+        return new InputSource(dtdUrl.openStream());
     }
 }

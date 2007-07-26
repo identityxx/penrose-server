@@ -26,21 +26,15 @@ import org.safehaus.penrose.module.Modules;
 import org.safehaus.penrose.mapping.Mappings;
 import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.connection.Connections;
-import org.safehaus.penrose.connection.ConnectionConfig;
 
 /**
  * @author Endi S. Dewata
  */
-public class Partition implements Cloneable {
+public class Partition implements PartitionMBean, Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
     private PartitionConfig partitionConfig;
-
-    private Connections connections = new Connections();
-    private Sources sources = new Sources();
-    private Mappings mappings = new Mappings();
-    private Modules modules = new Modules();
 
     private Collection<String> libraries = new ArrayList<String>();
     private ClassLoader classLoader;
@@ -57,6 +51,18 @@ public class Partition implements Cloneable {
         partitionConfig.setName(name);
     }
 
+    public String getDescription() {
+        return partitionConfig.getDescription();
+    }
+
+    public void setDescription(String description) {
+        partitionConfig.setDescription(description);
+    }
+
+    public boolean isEnabled() {
+        return partitionConfig.isEnabled();
+    }
+
     public String getHandlerName() {
         return partitionConfig.getHandlerName();
     }
@@ -65,16 +71,20 @@ public class Partition implements Cloneable {
         return partitionConfig.getEngineName();
     }
 
-    public Modules getModules() {
-        return modules;
-    }
-
     public Connections getConnections() {
-        return connections;
+        return partitionConfig.getConnections();
     }
 
-    public Collection<ConnectionConfig> getConnectionConfigs() {
-        return connections.getConnectionConfigs();
+    public Sources getSources() {
+        return partitionConfig.getSources();
+    }
+
+    public Mappings getMappings() {
+        return partitionConfig.getMappings();
+    }
+
+    public Modules getModules() {
+        return partitionConfig.getModules();
     }
 
     public PartitionConfig getPartitionConfig() {
@@ -89,24 +99,12 @@ public class Partition implements Cloneable {
         return partitionConfig.getName();
     }
 
-    public Sources getSources() {
-        return sources;
-    }
-
-    public void setSources(Sources sources) {
-        this.sources = sources;
-    }
-
     public Collection<String> getLibraries() {
         return libraries;
     }
 
     public void addLibrary(String library) {
         libraries.add(library);
-    }
-
-    public Mappings getMappings() {
-        return mappings;
     }
 
     public ClassLoader getClassLoader() {
@@ -122,12 +120,10 @@ public class Partition implements Cloneable {
 
         partition.partitionConfig = (PartitionConfig)partitionConfig.clone();
 
-        partition.connections = (Connections)connections.clone();
-        partition.sources = (Sources)sources.clone();
-        partition.mappings = (Mappings)mappings.clone();
-        partition.modules = (Modules)modules.clone();
-
         partition.libraries = new ArrayList<String>();
+        partition.libraries.addAll(libraries);
+
+        partition.classLoader = classLoader;
 
         return partition;
     }

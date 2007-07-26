@@ -43,7 +43,7 @@ public class JoinTestCase extends JDBCTestCase {
         penroseConfig.addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
         penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT", "conf");
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
         Partition partition = new Partition(partitionConfig);
 
         ConnectionConfig connectionConfig = new ConnectionConfig();

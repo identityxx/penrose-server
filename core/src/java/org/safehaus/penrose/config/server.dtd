@@ -3,7 +3,6 @@
 <!ELEMENT server (
         system-property*,
         property*,
-        service*,
         schema*,
         interpreter*,
         session*,
@@ -11,7 +10,6 @@
         engine*,
         connector*,
         adapter*,
-        partition*,
         root
 )>
 
@@ -20,11 +18,6 @@
 <!ELEMENT property-value (#PCDATA)>
 
 <!ELEMENT property (property-name, property-value)>
-
-<!ELEMENT service (service-class, description?, parameter*)>
-<!ATTLIST service name CDATA #REQUIRED>
-<!ATTLIST service enabled CDATA #IMPLIED>
-<!ELEMENT service-class (#PCDATA)>
 
 <!ELEMENT schema EMPTY>
 <!ATTLIST schema name CDATA #IMPLIED>
@@ -55,10 +48,6 @@
 <!ELEMENT adapter (adapter-class, description?, parameter*)>
 <!ATTLIST adapter name CDATA #REQUIRED>
 <!ELEMENT adapter-class (#PCDATA)>
-
-<!ELEMENT partition (handler-name?,engine-name?)>
-<!ATTLIST partition name CDATA #REQUIRED>
-<!ATTLIST partition path CDATA #REQUIRED>
 
 <!ELEMENT root (root-dn, root-password)>
 <!ELEMENT root-dn (#PCDATA)>

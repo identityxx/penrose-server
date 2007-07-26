@@ -27,7 +27,6 @@ import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
@@ -49,7 +48,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     private Map<String,SchemaConfig> schemaConfigs           = new LinkedHashMap<String,SchemaConfig>();
     private Map<String,AdapterConfig> adapterConfigs         = new LinkedHashMap<String,AdapterConfig>();
-    private Map<String,PartitionConfig> partitionConfigs     = new LinkedHashMap<String,PartitionConfig>();
     private Map<String,EngineConfig> engineConfigs           = new LinkedHashMap<String,EngineConfig>();
     private Map<String,HandlerConfig> handlerConfigs         = new LinkedHashMap<String,HandlerConfig>();
     private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
@@ -197,26 +195,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return schemaConfigs.remove(name);
     }
 
-    public void addPartitionConfig(PartitionConfig partitionConfig) {
-        partitionConfigs.put(partitionConfig.getName(), partitionConfig);
-    }
-
-    public PartitionConfig getPartitionConfig(String name) {
-        return partitionConfigs.get(name);
-    }
-
-    public Collection<PartitionConfig> getPartitionConfigs() {
-        return partitionConfigs.values();
-    }
-
-    public Collection<String> getPartitionNames() {
-        return partitionConfigs.keySet();
-    }
-
-    public PartitionConfig removePartitionConfig(String name) {
-        return partitionConfigs.remove(name);
-    }
-
     public HandlerConfig getHandlerConfig(String name) {
         return handlerConfigs.get(name);
     }
@@ -283,7 +261,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (properties == null ? 0 : properties.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
-                (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
                 (interpreterConfigs == null ? 0 : interpreterConfigs.hashCode()) +
                 (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
@@ -311,7 +288,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
-        if (!equals(partitionConfigs, penroseConfig.partitionConfigs)) return false;
         if (!equals(handlerConfigs, penroseConfig.handlerConfigs)) return false;
         if (!equals(interpreterConfigs, penroseConfig.interpreterConfigs)) return false;
 
@@ -344,11 +320,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
             addAdapterConfig((AdapterConfig) adapterConfig.clone());
         }
 
-        partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
-        for (PartitionConfig partitionConfig : penroseConfig.partitionConfigs.values()) {
-            addPartitionConfig((PartitionConfig) partitionConfig.clone());
-        }
-
         engineConfigs = new LinkedHashMap<String,EngineConfig>();
         for (EngineConfig engineConfig : penroseConfig.engineConfigs.values()) {
             addEngineConfig((EngineConfig) engineConfig.clone());
@@ -377,7 +348,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         properties.clear();
         schemaConfigs.clear();
         adapterConfigs.clear();
-        partitionConfigs.clear();
         engineConfigs.clear();
         handlerConfigs.clear();
         interpreterConfigs.clear();

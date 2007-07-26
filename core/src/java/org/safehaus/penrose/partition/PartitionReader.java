@@ -26,9 +26,14 @@ import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.Modules;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.apache.commons.digester.Digester;
+import org.apache.commons.digester.xmlrules.DigesterLoader;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.URLClassLoader;
 import java.net.URL;
 import java.util.List;
@@ -37,11 +42,14 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionReader {
+public class PartitionReader implements EntityResolver {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    String home;
+    URL dtdUrl;
+    URL digesterUrl;
+
+    Digester digester;
 
     ConnectionReader connectionReader;
     SourceReader sourceReader;
@@ -49,11 +57,16 @@ public class PartitionReader {
     ModuleReader moduleReader;
 
     public PartitionReader() {
-        this(null);
-    }
 
-    public PartitionReader(String home) {
-        this.home = home;
+        ClassLoader cl = getClass().getClassLoader();
+
+        dtdUrl = cl.getResource("org/safehaus/penrose/partition/partition.dtd");
+        digesterUrl = cl.getResource("org/safehaus/penrose/partition/partition-digester-rules.xml");
+
+        digester = DigesterLoader.createDigester(digesterUrl);
+        digester.setEntityResolver(this);
+        digester.setValidating(true);
+        digester.setClassLoader(cl);
 
         connectionReader = new ConnectionReader();
         sourceReader = new SourceReader();
@@ -61,44 +74,52 @@ public class PartitionReader {
         moduleReader = new ModuleReader();
     }
 
-    public Partition read(PartitionConfig partitionConfig) throws Exception {
-        return read(partitionConfig, partitionConfig.getPath());
+    public Partition read(String dir) throws Exception {
+        return read(new File(dir));
     }
 
-    public Partition read(PartitionConfig partitionConfig, String path) throws Exception {
-        Partition partition = new Partition(partitionConfig);
+    public Partition read(File dir) throws Exception {
 
-        if (path == null) {
-            path = home;
-        } else if (home != null) {
-            path = home+ File.separator+path;
+        String base = dir.getAbsolutePath()+File.separator+"DIR-INF";
+
+        PartitionConfig partitionConfig = new PartitionConfig();
+
+        String partitionFile = base+File.separator+"partition.xml";
+        File file = new File(partitionFile);
+
+        if (file.exists()) {
+            digester.push(partitionConfig);
+            digester.parse(file);
+            digester.pop();
+        } else {
+            partitionConfig.setName(dir.getName());
         }
-
-        String base = (path == null ? "" : path+File.separator)+"DIR-INF";
 
         String connectionsFile = base+File.separator+"connections.xml";
         log.debug("Loading "+connectionsFile);
 
-        Connections connections = partition.getConnections();
+        Connections connections = partitionConfig.getConnections();
         connectionReader.read(connectionsFile, connections);
 
         String sourcesFile = base+File.separator+"sources.xml";
         log.debug("Loading "+sourcesFile);
 
-        Sources sources = partition.getSources();
+        Sources sources = partitionConfig.getSources();
         sourceReader.read(sourcesFile, sources);
 
         String mappingFile = base+File.separator+"mapping.xml";
         log.debug("Loading "+mappingFile);
 
-        Mappings mappings = partition.getMappings();
+        Mappings mappings = partitionConfig.getMappings();
         mappingReader.read(mappingFile, mappings);
 
         String modulesFile = base+File.separator+"modules.xml";
         log.debug("Loading "+modulesFile);
 
-        Modules modules = partition.getModules();
+        Modules modules = partitionConfig.getModules();
         moduleReader.read(modulesFile, modules);
+
+        Partition partition = new Partition(partitionConfig);
 
         log.debug("Classpath:");
         List<URL> urls = new ArrayList<URL>();
@@ -118,8 +139,8 @@ public class PartitionReader {
                 }
             });
 
-            for (File file : files) {
-                URL url = file.toURL();
+            for (File f : files) {
+                URL url = f.toURL();
                 log.debug(" - "+url);
                 urls.add(url);
             }
@@ -129,5 +150,9 @@ public class PartitionReader {
         partition.setClassLoader(classLoader);
 
         return partition;
+    }
+
+    public InputSource resolveEntity(String publicId, String systemId) throws IOException {
+        return new InputSource(dtdUrl.openStream());
     }
 }

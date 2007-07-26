@@ -17,7 +17,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
 
-import java.util.Iterator;
 import java.util.Collection;
 
 /**
@@ -97,7 +96,6 @@ public class Demo {
         log.warn("Configuring Penrose.");
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.removePartitionConfig("DEFAULT");
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
@@ -120,7 +118,7 @@ public class Demo {
         SearchResponse<SearchResult> response = session.search("dc=Example,dc=com", "(objectClass=*)");
 
         while (response.hasNext()) {
-            SearchResult searchResult = (SearchResult) response.next();
+            SearchResult searchResult = response.next();
             log.warn("Entry:\n"+toString(searchResult));
         }
 
@@ -129,19 +127,22 @@ public class Demo {
 
     public String toString(SearchResult searchResult) throws Exception {
 
-        StringBuffer sb = new StringBuffer();
-        sb.append("dn: "+searchResult.getDn()+"\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append("dn: ");
+        sb.append(searchResult.getDn());
+        sb.append("\n");
 
         Attributes attributes = searchResult.getAttributes();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+        for (Attribute attribute : attributes.getAll()) {
 
             String name = attribute.getName();
             Collection values = attribute.getValues();
 
-            for (Iterator j=values.iterator(); j.hasNext(); ) {
-                Object value = j.next();
-                sb.append(name+": "+value+"\n");
+            for (Object value : values) {
+                sb.append(name);
+                sb.append(": ");
+                sb.append(value);
+                sb.append("\n");
             }
         }
 

@@ -22,8 +22,13 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionManager;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -42,11 +47,73 @@ public class PartitionManager implements PartitionManagerMBean {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
+    private ConnectionManager  connectionManager;
+    private SourceManager      sourceManager;
+    private SourceSyncManager  sourceSyncManager;
+    private ModuleManager      moduleManager;
+
     private PartitionValidator partitionValidator = new PartitionValidator();
 
     private Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
 
     public PartitionManager() {
+    }
+
+    public void loadPartitions(String dir) throws Exception {
+
+        PartitionReader partitionReader = new PartitionReader();
+
+        File services = new File(dir);
+        for (File file : services.listFiles()) {
+            if (!file.isDirectory()) continue;
+
+            String name = file.getName();
+
+            if (debug) {
+                log.debug("----------------------------------------------------------------------------------");
+                log.debug("Loading "+name+" partition.");
+            }
+
+            Partition partition = partitionReader.read(file);
+            if (partition == null || !partition.isEnabled()) continue;
+
+            Collection<PartitionValidationResult> results = partitionValidator.validate(partition);
+
+            for (PartitionValidationResult result : results) {
+                if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                    errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+                } else {
+                    errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+                }
+            }
+
+            for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
+                Connection connection = getConnectionManager().init(partition, connectionConfig);
+                if (connection != null) connection.start();
+            }
+
+            for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
+                getSourceManager().init(partition, sourceConfig);
+            }
+
+            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
+                SourceSync sourceSync = getSourceSyncManager().init(partition, sourceSyncConfig);
+                if (sourceSync != null) sourceSync.start();
+            }
+
+            for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
+                getSourceManager().init(partition, entryMapping);
+            }
+
+            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+                Module module = getModuleManager().init(partition, moduleConfig);
+                if (module != null) module.start();
+            }
+
+            addPartition(partition);
+        }
+
+        log.debug("----------------------------------------------------------------------------------");
     }
 
     public void store(String home, Collection<PartitionConfig> partitionConfigs) throws Exception {
@@ -57,7 +124,7 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void store(String home, PartitionConfig partitionConfig) throws Exception {
 
-        String path = (home == null ? "" : home+File.separator)+partitionConfig.getPath();
+        String path = (home == null ? "" : home+File.separator)+"partitions"+File.separator+partitionConfig.getName();
 
         if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
@@ -76,6 +143,24 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public void clear() throws Exception {
+        for (Partition partition : getPartitions()) {
+
+            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+                Module module = getModuleManager().getModule(partition, moduleConfig.getName());
+                if (module != null) module.stop();
+            }
+
+            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
+                SourceSync sourceSync = getSourceSyncManager().getSourceSync(partition, sourceSyncConfig.getName());
+                if (sourceSync != null) sourceSync.stop();
+            }
+
+            for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
+                Connection connection = getConnectionManager().getConnection(partition, connectionConfig.getName());
+                if (connection != null) connection.stop();
+            }
+        }
+
         partitions.clear();
     }
 
@@ -200,5 +285,37 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void setPartitionValidator(PartitionValidator partitionValidator) {
         this.partitionValidator = partitionValidator;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    public void setConnectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
+
+    public SourceManager getSourceManager() {
+        return sourceManager;
+    }
+
+    public void setSourceManager(SourceManager sourceManager) {
+        this.sourceManager = sourceManager;
+    }
+
+    public SourceSyncManager getSourceSyncManager() {
+        return sourceSyncManager;
+    }
+
+    public void setSourceSyncManager(SourceSyncManager sourceSyncManager) {
+        this.sourceSyncManager = sourceSyncManager;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public void setModuleManager(ModuleManager moduleManager) {
+        this.moduleManager = moduleManager;
     }
 }
