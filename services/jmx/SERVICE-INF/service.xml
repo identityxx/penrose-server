@@ -1,0 +1,16 @@
+<service enabled="true">
+
+  <service-name>JMX</service-name>
+  <service-class>org.safehaus.penrose.management.PenroseJMXService</service-class>
+
+  <parameter>
+    <param-name>rmiPort</param-name>
+    <param-value>1099</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>rmiTransportPort</param-name>
+    <param-value>40888</param-value>
+  </parameter>
+
+</service>

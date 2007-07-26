@@ -1,0 +1,11 @@
+<service enabled="true">
+
+  <service-name>LDAP</service-name>
+  <service-class>org.safehaus.penrose.mina.MinaLDAPService</service-class>
+
+  <parameter>
+    <param-name>ldapPort</param-name>
+    <param-value>10389</param-value>
+  </parameter>
+    
+</service>
