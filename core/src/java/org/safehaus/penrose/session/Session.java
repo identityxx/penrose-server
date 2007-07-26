@@ -25,7 +25,6 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;

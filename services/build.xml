@@ -15,6 +15,29 @@
         <ant dir="opends/SERVICE-INF" target="build"/>
     </target>
 
+    <target name="dist">
+        <copy todir="../server/target/dist/services">
+            <fileset dir=".">
+                <include name="**/SERVICE-INF/service.xml"/>
+            </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="../server/target/dist/services">
+            <fileset dir=".">
+                <exclude name="**/SERVICE-INF/build.xml"/>
+                <exclude name="**/SERVICE-INF/service.xml"/>
+                <exclude name="**/SERVICE-INF/classes/**"/>
+                <exclude name="**/SERVICE-INF/src/**"/>
+            </fileset>
+        </copy>
+        <ant dir="apacheds/SERVICE-INF" target="build"/>
+        <ant dir="jmx/SERVICE-INF" target="build"/>
+        <ant dir="ldap/SERVICE-INF" target="build"/>
+        <ant dir="opends/SERVICE-INF" target="build"/>
+    </target>
+
     <target name="clean">
         <ant dir="apacheds/SERVICE-INF" target="clean"/>
         <ant dir="jmx/SERVICE-INF" target="clean"/>

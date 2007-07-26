@@ -4,18 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.event.EventManager;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.acl.ACLManager;
-
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -123,13 +117,11 @@ public class SessionContext {
 
     public void load() throws Exception {
 
-        for (Iterator i=penroseConfig.getEngineConfigs().iterator(); i.hasNext(); ) {
-            EngineConfig engineConfig = (EngineConfig)i.next();
+        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
             engineManager.init(engineConfig);
         }
 
-        for (Iterator i=penroseConfig.getHandlerConfigs().iterator(); i.hasNext(); ) {
-            HandlerConfig handlerConfig = (HandlerConfig)i.next();
+        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
             handlerManager.init(handlerConfig);
         }
     }

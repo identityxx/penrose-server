@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.session;
 
-import java.util.Properties;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;

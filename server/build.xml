@@ -207,14 +207,8 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <copy todir="target/dist/services">
-            <fileset dir="../services">
-                <exclude name="**/SERVICE-INF/build.xml"/>
-                <exclude name="**/SERVICE-INF/classes/**"/>
-                <exclude name="**/SERVICE-INF/src/**"/>
-            </fileset>
-        </copy>
         <mkdir dir="target/dist/logs"/>
+        <ant dir="../services" target="dist"/>
         <mkdir dir="${project.dist}"/>
         <zip destfile="${project.dist}/${module.name}-${product.version}.zip"
             basedir="target/dist"/>
