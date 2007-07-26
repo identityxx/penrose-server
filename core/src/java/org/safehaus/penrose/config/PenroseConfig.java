@@ -33,7 +33,6 @@ import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.handler.DefaultHandler;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -47,7 +46,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
     private Map<String,String> properties                    = new LinkedHashMap<String,String>();
-    private Map<String,ServiceConfig> serviceConfigs         = new LinkedHashMap<String,ServiceConfig>();
 
     private Map<String,SchemaConfig> schemaConfigs           = new LinkedHashMap<String,SchemaConfig>();
     private Map<String,AdapterConfig> adapterConfigs         = new LinkedHashMap<String,AdapterConfig>();
@@ -121,26 +119,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
     public String removeProperty(String name) {
         return properties.remove(name);
-    }
-
-    public void addServiceConfig(ServiceConfig serviceConfig) {
-        serviceConfigs.put(serviceConfig.getName(), serviceConfig);
-    }
-
-    public ServiceConfig getServiceConfig(String name) {
-        return serviceConfigs.get(name);
-    }
-
-    public Collection<ServiceConfig> getServiceConfigs() {
-        return serviceConfigs.values();
-    }
-
-    public Collection<String> getServiceNames() {
-        return serviceConfigs.keySet();
-    }
-
-    public ServiceConfig removeServiceConfig(String name) {
-        return serviceConfigs.remove(name);
     }
 
     public void addEngineConfig(EngineConfig engineConfig) {
@@ -303,7 +281,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     public int hashCode() {
         return (systemProperties == null ? 0 : systemProperties.hashCode()) +
                 (properties == null ? 0 : properties.hashCode()) +
-                (serviceConfigs == null ? 0 : serviceConfigs.hashCode()) +
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (partitionConfigs == null ? 0 : partitionConfigs.hashCode()) +
@@ -331,7 +308,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         if (!equals(systemProperties, penroseConfig.systemProperties)) return false;
         if (!equals(properties, penroseConfig.properties)) return false;
-        if (!equals(serviceConfigs, penroseConfig.serviceConfigs)) return false;
 
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
@@ -357,11 +333,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
 
         properties = new LinkedHashMap<String,String>();
         properties.putAll(penroseConfig.properties);
-
-        serviceConfigs = new LinkedHashMap<String,ServiceConfig>();
-        for (ServiceConfig serviceConfig : penroseConfig.serviceConfigs.values()) {
-            addServiceConfig((ServiceConfig) serviceConfig.clone());
-        }
 
         schemaConfigs = new LinkedHashMap<String,SchemaConfig>();
         for (SchemaConfig schemaConfig : penroseConfig.schemaConfigs.values()) {
@@ -404,7 +375,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     public void clear() {
         systemProperties.clear();
         properties.clear();
-        serviceConfigs.clear();
         schemaConfigs.clear();
         adapterConfigs.clear();
         partitionConfigs.clear();

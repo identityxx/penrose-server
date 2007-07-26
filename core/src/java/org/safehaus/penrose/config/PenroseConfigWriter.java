@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.config;
 
-import java.util.Iterator;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.File;
@@ -35,7 +34,6 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
-import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.slf4j.LoggerFactory;
@@ -54,11 +52,6 @@ public class PenroseConfigWriter {
         file = new File(filename);
     }
 
-    /**
-     * Store configuration into xml file.
-     *
-     * @throws Exception
-     */
     public void write(PenroseConfig penroseConfig) throws Exception {
 
         file.getParentFile().mkdirs();
@@ -85,8 +78,7 @@ public class PenroseConfigWriter {
     public Element toElement(PenroseConfig penroseConfig) {
         Element element = new DefaultElement("server");
 
-        for (Iterator i = penroseConfig.getSystemPropertyNames().iterator(); i.hasNext();) {
-            String name = (String)i.next();
+        for (String name : penroseConfig.getSystemPropertyNames()) {
             String value = penroseConfig.getSystemProperty(name);
 
             Element parameter = new DefaultElement("system-property");
@@ -102,13 +94,7 @@ public class PenroseConfigWriter {
             element.add(parameter);
         }
 
-        for (Iterator i = penroseConfig.getServiceConfigs().iterator(); i.hasNext();) {
-            ServiceConfig serviceConfig = (ServiceConfig)i.next();
-            element.add(toElement(serviceConfig));
-        }
-
-        for (Iterator i=penroseConfig.getSchemaConfigs().iterator(); i.hasNext(); ) {
-            SchemaConfig schemaConfig = (SchemaConfig)i.next();
+        for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
 
             Element schema = new DefaultElement("schema");
             if (schemaConfig.getName() != null) schema.addAttribute("name", schemaConfig.getName());
@@ -164,41 +150,6 @@ public class PenroseConfigWriter {
             }
 
             element.add(rootElement);
-        }
-
-        return element;
-    }
-
-    public Element toElement(ServiceConfig serviceConfig) {
-
-        Element element = new DefaultElement("service");
-        element.addAttribute("name", serviceConfig.getName());
-        if (!serviceConfig.isEnabled()) element.addAttribute("enabled", "false");
-
-        Element adapterClass = new DefaultElement("service-class");
-        adapterClass.add(new DefaultText(serviceConfig.getServiceClass()));
-        element.add(adapterClass);
-
-        if (serviceConfig.getDescription() != null && !"".equals(serviceConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(serviceConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : serviceConfig.getParameterNames()) {
-            String value = serviceConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
         }
 
         return element;

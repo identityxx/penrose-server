@@ -82,7 +82,6 @@ public class PenroseServer {
         String path = (home == null ? "" : home+File.separator) + "services";
 
         serviceManager.loadServices(path);
-        //serviceManager.load(penroseConfig.getServiceConfigs());
     }
 
     public void start() throws Exception {

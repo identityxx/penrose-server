@@ -1,3 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE service PUBLIC
+  "-//Penrose/DTD Service ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/service.dtd">
+
 <service enabled="true">
 
   <service-name>JMX</service-name>

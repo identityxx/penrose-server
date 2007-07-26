@@ -32,8 +32,6 @@ public interface PenroseConfigMBean {
     public void setSystemProperty(String name, String value) throws Exception;
     public String removeSystemProperty(String name) throws Exception;
 
-    public Collection<String> getServiceNames() throws Exception;
-
     public Collection<String> getAdapterNames() throws Exception;
     public Collection<String> getSchemaNames() throws Exception;
     public Collection<String> getPartitionNames() throws Exception;

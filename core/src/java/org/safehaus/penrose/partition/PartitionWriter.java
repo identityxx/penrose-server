@@ -309,12 +309,7 @@ public class PartitionWriter {
         for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
             entryElement.add(toElement(sourceMapping));
         }
-/*
-        for (Iterator i = entryMapping.getRelationships().iterator(); i.hasNext(); ) {
-            Relationship relationship = (Relationship)i.next();
-            entryElement.add(toElement(relationship));
-        }
-*/
+
         Link link = entryMapping.getLink();
         if (link != null) {
             Element linkElement = new DefaultElement("link");
