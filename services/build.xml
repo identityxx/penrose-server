@@ -73,8 +73,8 @@
     <target name="install-services" if="penrose.services.missing">
         <echo message="Installing service files."/>
         <copy todir="${penrose.home}/services">
-            <fileset dir="../server/target/dist">
-                <include name="services/**/*"/>
+            <fileset dir="../server/target/dist/services">
+                <include name="**/*"/>
             </fileset>
         </copy>
     </target>
