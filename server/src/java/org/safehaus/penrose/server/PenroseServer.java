@@ -23,6 +23,8 @@ import java.io.File;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.config.*;
@@ -33,6 +35,7 @@ import org.safehaus.penrose.config.*;
 public class PenroseServer {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
+    public static boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private Penrose penrose;
@@ -77,20 +80,41 @@ public class PenroseServer {
 
         serviceManager = new ServiceManager();
         serviceManager.setPenroseServer(this);
-
-        String home = penrose.getHome();
-        String path = (home == null ? "" : home+File.separator) + "services";
-
-        serviceManager.loadServices(path);
     }
 
     public void start() throws Exception {
         penrose.start();
-        serviceManager.start();
+
+        String home = penrose.getHome();
+        String dir = (home == null ? "" : home+File.separator) + "services";
+
+        File services = new File(dir);
+        if (!services.isDirectory()) return;
+
+        for (File file : services.listFiles()) {
+            if (!file.isDirectory()) continue;
+
+            ServiceConfig serviceConfig = serviceManager.load(file);
+            String name = serviceConfig.getName();
+
+            if (!serviceConfig.isEnabled()) {
+                log.debug("Service "+name+" is disabled.");
+                continue;
+            }
+
+            log.debug("Starting "+name+" service.");
+
+            Service service = serviceManager.init(serviceConfig);
+            service.start();
+        }
     }
 
     public void stop() throws Exception {
-        serviceManager.stop();
+
+        for (Service service : serviceManager.getServices()) {
+            service.stop();
+        }
+
         penrose.stop();
     }
 

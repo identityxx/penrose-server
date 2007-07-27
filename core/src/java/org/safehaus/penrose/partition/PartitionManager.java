@@ -61,7 +61,7 @@ public class PartitionManager implements PartitionManagerMBean {
     }
 
     public PartitionConfig load(File dir) throws Exception {
-        log.debug("Loading partition in "+dir.getAbsolutePath()+".");
+        log.debug("Loading partition from "+dir.getAbsolutePath()+".");
         return partitionReader.read(dir);
     }
 

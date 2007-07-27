@@ -91,12 +91,12 @@ public class PartitionReader implements EntityResolver {
             partitionConfig.setName(baseDir.getName());
         }
 
-        log.debug("Classpath:");
+        //log.debug("Classpath:");
 
         File classesDir = new File(dirInf, "classes");
         if (classesDir.isDirectory()) {
             URL url = classesDir.toURL();
-            log.debug(" - "+url);
+            //log.debug(" - "+url);
             partitionConfig.addClassPath(url);
         }
 
@@ -110,7 +110,7 @@ public class PartitionReader implements EntityResolver {
 
             for (File f : files) {
                 URL url = f.toURL();
-                log.debug(" - "+url);
+                //log.debug(" - "+url);
                 partitionConfig.addClassPath(url);
             }
         }

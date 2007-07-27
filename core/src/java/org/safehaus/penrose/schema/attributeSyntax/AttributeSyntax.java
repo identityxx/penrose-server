@@ -37,10 +37,10 @@ public class AttributeSyntax {
     static {
 
         try {
-            if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
-                log.debug("Attribute syntaxes:");
-            }
+            //if (debug) {
+                //log.debug("----------------------------------------------------------------------------------");
+                //log.debug("Attribute syntaxes:");
+            //}
 
             ClassLoader cl = AttributeSyntax.class.getClassLoader();
             BufferedReader in = new BufferedReader(
@@ -70,7 +70,7 @@ public class AttributeSyntax {
                 String description = line.substring(0, i).trim();
                 //if (debug) log.debug(" - Description    : "+description);
 
-                if (debug) log.debug(" - "+oid+": "+description+(humanReadable ? " [Y]" : ""));
+                //if (debug) log.debug(" - "+oid+": "+description+(humanReadable ? " [Y]" : ""));
 
                 AttributeSyntax attributeSyntax = new AttributeSyntax(oid, description, humanReadable);
                 attributeSyntaxes.put(oid, attributeSyntax);

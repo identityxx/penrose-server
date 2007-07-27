@@ -217,16 +217,17 @@ public class PenroseContext {
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
             PartitionConfig partitionConfig = partitionManager.load(file);
+            String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {
-                log.debug("Partition is disabled.");
+                log.debug("Partition "+name+" is disabled.");
                 continue;
             }
 
+            log.debug("Starting "+name+" partition.");
+
             partitionManager.init(partitionConfig);
         }
-
-        log.debug("----------------------------------------------------------------------------------");
     }
 
     public void stop() throws Exception {

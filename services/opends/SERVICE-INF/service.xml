@@ -5,7 +5,7 @@
 
 <service enabled="false">
 
-  <service-name>LDAP</service-name>
+  <service-name>OpenDS</service-name>
   <service-class>org.safehaus.penrose.opends.OpenDSLDAPService</service-class>
 
 </service>

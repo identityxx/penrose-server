@@ -20,6 +20,8 @@ package org.safehaus.penrose.service;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.ArrayList;
+import java.net.URL;
 
 /**
  * @author Endi S. Dewata
@@ -32,6 +34,8 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     private String description;
 
     private Map<String,String> parameters = new TreeMap<String,String>();
+
+    private Collection<URL> classPaths = new ArrayList<URL>();
 
     public ServiceConfig() {
     }
@@ -130,11 +134,22 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
 
         parameters = new TreeMap<String,String>();
         parameters.putAll(serviceConfig.parameters);
+
+        classPaths = new ArrayList<URL>();
+        classPaths.addAll(serviceConfig.classPaths);
     }
 
     public Object clone() throws CloneNotSupportedException {
         ServiceConfig serviceConfig = (ServiceConfig)super.clone();
         serviceConfig.copy(this);
         return serviceConfig;
+    }
+
+    public Collection<URL> getClassPaths() {
+        return classPaths;
+    }
+
+    public void addClassPath(URL library) {
+        classPaths.add(library);
     }
 }

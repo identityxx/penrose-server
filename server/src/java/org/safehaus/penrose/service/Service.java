@@ -42,6 +42,9 @@ public class Service {
 
     protected ClassLoader classLoader;
 
+    public Service() {
+    }
+
     public String getParameter(String name) {
         return serviceConfig.getParameter(name);
     }

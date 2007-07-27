@@ -5,7 +5,7 @@
 
 <service enabled="false">
     
-  <service-name>LDAP</service-name>
+  <service-name>ApacheDS</service-name>
   <service-class>org.safehaus.penrose.apacheds.ApacheDSLDAPService</service-class>
   
   <parameter>

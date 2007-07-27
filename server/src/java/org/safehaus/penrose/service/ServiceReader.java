@@ -8,10 +8,11 @@ import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.apache.commons.digester.Digester;
 
 import java.net.URL;
-import java.io.Reader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata
@@ -25,7 +26,7 @@ public class ServiceReader implements EntityResolver {
 
     Digester digester;
 
-    public ServiceReader() throws Exception {
+    public ServiceReader() {
 
         ClassLoader cl = getClass().getClassLoader();
 
@@ -36,20 +37,43 @@ public class ServiceReader implements EntityResolver {
         digester.setEntityResolver(this);
         digester.setValidating(true);
         digester.setClassLoader(cl);
-
     }
 
-    public ServiceConfig read(String dir) throws Exception {
-
-        String filename = dir+File.separator+"SERVICE-INF"+File.separator+"service.xml";
+    public ServiceConfig read(File dir) throws Exception {
 
         ServiceConfig serviceConfig = new ServiceConfig();
+
+        File serviceInf = new File(dir, "SERVICE-INF");
+
+        File serviceXml = new File(serviceInf, "service.xml");
+
         digester.push(serviceConfig);
-
-        Reader reader = new FileReader(filename);
-		digester.parse(reader);
-
+		digester.parse(serviceXml);
         digester.pop();
+
+        //log.debug("Classpath:");
+
+        File classesDir = new File(serviceInf, "classes");
+        if (classesDir.exists()) {
+            URL url = classesDir.toURL();
+            //log.debug(" - "+url);
+            serviceConfig.addClassPath(url);
+        }
+
+        File libDir = new File(serviceInf, "lib");
+        if (libDir.isDirectory()) {
+            File files[] = libDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.toLowerCase().endsWith(".jar");
+                }
+            });
+
+            for (File file : files) {
+                URL url = file.toURL();
+                //log.debug(" - "+url);
+                serviceConfig.addClassPath(url);
+            }
+        }
 
         return serviceConfig;
     }
