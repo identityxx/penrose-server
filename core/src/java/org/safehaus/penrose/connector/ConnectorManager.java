@@ -52,7 +52,6 @@ public class ConnectorManager {
 
         connector.setConnectorConfig(connectorConfig);
         connector.setPenroseConfig(penroseConfig);
-        connector.setConnectionManager(penroseContext.getConnectionManager());
         connector.setPartitionManager(penroseContext.getPartitionManager());
         
         connector.init();

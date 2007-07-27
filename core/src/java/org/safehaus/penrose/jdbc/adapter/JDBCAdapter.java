@@ -34,7 +34,6 @@ import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.dbcp.*;
@@ -221,8 +220,7 @@ public class JDBCAdapter extends Adapter {
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
-        ConnectionManager connectionManager = penroseContext.getConnectionManager();
-        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
+        Connection connection = partition.getConnection(source.getConnectionName());
         JDBCClient client;
 
         if (AUTHENTICATION_FULL.equals(authentication)) {
@@ -990,8 +988,7 @@ public class JDBCAdapter extends Adapter {
         SourceValues sourceValues = new SourceValues();
         RDNBuilder rb = new RDNBuilder();
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Collection<SourceRef> primarySourceRefs = sourceManager.getPrimarySourceRefs(partition.getName(), entryMapping);
+        Collection<SourceRef> primarySourceRefs = partition.getPrimarySourceRefs(entryMapping);
 
         int column = 1;
 

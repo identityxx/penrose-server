@@ -68,15 +68,13 @@ public class SourceSync {
         user = sourceSyncConfig.getParameter(USER);
         //log.debug("User: "+user);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-
-        source = sourceManager.getSource(partition, sourceName);
+        source = partition.getSource(sourceName);
 
         if (changeLogName != null) {
-            changeLog = sourceManager.getSource(partition, changeLogName);
+            changeLog = partition.getSource(changeLogName);
             if (changeLog == null) throw new Exception("Change log "+changeLogName+" not found.");
 
-            tracker = sourceManager.getSource(partition, trackerName);
+            tracker = partition.getSource(trackerName);
             if (tracker == null) throw new Exception("Tracker "+trackerName+" not found.");
         }
 
@@ -84,7 +82,7 @@ public class SourceSync {
         while (st.hasMoreTokens()) {
             String destinationName = st.nextToken();
 
-            Source destination = sourceManager.getSource(partition, destinationName);
+            Source destination = partition.getSource(destinationName);
             if (destination == null) throw new Exception("Source "+destinationName+" not found.");
 
             destinations.add(destination);

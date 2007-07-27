@@ -21,9 +21,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.source.SourceSyncManager;
 import org.safehaus.penrose.source.SourceSync;
-import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
 import org.apache.log4j.*;
 
@@ -43,15 +41,12 @@ public class CacheUtil {
     public Logger log = Logger.getLogger(getClass());
 
     PartitionManager partitionManager;
-    SourceSyncManager sourceSyncManager;
 
     public CacheUtil(
-            PartitionManager partitionManager,
-            SourceSyncManager sourceSyncManager
+            PartitionManager partitionManager
     ) throws Exception {
 
         this.partitionManager = partitionManager;
-        this.sourceSyncManager = sourceSyncManager;
     }
 
     public void status() throws Exception {
@@ -61,7 +56,7 @@ public class CacheUtil {
     }
 
     public void status(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             status(sourceSync);
         }
@@ -92,7 +87,7 @@ public class CacheUtil {
     }
 
     public void create(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             create(sourceSync);
         }
@@ -123,7 +118,7 @@ public class CacheUtil {
     }
 
     public void load(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             load(sourceSync);
         }
@@ -145,7 +140,7 @@ public class CacheUtil {
     }
 
     public void sync(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             sync(sourceSync);
         }
@@ -167,7 +162,7 @@ public class CacheUtil {
     }
 
     public void clean(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             clean(sourceSync);
         }
@@ -198,7 +193,7 @@ public class CacheUtil {
     }
 
     public void drop(Partition partition) throws Exception {
-        Collection<SourceSync> caches = sourceSyncManager.getSourceSyncs(partition);
+        Collection<SourceSync> caches = partition.getSourceSyncs();
         for (SourceSync sourceSync : caches) {
             drop(sourceSync);
         }
@@ -309,10 +304,8 @@ public class CacheUtil {
         penroseContext.start();
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        SourceSyncManager sourceSyncManager = penroseContext.getSourceSyncManager();
 
-        CacheUtil cacheManager = new CacheUtil(partitionManager, sourceSyncManager);
+        CacheUtil cacheManager = new CacheUtil(partitionManager);
 
         Partition partition = null;
         Source source = null;
@@ -328,10 +321,10 @@ public class CacheUtil {
 
             if (iterator.hasNext()) {
                 String sourceName = (String)iterator.next();
-                sourceSync = sourceSyncManager.getSourceSync(partition, sourceName);
+                sourceSync = partition.getSourceSync(sourceName);
 
                 if (sourceSync == null) {
-                    source = sourceManager.getSource(partition, sourceName);
+                    source = partition.getSource(sourceName);
                     if (source == null) throw new Exception("Source "+sourceName+" not found.");
                 }
             }

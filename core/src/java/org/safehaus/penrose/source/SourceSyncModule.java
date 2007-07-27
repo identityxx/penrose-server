@@ -40,13 +40,11 @@ public class SourceSyncModule extends Module {
         initialize = s == null ? DEFAULT_INITIALIZE : Boolean.parseBoolean(s);
         log.debug("Initialize: "+initialize);
 
-        SourceSyncManager sourceSyncManager = penroseContext.getSourceSyncManager();
-
         StringTokenizer st = new StringTokenizer(sourceNames, ", \t\n\r\f");
         while (st.hasMoreTokens()) {
             String sourceName = st.nextToken();
 
-            SourceSync sourceSync = sourceSyncManager.getSourceSync(partition, sourceName);
+            SourceSync sourceSync = partition.getSourceSync(sourceName);
             if (sourceSync == null) {
                 log.error("Source sync "+partition.getName()+"/"+sourceName+" not found.");
                 continue;

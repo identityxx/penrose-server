@@ -31,7 +31,6 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionManager;
 
 import java.util.*;
 
@@ -77,8 +76,7 @@ public class LDAPAdapter extends Adapter {
         }
 
         String connectionName = source.getConnectionName();
-        ConnectionManager connectionManager = penroseContext.getConnectionManager();
-        Connection connection = connectionManager.getConnection(partition, connectionName);
+        Connection connection = partition.getConnection(connectionName);
 
         return new LDAPClient(connection.getParameters());
     }
@@ -92,8 +90,7 @@ public class LDAPAdapter extends Adapter {
             if (debug) log.debug("Storing connection info in session.");
 
             String connectionName = source.getConnectionName();
-            ConnectionManager connectionManager = penroseContext.getConnectionManager();
-            Connection connection = connectionManager.getConnection(partition, connectionName);
+            Connection connection = partition.getConnection(connectionName);
 
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
         } else {
@@ -106,8 +103,7 @@ public class LDAPAdapter extends Adapter {
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
-        ConnectionManager connectionManager = penroseContext.getConnectionManager();
-        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
+        Connection connection = partition.getConnection(source.getConnectionName());
         LDAPClient client;
 
         if (AUTHENTICATION_FULL.equals(authentication)) {

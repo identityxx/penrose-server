@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -60,10 +59,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
-
         Collection<AddListener> listeners = new ArrayList<AddListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(addListeners);
 
         for (AddListener listener : listeners) {
@@ -92,9 +89,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<BindListener> listeners = new ArrayList<BindListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(bindListeners);
 
         for (BindListener listener : listeners) {
@@ -123,9 +119,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<CompareListener> listeners = new ArrayList<CompareListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(compareListeners);
 
         for (CompareListener listener : listeners) {
@@ -154,9 +149,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(deleteListeners);
 
         for (DeleteListener listener : listeners) {
@@ -185,9 +179,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(modifyListeners);
 
         for (ModifyListener listener : listeners) {
@@ -216,9 +209,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(modrdnListeners);
 
         for (ModRdnListener listener : listeners) {
@@ -247,9 +239,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<SearchListener> listeners = new ArrayList<SearchListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(searchListeners);
 
         for (SearchListener listener : listeners) {
@@ -278,9 +269,8 @@ public class EventManager {
 
         DN dn = request.getDn();
 
-        ModuleManager moduleManager = penroseContext.getModuleManager();
         Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
-        listeners.addAll(moduleManager.getModules(event.getPartition(), dn));
+        listeners.addAll(event.getPartition().getModules(dn));
         listeners.addAll(unbindListeners);
 
         for (UnbindListener listener : listeners) {

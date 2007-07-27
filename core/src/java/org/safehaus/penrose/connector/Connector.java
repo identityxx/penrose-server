@@ -23,9 +23,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.slf4j.LoggerFactory;
@@ -43,7 +41,6 @@ public class Connector {
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
 
-    private ConnectionManager connectionManager;
     private PartitionManager partitionManager;
 
     public Connector() {
@@ -61,7 +58,7 @@ public class Connector {
     }
 
     public Connection getConnection(Partition partition, String name) throws Exception {
-        return connectionManager.getConnection(partition, name);
+        return partition.getConnection(name);
     }
 
     public RDN normalize(RDN rdn) throws Exception {
@@ -286,14 +283,6 @@ public class Connector {
 
     public void setConnectorConfig(ConnectorConfig connectorConfig) {
         this.connectorConfig = connectorConfig;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
     }
 
     public PenroseConfig getServerConfig() {

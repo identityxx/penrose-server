@@ -292,11 +292,9 @@ public class PenroseJMXService extends Service {
         PenroseContext penroseContext = penrose.getPenroseContext();
 
         register("Penrose:service=SchemaManager", penroseContext.getSchemaManager());
-        register("Penrose:service=ConnectionManager", penroseContext.getConnectionManager());
         register("Penrose:service=PartitionManager", penroseContext.getPartitionManager());
 
         SessionContext sessionContext = penrose.getSessionContext();
-        register("Penrose:service=ModuleManager", penroseContext.getModuleManager());
 
         register("Penrose:service=SessionManager", sessionContext.getSessionManager());
         register("Penrose:service=ServiceManager", getPenroseServer().getServiceManager());
@@ -305,9 +303,7 @@ public class PenroseJMXService extends Service {
     public void unregisterServices() throws Exception {
         unregister("Penrose:service=ServiceManager");
         unregister("Penrose:service=SessionManager");
-        unregister("Penrose:service=ModuleManager");
         unregister("Penrose:service=PartitionManager");
-        unregister("Penrose:service=ConnectionManager");
         unregister("Penrose:service=SchemaManager");
     }
 

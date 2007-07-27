@@ -24,7 +24,6 @@ import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -39,7 +38,6 @@ import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.LoggerFactory;
@@ -64,7 +62,6 @@ public abstract class Engine {
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
     public ConnectorManager connectorManager;
-    public ConnectionManager connectionManager;
     public PartitionManager partitionManager;
 
     public boolean stopping = false;
@@ -80,7 +77,6 @@ public abstract class Engine {
     }
 
     public void init() throws Exception {
-
         analyzer = new Analyzer();
         analyzer.setPartitionManager(partitionManager);
         analyzer.setInterpreterManager(interpreterManager);
@@ -122,14 +118,6 @@ public abstract class Engine {
     public Connector getConnector(SourceConfig sourceConfig) {
         String connectorName = sourceConfig.getParameter("connectorName");
         return connectorManager.getConnector(connectorName);
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
     }
 
     public PartitionManager getPartitionManager() {
@@ -594,7 +582,6 @@ public abstract class Engine {
         schemaManager = penroseContext.getSchemaManager();
         interpreterManager = penroseContext.getInterpreterManager();
         connectorManager = penroseContext.getConnectorManager();
-        connectionManager =penroseContext.getConnectionManager();
         partitionManager = penroseContext.getPartitionManager();
     }
 
@@ -605,14 +592,13 @@ public abstract class Engine {
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         for (EntryMapping em : partitionConfig.getMappings().getPath(entryMapping)) {
 
-            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
+            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -648,7 +634,6 @@ public abstract class Engine {
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
@@ -656,7 +641,7 @@ public abstract class Engine {
         for (EntryMapping em : partitionConfig.getMappings().getRelativePath(baseMapping, entryMapping)) {
             if (em == baseMapping) continue;
             
-            for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
+            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();

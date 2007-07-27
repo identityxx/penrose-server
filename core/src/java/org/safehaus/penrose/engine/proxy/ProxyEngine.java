@@ -26,7 +26,6 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.Source;
 
 import java.util.*;
@@ -82,7 +81,7 @@ public class ProxyEngine extends Engine {
         }
 
         String connectionName = source.getConnectionName();
-        Connection connection = connectionManager.getConnection(partition, connectionName);
+        Connection connection = partition.getConnection(connectionName);
 
         return new LDAPClient(connection.getParameters());
     }
@@ -96,7 +95,7 @@ public class ProxyEngine extends Engine {
             if (debug) log.debug("Storing connection info in session.");
 
             String connectionName = source.getConnectionName();
-            Connection connection = connectionManager.getConnection(partition, connectionName);
+            Connection connection = partition.getConnection(connectionName);
 
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
         } else {
@@ -119,7 +118,7 @@ public class ProxyEngine extends Engine {
         String authentication = source.getParameter(AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
 
-        Connection connection = connectionManager.getConnection(partition, source.getConnectionName());
+        Connection connection = partition.getConnection(source.getConnectionName());
         LDAPClient client;
 
         if (AUTHENTICATON_FULL.equals(authentication)) {
@@ -167,8 +166,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
@@ -211,8 +209,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = createClient(session, partition, source);
 
@@ -254,8 +251,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = createClient(session, partition, source);
 
@@ -298,8 +294,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
@@ -341,8 +336,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
@@ -386,8 +380,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
@@ -443,8 +436,7 @@ public class ProxyEngine extends Engine {
 
         SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
 
-        SourceManager sourceManager = penroseContext.getSourceManager();
-        final Source source = sourceManager.getSource(partition, sourceMapping.getSourceName());
+        final Source source = partition.getSource(sourceMapping.getSourceName());
 
         final LDAPClient client = getClient(session, partition, source);
 

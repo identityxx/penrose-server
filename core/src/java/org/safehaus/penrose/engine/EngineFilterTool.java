@@ -20,7 +20,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
@@ -152,8 +151,7 @@ public class EngineFilterTool {
         SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
 
-        ConnectionManager connectionManager = engine.getConnectionManager();
-        Connection connection = connectionManager.getConnection(partition, sourceConfig.getConnectionName());
+        Connection connection = partition.getConnection(sourceConfig.getConnectionName());
         if (connection == null) throw new Exception("Unknown connection: "+sourceConfig.getConnectionName());
 
         Adapter adapter = connection.getAdapter();

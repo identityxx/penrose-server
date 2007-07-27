@@ -25,10 +25,9 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -44,13 +43,9 @@ public class PartitionManager implements PartitionManagerMBean {
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
-    private PenroseConfig penroseConfig;
+    private PenroseConfig  penroseConfig;
     private PenroseContext penroseContext;
-
-    private ConnectionManager  connectionManager;
-    private SourceManager      sourceManager;
-    private SourceSyncManager  sourceSyncManager;
-    private ModuleManager      moduleManager;
+    private SessionContext sessionContext;
 
     private PartitionReader    partitionReader    = new PartitionReader();
     private PartitionValidator partitionValidator = new PartitionValidator();
@@ -78,28 +73,37 @@ public class PartitionManager implements PartitionManagerMBean {
         }
 
         Partition partition = new Partition(partitionConfig);
+        partition.setPenroseConfig(penroseConfig);
+        partition.setPenroseContext(penroseContext);
+        partition.setSessionContext(sessionContext);
 
         for (ConnectionConfig connectionConfig : partitionConfig.getConnections().getConnectionConfigs()) {
-            Connection connection = getConnectionManager().init(partition, connectionConfig);
-            if (connection != null) connection.start();
+
+            Connection connection = partition.createConnection(connectionConfig);
+            partition.addConnection(connection);
         }
 
         for (SourceConfig sourceConfig : partitionConfig.getSources().getSourceConfigs()) {
-            getSourceManager().init(partition, sourceConfig);
+
+            Source source = partition.createSource(sourceConfig);
+            partition.addSource(source);
         }
 
         for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSources().getSourceSyncConfigs()) {
-            SourceSync sourceSync = getSourceSyncManager().init(partition, sourceSyncConfig);
-            if (sourceSync != null) sourceSync.start();
+
+            SourceSync sourceSync = partition.createSourceSync(sourceSyncConfig);
+            partition.addSourceSync(sourceSync);
         }
 
         for (EntryMapping entryMapping : partitionConfig.getMappings().getEntryMappings()) {
-            getSourceManager().init(partition, entryMapping);
+            partition.createEntry(entryMapping);
         }
 
         for (ModuleConfig moduleConfig : partitionConfig.getModules().getModuleConfigs()) {
-            Module module = getModuleManager().init(partition, moduleConfig);
-            if (module != null) module.start();
+            if (!moduleConfig.isEnabled()) continue;
+
+            Module module = partition.createModule(moduleConfig);
+            partition.addModule(module);
         }
 
         addPartition(partition);
@@ -135,28 +139,24 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void clear() throws Exception {
         for (Partition partition : getPartitions()) {
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
 
-            for (ModuleConfig moduleConfig : partitionConfig.getModules().getModuleConfigs()) {
-                Module module = getModuleManager().getModule(partition, moduleConfig.getName());
-                if (module != null) module.stop();
+            for (Module module : partition.getModules()) {
+                module.stop();
             }
 
-            for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSources().getSourceSyncConfigs()) {
-                SourceSync sourceSync = getSourceSyncManager().getSourceSync(partition, sourceSyncConfig.getName());
-                if (sourceSync != null) sourceSync.stop();
+            for (SourceSync sourceSync : partition.getSourceSyncs()) {
+                sourceSync.stop();
             }
 
-            for (ConnectionConfig connectionConfig : partitionConfig.getConnections().getConnectionConfigs()) {
-                Connection connection = getConnectionManager().getConnection(partition, connectionConfig.getName());
-                if (connection != null) connection.stop();
+            for (Connection connection : partition.getConnections()) {
+                connection.stop();
             }
         }
 
         partitions.clear();
     }
 
-    public Partition getPartition(String name) throws Exception {
+    public Partition getPartition(String name) {
         return partitions.get(name);
     }
 
@@ -284,35 +284,11 @@ public class PartitionManager implements PartitionManagerMBean {
         this.partitionValidator = partitionValidator;
     }
 
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
+    public SessionContext getSessionContext() {
+        return sessionContext;
     }
 
-    public void setConnectionManager(ConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-    }
-
-    public SourceManager getSourceManager() {
-        return sourceManager;
-    }
-
-    public void setSourceManager(SourceManager sourceManager) {
-        this.sourceManager = sourceManager;
-    }
-
-    public SourceSyncManager getSourceSyncManager() {
-        return sourceSyncManager;
-    }
-
-    public void setSourceSyncManager(SourceSyncManager sourceSyncManager) {
-        this.sourceSyncManager = sourceSyncManager;
-    }
-
-    public ModuleManager getModuleManager() {
-        return moduleManager;
-    }
-
-    public void setModuleManager(ModuleManager moduleManager) {
-        this.moduleManager = moduleManager;
+    public void setSessionContext(SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
     }
 }
