@@ -63,11 +63,12 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
+    private boolean enabled = true;
+
 	private String name;
+    private String description;
 
     private String connectionName;
-
-    private String description;
 
     private Map<String,String> parameters = new HashMap<String,String>();
 
@@ -244,9 +245,13 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         SourceConfig sourceConfig = (SourceConfig)object;
+        if (enabled != sourceConfig.enabled) return false;
+
         if (!equals(name, sourceConfig.name)) return false;
-        if (!equals(connectionName, sourceConfig.connectionName)) return false;
         if (!equals(description, sourceConfig.description)) return false;
+
+        if (!equals(connectionName, sourceConfig.connectionName)) return false;
+
         if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
         if (!equals(parameters, sourceConfig.parameters)) return false;
 
@@ -254,9 +259,12 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
     }
 
     public void copy(SourceConfig sourceConfig) throws CloneNotSupportedException {
+        enabled = sourceConfig.enabled;
+
         name = sourceConfig.name;
-        connectionName = sourceConfig.connectionName;
         description = sourceConfig.description;
+
+        connectionName = sourceConfig.connectionName;
 
         fieldConfigs = new LinkedHashMap<String,FieldConfig>();
         fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
@@ -274,5 +282,13 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
         SourceConfig sourceConfig = (SourceConfig)super.clone();
         sourceConfig.copy(this);
         return sourceConfig;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

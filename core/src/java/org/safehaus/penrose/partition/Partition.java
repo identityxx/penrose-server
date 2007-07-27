@@ -38,6 +38,7 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.entry.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -58,10 +59,11 @@ public class Partition implements PartitionMBean, Cloneable {
 
     private ClassLoader classLoader;
 
-    private Map<String,Connection> connections = new HashMap<String,Connection>();
-    private Map<String,Source>     sources     = new HashMap<String,Source>();
-    private Map<String,SourceSync> sourceSyncs = new HashMap<String,SourceSync>();
-    private Map<String,Module>     modules     = new HashMap<String,Module>();
+    private Map<String,Connection> connections = new LinkedHashMap<String,Connection>();
+    private Map<String,Source>     sources     = new LinkedHashMap<String,Source>();
+    private Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
+    private Map<String,Entry>      entries     = new LinkedHashMap<String,Entry>();
+    private Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
 
     public Map<String,Map<String, SourceRef>> sourceRefs        = new LinkedHashMap<String,Map<String,SourceRef>>();
     public Map<String,Map<String,SourceRef>>  primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
@@ -289,9 +291,11 @@ public class Partition implements PartitionMBean, Cloneable {
         return sourceSync;
     }
 
-    public void createEntry(EntryMapping entryMapping) throws Exception {
+    public Entry createEntry(EntryMapping entryMapping) throws Exception {
 
         log.debug("Initializing entry mapping "+entryMapping.getDn()+".");
+
+        Entry entry = new Entry(entryMapping);
 
         for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
             SourceRef sourceRef = createSourceRef(entryMapping, sourceMapping);
@@ -324,6 +328,8 @@ public class Partition implements PartitionMBean, Cloneable {
 
             em = partitionConfig.getMappings().getParent(em);
         }
+
+        return entry;
     }
 
     public SourceRef createSourceRef(EntryMapping entryMapping, SourceMapping sourceMapping) throws Exception {
@@ -411,5 +417,17 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setSessionContext(SessionContext sessionContext) {
         this.sessionContext = sessionContext;
+    }
+
+    public void addEntry(Entry entry) {
+        entries.put(entry.getId(), entry);
+    }
+
+    public Collection<Entry> getEntries() {
+        return entries.values();
+    }
+
+    public Entry getEntry(String id) {
+        return entries.get(id);
     }
 }

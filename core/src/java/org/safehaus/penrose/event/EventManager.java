@@ -22,6 +22,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -60,7 +61,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<AddListener> listeners = new ArrayList<AddListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(addListeners);
 
         for (AddListener listener : listeners) {
@@ -90,7 +96,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<BindListener> listeners = new ArrayList<BindListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(bindListeners);
 
         for (BindListener listener : listeners) {
@@ -120,7 +131,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<CompareListener> listeners = new ArrayList<CompareListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(compareListeners);
 
         for (CompareListener listener : listeners) {
@@ -150,7 +166,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(deleteListeners);
 
         for (DeleteListener listener : listeners) {
@@ -180,7 +201,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(modifyListeners);
 
         for (ModifyListener listener : listeners) {
@@ -210,7 +236,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(modrdnListeners);
 
         for (ModRdnListener listener : listeners) {
@@ -240,7 +271,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<SearchListener> listeners = new ArrayList<SearchListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(searchListeners);
 
         for (SearchListener listener : listeners) {
@@ -270,7 +306,12 @@ public class EventManager {
         DN dn = request.getDn();
 
         Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
-        listeners.addAll(event.getPartition().getModules(dn));
+
+        Partition partition = event.getPartition();
+        if (partition != null) {
+            listeners.addAll(partition.getModules(dn));
+        }
+
         listeners.addAll(unbindListeners);
 
         for (UnbindListener listener : listeners) {

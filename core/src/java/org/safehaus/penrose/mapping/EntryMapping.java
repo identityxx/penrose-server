@@ -53,12 +53,12 @@ public class EntryMapping implements Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
+    private boolean enabled = true;
+
     private String id;
     private String parentId;
 
     private DN dn;
-
-    private boolean enabled = true;
 
     private Collection<String> objectClasses = new TreeSet<String>();
 
@@ -72,8 +72,6 @@ public class EntryMapping implements Cloneable {
 
     private List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
     
-    private Collection<Relationship> relationships = new ArrayList<Relationship>();
-
     private Link link;
     private String handlerName;
     private String engineName;
@@ -177,10 +175,6 @@ public class EntryMapping implements Cloneable {
     public void removeAttributeMappings() {
         attributeMappings.clear();
         attributeMappingsByName.clear();
-    }
-
-    public Collection<Relationship> getRelationships() {
-        return relationships;
     }
 
     public Collection<SourceMapping> getSourceMappings() {
@@ -317,18 +311,6 @@ public class EntryMapping implements Cloneable {
         if (list.isEmpty()) removeAttributeMappings(attributeMapping.getName());
     }
 
-	public void addRelationship(Relationship relationship) {
-		relationships.add(relationship);
-	}
-
-    public void removeRelationship(Relationship relationship) {
-        relationships.remove(relationship);
-    }
-
-    public void removeRelationships() {
-        relationships.clear();
-    }
-    
     public String getDescription() {
         return description;
     }
@@ -385,15 +367,18 @@ public class EntryMapping implements Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         EntryMapping entryMapping = (EntryMapping)object;
+        if (enabled != entryMapping.enabled) return false;
+
         if (!equals(id, entryMapping.id)) return false;
         if (!equals(parentId, entryMapping.parentId)) return false;
+
         if (!equals(dn, entryMapping.dn)) return false;
-        if (enabled != entryMapping.enabled) return false;
-        if (!equals(objectClasses, entryMapping.objectClasses)) return false;
         if (!equals(description, entryMapping.description)) return false;
+
+        if (!equals(objectClasses, entryMapping.objectClasses)) return false;
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
+
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
-        if (!equals(relationships, entryMapping.relationships)) return false;
         if (!equals(link, entryMapping.link)) return false;
         if (!equals(handlerName, entryMapping.handlerName)) return false;
         if (!equals(engineName, entryMapping.engineName)) return false;
@@ -404,10 +389,12 @@ public class EntryMapping implements Cloneable {
     }
 
     public void copy(EntryMapping entryMapping) throws CloneNotSupportedException {
+        enabled = entryMapping.enabled;
+
         id = entryMapping.id;
         parentId = entryMapping.parentId;
+
         dn = entryMapping.dn;
-        enabled = entryMapping.enabled;
         description = entryMapping.description;
 
         objectClasses = new TreeSet<String>();
@@ -425,11 +412,6 @@ public class EntryMapping implements Cloneable {
         sourceMappings = new ArrayList<SourceMapping>();
         for (SourceMapping sourceMapping : entryMapping.sourceMappings) {
             addSourceMapping((SourceMapping) sourceMapping.clone());
-        }
-
-        relationships = new ArrayList<Relationship>();
-        for (Relationship relationship : entryMapping.relationships) {
-            addRelationship((Relationship) relationship.clone());
         }
 
         link = entryMapping.link == null ? null : (Link)entryMapping.link.clone();

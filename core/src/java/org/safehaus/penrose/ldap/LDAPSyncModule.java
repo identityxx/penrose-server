@@ -19,11 +19,8 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.entry.*;
 
 import javax.naming.directory.*;
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -72,7 +69,7 @@ public class LDAPSyncModule extends Module {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
     }
-*/
+
     public javax.naming.directory.SearchResult createSearchResult(Entry entry) {
 
         //log.debug("Converting "+entry.getDn());
@@ -107,7 +104,7 @@ public class LDAPSyncModule extends Module {
 
         return new javax.naming.directory.SearchResult(entry.getDn().toString(), entry, attrs);
     }
-/*
+
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
         DN baseDn = (DN)event.getSource();

@@ -26,10 +26,12 @@ import java.util.LinkedHashMap;
  */
 public class ModuleConfig implements ModuleConfigMBean, Cloneable {
 
-    private String name;
     private boolean enabled = true;
-    private String moduleClass;
+
+    private String name;
     private String description;
+
+    private String moduleClass;
 
     public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -90,11 +92,7 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (enabled ? 0 : 1) +
-                (moduleClass == null ? 0 : moduleClass.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -109,20 +107,25 @@ public class ModuleConfig implements ModuleConfigMBean, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         ModuleConfig moduleConfig = (ModuleConfig)object;
-        if (!equals(name, moduleConfig.name)) return false;
         if (enabled != moduleConfig.enabled) return false;
-        if (!equals(moduleClass, moduleConfig.moduleClass)) return false;
+
+        if (!equals(name, moduleConfig.name)) return false;
         if (!equals(description, moduleConfig.description)) return false;
+
+        if (!equals(moduleClass, moduleConfig.moduleClass)) return false;
+
         if (!equals(parameters, moduleConfig.parameters)) return false;
 
         return true;
     }
 
     public void copy(ModuleConfig moduleConfig) {
-        name = moduleConfig.name;
         enabled = moduleConfig.enabled;
-        moduleClass = moduleConfig.moduleClass;
+
+        name = moduleConfig.name;
         description = moduleConfig.description;
+
+        moduleClass = moduleConfig.moduleClass;
 
         parameters = new LinkedHashMap<String,String>();
         parameters.putAll(moduleConfig.parameters);

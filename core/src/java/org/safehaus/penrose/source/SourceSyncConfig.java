@@ -9,6 +9,8 @@ import java.util.Collection;
  */
 public class SourceSyncConfig implements Cloneable {
 
+    private boolean enabled = true;
+
     private String name;
     private String destinations;
     private SourceConfig sourceConfig;
@@ -98,5 +100,13 @@ public class SourceSyncConfig implements Cloneable {
 
     public void setDestinations(String destinations) {
         this.destinations = destinations;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

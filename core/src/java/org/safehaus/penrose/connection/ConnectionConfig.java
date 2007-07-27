@@ -24,11 +24,12 @@ import java.util.*;
  */
 public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 
+    private boolean enabled = true;
+
 	public String name;
+    public String description;
 
 	public String adapterName;
-
-	public String description;
 
 	public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -91,10 +92,7 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
 	}
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (adapterName == null ? 0 : adapterName.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -109,18 +107,25 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         ConnectionConfig connectionConfig = (ConnectionConfig)object;
+        if (enabled != connectionConfig.enabled) return false;
+
         if (!equals(name, connectionConfig.name)) return false;
-        if (!equals(adapterName, connectionConfig.adapterName)) return false;
         if (!equals(description, connectionConfig.description)) return false;
+
+        if (!equals(adapterName, connectionConfig.adapterName)) return false;
+
         if (!equals(parameters, connectionConfig.parameters)) return false;
 
         return true;
     }
 
     public void copy(ConnectionConfig connectionConfig) {
+        enabled = connectionConfig.enabled;
+
         name = connectionConfig.name;
-        adapterName = connectionConfig.adapterName;
         description = connectionConfig.description;
+
+        adapterName = connectionConfig.adapterName;
 
         parameters = new LinkedHashMap<String,String>();
         parameters.putAll(connectionConfig.parameters);
@@ -130,5 +135,13 @@ public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
         ConnectionConfig connectionConfig = (ConnectionConfig)super.clone();
         connectionConfig.copy(this);
         return connectionConfig;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

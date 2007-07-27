@@ -28,6 +28,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.entry.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -78,25 +79,31 @@ public class PartitionManager implements PartitionManagerMBean {
         partition.setSessionContext(sessionContext);
 
         for (ConnectionConfig connectionConfig : partitionConfig.getConnections().getConnectionConfigs()) {
+            if (!connectionConfig.isEnabled()) continue;
 
             Connection connection = partition.createConnection(connectionConfig);
             partition.addConnection(connection);
         }
 
         for (SourceConfig sourceConfig : partitionConfig.getSources().getSourceConfigs()) {
+            if (!sourceConfig.isEnabled()) continue;
 
             Source source = partition.createSource(sourceConfig);
             partition.addSource(source);
         }
 
         for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSources().getSourceSyncConfigs()) {
+            if (!sourceSyncConfig.isEnabled()) continue;
 
             SourceSync sourceSync = partition.createSourceSync(sourceSyncConfig);
             partition.addSourceSync(sourceSync);
         }
 
         for (EntryMapping entryMapping : partitionConfig.getMappings().getEntryMappings()) {
-            partition.createEntry(entryMapping);
+            if (!entryMapping.isEnabled()) continue;
+
+            Entry entry = partition.createEntry(entryMapping);
+            partition.addEntry(entry);
         }
 
         for (ModuleConfig moduleConfig : partitionConfig.getModules().getModuleConfigs()) {
