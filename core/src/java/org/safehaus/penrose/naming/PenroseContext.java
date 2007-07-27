@@ -220,7 +220,7 @@ public class PenroseContext {
             String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {
-                log.debug("Partition "+name+" is disabled.");
+                log.debug(name+" partition is disabled.");
                 continue;
             }
 

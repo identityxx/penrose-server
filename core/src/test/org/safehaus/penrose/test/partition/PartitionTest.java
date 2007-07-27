@@ -83,18 +83,21 @@ public class PartitionTest extends TestCase {
 
     public void print(Partition partition) throws Exception {
         log.debug("Entries:");
-        Collection<EntryMapping> c = partition.getMappings().getRootEntryMappings();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<EntryMapping> c = partitionConfig.getMappings().getRootEntryMappings();
         print(partition, c, 0);
     }
 
     public void print(Partition partition, Collection<EntryMapping> entryMappings, int level) throws Exception {
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
 
         for (EntryMapping entryMapping : entryMappings) {
 
             for (int l = 0; l < level; l++) System.out.print("  ");
             log.debug(" - " + entryMapping.getRdn());
 
-            Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
+            Collection<EntryMapping> children = partitionConfig.getMappings().getChildren(entryMapping);
             print(partition, children, level + 1);
         }
     }

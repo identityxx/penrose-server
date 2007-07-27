@@ -3,6 +3,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
@@ -185,7 +186,8 @@ public class DefaultHandler extends Handler {
         PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
 
-        Collection<EntryMapping> c = p.getMappings().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
+        PartitionConfig partitionConfig = p.getPartitionConfig();
+        Collection<EntryMapping> c = partitionConfig.getMappings().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
@@ -216,9 +218,10 @@ public class DefaultHandler extends Handler {
         int scope = request.getScope();
         final Filter filter = request.getFilter();
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         if (scope != SearchRequest.SCOPE_BASE
                 && scope != SearchRequest.SCOPE_SUB
-                && (scope != SearchRequest.SCOPE_ONE || partition.getMappings().getParent(entryMapping) != baseMapping)
+                && (scope != SearchRequest.SCOPE_ONE || partitionConfig.getMappings().getParent(entryMapping) != baseMapping)
         ) {
             // if not searching for base or subtree or immediate children) then skip
             return;
@@ -328,7 +331,8 @@ public class DefaultHandler extends Handler {
             return;
         }
 
-        Collection children = partition.getMappings().getChildren(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection children = partitionConfig.getMappings().getChildren(entryMapping);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
         if (scope == SearchRequest.SCOPE_ONE) {

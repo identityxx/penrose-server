@@ -20,6 +20,7 @@ package org.safehaus.penrose.handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.acl.ACLManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
@@ -175,7 +176,8 @@ public abstract class Handler {
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
             DN parentDn = dn.getParentDn();
 
             SearchResult parent = find(session, partition, parentMapping, parentDn);
@@ -589,7 +591,8 @@ public abstract class Handler {
     ) throws Exception {
 
         DN parentDn = dn.getParentDn();
-        EntryMapping em = partition.getMappings().getParent(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        EntryMapping em = partitionConfig.getMappings().getParent(entryMapping);
 
         if (parentDn != null && em != null) {
             extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
@@ -631,7 +634,8 @@ public abstract class Handler {
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
-        Sources sources = partition.getSources();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Sources sources = partitionConfig.getSources();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

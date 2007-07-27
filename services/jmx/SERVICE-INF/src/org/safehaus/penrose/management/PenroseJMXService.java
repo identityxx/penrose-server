@@ -349,7 +349,9 @@ public class PenroseJMXService extends Service {
 
     public void registerConnections(Partition partition) throws Exception {
 
-        Collection<ConnectionConfig> connectionConfigs = partition.getConnections().getConnectionConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+
+        Collection<ConnectionConfig> connectionConfigs = partitionConfig.getConnections().getConnectionConfigs();
         for (ConnectionConfig connectionConfig : connectionConfigs) {
 
             String name = "Penrose Config:name=" + connectionConfig.getName() + ",partition=" + partition.getName() + ",type=ConnectionConfig";
@@ -359,7 +361,9 @@ public class PenroseJMXService extends Service {
 
     public void unregisterConnections(Partition partition) throws Exception {
 
-        Collection<ConnectionConfig> connectionConfigs = partition.getConnections().getConnectionConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+
+        Collection<ConnectionConfig> connectionConfigs = partitionConfig.getConnections().getConnectionConfigs();
         for (ConnectionConfig connectionConfig : connectionConfigs) {
 
             String name = "Penrose Config:name=" + connectionConfig.getName() + ",partition=" + partition.getName() + ",type=ConnectionConfig";
@@ -369,7 +373,8 @@ public class PenroseJMXService extends Service {
 
     public void registerSources(Partition partition) throws Exception {
 
-        Collection<SourceConfig> sourceConfigs = partition.getSources().getSourceConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<SourceConfig> sourceConfigs = partitionConfig.getSources().getSourceConfigs();
         for (SourceConfig sourceConfig : sourceConfigs) {
 
             String name = "Penrose Config:name=" + sourceConfig.getName() + ",partition=" + partition.getName() + ",type=SourceConfig";
@@ -381,7 +386,8 @@ public class PenroseJMXService extends Service {
 
     public void unregisterSources(Partition partition) throws Exception {
 
-        Collection<SourceConfig> sourceConfigs = partition.getSources().getSourceConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<SourceConfig> sourceConfigs = partitionConfig.getSources().getSourceConfigs();
         for (SourceConfig sourceConfig : sourceConfigs) {
 
             unregisterFields(partition, sourceConfig);
@@ -413,7 +419,8 @@ public class PenroseJMXService extends Service {
 
     public void registerModules(Partition partition) throws Exception {
 
-        Collection<ModuleConfig> moduleConfigs = partition.getModules().getModuleConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<ModuleConfig> moduleConfigs = partitionConfig.getModules().getModuleConfigs();
         for (ModuleConfig moduleConfig : moduleConfigs) {
 
             String name = "Penrose Config:name=" + moduleConfig.getName() + ",partition=" + partition.getName() + ",type=ModuleConfig";
@@ -423,7 +430,8 @@ public class PenroseJMXService extends Service {
 
     public void unregisterModules(Partition partition) throws Exception {
 
-        Collection<ModuleConfig> moduleConfigs = partition.getModules().getModuleConfigs();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<ModuleConfig> moduleConfigs = partitionConfig.getModules().getModuleConfigs();
         for (ModuleConfig moduleConfig : moduleConfigs) {
 
             String name = "Penrose Config:name=" + moduleConfig.getName() + ",partition=" + partition.getName() + ",type=ModuleConfig";

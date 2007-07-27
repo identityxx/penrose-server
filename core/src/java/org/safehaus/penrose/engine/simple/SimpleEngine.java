@@ -79,7 +79,8 @@ public class SimpleEngine extends Engine {
                 );
             }
 
-            entryMapping = partition.getMappings().getParent(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
         }
     }
 
@@ -94,7 +95,8 @@ public class SimpleEngine extends Engine {
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
-        Sources sources = partition.getSources();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Sources sources = partitionConfig.getSources();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

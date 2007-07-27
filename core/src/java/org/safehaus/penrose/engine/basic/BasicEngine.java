@@ -4,6 +4,7 @@ import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -69,7 +70,8 @@ public class BasicEngine extends Engine {
     ) throws Exception {
 
         DN parentDn = dn.getParentDn();
-        EntryMapping em = partition.getMappings().getParent(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        EntryMapping em = partitionConfig.getMappings().getParent(entryMapping);
 
         if (parentDn != null && em != null) {
             extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
@@ -111,7 +113,8 @@ public class BasicEngine extends Engine {
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
-        Sources sources = partition.getSources();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Sources sources = partitionConfig.getSources();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

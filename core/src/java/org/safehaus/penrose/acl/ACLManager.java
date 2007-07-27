@@ -20,6 +20,7 @@ package org.safehaus.penrose.acl;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -146,7 +147,8 @@ public class ACLManager {
             }
         }
 
-        EntryMapping parentEntryMapping = partition.getMappings().getParent(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        EntryMapping parentEntryMapping = partitionConfig.getMappings().getParent(entryMapping);
         if (parentEntryMapping == null) {
         	if (debug) {
         		log.debug("Parent entry for "+entryMapping.getDn()+" not found.");
@@ -312,7 +314,8 @@ public class ACLManager {
 
         if (entryMapping == null) return;
 
-        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
         getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         if (debug) log.debug("Checking ACL in "+entryMapping.getDn()+":");

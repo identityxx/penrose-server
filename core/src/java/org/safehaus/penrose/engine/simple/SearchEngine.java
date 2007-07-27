@@ -19,6 +19,7 @@ package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.entry.SourceValues;
@@ -172,7 +173,8 @@ public class SearchEngine {
                 args.add(value);
             }
 
-            em = partition.getMappings().getParent(em);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            em = partitionConfig.getMappings().getParent(em);
         }
     }
 

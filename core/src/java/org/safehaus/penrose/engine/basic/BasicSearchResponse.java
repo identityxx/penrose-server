@@ -6,6 +6,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
@@ -79,9 +80,10 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     public Collection<EntryMapping> createPath(EntryMapping entryMapping) {
         List<EntryMapping> path = new ArrayList<EntryMapping>();
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             path.add(0, entryMapping);
-            entryMapping = partition.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
         }
 
         return path;

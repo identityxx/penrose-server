@@ -24,6 +24,7 @@ import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.entry.*;
@@ -65,7 +66,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         Entry entry = (Entry)event.getSource();
 
-        if (!partition.getMappings().contains(entry.getDn())) return;
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        if (!partitionConfig.getMappings().contains(entry.getDn())) return;
 
         DirContext ctx = null;
 
@@ -128,7 +130,8 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();
         Partition partition = partitionManager.getPartition(baseDn);
-        Collection entryMappings = partition.getMappings().findEntryMappings(baseDn);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection entryMappings = partitionConfig.getMappings().findEntryMappings(baseDn);
 
         if (entryMappings == null || entryMappings.isEmpty()) return;
 

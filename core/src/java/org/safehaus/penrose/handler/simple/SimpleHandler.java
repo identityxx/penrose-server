@@ -4,6 +4,7 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
@@ -70,10 +71,11 @@ public class SimpleHandler extends Handler {
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         int scope = request.getScope();
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
-                || scope == SearchRequest.SCOPE_ONE && partition.getMappings().getParent(entryMapping) == baseMapping
+                || scope == SearchRequest.SCOPE_ONE && partitionConfig.getMappings().getParent(entryMapping) == baseMapping
                 ) {
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
@@ -95,7 +97,7 @@ public class SimpleHandler extends Handler {
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
+            Collection<EntryMapping> children = partitionConfig.getMappings().getChildren(entryMapping);
 
             for (EntryMapping childMapping : children) {
                 Handler handler = handlerManager.getHandler(partition, childMapping);

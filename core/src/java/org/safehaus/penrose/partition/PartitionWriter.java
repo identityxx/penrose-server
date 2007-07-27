@@ -104,7 +104,8 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
-        writer.write(createElement(partition.getMappings()));
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        writer.write(createElement(partitionConfig.getMappings()));
         writer.close();
     }
 
@@ -124,7 +125,8 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-        writer.write(createElement(partition.getConnections()));
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        writer.write(createElement(partitionConfig.getConnections()));
         writer.close();
     }
 
@@ -144,7 +146,8 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
-        writer.write(createElement(partition.getSources()));
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        writer.write(createElement(partitionConfig.getSources()));
         writer.close();
     }
 
@@ -164,7 +167,8 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-        writer.write(createElement(partition.getModules()));
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        writer.write(createElement(partitionConfig.getModules()));
         writer.close();
     }
 

@@ -24,11 +24,6 @@ import java.net.URLClassLoader;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
-import org.safehaus.penrose.module.Modules;
-import org.safehaus.penrose.mapping.Mappings;
-import org.safehaus.penrose.source.Sources;
-import org.safehaus.penrose.connection.Connections;
-
 /**
  * @author Endi S. Dewata
  */
@@ -73,22 +68,6 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public String getEngineName() {
         return partitionConfig.getEngineName();
-    }
-
-    public Connections getConnections() {
-        return partitionConfig.getConnections();
-    }
-
-    public Sources getSources() {
-        return partitionConfig.getSources();
-    }
-
-    public Mappings getMappings() {
-        return partitionConfig.getMappings();
-    }
-
-    public Modules getModules() {
-        return partitionConfig.getModules();
     }
 
     public PartitionConfig getPartitionConfig() {

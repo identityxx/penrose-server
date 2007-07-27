@@ -29,6 +29,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
@@ -180,7 +181,8 @@ public abstract class Engine {
     public void start() throws Exception {
         for (Partition partition : partitionManager.getPartitions()) {
 
-            for (EntryMapping entryMapping : partition.getMappings().getRootEntryMappings()) {
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            for (EntryMapping entryMapping : partitionConfig.getMappings().getRootEntryMappings()) {
                 analyzer.analyze(partition, entryMapping);
             }
         }
@@ -234,7 +236,8 @@ public abstract class Engine {
     }
 
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
-        Collection effectiveSources = partition.getMappings().getEffectiveSourceMappings(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection effectiveSources = partitionConfig.getMappings().getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
         Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
@@ -242,7 +245,7 @@ public abstract class Engine {
             if (attributeMapping.getConstant() == null) return false;
         }
 
-        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
         if (parentMapping == null) return true;
 
         return isStatic(partition, parentMapping);
@@ -468,7 +471,8 @@ public abstract class Engine {
             return new RDN();
         }
 
-        Collection<FieldMapping> fields = partition.getSources().getSearchableFields(sourceMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection<FieldMapping> fields = partitionConfig.getSources().getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
@@ -509,7 +513,8 @@ public abstract class Engine {
             Collection<DN> dns
     ) throws Exception {
 
-        EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
 
         Collection<DN> parentDns = new ArrayList<DN>();
         if (parentMapping != null) {
@@ -604,7 +609,8 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        for (EntryMapping em : partition.getMappings().getPath(entryMapping)) {
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        for (EntryMapping em : partitionConfig.getMappings().getPath(entryMapping)) {
 
             for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {
 
@@ -646,7 +652,8 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        for (EntryMapping em : partition.getMappings().getRelativePath(baseMapping, entryMapping)) {
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        for (EntryMapping em : partitionConfig.getMappings().getRelativePath(baseMapping, entryMapping)) {
             if (em == baseMapping) continue;
             
             for (SourceRef sourceRef : sourceManager.getSourceRefs(partition, em)) {

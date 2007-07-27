@@ -79,25 +79,25 @@ public class PartitionManager implements PartitionManagerMBean {
 
         Partition partition = new Partition(partitionConfig);
 
-        for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
+        for (ConnectionConfig connectionConfig : partitionConfig.getConnections().getConnectionConfigs()) {
             Connection connection = getConnectionManager().init(partition, connectionConfig);
             if (connection != null) connection.start();
         }
 
-        for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
+        for (SourceConfig sourceConfig : partitionConfig.getSources().getSourceConfigs()) {
             getSourceManager().init(partition, sourceConfig);
         }
 
-        for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
+        for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSources().getSourceSyncConfigs()) {
             SourceSync sourceSync = getSourceSyncManager().init(partition, sourceSyncConfig);
             if (sourceSync != null) sourceSync.start();
         }
 
-        for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
+        for (EntryMapping entryMapping : partitionConfig.getMappings().getEntryMappings()) {
             getSourceManager().init(partition, entryMapping);
         }
 
-        for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : partitionConfig.getModules().getModuleConfigs()) {
             Module module = getModuleManager().init(partition, moduleConfig);
             if (module != null) module.start();
         }
@@ -135,18 +135,19 @@ public class PartitionManager implements PartitionManagerMBean {
 
     public void clear() throws Exception {
         for (Partition partition : getPartitions()) {
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
 
-            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+            for (ModuleConfig moduleConfig : partitionConfig.getModules().getModuleConfigs()) {
                 Module module = getModuleManager().getModule(partition, moduleConfig.getName());
                 if (module != null) module.stop();
             }
 
-            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
+            for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSources().getSourceSyncConfigs()) {
                 SourceSync sourceSync = getSourceSyncManager().getSourceSync(partition, sourceSyncConfig.getName());
                 if (sourceSync != null) sourceSync.stop();
             }
 
-            for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
+            for (ConnectionConfig connectionConfig : partitionConfig.getConnections().getConnectionConfigs()) {
                 Connection connection = getConnectionManager().getConnection(partition, connectionConfig.getName());
                 if (connection != null) connection.stop();
             }
@@ -165,7 +166,8 @@ public class PartitionManager implements PartitionManagerMBean {
 
         String sourceName = sourceMapping.getSourceName();
         for (Partition partition : partitions.values()) {
-            if (partition.getSources().getSourceConfig(sourceName) != null) return partition;
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            if (partitionConfig.getSources().getSourceConfig(sourceName) != null) return partition;
         }
         return null;
     }
@@ -176,7 +178,8 @@ public class PartitionManager implements PartitionManagerMBean {
 
         String connectionName = sourceConfig.getConnectionName();
         for (Partition partition : partitions.values()) {
-            if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            if (partitionConfig.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }
@@ -187,7 +190,8 @@ public class PartitionManager implements PartitionManagerMBean {
 
         String connectionName = connectionConfig.getName();
         for (Partition partition : partitions.values()) {
-            if (partition.getConnections().getConnectionConfig(connectionName) != null) return partition;
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            if (partitionConfig.getConnections().getConnectionConfig(connectionName) != null) return partition;
         }
         return null;
     }
@@ -197,7 +201,8 @@ public class PartitionManager implements PartitionManagerMBean {
         if (entryMapping == null) return null;
 
         for (Partition partition : partitions.values()) {
-            if (partition.getMappings().contains(entryMapping)) {
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            if (partitionConfig.getMappings().contains(entryMapping)) {
                 return partition;
             }
         }
@@ -220,7 +225,8 @@ public class PartitionManager implements PartitionManagerMBean {
         for (Partition partition : partitions.values()) {
             if (debug) log.debug("Checking "+partition.getName()+" partition.");
 
-            Collection<DN> suffixes = partition.getMappings().getSuffixes();
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection<DN> suffixes = partitionConfig.getMappings().getSuffixes();
             for (DN suffix : suffixes) {
                 if (suffix.isEmpty() && dn.isEmpty() // Root DSE
                         || dn.endsWith(suffix)) {

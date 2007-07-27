@@ -22,6 +22,7 @@ import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -164,7 +165,8 @@ public class EntryCache {
     public void remove(Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
         log.info("["+entryMapping.getDn()+"] remove("+dn+")");
 
-        Collection children = partition.getMappings().getChildren(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection children = partitionConfig.getMappings().getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
 
@@ -188,7 +190,8 @@ public class EntryCache {
     }
 
     public void create(Partition partition) throws Exception {
-        Collection entryMappings = partition.getMappings().getRootEntryMappings();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection entryMappings = partitionConfig.getMappings().getRootEntryMappings();
         create(partition, entryMappings);
     }
 
@@ -202,7 +205,8 @@ public class EntryCache {
             log.debug("Creating tables for "+entryMapping.getDn());
             cacheStorage.create();
 
-            Collection children = partition.getMappings().getChildren(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection children = partitionConfig.getMappings().getChildren(entryMapping);
             create(partition, children);
         }
     }
@@ -211,7 +215,8 @@ public class EntryCache {
     }
 
     public void clean(Partition partition) throws Exception {
-        Collection entryMappings = partition.getMappings().getRootEntryMappings();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection entryMappings = partitionConfig.getMappings().getRootEntryMappings();
         clean(partition, entryMappings);
     }
 
@@ -223,7 +228,8 @@ public class EntryCache {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             final EntryMapping entryMapping = (EntryMapping)i.next();
 
-            Collection children = partition.getMappings().getChildren(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection children = partitionConfig.getMappings().getChildren(entryMapping);
             clean(partition, children);
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(partition, entryMapping);
@@ -232,7 +238,8 @@ public class EntryCache {
     }
 
     public void invalidate(Partition partition) throws Exception {
-        Collection entryMappings = partition.getMappings().getRootEntryMappings();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection entryMappings = partitionConfig.getMappings().getRootEntryMappings();
         invalidate(partition, entryMappings);
     }
 
@@ -244,7 +251,8 @@ public class EntryCache {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             final EntryMapping entryMapping = (EntryMapping)i.next();
 
-            Collection children = partition.getMappings().getChildren(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection children = partitionConfig.getMappings().getChildren(entryMapping);
             invalidate(partition, children);
 
             EntryCacheStorage entryCacheStorage = getCacheStorage(partition, entryMapping);
@@ -253,7 +261,8 @@ public class EntryCache {
     }
 
     public void drop(Partition partition) throws Exception {
-        Collection entryMappings = partition.getMappings().getRootEntryMappings();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection entryMappings = partitionConfig.getMappings().getRootEntryMappings();
         drop(partition, entryMappings);
     }
 
@@ -264,7 +273,8 @@ public class EntryCache {
         for (Iterator i=entryDefinitions.iterator(); i.hasNext(); ) {
             EntryMapping entryMapping = (EntryMapping)i.next();
 
-            Collection children = partition.getMappings().getChildren(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection children = partitionConfig.getMappings().getChildren(entryMapping);
             drop(partition, children);
 
             cacheStorage = getCacheStorage(partition, entryMapping);

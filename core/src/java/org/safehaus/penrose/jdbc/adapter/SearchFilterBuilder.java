@@ -26,6 +26,7 @@ import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -303,10 +304,11 @@ public class SearchFilterBuilder {
     public boolean isPrimarySource(String sourceName) {
         EntryMapping em = entryMapping;
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (em != null) {
             SourceMapping sourceMapping = em.getSourceMapping(0);
             if (sourceMapping != null && sourceMapping.getName().equals(sourceName)) return true;
-            em = partition.getMappings().getParent(em);
+            em = partitionConfig.getMappings().getParent(em);
         }
 
         return false;

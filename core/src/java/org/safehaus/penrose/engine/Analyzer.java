@@ -21,6 +21,7 @@ import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -47,7 +48,7 @@ public class Analyzer {
 
     public void analyze(Partition partition, EntryMapping entryMapping) throws Exception {
 
-    	if (debug) log.debug("Analyzing entry "+entryMapping.getDn()+".");
+    	//if (debug) log.debug("Analyzing entry "+entryMapping.getDn()+".");
 
         SourceMapping sourceMapping = computePrimarySource(entryMapping);
         if (sourceMapping != null) {
@@ -63,9 +64,10 @@ public class Analyzer {
         }
 
         boolean unique = isUnique(partition, entryMapping);
-        if (debug) log.debug("Unique: "+unique);
+        //if (debug) log.debug("Unique: "+unique);
 
-        Collection children = partition.getMappings().getChildren(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection children = partitionConfig.getMappings().getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
             analyze(partition, childMapping);
@@ -80,7 +82,8 @@ public class Analyzer {
 
         Graph graph = new Graph();
 
-        Collection sources = partition.getMappings().getEffectiveSourceMappings(entryMapping);
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        Collection sources = partitionConfig.getMappings().getEffectiveSourceMappings(entryMapping);
         //if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -230,19 +233,19 @@ public class Analyzer {
 
             if (attributeMapping.getExpression() == null) continue;
 
-            if (debug) log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
+            //if (debug) log.debug("RDN attribute "+attributeMapping.getName()+" is an expression.");
             return false;
         }
 
         //log.debug("RDN sources: "+rdnSources);
 
         if (rdnSources.isEmpty()) {
-            log.debug("RDN attributes are constants.");
+            //log.debug("RDN attributes are constants.");
             return false;
         }
 
         if (rdnSources.size() > 1) {
-        	if (debug) log.debug("RDN uses multiple sources: "+rdnSources);
+        	//if (debug) log.debug("RDN uses multiple sources: "+rdnSources);
             return false;
         }
 
@@ -251,7 +254,8 @@ public class Analyzer {
         SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceAlias);
         if (sourceMapping == null) throw new Exception("Invalid source mapping \""+sourceAlias+"\" in \""+entryMapping.getDn()+"\".");
 
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceMapping.getSourceName());
         if (sourceMapping == null) throw new Exception("Invalid source reference \""+sourceMapping.getSourceName()+"\" in \""+entryMapping.getDn()+"\".");
 
         Collection uniqueFields = new TreeSet();
@@ -274,7 +278,7 @@ public class Analyzer {
                 continue;
             }
 
-            if (debug) log.debug("RDN uses non-unique field: "+fieldName);
+            //if (debug) log.debug("RDN uses non-unique field: "+fieldName);
             return false;
         }
 
@@ -303,7 +307,8 @@ public class Analyzer {
         b = new Boolean(checkUniqueness(partition, entryMapping));
 
         if (b.booleanValue()) { // check parent mapping
-            EntryMapping parentMapping = partition.getMappings().getParent(entryMapping);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
 
             if (parentMapping != null) b = new Boolean(isUnique(partition, parentMapping));
         }

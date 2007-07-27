@@ -98,7 +98,7 @@ public class PenroseServer {
             String name = serviceConfig.getName();
 
             if (!serviceConfig.isEnabled()) {
-                log.debug("Service "+name+" is disabled.");
+                log.debug(name+" service is disabled.");
                 continue;
             }
 

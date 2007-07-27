@@ -24,6 +24,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.ServiceManager;
@@ -143,14 +144,15 @@ public class PenroseService implements PenroseServiceMBean {
             Partition partition = partitionManager.getPartition(oldDn);
             if (partition == null) return;
 
-            Collection c = partition.getMappings().findEntryMappings(oldDn);
+            PartitionConfig partitionConfig = partition.getPartitionConfig();
+            Collection c = partitionConfig.getMappings().findEntryMappings(oldDn);
             Collection entryMappings = new ArrayList();
             if (c != null) entryMappings.addAll(c);
 
             log.debug("Found "+entryMappings.size()+" entries.");
             for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
                 EntryMapping entryMapping = (EntryMapping)i.next();
-                partition.getMappings().renameEntryMapping(entryMapping, newDn);
+                partitionConfig.getMappings().renameEntryMapping(entryMapping, newDn);
             }
 
         } catch (Exception e) {

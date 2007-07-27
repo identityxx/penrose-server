@@ -7,6 +7,7 @@ import org.safehaus.penrose.entry.SourceValues;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +33,10 @@ public class EngineTool {
 
         List<EntryMapping> mappings = new ArrayList<EntryMapping>();
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             mappings.add(entryMapping);
-            entryMapping = partition.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -48,9 +50,10 @@ public class EngineTool {
 
         List<EntryMapping> mappings = new ArrayList<EntryMapping>();
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
-            entryMapping = partition.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -113,9 +116,10 @@ public class EngineTool {
 
         List<EntryMapping> path = new ArrayList<EntryMapping>();
 
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             path.add(0, entryMapping);
-            entryMapping = partition.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
         }
 
         propagate(path, sourceValues, interpreter);

@@ -22,6 +22,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -120,7 +121,8 @@ public class ModuleManager implements ModuleManagerMBean {
         Collection<Module> list = new ArrayList<Module>();
         if (partition == null) return list;
 
-        for (Collection<ModuleMapping> moduleMappings : partition.getModules().getModuleMappings()) {
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        for (Collection<ModuleMapping> moduleMappings : partitionConfig.getModules().getModuleMappings()) {
 
             for (ModuleMapping moduleMapping : moduleMappings) {
                 String moduleName = moduleMapping.getModuleName();

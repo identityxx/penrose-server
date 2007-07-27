@@ -24,6 +24,7 @@ import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.entry.SourceValues;
 import org.slf4j.LoggerFactory;
@@ -147,7 +148,8 @@ public class EngineFilterTool {
 
         if (!sourceName.equals(sourceMapping.getName())) return null;
 
-        SourceConfig sourceConfig = partition.getSources().getSourceConfig(sourceMapping.getSourceName());
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceMapping.getSourceName());
         if (sourceConfig == null) throw new Exception("Unknown source: "+sourceMapping.getSourceName());
 
         ConnectionManager connectionManager = engine.getConnectionManager();
