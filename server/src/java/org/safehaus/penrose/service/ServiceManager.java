@@ -53,12 +53,6 @@ public class ServiceManager implements ServiceManagerMBean {
         }
     }
 
-    public void load(Collection<ServiceConfig> serviceConfigs) throws Exception {
-        for (ServiceConfig serviceConfig : serviceConfigs) {
-            load(null, serviceConfig);
-        }
-    }
-
     public void load(String base, ServiceConfig serviceConfig) throws Exception {
 
         if (!serviceConfig.isEnabled()) return;

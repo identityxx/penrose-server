@@ -306,7 +306,6 @@ public class CacheUtil {
 
         PenroseContext penroseContext = new PenroseContext(home);
         penroseContext.init(penroseConfig);
-        penroseContext.load();
         penroseContext.start();
 
         PartitionManager partitionManager = penroseContext.getPartitionManager();

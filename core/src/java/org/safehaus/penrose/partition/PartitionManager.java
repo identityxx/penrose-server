@@ -52,6 +52,7 @@ public class PartitionManager implements PartitionManagerMBean {
     private SourceSyncManager  sourceSyncManager;
     private ModuleManager      moduleManager;
 
+    private PartitionReader    partitionReader    = new PartitionReader();
     private PartitionValidator partitionValidator = new PartitionValidator();
 
     private Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
@@ -59,76 +60,66 @@ public class PartitionManager implements PartitionManagerMBean {
     public PartitionManager() {
     }
 
-    public void loadPartitions(String dir) throws Exception {
-
-        PartitionReader partitionReader = new PartitionReader();
-
-        File services = new File(dir);
-        for (File file : services.listFiles()) {
-            if (!file.isDirectory()) continue;
-
-            String name = file.getName();
-
-            if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
-                log.debug("Loading "+name+" partition.");
-            }
-
-            Partition partition = partitionReader.read(file);
-            if (partition == null || !partition.isEnabled()) continue;
-
-            Collection<PartitionValidationResult> results = partitionValidator.validate(partition);
-
-            for (PartitionValidationResult result : results) {
-                if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                    errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-                } else {
-                    errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-                }
-            }
-
-            for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
-                Connection connection = getConnectionManager().init(partition, connectionConfig);
-                if (connection != null) connection.start();
-            }
-
-            for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
-                getSourceManager().init(partition, sourceConfig);
-            }
-
-            for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
-                SourceSync sourceSync = getSourceSyncManager().init(partition, sourceSyncConfig);
-                if (sourceSync != null) sourceSync.start();
-            }
-
-            for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
-                getSourceManager().init(partition, entryMapping);
-            }
-
-            for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
-                Module module = getModuleManager().init(partition, moduleConfig);
-                if (module != null) module.start();
-            }
-
-            addPartition(partition);
-        }
-
-        log.debug("----------------------------------------------------------------------------------");
+    public PartitionConfig load(File dir) throws Exception {
+        log.debug("Loading partition in "+dir.getAbsolutePath()+".");
+        return partitionReader.read(dir);
     }
 
-    public void store(String home, Collection<PartitionConfig> partitionConfigs) throws Exception {
-        for (PartitionConfig partitionConfig : partitionConfigs) {
-            store(home, partitionConfig);
+    public Partition init(PartitionConfig partitionConfig) throws Exception {
+
+        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
+
+        for (PartitionValidationResult result : results) {
+            if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+            } else {
+                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+            }
+        }
+
+        Partition partition = new Partition(partitionConfig);
+
+        for (ConnectionConfig connectionConfig : partition.getConnections().getConnectionConfigs()) {
+            Connection connection = getConnectionManager().init(partition, connectionConfig);
+            if (connection != null) connection.start();
+        }
+
+        for (SourceConfig sourceConfig : partition.getSources().getSourceConfigs()) {
+            getSourceManager().init(partition, sourceConfig);
+        }
+
+        for (SourceSyncConfig sourceSyncConfig : partition.getSources().getSourceSyncConfigs()) {
+            SourceSync sourceSync = getSourceSyncManager().init(partition, sourceSyncConfig);
+            if (sourceSync != null) sourceSync.start();
+        }
+
+        for (EntryMapping entryMapping : partition.getMappings().getEntryMappings()) {
+            getSourceManager().init(partition, entryMapping);
+        }
+
+        for (ModuleConfig moduleConfig : partition.getModules().getModuleConfigs()) {
+            Module module = getModuleManager().init(partition, moduleConfig);
+            if (module != null) module.start();
+        }
+
+        addPartition(partition);
+
+        return partition;
+    }
+
+    public void store(String home, Collection<Partition> partitions) throws Exception {
+        for (Partition partition : partitions) {
+            store(home, partition);
         }
     }
 
-    public void store(String home, PartitionConfig partitionConfig) throws Exception {
+    public void store(String home, Partition partition) throws Exception {
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
 
         String path = (home == null ? "" : home+File.separator)+"partitions"+File.separator+partitionConfig.getName();
 
         if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
-
-        Partition partition = getPartition(partitionConfig.getName());
 
         PartitionWriter partitionWriter = new PartitionWriter(path);
         partitionWriter.write(partition);

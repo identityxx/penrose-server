@@ -5,24 +5,18 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.source.*;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.filter.FilterEvaluator;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleManager;
-import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.session.SessionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.io.File;
 
 /**
@@ -191,9 +185,6 @@ public class PenroseContext {
         partitionManager.setSourceManager(sourceManager);
         partitionManager.setSourceSyncManager(sourceSyncManager);
         partitionManager.setModuleManager(moduleManager);
-    }
-
-    public void load() throws Exception {
 
         for (String name : penroseConfig.getSystemPropertyNames()) {
             String value = penroseConfig.getSystemProperty(name);
@@ -216,7 +207,26 @@ public class PenroseContext {
         threadManager.start();
 
         String dir = (home == null ? "" : home+ File.separator)+"partitions";
-        partitionManager.loadPartitions(dir);
+
+        File partitions = new File(dir);
+        if (!partitions.isDirectory()) return;
+
+        for (File file : partitions.listFiles()) {
+            if (!file.isDirectory()) continue;
+
+            if (debug) log.debug("----------------------------------------------------------------------------------");
+
+            PartitionConfig partitionConfig = partitionManager.load(file);
+
+            if (!partitionConfig.isEnabled()) {
+                log.debug("Partition is disabled.");
+                continue;
+            }
+
+            partitionManager.init(partitionConfig);
+        }
+
+        log.debug("----------------------------------------------------------------------------------");
     }
 
     public void stop() throws Exception {

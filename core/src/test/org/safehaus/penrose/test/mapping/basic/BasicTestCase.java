@@ -1,13 +1,9 @@
 package org.safehaus.penrose.test.mapping.basic;
 
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
@@ -28,8 +24,8 @@ public class BasicTestCase extends JDBCTestCase {
 
     public String baseDn = "ou=Groups,dc=Example,dc=com";
 
-    public PenroseConfig penroseConfig;
     public Penrose penrose;
+    public PenroseConfig penroseConfig;
 
     public BasicTestCase() throws Exception {
     }
@@ -42,17 +38,16 @@ public class BasicTestCase extends JDBCTestCase {
                 "primary key (groupname))"
         );
 
-        penroseConfig = new PenroseConfig();
-        penroseConfig.addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
-        penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", SimpleEngine.class.getName()));
-
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose = penroseFactory.createPenrose();
+        penrose.start();
+
+        penroseConfig = penrose.getPenroseConfig();
+
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
-        Partition partition = new Partition(partitionConfig);
 
         ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.setAdapterName("JDBC");
@@ -61,7 +56,7 @@ public class BasicTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", getUrl());
         connectionConfig.setParameter("user", getUser());
         connectionConfig.setParameter("password", getPassword());
-        partition.getConnections().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnections().addConnectionConfig(connectionConfig);
 
         SourceConfig sourceConfig = new SourceConfig();
         sourceConfig.setName("groups");
@@ -69,12 +64,12 @@ public class BasicTestCase extends JDBCTestCase {
         sourceConfig.setParameter("table", "groups");
         sourceConfig.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         sourceConfig.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.getSources().addSourceConfig(sourceConfig);
+        partitionConfig.getSources().addSourceConfig(sourceConfig);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partition.getMappings().addEntryMapping(ou);
+        partitionConfig.getMappings().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -88,11 +83,9 @@ public class BasicTestCase extends JDBCTestCase {
         sourceMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(sourceMapping);
 
-        partition.getMappings().addEntryMapping(groups);
+        partitionConfig.getMappings().addEntryMapping(groups);
 
-        partitionManager.addPartition(partition);
-
-        penrose.start();
+        partitionManager.init(partitionConfig);
     }
 /*
     public void testDummy()

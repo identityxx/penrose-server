@@ -18,6 +18,8 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -36,11 +38,13 @@ public class Partition implements PartitionMBean, Cloneable {
 
     private PartitionConfig partitionConfig;
 
-    private Collection<String> libraries = new ArrayList<String>();
     private ClassLoader classLoader;
 
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
+
+        Collection<URL> classPaths = partitionConfig.getClassPaths();
+        classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]));
     }
 
     public String getName() {
@@ -99,14 +103,6 @@ public class Partition implements PartitionMBean, Cloneable {
         return partitionConfig.getName();
     }
 
-    public Collection<String> getLibraries() {
-        return libraries;
-    }
-
-    public void addLibrary(String library) {
-        libraries.add(library);
-    }
-
     public ClassLoader getClassLoader() {
         return classLoader;
     }
@@ -119,9 +115,6 @@ public class Partition implements PartitionMBean, Cloneable {
         Partition partition = (Partition)super.clone();
 
         partition.partitionConfig = (PartitionConfig)partitionConfig.clone();
-
-        partition.libraries = new ArrayList<String>();
-        partition.libraries.addAll(libraries);
 
         partition.classLoader = classLoader;
 

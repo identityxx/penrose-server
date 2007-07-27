@@ -2,8 +2,6 @@ package org.safehaus.penrose.test.mapping;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -31,20 +29,20 @@ public class StaticTestCase extends TestCase {
     public void setUp() throws Exception {
 
         penroseConfig = new DefaultPenroseConfig();
-        penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", SimpleEngine.class.getName()));
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose.start();
+
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
-        Partition partition = new Partition(partitionConfig);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partition.getMappings().addEntryMapping(ou);
+        partitionConfig.getMappings().addEntryMapping(ou);
 
         EntryMapping group = new EntryMapping("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
@@ -54,7 +52,7 @@ public class StaticTestCase extends TestCase {
         group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member2"));
         group.addAttributeMapping(new AttributeMapping("creatorsName", AttributeMapping.CONSTANT, penroseConfig.getRootDn().toString()));
         
-        partition.getMappings().addEntryMapping(group);
+        partitionConfig.getMappings().addEntryMapping(group);
 
         EntryMapping member1 = new EntryMapping("uid=member1,cn=group,"+baseDn);
         member1.addObjectClass("person");
@@ -63,7 +61,7 @@ public class StaticTestCase extends TestCase {
         member1.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member1", true));
         member1.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partition.getMappings().addEntryMapping(member1);
+        partitionConfig.getMappings().addEntryMapping(member1);
         
         EntryMapping member2 = new EntryMapping("uid=member2,cn=group,"+baseDn);
         member2.addObjectClass("person");
@@ -72,11 +70,9 @@ public class StaticTestCase extends TestCase {
         member2.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member2", true));
         member2.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partition.getMappings().addEntryMapping(member2);
+        partitionConfig.getMappings().addEntryMapping(member2);
 
-        partitionManager.addPartition(partition);
-
-        penrose.start();
+        partitionManager.init(partitionConfig);
     }
     
     public void testDummy()

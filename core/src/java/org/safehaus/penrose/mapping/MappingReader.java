@@ -40,10 +40,7 @@ public class MappingReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public void read(String filename, Mappings mappings) throws Exception {
-        File file = new File(filename);
-        if (!file.exists()) return;
-
+    public void read(File file, Mappings mappings) throws Exception {
 		digester.push(mappings);
 		digester.parse(file);
         digester.pop();

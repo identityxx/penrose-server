@@ -11,7 +11,6 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -80,33 +79,27 @@ public class Demo {
 
     public void run() throws Exception {
 
-        log.warn("Creating partition.");
-
-        PartitionConfig partitionConfig = new PartitionConfig();
-        partitionConfig.setName("Example");
-
-        Partition partition = new Partition(partitionConfig);
-
-        EntryMapping rootEntry = createRootEntry();
-        partition.getMappings().addEntryMapping(rootEntry);
-
-        EntryMapping usersEntry = createUsersEntry();
-        partition.getMappings().addEntryMapping(usersEntry);
-
-        log.warn("Configuring Penrose.");
+        log.warn("Starting Penrose.");
 
         PenroseConfig penroseConfig = new DefaultPenroseConfig();
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose.start();
+
+        log.warn("Creating partition.");
+
+        PartitionConfig partitionConfig = new PartitionConfig("Example");
+
+        EntryMapping rootEntry = createRootEntry();
+        partitionConfig.getMappings().addEntryMapping(rootEntry);
+
+        EntryMapping usersEntry = createUsersEntry();
+        partitionConfig.getMappings().addEntryMapping(usersEntry);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
-        partitionManager.addPartition(partition);
-
-        log.warn("Starting Penrose.");
-
-        penrose.start();
+        partitionManager.init(partitionConfig);
 
         log.warn("Connecting to Penrose.");
 

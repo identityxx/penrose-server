@@ -36,10 +36,7 @@ public class ConnectionReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public void read(String filename, Connections connections) throws Exception {
-        File file = new File(filename);
-        if (!file.exists()) return;
-
+    public void read(File file, Connections connections) throws Exception {
         digester.push(connections);
         digester.parse(file);
         digester.pop();

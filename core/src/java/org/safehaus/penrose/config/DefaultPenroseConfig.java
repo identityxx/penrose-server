@@ -24,7 +24,6 @@ import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.proxy.ProxyEngine;
 
-
 /**
  * @author Endi S. Dewata
  */

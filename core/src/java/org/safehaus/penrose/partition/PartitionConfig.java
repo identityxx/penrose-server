@@ -22,6 +22,10 @@ import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.mapping.Mappings;
 import org.safehaus.penrose.module.Modules;
 
+import java.util.Collection;
+import java.util.ArrayList;
+import java.net.URL;
+
 /**
  * @author Endi S. Dewata
  */
@@ -36,9 +40,11 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     private String engineName;
 
     private Connections connections = new Connections();
-    private Sources sources = new Sources();
-    private Mappings mappings = new Mappings();
-    private Modules modules = new Modules();
+    private Sources     sources    = new Sources();
+    private Mappings    mappings   = new Mappings();
+    private Modules     modules    = new Modules();
+
+    private Collection<URL> classPaths = new ArrayList<URL>();
 
     public PartitionConfig() {
     }
@@ -113,6 +119,9 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         partitionConfig.mappings = (Mappings)mappings.clone();
         partitionConfig.modules = (Modules)modules.clone();
 
+        partitionConfig.classPaths = new ArrayList<URL>();
+        partitionConfig.classPaths.addAll(classPaths);
+
         return partitionConfig;
     }
 
@@ -146,5 +155,13 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Collection<URL> getClassPaths() {
+        return classPaths;
+    }
+
+    public void addClassPath(URL library) {
+        classPaths.add(library);
     }
 }

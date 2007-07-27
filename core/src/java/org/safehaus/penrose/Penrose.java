@@ -86,7 +86,7 @@ public class Penrose {
     }
 
     protected Penrose() throws Exception {
-        penroseConfig = loadConfig();
+        penroseConfig = new DefaultPenroseConfig();
 
         init();
     }
@@ -154,7 +154,6 @@ public class Penrose {
 
         penroseContext.setSessionContext(sessionContext);
         penroseContext.init(penroseConfig);
-        penroseContext.load();
 
         connectorContext.setPenroseConfig(penroseConfig);
         connectorContext.setPenroseContext(penroseContext);

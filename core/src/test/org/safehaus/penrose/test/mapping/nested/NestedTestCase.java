@@ -1,15 +1,11 @@
 package org.safehaus.penrose.test.mapping.nested;
 
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
@@ -22,8 +18,8 @@ public class NestedTestCase extends JDBCTestCase {
 
     public String baseDn = "ou=Groups,dc=Example,dc=com";
 
-    public PenroseConfig penroseConfig;
     public Penrose penrose;
+    public PenroseConfig penroseConfig;
 
     public NestedTestCase() throws Exception {
     }
@@ -43,12 +39,13 @@ public class NestedTestCase extends JDBCTestCase {
                 "primary key (username, groupname))"
         );
 
-        penroseConfig = new PenroseConfig();
-        penroseConfig.addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
-        penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", SimpleEngine.class.getName()));
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose();
+        penrose.start();
+
+        penroseConfig = penrose.getPenroseConfig();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
-        Partition partition = new Partition(partitionConfig);
 
         ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.setAdapterName("JDBC");
@@ -57,7 +54,7 @@ public class NestedTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partition.getConnections().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnections().addConnectionConfig(connectionConfig);
 
         SourceConfig groupsSource = new SourceConfig();
         groupsSource.setName("groups");
@@ -65,7 +62,7 @@ public class NestedTestCase extends JDBCTestCase {
         groupsSource.setParameter("table", "groups");
         groupsSource.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         groupsSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partition.getSources().addSourceConfig(groupsSource);
+        partitionConfig.getSources().addSourceConfig(groupsSource);
 
         SourceConfig usergroupsSource = new SourceConfig();
         usergroupsSource.setName("members");
@@ -74,12 +71,12 @@ public class NestedTestCase extends JDBCTestCase {
         usergroupsSource.addFieldConfig(new FieldConfig("username", "USERNAME", true));
         usergroupsSource.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         usergroupsSource.addFieldConfig(new FieldConfig("name", "NAME", false));
-        partition.getSources().addSourceConfig(usergroupsSource);
+        partitionConfig.getSources().addSourceConfig(usergroupsSource);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partition.getMappings().addEntryMapping(ou);
+        partitionConfig.getMappings().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -93,7 +90,7 @@ public class NestedTestCase extends JDBCTestCase {
         groupsMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(groupsMapping);
 
-        partition.getMappings().addEntryMapping(groups);
+        partitionConfig.getMappings().addEntryMapping(groups);
 
         EntryMapping members = new EntryMapping("uid=...,cn=...,"+baseDn);
         members.addObjectClass("person");
@@ -111,16 +108,12 @@ public class NestedTestCase extends JDBCTestCase {
         membersMapping.addFieldMapping(new FieldMapping("name", FieldMapping.VARIABLE, "cn"));
         members.addSourceMapping(membersMapping);
 
-        partition.getMappings().addEntryMapping(members);
-
-        PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
+        partitionConfig.getMappings().addEntryMapping(members);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
-        partitionManager.addPartition(partition);
+        partitionManager.init(partitionConfig);
 
-        penrose.start();
     }
     
     public void testDummy()

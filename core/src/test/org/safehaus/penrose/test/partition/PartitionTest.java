@@ -9,7 +9,6 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -18,34 +17,33 @@ public class PartitionTest extends TestCase {
 
     Logger log = Logger.getLogger(getClass());
 
-    Partition partition;
+    PartitionConfig partitionConfig;
 
     public PartitionTest() {
     }
 
     public void setUp() throws Exception {
-        PartitionConfig partitionConfig = new PartitionConfig("example");
-        partition = new Partition(partitionConfig);
+        partitionConfig = new PartitionConfig("example");
 
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
-        partition.getMappings().addEntryMapping(rootEntry);
+        partitionConfig.getMappings().addEntryMapping(rootEntry);
 
         EntryMapping usersEntry = new EntryMapping("cn=Users,dc=Example,dc=com");
         usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
-        partition.getMappings().addEntryMapping(usersEntry);
+        partitionConfig.getMappings().addEntryMapping(usersEntry);
 
         EntryMapping users1Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users1Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "users.cn", true));
-        partition.getMappings().addEntryMapping(users1Mapping);
+        partitionConfig.getMappings().addEntryMapping(users1Mapping);
 
         EntryMapping users2Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
-        partition.getMappings().addEntryMapping(users2Mapping);
+        partitionConfig.getMappings().addEntryMapping(users2Mapping);
 
         EntryMapping proxyMapping = new EntryMapping("cn=Proxy,dc=Example,dc=com");
         proxyMapping.addSourceMapping(new SourceMapping("DEFAULT", "source"));
-        partition.getMappings().addEntryMapping(proxyMapping);
+        partitionConfig.getMappings().addEntryMapping(proxyMapping);
     }
 
     public void tearDown() throws Exception {
@@ -57,7 +55,7 @@ public class PartitionTest extends TestCase {
     }
 */
     public void testFindingRootEntry() throws Exception {
-        Collection entryMappings = partition.getMappings().getEntryMappings("dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -66,7 +64,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingStaticEntry() throws Exception {
-        Collection entryMappings = partition.getMappings().getEntryMappings("cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -75,7 +73,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        Collection entryMappings = partition.getMappings().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -85,20 +83,19 @@ public class PartitionTest extends TestCase {
 
     public void print(Partition partition) throws Exception {
         log.debug("Entries:");
-        Collection c = partition.getMappings().getRootEntryMappings();
+        Collection<EntryMapping> c = partition.getMappings().getRootEntryMappings();
         print(partition, c, 0);
     }
 
-    public void print(Partition partition, Collection entryMappings, int level) throws Exception {
+    public void print(Partition partition, Collection<EntryMapping> entryMappings, int level) throws Exception {
 
-        for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-            EntryMapping entryMapping = (EntryMapping)i.next();
+        for (EntryMapping entryMapping : entryMappings) {
 
-            for (int l=0; l<level; l++) System.out.print("  ");
-            log.debug(" - "+entryMapping.getRdn());
+            for (int l = 0; l < level; l++) System.out.print("  ");
+            log.debug(" - " + entryMapping.getRdn());
 
-            Collection children = partition.getMappings().getChildren(entryMapping);
-            print(partition, children, level+1);
+            Collection<EntryMapping> children = partition.getMappings().getChildren(entryMapping);
+            print(partition, children, level + 1);
         }
     }
 }

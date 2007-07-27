@@ -26,17 +26,12 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.engine.DefaultEngine;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 
 /**
@@ -73,27 +68,22 @@ public class PartitionManagerTest extends TestCase {
 
     public void testAddingPartition() throws Exception {
 
-        PenroseConfig penroseConfig = new PenroseConfig();
-        penroseConfig.addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
-        penroseConfig.addEngineConfig(new EngineConfig("DEFAULT", DefaultEngine.class.getName()));
-
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
-        penrose = penroseFactory.createPenrose(penroseConfig);
+        penrose = penroseFactory.createPenrose();
+        penrose.start();
+
         PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penroseContext.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
-        Partition partition = new Partition(partitionConfig);
 
         EntryMapping entryMapping = new EntryMapping();
         entryMapping.setDn("ou=Test,dc=Example,dc=com");
         entryMapping.addObjectClass("organizationalUnit");
         entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
-        partition.getMappings().addEntryMapping(entryMapping);
+        partitionConfig.getMappings().addEntryMapping(entryMapping);
 
-        partitionManager.addPartition(partition);
-
-        penrose.start();
+        partitionManager.init(partitionConfig);
 
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
@@ -106,7 +96,7 @@ public class PartitionManagerTest extends TestCase {
 
         assertTrue(response.hasNext());
 
-        SearchResult searchResult = (SearchResult) response.next();
+        SearchResult searchResult = response.next();
         DN dn = searchResult.getDn();
         assertTrue(dn.matches("ou=Test,dc=Example,dc=com"));
 
