@@ -6,7 +6,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.ldap.Attributes;

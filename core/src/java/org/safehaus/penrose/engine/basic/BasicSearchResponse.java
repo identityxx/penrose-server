@@ -1,7 +1,7 @@
 package org.safehaus.penrose.engine.basic;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.interpreter.Interpreter;

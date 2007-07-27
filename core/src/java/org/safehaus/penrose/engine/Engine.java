@@ -34,7 +34,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.util.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;

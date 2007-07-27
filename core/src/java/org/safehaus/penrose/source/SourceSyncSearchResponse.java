@@ -1,7 +1,6 @@
 package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
 

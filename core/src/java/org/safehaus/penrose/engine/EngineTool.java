@@ -3,7 +3,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 

@@ -7,7 +7,7 @@ import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.jdbc.JDBCClient;

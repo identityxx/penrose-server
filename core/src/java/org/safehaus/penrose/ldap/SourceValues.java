@@ -15,14 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.entry;
+package org.safehaus.penrose.ldap;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import org.safehaus.penrose.util.BinaryUtil;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.Attributes;
 
 import java.util.*;
 

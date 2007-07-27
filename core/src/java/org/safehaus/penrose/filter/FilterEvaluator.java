@@ -7,7 +7,6 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
-import org.safehaus.penrose.entry.Entry;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.RDN;
@@ -27,10 +26,6 @@ public class FilterEvaluator {
     private SchemaManager schemaManager;
 
     public FilterEvaluator() throws Exception {
-    }
-
-    public boolean eval(Entry entry, Filter filter) throws Exception {
-        return eval(entry.getAttributes(), filter);
     }
 
     public boolean eval(Attributes attributes, Filter filter) throws Exception {

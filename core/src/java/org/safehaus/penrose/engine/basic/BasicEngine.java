@@ -11,7 +11,6 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;

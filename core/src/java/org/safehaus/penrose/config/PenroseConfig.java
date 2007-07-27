@@ -19,8 +19,6 @@ package org.safehaus.penrose.config;
 
 import java.util.*;
 
-import org.safehaus.penrose.cache.CacheConfig;
-import org.safehaus.penrose.cache.EntryCache;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.simple.SimpleEngine;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
@@ -52,18 +50,12 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private Map<String,HandlerConfig> handlerConfigs         = new LinkedHashMap<String,HandlerConfig>();
     private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    private CacheConfig entryCacheConfig;
-
     private SessionConfig sessionConfig;
     private ConnectorConfig connectorConfig;
 
     private UserConfig rootUserConfig;
 
     public PenroseConfig() {
-
-        entryCacheConfig = new CacheConfig();
-        entryCacheConfig.setName(EntryCache.DEFAULT_CACHE_NAME);
-        entryCacheConfig.setCacheClass(EntryCache.DEFAULT_CACHE_CLASS);
 
         connectorConfig = new ConnectorConfig();
         sessionConfig = new SessionConfig();
@@ -167,14 +159,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         return connectorConfig;
     }
 
-    public CacheConfig getEntryCacheConfig() {
-        return entryCacheConfig;
-    }
-
-    public void setEntryCacheConfig(CacheConfig entryCacheConfig) {
-        this.entryCacheConfig = entryCacheConfig;
-    }
-
     public void addSchemaConfig(SchemaConfig schemaConfig) {
         schemaConfigs.put(schemaConfig.getName(), schemaConfig);
     }
@@ -263,7 +247,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
                 (interpreterConfigs == null ? 0 : interpreterConfigs.hashCode()) +
-                (entryCacheConfig == null ? 0 : entryCacheConfig.hashCode()) +
                 (sessionConfig == null ? 0 : sessionConfig.hashCode()) +
                 (engineConfigs == null ? 0 : engineConfigs.hashCode()) +
                 (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
@@ -290,8 +273,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
         if (!equals(handlerConfigs, penroseConfig.handlerConfigs)) return false;
         if (!equals(interpreterConfigs, penroseConfig.interpreterConfigs)) return false;
-
-        if (!equals(entryCacheConfig, penroseConfig.entryCacheConfig)) return false;
 
         if (!equals(sessionConfig, penroseConfig.sessionConfig)) return false;
         if (!equals(engineConfigs, penroseConfig.engineConfigs)) return false;
@@ -334,8 +315,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         for (InterpreterConfig interpreterConfig : penroseConfig.interpreterConfigs.values()) {
             addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
         }
-
-        entryCacheConfig = (CacheConfig)penroseConfig.entryCacheConfig.clone();
 
         sessionConfig = (SessionConfig)penroseConfig.sessionConfig.clone();
         connectorConfig = (ConnectorConfig)penroseConfig.connectorConfig.clone();

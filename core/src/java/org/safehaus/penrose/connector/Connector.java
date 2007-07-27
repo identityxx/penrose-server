@@ -20,7 +20,6 @@ package org.safehaus.penrose.connector;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;

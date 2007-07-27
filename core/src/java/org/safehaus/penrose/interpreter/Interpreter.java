@@ -18,7 +18,7 @@
 package org.safehaus.penrose.interpreter;
 
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;

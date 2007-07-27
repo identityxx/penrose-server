@@ -1,12 +1,9 @@
 package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.entry.SourceValues;
-import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.ldap.ModRdnRequest;
-import org.safehaus.penrose.ldap.ModRdnResponse;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;

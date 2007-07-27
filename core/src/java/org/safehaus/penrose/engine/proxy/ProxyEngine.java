@@ -24,7 +24,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.source.Source;
 

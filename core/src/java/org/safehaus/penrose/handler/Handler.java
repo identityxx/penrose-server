@@ -22,8 +22,6 @@ import org.safehaus.penrose.acl.ACLManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.engine.EngineTool;
@@ -35,10 +33,8 @@ import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.cache.EntryCache;
-import org.safehaus.penrose.cache.CacheConfig;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.source.Sources;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
@@ -79,8 +75,6 @@ public abstract class Handler {
     protected EngineManager      engineManager;
     protected ACLManager         aclManager;
 
-    protected EntryCache         entryCache;
-
     protected String status = STOPPED;
     protected boolean fetch = DEFAULT_FETCH;
 
@@ -99,18 +93,6 @@ public abstract class Handler {
 
         handlerManager     = sessionContext.getHandlerManager();
         sessionManager     = sessionContext.getSessionManager();
-
-        CacheConfig cacheConfig = penroseConfig.getEntryCacheConfig();
-        String cacheClass = cacheConfig.getCacheClass() == null ? EntryCache.class.getName() : cacheConfig.getCacheClass();
-
-        //log.debug("Initializing entry cache "+cacheClass);
-        Class clazz = Class.forName(cacheClass);
-        entryCache = (EntryCache)clazz.newInstance();
-
-        entryCache.setCacheConfig(cacheConfig);
-        entryCache.setPenroseConfig(penroseConfig);
-        entryCache.setPenroseContext(penroseContext);
-        entryCache.init();
     }
 
     public void start() throws Exception {
@@ -528,14 +510,6 @@ public abstract class Handler {
 
     public void setInterpreterFactory(InterpreterManager interpreterManager) {
         this.interpreterManager = interpreterManager;
-    }
-
-    public EntryCache getEntryCache() {
-        return entryCache;
-    }
-
-    public void setEntryCache(EntryCache entryCache) {
-        this.entryCache = entryCache;
     }
 
     public HandlerConfig getHandlerConfig() {

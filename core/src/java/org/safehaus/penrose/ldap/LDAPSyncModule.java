@@ -18,23 +18,17 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.cache.EntryCacheListener;
-import org.safehaus.penrose.cache.EntryCacheEvent;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.entry.*;
 
 import javax.naming.directory.*;
-import javax.naming.directory.Attributes;
 import java.util.Collection;
 import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class LDAPSyncModule extends Module implements EntryCacheListener {
+public class LDAPSyncModule extends Module {
 
     public final static String CONNECTION = "connection";
 
@@ -43,12 +37,6 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
     public void init() throws Exception {
 
         connectionName = getParameter(CONNECTION);
-
-        //HandlerManager handlerManager = sessionContext.getHandlerManager();
-        //Handler handler = handlerManager.getHandler(partition);
-        //EntryCache entryCache = handler.getEntryCache();
-
-        //entryCache.addListener(this);
     }
 
     public DirContext getConnection() throws Exception {
@@ -57,7 +45,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
         LDAPClient client = (LDAPClient)connection.openConnection();
         return client.open();
     }
-
+/*
     public void cacheAdded(EntryCacheEvent event) throws Exception {
 
         Entry entry = (Entry)event.getSource();
@@ -84,7 +72,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
     }
-
+*/
     public javax.naming.directory.SearchResult createSearchResult(Entry entry) {
 
         //log.debug("Converting "+entry.getDn());
@@ -119,7 +107,7 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
 
         return new javax.naming.directory.SearchResult(entry.getDn().toString(), entry, attrs);
     }
-
+/*
     public void cacheRemoved(EntryCacheEvent event) throws Exception {
 
         DN baseDn = (DN)event.getSource();
@@ -146,4 +134,5 @@ public class LDAPSyncModule extends Module implements EntryCacheListener {
             if (ctx != null) try { ctx.close(); } catch (Exception e) {}
         }
     }
+*/
 }

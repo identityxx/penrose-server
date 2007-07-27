@@ -22,7 +22,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.source.SourceRef;

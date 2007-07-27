@@ -1,7 +1,7 @@
 package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.interpreter.Interpreter;

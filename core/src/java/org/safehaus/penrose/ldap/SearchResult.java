@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

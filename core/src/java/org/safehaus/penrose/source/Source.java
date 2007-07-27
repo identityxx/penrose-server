@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 
 import java.util.*;
 

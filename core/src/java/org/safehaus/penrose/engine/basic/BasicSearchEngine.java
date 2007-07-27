@@ -3,7 +3,7 @@ package org.safehaus.penrose.engine.basic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.entry.SourceValues;
+import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connector.Connector;

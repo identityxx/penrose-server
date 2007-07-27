@@ -22,7 +22,6 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
