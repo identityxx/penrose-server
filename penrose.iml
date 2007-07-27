@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/adapter/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/embedded/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/listener/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/lockout/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/samba/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/tomcat/src" isTestSource="false" />

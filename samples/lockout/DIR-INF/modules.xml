@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="LockoutModule">
+    <module-class>org.safehaus.penrose.module.LockoutModule</module-class>
+  </module>
+
+  <module-mapping>
+    <module-name>LockoutModule</module-name>
+    <base-dn>dc=my-domain,dc=com</base-dn>
+  </module-mapping>
+
+</modules>

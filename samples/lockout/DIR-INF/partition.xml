@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE partition PUBLIC
+  "-//Penrose/DTD Partition ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/partition.dtd">
+
+<partition>
+
+    <partition-name>Lockout</partition-name>
+
+</partition>
