@@ -22,9 +22,9 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public interface ServiceManagerMBean {
+public interface ServicesMBean {
 
-    public Collection getServiceNames() throws Exception;
+    public Collection<String> getServiceNames() throws Exception;
 
     public void start() throws Exception;
     public void start(String name) throws Exception;

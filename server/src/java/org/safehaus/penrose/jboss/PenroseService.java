@@ -18,9 +18,8 @@
 package org.safehaus.penrose.jboss;
 
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.Services;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -94,23 +93,23 @@ public class PenroseService implements PenroseServiceMBean {
 
     public Collection getServiceNames() throws Exception {
         Collection serviceNames = new ArrayList();
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         serviceNames.addAll(serviceManager.getServiceNames());
         return serviceNames;
     }
 
     public void start(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         serviceManager.start(serviceName);
     }
 
     public void stop(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         serviceManager.stop(serviceName);
     }
 
     public String getStatus(String serviceName) throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         return serviceManager.getStatus(serviceName);
     }
 

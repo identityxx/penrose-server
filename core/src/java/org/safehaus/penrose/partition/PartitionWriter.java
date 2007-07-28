@@ -32,15 +32,16 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.module.Modules;
+import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.connection.Connections;
+import org.safehaus.penrose.connection.ConnectionConfigs;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -58,17 +59,17 @@ public class PartitionWriter {
         this.directory = new File(directory);
     }
 
-    public void write(Partition partition) throws Exception {
+    public void write(PartitionConfig partitionConfig) throws Exception {
         directory.mkdirs();
 
-        storePartitionConfig(partition);
-        storeMappingConfig(partition);
-        storeConnectionsConfig(partition);
-        storeSourcesConfig(partition);
-        storeModulesConfig(partition);
+        storePartitionConfig(partitionConfig);
+        storeMappingConfig(partitionConfig);
+        storeConnectionsConfig(partitionConfig);
+        storeSourcesConfig(partitionConfig);
+        storeModulesConfig(partitionConfig);
     }
 
-    public void storePartitionConfig(Partition partition) throws Exception {
+    public void storePartitionConfig(PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "partition.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -84,11 +85,11 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/partition.dtd"
         );
 
-        writer.write(createElement(partition.getPartitionConfig()));
+        writer.write(createElement(partitionConfig));
         writer.close();
     }
 
-    public void storeMappingConfig(Partition partition) throws Exception {
+    public void storeMappingConfig(PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "mapping.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -104,12 +105,11 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        writer.write(createElement(partitionConfig.getMappings()));
+        writer.write(createElement(partitionConfig.getDirectoryConfigs()));
         writer.close();
     }
 
-    public void storeConnectionsConfig(Partition partition) throws Exception {
+    public void storeConnectionsConfig(PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "connections.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -125,12 +125,11 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        writer.write(createElement(partitionConfig.getConnections()));
+        writer.write(createElement(partitionConfig.getConnectionConfigs()));
         writer.close();
     }
 
-    public void storeSourcesConfig(Partition partition) throws Exception {
+    public void storeSourcesConfig(PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "sources.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -146,12 +145,11 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        writer.write(createElement(partitionConfig.getSources()));
+        writer.write(createElement(partitionConfig.getSourceConfigs()));
         writer.close();
     }
 
-    public void storeModulesConfig(Partition partition) throws Exception {
+    public void storeModulesConfig(PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "modules.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -167,8 +165,7 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        writer.write(createElement(partitionConfig.getModules()));
+        writer.write(createElement(partitionConfig.getModuleConfigs()));
         writer.close();
     }
 
@@ -205,7 +202,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element createElement(Mappings mappings) throws Exception {
+    public Element createElement(DirectoryConfigs mappings) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
         for (EntryMapping entryMapping : mappings.getRootEntryMappings()) {
@@ -215,7 +212,7 @@ public class PartitionWriter {
         return mappingElement;
     }
 
-    public Element createElement(Connections connections) {
+    public Element createElement(ConnectionConfigs connections) {
         Element element = new DefaultElement("connections");
 
         for (ConnectionConfig connectionConfig : connections.getConnectionConfigs()) {
@@ -225,7 +222,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element createElement(Sources sources) throws Exception {
+    public Element createElement(SourceConfigs sources) throws Exception {
         Element element = new DefaultElement("sources");
 
         for (SourceConfig sourceConfig : sources.getSourceConfigs()) {
@@ -235,7 +232,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element createElement(Modules modules) {
+    public Element createElement(ModuleConfigs modules) {
         Element modulesElement = new DefaultElement("modules");
 
         // module
@@ -345,7 +342,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(Mappings mappings, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element toElement(DirectoryConfigs mappings, EntryMapping entryMapping, Element configElement) throws Exception {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));

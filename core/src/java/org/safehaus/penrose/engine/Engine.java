@@ -26,9 +26,10 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connector.ConnectorManager;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.graph.Graph;
@@ -61,7 +62,7 @@ public abstract class Engine {
     public SchemaManager schemaManager;
     public InterpreterManager interpreterManager;
     public ConnectorManager connectorManager;
-    public PartitionManager partitionManager;
+    public PartitionConfigs partitionConfigs;
 
     public boolean stopping = false;
 
@@ -77,7 +78,7 @@ public abstract class Engine {
 
     public void init() throws Exception {
         analyzer = new Analyzer();
-        analyzer.setPartitionManager(partitionManager);
+        analyzer.setPartitionManager(partitionConfigs);
         analyzer.setInterpreterManager(interpreterManager);
     }
 
@@ -119,12 +120,12 @@ public abstract class Engine {
         return connectorManager.getConnector(connectorName);
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public PartitionConfigs getPartitionManager() {
+        return partitionConfigs;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) throws Exception {
-        this.partitionManager = partitionManager;
+    public void setPartitionManager(PartitionConfigs partitionConfigs) throws Exception {
+        this.partitionConfigs = partitionConfigs;
     }
 
     public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
@@ -166,10 +167,11 @@ public abstract class Engine {
     }
 
     public void start() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        Partitions partitions = penroseContext.getPartitions();
+        for (Partition partition : partitions.getPartitions()) {
 
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            for (EntryMapping entryMapping : partitionConfig.getMappings().getRootEntryMappings()) {
+            for (EntryMapping entryMapping : partitionConfig.getDirectoryConfigs().getRootEntryMappings()) {
                 analyzer.analyze(partition, entryMapping);
             }
         }
@@ -224,7 +226,7 @@ public abstract class Engine {
 
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection effectiveSources = partitionConfig.getMappings().getEffectiveSourceMappings(entryMapping);
+        Collection effectiveSources = partitionConfig.getDirectoryConfigs().getEffectiveSourceMappings(entryMapping);
         if (effectiveSources.size() > 0) return false;
 
         Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
@@ -232,7 +234,7 @@ public abstract class Engine {
             if (attributeMapping.getConstant() == null) return false;
         }
 
-        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         if (parentMapping == null) return true;
 
         return isStatic(partition, parentMapping);
@@ -459,7 +461,7 @@ public abstract class Engine {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<FieldMapping> fields = partitionConfig.getSources().getSearchableFields(sourceMapping);
+        Collection<FieldMapping> fields = partitionConfig.getSourceConfigs().getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
@@ -501,7 +503,7 @@ public abstract class Engine {
     ) throws Exception {
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
 
         Collection<DN> parentDns = new ArrayList<DN>();
         if (parentMapping != null) {
@@ -581,7 +583,7 @@ public abstract class Engine {
         schemaManager = penroseContext.getSchemaManager();
         interpreterManager = penroseContext.getInterpreterManager();
         connectorManager = penroseContext.getConnectorManager();
-        partitionManager = penroseContext.getPartitionManager();
+        partitionConfigs = penroseContext.getPartitionConfigs();
     }
 
     public List<Collection<SourceRef>> getGroupsOfSources(
@@ -595,7 +597,7 @@ public abstract class Engine {
         Connection lastConnection = null;
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        for (EntryMapping em : partitionConfig.getMappings().getPath(entryMapping)) {
+        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getPath(entryMapping)) {
 
             for (SourceRef sourceRef : partition.getSourceRefs(em)) {
 
@@ -637,7 +639,7 @@ public abstract class Engine {
         Connection lastConnection = null;
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        for (EntryMapping em : partitionConfig.getMappings().getRelativePath(baseMapping, entryMapping)) {
+        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getRelativePath(baseMapping, entryMapping)) {
             if (em == baseMapping) continue;
             
             for (SourceRef sourceRef : partition.getSourceRefs(em)) {

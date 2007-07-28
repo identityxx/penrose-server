@@ -74,8 +74,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         interpreter.set(sourceValues);
 
@@ -141,8 +140,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         interpreter.set(newSourceValues);
 

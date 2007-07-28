@@ -18,7 +18,6 @@ public class JDBCFilterBuilder {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected Source source;
     protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
 
     private String sql;
@@ -32,12 +31,6 @@ public class JDBCFilterBuilder {
 
     public JDBCFilterBuilder(boolean extractValues) throws Exception {
         this.extractValues = extractValues;
-    }
-
-    public JDBCFilterBuilder(
-            Source source
-    ) throws Exception {
-        this.source = source;
     }
 
     public void generate(Filter filter) throws Exception {
@@ -85,50 +78,27 @@ public class JDBCFilterBuilder {
             log.debug("Simple Filter: "+name+" "+operator+" "+v);
         }
 
-        Field lField;
-        String lhs;
+        int i = name.indexOf('.');
+        String lsourceName = name.substring(0, i);
+        String lfieldName = name.substring(i+1);
 
-        if (source == null) {
-            int i = name.indexOf('.');
-            String sourceName = name.substring(0, i);
-            String fieldName = name.substring(i+1);
+        if (lfieldName.startsWith("primaryKey.")) lfieldName = lfieldName.substring(11);
 
-            if (fieldName.startsWith("primaryKey.")) fieldName = fieldName.substring(11);
+        SourceRef lsourceRef = sourceRefs.get(lsourceName);
+        Source ls = lsourceRef.getSource();
 
-            SourceRef sourceRef = sourceRefs.get(sourceName);
-            Source s = sourceRef.getSource();
+        Field lField = ls.getField(lfieldName);
+        if (lField == null) throw new Exception("Unknown field: "+name);
 
-            lField = s.getField(fieldName);
-            if (lField == null) throw new Exception("Unknown field: "+name);
+        StringBuilder sb1 = new StringBuilder();
+        sb1.append(lsourceName);
+        sb1.append(".");
 
-            StringBuilder sb1 = new StringBuilder();
-            sb1.append(sourceName);
-            sb1.append(".");
+        if (quote != null) sb1.append(quote);
+        sb1.append(lField.getOriginalName());
+        if (quote != null) sb1.append(quote);
 
-            if (quote != null) sb1.append(quote);
-            sb1.append(lField.getOriginalName());
-            if (quote != null) sb1.append(quote);
-
-            lhs = sb1.toString();
-
-        } else {
-            int i = name.indexOf('.');
-            String sourceName = source.getName();
-            String fieldName = i >= 0 ? name.substring(i+1) : name;
-
-            lField = source.getField(fieldName);
-            if (lField == null) throw new Exception("Unknown field: "+name);
-
-            StringBuilder sb1 = new StringBuilder();
-            sb1.append(sourceName);
-            sb1.append(".");
-
-            if (quote != null) sb1.append(quote);
-            sb1.append(lField.getOriginalName());
-            if (quote != null) sb1.append(quote);
-
-            lhs = sb1.toString();
-        }
+        String lhs = sb1.toString();
 
         Field rField;
         String rhs;
@@ -140,45 +110,25 @@ public class JDBCFilterBuilder {
         } else {
             rhs = value.toString();
 
-            if (source == null) {
-                int i = rhs.indexOf('.');
-                String sourceName = rhs.substring(0, i);
-                String fieldName = rhs.substring(i+1);
+            int j = rhs.indexOf('.');
+            String rsourceName = rhs.substring(0, j);
+            String rfieldName = rhs.substring(j+1);
 
-                SourceRef sourceRef = sourceRefs.get(sourceName);
-                Source s = sourceRef.getSource();
+            SourceRef rsourceRef = sourceRefs.get(rsourceName);
+            Source rs = rsourceRef.getSource();
 
-                rField = s.getField(fieldName);
-                if (rField == null) throw new Exception("Unknown field: "+rhs);
+            rField = rs.getField(rfieldName);
+            if (rField == null) throw new Exception("Unknown field: "+rhs);
 
-                StringBuilder sb1 = new StringBuilder();
-                sb1.append(sourceName);
-                sb1.append(".");
+            StringBuilder sb2 = new StringBuilder();
+            sb2.append(rsourceName);
+            sb2.append(".");
 
-                if (quote != null) sb1.append(quote);
-                sb1.append(rField.getOriginalName());
-                if (quote != null) sb1.append(quote);
+            if (quote != null) sb2.append(quote);
+            sb2.append(rField.getOriginalName());
+            if (quote != null) sb2.append(quote);
 
-                rhs = sb1.toString();
-
-            } else {
-                int i = rhs.indexOf('.');
-                String sourceName = source.getName();
-                String fieldName = i >= 0 ? rhs.substring(i+1) : rhs;
-
-                rField = source.getField(fieldName);
-                if (rField == null) throw new Exception("Unknown field: "+rhs);
-
-                StringBuilder sb1 = new StringBuilder();
-                sb1.append(sourceName);
-                sb1.append(".");
-
-                if (quote != null) sb1.append(quote);
-                sb1.append(rField.getOriginalName());
-                if (quote != null) sb1.append(quote);
-
-                rhs = sb1.toString();
-            }
+            rhs = sb2.toString();
         }
 
         if ("VARCHAR".equals(lField.getType()) && !lField.isCaseSensitive()) {
@@ -288,14 +238,6 @@ public class JDBCFilterBuilder {
         sb.append("(");
         sb.append(sb2);
         sb.append(")");
-    }
-
-    public Source getSource() {
-        return source;
-    }
-
-    public void setSource(Source source) {
-        this.source = source;
     }
 
     public Collection<String> getSourceAliases() {

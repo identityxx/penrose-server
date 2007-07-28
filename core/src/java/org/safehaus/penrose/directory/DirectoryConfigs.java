@@ -1,7 +1,9 @@
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.mapping.SourceMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +12,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class Mappings implements Cloneable {
+public class DirectoryConfigs implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -436,7 +438,7 @@ public class Mappings implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        Mappings mappings = (Mappings)super.clone();
+        DirectoryConfigs mappings = (DirectoryConfigs)super.clone();
 
         mappings.entryMappingsById = new LinkedHashMap<String,EntryMapping>();
         mappings.entryMappingsByDn = new LinkedHashMap<String,Collection<EntryMapping>>();

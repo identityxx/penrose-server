@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.connector;
 
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.Map;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -52,7 +49,7 @@ public class ConnectorManager {
 
         connector.setConnectorConfig(connectorConfig);
         connector.setPenroseConfig(penroseConfig);
-        connector.setPartitionManager(penroseContext.getPartitionManager());
+        connector.setPartitionManager(penroseContext.getPartitionConfigs());
         
         connector.init();
 

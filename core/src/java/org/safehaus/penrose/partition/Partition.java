@@ -37,8 +37,7 @@ import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.session.SessionContext;
-import org.safehaus.penrose.entry.Entry;
+import org.safehaus.penrose.directory.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -55,7 +54,6 @@ public class Partition implements PartitionMBean, Cloneable {
     private PartitionConfig partitionConfig;
     private PenroseConfig   penroseConfig;
     private PenroseContext  penroseContext;
-    private SessionContext  sessionContext;
 
     private ClassLoader classLoader;
 
@@ -138,7 +136,7 @@ public class Partition implements PartitionMBean, Cloneable {
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
-        AdapterConfig adapterConfig = partitionConfig.getConnections().getAdapterConfig(adapterName);
+        AdapterConfig adapterConfig = partitionConfig.getConnectionConfigs().getAdapterConfig(adapterName);
 
         if (adapterConfig == null) {
             adapterConfig = penroseConfig.getAdapterConfig(adapterName);
@@ -225,7 +223,6 @@ public class Partition implements PartitionMBean, Cloneable {
         module.setPartition(this);
         module.setPenroseConfig(penroseConfig);
         module.setPenroseContext(penroseContext);
-        module.setSessionContext(sessionContext);
         module.init();
         module.start();
 
@@ -250,7 +247,7 @@ public class Partition implements PartitionMBean, Cloneable {
 
         Collection<Module> list = new ArrayList<Module>();
 
-        for (Collection<ModuleMapping> moduleMappings : partitionConfig.getModules().getModuleMappings()) {
+        for (Collection<ModuleMapping> moduleMappings : partitionConfig.getModuleConfigs().getModuleMappings()) {
 
             for (ModuleMapping moduleMapping : moduleMappings) {
                 String moduleName = moduleMapping.getModuleName();
@@ -326,7 +323,7 @@ public class Partition implements PartitionMBean, Cloneable {
                 addPrimarySourceRef(entryMapping, primarySourceRef);
             }
 
-            em = partitionConfig.getMappings().getParent(em);
+            em = partitionConfig.getDirectoryConfigs().getParent(em);
         }
 
         return entry;
@@ -409,14 +406,6 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
-    }
-
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    public void setSessionContext(SessionContext sessionContext) {
-        this.sessionContext = sessionContext;
     }
 
     public void addEntry(Entry entry) {

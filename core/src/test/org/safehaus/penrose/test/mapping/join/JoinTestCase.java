@@ -51,7 +51,7 @@ public class JoinTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partitionConfig.getConnections().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnectionConfigs().addConnectionConfig(connectionConfig);
 
         SourceConfig groupsSource = new SourceConfig();
         groupsSource.setName("groups");
@@ -59,7 +59,7 @@ public class JoinTestCase extends JDBCTestCase {
         groupsSource.setParameter("table", "groups");
         groupsSource.addFieldConfig(new FieldConfig("groupname", true));
         groupsSource.addFieldConfig(new FieldConfig("description"));
-        partitionConfig.getSources().addSourceConfig(groupsSource);
+        partitionConfig.getSourceConfigs().addSourceConfig(groupsSource);
 
         SourceConfig usergroupsSource = new SourceConfig();
         usergroupsSource.setName("usergroups");
@@ -67,12 +67,12 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsSource.setParameter("table", "usergroups");
         usergroupsSource.addFieldConfig(new FieldConfig("groupname", true));
         usergroupsSource.addFieldConfig(new FieldConfig("username", true));
-        partitionConfig.getSources().addSourceConfig(usergroupsSource);
+        partitionConfig.getSourceConfigs().addSourceConfig(usergroupsSource);
 
         EntryMapping ou = new EntryMapping("ou=Groups,dc=Example,dc=com");
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getMappings().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,ou=Groups,dc=Example,dc=com");
         groups.addObjectClass("groupOfUniqueNames");
@@ -95,11 +95,12 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsMapping.setSearch(SourceMapping.REQUIRED);
         groups.addSourceMapping(usergroupsMapping);
 
-        partitionConfig.getMappings().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        partitionManager.init(partitionConfig);
+        Partitions partitions = penrose.getPartitions();
+
+        partitions.init(penroseConfig, penroseContext, partitionConfig);
     }
 
     public void tearDown() throws Exception {

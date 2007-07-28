@@ -45,7 +45,7 @@ public class BasicTestCase extends JDBCTestCase {
         penroseConfig = penrose.getPenroseConfig();
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partitions partitions = penrose.getPartitions();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
@@ -56,7 +56,7 @@ public class BasicTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", getUrl());
         connectionConfig.setParameter("user", getUser());
         connectionConfig.setParameter("password", getPassword());
-        partitionConfig.getConnections().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnectionConfigs().addConnectionConfig(connectionConfig);
 
         SourceConfig sourceConfig = new SourceConfig();
         sourceConfig.setName("groups");
@@ -64,12 +64,12 @@ public class BasicTestCase extends JDBCTestCase {
         sourceConfig.setParameter("table", "groups");
         sourceConfig.addFieldConfig(new FieldConfig("groupname", "GROUPNAME", true));
         sourceConfig.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partitionConfig.getSources().addSourceConfig(sourceConfig);
+        partitionConfig.getSourceConfigs().addSourceConfig(sourceConfig);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getMappings().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -83,9 +83,9 @@ public class BasicTestCase extends JDBCTestCase {
         sourceMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(sourceMapping);
 
-        partitionConfig.getMappings().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
 
-        partitionManager.init(partitionConfig);
+        partitions.init(penroseConfig, penroseContext, partitionConfig);
     }
 /*
     public void testDummy()

@@ -2,8 +2,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
@@ -183,11 +184,11 @@ public class DefaultHandler extends Handler {
         String partitionName = link.getPartitionName();
         DN dn = link.getDn();
 
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
+        Partitions partitions = penroseContext.getPartitions();
+        Partition p = partitionName == null ? partition : partitions.getPartition(partitionName);
 
         PartitionConfig partitionConfig = p.getPartitionConfig();
-        Collection<EntryMapping> c = partitionConfig.getMappings().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
+        Collection<EntryMapping> c = partitionConfig.getDirectoryConfigs().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
@@ -221,7 +222,7 @@ public class DefaultHandler extends Handler {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         if (scope != SearchRequest.SCOPE_BASE
                 && scope != SearchRequest.SCOPE_SUB
-                && (scope != SearchRequest.SCOPE_ONE || partitionConfig.getMappings().getParent(entryMapping) != baseMapping)
+                && (scope != SearchRequest.SCOPE_ONE || partitionConfig.getDirectoryConfigs().getParent(entryMapping) != baseMapping)
         ) {
             // if not searching for base or subtree or immediate children) then skip
             return;
@@ -332,7 +333,7 @@ public class DefaultHandler extends Handler {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection children = partitionConfig.getMappings().getChildren(entryMapping);
+        Collection children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
         if (scope == SearchRequest.SCOPE_ONE) {

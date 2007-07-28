@@ -20,6 +20,7 @@ package org.safehaus.penrose;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.session.Session;
@@ -31,6 +32,7 @@ import org.safehaus.penrose.log4j.Log4jConfigReader;
 import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
+import org.safehaus.penrose.partition.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -40,6 +42,8 @@ import org.slf4j.Logger;
 public class Penrose {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
+    public boolean debug = log.isDebugEnabled();
 
     public static String PRODUCT_NAME          = "Penrose";
     public static String PRODUCT_VERSION       = "1.2";
@@ -61,6 +65,10 @@ public class Penrose {
     private PenroseContext     penroseContext;
     private ConnectorContext   connectorContext;
     private SessionContext     sessionContext;
+
+    private PartitionConfigs   partitionConfigs;
+    private PartitionValidator partitionValidator;
+    private Partitions         partitions;
 
     private String status = STOPPED;
 
@@ -152,7 +160,17 @@ public class Penrose {
         connectorContext = new ConnectorContext();
         sessionContext = new SessionContext();
 
+        partitionConfigs = new PartitionConfigs();
+
+        partitions = new Partitions();
+
+        partitionValidator = new PartitionValidator();
+        partitionValidator.setPenroseConfig(penroseConfig);
+        partitionValidator.setPenroseContext(penroseContext);
+
         penroseContext.setSessionContext(sessionContext);
+        penroseContext.setPartitionConfigs(partitionConfigs);
+        penroseContext.setPartitions(partitions);
         penroseContext.init(penroseConfig);
 
         connectorContext.setPenroseConfig(penroseConfig);
@@ -167,6 +185,8 @@ public class Penrose {
     }
 
     public void clear() throws Exception {
+        partitionConfigs.clear();
+        partitions.clear();
         penroseContext.clear();
     }
 
@@ -187,6 +207,40 @@ public class Penrose {
         status = STARTING;
 
         penroseContext.start();
+
+        String dir = (home == null ? "" : home+ File.separator)+"partitions";
+
+        File partitionsDir = new File(dir);
+        if (!partitionsDir.isDirectory()) return;
+
+        for (File file : partitionsDir.listFiles()) {
+            if (!file.isDirectory()) continue;
+
+            if (debug) log.debug("----------------------------------------------------------------------------------");
+
+            PartitionConfig partitionConfig = partitionConfigs.load(file);
+            String name = partitionConfig.getName();
+
+            if (!partitionConfig.isEnabled()) {
+                log.debug(name+" partition is disabled.");
+                continue;
+            }
+
+            Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
+
+            for (PartitionValidationResult result : results) {
+                if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                    errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+                } else {
+                    errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+                }
+            }
+
+            log.debug("Starting "+name+" partition.");
+
+            partitions.init(penroseConfig, penroseContext, partitionConfig);
+        }
+
         sessionContext.start();
 
         status = STARTED;
@@ -203,6 +257,9 @@ public class Penrose {
         status = STOPPING;
 
         sessionContext.stop();
+
+        partitions.stop();
+
         penroseContext.stop();
 
         status = STOPPED;
@@ -271,5 +328,21 @@ public class Penrose {
     public void setHome(String home) {
         this.home = home;
         penroseContext.setHome(home);
+    }
+
+    public PartitionConfigs getPartitionConfigs() {
+        return partitionConfigs;
+    }
+
+    public void setPartitionConfigs(PartitionConfigs partitionConfigs) {
+        this.partitionConfigs = partitionConfigs;
+    }
+
+    public Partitions getPartitions() {
+        return partitions;
+    }
+
+    public void setPartitions(Partitions partitions) {
+        this.partitions = partitions;
     }
 }

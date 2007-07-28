@@ -472,7 +472,8 @@ public class JDBCAdapter extends Adapter {
         try {
             DeleteStatement statement = new DeleteStatement();
 
-            statement.setSource(source);
+            SourceRef sourceRef = new SourceRef(source);
+            statement.setSourceRef(sourceRef);
 
             RDN rdn = request.getDn().getRdn();
             Filter filter = null;
@@ -567,7 +568,8 @@ public class JDBCAdapter extends Adapter {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            statement.setSource(source);
+            SourceRef sourceRef = new SourceRef(source);
+            statement.setSourceRef(sourceRef);
 
             RDN rdn = request.getDn().getRdn();
 
@@ -687,7 +689,8 @@ public class JDBCAdapter extends Adapter {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            statement.setSource(source);
+            SourceRef sourceRef = new SourceRef(source);
+            statement.setSourceRef(sourceRef);
 
             RDN newRdn = request.getNewRdn();
             for (String name : newRdn.getNames()) {

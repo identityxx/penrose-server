@@ -17,10 +17,10 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.connection.Connections;
-import org.safehaus.penrose.source.Sources;
-import org.safehaus.penrose.mapping.Mappings;
-import org.safehaus.penrose.module.Modules;
+import org.safehaus.penrose.connection.ConnectionConfigs;
+import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.module.ModuleConfigs;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -39,10 +39,10 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     private String handlerName;
     private String engineName;
 
-    private Connections connections = new Connections();
-    private Sources     sources    = new Sources();
-    private Mappings    mappings   = new Mappings();
-    private Modules     modules    = new Modules();
+    private ConnectionConfigs connectionConfigs = new ConnectionConfigs();
+    private SourceConfigs     sourceConfigs     = new SourceConfigs();
+    private DirectoryConfigs  directoryConfigs  = new DirectoryConfigs();
+    private ModuleConfigs     moduleConfigs     = new ModuleConfigs();
 
     private Collection<URL> classPaths = new ArrayList<URL>();
 
@@ -114,10 +114,10 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         partitionConfig.handlerName = handlerName;
         partitionConfig.engineName = engineName;
 
-        partitionConfig.connections = (Connections)connections.clone();
-        partitionConfig.sources = (Sources)sources.clone();
-        partitionConfig.mappings = (Mappings)mappings.clone();
-        partitionConfig.modules = (Modules)modules.clone();
+        partitionConfig.connectionConfigs = (ConnectionConfigs) connectionConfigs.clone();
+        partitionConfig.sourceConfigs = (SourceConfigs) sourceConfigs.clone();
+        partitionConfig.directoryConfigs = (DirectoryConfigs) directoryConfigs.clone();
+        partitionConfig.moduleConfigs = (ModuleConfigs) moduleConfigs.clone();
 
         partitionConfig.classPaths = new ArrayList<URL>();
         partitionConfig.classPaths.addAll(classPaths);
@@ -125,20 +125,20 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         return partitionConfig;
     }
 
-    public Connections getConnections() {
-        return connections;
+    public ConnectionConfigs getConnectionConfigs() {
+        return connectionConfigs;
     }
 
-    public Sources getSources() {
-        return sources;
+    public SourceConfigs getSourceConfigs() {
+        return sourceConfigs;
     }
 
-    public Mappings getMappings() {
-        return mappings;
+    public DirectoryConfigs getDirectoryConfigs() {
+        return directoryConfigs;
     }
 
-    public Modules getModules() {
-        return modules;
+    public ModuleConfigs getModuleConfigs() {
+        return moduleConfigs;
     }
 
     public boolean isEnabled() {

@@ -32,7 +32,7 @@ import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partitions;
 
 /**
  * @author Endi S. Dewata
@@ -73,7 +73,7 @@ public class PartitionManagerTest extends TestCase {
         penrose.start();
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partitions partitions = penrose.getPartitions();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
@@ -81,9 +81,9 @@ public class PartitionManagerTest extends TestCase {
         entryMapping.setDn("ou=Test,dc=Example,dc=com");
         entryMapping.addObjectClass("organizationalUnit");
         entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
-        partitionConfig.getMappings().addEntryMapping(entryMapping);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(entryMapping);
 
-        partitionManager.init(partitionConfig);
+        partitions.init(penroseConfig, penroseContext, partitionConfig);
 
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
@@ -113,7 +113,7 @@ public class PartitionManagerTest extends TestCase {
         PartitionReader partitionReader = new PartitionReader();
         Partition partition = partitionReader.read(partitionConfig);
 
-        PartitionManager partitionManager = penrose.getPartitionManager();
+        PartitionManager partitionManager = penrose.getPartitionConfigs();
         partitionManager.addPartition(partition);
 
         partitionManager.findPartition("dc=Shop,c=Example,dc=com");

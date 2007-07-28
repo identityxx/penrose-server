@@ -38,19 +38,20 @@ import gnu.getopt.Getopt;
  */
 public class CacheUtil {
 
-    public Logger log = Logger.getLogger(getClass());
+    public static Logger log = Logger.getLogger(CacheUtil.class);
+    public static boolean debug = log.isDebugEnabled();
 
-    PartitionManager partitionManager;
+    Partitions partitions;
 
     public CacheUtil(
-            PartitionManager partitionManager
+            Partitions partitions
     ) throws Exception {
 
-        this.partitionManager = partitionManager;
+        this.partitions = partitions;
     }
 
     public void status() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             status(partition);
         }
     }
@@ -81,7 +82,7 @@ public class CacheUtil {
     }
 
     public void create() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             create(partition);
         }
     }
@@ -112,7 +113,7 @@ public class CacheUtil {
     }
 
     public void load() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             load(partition);
         }
     }
@@ -134,7 +135,7 @@ public class CacheUtil {
     }
 
     public void sync() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             sync(partition);
         }
     }
@@ -156,7 +157,7 @@ public class CacheUtil {
     }
 
     public void clean() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             clean(partition);
         }
     }
@@ -187,7 +188,7 @@ public class CacheUtil {
     }
 
     public void drop() throws Exception {
-        for (Partition partition : partitionManager.getPartitions()) {
+        for (Partition partition : partitions.getPartitions()) {
             drop(partition);
         }
     }
@@ -303,9 +304,33 @@ public class CacheUtil {
         penroseContext.init(penroseConfig);
         penroseContext.start();
 
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        PartitionConfigs partitionConfigs = new PartitionConfigs();
+        Partitions partitions = new Partitions();
 
-        CacheUtil cacheManager = new CacheUtil(partitionManager);
+        String dir = (home == null ? "" : home+ File.separator)+"partitions";
+
+        File partitionsDir = new File(dir);
+        if (!partitionsDir.isDirectory()) return;
+
+        for (File file : partitionsDir.listFiles()) {
+            if (!file.isDirectory()) continue;
+
+            if (debug) log.debug("----------------------------------------------------------------------------------");
+
+            PartitionConfig partitionConfig = partitionConfigs.load(file);
+            String name = partitionConfig.getName();
+
+            if (!partitionConfig.isEnabled()) {
+                log.debug(name+" partition is disabled.");
+                continue;
+            }
+
+            log.debug("Starting "+name+" partition.");
+
+            partitions.init(penroseConfig, penroseContext, partitionConfig);
+        }
+
+        CacheUtil cacheManager = new CacheUtil(partitions);
 
         Partition partition = null;
         Source source = null;
@@ -316,7 +341,8 @@ public class CacheUtil {
 
         if (iterator.hasNext()) {
             String partitionName = (String)iterator.next();
-            partition = partitionManager.getPartition(partitionName);
+            partition = partitions.getPartition(partitionName);
+
             if (partition == null) throw new Exception("Partition "+partitionName+" not found.");
 
             if (iterator.hasNext()) {
@@ -408,6 +434,7 @@ public class CacheUtil {
             }
         }
 
+        partitions.stop();
         penroseContext.stop();
 
         System.exit(0);

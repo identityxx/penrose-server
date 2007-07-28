@@ -40,7 +40,7 @@ public class Connector {
     private PenroseConfig penroseConfig;
     private ConnectorConfig connectorConfig;
 
-    private PartitionManager partitionManager;
+    private PartitionConfigs partitionConfigs;
 
     public Connector() {
     }
@@ -48,12 +48,12 @@ public class Connector {
     public void init() throws Exception {
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public PartitionConfigs getPartitionManager() {
+        return partitionConfigs;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) throws Exception {
-        this.partitionManager = partitionManager;
+    public void setPartitionManager(PartitionConfigs partitionConfigs) throws Exception {
+        this.partitionConfigs = partitionConfigs;
     }
 
     public Connection getConnection(Partition partition, String name) throws Exception {

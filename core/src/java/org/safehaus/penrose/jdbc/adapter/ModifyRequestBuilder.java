@@ -73,8 +73,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         Collection<Modification> modifications = request.getModifications();
         for (Modification modification : modifications) {
@@ -361,8 +360,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         Filter filter = null;
 

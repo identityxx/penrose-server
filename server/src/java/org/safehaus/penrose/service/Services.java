@@ -22,29 +22,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
  * @author Endi S. Dewata
  */
-public class ServiceManager implements ServiceManagerMBean {
+public class Services implements ServicesMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private PenroseServer penroseServer;
-
-    public ServiceReader serviceReader = new ServiceReader();
-
     private Map<String,Service> services = new LinkedHashMap<String,Service>();
 
-    public ServiceConfig load(File dir) throws Exception {
-        log.debug("Loading service from "+dir.getAbsolutePath()+".");
-        return serviceReader.read(dir);
-    }
-
-    public Service init(ServiceConfig serviceConfig) throws Exception {
+    public Service init(PenroseServer penroseServer, ServiceConfig serviceConfig) throws Exception {
 
         Collection<URL> classPaths = serviceConfig.getClassPaths();
         URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]));
@@ -130,13 +120,5 @@ public class ServiceManager implements ServiceManagerMBean {
 
     public void clear() {
         services.clear();
-    }
-
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
-    }
-
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
     }
 }

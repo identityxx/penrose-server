@@ -23,14 +23,15 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.Modules;
+import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.connection.Connections;
+import org.safehaus.penrose.connection.ConnectionConfigs;
+import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -54,15 +55,15 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        results.addAll(validate(partitionConfig, partitionConfig.getConnections()));
-        results.addAll(validate(partitionConfig, partitionConfig.getSources()));
-        results.addAll(validate(partitionConfig, partitionConfig.getMappings()));
-        results.addAll(validateModuleConfigs(partitionConfig, partitionConfig.getModules()));
+        results.addAll(validate(partitionConfig, partitionConfig.getConnectionConfigs()));
+        results.addAll(validate(partitionConfig, partitionConfig.getSourceConfigs()));
+        results.addAll(validate(partitionConfig, partitionConfig.getDirectoryConfigs()));
+        results.addAll(validateModuleConfigs(partitionConfig, partitionConfig.getModuleConfigs()));
 
         return results;
     }
 
-    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, Connections connections) throws Exception {
+    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, ConnectionConfigs connections) throws Exception {
 
         String name = partitionConfig.getName();
 
@@ -97,7 +98,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, Sources sources) throws Exception {
+    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, SourceConfigs sources) throws Exception {
 
         String name = partitionConfig.getName();
 
@@ -117,7 +118,7 @@ public class PartitionValidator {
                 continue;
             }
 
-            ConnectionConfig connectionConfig = partitionConfig.getConnections().getConnectionConfig(connectionName);
+            ConnectionConfig connectionConfig = partitionConfig.getConnectionConfigs().getConnectionConfig(connectionName);
             if (connectionConfig == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid connection name: " + connectionName, name + ": " + sourceName, sourceConfig));
             }
@@ -138,7 +139,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, Mappings mappings) throws Exception {
+    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, DirectoryConfigs mappings) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         for (EntryMapping entryMapping : mappings.getEntryMappings()) {
@@ -157,7 +158,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateObjectClasses(PartitionConfig partitionConfig, Mappings mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateObjectClasses(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         //log.debug("Validating entry "+entryMapping"'s object classes");
@@ -194,7 +195,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateAttributeMappings(PartitionConfig partitionConfig, Mappings mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateAttributeMappings(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         //log.debug("Validating entry "+entryMapping"'s attributes");
@@ -233,7 +234,7 @@ public class PartitionValidator {
                     continue;
                 }
 
-                SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceMapping.getSourceName());
+                SourceConfig sourceConfig = partitionConfig.getSourceConfigs().getSourceConfig(sourceMapping.getSourceName());
                 if (sourceConfig == null) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source: " + sourceMapping.getSourceName(), entryMapping.getDn(), entryMapping));
                     continue;
@@ -266,7 +267,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateSourceMappings(PartitionConfig partitionConfig, Mappings mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateSourceMappings(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
@@ -283,7 +284,7 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source name.", entryMapping.getDn() + "/" + alias, entryMapping));
             }
 
-            SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceName);
+            SourceConfig sourceConfig = partitionConfig.getSourceConfigs().getSourceConfig(sourceName);
             if (sourceConfig == null) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Invalid source name: " + sourceName, entryMapping.getDn() + "/" + alias, entryMapping));
                 continue;
@@ -318,7 +319,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateModuleConfigs(PartitionConfig partitionConfig, Modules modules) throws Exception {
+    public Collection<PartitionValidationResult> validateModuleConfigs(PartitionConfig partitionConfig, ModuleConfigs modules) throws Exception {
 
         String name = partitionConfig.getName();
 

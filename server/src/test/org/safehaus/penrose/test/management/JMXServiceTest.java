@@ -22,7 +22,7 @@ import org.apache.log4j.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.Services;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.management.PenroseJMXService;
 
@@ -57,7 +57,7 @@ public class JMXServiceTest extends TestCase {
     }
 
     public void testJMXService() throws Exception {
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX");
         int port = service.getRmiPort();
         connect(port);
@@ -65,7 +65,7 @@ public class JMXServiceTest extends TestCase {
 
     public void testChangingJMXPort() throws Exception {
 
-        ServiceManager serviceManager = penroseServer.getServiceManager();
+        Services serviceManager = penroseServer.getServices();
         PenroseJMXService service = (PenroseJMXService)serviceManager.getService("JMX");
         int port = service.getRmiPort();
 

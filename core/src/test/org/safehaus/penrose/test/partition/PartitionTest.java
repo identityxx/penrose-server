@@ -27,23 +27,23 @@ public class PartitionTest extends TestCase {
 
         EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
-        partitionConfig.getMappings().addEntryMapping(rootEntry);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(rootEntry);
 
         EntryMapping usersEntry = new EntryMapping("cn=Users,dc=Example,dc=com");
         usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
-        partitionConfig.getMappings().addEntryMapping(usersEntry);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(usersEntry);
 
         EntryMapping users1Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users1Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "users.cn", true));
-        partitionConfig.getMappings().addEntryMapping(users1Mapping);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(users1Mapping);
 
         EntryMapping users2Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
-        partitionConfig.getMappings().addEntryMapping(users2Mapping);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(users2Mapping);
 
         EntryMapping proxyMapping = new EntryMapping("cn=Proxy,dc=Example,dc=com");
         proxyMapping.addSourceMapping(new SourceMapping("DEFAULT", "source"));
-        partitionConfig.getMappings().addEntryMapping(proxyMapping);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(proxyMapping);
     }
 
     public void tearDown() throws Exception {
@@ -55,7 +55,7 @@ public class PartitionTest extends TestCase {
     }
 */
     public void testFindingRootEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getDirectoryConfigs().getEntryMappings("dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -64,7 +64,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingStaticEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getDirectoryConfigs().getEntryMappings("cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -73,7 +73,7 @@ public class PartitionTest extends TestCase {
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getMappings().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
+        Collection entryMappings = partitionConfig.getDirectoryConfigs().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
         assertNotNull(entryMappings);
         assertFalse(entryMappings.isEmpty());
 
@@ -84,7 +84,7 @@ public class PartitionTest extends TestCase {
     public void print(Partition partition) throws Exception {
         log.debug("Entries:");
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> c = partitionConfig.getMappings().getRootEntryMappings();
+        Collection<EntryMapping> c = partitionConfig.getDirectoryConfigs().getRootEntryMappings();
         print(partition, c, 0);
     }
 
@@ -97,7 +97,7 @@ public class PartitionTest extends TestCase {
             for (int l = 0; l < level; l++) System.out.print("  ");
             log.debug(" - " + entryMapping.getRdn());
 
-            Collection<EntryMapping> children = partitionConfig.getMappings().getChildren(entryMapping);
+            Collection<EntryMapping> children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
             print(partition, children, level + 1);
         }
     }

@@ -2,6 +2,7 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Token;
+import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.apache.commons.digester.Digester;
 import org.apache.commons.digester.xmlrules.DigesterLoader;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class MappingReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public void read(File file, Mappings mappings) throws Exception {
+    public void read(File file, DirectoryConfigs mappings) throws Exception {
 		digester.push(mappings);
 		digester.parse(file);
         digester.pop();

@@ -308,7 +308,7 @@ public class SearchFilterBuilder {
         while (em != null) {
             SourceMapping sourceMapping = em.getSourceMapping(0);
             if (sourceMapping != null && sourceMapping.getName().equals(sourceName)) return true;
-            em = partitionConfig.getMappings().getParent(em);
+            em = partitionConfig.getDirectoryConfigs().getParent(em);
         }
 
         return false;

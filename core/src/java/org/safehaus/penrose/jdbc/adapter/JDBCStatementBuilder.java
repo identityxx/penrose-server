@@ -148,7 +148,8 @@ public class JDBCStatementBuilder {
             }
 
         } else {
-            filterBuilder = new JDBCFilterBuilder(source);
+            filterBuilder = new JDBCFilterBuilder();
+            filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
             filterBuilder.setQuote(quote);
         }
 
@@ -257,10 +258,12 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("update ");
 
-        Source source = statement.getSource();
-        String table = getTableName(source);
+        SourceRef sourceRef = statement.getSourceRef();
+        String table = getTableName(sourceRef.getSource());
 
         sb.append(table);
+        sb.append(" ");
+        sb.append(sourceRef.getAlias());
 
         sb.append(" set ");
 
@@ -285,7 +288,8 @@ public class JDBCStatementBuilder {
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
         filterBuilder.setQuote(quote);
 
         filterBuilder.generate(filter);
@@ -308,14 +312,18 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("delete from ");
 
-        Source source = statement.getSource();
-        String table = getTableName(source);
+        SourceRef sourceRef = statement.getSourceRef();
+        String table = getTableName(sourceRef.getSource());
 
         sb.append(table);
+        sb.append(" ");
+        sb.append(sourceRef.getAlias());
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(source);
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
+
         filterBuilder.setQuote(quote);
 
         filterBuilder.generate(filter);

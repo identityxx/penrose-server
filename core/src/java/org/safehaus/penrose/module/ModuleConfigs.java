@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * @author Endi Sukma Dewata
  */
-public class Modules implements Cloneable {
+public class ModuleConfigs implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -76,7 +76,7 @@ public class Modules implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        Modules modules = (Modules)super.clone();
+        ModuleConfigs modules = (ModuleConfigs)super.clone();
 
         modules.moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
         modules.moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();

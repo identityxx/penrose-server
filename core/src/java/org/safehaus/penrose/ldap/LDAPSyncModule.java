@@ -109,7 +109,7 @@ public class LDAPSyncModule extends Module {
 
         DN baseDn = (DN)event.getSource();
 
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        PartitionManager partitionManager = penroseContext.getPartitionConfigs();
         Partition partition = partitionManager.getPartition(baseDn);
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection entryMappings = partitionConfig.getMappings().findEntryMappings(baseDn);

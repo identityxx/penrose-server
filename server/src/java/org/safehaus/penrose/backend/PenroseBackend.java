@@ -28,7 +28,8 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -82,9 +83,8 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         if (penroseConfig.getRootDn().matches(dn)) return true;
         
         Penrose penrose = penroseServer.getPenrose();
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        return partitionManager.getPartition(dn) != null;
+        Partitions partitions = penrose.getPartitions();
+        return partitions.getPartition(dn) != null;
     }
 
     public com.identyx.javabackend.Session getSession(Object id) throws Exception {

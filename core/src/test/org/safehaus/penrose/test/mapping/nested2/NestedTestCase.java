@@ -54,7 +54,7 @@ public class NestedTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partitionConfig.getConnections().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnectionConfigs().addConnectionConfig(connectionConfig);
 
         SourceConfig parentsSource = new SourceConfig();
         parentsSource.setName("parents");
@@ -62,7 +62,7 @@ public class NestedTestCase extends JDBCTestCase {
         parentsSource.setParameter("table", "parents");
         parentsSource.addFieldConfig(new FieldConfig("parentname", "PARENTNAME", true));
         parentsSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partitionConfig.getSources().addSourceConfig(parentsSource);
+        partitionConfig.getSourceConfigs().addSourceConfig(parentsSource);
 
         SourceConfig childrenSource = new SourceConfig();
         childrenSource.setName("children");
@@ -70,12 +70,12 @@ public class NestedTestCase extends JDBCTestCase {
         childrenSource.setParameter("table", "children");
         childrenSource.addFieldConfig(new FieldConfig("parentname", "PARENTNAME", true));
         childrenSource.addFieldConfig(new FieldConfig("description", "DESCRIPTION", false));
-        partitionConfig.getSources().addSourceConfig(childrenSource);
+        partitionConfig.getSourceConfigs().addSourceConfig(childrenSource);
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Parents", true));
-        partitionConfig.getMappings().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -89,7 +89,7 @@ public class NestedTestCase extends JDBCTestCase {
         groupsMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(groupsMapping);
 
-        partitionConfig.getMappings().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
 
         EntryMapping members = new EntryMapping("uid=child,cn=...,"+baseDn);
         members.addObjectClass("person");
@@ -105,11 +105,12 @@ public class NestedTestCase extends JDBCTestCase {
         membersMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         members.addSourceMapping(membersMapping);
 
-        partitionConfig.getMappings().addEntryMapping(members);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(members);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        partitionManager.init(partitionConfig);
+        Partitions partitions = penrose.getPartitions();
+
+        partitions.init(penroseConfig, penroseContext, partitionConfig);
     }
     
     public void testDummy()

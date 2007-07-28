@@ -20,7 +20,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
@@ -39,7 +39,7 @@ public class Analyzer {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    private PartitionManager partitionManager;
+    private PartitionConfigs partitionConfigs;
     private InterpreterManager interpreterManager;
 
     public Map graphs = new HashMap();
@@ -67,7 +67,7 @@ public class Analyzer {
         //if (debug) log.debug("Unique: "+unique);
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection children = partitionConfig.getMappings().getChildren(entryMapping);
+        Collection children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
         for (Iterator i=children.iterator(); i.hasNext(); ) {
             EntryMapping childMapping = (EntryMapping)i.next();
             analyze(partition, childMapping);
@@ -83,7 +83,7 @@ public class Analyzer {
         Graph graph = new Graph();
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection sources = partitionConfig.getMappings().getEffectiveSourceMappings(entryMapping);
+        Collection sources = partitionConfig.getDirectoryConfigs().getEffectiveSourceMappings(entryMapping);
         //if (sources.size() == 0) return null;
 
         for (Iterator i=sources.iterator(); i.hasNext(); ) {
@@ -188,12 +188,12 @@ public class Analyzer {
         this.interpreterManager = interpreterManager;
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public PartitionConfigs getPartitionManager() {
+        return partitionConfigs;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
+    public void setPartitionManager(PartitionConfigs partitionConfigs) {
+        this.partitionConfigs = partitionConfigs;
     }
 
     public Graph getGraph(EntryMapping entryMapping) throws Exception {
@@ -255,7 +255,7 @@ public class Analyzer {
         if (sourceMapping == null) throw new Exception("Invalid source mapping \""+sourceAlias+"\" in \""+entryMapping.getDn()+"\".");
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfig sourceConfig = partitionConfig.getSources().getSourceConfig(sourceMapping.getSourceName());
+        SourceConfig sourceConfig = partitionConfig.getSourceConfigs().getSourceConfig(sourceMapping.getSourceName());
         if (sourceMapping == null) throw new Exception("Invalid source reference \""+sourceMapping.getSourceName()+"\" in \""+entryMapping.getDn()+"\".");
 
         Collection uniqueFields = new TreeSet();
@@ -308,7 +308,7 @@ public class Analyzer {
 
         if (b.booleanValue()) { // check parent mapping
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+            EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
 
             if (parentMapping != null) b = new Boolean(isUnique(partition, parentMapping));
         }

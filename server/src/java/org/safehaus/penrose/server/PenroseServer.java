@@ -22,9 +22,10 @@ import java.io.File;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.Services;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.service.Service;
+import org.safehaus.penrose.service.ServiceConfigs;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.config.*;
@@ -40,7 +41,8 @@ public class PenroseServer {
     private PenroseConfig penroseConfig;
     private Penrose penrose;
 
-    private ServiceManager serviceManager;
+    private ServiceConfigs serviceConfigs;
+    private Services services;
 
     public PenroseServer() throws Exception {
 
@@ -78,8 +80,8 @@ public class PenroseServer {
         
         penroseConfig = penrose.getPenroseConfig();
 
-        serviceManager = new ServiceManager();
-        serviceManager.setPenroseServer(this);
+        serviceConfigs = new ServiceConfigs();
+        services = new Services();
     }
 
     public void start() throws Exception {
@@ -88,13 +90,13 @@ public class PenroseServer {
         String home = penrose.getHome();
         String dir = (home == null ? "" : home+File.separator) + "services";
 
-        File services = new File(dir);
-        if (!services.isDirectory()) return;
+        File servicesDir = new File(dir);
+        if (!servicesDir.isDirectory()) return;
 
-        for (File file : services.listFiles()) {
+        for (File file : servicesDir.listFiles()) {
             if (!file.isDirectory()) continue;
 
-            ServiceConfig serviceConfig = serviceManager.load(file);
+            ServiceConfig serviceConfig = serviceConfigs.load(file);
             String name = serviceConfig.getName();
 
             if (!serviceConfig.isEnabled()) {
@@ -104,14 +106,14 @@ public class PenroseServer {
 
             log.debug("Starting "+name+" service.");
 
-            Service service = serviceManager.init(serviceConfig);
+            Service service = services.init(this, serviceConfig);
             service.start();
         }
     }
 
     public void stop() throws Exception {
 
-        for (Service service : serviceManager.getServices()) {
+        for (Service service : services.getServices()) {
             service.stop();
         }
 
@@ -189,19 +191,19 @@ public class PenroseServer {
         this.penrose = penrose;
     }
 
-    public ServiceManager getServiceManager() {
-        return serviceManager;
+    public Services getServices() {
+        return services;
     }
 
-    public void setServiceManager(ServiceManager serviceManager) {
-        this.serviceManager = serviceManager;
+    public void setServices(Services services) {
+        this.services = services;
     }
 
     public void reload() throws Exception {
 
         penrose.reload();
 
-        serviceManager.clear();
+        services.clear();
         //serviceManager.load(penroseConfig.getServiceConfigs());
     }
 

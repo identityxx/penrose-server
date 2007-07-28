@@ -19,8 +19,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -173,13 +174,13 @@ public class HandlerManager {
         DN parentDn = dn.getParentDn();
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
 
         for (EntryMapping entryMapping : entryMappings) {
             if (debug) log.debug("Adding " + dn + " into " + entryMapping.getDn());
 
-            EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+            EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
             int rc = aclManager.checkAdd(session, partition, parentMapping, parentDn);
 
             if (rc != LDAP.SUCCESS) {
@@ -242,7 +243,7 @@ public class HandlerManager {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
 
         for (EntryMapping entryMapping : entryMappings) {
             if (debug) log.debug("Binding " + dn + " in " + entryMapping.getDn());
@@ -275,7 +276,7 @@ public class HandlerManager {
         request.setAttributeName(attributeName);
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
 
         for (EntryMapping entryMapping : entryMappings) {
@@ -323,7 +324,7 @@ public class HandlerManager {
         request.setDn(dn);
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
 
         for (EntryMapping entryMapping : entryMappings) {
@@ -372,7 +373,7 @@ public class HandlerManager {
         request.setModifications(modifications);
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
 
         for (EntryMapping entryMapping : entryMappings) {
@@ -421,7 +422,7 @@ public class HandlerManager {
         request.setNewRdn(newRdn);
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(dn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
 
         for (EntryMapping entryMapping : entryMappings) {
@@ -515,7 +516,7 @@ public class HandlerManager {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(baseDn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(baseDn);
 
         if (entryMappings.isEmpty()) {
             if (debug) log.debug("Base DN "+baseDn+" not found.");
@@ -598,7 +599,7 @@ public class HandlerManager {
         DN bindDn = request.getDn();
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> entryMappings = partitionConfig.getMappings().findEntryMappings(bindDn);
+        Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(bindDn);
 
         for (EntryMapping entryMapping : entryMappings) {
             if (debug) log.debug("Unbinding " + bindDn + " from " + entryMapping.getDn());
@@ -618,10 +619,10 @@ public class HandlerManager {
         attributes.addValue("supportedLDAPVersion", "3");
         attributes.addValue("subschemaSubentry", SCHEMA_DN.toString());
 
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
-        for (Partition partition : partitionManager.getPartitions()) {
+        Partitions partitions = penroseContext.getPartitions();
+        for (Partition partition : partitions.getPartitions()) {
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            for (EntryMapping entryMapping : partitionConfig.getMappings().getRootEntryMappings()) {
+            for (EntryMapping entryMapping : partitionConfig.getDirectoryConfigs().getRootEntryMappings()) {
                 if (entryMapping.getDn().isEmpty()) continue;
                 attributes.addValue("namingContexts", entryMapping.getDn().toString());
             }

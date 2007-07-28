@@ -75,8 +75,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         Filter filter = null;
 
@@ -108,8 +107,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        Source source = sourceRef.getSource();
-        statement.setSource(source);
+        statement.setSourceRef(sourceRef);
 
         Filter filter = null;
 

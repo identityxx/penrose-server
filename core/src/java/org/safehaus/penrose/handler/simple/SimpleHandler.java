@@ -75,7 +75,7 @@ public class SimpleHandler extends Handler {
         int scope = request.getScope();
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
-                || scope == SearchRequest.SCOPE_ONE && partitionConfig.getMappings().getParent(entryMapping) == baseMapping
+                || scope == SearchRequest.SCOPE_ONE && partitionConfig.getDirectoryConfigs().getParent(entryMapping) == baseMapping
                 ) {
 
             SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
@@ -97,7 +97,7 @@ public class SimpleHandler extends Handler {
         if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            Collection<EntryMapping> children = partitionConfig.getMappings().getChildren(entryMapping);
+            Collection<EntryMapping> children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
 
             for (EntryMapping childMapping : children) {
                 Handler handler = handlerManager.getHandler(partition, childMapping);

@@ -24,7 +24,8 @@ import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfigs;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -135,8 +136,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -231,8 +232,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -332,8 +333,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -427,8 +428,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -510,8 +511,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -605,8 +606,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -715,8 +716,8 @@ public class Session {
         try {
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            partition = partitionManager.getPartition(dn);
+            Partitions partitions = penroseContext.getPartitions();
+            partition = partitions.getPartition(dn);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -820,8 +821,8 @@ public class Session {
 
         try {
             if (!rootUser && bindDn != null) {
-                PartitionManager partitionManager = penroseContext.getPartitionManager();
-                partition = partitionManager.getPartition(bindDn);
+                Partitions partitions = penroseContext.getPartitions();
+                partition = partitions.getPartition(bindDn);
             }
 
         } catch (Exception e) {

@@ -16,7 +16,7 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.ldap.*;
 
 import java.util.*;
@@ -70,7 +70,7 @@ public class BasicEngine extends Engine {
 
         DN parentDn = dn.getParentDn();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping em = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping em = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
 
         if (parentDn != null && em != null) {
             extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
@@ -113,7 +113,7 @@ public class BasicEngine extends Engine {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Sources sources = partitionConfig.getSources();
+        SourceConfigs sources = partitionConfig.getSourceConfigs();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

@@ -34,8 +34,6 @@ public interface PenroseServiceMBean {
     public void reload() throws Exception;
     public void restart() throws Exception;
 
-    public void renameEntryMapping(DN oldDn, DN newDn) throws Exception;
-
     public Collection getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;
     public void stop(String serviceName) throws Exception;

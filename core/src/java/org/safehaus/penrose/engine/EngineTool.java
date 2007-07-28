@@ -35,7 +35,7 @@ public class EngineTool {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             mappings.add(entryMapping);
-            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -52,7 +52,7 @@ public class EngineTool {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             mappings.add(0, entryMapping);
-            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         }
 
         propagate(mappings, sourceValues);
@@ -118,7 +118,7 @@ public class EngineTool {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             path.add(0, entryMapping);
-            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         }
 
         propagate(path, sourceValues, interpreter);

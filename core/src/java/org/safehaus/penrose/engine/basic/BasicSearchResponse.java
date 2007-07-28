@@ -83,7 +83,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         while (entryMapping != null) {
             path.add(0, entryMapping);
-            entryMapping = partitionConfig.getMappings().getParent(entryMapping);
+            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         }
 
         return path;

@@ -1,7 +1,7 @@
 package org.safehaus.penrose.example.tomcat;
 
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.Services;
 import org.safehaus.penrose.Penrose;
 
 import javax.servlet.*;
@@ -59,7 +59,7 @@ public class DemoServlet extends GenericServlet {
             out.println();
 
             out.println("Penrose Services:");
-            ServiceManager serviceManager = penroseServer.getServiceManager();
+            Services serviceManager = penroseServer.getServices();
             Collection serviceNames = serviceManager.getServiceNames();
             for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {
                 String serviceName = (String)i.next();

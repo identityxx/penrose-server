@@ -13,7 +13,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class Sources implements Cloneable {
+public class SourceConfigs implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -109,7 +109,7 @@ public class Sources implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        Sources sources = (Sources)super.clone();
+        SourceConfigs sources = (SourceConfigs)super.clone();
 
         sources.sourceConfigs = new LinkedHashMap<String,SourceConfig>();
         for (SourceConfig sourceConfig : sourceConfigs.values()) {

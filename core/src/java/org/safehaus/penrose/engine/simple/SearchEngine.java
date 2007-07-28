@@ -174,7 +174,7 @@ public class SearchEngine {
             }
 
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            em = partitionConfig.getMappings().getParent(em);
+            em = partitionConfig.getDirectoryConfigs().getParent(em);
         }
     }
 

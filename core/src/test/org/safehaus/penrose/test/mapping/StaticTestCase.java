@@ -35,14 +35,14 @@ public class StaticTestCase extends TestCase {
         penrose.start();
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partitions partitions = penrose.getPartitions();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getMappings().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
 
         EntryMapping group = new EntryMapping("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
@@ -52,7 +52,7 @@ public class StaticTestCase extends TestCase {
         group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member2"));
         group.addAttributeMapping(new AttributeMapping("creatorsName", AttributeMapping.CONSTANT, penroseConfig.getRootDn().toString()));
         
-        partitionConfig.getMappings().addEntryMapping(group);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(group);
 
         EntryMapping member1 = new EntryMapping("uid=member1,cn=group,"+baseDn);
         member1.addObjectClass("person");
@@ -61,7 +61,7 @@ public class StaticTestCase extends TestCase {
         member1.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member1", true));
         member1.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partitionConfig.getMappings().addEntryMapping(member1);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(member1);
         
         EntryMapping member2 = new EntryMapping("uid=member2,cn=group,"+baseDn);
         member2.addObjectClass("person");
@@ -70,9 +70,9 @@ public class StaticTestCase extends TestCase {
         member2.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member2", true));
         member2.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partitionConfig.getMappings().addEntryMapping(member2);
+        partitionConfig.getDirectoryConfigs().addEntryMapping(member2);
 
-        partitionManager.init(partitionConfig);
+        partitions.init(penroseConfig, penroseContext, partitionConfig);
     }
     
     public void testDummy()

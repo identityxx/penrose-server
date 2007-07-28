@@ -14,8 +14,6 @@ import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-
 /**
  * @author Endi S. Dewata
  */
@@ -48,7 +46,8 @@ public class PenroseContext {
 
     private ConnectorManager   connectorManager;
 
-    private PartitionManager   partitionManager;
+    private PartitionConfigs   partitionConfigs;
+    private Partitions         partitions;
 
     private SessionContext     sessionContext;
 
@@ -72,12 +71,20 @@ public class PenroseContext {
         this.schemaManager = schemaManager;
     }
 
-    public PartitionManager getPartitionManager() {
-        return partitionManager;
+    public PartitionConfigs getPartitionConfigs() {
+        return partitionConfigs;
     }
 
-    public void setPartitionManager(PartitionManager partitionManager) {
-        this.partitionManager = partitionManager;
+    public void setPartitionConfigs(PartitionConfigs partitionConfigs) {
+        this.partitionConfigs = partitionConfigs;
+    }
+
+    public Partitions getPartitions() {
+        return partitions;
+    }
+
+    public void setPartitions(Partitions partitions) {
+        this.partitions = partitions;
     }
 
     public InterpreterManager getInterpreterManager() {
@@ -107,6 +114,12 @@ public class PenroseContext {
     public void init(PenroseConfig penroseConfig) throws Exception {
         this.penroseConfig = penroseConfig;
 
+        for (String name : penroseConfig.getSystemPropertyNames()) {
+            String value = penroseConfig.getSystemProperty(name);
+
+            System.setProperty(name, value);
+        }
+
         threadManager = new ThreadManager();
         threadManager.setPenroseConfig(penroseConfig);
         threadManager.setPenroseContext(this);
@@ -126,17 +139,6 @@ public class PenroseContext {
         connectorManager.setPenroseConfig(penroseConfig);
         connectorManager.setPenroseContext(this);
 
-        partitionManager = new PartitionManager();
-        partitionManager.setPenroseConfig(penroseConfig);
-        partitionManager.setPenroseContext(this);
-        partitionManager.setSessionContext(sessionContext);
-
-        for (String name : penroseConfig.getSystemPropertyNames()) {
-            String value = penroseConfig.getSystemProperty(name);
-
-            System.setProperty(name, value);
-        }
-
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
             schemaManager.init(home, schemaConfig);
         }
@@ -150,39 +152,14 @@ public class PenroseContext {
 
     public void start() throws Exception {
         threadManager.start();
-
-        String dir = (home == null ? "" : home+ File.separator)+"partitions";
-
-        File partitions = new File(dir);
-        if (!partitions.isDirectory()) return;
-
-        for (File file : partitions.listFiles()) {
-            if (!file.isDirectory()) continue;
-
-            if (debug) log.debug("----------------------------------------------------------------------------------");
-
-            PartitionConfig partitionConfig = partitionManager.load(file);
-            String name = partitionConfig.getName();
-
-            if (!partitionConfig.isEnabled()) {
-                log.debug(name+" partition is disabled.");
-                continue;
-            }
-
-            log.debug("Starting "+name+" partition.");
-
-            partitionManager.init(partitionConfig);
-        }
     }
 
     public void stop() throws Exception {
-        partitionManager.clear();
         threadManager.stop();
     }
 
     public void clear() throws Exception {
         connectorManager.clear();
-        partitionManager.clear();
         interpreterManager.clear();
         schemaManager.clear();
     }

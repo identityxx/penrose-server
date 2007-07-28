@@ -7,10 +7,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.NotFilter;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.Field;
-
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata

@@ -11,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class Connections implements Cloneable {
+public class ConnectionConfigs implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -65,7 +65,7 @@ public class Connections implements Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        Connections connections = (Connections)super.clone();
+        ConnectionConfigs connections = (ConnectionConfigs)super.clone();
 
         connections.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
         for (AdapterConfig adapterConfig : adapterConfigs.values()) {

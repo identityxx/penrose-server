@@ -1,7 +1,6 @@
 package org.safehaus.penrose.changelog;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.entry.*;
 import org.safehaus.penrose.source.Source;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -74,7 +73,7 @@ public abstract class ChangeLogUtil {
 
         if (!response.hasNext()) return null;
 
-        SearchResult trackerEntry = (SearchResult)response.next();
+        SearchResult trackerEntry = response.next();
         Attributes attributes = trackerEntry.getAttributes();
 
         if (debug) {

@@ -35,7 +35,7 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.LoggerFactory;
@@ -159,7 +159,7 @@ public abstract class Handler {
 
         if (fetchEntry) {
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+            EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
             DN parentDn = dn.getParentDn();
 
             SearchResult parent = find(session, partition, parentMapping, parentDn);
@@ -566,7 +566,7 @@ public abstract class Handler {
 
         DN parentDn = dn.getParentDn();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping em = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping em = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
 
         if (parentDn != null && em != null) {
             extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
@@ -609,7 +609,7 @@ public abstract class Handler {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Sources sources = partitionConfig.getSources();
+        SourceConfigs sources = partitionConfig.getSourceConfigs();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

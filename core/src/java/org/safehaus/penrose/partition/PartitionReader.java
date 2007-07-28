@@ -19,11 +19,12 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.ConnectionReader;
-import org.safehaus.penrose.connection.Connections;
+import org.safehaus.penrose.connection.ConnectionConfigs;
 import org.safehaus.penrose.source.SourceReader;
-import org.safehaus.penrose.source.Sources;
+import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.module.ModuleReader;
-import org.safehaus.penrose.module.Modules;
+import org.safehaus.penrose.module.ModuleConfigs;
+import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.apache.commons.digester.Digester;
@@ -118,28 +119,28 @@ public class PartitionReader implements EntityResolver {
         File connectionsXml = new File(dirInf, "connections.xml");
         if (connectionsXml.exists()) {
             log.debug("Loading "+connectionsXml.getAbsolutePath()+".");
-            Connections connections = partitionConfig.getConnections();
+            ConnectionConfigs connections = partitionConfig.getConnectionConfigs();
             connectionReader.read(connectionsXml, connections);
         }
 
         File sourcesXml = new File(dirInf, "sources.xml");
         if (sourcesXml.exists()) {
             log.debug("Loading "+sourcesXml.getAbsolutePath()+".");
-            Sources sources = partitionConfig.getSources();
+            SourceConfigs sources = partitionConfig.getSourceConfigs();
             sourceReader.read(sourcesXml, sources);
         }
 
         File mappingXml = new File(dirInf, "mapping.xml");
         if (mappingXml.exists()) {
             log.debug("Loading "+mappingXml.getAbsolutePath()+".");
-            Mappings mappings = partitionConfig.getMappings();
+            DirectoryConfigs mappings = partitionConfig.getDirectoryConfigs();
             mappingReader.read(mappingXml, mappings);
         }
 
         File modulesFile = new File(dirInf, "modules.xml");
         if (modulesFile.exists()) {
             log.debug("Loading "+modulesFile.getAbsolutePath()+".");
-            Modules modules = partitionConfig.getModules();
+            ModuleConfigs modules = partitionConfig.getModuleConfigs();
             moduleReader.read(modulesFile, modules);
         }
 

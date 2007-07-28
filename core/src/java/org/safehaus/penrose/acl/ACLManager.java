@@ -148,7 +148,7 @@ public class ACLManager {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentEntryMapping = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping parentEntryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         if (parentEntryMapping == null) {
         	if (debug) {
         		log.debug("Parent entry for "+entryMapping.getDn()+" not found.");
@@ -315,7 +315,7 @@ public class ACLManager {
         if (entryMapping == null) return;
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentMapping = partitionConfig.getMappings().getParent(entryMapping);
+        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
         getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         if (debug) log.debug("Checking ACL in "+entryMapping.getDn()+":");

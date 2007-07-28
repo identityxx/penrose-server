@@ -19,20 +19,13 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.service.Services;
 
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -124,7 +117,7 @@ public class PenroseService implements PenroseServiceMBean {
     public Collection getServiceNames() throws Exception {
         try {
             Collection serviceNames = new ArrayList();
-            ServiceManager serviceManager = penroseServer.getServiceManager();
+            Services serviceManager = penroseServer.getServices();
             serviceNames.addAll(serviceManager.getServiceNames());
             return serviceNames;
         } catch (Exception e) {
@@ -133,37 +126,9 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public void renameEntryMapping(DN oldDn, DN newDn) throws Exception {
-        try {
-            log.debug("Renaming "+oldDn+" to "+newDn);
-
-            Penrose penrose = penroseServer.getPenrose();
-            PenroseContext penroseContext = penrose.getPenroseContext();
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-
-            Partition partition = partitionManager.getPartition(oldDn);
-            if (partition == null) return;
-
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
-            Collection c = partitionConfig.getMappings().findEntryMappings(oldDn);
-            Collection entryMappings = new ArrayList();
-            if (c != null) entryMappings.addAll(c);
-
-            log.debug("Found "+entryMappings.size()+" entries.");
-            for (Iterator i=entryMappings.iterator(); i.hasNext(); ) {
-                EntryMapping entryMapping = (EntryMapping)i.next();
-                partitionConfig.getMappings().renameEntryMapping(entryMapping, newDn);
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
     public void start(String serviceName) throws Exception {
         try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
+            Services serviceManager = penroseServer.getServices();
             serviceManager.start(serviceName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -173,7 +138,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public void stop(String serviceName) throws Exception {
         try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
+            Services serviceManager = penroseServer.getServices();
             serviceManager.stop(serviceName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -183,7 +148,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public String getStatus(String serviceName) throws Exception {
         try {
-            ServiceManager serviceManager = penroseServer.getServiceManager();
+            Services serviceManager = penroseServer.getServices();
             return serviceManager.getStatus(serviceName);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
