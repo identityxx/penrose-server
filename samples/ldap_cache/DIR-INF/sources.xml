@@ -27,6 +27,10 @@
       <param-name>objectClasses</param-name>
       <param-value>person,organizationalPerson,inetOrgPerson</param-value>
     </parameter>
+    <parameter>
+      <param-name>sync</param-name>
+      <param-value>users_cache</param-value>
+    </parameter>
   </source>
 
   <source name="users_cache">
@@ -80,6 +84,10 @@ return users.cn.substring(i+1);
       <param-name>objectClasses</param-name>
       <param-value>groupOfUniqueNames</param-value>
     </parameter>
+    <parameter>
+      <param-name>sync</param-name>
+      <param-value>groups_cache,usergroups_cache</param-value>
+    </parameter>
   </source>
 
   <source name="groups_cache">
@@ -110,21 +118,5 @@ return um.substring(i+1, j);
       <param-value>usergroups_cache</param-value>
     </parameter>
   </source>
-
-  <source-sync name="users">
-    <class-name>org.safehaus.penrose.source.ldap.LDAPSourceSync</class-name>
-    <parameter>
-      <param-name>source</param-name>
-      <param-value>users</param-value>
-    </parameter>
-  </source-sync>
-
-  <source-sync name="groups">
-    <class-name>org.safehaus.penrose.source.ldap.LDAPSourceSync</class-name>
-    <parameter>
-      <param-name>source</param-name>
-      <param-value>groups</param-value>
-    </parameter>
-  </source-sync>
 
 </sources>
