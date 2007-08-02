@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.service;
 
-import org.safehaus.penrose.server.PenroseServer;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -35,12 +34,12 @@ public class Service {
     public final static String STARTING = "STARTING";
     public final static String STARTED  = "STARTED";
 
-    protected PenroseServer penroseServer;
     protected ServiceConfig serviceConfig;
-
-    protected String status = STOPPED;
+    protected ServiceContext serviceContext;
 
     protected ClassLoader classLoader;
+
+    protected String status = STOPPED;
 
     public Service() {
     }
@@ -72,14 +71,6 @@ public class Service {
         this.serviceConfig = serviceConfig;
     }
 
-    public PenroseServer getPenroseServer() {
-        return penroseServer;
-    }
-
-    public void setPenroseServer(PenroseServer penroseServer) {
-        this.penroseServer = penroseServer;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -94,5 +85,13 @@ public class Service {
 
     public void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
+    }
+
+    public ServiceContext getServiceContext() {
+        return serviceContext;
+    }
+
+    public void setServiceContext(ServiceContext serviceContext) {
+        this.serviceContext = serviceContext;
     }
 }

@@ -23,16 +23,16 @@
     </path>
 
     <target name="build">
-        <mkdir dir="classes"/>
+        <mkdir dir="target/classes"/>
         <javac
             srcdir="src"
-            destdir="classes"
+            destdir="target/classes"
             classpathref="lib.path"
             debug="on"
             debuglevel="lines,vars,source"
         />
         <jar jarfile="lib/${product.name}-ldap-service-${product.version}.jar">
-            <fileset dir="classes"/>
+            <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title}"/>
@@ -44,7 +44,7 @@
     </target>
 
     <target name="clean">
-        <delete dir="classes" failonerror="false"/>
+        <delete dir="target" failonerror="false"/>
         <delete file="lib/${product.name}-ldap-service-${product.version}.jar" failonerror="false"/>        
     </target>
 

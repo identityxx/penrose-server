@@ -110,7 +110,11 @@ public class NestedTestCase extends JDBCTestCase {
         PenroseContext penroseContext = penrose.getPenroseContext();
         Partitions partitions = penrose.getPartitions();
 
-        partitions.init(penroseConfig, penroseContext, partitionConfig);
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitions.init(partitionConfig, partitionContext);
     }
     
     public void testDummy()

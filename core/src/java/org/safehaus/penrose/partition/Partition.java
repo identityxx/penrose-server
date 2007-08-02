@@ -35,8 +35,6 @@ import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.directory.Entry;
 
 /**
@@ -52,8 +50,7 @@ public class Partition implements PartitionMBean, Cloneable {
     public final static Collection<SourceRef> EMPTY_SOURCEREFS = new ArrayList<SourceRef>();
 
     private PartitionConfig partitionConfig;
-    private PenroseConfig   penroseConfig;
-    private PenroseContext  penroseContext;
+    private PartitionContext partitionContext;
 
     private ClassLoader classLoader;
 
@@ -87,6 +84,18 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setDescription(String description) {
         partitionConfig.setDescription(description);
+    }
+
+    public Map<String,String> getParameters() {
+        return partitionConfig.getParameters();
+    }
+
+    public Collection<String> getParameterNames() {
+        return partitionConfig.getParameterNames();
+    }
+
+    public String getParameter(String name) {
+        return partitionConfig.getParameter(name);
     }
 
     public boolean isEnabled() {
@@ -125,6 +134,7 @@ public class Partition implements PartitionMBean, Cloneable {
         Partition partition = (Partition)super.clone();
 
         partition.partitionConfig = (PartitionConfig)partitionConfig.clone();
+        partition.partitionContext = (PartitionContext)partitionContext.clone();
 
         partition.classLoader = classLoader;
 
@@ -139,14 +149,14 @@ public class Partition implements PartitionMBean, Cloneable {
         AdapterConfig adapterConfig = partitionConfig.getConnectionConfigs().getAdapterConfig(adapterName);
 
         if (adapterConfig == null) {
-            adapterConfig = penroseConfig.getAdapterConfig(adapterName);
+            adapterConfig = partitionContext.getPenroseConfig().getAdapterConfig(adapterName);
         }
 
         if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName+".");
 
         Connection connection = new Connection(this, connectionConfig, adapterConfig);
-        connection.setPenroseConfig(penroseConfig);
-        connection.setPenroseContext(penroseContext);
+        connection.setPenroseConfig(partitionContext.getPenroseConfig());
+        connection.setPenroseContext(partitionContext.getPenroseContext());
         connection.init();
         connection.start();
 
@@ -221,8 +231,8 @@ public class Partition implements PartitionMBean, Cloneable {
 
         module.setModuleConfig(moduleConfig);
         module.setPartition(this);
-        module.setPenroseConfig(penroseConfig);
-        module.setPenroseContext(penroseContext);
+        module.setPenroseConfig(partitionContext.getPenroseConfig());
+        module.setPenroseContext(partitionContext.getPenroseContext());
         module.init();
         module.start();
 
@@ -280,8 +290,8 @@ public class Partition implements PartitionMBean, Cloneable {
 
         sourceSync.setSourceSyncConfig(sourceSyncConfig);
         sourceSync.setPartition(this);
-        sourceSync.setPenroseConfig(penroseConfig);
-        sourceSync.setPenroseContext(penroseContext);
+        sourceSync.setPenroseConfig(partitionContext.getPenroseConfig());
+        sourceSync.setPenroseContext(partitionContext.getPenroseContext());
         sourceSync.init();
         sourceSync.start();
 
@@ -392,22 +402,6 @@ public class Partition implements PartitionMBean, Cloneable {
         return map.get(sourceName);
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
-    }
-
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
-    }
-
     public void addEntry(Entry entry) {
         entries.put(entry.getId(), entry);
     }
@@ -418,5 +412,13 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public Entry getEntry(String id) {
         return entries.get(id);
+    }
+
+    public PartitionContext getPartitionContext() {
+        return partitionContext;
+    }
+
+    public void setPartitionContext(PartitionContext partitionContext) {
+        this.partitionContext = partitionContext;
     }
 }

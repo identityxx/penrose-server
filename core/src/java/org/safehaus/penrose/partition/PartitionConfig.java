@@ -24,6 +24,8 @@ import org.safehaus.penrose.module.ModuleConfigs;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.net.URL;
 
 /**
@@ -38,6 +40,8 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
     private String handlerName;
     private String engineName;
+
+    public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
     private ConnectionConfigs connectionConfigs = new ConnectionConfigs();
     private SourceConfigs     sourceConfigs     = new SourceConfigs();
@@ -77,6 +81,32 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         this.engineName = engineName;
     }
 
+    public Map<String,String> getParameters() {
+        return parameters;
+    }
+
+    public Collection<String> getParameterNames() {
+        return parameters.keySet();
+    }
+
+    public String getParameter(String name) {
+        return parameters.get(name);
+    }
+
+    public void setParameters(Map<String,String> parameters) {
+        if (parameters == this.parameters) return;
+        this.parameters.clear();
+        this.parameters.putAll(parameters);
+    }
+
+    public void setParameter(String name, String value) {
+        parameters.put(name, value);
+    }
+
+    public String removeParameter(String name) {
+        return parameters.remove(name);
+    }
+
     public int hashCode() {
         return name == null ? 0 : name.hashCode();
     }
@@ -101,6 +131,8 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         if (!equals(handlerName, partitionConfig.handlerName)) return false;
         if (!equals(engineName, partitionConfig.engineName)) return false;
 
+        if (!equals(parameters, partitionConfig.parameters)) return false;
+
         return true;
     }
 
@@ -113,6 +145,9 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
         partitionConfig.handlerName = handlerName;
         partitionConfig.engineName = engineName;
+
+        partitionConfig.parameters = new LinkedHashMap<String,String>();
+        partitionConfig.parameters.putAll(parameters);
 
         partitionConfig.connectionConfigs = (ConnectionConfigs) connectionConfigs.clone();
         partitionConfig.sourceConfigs = (SourceConfigs) sourceConfigs.clone();

@@ -51,14 +51,10 @@
                 <exclude name="build.xml"/>
                 <exclude name="**/SERVICE-INF/build.xml"/>
                 <exclude name="**/SERVICE-INF/service.xml"/>
-                <exclude name="**/SERVICE-INF/classes/**"/>
+                <exclude name="**/SERVICE-INF/target/**"/>
                 <exclude name="**/SERVICE-INF/src/**"/>
             </fileset>
         </copy>
-        <ant dir="apacheds/SERVICE-INF" target="build"/>
-        <ant dir="jmx/SERVICE-INF" target="build"/>
-        <ant dir="ldap/SERVICE-INF" target="build"/>
-        <ant dir="opends/SERVICE-INF" target="build"/>
     </target>
 
     <target name="check-install">

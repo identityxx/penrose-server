@@ -27,7 +27,7 @@ public class OpenDSLDAPService extends LDAPService {
 
     public void init() throws Exception {
 
-        PenroseServer penroseServer = getPenroseServer();
+        PenroseServer penroseServer = serviceContext.getPenroseServer();
         System.setProperty("org.opends.server.ServerRoot", penroseServer.getHome());
 
         String home = penroseServer.getHome();
@@ -91,7 +91,7 @@ public class OpenDSLDAPService extends LDAPService {
 
         PluginConfigManager pluginConfigManager = DirectoryServer.getPluginConfigManager();
         JavaBackendPlugin javaBackend = (JavaBackendPlugin)pluginConfigManager.getRegisteredPlugin(DN.decode("cn=Java Backend,cn=Plugins,cn=config"));
-        javaBackend.setBackend(new PenroseBackend(getPenroseServer()));
+        javaBackend.setBackend(new PenroseBackend(serviceContext.getPenroseServer()));
 
         log.warn("Listening to port "+value.getStringValue()+" (LDAP).");
     }

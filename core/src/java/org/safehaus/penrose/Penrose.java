@@ -208,17 +208,17 @@ public class Penrose {
 
         penroseContext.start();
 
-        String dir = (home == null ? "" : home+ File.separator)+"partitions";
+        String base = (home == null ? "" : home+ File.separator)+"partitions";
 
-        File partitionsDir = new File(dir);
+        File partitionsDir = new File(base);
         if (!partitionsDir.isDirectory()) return;
 
-        for (File file : partitionsDir.listFiles()) {
-            if (!file.isDirectory()) continue;
+        for (File partitionDir : partitionsDir.listFiles()) {
+            if (!partitionDir.isDirectory()) continue;
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
-            PartitionConfig partitionConfig = partitionConfigs.load(file);
+            PartitionConfig partitionConfig = partitionConfigs.load(partitionDir);
             String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {
@@ -238,7 +238,12 @@ public class Penrose {
 
             log.debug("Starting "+name+" partition.");
 
-            partitions.init(penroseConfig, penroseContext, partitionConfig);
+            PartitionContext partitionContext = new PartitionContext();
+            partitionContext.setPath(partitionDir.getAbsolutePath());
+            partitionContext.setPenroseConfig(penroseConfig);
+            partitionContext.setPenroseContext(penroseContext);
+
+            partitions.init(partitionConfig, partitionContext);
         }
 
         sessionContext.start();

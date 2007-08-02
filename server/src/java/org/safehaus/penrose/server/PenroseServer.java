@@ -22,10 +22,7 @@ import java.io.File;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.service.Services;
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.service.Service;
-import org.safehaus.penrose.service.ServiceConfigs;
+import org.safehaus.penrose.service.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.config.*;
@@ -88,15 +85,15 @@ public class PenroseServer {
         penrose.start();
 
         String home = penrose.getHome();
-        String dir = (home == null ? "" : home+File.separator) + "services";
+        String base = (home == null ? "" : home+File.separator) + "services";
 
-        File servicesDir = new File(dir);
+        File servicesDir = new File(base);
         if (!servicesDir.isDirectory()) return;
 
-        for (File file : servicesDir.listFiles()) {
-            if (!file.isDirectory()) continue;
+        for (File serviceDir : servicesDir.listFiles()) {
+            if (!serviceDir.isDirectory()) continue;
 
-            ServiceConfig serviceConfig = serviceConfigs.load(file);
+            ServiceConfig serviceConfig = serviceConfigs.load(serviceDir);
             String name = serviceConfig.getName();
 
             if (!serviceConfig.isEnabled()) {
@@ -106,7 +103,11 @@ public class PenroseServer {
 
             log.debug("Starting "+name+" service.");
 
-            Service service = services.init(this, serviceConfig);
+            ServiceContext serviceContext = new ServiceContext();
+            serviceContext.setPath(serviceDir.getAbsolutePath());
+            serviceContext.setPenroseServer(this);
+
+            Service service = services.init(serviceConfig, serviceContext);
             service.start();
         }
     }

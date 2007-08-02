@@ -34,7 +34,7 @@ public class Services implements ServicesMBean {
 
     private Map<String,Service> services = new LinkedHashMap<String,Service>();
 
-    public Service init(PenroseServer penroseServer, ServiceConfig serviceConfig) throws Exception {
+    public Service init(ServiceConfig serviceConfig, ServiceContext serviceContext) throws Exception {
 
         Collection<URL> classPaths = serviceConfig.getClassPaths();
         URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]));
@@ -43,8 +43,8 @@ public class Services implements ServicesMBean {
         Service service = (Service)clazz.newInstance();
 
         service.setServiceConfig(serviceConfig);
+        service.setServiceContext(serviceContext);
         service.setClassLoader(classLoader);
-        service.setPenroseServer(penroseServer);
         service.init();
 
         addService(serviceConfig.getName(), service);

@@ -24,7 +24,6 @@ import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.config.PenroseConfig;

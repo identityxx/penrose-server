@@ -52,10 +52,10 @@ public class ApacheDSLDAPService extends LDAPService {
 
         setStatus(STARTING);
 
-        PenroseServer penroseServer = getPenroseServer();
+        PenroseServer penroseServer = serviceContext.getPenroseServer();
         Penrose penrose = penroseServer.getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String home = penrose.getHome();
+        String path = serviceContext.getPath();
 
         Backend backend = new PenroseBackend(penroseServer);
 
@@ -76,7 +76,7 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setMaxThreads(maxThreads);
 
         // Configure working directory
-        String workingDirectory = (home == null ? "" : home+File.separator)+"var"+File.separator+"data";
+        String workingDirectory = (path == null ? "" : path+File.separator)+"var"+File.separator+"data";
         configuration.setWorkingDirectory(new File(workingDirectory));
 
         // Configure bootstrap schemas
@@ -216,7 +216,7 @@ public class ApacheDSLDAPService extends LDAPService {
 
         setStatus(STOPPING);
         
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         Hashtable<String,Object> env = new ShutdownConfiguration().toJndiEnvironment();

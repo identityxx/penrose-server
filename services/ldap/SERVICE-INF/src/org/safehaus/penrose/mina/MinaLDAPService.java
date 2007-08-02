@@ -39,7 +39,7 @@ public class MinaLDAPService extends LDAPService {
     public void init() throws Exception {
         super.init();
 
-        PenroseServer penroseServer = getPenroseServer();
+        PenroseServer penroseServer = serviceContext.getPenroseServer();
         Penrose penrose = penroseServer.getPenrose();
         PenroseContext penroseContext = penrose.getPenroseContext();
 

@@ -69,6 +69,13 @@
         <tar destfile="target/${product.name}-schema.tar.gz" compression="gzip">
             <tarfileset dir="schema"/>
         </tar>
+        <tar destfile="target/${product.name}-services.tar.gz" compression="gzip">
+            <tarfileset dir="services">
+                <exclude name="**/build.xml"/>
+                <exclude name="**/src/"/>
+                <exclude name="**/target/"/>
+            </tarfileset>
+        </tar>
         <tar destfile="target/${product.name}-docs.tar.gz" compression="gzip">
             <tarfileset dir="core/target" includes="javadoc/**"/>
             <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>

@@ -307,17 +307,17 @@ public class CacheUtil {
         PartitionConfigs partitionConfigs = new PartitionConfigs();
         Partitions partitions = new Partitions();
 
-        String dir = (home == null ? "" : home+ File.separator)+"partitions";
+        String base = (home == null ? "" : home+ File.separator)+"partitions";
 
-        File partitionsDir = new File(dir);
+        File partitionsDir = new File(base);
         if (!partitionsDir.isDirectory()) return;
 
-        for (File file : partitionsDir.listFiles()) {
-            if (!file.isDirectory()) continue;
+        for (File dir : partitionsDir.listFiles()) {
+            if (!dir.isDirectory()) continue;
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
-            PartitionConfig partitionConfig = partitionConfigs.load(file);
+            PartitionConfig partitionConfig = partitionConfigs.load(dir);
             String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {
@@ -327,7 +327,12 @@ public class CacheUtil {
 
             log.debug("Starting "+name+" partition.");
 
-            partitions.init(penroseConfig, penroseContext, partitionConfig);
+            PartitionContext partitionContext = new PartitionContext();
+            partitionContext.setPath(dir.getAbsolutePath());
+            partitionContext.setPenroseConfig(penroseConfig);
+            partitionContext.setPenroseContext(penroseContext);
+
+            partitions.init(partitionConfig, partitionContext);
         }
 
         CacheUtil cacheManager = new CacheUtil(partitions);

@@ -72,7 +72,11 @@ public class StaticTestCase extends TestCase {
 
         partitionConfig.getDirectoryConfigs().addEntryMapping(member2);
 
-        partitions.init(penroseConfig, penroseContext, partitionConfig);
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitions.init(partitionConfig, partitionContext);
     }
     
     public void testDummy()

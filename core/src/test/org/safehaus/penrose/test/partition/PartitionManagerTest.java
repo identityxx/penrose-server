@@ -33,6 +33,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.PartitionContext;
 
 /**
  * @author Endi S. Dewata
@@ -83,7 +84,11 @@ public class PartitionManagerTest extends TestCase {
         entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
         partitionConfig.getDirectoryConfigs().addEntryMapping(entryMapping);
 
-        partitions.init(penroseConfig, penroseContext, partitionConfig);
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitions.init(partitionConfig, partitionContext);
 
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");

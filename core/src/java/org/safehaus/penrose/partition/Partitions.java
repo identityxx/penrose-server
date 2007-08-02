@@ -35,11 +35,10 @@ public class Partitions implements PartitionsMBean {
     public Partitions() {
     }
 
-    public Partition init(PenroseConfig penroseConfig, PenroseContext penroseContext, PartitionConfig partitionConfig) throws Exception {
+    public Partition init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
 
         Partition partition = new Partition(partitionConfig);
-        partition.setPenroseConfig(penroseConfig);
-        partition.setPenroseContext(penroseContext);
+        partition.setPartitionContext(partitionContext);
 
         for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
             if (!connectionConfig.isEnabled()) continue;

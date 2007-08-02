@@ -12,6 +12,7 @@ import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
@@ -100,7 +101,12 @@ public class Demo {
         PenroseContext penroseContext = penrose.getPenroseContext();
 
         Partitions partitions = penrose.getPartitions();
-        partitions.init(penroseConfig, penroseContext, partitionConfig);
+
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitions.init(partitionConfig, partitionContext);
 
 
         log.warn("Connecting to Penrose.");

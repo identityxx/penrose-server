@@ -26,10 +26,10 @@
       <excludeFolder url="file://$MODULE_DIR$/core/target/tests" />
       <excludeFolder url="file://$MODULE_DIR$/server/dist" />
       <excludeFolder url="file://$MODULE_DIR$/server/target" />
-      <excludeFolder url="file://$MODULE_DIR$/services/apacheds/SERVICE-INF/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/services/ldap/SERVICE-INF/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/services/opends/SERVICE-INF/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/services/apacheds/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/ldap/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/opends/SERVICE-INF/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

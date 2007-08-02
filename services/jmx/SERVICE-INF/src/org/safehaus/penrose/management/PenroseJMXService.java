@@ -117,7 +117,7 @@ public class PenroseJMXService extends Service {
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
         if (!mbeanServer.isRegistered(penroseServiceName)) {
-            penroseService = new PenroseService(getPenroseServer());
+            penroseService = new PenroseService(serviceContext.getPenroseServer());
             mbeanServer.registerMBean(penroseService, penroseServiceName);
         }
 
@@ -139,7 +139,7 @@ public class PenroseJMXService extends Service {
             url += "/jmx";
 
             JMXServiceURL serviceURL = new JMXServiceURL(url);
-            jmxAuthenticator = new PenroseJMXAuthenticator(getPenroseServer().getPenrose());
+            jmxAuthenticator = new PenroseJMXAuthenticator(serviceContext.getPenroseServer().getPenrose());
 
             HashMap<String,Object> environment = new HashMap<String,Object>();
             environment.put("jmx.remote.authenticator", jmxAuthenticator);
@@ -241,7 +241,7 @@ public class PenroseJMXService extends Service {
 
     public void registerConfigs() throws Exception {
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         register("Penrose Config:type=PenroseConfig", penroseConfig);
@@ -265,7 +265,7 @@ public class PenroseJMXService extends Service {
 
     public void unregisterConfigs() throws Exception {
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
         Partitions partitions = penrose.getPartitions();
@@ -288,7 +288,7 @@ public class PenroseJMXService extends Service {
     }
 
     public void registerServices() throws Exception {
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         PenroseContext penroseContext = penrose.getPenroseContext();
 
         register("Penrose:service=SchemaManager", penroseContext.getSchemaManager());
@@ -298,7 +298,7 @@ public class PenroseJMXService extends Service {
         SessionContext sessionContext = penrose.getSessionContext();
 
         register("Penrose:service=SessionManager", sessionContext.getSessionManager());
-        register("Penrose:service=Services", getPenroseServer().getServices());
+        register("Penrose:service=Services", serviceContext.getPenroseServer().getServices());
     }
 
     public void unregisterServices() throws Exception {
@@ -311,7 +311,7 @@ public class PenroseJMXService extends Service {
 
     public void registerPartitions() throws Exception {
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         Partitions partitions = penrose.getPartitions();
 
         for (Partition partition : partitions.getPartitions()) {
@@ -327,7 +327,7 @@ public class PenroseJMXService extends Service {
 
     public void unregisterPartitions() throws Exception {
 
-        Penrose penrose = getPenroseServer().getPenrose();
+        Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         Partitions partitions = penrose.getPartitions();
 
         for (Partition partition : partitions.getPartitions()) {
