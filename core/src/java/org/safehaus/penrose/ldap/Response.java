@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class Response {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
     protected Collection<Control> controls   = new ArrayList<Control>();

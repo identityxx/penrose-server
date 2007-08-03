@@ -8,23 +8,23 @@ import org.safehaus.penrose.filter.Filter;
 public class JoinClause {
 
     private String type;
-    private Filter filter;
-    private String sql;
+    private Filter condition;
+    private String where;
 
-    public Filter getFilter() {
-        return filter;
+    public Filter getCondition() {
+        return condition;
     }
 
-    public void setFilter(Filter filter) {
-        this.filter = filter;
+    public void setCondition(Filter condition) {
+        this.condition = condition;
     }
 
-    public String getSql() {
-        return sql;
+    public String getWhere() {
+        return where;
     }
 
-    public void setSql(String sql) {
-        this.sql = sql;
+    public void setWhere(String where) {
+        this.where = where;
     }
 
     public String getType() {

@@ -81,7 +81,11 @@ public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
                     newAttributes.print();
                 }
 
-                destination.add(newDn, newAttributes);
+                try {
+                    destination.add(newDn, newAttributes);
+                } catch (Exception e) {
+                    errorLog.error(e.getMessage(), e);
+                }
             }
         }
 

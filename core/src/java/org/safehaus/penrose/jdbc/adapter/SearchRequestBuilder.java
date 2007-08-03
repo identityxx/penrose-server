@@ -81,15 +81,15 @@ public class SearchRequestBuilder extends RequestBuilder {
         return joinType;
     }
 
-    public Filter generateJoinFilter(SourceRef sourceRef) throws Exception {
-        return generateJoinFilter(sourceRef, sourceRef.getAlias());
-    }
-
-    public String generateJoinOn(SourceRef sourceRef) throws Exception {
+    public Filter generateJoinOn(SourceRef sourceRef) throws Exception {
         return generateJoinOn(sourceRef, sourceRef.getAlias());
     }
 
-    public Filter generateJoinFilter(SourceRef sourceRef, String alias) throws Exception {
+    public String generateJoinFilter(SourceRef sourceRef) throws Exception {
+        return generateJoinFilter(sourceRef, sourceRef.getAlias());
+    }
+
+    public Filter generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
 
         if (debug) log.debug(" - Join on:");
 
@@ -155,7 +155,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         return filter;
     }
 
-    public String generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
+    public String generateJoinFilter(SourceRef sourceRef, String alias) throws Exception {
 
         if (debug) log.debug(" - Join filter:");
 
@@ -215,28 +215,28 @@ public class SearchRequestBuilder extends RequestBuilder {
 
             statement.addSourceRef(sourceRef);
 
-            // join previous table
-            if (sourceCounter > 0) {
+            if (sourceCounter == 0) { // join previous source
+                String where = sourceRef.getParameter(JDBCClient.FILTER);
+                if (where != null) filters.add(where);
+
+                Source source = sourceRef.getSource();
+                where = source.getParameter(JDBCClient.FILTER);
+                if (where != null) {
+                    where = where.replaceAll(source.getName()+".", alias+".");
+                    filters.add(where);
+                }
+                
+            } else { // add filter of first source
                 String joinType = generateJoinType(sourceRef);
-                Filter joinFilter = generateJoinFilter(sourceRef);
-                String joinOn = generateJoinOn(sourceRef);
+                Filter joinCondition = generateJoinOn(sourceRef);
+                String joinWhere = generateJoinFilter(sourceRef);
 
                 JoinClause joinClause = new JoinClause();
                 joinClause.setType(joinType);
-                joinClause.setFilter(joinFilter);
-                joinClause.setSql(joinOn);
+                joinClause.setCondition(joinCondition);
+                joinClause.setWhere(joinWhere);
 
                 statement.addJoin(joinClause);
-            }
-
-            String where = sourceRef.getParameter(JDBCClient.FILTER);
-            if (where != null) filters.add(where);
-
-            Source source = sourceRef.getSource();
-            where = source.getParameter(JDBCClient.FILTER);
-            if (where != null) {
-                where = where.replaceAll(source.getName()+".", alias+".");
-                filters.add(where);
             }
 
             statement.addOrders(sourceRef.getPrimaryKeyFieldRefs());
@@ -263,13 +263,13 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.addSourceRef(alias, sourceRef);
 
             String joinType = generateJoinType(sourceRef);
-            Filter joinFilter = generateJoinFilter(sourceRef, alias);
-            String joinOn = generateJoinOn(sourceRef, alias);
+            Filter joinCondition = generateJoinOn(sourceRef, alias);
+            String joinWhere = generateJoinFilter(sourceRef, alias);
 
             JoinClause joinClause = new JoinClause();
             joinClause.setType(joinType);
-            joinClause.setFilter(joinFilter);
-            joinClause.setSql(joinOn);
+            joinClause.setCondition(joinCondition);
+            joinClause.setWhere(joinWhere);
 
             statement.addJoin(joinClause);
         }

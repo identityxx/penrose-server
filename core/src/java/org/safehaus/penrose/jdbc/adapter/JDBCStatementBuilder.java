@@ -96,8 +96,8 @@ public class JDBCStatementBuilder {
 
             JoinClause joinClause = (JoinClause)j.next();
             String joinType = joinClause.getType();
-            Filter joinFilter = joinClause.getFilter();
-            String joinOn = joinClause.getSql();
+            Filter joinCondition = joinClause.getCondition();
+            String joinWhere = joinClause.getWhere();
 
             sb.append(" ");
             sb.append(joinType);
@@ -110,7 +110,7 @@ public class JDBCStatementBuilder {
 
             sb.append(" on ");
 
-            if (joinOn != null) {
+            if (joinWhere != null) {
                 sb.append("(");
             }
 
@@ -122,14 +122,14 @@ public class JDBCStatementBuilder {
                 filterBuilder.addSourceRef(cn, sr);
             }
 
-            filterBuilder.generate(joinFilter);
+            filterBuilder.generate(joinCondition);
 
             String sqlFilter = filterBuilder.getSql();
             sb.append(sqlFilter);
 
-            if (joinOn != null) {
+            if (joinWhere != null) {
                 sb.append(") and (");
-                sb.append(joinOn);
+                sb.append(joinWhere);
                 sb.append(")");
             }
         }
