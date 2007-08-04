@@ -23,30 +23,28 @@ import com.identyx.javabackend.opends.JavaBackendPlugin;
 public class OpenDSLDAPService extends LDAPService {
 
     String configClass = ConfigFileHandler.class.getName();
-    String configFile;
+    File configFile;
 
     public void init() throws Exception {
 
         PenroseServer penroseServer = serviceContext.getPenroseServer();
-        System.setProperty("org.opends.server.ServerRoot", penroseServer.getHome());
+        System.setProperty("org.opends.server.ServerRoot", penroseServer.getHome().getAbsolutePath());
 
-        String home = penroseServer.getHome();
+        File home = penroseServer.getHome();
         //String home = penroseServer.getHome()+File.separator+"services"+File.separator+"opends";
 
-        configFile = home+File.separator+"config"+File.separator+"config.ldif";
+        configFile = new File(home, "config"+File.separator+"config.ldif");
         log.debug("Config file: "+configFile);
 
         try {
-            String logs = home+File.separator+"logs";
-            String pidFilePath = logs+File.separator+"server.pid";
-            String startingFilePath = logs+File.separator+"server.starting";
+            File logs = new File(home, "logs");
 
-            File pidFile = new File(pidFilePath);
+            File pidFile = new File(logs, "server.pid");
             if (pidFile.exists()) {
                 pidFile.deleteOnExit();
             }
 
-            File startingFile = new File(startingFilePath);
+            File startingFile = new File(logs, "server.starting");
             if (startingFile.exists()) {
                 startingFile.deleteOnExit();
             }
@@ -64,7 +62,7 @@ public class OpenDSLDAPService extends LDAPService {
 
         directoryServer.initializeConfiguration(
                 configClass,
-                configFile
+                configFile.getAbsolutePath()
         );
 
         ConfigHandler configHandler = DirectoryServer.getConfigHandler();

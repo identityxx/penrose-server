@@ -20,7 +20,7 @@ public class ServiceConfigs implements ServiceConfigsMBean {
     private Map<String,ServiceConfig> serviceConfigs = new LinkedHashMap<String,ServiceConfig>();
 
     public ServiceConfig load(File dir) throws Exception {
-        log.debug("Loading service from "+dir.getAbsolutePath()+".");
+        log.debug("Loading service from "+dir+".");
         ServiceConfig serviceConfig = serviceReader.read(dir);
 
         addServiceConfig(serviceConfig);

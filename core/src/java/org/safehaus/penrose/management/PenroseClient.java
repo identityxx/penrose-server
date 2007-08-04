@@ -178,6 +178,10 @@ public class PenroseClient {
         return (String)connection.getAttribute(name, "ProductVersion");
     }
 
+    public Collection<String> getPartitionNames() throws Exception {
+        return (Collection<String>)connection.getAttribute(name, "PartitionNames");
+    }
+
     public Collection<String> getServiceNames() throws Exception {
         return (Collection<String>)connection.getAttribute(name, "ServiceNames");
     }

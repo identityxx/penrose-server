@@ -5,11 +5,11 @@
         property*,
         schema*,
         interpreter*,
-        session*,
-        handler*,
         engine*,
-        connector*,
+        handler*,
         adapter*,
+        session*,
+        connector*,
         root
 )>
 
@@ -23,13 +23,13 @@
 <!ATTLIST schema name CDATA #IMPLIED>
 <!ATTLIST schema path CDATA #REQUIRED>
 
+<!ELEMENT session (description?, parameter*)>
+<!ATTLIST session name CDATA #IMPLIED>
+
 <!ELEMENT interpreter (interpreter-name?,interpreter-class?, description?, parameter*)>
 <!ATTLIST interpreter name CDATA #IMPLIED>
 <!ELEMENT interpreter-name (#PCDATA)>
 <!ELEMENT interpreter-class (#PCDATA)>
-
-<!ELEMENT session (description?, parameter*)>
-<!ATTLIST session name CDATA #IMPLIED>
 
 <!ELEMENT handler (handler-name?, handler-class?, description?, parameter*)>
 <!ATTLIST handler name CDATA #IMPLIED>

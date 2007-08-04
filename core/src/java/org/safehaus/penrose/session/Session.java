@@ -1017,9 +1017,8 @@ public class Session {
 
     public void setSessionContext(SessionContext sessionContext) {
         this.sessionContext = sessionContext;
-
-        handlerManager = sessionContext.getHandlerManager();
         eventManager = sessionContext.getEventManager();
+        handlerManager = sessionContext.getHandlerManager();
     }
 
     public PenroseConfig getPenroseConfig() {

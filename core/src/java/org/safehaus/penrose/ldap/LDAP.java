@@ -33,6 +33,9 @@ public class LDAP {
 
     public static Logger log = LoggerFactory.getLogger(LDAP.class);
 
+    public final static DN ROOT_DSE_DN = new DN("");
+    public final static DN SCHEMA_DN   = new DN("cn=Subschema");
+
     public static final int SUCCESS = 0;
     public static final int OPERATIONS_ERROR = 1;
     public static final int PROTOCOL_ERROR = 2;

@@ -18,20 +18,16 @@
 package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
-import org.safehaus.penrose.acl.ACLManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineManager;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
@@ -51,31 +47,13 @@ public abstract class Handler {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    public final static String STOPPED  = "STOPPED";
-    public final static String STARTING = "STARTING";
-    public final static String STARTED  = "STARTED";
-    public final static String STOPPING = "STOPPING";
-
     public final static String  FETCH         = "fetch";
     public final static boolean DEFAULT_FETCH = false;
 
-    protected PenroseConfig      penroseConfig;
-    protected PenroseContext     penroseContext;
-    protected SessionContext     sessionContext;
-
     protected HandlerConfig      handlerConfig;
+    protected Partition          partition;
+    protected PenroseContext     penroseContext;
 
-    protected ThreadManager      threadManager;
-    protected SchemaManager      schemaManager;
-    protected InterpreterManager interpreterManager;
-
-    protected SessionManager     sessionManager;
-    protected HandlerManager     handlerManager;
-
-    protected EngineManager      engineManager;
-    protected ACLManager         aclManager;
-
-    protected String status = STOPPED;
     protected boolean fetch = DEFAULT_FETCH;
 
     public Handler() throws Exception {
@@ -84,58 +62,16 @@ public abstract class Handler {
     public void init(HandlerConfig handlerConfig) throws Exception {
         this.handlerConfig = handlerConfig;
 
-        threadManager      = penroseContext.getThreadManager();
-        schemaManager      = penroseContext.getSchemaManager();
-        interpreterManager = penroseContext.getInterpreterManager();
-
-        engineManager      = sessionContext.getEngineManager();
-        aclManager         = sessionContext.getAclManager();
-
-        handlerManager     = sessionContext.getHandlerManager();
-        sessionManager     = sessionContext.getSessionManager();
+        init();
     }
 
-    public void start() throws Exception {
-
-        if (!STOPPED.equals(status)) return;
-
-        //log.debug("Starting SessionHandler...");
-
-        try {
-            status = STARTING;
-            status = STARTED;
-
-            //log.debug("SessionHandler started.");
-
-        } catch (Exception e) {
-            status = STOPPED;
-            log.error(e.getMessage(), e);
-            throw e;
-        }
+    public void init() throws Exception {
     }
 
-    public void stop() throws Exception {
-
-        if (!STARTED.equals(status)) return;
-
-        try {
-            status = STOPPING;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-
-        status = STOPPED;
+    public String getName() {
+        return handlerConfig.getName();
     }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +112,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.add(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -215,7 +152,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.bind(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -254,7 +192,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.compare(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -270,7 +209,8 @@ public abstract class Handler {
             UnbindResponse response
     ) throws Exception {
 
-        //Engine engine = getEngine(partition, entryMapping);
+        //Partitions partitions = penroseContext.getPartitions();
+        //Engine engine = getEngine(partition, this, entryMapping);
 
         //engine.unbind(session, partition, entryMapping, bindDn);
     }
@@ -286,7 +226,8 @@ public abstract class Handler {
             DN dn
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         return engine.find(session, partition, entryMapping, dn);
     }
 
@@ -325,7 +266,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.delete(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -364,7 +306,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.modify(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -403,7 +346,8 @@ public abstract class Handler {
             sourceValues.print();
         }
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.modrdn(session, partition, entryMapping, sourceValues, request, response);
     }
 
@@ -447,7 +391,8 @@ public abstract class Handler {
             final SearchResponse<SearchResult> response
     ) throws Exception {
 
-        Engine engine = getEngine(partition, entryMapping);
+        Partitions partitions = penroseContext.getPartitions();
+        Engine engine = partitions.getEngine(partition, this, entryMapping);
         engine.search(
                 session,
                 partition,
@@ -461,56 +406,6 @@ public abstract class Handler {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscelleanous
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public EngineManager getEngineManager() {
-        return engineManager;
-    }
-
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    public Engine getEngine(Partition partition, EntryMapping entryMapping) {
-        String engineName = entryMapping.getEngineName();
-        if (engineName != null) return engineManager.getEngine(engineName);
-
-        engineName = partition.getEngineName();
-        if (engineName != null) return engineManager.getEngine(engineName);
-
-        return engineManager.getEngine("DEFAULT");
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
-    public SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
-
-    public InterpreterManager getInterpreterFactory() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterFactory(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
 
     public HandlerConfig getHandlerConfig() {
         return handlerConfig;
@@ -528,14 +423,6 @@ public abstract class Handler {
         this.penroseContext = penroseContext;
     }
 
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    public void setSessionContext(SessionContext sessionContext) {
-        this.sessionContext = sessionContext;
-    }
-
     public void extractSourceValues(
             Partition partition,
             EntryMapping entryMapping,
@@ -543,6 +430,7 @@ public abstract class Handler {
             SourceValues sourceValues
     ) throws Exception {
 
+        InterpreterManager interpreterManager = penroseContext.getInterpreterManager();
         Interpreter interpreter = interpreterManager.newInstance();
 
         if (debug) log.debug("Extracting source values from "+dn);
@@ -630,5 +518,16 @@ public abstract class Handler {
         }
     }
 
+    public Partition getPartition() {
+        return partition;
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
+    }
+
+    public String getEngineName() {
+        return null;
+    }
 }
 

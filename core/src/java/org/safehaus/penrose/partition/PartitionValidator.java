@@ -83,7 +83,7 @@ public class PartitionValidator {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing adapter name.", name + ": " + connectionName, connectionConfig));
 
             } else if (penroseConfig != null) {
-                AdapterConfig adapterConfig = connections.getAdapterConfig(adapterName);
+                AdapterConfig adapterConfig = partitionConfig.getAdapterConfig(adapterName);
 
                 if (adapterConfig == null) {
                     adapterConfig = penroseConfig.getAdapterConfig(adapterName);

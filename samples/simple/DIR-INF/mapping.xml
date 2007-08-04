@@ -97,6 +97,7 @@
         <variable>memberOf</variable>
       </field>
     </source>
+    <handler>SIMPLE</handler>
   </entry>
 
   <entry dn="ou=Groups,dc=Simple,dc=Example,dc=com">
@@ -117,6 +118,7 @@
         <variable>cn</variable>
       </field>
     </source>
+    <handler>SIMPLE</handler>
   </entry>
 
 </mapping>

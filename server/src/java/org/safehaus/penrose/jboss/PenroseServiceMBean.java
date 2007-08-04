@@ -30,7 +30,6 @@ public interface PenroseServiceMBean extends Service {
     public String getProductVersion() throws Exception;
 
     public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
 
     public void start() throws Exception;
     public void stop();

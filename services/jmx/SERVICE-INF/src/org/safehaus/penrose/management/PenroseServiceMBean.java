@@ -27,23 +27,23 @@ public interface PenroseServiceMBean {
     public String getProductVersion() throws Exception;
 
     public String getHome() throws Exception;
-    public void setHome(String home) throws Exception;
 
     public void start() throws Exception;
     public void stop() throws Exception;
     public void reload() throws Exception;
     public void restart() throws Exception;
 
-    public Collection getServiceNames() throws Exception;
+    public Collection<String> getPartitionNames() throws Exception;
+    public Collection<String> getServiceNames() throws Exception;
     public void start(String serviceName) throws Exception;
     public void stop(String serviceName) throws Exception;
     public String getStatus(String serviceName) throws Exception;
 
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;
-    public Collection listFiles(String directory) throws Exception;
+    public Collection<String> listFiles(String directory) throws Exception;
 
-    public Collection getLoggerNames() throws Exception;
+    public Collection<String> getLoggerNames() throws Exception;
     public String getLoggerLevel(String name) throws Exception;
     public void setLoggerLevel(String name, String level) throws Exception;
 }

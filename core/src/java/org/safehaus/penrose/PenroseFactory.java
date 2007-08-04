@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 
 import java.net.URL;
 import java.util.Properties;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -68,7 +69,15 @@ public class PenroseFactory {
         return new Penrose(home);
     }
 
+    public Penrose createPenrose(File home) throws Exception {
+        return new Penrose(home);
+    }
+
     public Penrose createPenrose(String home, PenroseConfig penroseConfig) throws Exception {
+        return new Penrose(home, penroseConfig);
+    }
+
+    public Penrose createPenrose(File home, PenroseConfig penroseConfig) throws Exception {
         return new Penrose(home, penroseConfig);
     }
 

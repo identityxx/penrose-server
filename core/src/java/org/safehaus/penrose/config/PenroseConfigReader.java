@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import java.io.Reader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.File;
 import java.net.URL;
 
 /**
@@ -40,8 +41,12 @@ public class PenroseConfigReader implements EntityResolver {
     Reader reader;
 
     public PenroseConfigReader(String filename) throws Exception {
-        log.debug("Loading Penrose configuration: "+filename);
-        init(new FileReader(filename));
+        this(new File(filename));
+    }
+
+    public PenroseConfigReader(File file) throws Exception {
+        log.debug("Loading Penrose configuration: "+file);
+        init(new FileReader(file));
     }
 
     public PenroseConfigReader(Reader reader) throws Exception {

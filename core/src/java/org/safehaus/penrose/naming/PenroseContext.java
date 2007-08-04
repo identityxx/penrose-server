@@ -14,6 +14,8 @@ import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+
 /**
  * @author Endi S. Dewata
  */
@@ -30,18 +32,18 @@ public class PenroseContext {
     public final static String HANDLER_MANAGER     = "java:comp/org/safehaus/penrose/handler/HandlerManager";
     public final static String EVENT_MANAGER       = "java:comp/org/safehaus/penrose/event/EventManager";
 
-    public final static String ENGINE_MANAGER      = "java:comp/org/safehaus/penrose/engine/EngineManager";
     public final static String INTERPRETER_MANAGER = "java:comp/org/safehaus/penrose/interpreter/InterpreterManager";
     public final static String CONNECTOR_MANAGER   = "java:comp/org/safehaus/penrose/connector/ConnectorManager";
 
     public final static String PARTITION_MANAGER   = "java:comp/org/safehaus/penrose/partition/PartitionManager";
 
-    private String             home;
+    private File               home;
     private PenroseConfig      penroseConfig;
 
     private ThreadManager      threadManager;
     private SchemaManager      schemaManager;
     private FilterEvaluator    filterEvaluator;
+
     private InterpreterManager interpreterManager;
 
     private ConnectorManager   connectorManager;
@@ -51,7 +53,7 @@ public class PenroseContext {
 
     private SessionContext     sessionContext;
 
-    public PenroseContext(String home) {
+    public PenroseContext(File home) {
         this.home = home;
     }
 
@@ -180,11 +182,11 @@ public class PenroseContext {
         this.filterEvaluator = filterEvaluator;
     }
 
-    public String getHome() {
+    public File getHome() {
         return home;
     }
 
-    public void setHome(String home) {
+    public void setHome(File home) {
         this.home = home;
     }
 }

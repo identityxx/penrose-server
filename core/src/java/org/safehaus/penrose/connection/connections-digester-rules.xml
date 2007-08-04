@@ -26,19 +26,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 	<pattern value="connections">
 
-        <pattern value="adapter">
-
-            <object-create-rule classname="org.safehaus.penrose.adapter.AdapterConfig" />
-            <set-properties-rule/>
-
-            <call-method-rule pattern="adapter-name" methodname="setName" paramcount="0" />
-            <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-
-            <set-next-rule methodname="addAdapterConfig" />
-
-        </pattern>
-
         <pattern value="connection">
 
             <object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -45,6 +46,10 @@ public class SchemaManager implements SchemaManagerMBean {
     }
 
     public void init(String home, SchemaConfig schemaConfig) throws Exception {
+        init(new File(home), schemaConfig);
+    }
+
+    public void init(File home, SchemaConfig schemaConfig) throws Exception {
 
         Schema schema = getSchema(schemaConfig.getName());
         if (schema != null) return;

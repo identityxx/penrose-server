@@ -2,7 +2,6 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.mapping.EntryMapping;
@@ -37,8 +36,8 @@ public class DefaultHandler extends Handler {
     public DefaultHandler() throws Exception {
     }
 
-    public void init(HandlerConfig handlerConfig) throws Exception {
-        super.init(handlerConfig);
+    public void init() throws Exception {
+        super.init();
 
         String s = handlerConfig.getParameter(CACHE);
         boolean cacheEnabled = s == null ? DEFAULT_CACHE : Boolean.parseBoolean(s);
@@ -194,7 +193,7 @@ public class DefaultHandler extends Handler {
 
         for (EntryMapping em : c) {
 
-            Handler handler = handlerManager.getHandler(p, em);
+            Handler handler = partitions.getHandler(p, em);
 
             handler.search(
                     session,
@@ -332,6 +331,7 @@ public class DefaultHandler extends Handler {
             return;
         }
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
 
@@ -343,7 +343,7 @@ public class DefaultHandler extends Handler {
         for (Object aChildren : children) {
             EntryMapping childMapping = (EntryMapping) aChildren;
 
-            Handler handler = handlerManager.getHandler(partition, childMapping);
+            Handler handler = partitions.getHandler(partition, childMapping);
 
             handler.search(
                     session,

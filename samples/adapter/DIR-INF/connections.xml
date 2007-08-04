@@ -5,10 +5,6 @@
 
 <connections>
 
-  <adapter name="Demo">
-    <adapter-class>org.safehaus.penrose.example.adapter.DemoAdapter</adapter-class>
-  </adapter>
-
   <connection name="DemoDatabase">
     <adapter-name>Demo</adapter-name>
   </connection>

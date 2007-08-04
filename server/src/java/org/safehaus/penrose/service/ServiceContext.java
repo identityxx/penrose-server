@@ -2,20 +2,22 @@ package org.safehaus.penrose.service;
 
 import org.safehaus.penrose.server.PenroseServer;
 
+import java.io.File;
+
 /**
  * @author Endi Sukma Dewata
  */
 public class ServiceContext implements Cloneable {
     
-    protected String path;
+    protected File path;
 
     protected PenroseServer penroseServer;
 
-    public String getPath() {
+    public File getPath() {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(File path) {
         this.path = path;
     }
 

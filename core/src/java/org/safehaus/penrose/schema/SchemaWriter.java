@@ -38,8 +38,8 @@ public class SchemaWriter {
     public SchemaWriter() {
     }
 
-    public SchemaWriter(String directory) {
-        this.baseDir = new File(directory);
+    public SchemaWriter(File directory) {
+        this.baseDir = directory;
     }
 
     public void write(Schema schema) throws Exception {

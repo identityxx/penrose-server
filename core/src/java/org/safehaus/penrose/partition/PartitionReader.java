@@ -76,20 +76,18 @@ public class PartitionReader implements EntityResolver {
         return read(new File(dir));
     }
 
-    public PartitionConfig read(File baseDir) throws Exception {
+    public PartitionConfig read(File partitionDir) throws Exception {
 
-        PartitionConfig partitionConfig = new PartitionConfig();
+        PartitionConfig partitionConfig = new PartitionConfig(partitionDir.getName());
 
-        File dirInf = new File(baseDir, "DIR-INF");
+        File dirInf = new File(partitionDir, "DIR-INF");
 
         File partitionXml = new File(dirInf, "partition.xml");
         if (partitionXml.exists()) {
-            log.debug("Loading "+partitionXml.getAbsolutePath()+".");
+            log.debug("Loading "+partitionXml+".");
             digester.push(partitionConfig);
             digester.parse(partitionXml);
             digester.pop();
-        } else {
-            partitionConfig.setName(baseDir.getName());
         }
 
         //log.debug("Classpath:");
@@ -116,35 +114,44 @@ public class PartitionReader implements EntityResolver {
             }
         }
 
-        File connectionsXml = new File(dirInf, "connections.xml");
-        if (connectionsXml.exists()) {
-            log.debug("Loading "+connectionsXml.getAbsolutePath()+".");
-            ConnectionConfigs connections = partitionConfig.getConnectionConfigs();
-            connectionReader.read(connectionsXml, connections);
-        }
-
-        File sourcesXml = new File(dirInf, "sources.xml");
-        if (sourcesXml.exists()) {
-            log.debug("Loading "+sourcesXml.getAbsolutePath()+".");
-            SourceConfigs sources = partitionConfig.getSourceConfigs();
-            sourceReader.read(sourcesXml, sources);
-        }
-
-        File mappingXml = new File(dirInf, "mapping.xml");
-        if (mappingXml.exists()) {
-            log.debug("Loading "+mappingXml.getAbsolutePath()+".");
-            DirectoryConfigs mappings = partitionConfig.getDirectoryConfigs();
-            mappingReader.read(mappingXml, mappings);
-        }
-
-        File modulesFile = new File(dirInf, "modules.xml");
-        if (modulesFile.exists()) {
-            log.debug("Loading "+modulesFile.getAbsolutePath()+".");
-            ModuleConfigs modules = partitionConfig.getModuleConfigs();
-            moduleReader.read(modulesFile, modules);
-        }
+        read(dirInf, partitionConfig.getConnectionConfigs());
+        read(dirInf, partitionConfig.getSourceConfigs());
+        read(dirInf, partitionConfig.getDirectoryConfigs());
+        read(dirInf, partitionConfig.getModuleConfigs());
 
         return partitionConfig;
+    }
+
+    public void read(File dir, ConnectionConfigs connections) throws Exception {
+        File connectionsXml = new File(dir, "connections.xml");
+        if (!connectionsXml.exists()) return;
+
+        log.debug("Loading "+connectionsXml+".");
+        connectionReader.read(connectionsXml, connections);
+    }
+
+    public void read(File dir, SourceConfigs sources) throws Exception {
+        File sourcesXml = new File(dir, "sources.xml");
+        if (!sourcesXml.exists()) return;
+
+        log.debug("Loading "+sourcesXml+".");
+        sourceReader.read(sourcesXml, sources);
+    }
+
+    public void read(File dir, DirectoryConfigs mappings) throws Exception {
+        File mappingXml = new File(dir, "mapping.xml");
+        if (!mappingXml.exists()) return;
+
+        log.debug("Loading "+mappingXml+".");
+        mappingReader.read(mappingXml, mappings);
+    }
+
+    public void read(File dir, ModuleConfigs modules) throws Exception {
+        File modulesFile = new File(dir, "modules.xml");
+        if (!modulesFile.exists()) return;
+
+        log.debug("Loading "+modulesFile+".");
+        moduleReader.read(modulesFile, modules);
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {

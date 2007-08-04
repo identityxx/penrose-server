@@ -21,6 +21,10 @@ import org.safehaus.penrose.connection.ConnectionConfigs;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.safehaus.penrose.module.ModuleConfigs;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -38,8 +42,10 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     private String name;
     private String description;
 
-    private String handlerName;
-    private String engineName;
+    private Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
+    private Map<String,EngineConfig>      engineConfigs      = new LinkedHashMap<String,EngineConfig>();
+    private Map<String,HandlerConfig>     handlerConfigs     = new LinkedHashMap<String,HandlerConfig>();
+    private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
     public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -63,22 +69,6 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getHandlerName() {
-        return handlerName;
-    }
-
-    public void setHandlerName(String handlerName) {
-        this.handlerName = handlerName;
-    }
-
-    public String getEngineName() {
-        return engineName;
-    }
-
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
     }
 
     public Map<String,String> getParameters() {
@@ -128,8 +118,10 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         if (!equals(name, partitionConfig.name)) return false;
         if (!equals(description, partitionConfig.description)) return false;
 
-        if (!equals(handlerName, partitionConfig.handlerName)) return false;
-        if (!equals(engineName, partitionConfig.engineName)) return false;
+        if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
+        if (!equals(handlerConfigs, partitionConfig.handlerConfigs)) return false;
+        if (!equals(engineConfigs, partitionConfig.engineConfigs)) return false;
+        if (!equals(interpreterConfigs, partitionConfig.interpreterConfigs)) return false;
 
         if (!equals(parameters, partitionConfig.parameters)) return false;
 
@@ -143,8 +135,25 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
         partitionConfig.enabled = enabled;
         partitionConfig.description = description;
 
-        partitionConfig.handlerName = handlerName;
-        partitionConfig.engineName = engineName;
+        partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
+        for (AdapterConfig adapterConfig : adapterConfigs.values()) {
+            partitionConfig.addAdapterConfig((AdapterConfig) adapterConfig.clone());
+        }
+
+        partitionConfig.engineConfigs = new LinkedHashMap<String,EngineConfig>();
+        for (EngineConfig engineConfig : engineConfigs.values()) {
+            partitionConfig.addEngineConfig((EngineConfig) engineConfig.clone());
+        }
+
+        partitionConfig.handlerConfigs = new LinkedHashMap<String,HandlerConfig>();
+        for (HandlerConfig handlerConfig : handlerConfigs.values()) {
+            partitionConfig.addHandlerConfig((HandlerConfig) handlerConfig.clone());
+        }
+
+        partitionConfig.interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
+        for (InterpreterConfig interpreterConfig : interpreterConfigs.values()) {
+            partitionConfig.addInterpreterConfig((InterpreterConfig) interpreterConfig.clone());
+        }
 
         partitionConfig.parameters = new LinkedHashMap<String,String>();
         partitionConfig.parameters.putAll(parameters);
@@ -199,4 +208,65 @@ public class PartitionConfig implements PartitionConfigMBean, Cloneable {
     public void addClassPath(URL library) {
         classPaths.add(library);
     }
+
+    public void addEngineConfig(EngineConfig engineConfig) {
+        engineConfigs.put(engineConfig.getName(), engineConfig);
+    }
+
+    public EngineConfig getEngineConfig(String name) {
+        return engineConfigs.get(name);
+    }
+
+    public Collection<EngineConfig> getEngineConfigs() {
+        return engineConfigs.values();
+    }
+
+    public Collection<String> getEngineNames() {
+        return engineConfigs.keySet();
+    }
+
+    public Collection<InterpreterConfig> getInterpreterConfigs() {
+        return interpreterConfigs.values();
+    }
+
+    public void addInterpreterConfig(InterpreterConfig interpreterConfig) {
+        interpreterConfigs.put(interpreterConfig.getName(), interpreterConfig);
+    }
+
+    public Collection<AdapterConfig> getAdapterConfigs() {
+        return adapterConfigs.values();
+    }
+
+    public AdapterConfig getAdapterConfig(String name) {
+        return adapterConfigs.get(name);
+    }
+
+    public void addAdapterConfig(AdapterConfig adapter) {
+        adapterConfigs.put(adapter.getName(), adapter);
+    }
+
+    public Collection<String> getAdapterNames() {
+        return adapterConfigs.keySet();
+    }
+
+    public HandlerConfig getHandlerConfig(String name) {
+        return handlerConfigs.get(name);
+    }
+
+    public Collection<HandlerConfig> getHandlerConfigs() {
+        return handlerConfigs.values();
+    }
+
+    public Collection<String> getHandlerNames() {
+        return handlerConfigs.keySet();
+    }
+
+    public void addHandlerConfig(HandlerConfig handlerConfig) {
+        handlerConfigs.put(handlerConfig.getName(), handlerConfig);
+    }
+
+    public HandlerConfig removeHandlerConfig(String name) {
+        return handlerConfigs.remove(name);
+    }
+
 }

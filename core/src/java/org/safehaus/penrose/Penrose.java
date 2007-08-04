@@ -33,6 +33,8 @@ import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.handler.HandlerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -59,7 +61,7 @@ public class Penrose {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    private String             home;
+    private File               home;
 
     private PenroseConfig      penroseConfig;
     private PenroseContext     penroseContext;
@@ -100,6 +102,13 @@ public class Penrose {
     }
 
     protected Penrose(String home) throws Exception {
+        this.home = new File(home);
+        penroseConfig = loadConfig(home);
+
+        init();
+    }
+
+    protected Penrose(File home) throws Exception {
         this.home = home;
         penroseConfig = loadConfig(home);
 
@@ -107,6 +116,13 @@ public class Penrose {
     }
 
     protected Penrose(String home, PenroseConfig penroseConfig) throws Exception {
+        this.home = new File(home);
+        this.penroseConfig = penroseConfig;
+
+        init();
+    }
+
+    protected Penrose(File home, PenroseConfig penroseConfig) throws Exception {
         this.home = home;
         this.penroseConfig = penroseConfig;
 
@@ -124,11 +140,15 @@ public class Penrose {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public PenroseConfig loadConfig() throws Exception {
-        return loadConfig(null);
+        return loadConfig((File)null);
     }
 
     public PenroseConfig loadConfig(String dir) throws Exception {
-        String path = (dir == null ? "" : dir+File.separator)+"conf"+File.separator+"server.xml";
+        return loadConfig(new File(dir));
+    }
+
+    public PenroseConfig loadConfig(File dir) throws Exception {
+        File path = new File(dir, "conf"+File.separator+"server.xml");
         PenroseConfigReader reader = new PenroseConfigReader(path);
         return reader.read();
     }
@@ -139,7 +159,7 @@ public class Penrose {
 
     void init() throws Exception {
 
-        File log4jXml = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
+        File log4jXml = new File(home, "conf"+File.separator+"log4j.xml");
 
         if (log4jXml.exists()) {
             Log4jConfigReader configReader = new Log4jConfigReader(log4jXml);
@@ -208,9 +228,49 @@ public class Penrose {
 
         penroseContext.start();
 
-        String base = (home == null ? "" : home+ File.separator)+"partitions";
+        if (debug) log.debug("----------------------------------------------------------------------------------");
+        log.debug("Loading DEFAULT partition.");
 
-        File partitionsDir = new File(base);
+        File conf = new File(home, "conf");
+
+        PartitionReader partitionReader = partitionConfigs.getPartitionReader();
+
+        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
+
+        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
+            partitionConfig.addHandlerConfig(handlerConfig);
+        }
+
+        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
+            partitionConfig.addEngineConfig(engineConfig);
+        }
+
+        partitionReader.read(conf, partitionConfig.getConnectionConfigs());
+        partitionReader.read(conf, partitionConfig.getSourceConfigs());
+        partitionReader.read(conf, partitionConfig.getDirectoryConfigs());
+        partitionReader.read(conf, partitionConfig.getModuleConfigs());
+
+        partitionConfigs.addPartitionConfig(partitionConfig);
+
+        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
+
+        for (PartitionValidationResult result : results) {
+            if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+            } else {
+                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+            }
+        }
+
+        log.debug("Starting DEFAULT partition.");
+
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitions.init(partitionConfig, partitionContext);
+
+        File partitionsDir = new File(home, "partitions");
         if (!partitionsDir.isDirectory()) return;
 
         for (File partitionDir : partitionsDir.listFiles()) {
@@ -218,7 +278,7 @@ public class Penrose {
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
-            PartitionConfig partitionConfig = partitionConfigs.load(partitionDir);
+            partitionConfig = partitionConfigs.load(partitionDir);
             String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {
@@ -226,7 +286,7 @@ public class Penrose {
                 continue;
             }
 
-            Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
+            results = partitionValidator.validate(partitionConfig);
 
             for (PartitionValidationResult result : results) {
                 if (result.getType().equals(PartitionValidationResult.ERROR)) {
@@ -238,8 +298,8 @@ public class Penrose {
 
             log.debug("Starting "+name+" partition.");
 
-            PartitionContext partitionContext = new PartitionContext();
-            partitionContext.setPath(partitionDir.getAbsolutePath());
+            partitionContext = new PartitionContext();
+            partitionContext.setPath(partitionDir);
             partitionContext.setPenroseConfig(penroseConfig);
             partitionContext.setPenroseContext(penroseContext);
 
@@ -326,13 +386,13 @@ public class Penrose {
         this.sessionContext = sessionContext;
     }
 
-    public String getHome() {
+    public File getHome() {
         return home;
     }
 
     public void setHome(String home) {
-        this.home = home;
-        penroseContext.setHome(home);
+        this.home = new File(home);
+        penroseContext.setHome(this.home);
     }
 
     public PartitionConfigs getPartitionConfigs() {

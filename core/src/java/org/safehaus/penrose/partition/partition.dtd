@@ -1,14 +1,36 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!ELEMENT partition (partition-name, description?, handler-name?, engine-name?, parameter*)>
-<!ATTLIST partition enabled CDATA #IMPLIED>
+<!ELEMENT partition (
+        description?,
+        interpreter*,
+        engine*,
+        handler*,
+        adapter*,
+        parameter*
+)>
 
-<!ELEMENT partition-name (#PCDATA)>
+<!ATTLIST partition enabled CDATA #IMPLIED>
 
 <!ELEMENT description (#PCDATA)>
 
+<!ELEMENT interpreter (interpreter-name?,interpreter-class?, description?, parameter*)>
+<!ATTLIST interpreter name CDATA #IMPLIED>
+<!ELEMENT interpreter-name (#PCDATA)>
+<!ELEMENT interpreter-class (#PCDATA)>
+
+<!ELEMENT handler (handler-name?, handler-class?, description?, parameter*)>
+<!ATTLIST handler name CDATA #IMPLIED>
 <!ELEMENT handler-name (#PCDATA)>
+<!ELEMENT handler-class (#PCDATA)>
+
+<!ELEMENT engine (engine-name?, engine-class?, description?, parameter*)>
+<!ATTLIST engine name CDATA #IMPLIED>
 <!ELEMENT engine-name (#PCDATA)>
+<!ELEMENT engine-class (#PCDATA)>
+
+<!ELEMENT adapter (adapter-class, description?, parameter*)>
+<!ATTLIST adapter name CDATA #REQUIRED>
+<!ELEMENT adapter-class (#PCDATA)>
 
 <!ELEMENT parameter (param-name, param-value)>
 <!ELEMENT param-name (#PCDATA)>

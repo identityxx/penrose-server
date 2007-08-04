@@ -55,7 +55,7 @@ public class ApacheDSLDAPService extends LDAPService {
         PenroseServer penroseServer = serviceContext.getPenroseServer();
         Penrose penrose = penroseServer.getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
-        String path = serviceContext.getPath();
+        File path = serviceContext.getPath();
 
         Backend backend = new PenroseBackend(penroseServer);
 
@@ -76,8 +76,8 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setMaxThreads(maxThreads);
 
         // Configure working directory
-        String workingDirectory = (path == null ? "" : path+File.separator)+"var"+File.separator+"data";
-        configuration.setWorkingDirectory(new File(workingDirectory));
+        File workingDirectory = new File(path, "var"+File.separator+"data");
+        configuration.setWorkingDirectory(workingDirectory);
 
         // Configure bootstrap schemas
         Set<Object> bootstrapSchemas = new HashSet<Object>();

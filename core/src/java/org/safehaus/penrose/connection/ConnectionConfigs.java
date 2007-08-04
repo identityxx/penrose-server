@@ -2,7 +2,6 @@ package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.adapter.AdapterConfig;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -16,22 +15,7 @@ public class ConnectionConfigs implements Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    private Map<String,AdapterConfig> adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
-
-    public void addAdapterConfig(AdapterConfig adapterConfig) {
-        String name = adapterConfig.getName();
-        if (debug) log.debug("Adding adapter "+name+".");
-        adapterConfigs.put(name, adapterConfig);
-    }
-
-    public AdapterConfig getAdapterConfig(String name) {
-        return adapterConfigs.get(name);
-    }
-
-    public Collection<AdapterConfig> getAdapterConfigs() {
-        return adapterConfigs.values();
-    }
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) {
         String name = connectionConfig.getName();
@@ -66,11 +50,6 @@ public class ConnectionConfigs implements Cloneable {
 
     public Object clone() throws CloneNotSupportedException {
         ConnectionConfigs connections = (ConnectionConfigs)super.clone();
-
-        connections.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
-        for (AdapterConfig adapterConfig : adapterConfigs.values()) {
-            connections.adapterConfigs.put(adapterConfig.getName(), (AdapterConfig)adapterConfig.clone());
-        }
 
         connections.connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
         for (ConnectionConfig connectionConfig : connectionConfigs.values()) {

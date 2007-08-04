@@ -37,7 +37,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
-    private PartitionReader partitionReader = new PartitionReader();
+    protected PartitionReader partitionReader = new PartitionReader();
 
     private Map<String,PartitionConfig> partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
 
@@ -45,7 +45,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     }
 
     public PartitionConfig load(File dir) throws Exception {
-        log.debug("Loading partition from "+dir.getAbsolutePath()+".");
+        if (debug) log.debug("Loading partition from "+dir+".");
 
         PartitionConfig partitionConfig = partitionReader.read(dir);
 
@@ -54,20 +54,14 @@ public class PartitionConfigs implements PartitionConfigsMBean {
         return partitionConfig;
     }
 
-    public void store(String home, Collection<PartitionConfig> partitionConfigs) throws Exception {
-        for (PartitionConfig partitionConfig : partitionConfigs) {
-            store(home, partitionConfig);
-        }
-    }
+    public void store(File home, PartitionConfig partitionConfig) throws Exception {
 
-    public void store(String home, PartitionConfig partitionConfig) throws Exception {
-
-        String path = (home == null ? "" : home+File.separator)+"partitions"+File.separator+partitionConfig.getName();
+        File path = new File(home, "partitions"+File.separator+partitionConfig.getName());
 
         if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
 
-        PartitionWriter partitionWriter = new PartitionWriter(path);
-        partitionWriter.write(partitionConfig);
+        PartitionWriter partitionWriter = new PartitionWriter();
+        partitionWriter.write(path, partitionConfig);
     }
 
     public PartitionConfig removePartitionConfig(String name) throws Exception {
@@ -177,5 +171,13 @@ public class PartitionConfigs implements PartitionConfigsMBean {
 
     public PartitionConfig getPartitionConfig(String name) {
         return partitionConfigs.get(name);
+    }
+
+    public PartitionReader getPartitionReader() {
+        return partitionReader;
+    }
+
+    public void setPartitionReader(PartitionReader partitionReader) {
+        this.partitionReader = partitionReader;
     }
 }

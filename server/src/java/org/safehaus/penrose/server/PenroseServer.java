@@ -57,7 +57,23 @@ public class PenroseServer {
         init();
     }
 
+    public PenroseServer(File home) throws Exception {
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(home);
+
+        init();
+    }
+
     public PenroseServer(String home, PenroseConfig penroseConfig) throws Exception {
+
+        PenroseFactory penroseFactory = PenroseFactory.getInstance();
+        penrose = penroseFactory.createPenrose(home, penroseConfig);
+
+        init();
+    }
+
+    public PenroseServer(File home, PenroseConfig penroseConfig) throws Exception {
 
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(home, penroseConfig);
@@ -84,10 +100,11 @@ public class PenroseServer {
     public void start() throws Exception {
         penrose.start();
 
-        String home = penrose.getHome();
-        String base = (home == null ? "" : home+File.separator) + "services";
+        if (debug) log.debug("----------------------------------------------------------------------------------");
 
-        File servicesDir = new File(base);
+        File home = penrose.getHome();
+
+        File servicesDir = new File(home, "services");
         if (!servicesDir.isDirectory()) return;
 
         for (File serviceDir : servicesDir.listFiles()) {
@@ -104,7 +121,7 @@ public class PenroseServer {
             log.debug("Starting "+name+" service.");
 
             ServiceContext serviceContext = new ServiceContext();
-            serviceContext.setPath(serviceDir.getAbsolutePath());
+            serviceContext.setPath(serviceDir);
             serviceContext.setPenroseServer(this);
 
             Service service = services.init(serviceConfig, serviceContext);
@@ -125,14 +142,10 @@ public class PenroseServer {
         return penrose.getStatus();
     }
 
-    public String getHome() {
+    public File getHome() {
         return penrose.getHome();
     }
 
-    public void setHome(String home) {
-        penrose.setHome(home);
-    }
-    
     public void listAllThreads() {
         // Find the root thread group
         ThreadGroup root = Thread.currentThread().getThreadGroup();

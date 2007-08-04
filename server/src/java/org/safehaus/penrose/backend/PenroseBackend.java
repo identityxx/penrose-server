@@ -27,8 +27,6 @@ import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -43,16 +41,16 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public String home;
+    public File home;
 
     public PenroseServer penroseServer;
 
     public Map<Object,PenroseSession> sessions = new HashMap<Object,PenroseSession>();
 
     public PenroseBackend() {
-        home = System.getProperty("penrose.home");
+        home = new File(System.getProperty("penrose.home"));
 
-        File f = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.xml");
+        File f = new File(home, "conf"+File.separator+"log4j.xml");
         if (f.exists()) DOMConfigurator.configure(f.getAbsolutePath());
     }
 

@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
@@ -29,10 +28,8 @@ import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.graph.Graph;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.util.*;
@@ -53,21 +50,19 @@ public abstract class Engine {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    public PenroseConfig penroseConfig;
-    public PenroseContext penroseContext;
-    public SessionContext sessionContext;
+    protected EngineConfig engineConfig;
+    protected Partition partition;
+    protected PenroseContext penroseContext;
 
-    public EngineConfig engineConfig;
+    protected SchemaManager schemaManager;
+    protected InterpreterManager interpreterManager;
+    protected ConnectorManager connectorManager;
+    protected PartitionConfigs partitionConfigs;
 
-    public SchemaManager schemaManager;
-    public InterpreterManager interpreterManager;
-    public ConnectorManager connectorManager;
-    public PartitionConfigs partitionConfigs;
-
-    public boolean stopping = false;
-
-    protected Analyzer analyzer;
-
+    public String getName() {
+        return engineConfig.getName();
+    }
+    
     public Collection<String> getParameterNames() {
         return engineConfig.getParameterNames();
     }
@@ -76,10 +71,12 @@ public abstract class Engine {
         return engineConfig.getParameter(name);
     }
 
+    public void init(EngineConfig engineConfig) throws Exception {
+        this.engineConfig = engineConfig;
+        init();
+    }
+
     public void init() throws Exception {
-        analyzer = new Analyzer();
-        analyzer.setPartitionManager(partitionConfigs);
-        analyzer.setInterpreterManager(interpreterManager);
     }
 
     public EngineConfig getEngineConfig() {
@@ -88,10 +85,6 @@ public abstract class Engine {
 
     public void setEngineConfig(EngineConfig engineConfig) {
         this.engineConfig = engineConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
     }
 
     public SchemaManager getSchemaManager() {
@@ -128,10 +121,6 @@ public abstract class Engine {
         this.partitionConfigs = partitionConfigs;
     }
 
-    public SourceMapping getPrimarySource(EntryMapping entryMapping) throws Exception {
-        return analyzer.getPrimarySource(entryMapping);
-    }
-
     public Attributes createAttributes(
             EntryMapping entryMapping,
             SourceValues sourceValues,
@@ -160,30 +149,6 @@ public abstract class Engine {
         }
 
         return attributes;
-    }
-
-    public Graph getGraph(EntryMapping entryMapping) throws Exception {
-        return analyzer.getGraph(entryMapping);
-    }
-
-    public void start() throws Exception {
-        Partitions partitions = penroseContext.getPartitions();
-        for (Partition partition : partitions.getPartitions()) {
-
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
-            for (EntryMapping entryMapping : partitionConfig.getDirectoryConfigs().getRootEntryMappings()) {
-                analyzer.analyze(partition, entryMapping);
-            }
-        }
-    }
-
-    public void stop() throws Exception {
-        if (stopping) return;
-
-        log.debug("Stopping Engine...");
-        stopping = true;
-
-        log.debug("Engine stopped.");
     }
 
     public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
@@ -220,10 +185,6 @@ public abstract class Engine {
         return sourceMapping.getName();
     }
 
-    public boolean isStopping() {
-        return stopping;
-    }
-
     public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection effectiveSources = partitionConfig.getDirectoryConfigs().getEffectiveSourceMappings(entryMapping);
@@ -235,13 +196,8 @@ public abstract class Engine {
         }
 
         EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-        if (parentMapping == null) return true;
+        return parentMapping == null || isStatic(partition, parentMapping);
 
-        return isStatic(partition, parentMapping);
-    }
-
-    public boolean isUnique(Partition partition, EntryMapping entryMapping) throws Exception {
-        return analyzer.isUnique(partition, entryMapping);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -561,10 +517,6 @@ public abstract class Engine {
         return TransformEngine.convert(attributes);
     }
 
-    public PenroseConfig getServerConfig() {
-        return penroseConfig;
-    }
-
     public ConnectorManager getConnectorManager() {
         return connectorManager;
     }
@@ -666,12 +618,12 @@ public abstract class Engine {
         return results;
     }
 
-    public SessionContext getSessionContext() {
-        return sessionContext;
+    public Partition getPartition() {
+        return partition;
     }
 
-    public void setSessionContext(SessionContext sessionContext) {
-        this.sessionContext = sessionContext;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }
 

@@ -36,6 +36,10 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.engine.Engine;
+import org.safehaus.penrose.engine.EngineConfig;
 
 /**
  * @author Endi S. Dewata
@@ -49,19 +53,23 @@ public class Partition implements PartitionMBean, Cloneable {
     public final static Collection<Source> EMPTY_SOURCES = new ArrayList<Source>();
     public final static Collection<SourceRef> EMPTY_SOURCEREFS = new ArrayList<SourceRef>();
 
-    private PartitionConfig partitionConfig;
-    private PartitionContext partitionContext;
+    protected PartitionConfig partitionConfig;
+    protected PartitionContext partitionContext;
 
-    private ClassLoader classLoader;
+    protected ClassLoader classLoader;
 
-    private Map<String,Connection> connections = new LinkedHashMap<String,Connection>();
-    private Map<String,Source>     sources     = new LinkedHashMap<String,Source>();
-    private Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
-    private Map<String,Entry>      entries     = new LinkedHashMap<String,Entry>();
-    private Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
+    protected Map<String, Handler> handlers = new LinkedHashMap<String,Handler>();
+    protected Map<String, Engine>  engines  = new LinkedHashMap<String,Engine>();
 
-    public Map<String,Map<String, SourceRef>> sourceRefs        = new LinkedHashMap<String,Map<String,SourceRef>>();
-    public Map<String,Map<String,SourceRef>>  primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
+
+    protected Map<String,Connection> connections = new LinkedHashMap<String,Connection>();
+    protected Map<String,Source>     sources     = new LinkedHashMap<String,Source>();
+    protected Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
+    protected Map<String,Entry>      entries     = new LinkedHashMap<String,Entry>();
+    protected Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
+
+    protected Map<String,Map<String,SourceRef>> sourceRefs         = new LinkedHashMap<String,Map<String,SourceRef>>();
+    protected Map<String,Map<String,SourceRef>>  primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
 
     public Partition(PartitionConfig partitionConfig) {
         this.partitionConfig = partitionConfig;
@@ -102,14 +110,6 @@ public class Partition implements PartitionMBean, Cloneable {
         return partitionConfig.isEnabled();
     }
 
-    public String getHandlerName() {
-        return partitionConfig.getHandlerName();
-    }
-
-    public String getEngineName() {
-        return partitionConfig.getEngineName();
-    }
-
     public PartitionConfig getPartitionConfig() {
         return partitionConfig;
     }
@@ -141,12 +141,71 @@ public class Partition implements PartitionMBean, Cloneable {
         return partition;
     }
 
+    public Handler createHandler(HandlerConfig handlerConfig) throws Exception {
+
+        String handlerName = handlerConfig.getName();
+        if (handlerName == null) throw new Exception("Missing handler name.");
+
+        log.debug("Initializing handler "+handlerName+".");
+
+        String handlerClass = handlerConfig.getHandlerClass();
+        Class clazz = classLoader.loadClass(handlerClass);
+        Handler handler = (Handler)clazz.newInstance();
+
+        handler.setPartition(this);
+        handler.setPenroseContext(partitionContext.getPenroseContext());
+        handler.init(handlerConfig);
+
+        return handler;
+    }
+
+    public void addHandler(Handler handler) {
+        handlers.put(handler.getName(), handler);
+    }
+
+    public Handler getHandler(String name) {
+        return handlers.get(name);
+    }
+
+    public Handler getHandler(Partition partition, EntryMapping entryMapping) {
+        String handlerName = entryMapping.getHandlerName();
+        if (handlerName != null) return handlers.get(handlerName);
+
+        return handlers.get("DEFAULT");
+    }
+
+    public Engine createEngine(EngineConfig engineConfig) throws Exception {
+
+        String engineName = engineConfig.getName();
+        if (engineName == null) throw new Exception("Missing engine name.");
+
+        log.debug("Initializing engine "+engineName+".");
+
+        String engineClass = engineConfig.getEngineClass();
+        Class clazz = classLoader.loadClass(engineClass);
+        Engine engine = (Engine)clazz.newInstance();
+
+        engine.setPartition(this);
+        engine.setPenroseContext(partitionContext.getPenroseContext());
+        engine.init(engineConfig);
+
+        return engine;
+    }
+
+    public void addEngine(Engine engine) {
+        engines.put(engine.getName(), engine);
+    }
+
+    public Engine getEngine(String name) {
+        return engines.get(name);
+    }
+
     public Connection createConnection(ConnectionConfig connectionConfig) throws Exception {
 
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
-        AdapterConfig adapterConfig = partitionConfig.getConnectionConfigs().getAdapterConfig(adapterName);
+        AdapterConfig adapterConfig = partitionConfig.getAdapterConfig(adapterName);
 
         if (adapterConfig == null) {
             adapterConfig = partitionContext.getPenroseConfig().getAdapterConfig(adapterName);

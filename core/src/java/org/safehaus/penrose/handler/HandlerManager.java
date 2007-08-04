@@ -19,7 +19,6 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -45,9 +44,6 @@ public class HandlerManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
-
-    public final static DN ROOT_DSE_DN = new DN("");
-    public final static DN SCHEMA_DN   = new DN("cn=Subschema");
 
     Map<String,Handler> handlers = new TreeMap<String,Handler>();
 
@@ -91,64 +87,6 @@ public class HandlerManager {
         aclManager = sessionContext.getAclManager();
     }
 
-    public void init(HandlerConfig handlerConfig) throws Exception {
-
-        String name = handlerConfig.getName();
-        String className = handlerConfig.getHandlerClass();
-        if (className == null) {
-            className = DefaultHandler.class.getName();
-        }
-
-        log.debug("Initializing handler "+name+": "+className);
-
-        Class clazz = Class.forName(className);
-        Handler handler = (Handler)clazz.newInstance();
-
-        handler.setPenroseConfig(penroseConfig);
-        handler.setPenroseContext(penroseContext);
-        handler.setSessionContext(sessionContext);
-        handler.init(handlerConfig);
-
-        handlers.put(handlerConfig.getName(), handler);
-    }
-
-    public Handler getHandler(String name) {
-        return handlers.get(name);
-    }
-
-    public Handler getHandler(Partition partition, EntryMapping entryMapping) {
-        String handlerName = entryMapping.getHandlerName();
-        if (handlerName != null) return handlers.get(handlerName);
-
-        handlerName = partition.getHandlerName();
-        if (handlerName != null) return handlers.get(handlerName);
-
-        return handlers.get("DEFAULT");
-    }
-
-    public Handler getHandler(Partition partition) {
-        String handlerName = partition.getHandlerName();
-        if (handlerName != null) return handlers.get(handlerName);
-
-        return handlers.get("DEFAULT");
-    }
-    
-    public void clear() {
-        handlers.clear();
-    }
-
-    public void start() throws Exception {
-        for (Handler handler : handlers.values()) {
-            handler.start();
-        }
-    }
-
-    public void stop() throws Exception {
-        for (Handler handler : handlers.values()) {
-            handler.stop();
-        }
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ADD
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,6 +111,7 @@ public class HandlerManager {
 
         DN parentDn = dn.getParentDn();
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
@@ -190,7 +129,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(partition, entryMapping);
+                Handler handler = partitions.getHandler(partition, entryMapping);
                 handler.add(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -242,13 +181,14 @@ public class HandlerManager {
             return;
         }
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
 
         for (EntryMapping entryMapping : entryMappings) {
             if (debug) log.debug("Binding " + dn + " in " + entryMapping.getDn());
 
-            Handler handler = getHandler(partition, entryMapping);
+            Handler handler = partitions.getHandler(partition, entryMapping);
             handler.bind(session, partition, entryMapping, request, response);
         }
     }
@@ -275,6 +215,7 @@ public class HandlerManager {
         String attributeName = schemaManager.normalizeAttributeName(request.getAttributeName());
         request.setAttributeName(attributeName);
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
@@ -291,7 +232,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(partition, entryMapping);
+                Handler handler = partitions.getHandler(partition, entryMapping);
                 handler.compare(session, partition, entryMapping, request, response);
 
                 return;
@@ -323,6 +264,7 @@ public class HandlerManager {
         DN dn = schemaManager.normalize(request.getDn());
         request.setDn(dn);
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
@@ -339,7 +281,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(partition, entryMapping);
+                Handler handler = partitions.getHandler(partition, entryMapping);
                 handler.delete(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -372,6 +314,7 @@ public class HandlerManager {
         Collection<Modification> modifications = schemaManager.normalizeModifications(request.getModifications());
         request.setModifications(modifications);
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
@@ -388,7 +331,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(partition, entryMapping);
+                Handler handler = partitions.getHandler(partition, entryMapping);
                 handler.modify(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -421,6 +364,7 @@ public class HandlerManager {
         RDN newRdn = schemaManager.normalize(request.getNewRdn());
         request.setNewRdn(newRdn);
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(dn);
         Exception exception = null;
@@ -437,7 +381,7 @@ public class HandlerManager {
             }
 
             try {
-                Handler handler = getHandler(partition, entryMapping);
+                Handler handler = partitions.getHandler(partition, entryMapping);
                 handler.modrdn(session, partition, entryMapping, request, response);
                 return;
             } catch (Exception e) {
@@ -469,7 +413,7 @@ public class HandlerManager {
 
         if (partition == null) {
 
-            if (baseDn.matches(HandlerManager.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
+            if (baseDn.matches(LDAP.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
 
                 SearchResult result = createRootDSE();
                 Attributes attrs = result.getAttributes();
@@ -488,7 +432,7 @@ public class HandlerManager {
 
                 response.add(result);
 
-            } else if (baseDn.matches(HandlerManager.SCHEMA_DN)) {
+            } else if (baseDn.matches(LDAP.SCHEMA_DN)) {
 
                 SearchResult result = createSchema();
                 Attributes attrs = result.getAttributes();
@@ -515,6 +459,7 @@ public class HandlerManager {
             return;
         }
 
+        final Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(baseDn);
 
@@ -550,7 +495,7 @@ public class HandlerManager {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        Handler handler = getHandler(partition, entryMapping);
+                        Handler handler = partitions.getHandler(partition, entryMapping);
 
                         handler.search(
                                 session,
@@ -598,13 +543,14 @@ public class HandlerManager {
 
         DN bindDn = request.getDn();
 
+        Partitions partitions = penroseContext.getPartitions();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         Collection<EntryMapping> entryMappings = partitionConfig.getDirectoryConfigs().findEntryMappings(bindDn);
 
         for (EntryMapping entryMapping : entryMappings) {
             if (debug) log.debug("Unbinding " + bindDn + " from " + entryMapping.getDn());
 
-            Handler handler = getHandler(partition, entryMapping);
+            Handler handler = partitions.getHandler(partition, entryMapping);
             handler.unbind(session, partition, entryMapping, request, response);
         }
     }
@@ -617,7 +563,7 @@ public class HandlerManager {
         attributes.addValue("vendorName", Penrose.VENDOR_NAME);
         attributes.addValue("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
         attributes.addValue("supportedLDAPVersion", "3");
-        attributes.addValue("subschemaSubentry", SCHEMA_DN.toString());
+        attributes.addValue("subschemaSubentry", LDAP.SCHEMA_DN.toString());
 
         Partitions partitions = penroseContext.getPartitions();
         for (Partition partition : partitions.getPartitions()) {
@@ -628,7 +574,7 @@ public class HandlerManager {
             }
         }
 
-        return new SearchResult(ROOT_DSE_DN, attributes);
+        return new SearchResult(LDAP.ROOT_DSE_DN, attributes);
     }
 
     public SearchResult createSchema() throws Exception {
@@ -647,7 +593,7 @@ public class HandlerManager {
             attributes.addValue("objectClasses", "( "+objectClass+" )");
         }
 
-        return new SearchResult(SCHEMA_DN, attributes);
+        return new SearchResult(LDAP.SCHEMA_DN, attributes);
     }
 
     public void removeAttributes(Attributes attributes, Collection<String> list) throws Exception {

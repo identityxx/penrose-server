@@ -85,6 +85,8 @@ public class ModuleConfigs implements Cloneable {
             modules.addModuleConfig((ModuleConfig)moduleConfig.clone());
 
             Collection<ModuleMapping> list = moduleMappings.get(moduleConfig.getName());
+            if (list == null) continue;
+            
             for (ModuleMapping moduleMapping : list) {
                 modules.addModuleMapping((ModuleMapping)moduleMapping.clone());
             }

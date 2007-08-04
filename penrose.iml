@@ -20,11 +20,9 @@
       <sourceFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/ldap/SERVICE-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/opends/SERVICE-INF/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/core/dist" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/classes" />
-      <excludeFolder url="file://$MODULE_DIR$/core/target/javadoc" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/tests" />
-      <excludeFolder url="file://$MODULE_DIR$/server/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/server/target" />
       <excludeFolder url="file://$MODULE_DIR$/services/apacheds/SERVICE-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/target" />

@@ -270,13 +270,13 @@ public class CacheUtil {
             System.exit(0);
         }
 
-        String home = System.getProperty("penrose.home");
+        File home = new File(System.getProperty("penrose.home"));
 
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.OFF);
 
         Logger logger = Logger.getLogger("org.safehaus.penrose");
-        File log4jProperties = new File((home == null ? "" : home+File.separator)+"conf"+File.separator+"log4j.properties");
+        File log4jProperties = new File(home, "conf"+File.separator+"log4j.properties");
 
         if (log4jProperties.exists()) {
             PropertyConfigurator.configure(log4jProperties.getAbsolutePath());
@@ -297,7 +297,8 @@ public class CacheUtil {
             BasicConfigurator.configure(appender);
         }
 
-        PenroseConfigReader reader = new PenroseConfigReader((home == null ? "" : home+File.separator)+"conf"+File.separator+"server.xml");
+        File file = new File(home, "conf"+File.separator+"server.xml");
+        PenroseConfigReader reader = new PenroseConfigReader(file);
         PenroseConfig penroseConfig = reader.read();
 
         PenroseContext penroseContext = new PenroseContext(home);
@@ -307,9 +308,7 @@ public class CacheUtil {
         PartitionConfigs partitionConfigs = new PartitionConfigs();
         Partitions partitions = new Partitions();
 
-        String base = (home == null ? "" : home+ File.separator)+"partitions";
-
-        File partitionsDir = new File(base);
+        File partitionsDir = new File(home, "partitions");
         if (!partitionsDir.isDirectory()) return;
 
         for (File dir : partitionsDir.listFiles()) {
@@ -328,7 +327,7 @@ public class CacheUtil {
             log.debug("Starting "+name+" partition.");
 
             PartitionContext partitionContext = new PartitionContext();
-            partitionContext.setPath(dir.getAbsolutePath());
+            partitionContext.setPath(dir);
             partitionContext.setPenroseConfig(penroseConfig);
             partitionContext.setPenroseContext(penroseContext);
 

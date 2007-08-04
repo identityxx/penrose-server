@@ -5,11 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.event.EventManager;
-import org.safehaus.penrose.handler.HandlerManager;
-import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.engine.EngineManager;
-import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.acl.ACLManager;
+import org.safehaus.penrose.handler.HandlerManager;
 
 /**
  * @author Endi S. Dewata
@@ -21,13 +18,10 @@ public class SessionContext {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private EngineManager  engineManager;
     private ACLManager     aclManager;
-
     private EventManager   eventManager;
-
-    private HandlerManager handlerManager;
     private SessionManager sessionManager;
+    private HandlerManager handlerManager;
 
     public SessionContext() {
     }
@@ -48,14 +42,6 @@ public class SessionContext {
         this.penroseContext = penroseContext;
     }
 
-    public EngineManager getEngineManager() {
-        return engineManager;
-    }
-
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
     public ACLManager getAclManager() {
         return aclManager;
     }
@@ -72,14 +58,6 @@ public class SessionContext {
         this.eventManager = eventManager;
     }
 
-    public HandlerManager getHandlerManager() {
-        return handlerManager;
-    }
-
-    public void setHandlerManager(HandlerManager handlerManager) {
-        this.handlerManager = handlerManager;
-    }
-
     public SessionManager getSessionManager() {
         return sessionManager;
     }
@@ -88,12 +66,15 @@ public class SessionContext {
         this.sessionManager = sessionManager;
     }
 
-    public void init() throws Exception {
+    public HandlerManager getHandlerManager() {
+        return handlerManager;
+    }
 
-        engineManager = new EngineManager();
-        engineManager.setPenroseConfig(penroseConfig);
-        engineManager.setPenroseContext(penroseContext);
-        engineManager.setSessionContext(this);
+    public void setHandlerManager(HandlerManager handlerManager) {
+        this.handlerManager = handlerManager;
+    }
+
+    public void init() throws Exception {
 
         aclManager = new ACLManager();
         aclManager.setPenroseConfig(penroseConfig);
@@ -104,42 +85,25 @@ public class SessionContext {
         eventManager.setPenroseContext(penroseContext);
         eventManager.setSessionContext(this);
 
-        handlerManager = new HandlerManager();
-        handlerManager.setPenroseConfig(penroseConfig);
-        handlerManager.setPenroseContext(penroseContext);
-        handlerManager.setSessionContext(this);
-
         sessionManager = new SessionManager();
         sessionManager.setPenroseConfig(penroseConfig);
         sessionManager.setPenroseContext(penroseContext);
         sessionManager.setSessionContext(this);
+
+        handlerManager = new HandlerManager();
+        handlerManager.setPenroseConfig(penroseConfig);
+        handlerManager.setPenroseContext(penroseContext);
+        handlerManager.setSessionContext(this);
     }
 
     public void load() throws Exception {
-
-        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
-            engineManager.init(engineConfig);
-        }
-
-        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
-            handlerManager.init(handlerConfig);
-        }
     }
 
     public void start() throws Exception {
-        engineManager.start();
-        handlerManager.start();
         sessionManager.start();
     }
 
     public void stop() throws Exception {
         sessionManager.stop();
-        handlerManager.stop();
-        engineManager.stop();
-    }
-
-    public void clear() throws Exception {
-        handlerManager.clear();
-        engineManager.clear();
     }
 }

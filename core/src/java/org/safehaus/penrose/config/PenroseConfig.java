@@ -44,13 +44,13 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
     private Map<String,String> properties                    = new LinkedHashMap<String,String>();
 
-    private Map<String,SchemaConfig> schemaConfigs           = new LinkedHashMap<String,SchemaConfig>();
-    private Map<String,AdapterConfig> adapterConfigs         = new LinkedHashMap<String,AdapterConfig>();
-    private Map<String,EngineConfig> engineConfigs           = new LinkedHashMap<String,EngineConfig>();
-    private Map<String,HandlerConfig> handlerConfigs         = new LinkedHashMap<String,HandlerConfig>();
+    private Map<String,SchemaConfig>      schemaConfigs      = new LinkedHashMap<String,SchemaConfig>();
+    private Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
+    private Map<String,EngineConfig>      engineConfigs      = new LinkedHashMap<String,EngineConfig>();
+    private Map<String,HandlerConfig>     handlerConfigs     = new LinkedHashMap<String,HandlerConfig>();
     private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    private SessionConfig sessionConfig;
+    private SessionConfig   sessionConfig;
     private ConnectorConfig connectorConfig;
 
     private UserConfig rootUserConfig;
@@ -192,7 +192,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void addHandlerConfig(HandlerConfig handlerConfig) {
-        //log.debug("Adding handler "+handlerConfig.getName()+": "+handlerConfig.getHandlerClass());
         handlerConfigs.put(handlerConfig.getName(), handlerConfig);
     }
 
@@ -246,9 +245,9 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
                 (schemaConfigs == null ? 0 : schemaConfigs.hashCode()) +
                 (adapterConfigs == null ? 0 : adapterConfigs.hashCode()) +
                 (handlerConfigs == null ? 0 : handlerConfigs.hashCode()) +
+                (engineConfigs == null ? 0 : engineConfigs.hashCode()) +
                 (interpreterConfigs == null ? 0 : interpreterConfigs.hashCode()) +
                 (sessionConfig == null ? 0 : sessionConfig.hashCode()) +
-                (engineConfigs == null ? 0 : engineConfigs.hashCode()) +
                 (connectorConfig == null ? 0 : connectorConfig.hashCode()) +
                 (rootUserConfig == null ? 0 : rootUserConfig.hashCode());
     }
@@ -272,10 +271,10 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         if (!equals(schemaConfigs, penroseConfig.schemaConfigs)) return false;
         if (!equals(adapterConfigs, penroseConfig.adapterConfigs)) return false;
         if (!equals(handlerConfigs, penroseConfig.handlerConfigs)) return false;
+        if (!equals(engineConfigs, penroseConfig.engineConfigs)) return false;
         if (!equals(interpreterConfigs, penroseConfig.interpreterConfigs)) return false;
 
         if (!equals(sessionConfig, penroseConfig.sessionConfig)) return false;
-        if (!equals(engineConfigs, penroseConfig.engineConfigs)) return false;
         if (!equals(connectorConfig, penroseConfig.connectorConfig)) return false;
 
         if (!equals(rootUserConfig, penroseConfig.rootUserConfig)) return false;

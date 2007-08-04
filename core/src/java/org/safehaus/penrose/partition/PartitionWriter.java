@@ -36,6 +36,10 @@ import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.directory.DirectoryConfigs;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionConfigs;
@@ -53,23 +57,21 @@ public class PartitionWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    File directory;
-
-    public PartitionWriter(String directory) {
-        this.directory = new File(directory);
+    public PartitionWriter() {
     }
 
-    public void write(PartitionConfig partitionConfig) throws Exception {
-        directory.mkdirs();
+    public void write(File directory, PartitionConfig partitionConfig) throws Exception {
+        File dirInf = new File(directory, "DIR-INF");
+        dirInf.mkdirs();
 
-        storePartitionConfig(partitionConfig);
-        storeMappingConfig(partitionConfig);
-        storeConnectionsConfig(partitionConfig);
-        storeSourcesConfig(partitionConfig);
-        storeModulesConfig(partitionConfig);
+        storePartitionConfig(dirInf, partitionConfig);
+        storeConnectionsConfig(dirInf, partitionConfig);
+        storeSourcesConfig(dirInf, partitionConfig);
+        storeMappingConfig(dirInf, partitionConfig);
+        storeModulesConfig(dirInf, partitionConfig);
     }
 
-    public void storePartitionConfig(PartitionConfig partitionConfig) throws Exception {
+    public void storePartitionConfig(File directory, PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "partition.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -89,7 +91,7 @@ public class PartitionWriter {
         writer.close();
     }
 
-    public void storeMappingConfig(PartitionConfig partitionConfig) throws Exception {
+    public void storeMappingConfig(File directory, PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "mapping.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -109,7 +111,7 @@ public class PartitionWriter {
         writer.close();
     }
 
-    public void storeConnectionsConfig(PartitionConfig partitionConfig) throws Exception {
+    public void storeConnectionsConfig(File directory, PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "connections.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -129,7 +131,7 @@ public class PartitionWriter {
         writer.close();
     }
 
-    public void storeSourcesConfig(PartitionConfig partitionConfig) throws Exception {
+    public void storeSourcesConfig(File directory, PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "sources.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -149,7 +151,7 @@ public class PartitionWriter {
         writer.close();
     }
 
-    public void storeModulesConfig(PartitionConfig partitionConfig) throws Exception {
+    public void storeModulesConfig(File directory, PartitionConfig partitionConfig) throws Exception {
         File file = new File(directory, "modules.xml");
 
         FileWriter fw = new FileWriter(file);
@@ -174,10 +176,6 @@ public class PartitionWriter {
 
         if (!partitionConfig.isEnabled()) element.addAttribute("enabled", "false");
 
-        Element partitionName = new DefaultElement("partition-name");
-        partitionName.add(new DefaultText(partitionConfig.getName()));
-        element.add(partitionName);
-
         String s = partitionConfig.getDescription();
         if (s != null && !"".equals(s)) {
             Element description = new DefaultElement("description");
@@ -185,18 +183,155 @@ public class PartitionWriter {
             element.add(description);
         }
 
-        s = partitionConfig.getHandlerName();
-        if (s != null && !"".equals(s)) {
-            Element handlerName = new DefaultElement("handler-name");
-            handlerName.add(new DefaultText(s));
-            element.add(handlerName);
+        for (InterpreterConfig interpreterConfig : partitionConfig.getInterpreterConfigs()) {
+            element.add(createElement(interpreterConfig));
         }
 
-        s = partitionConfig.getEngineName();
-        if (s != null && !"".equals(s)) {
-            Element engineName = new DefaultElement("engine-name");
-            engineName.add(new DefaultText(s));
-            element.add(engineName);
+        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
+            element.add(createElement(engineConfig));
+        }
+
+        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
+            element.add(createElement(handlerConfig));
+        }
+
+        for (AdapterConfig adapterConfig : partitionConfig.getAdapterConfigs()) {
+            element.add(createElement(adapterConfig));
+        }
+
+        return element;
+    }
+
+    public Element createElement(InterpreterConfig interpreterConfig) {
+        Element element = new DefaultElement("interpreter");
+/*
+        Element interpreterName = new DefaultElement("interpreter-name");
+        interpreterName.add(new DefaultText(interpreterConfig.getName()));
+        element.add(interpreterName);
+*/
+        Element interpreterClass = new DefaultElement("interpreter-class");
+        interpreterClass.add(new DefaultText(interpreterConfig.getInterpreterClass()));
+        element.add(interpreterClass);
+
+        if (interpreterConfig.getDescription() != null && !"".equals(interpreterConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(interpreterConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (String name : interpreterConfig.getParameterNames()) {
+            String value = interpreterConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
+    }
+
+    public Element createElement(EngineConfig engineConfig) {
+        Element element = new DefaultElement("engine");
+        element.addAttribute("name", engineConfig.getName());
+
+        Element engineClass = new DefaultElement("engine-class");
+        engineClass.add(new DefaultText(engineConfig.getEngineClass()));
+        element.add(engineClass);
+
+        if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(engineConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (String name : engineConfig.getParameterNames()) {
+            String value = engineConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
+    }
+
+    public Element createElement(HandlerConfig handlerConfig) {
+        Element element = new DefaultElement("handler");
+        element.addAttribute("name", handlerConfig.getName());
+
+        Element handlerClass = new DefaultElement("handler-class");
+        handlerClass.add(new DefaultText(handlerConfig.getHandlerClass()));
+        element.add(handlerClass);
+
+        if (handlerConfig.getDescription() != null && !"".equals(handlerConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(handlerConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (String name : handlerConfig.getParameterNames()) {
+            String value = handlerConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
+    }
+
+    public Element createElement(AdapterConfig adapterConfig) {
+        Element element = new DefaultElement("adapter");
+        element.addAttribute("name", adapterConfig.getName());
+
+        Element adapterClass = new DefaultElement("adapter-class");
+        adapterClass.add(new DefaultText(adapterConfig.getAdapterClass()));
+        element.add(adapterClass);
+
+        if (adapterConfig.getDescription() != null && !"".equals(adapterConfig.getDescription())) {
+            Element description = new DefaultElement("description");
+            description.add(new DefaultText(adapterConfig.getDescription()));
+            element.add(description);
+        }
+
+        for (String name : adapterConfig.getParameterNames()) {
+            String value = adapterConfig.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
         }
 
         return element;
@@ -206,7 +341,7 @@ public class PartitionWriter {
         Element mappingElement = new DefaultElement("mapping");
 
         for (EntryMapping entryMapping : mappings.getRootEntryMappings()) {
-            toElement(mappings, entryMapping, mappingElement);
+            createElement(mappings, entryMapping, mappingElement);
         }
 
         return mappingElement;
@@ -342,7 +477,7 @@ public class PartitionWriter {
         return element;
     }
 
-    public Element toElement(DirectoryConfigs mappings, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element createElement(DirectoryConfigs mappings, EntryMapping entryMapping, Element configElement) throws Exception {
 
         Element entryElement = new DefaultElement("entry");
         entryElement.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));
@@ -417,7 +552,7 @@ public class PartitionWriter {
 
         Collection<EntryMapping> children = mappings.getChildren(entryMapping);
         for (EntryMapping child : children) {
-            toElement(mappings, child, configElement);
+            createElement(mappings, child, configElement);
         }
 
         return entryElement;

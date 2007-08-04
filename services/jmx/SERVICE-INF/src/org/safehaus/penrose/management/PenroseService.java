@@ -19,8 +19,8 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.service.Services;
 
 import java.util.Collection;
@@ -29,7 +29,6 @@ import java.util.Enumeration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-
 
 /**
  * @author Endi S. Dewata
@@ -58,18 +57,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public String getHome() throws Exception {
         try {
-            return penroseServer.getHome();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public void setHome(String home) throws Exception {
-        try {
-            PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-            penroseServer.setHome(home);
-            penroseServer.reload();
+            return penroseServer.getHome().getAbsolutePath();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -114,9 +102,22 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public Collection getServiceNames() throws Exception {
+    public Collection<String> getPartitionNames() throws Exception {
         try {
-            Collection serviceNames = new ArrayList();
+            Collection<String> partitionNames = new ArrayList<String>();
+            Penrose penrose = penroseServer.getPenrose();
+            PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
+            partitionNames.addAll(partitionConfigs.getPartitionNames());
+            return partitionNames;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public Collection<String> getServiceNames() throws Exception {
+        try {
+            Collection<String> serviceNames = new ArrayList<String>();
             Services serviceManager = penroseServer.getServices();
             serviceNames.addAll(serviceManager.getServiceNames());
             return serviceNames;
@@ -156,20 +157,20 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public Collection listFiles(String directory) throws Exception {
+    public Collection<String> listFiles(String directory) throws Exception {
         try {
-            Collection results = new ArrayList();
+            Collection<String> results = new ArrayList<String>();
 
-            String homeDirectory = penroseServer.getHome();
-            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
+            File home = penroseServer.getHome();
+            File file = new File(home, directory);
             if (!file.exists()) return results;
 
             File children[] = file.listFiles();
-            for (int i=0; i<children.length; i++) {
-                if (children[i].isDirectory()) {
-                    results.addAll(listFiles(directory+File.separator+children[i].getName()));
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    results.addAll(listFiles(directory + File.separator + child.getName()));
                 } else {
-                    results.add(directory+File.separator+children[i].getName());
+                    results.add(directory + File.separator + child.getName());
                 }
             }
             return results;
@@ -181,11 +182,11 @@ public class PenroseService implements PenroseServiceMBean {
 
     public byte[] download(String filename) throws Exception {
         try {
-            String homeDirectory = penroseServer.getHome();
-            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+            File home = penroseServer.getHome();
+            File file = new File(home, filename);
             if (!file.exists()) return null;
 
-            log.debug("Downloading "+file.getAbsolutePath());
+            log.debug("Downloading "+file);
 
             FileInputStream in = new FileInputStream(file);
             byte content[] = new byte[(int)file.length()];
@@ -201,11 +202,11 @@ public class PenroseService implements PenroseServiceMBean {
 
     public void upload(String filename, byte content[]) throws Exception {
         try {
-            String homeDirectory = penroseServer.getHome();
-            File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+            File home = penroseServer.getHome();
+            File file = new File(home, filename);
             file.getParentFile().mkdirs();
 
-            log.debug("Uploading "+file.getAbsolutePath());
+            log.debug("Uploading "+file);
 
             FileOutputStream out = new FileOutputStream(file);
             out.write(content);
@@ -216,8 +217,8 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public Collection getLoggerNames() throws Exception {
-        Collection loggerNames = new ArrayList();
+    public Collection<String> getLoggerNames() throws Exception {
+        Collection<String> loggerNames = new ArrayList<String>();
         for (Enumeration e = log.getLoggerRepository().getCurrentLoggers(); e.hasMoreElements(); ) {
             Logger logger = (Logger)e.nextElement();
             loggerNames.add(logger.getName());

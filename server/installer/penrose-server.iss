@@ -25,7 +25,7 @@ UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
 OutputBaseFilename=${module.name}-${product.version}
-OutputDir=..\dist
+OutputDir=..\..\dist
 LicenseFile=dist\LICENSE.txt
 
 [Files]

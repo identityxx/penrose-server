@@ -2,8 +2,6 @@ package org.safehaus.penrose.partition;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.source.SourceConfig;
@@ -16,6 +14,10 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.handler.HandlerConfig;
+import org.safehaus.penrose.handler.Handler;
+import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.Engine;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -39,6 +41,16 @@ public class Partitions implements PartitionsMBean {
 
         Partition partition = new Partition(partitionConfig);
         partition.setPartitionContext(partitionContext);
+
+        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
+            Handler handler = partition.createHandler(handlerConfig);
+            partition.addHandler(handler);
+        }
+
+        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
+            Engine engine = partition.createEngine(engineConfig);
+            partition.addEngine(engine);
+        }
 
         for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
             if (!connectionConfig.isEnabled()) continue;
@@ -209,5 +221,36 @@ public class Partitions implements PartitionsMBean {
 
     public Collection<String> getPartitionNames() {
         return partitions.keySet();
+    }
+
+    public Handler getHandler(Partition partition, EntryMapping entryMapping) {
+        String handlerName = entryMapping.getHandlerName();
+        if (handlerName == null) handlerName = "DEFAULT";
+
+        Handler handler = partition.getHandler(handlerName);
+        if (handler != null) {
+            if (debug) log.debug("Using "+handlerName+" handler in "+partition.getName()+" partition.");
+            return handler;
+        }
+
+        if (debug) log.debug("Using "+handlerName+" handler in DEFAULT partition.");
+        partition = partitions.get("DEFAULT");
+        return partition.getHandler(handlerName);
+    }
+
+    public Engine getEngine(Partition partition, Handler handler, EntryMapping entryMapping) {
+        String engineName = entryMapping.getEngineName();
+        if (engineName == null) engineName = handler.getEngineName();
+        if (engineName == null) engineName = "DEFAULT";
+
+        Engine engine = partition.getEngine(engineName);
+        if (engine != null) {
+            if (debug) log.debug("Using "+engineName+" engine in "+partition.getName()+" partition.");
+            return engine;
+        }
+
+        if (debug) log.debug("Using "+engineName+" engine in DEFAULT partition.");
+        partition = partitions.get("DEFAULT");
+        return partition.getEngine(engineName);
     }
 }

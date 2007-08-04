@@ -50,16 +50,7 @@ public class PenroseService implements PenroseServiceMBean {
     public String getHome() throws Exception {
         if (penroseServer == null) return home;
         
-        return penroseServer.getHome();
-    }
-
-    public void setHome(String home) throws Exception {
-        this.home = home;
-
-        if (penroseServer != null) {
-            penroseServer.setHome(home);
-            penroseServer.reload();
-        }
+        return penroseServer.getHome().getAbsolutePath();
     }
 
     public void create() throws Exception {
@@ -113,30 +104,30 @@ public class PenroseService implements PenroseServiceMBean {
         return serviceManager.getStatus(serviceName);
     }
 
-    public Collection listFiles(String directory) throws Exception {
-        Collection results = new ArrayList();
+    public Collection<String> listFiles(String directory) throws Exception {
+        Collection<String> results = new ArrayList<String>();
 
-        String homeDirectory = penroseServer.getHome();
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+directory);
+        File home = penroseServer.getHome();
+        File file = new File(home, directory);
         if (!file.exists()) return results;
 
         File children[] = file.listFiles();
-        for (int i=0; i<children.length; i++) {
-            if (children[i].isDirectory()) {
-                results.addAll(listFiles(directory+File.separator+children[i].getName()));
+        for (File child : children) {
+            if (child.isDirectory()) {
+                results.addAll(listFiles(directory + File.separator + child.getName()));
             } else {
-                results.add(directory+File.separator+children[i].getName());
+                results.add(directory + File.separator + child.getName());
             }
         }
         return results;
     }
 
     public byte[] download(String filename) throws Exception {
-        String home = penroseServer.getHome();
-        File file = new File((home == null ? "" : home+File.separator)+filename);
+        File home = penroseServer.getHome();
+        File file = new File(home, filename);
         if (!file.exists()) return null;
 
-        log.debug("Downloading "+file.getAbsolutePath());
+        log.debug("Downloading "+file);
 
         FileInputStream in = new FileInputStream(file);
         byte content[] = new byte[(int)file.length()];
@@ -147,11 +138,11 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public void upload(String filename, byte content[]) throws Exception {
-        String homeDirectory = penroseServer.getHome();
-        File file = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+filename);
+        File home = penroseServer.getHome();
+        File file = new File(home, filename);
         file.getParentFile().mkdirs();
 
-        log.debug("Uploading "+file.getAbsolutePath());
+        log.debug("Uploading "+file);
 
         FileOutputStream out = new FileOutputStream(file);
         out.write(content);

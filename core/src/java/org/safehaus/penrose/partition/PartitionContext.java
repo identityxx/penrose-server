@@ -3,12 +3,14 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 
+import java.io.File;
+
 /**
  * @author Endi Sukma Dewata
  */
 public class PartitionContext implements Cloneable {
 
-    private String path;
+    private File path;
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -16,11 +18,11 @@ public class PartitionContext implements Cloneable {
     public PartitionContext() {
     }
 
-    public String getPath() {
+    public File getPath() {
         return path;
     }
 
-    public void setPath(String path) {
+    public void setPath(File path) {
         this.path = path;
     }
 

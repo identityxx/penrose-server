@@ -5,9 +5,12 @@
 
 <partition>
 
-    <partition-name>Simple</partition-name>
+    <handler name="SIMPLE">
+        <handler-class>org.safehaus.penrose.handler.simple.SimpleHandler</handler-class>
+    </handler>
 
-    <handler-name>SIMPLE</handler-name>
-    <engine-name>SIMPLE</engine-name>
+    <engine name="SIMPLE">
+        <engine-class>org.safehaus.penrose.engine.simple.SimpleEngine</engine-class>
+    </engine>
 
 </partition>

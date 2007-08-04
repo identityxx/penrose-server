@@ -32,27 +32,26 @@ public class SchemaReader {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private String home;
+    private File home;
 
     public SchemaReader() {
     }
 
-    public SchemaReader(String home) {
+    public SchemaReader(File home) {
         this.home = home;
     }
 
     public Schema read(SchemaConfig schemaConfig) throws Exception {
 
-        String path = (home == null ? "" : home+File.separator)+schemaConfig.getPath();
+        File path = new File(home, schemaConfig.getPath());
 
         log.debug("Loading schema "+path+".");
 
         Schema schema = new Schema(schemaConfig);
 
-        File file = new File(path);
-        if (!file.exists()) return schema;
+        if (!path.exists()) return schema;
 
-        FileReader in = new FileReader(file);
+        FileReader in = new FileReader(path);
         
         SchemaParser parser = new SchemaParser(in);
         Collection c = parser.parse();

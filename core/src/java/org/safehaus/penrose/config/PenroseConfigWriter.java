@@ -68,13 +68,13 @@ public class PenroseConfigWriter {
                 "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
-        xmlWriter.write(toElement(penroseConfig));
+        xmlWriter.write(createElement(penroseConfig));
         xmlWriter.close();
 
         writer.close();
     }
 
-    public Element toElement(PenroseConfig penroseConfig) {
+    public Element createElement(PenroseConfig penroseConfig) {
         Element element = new DefaultElement("server");
 
         for (String name : penroseConfig.getSystemPropertyNames()) {
@@ -103,7 +103,7 @@ public class PenroseConfigWriter {
         }
 
         for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
-            element.add(toElement(interpreterConfig));
+            element.add(createElement(interpreterConfig));
         }
 
         if (penroseConfig.getSessionConfig() != null) {
@@ -112,20 +112,20 @@ public class PenroseConfigWriter {
         }
 
         for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
-            element.add(toElement(engineConfig));
+            element.add(createElement(engineConfig));
         }
 
         for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
-            element.add(toElement(handlerConfig));
+            element.add(createElement(handlerConfig));
         }
 
         if (penroseConfig.getConnectorConfig() != null) {
             ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-            element.add(toElement(connectorConfig));
+            element.add(createElement(connectorConfig));
         }
 
         for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
-            element.add(toElement(adapterConfig));
+            element.add(createElement(adapterConfig));
         }
 
         UserConfig rootUserConfig = penroseConfig.getRootUserConfig();
@@ -150,7 +150,7 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(AdapterConfig adapterConfig) {
+    public Element createElement(AdapterConfig adapterConfig) {
         Element element = new DefaultElement("adapter");
         element.addAttribute("name", adapterConfig.getName());
 
@@ -183,7 +183,7 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(InterpreterConfig interpreterConfig) {
+    public Element createElement(InterpreterConfig interpreterConfig) {
         Element element = new DefaultElement("interpreter");
 /*
         Element interpreterName = new DefaultElement("interpreter-name");
@@ -247,7 +247,7 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(EngineConfig engineConfig) {
+    public Element createElement(EngineConfig engineConfig) {
         Element element = new DefaultElement("engine");
         element.addAttribute("name", engineConfig.getName());
 
@@ -280,7 +280,7 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(HandlerConfig handlerConfig) {
+    public Element createElement(HandlerConfig handlerConfig) {
         Element element = new DefaultElement("handler");
         element.addAttribute("name", handlerConfig.getName());
 
@@ -313,7 +313,7 @@ public class PenroseConfigWriter {
         return element;
     }
 
-    public Element toElement(ConnectorConfig connectorConfig) {
+    public Element createElement(ConnectorConfig connectorConfig) {
         Element element = new DefaultElement("connector");
 /*
         Element cacheName = new DefaultElement("connector-name");

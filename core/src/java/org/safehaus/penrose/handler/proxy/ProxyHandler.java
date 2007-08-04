@@ -8,7 +8,6 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.engine.Engine;
 
 /**
  * @author Endi S. Dewata
@@ -18,8 +17,8 @@ public class ProxyHandler extends DefaultHandler {
     public ProxyHandler() throws Exception {
     }
 
-    public Engine getEngine(Partition partition, EntryMapping entryMapping) {
-        return engineManager.getEngine("PROXY");
+    public String getEngineName() {
+        return "PROXY";
     }
 
     public void search(
