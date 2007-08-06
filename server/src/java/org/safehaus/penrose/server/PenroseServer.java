@@ -299,4 +299,8 @@ public class PenroseServer {
             System.exit(1);
         }
     }
+
+    public ServiceConfigs getServiceConfigs() {
+        return serviceConfigs;
+    }
 }

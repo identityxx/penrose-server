@@ -5,7 +5,6 @@
 
 <service enabled="true">
 
-  <service-name>LDAP</service-name>
   <service-class>org.safehaus.penrose.mina.MinaLDAPService</service-class>
 
   <parameter>

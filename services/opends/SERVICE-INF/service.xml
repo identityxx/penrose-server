@@ -5,7 +5,6 @@
 
 <service enabled="false">
 
-  <service-name>OpenDS</service-name>
   <service-class>org.safehaus.penrose.opends.OpenDSLDAPService</service-class>
 
 </service>

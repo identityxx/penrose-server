@@ -40,9 +40,8 @@ public class ServiceConfig implements Cloneable, ServiceConfigMBean {
     public ServiceConfig() {
     }
 
-    public ServiceConfig(String name, String serviceClass) {
+    public ServiceConfig(String name) {
         this.name = name;
-        this.serviceClass = serviceClass;
     }
     
     public String getName() {

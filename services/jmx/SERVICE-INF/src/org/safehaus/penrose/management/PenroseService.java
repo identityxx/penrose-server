@@ -22,6 +22,7 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.service.Services;
+import org.safehaus.penrose.service.ServiceConfigs;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -118,8 +119,8 @@ public class PenroseService implements PenroseServiceMBean {
     public Collection<String> getServiceNames() throws Exception {
         try {
             Collection<String> serviceNames = new ArrayList<String>();
-            Services serviceManager = penroseServer.getServices();
-            serviceNames.addAll(serviceManager.getServiceNames());
+            ServiceConfigs serviceConfigs = penroseServer.getServiceConfigs();
+            serviceNames.addAll(serviceConfigs.getServiceNames());
             return serviceNames;
         } catch (Exception e) {
             log.error(e.getMessage(), e);

@@ -39,14 +39,13 @@ public class ServiceReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public ServiceConfig read(File dir) throws Exception {
+    public ServiceConfig read(File serviceDir) throws Exception {
 
-        ServiceConfig serviceConfig = new ServiceConfig();
+        ServiceConfig serviceConfig = new ServiceConfig(serviceDir.getName());
 
-        File serviceInf = new File(dir, "SERVICE-INF");
+        File serviceInf = new File(serviceDir, "SERVICE-INF");
 
         File serviceXml = new File(serviceInf, "service.xml");
-
         digester.push(serviceConfig);
 		digester.parse(serviceXml);
         digester.pop();

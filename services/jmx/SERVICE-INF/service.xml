@@ -5,7 +5,6 @@
 
 <service enabled="true">
 
-  <service-name>JMX</service-name>
   <service-class>org.safehaus.penrose.management.PenroseJMXService</service-class>
 
   <parameter>
