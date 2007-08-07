@@ -37,7 +37,7 @@ public class Services implements ServicesMBean {
     public Service init(ServiceConfig serviceConfig, ServiceContext serviceContext) throws Exception {
 
         Collection<URL> classPaths = serviceConfig.getClassPaths();
-        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]));
+        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
         Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
         Service service = (Service)clazz.newInstance();

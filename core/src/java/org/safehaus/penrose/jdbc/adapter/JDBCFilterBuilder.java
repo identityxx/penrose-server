@@ -78,9 +78,22 @@ public class JDBCFilterBuilder {
             log.debug("Simple Filter: "+name+" "+operator+" "+v);
         }
 
+        StringBuilder sb1 = new StringBuilder();
+
+        String lsourceName;
+        String lfieldName;
+
         int i = name.indexOf('.');
-        String lsourceName = name.substring(0, i);
-        String lfieldName = name.substring(i+1);
+        if (i < 0) {
+            lsourceName = sourceRefs.keySet().iterator().next();
+            lfieldName = name;
+        } else {
+            lsourceName = name.substring(0, i);
+            lfieldName = name.substring(i+1);
+
+            sb1.append(lsourceName);
+            sb1.append(".");
+        }
 
         if (lfieldName.startsWith("primaryKey.")) lfieldName = lfieldName.substring(11);
 
@@ -89,10 +102,6 @@ public class JDBCFilterBuilder {
 
         Field lField = ls.getField(lfieldName);
         if (lField == null) throw new Exception("Unknown field: "+name);
-
-        StringBuilder sb1 = new StringBuilder();
-        sb1.append(lsourceName);
-        sb1.append(".");
 
         if (quote != null) sb1.append(quote);
         sb1.append(lField.getOriginalName());

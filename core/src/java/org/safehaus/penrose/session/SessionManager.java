@@ -28,8 +28,6 @@ public class SessionManager implements SessionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static String SESSION_ID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
     private SessionContext sessionContext;
@@ -39,18 +37,18 @@ public class SessionManager implements SessionManagerMBean {
     public Map<Object,Session> sessions = new LinkedHashMap<Object,Session>();
 
     public long sessionCounter;
-    private int maxSessions;
-    private int maxIdleTime; // minutes
+    private Integer maxSessions;
+    private Integer maxIdleTime; // minutes
 
     public SessionManager() {
     }
 
     public void start() throws Exception {
         String s = sessionConfig.getParameter(SessionConfig.MAX_SESSIONS);
-        maxSessions = s == null ? SessionConfig.DEFAULT_MAX_SESSIONS : Integer.parseInt(s);
+        if (s != null) maxSessions = new Integer(s);
 
         s = sessionConfig.getParameter(SessionConfig.MAX_IDLE_TIME);
-        maxIdleTime = s == null ? SessionConfig.DEFAULT_MAX_IDLE_TIME : Integer.parseInt(s);
+        if (s != null) maxIdleTime = new Integer(s);
     }
 
     public void stop() throws Exception {
@@ -58,7 +56,7 @@ public class SessionManager implements SessionManagerMBean {
         sessions.clear();
     }
 
-    public synchronized Session newSession() {
+    public synchronized Session newSession() throws Exception {
 
         Object sessionId = createSessionId();
         while (sessions.get(sessionId) != null) {
@@ -68,11 +66,13 @@ public class SessionManager implements SessionManagerMBean {
         return createSession(sessionId);
     }
 
-    public synchronized Session createSession(Object sessionId) {
+    public synchronized Session createSession(Object sessionId) throws Exception {
 
         purge();
 
-        if (sessions.size() >= maxSessions) return null;
+        if (maxSessions != null && sessions.size() >= maxSessions) {
+            throw new Exception("Maximum number of sessions has been reached.");
+        }
 
         //log.debug("Creating session "+sessionId);
         Session session = new Session(this);
@@ -107,14 +107,6 @@ public class SessionManager implements SessionManagerMBean {
         Long sessionId = sessionCounter;
         sessionCounter++;
         return sessionId;
-/*
-        StringBuilder sb = new StringBuilder();
-        for (int i=0; i<64; i++) {
-            int index = (int)(SESSION_ID_CHARS.length()*Math.random());
-            sb.append(SESSION_ID_CHARS.charAt(index));
-        }
-        return sb.toString();
-*/
     }
 
     public synchronized void purge() {
@@ -139,7 +131,7 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public boolean isExpired(Session session) {
-        if (session == null) return false;
+        if (session == null || maxIdleTime == null) return false;
 
         long idleTime = System.currentTimeMillis() - session.getLastActivityDate().getTime();
         //log.debug("Session "+session.getSessionId()+" idleTime = "+idleTime);
@@ -161,19 +153,19 @@ public class SessionManager implements SessionManagerMBean {
         return sessions.size();
     }
 
-    public void setMaxSessions(int maxSessions) {
+    public void setMaxSessions(Integer maxSessions) {
         this.maxSessions = maxSessions;
     }
 
-    public int getMaxSessions() {
+    public Integer getMaxSessions() {
         return maxSessions;
     }
 
-    public int getMaxIdleTime() {
+    public Integer getMaxIdleTime() {
         return maxIdleTime;
     }
 
-    public void setMaxIdleTime(int maxIdleTime) {
+    public void setMaxIdleTime(Integer maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
     }
 

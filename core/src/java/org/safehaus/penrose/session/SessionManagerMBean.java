@@ -28,9 +28,9 @@ public interface SessionManagerMBean {
     public int getNumberOfSessions() throws Exception;
     public void purge() throws Exception;
 
-    public void setMaxSessions(int maxSessions) throws Exception;
-    public int getMaxSessions() throws Exception;
+    public void setMaxSessions(Integer maxSessions) throws Exception;
+    public Integer getMaxSessions() throws Exception;
 
-    public int getMaxIdleTime() throws Exception;
-    public void setMaxIdleTime(int maxIdleTime) throws Exception;
+    public Integer getMaxIdleTime() throws Exception;
+    public void setMaxIdleTime(Integer maxIdleTime) throws Exception;
 }

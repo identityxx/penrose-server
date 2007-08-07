@@ -262,8 +262,6 @@ public class JDBCStatementBuilder {
         String table = getTableName(sourceRef.getSource());
 
         sb.append(table);
-        sb.append(" ");
-        sb.append(sourceRef.getAlias());
 
         sb.append(" set ");
 
@@ -316,8 +314,6 @@ public class JDBCStatementBuilder {
         String table = getTableName(sourceRef.getSource());
 
         sb.append(table);
-        sb.append(" ");
-        sb.append(sourceRef.getAlias());
 
         Filter filter = statement.getFilter();
 

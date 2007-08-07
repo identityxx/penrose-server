@@ -29,9 +29,6 @@ public class SessionConfig implements SessionConfigMBean, Cloneable {
     public final static String MAX_SESSIONS       = "maxSessions";
     public final static String MAX_IDLE_TIME      = "maxIdleTime";
 
-    public final static int DEFAULT_MAX_SESSIONS  = 20;
-    public final static int DEFAULT_MAX_IDLE_TIME = 5; // minutes
-
     private String description;
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();

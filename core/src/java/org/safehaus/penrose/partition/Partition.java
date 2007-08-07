@@ -75,7 +75,7 @@ public class Partition implements PartitionMBean, Cloneable {
         this.partitionConfig = partitionConfig;
 
         Collection<URL> classPaths = partitionConfig.getClassPaths();
-        classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]));
+        classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
     }
 
     public String getName() {

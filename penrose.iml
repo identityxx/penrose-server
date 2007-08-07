@@ -16,18 +16,18 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/tomcat/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/services/apacheds/SERVICE-INF/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/services/ldap/SERVICE-INF/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/services/opends/SERVICE-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/classes" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/tests" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/server/target" />
-      <excludeFolder url="file://$MODULE_DIR$/services/apacheds/SERVICE-INF/target" />
-      <excludeFolder url="file://$MODULE_DIR$/services/jmx/SERVICE-INF/target" />
-      <excludeFolder url="file://$MODULE_DIR$/services/ldap/SERVICE-INF/target" />
-      <excludeFolder url="file://$MODULE_DIR$/services/opends/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -304,7 +304,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/mina-filter-ssl-1.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/mina-filter-ssl-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -313,7 +313,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/mina-core-1.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/mina-core-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -322,7 +322,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/jmx/SERVICE-INF/lib/jmxtools-1.2.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/jmxtools-1.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -331,7 +331,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/jmx/SERVICE-INF/lib/jmxri-1.2.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/jmxri-1.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -340,7 +340,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/jmx/SERVICE-INF/lib/mx4j-tools.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/mx4j-tools.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -349,7 +349,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/jmx/SERVICE-INF/lib/mx4j.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/mx4j.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -358,7 +358,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/java-backend-apacheds-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/java-backend-apacheds-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -367,7 +367,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/java-backend-mina-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/java-backend-mina-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -376,7 +376,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/shared-ldap-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/shared-ldap-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -385,7 +385,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/shared-asn1-codec-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/shared-asn1-codec-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -394,7 +394,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/backport-util-concurrent-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/backport-util-concurrent-2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -403,7 +403,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/ldap/SERVICE-INF/lib/shared-asn1-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/LDAP/SERVICE-INF/lib/shared-asn1-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -412,7 +412,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/opends/SERVICE-INF/lib/activation.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/OpenDS/SERVICE-INF/lib/activation.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -421,7 +421,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/opends/SERVICE-INF/lib/je.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/OpenDS/SERVICE-INF/lib/je.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -430,7 +430,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/opends/SERVICE-INF/lib/mail.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/OpenDS/SERVICE-INF/lib/mail.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -439,7 +439,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/opends/SERVICE-INF/lib/OpenDS.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/OpenDS/SERVICE-INF/lib/OpenDS.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -448,7 +448,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/opends/SERVICE-INF/lib/java-backend-opends-1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/OpenDS/SERVICE-INF/lib/java-backend-opends-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -457,7 +457,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/spring-context-1.2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/spring-context-1.2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -466,7 +466,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/maven-embedder-2.0.2-dep.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/maven-embedder-2.0.2-dep.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -475,7 +475,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-protocol-ntp-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-protocol-ntp-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -484,7 +484,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-server-main-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-server-main-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -493,7 +493,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/backport-util-concurrent-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/backport-util-concurrent-2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -502,7 +502,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/jdbm-1.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/jdbm-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -511,7 +511,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-kerberos-shared-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-kerberos-shared-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -520,7 +520,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-server-jndi-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-server-jndi-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -529,7 +529,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/shared-ldap-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/shared-ldap-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -538,7 +538,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-protocol-shared-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-protocol-shared-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -547,7 +547,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-core-plugin-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-core-plugin-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -556,7 +556,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-protocol-ldap-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-protocol-ldap-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -565,7 +565,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-core-shared-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-core-shared-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -574,7 +574,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/spring-core-1.2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/spring-core-1.2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -583,7 +583,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-server-ssl-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-server-ssl-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -592,7 +592,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/spring-beans-1.2.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/spring-beans-1.2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -601,7 +601,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-core-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-core-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -610,7 +610,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/penrose-apacheds-service-2.0b1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/penrose-apacheds-service-2.0b1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -619,7 +619,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/mina-core-1.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/mina-core-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -628,7 +628,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/lcrypto-jdk14-131.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/lcrypto-jdk14-131.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -637,7 +637,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/mina-filter-ssl-1.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/mina-filter-ssl-1.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -646,7 +646,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-protocol-kerberos-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-protocol-kerberos-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -655,7 +655,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/antlr-2.7.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/antlr-2.7.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -664,7 +664,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/apacheds-protocol-changepw-1.0.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/apacheds-protocol-changepw-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -673,7 +673,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/shared-asn1-codec-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/shared-asn1-codec-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -682,7 +682,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/apacheds/SERVICE-INF/lib/shared-asn1-0.9.5.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/shared-asn1-0.9.5.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
