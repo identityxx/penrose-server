@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.service;
 
-import org.safehaus.penrose.server.PenroseServer;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -40,14 +39,10 @@ public class Services implements ServicesMBean {
         URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
         Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
+
         Service service = (Service)clazz.newInstance();
-
-        service.setServiceConfig(serviceConfig);
-        service.setServiceContext(serviceContext);
         service.setClassLoader(classLoader);
-        service.init();
-
-        addService(serviceConfig.getName(), service);
+        service.init(serviceConfig, serviceContext);
 
         return service;
     }
@@ -98,8 +93,8 @@ public class Services implements ServicesMBean {
         return service.getStatus();
     }
 
-    public void addService(String name, Service service) {
-        services.put(name, service);
+    public void addService(Service service) {
+        services.put(service.getName(), service);
     }
 
     public Service getService(String name) {

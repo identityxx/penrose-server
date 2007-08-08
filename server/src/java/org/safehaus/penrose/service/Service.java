@@ -44,12 +44,23 @@ public class Service {
     public Service() {
     }
 
+    public String getName() {
+        return serviceConfig.getName();
+    }
+
     public String getParameter(String name) {
         return serviceConfig.getParameter(name);
     }
 
     public Collection getParameterNames() {
         return serviceConfig.getParameterNames();
+    }
+
+    public void init(ServiceConfig serviceConfig, ServiceContext serviceContext) throws Exception {
+        this.serviceConfig = serviceConfig;
+        this.serviceContext = serviceContext;
+
+        init();
     }
 
     public void init() throws Exception {

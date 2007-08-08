@@ -20,11 +20,8 @@ package org.safehaus.penrose.jdbc;
 import java.sql.*;
 import java.util.*;
 
-import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.TableConfig;
 import org.safehaus.penrose.jdbc.adapter.JDBCStatementBuilder;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.util.Formatter;
 
 import org.slf4j.LoggerFactory;
@@ -492,9 +489,21 @@ public class JDBCClient {
     	ps.setObject(paramIndex, object);
     }
 
-    public void createTable(Source source) throws Exception {
+    public void createDatabase(String database) throws Exception {
+        executeUpdate("create database "+database);
+    }
 
-        String tableName = source.getParameter(JDBCClient.TABLE);
+    public void dropDatabase(String database) throws Exception {
+        executeUpdate("drop database "+database);
+    }
+
+    public void createTable(Source source) throws Exception {
+        createTable(source.getSourceConfig());
+    }
+
+    public void createTable(SourceConfig sourceConfig) throws Exception {
+
+        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
 
         StringBuilder sb = new StringBuilder();
 
@@ -503,7 +512,7 @@ public class JDBCClient {
         sb.append(" (");
 
         boolean first = true;
-        for (Field field : source.getFields()) {
+        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
 
             if (first) {
                 first = false;
@@ -511,29 +520,29 @@ public class JDBCClient {
                 sb.append(", ");
             }
 
-            sb.append(field.getName());
+            sb.append(fieldConfig.getName());
             sb.append(" ");
-            sb.append(field.getType());
+            sb.append(fieldConfig.getType());
 
-            if (field.getLength() > 0) {
+            if (fieldConfig.getLength() > 0) {
                 sb.append("(");
-                sb.append(field.getLength());
+                sb.append(fieldConfig.getLength());
                 sb.append(")");
             }
 
-            if (field.isCaseSensitive()) {
+            if (fieldConfig.isCaseSensitive()) {
                 sb.append(" binary");
             }
         }
 
-        Collection<String> indexFieldNames = source.getIndexFieldNames();
+        Collection<String> indexFieldNames = sourceConfig.getIndexFieldNames();
         for (String fieldName : indexFieldNames) {
             sb.append(", index (");
             sb.append(fieldName);
             sb.append(")");
         }
 
-        Collection<String> primaryKeyNames = source.getPrimaryKeyNames();
+        Collection<String> primaryKeyNames = sourceConfig.getPrimaryKeyNames();
         if (!primaryKeyNames.isEmpty()) {
             sb.append(", primary key (");
 
@@ -560,9 +569,13 @@ public class JDBCClient {
     }
 
     public void renameTable(Source oldSource, Source newSource) throws Exception {
+        renameTable(oldSource.getSourceConfig(), newSource.getSourceConfig());
+    }
 
-        String oldTableName = oldSource.getParameter(JDBCClient.TABLE);
-        String newTableName = newSource.getParameter(JDBCClient.TABLE);
+    public void renameTable(SourceConfig oldSourceConfig, SourceConfig newSourceConfig) throws Exception {
+
+        String oldTableName = oldSourceConfig.getParameter(JDBCClient.TABLE);
+        String newTableName = newSourceConfig.getParameter(JDBCClient.TABLE);
 
         StringBuilder sb = new StringBuilder();
 
@@ -577,8 +590,12 @@ public class JDBCClient {
     }
 
     public void dropTable(Source source) throws Exception {
+        dropTable(source.getSourceConfig());
+    }
 
-        String tableName = source.getParameter(JDBCClient.TABLE);
+    public void dropTable(SourceConfig sourceConfig) throws Exception {
+
+        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
 
         StringBuilder sb = new StringBuilder();
 
@@ -591,8 +608,12 @@ public class JDBCClient {
     }
 
     public void cleanTable(Source source) throws Exception {
+        cleanTable(source.getSourceConfig());
+    }
 
-        String tableName = source.getParameter(JDBCClient.TABLE);
+    public void cleanTable(SourceConfig sourceConfig) throws Exception {
+
+        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
 
         StringBuilder sb = new StringBuilder();
 
@@ -605,8 +626,12 @@ public class JDBCClient {
     }
 
     public void showStatus(final Source source) throws Exception {
+        showStatus(source.getSourceConfig());
+    }
 
-        final String tableName = source.getParameter(JDBCClient.TABLE);
+    public void showStatus(final SourceConfig sourceConfig) throws Exception {
+
+        final String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
 
         StringBuilder sb = new StringBuilder();
 
@@ -629,7 +654,7 @@ public class JDBCClient {
         sb.append("select ");
 
         boolean first = true;
-        for (Field field : source.getFields()) {
+        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
 
             if (first) {
                 first = false;
@@ -638,7 +663,7 @@ public class JDBCClient {
             }
 
             sb.append("max(length(");
-            sb.append(field.getOriginalName());
+            sb.append(fieldConfig.getOriginalName());
             sb.append("))");
         }
 
@@ -652,11 +677,10 @@ public class JDBCClient {
                 ResultSet rs = (ResultSet)object;
 
                 int index = 1;
-                for (Iterator i=source.getFields().iterator(); i.hasNext(); index++) {
-                    Field field = (Field)i.next();
-                    Object length = rs.getObject(index);
-                    int maxLength = field.getLength();
-                    log.error(" - Field "+field.getName()+": "+length+(maxLength > 0 ? "/"+maxLength : ""));
+                for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+                    Object length = rs.getObject(index++);
+                    int maxLength = fieldConfig.getLength();
+                    log.error(" - Field " + fieldConfig.getName() + ": " + length + (maxLength > 0 ? "/" + maxLength : ""));
                 }
             }
         };

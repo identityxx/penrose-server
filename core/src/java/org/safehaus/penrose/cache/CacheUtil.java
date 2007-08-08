@@ -331,7 +331,9 @@ public class CacheUtil {
             partitionContext.setPenroseConfig(penroseConfig);
             partitionContext.setPenroseContext(penroseContext);
 
-            partitions.init(partitionConfig, partitionContext);
+            Partition partition = new Partition();
+            partition.init(partitionConfig, partitionContext);
+            partitions.addPartition(partition);
         }
 
         CacheUtil cacheManager = new CacheUtil(partitions);

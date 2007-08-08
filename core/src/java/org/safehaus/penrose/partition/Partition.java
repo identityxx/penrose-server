@@ -71,11 +71,60 @@ public class Partition implements PartitionMBean, Cloneable {
     protected Map<String,Map<String,SourceRef>> sourceRefs         = new LinkedHashMap<String,Map<String,SourceRef>>();
     protected Map<String,Map<String,SourceRef>>  primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
 
-    public Partition(PartitionConfig partitionConfig) {
+    public Partition() {
+    }
+
+    public void init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
         this.partitionConfig = partitionConfig;
+        this.partitionContext = partitionContext;
 
         Collection<URL> classPaths = partitionConfig.getClassPaths();
         classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+
+        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
+            Handler handler = createHandler(handlerConfig);
+            addHandler(handler);
+        }
+
+        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
+            Engine engine = createEngine(engineConfig);
+            addEngine(engine);
+        }
+
+        for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
+            if (!connectionConfig.isEnabled()) continue;
+
+            Connection connection = createConnection(connectionConfig);
+            addConnection(connection);
+        }
+
+        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigs().getSourceConfigs()) {
+            if (!sourceConfig.isEnabled()) continue;
+
+            Source source = createSource(sourceConfig);
+            addSource(source);
+        }
+
+        for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSourceConfigs().getSourceSyncConfigs()) {
+            if (!sourceSyncConfig.isEnabled()) continue;
+
+            SourceSync sourceSync = createSourceSync(sourceSyncConfig);
+            addSourceSync(sourceSync);
+        }
+
+        for (EntryMapping entryMapping : partitionConfig.getDirectoryConfigs().getEntryMappings()) {
+            if (!entryMapping.isEnabled()) continue;
+
+            Entry entry = createEntry(entryMapping);
+            addEntry(entry);
+        }
+
+        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigs().getModuleConfigs()) {
+            if (!moduleConfig.isEnabled()) continue;
+
+            Module module = createModule(moduleConfig);
+            addModule(module);
+        }
     }
 
     public String getName() {

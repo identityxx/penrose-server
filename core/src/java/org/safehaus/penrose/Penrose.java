@@ -268,7 +268,9 @@ public class Penrose {
         partitionContext.setPenroseConfig(penroseConfig);
         partitionContext.setPenroseContext(penroseContext);
 
-        partitions.init(partitionConfig, partitionContext);
+        Partition partition = new Partition();
+        partition.init(partitionConfig, partitionContext);
+        partitions.addPartition(partition);
 
         File partitionsDir = new File(home, "partitions");
         if (!partitionsDir.isDirectory()) return;
@@ -303,7 +305,9 @@ public class Penrose {
             partitionContext.setPenroseConfig(penroseConfig);
             partitionContext.setPenroseContext(penroseContext);
 
-            partitions.init(partitionConfig, partitionContext);
+            partition = new Partition();
+            partition.init(partitionConfig, partitionContext);
+            partitions.addPartition(partition);
         }
 
         sessionContext.start();

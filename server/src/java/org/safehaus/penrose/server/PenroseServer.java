@@ -125,6 +125,8 @@ public class PenroseServer {
             serviceContext.setPenroseServer(this);
 
             Service service = services.init(serviceConfig, serviceContext);
+            services.addService(service);
+
             service.start();
         }
     }

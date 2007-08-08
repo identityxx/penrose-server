@@ -5,18 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceSyncConfig;
 import org.safehaus.penrose.source.SourceSync;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.engine.Engine;
 
 import java.util.Map;
@@ -35,61 +29,6 @@ public class Partitions implements PartitionsMBean {
     private Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
 
     public Partitions() {
-    }
-
-    public Partition init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
-
-        Partition partition = new Partition(partitionConfig);
-        partition.setPartitionContext(partitionContext);
-
-        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
-            Handler handler = partition.createHandler(handlerConfig);
-            partition.addHandler(handler);
-        }
-
-        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
-            Engine engine = partition.createEngine(engineConfig);
-            partition.addEngine(engine);
-        }
-
-        for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
-            if (!connectionConfig.isEnabled()) continue;
-
-            Connection connection = partition.createConnection(connectionConfig);
-            partition.addConnection(connection);
-        }
-
-        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigs().getSourceConfigs()) {
-            if (!sourceConfig.isEnabled()) continue;
-
-            Source source = partition.createSource(sourceConfig);
-            partition.addSource(source);
-        }
-
-        for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSourceConfigs().getSourceSyncConfigs()) {
-            if (!sourceSyncConfig.isEnabled()) continue;
-
-            SourceSync sourceSync = partition.createSourceSync(sourceSyncConfig);
-            partition.addSourceSync(sourceSync);
-        }
-
-        for (EntryMapping entryMapping : partitionConfig.getDirectoryConfigs().getEntryMappings()) {
-            if (!entryMapping.isEnabled()) continue;
-
-            Entry entry = partition.createEntry(entryMapping);
-            partition.addEntry(entry);
-        }
-
-        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigs().getModuleConfigs()) {
-            if (!moduleConfig.isEnabled()) continue;
-
-            Module module = partition.createModule(moduleConfig);
-            partition.addModule(module);
-        }
-
-        addPartition(partition);
-
-        return partition;
     }
 
     public void addPartition(Partition partition) {
