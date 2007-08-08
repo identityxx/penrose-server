@@ -24,13 +24,10 @@ public class JDBCFilterBuilder {
     private Collection<Assignment> assignments = new ArrayList<Assignment>();
 
     private String quote;
-    public boolean extractValues = true;
+    private boolean extractValues = true;
+    private boolean appendSourceAlias = true;
 
     public JDBCFilterBuilder() throws Exception {
-    }
-
-    public JDBCFilterBuilder(boolean extractValues) throws Exception {
-        this.extractValues = extractValues;
     }
 
     public void generate(Filter filter) throws Exception {
@@ -90,7 +87,9 @@ public class JDBCFilterBuilder {
         } else {
             lsourceName = name.substring(0, i);
             lfieldName = name.substring(i+1);
+        }
 
+        if (appendSourceAlias) {
             sb1.append(lsourceName);
             sb1.append(".");
         }
@@ -283,5 +282,21 @@ public class JDBCFilterBuilder {
 
     public void setQuote(String quote) {
         this.quote = quote;
+    }
+
+    public boolean isExtractValues() {
+        return extractValues;
+    }
+
+    public void setExtractValues(boolean extractValues) {
+        this.extractValues = extractValues;
+    }
+
+    public boolean isAppendSourceAlias() {
+        return appendSourceAlias;
+    }
+
+    public void setAppendSourceAlias(boolean appendSourceAlias) {
+        this.appendSourceAlias = appendSourceAlias;
     }
 }

@@ -39,9 +39,12 @@ public interface PenroseServiceMBean {
     public void stop(String serviceName) throws Exception;
     public String getStatus(String serviceName) throws Exception;
 
+    public void createDirectory(String path) throws Exception;
+    public void removeDirectory(String path) throws Exception;
+
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;
-    public Collection<String> listFiles(String directory) throws Exception;
+    public Collection<String> listFiles(String path) throws Exception;
 
     public Collection<String> getLoggerNames() throws Exception;
     public String getLoggerLevel(String name) throws Exception;

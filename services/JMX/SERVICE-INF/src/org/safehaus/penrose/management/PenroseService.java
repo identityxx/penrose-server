@@ -158,27 +158,65 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
-    public Collection<String> listFiles(String directory) throws Exception {
+    public Collection<String> listFiles(String path) throws Exception {
         try {
             Collection<String> results = new ArrayList<String>();
 
             File home = penroseServer.getHome();
-            File file = new File(home, directory);
-            if (!file.exists()) return results;
+            File dir = new File(home, path);
+            if (!dir.exists()) return results;
 
-            File children[] = file.listFiles();
-            for (File child : children) {
-                if (child.isDirectory()) {
-                    results.addAll(listFiles(directory + File.separator + child.getName()));
+            File files[] = dir.listFiles();
+            if (files == null) return results;
+
+            for (File file : files) {
+                String p = path+"/"+file.getName(); 
+                if (file.isDirectory()) {
+                    results.add(p+"/");
+                    results.addAll(listFiles(p));
                 } else {
-                    results.add(directory + File.separator + child.getName());
+                    results.add(p);
                 }
             }
             return results;
+            
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
+    }
+
+    public void createDirectory(String path) throws Exception {
+        try {
+            File home = penroseServer.getHome();
+            File dir = new File(home, path);
+            dir.mkdirs();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void removeDirectory(String path) throws Exception {
+        try {
+            File home = penroseServer.getHome();
+            delete(new File(home, path));
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void delete(File dir) {
+        File files[] = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                delete(file);
+            }
+        }
+        dir.delete();
     }
 
     public byte[] download(String filename) throws Exception {

@@ -253,4 +253,8 @@ public class Partitions implements PartitionsMBean {
         partition = partitions.get("DEFAULT");
         return partition.getEngine(engineName);
     }
+
+    public int size() {
+        return partitions.size();
+    }
 }

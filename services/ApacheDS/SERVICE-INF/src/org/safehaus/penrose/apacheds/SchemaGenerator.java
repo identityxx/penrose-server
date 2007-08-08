@@ -167,8 +167,8 @@ public class SchemaGenerator {
 
         File files[] = file.listFiles();
         if (files != null) {
-            for (int i=0; i<files.length; i++) {
-                compile(prefix, files[i]);
+            for (File file1 : files) {
+                compile(prefix, file1);
             }
         }
 
@@ -279,8 +279,8 @@ public class SchemaGenerator {
 
         File files[] = file.listFiles();
         if (files != null) {
-            for (int i=0; i<files.length; i++) {
-                delete(prefix, files[i]);
+            for (File file1 : files) {
+                delete(prefix, file1);
             }
         }
 

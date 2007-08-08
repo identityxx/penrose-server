@@ -53,8 +53,6 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("select distinct ");
 
-        int count = statement.getSourceAliases().size();
-
         boolean first = true;
         for (FieldRef fieldRef : statement.getFieldRefs()) {
 
@@ -114,7 +112,8 @@ public class JDBCStatementBuilder {
                 sb.append("(");
             }
 
-            JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(false);
+            JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+            filterBuilder.setExtractValues(false);
             filterBuilder.setQuote(quote);
 
             for (String cn : statement.getSourceAliases()) {
@@ -136,21 +135,12 @@ public class JDBCStatementBuilder {
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder;
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        filterBuilder.setQuote(quote);
 
-        if (count > 1) {
-            filterBuilder = new JDBCFilterBuilder();
-            filterBuilder.setQuote(quote);
-
-            for (String cn : statement.getSourceAliases()) {
-                sourceRef = statement.getSourceRef(cn);
-                filterBuilder.addSourceRef(cn, sourceRef);
-            }
-
-        } else {
-            filterBuilder = new JDBCFilterBuilder();
-            filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
-            filterBuilder.setQuote(quote);
+        for (String cn : statement.getSourceAliases()) {
+            sourceRef = statement.getSourceRef(cn);
+            filterBuilder.addSourceRef(cn, sourceRef);
         }
 
         filterBuilder.generate(filter);
@@ -287,6 +277,7 @@ public class JDBCStatementBuilder {
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        filterBuilder.setAppendSourceAlias(false);
         filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
         filterBuilder.setQuote(quote);
 
@@ -318,6 +309,7 @@ public class JDBCStatementBuilder {
         Filter filter = statement.getFilter();
 
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        filterBuilder.setAppendSourceAlias(false);
         filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
 
         filterBuilder.setQuote(quote);

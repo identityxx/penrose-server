@@ -256,6 +256,20 @@ public class PenroseClient {
         );
     }
 
+    public void createDirectory(String path) throws Exception {
+        invoke("createDirectory",
+                new Object[] { path },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void removeDirectory(String path) throws Exception {
+        invoke("removeDirectory",
+                new Object[] { path },
+                new String[] { String.class.getName() }
+        );
+    }
+
     public byte[] download(String filename) throws Exception {
         return (byte[])invoke("download",
                 new Object[] { filename },

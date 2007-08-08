@@ -104,21 +104,25 @@ public class PenroseService implements PenroseServiceMBean {
         return serviceManager.getStatus(serviceName);
     }
 
-    public Collection<String> listFiles(String directory) throws Exception {
+    public Collection<String> listFiles(String path) throws Exception {
         Collection<String> results = new ArrayList<String>();
 
         File home = penroseServer.getHome();
-        File file = new File(home, directory);
+        File file = new File(home, path);
         if (!file.exists()) return results;
 
-        File children[] = file.listFiles();
-        for (File child : children) {
+        File files[] = file.listFiles();
+        if (files == null) return results;
+
+        for (File child : files) {
+            String p = path+File.separator+child.getName();
             if (child.isDirectory()) {
-                results.addAll(listFiles(directory + File.separator + child.getName()));
+                results.addAll(listFiles(p));
             } else {
-                results.add(directory + File.separator + child.getName());
+                results.add(p);
             }
         }
+
         return results;
     }
 
