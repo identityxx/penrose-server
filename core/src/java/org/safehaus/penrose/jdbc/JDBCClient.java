@@ -41,7 +41,6 @@ public class JDBCClient {
     public final static String CATALOG      = "catalog";
     public final static String SCHEMA       = "schema";
     public final static String TABLE        = "table";
-    public final static String TABLE_NAME   = "tableName";
     public final static String FILTER       = "filter";
 
     public final static String INITIAL_SIZE                         = "initialSize";
@@ -175,6 +174,14 @@ public class JDBCClient {
 
     public Collection<FieldConfig> getColumns(String tableName) throws Exception {
         return getColumns(null, null, tableName);
+    }
+
+    public Collection<FieldConfig> getColumns(SourceConfig sourceConfig) throws Exception {
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
+        return getColumns(catalog, schema, table);
     }
 
     public Collection<FieldConfig> getColumns(String catalog, String schema, String tableName) throws Exception {
@@ -497,18 +504,47 @@ public class JDBCClient {
         executeUpdate("drop database "+database);
     }
 
+    public String getTableName(Source source)  {
+        return getTableName(source.getSourceConfig());
+    }
+
+    public String getTableName(SourceConfig sourceConfig)  {
+        StringBuilder sb = new StringBuilder();
+
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        if (catalog != null) {
+            if (quote != null) sb.append(quote);
+            sb.append(catalog);
+            if (quote != null) sb.append(quote);
+            sb.append(".");
+        }
+
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        if (schema != null) {
+            if (quote != null) sb.append(quote);
+            sb.append(schema);
+            if (quote != null) sb.append(quote);
+            sb.append(".");
+        }
+
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+        if (quote != null) sb.append(quote);
+        sb.append(table);
+        if (quote != null) sb.append(quote);
+
+        return sb.toString();
+    }
+
     public void createTable(Source source) throws Exception {
         createTable(source.getSourceConfig());
     }
 
     public void createTable(SourceConfig sourceConfig) throws Exception {
 
-        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("create table ");
-        sb.append(tableName);
+        sb.append(getTableName(sourceConfig));
         sb.append(" (");
 
         boolean first = true;
@@ -574,15 +610,12 @@ public class JDBCClient {
 
     public void renameTable(SourceConfig oldSourceConfig, SourceConfig newSourceConfig) throws Exception {
 
-        String oldTableName = oldSourceConfig.getParameter(JDBCClient.TABLE);
-        String newTableName = newSourceConfig.getParameter(JDBCClient.TABLE);
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("rename table ");
-        sb.append(oldTableName);
+        sb.append(getTableName(oldSourceConfig));
         sb.append(" to ");
-        sb.append(newTableName);
+        sb.append(getTableName(newSourceConfig));
 
         String sql = sb.toString();
 
@@ -595,12 +628,10 @@ public class JDBCClient {
 
     public void dropTable(SourceConfig sourceConfig) throws Exception {
 
-        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("drop table ");
-        sb.append(tableName);
+        sb.append(getTableName(sourceConfig));
 
         String sql = sb.toString();
 
@@ -613,12 +644,10 @@ public class JDBCClient {
 
     public void cleanTable(SourceConfig sourceConfig) throws Exception {
 
-        String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("delete from ");
-        sb.append(tableName);
+        sb.append(getTableName(sourceConfig));
 
         String sql = sb.toString();
 
@@ -631,7 +660,7 @@ public class JDBCClient {
 
     public void showStatus(final SourceConfig sourceConfig) throws Exception {
 
-        final String tableName = sourceConfig.getParameter(JDBCClient.TABLE);
+        final String tableName = getTableName(sourceConfig);
 
         StringBuilder sb = new StringBuilder();
 

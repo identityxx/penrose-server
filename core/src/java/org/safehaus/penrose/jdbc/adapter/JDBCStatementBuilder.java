@@ -347,8 +347,6 @@ public class JDBCStatementBuilder {
         }
 
         String table = source.getParameter(JDBCClient.TABLE);
-        if (table == null) table = source.getParameter(JDBCClient.TABLE_NAME);
-
         if (quote != null) sb.append(quote);
         sb.append(table);
         if (quote != null) sb.append(quote);
