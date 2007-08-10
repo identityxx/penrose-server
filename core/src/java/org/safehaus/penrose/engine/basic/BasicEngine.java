@@ -574,7 +574,7 @@ public class BasicEngine extends Engine {
            extractSourceValues(partition, baseMapping, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        //EngineTool.propagateDown(partition, entryMapping, sourceValues);
 
         if (debug) {
             log.debug("Source values:");

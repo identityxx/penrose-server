@@ -29,6 +29,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import java.util.*;
 import java.io.File;
+import java.io.FileInputStream;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
@@ -257,6 +258,9 @@ public class PenroseClient {
     }
 
     public void createDirectory(String path) throws Exception {
+
+        log.debug("Creating remote directory "+path+".");
+
         invoke("createDirectory",
                 new Object[] { path },
                 new String[] { String.class.getName() }
@@ -264,6 +268,9 @@ public class PenroseClient {
     }
 
     public void removeDirectory(String path) throws Exception {
+
+        log.debug("Removing remote directory "+path+".");
+
         invoke("removeDirectory",
                 new Object[] { path },
                 new String[] { String.class.getName() }
@@ -277,7 +284,51 @@ public class PenroseClient {
         );
     }
 
+    public void upload(File dir) throws Exception {
+        upload(dir, null);
+    }
+
+    public void upload(File file, String path) throws Exception {
+        if (path != null) file = new File(file, path);
+
+        if (file.isDirectory()) {
+            uploadFolder(file, path);
+        } else {
+            uploadFile(file, path);
+        }
+    }
+
+    public void uploadFolder(File dir, String path) throws Exception {
+
+        log.debug("Uploading directory "+dir.getAbsolutePath()+" to "+path+".");
+
+        createDirectory(path);
+        
+        for (File file : dir.listFiles()) {
+            String newPath = (path == null ? "" : path + "/") + file.getName();
+
+            if (file.isDirectory()) {
+                uploadFolder(file, newPath);
+
+            } else {
+                uploadFile(file, newPath);
+            }
+        }
+    }
+
+    public void uploadFile(File file, String path) throws Exception {
+        FileInputStream in = new FileInputStream(file);
+        byte content[] = new byte[(int)file.length()];
+        in.read(content);
+        in.close();
+
+        upload(path, content);
+    }
+
     public void upload(String filename, byte content[]) throws Exception {
+
+        log.debug("Uploading file "+filename+".");
+
         invoke("upload",
                 new Object[] { filename, content },
                 new String[] { String.class.getName(), "[B" }
