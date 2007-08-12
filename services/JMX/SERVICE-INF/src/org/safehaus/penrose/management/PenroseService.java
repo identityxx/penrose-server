@@ -166,6 +166,8 @@ public class PenroseService implements PenroseServiceMBean {
             File dir = new File(home, path);
             if (!dir.exists()) return results;
 
+            results.add(path+"/");
+            
             File files[] = dir.listFiles();
             if (files == null) return results;
 

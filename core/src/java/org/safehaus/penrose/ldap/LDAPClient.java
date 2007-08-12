@@ -632,7 +632,7 @@ public class LDAPClient {
         return new javax.naming.directory.SearchResult(entry.getDN(), entry, attributes);
     }
 
-    public Collection getNamingContexts() throws Exception {
+    public Collection<String> getNamingContexts() throws Exception {
         getRootDSE();
         javax.naming.directory.Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
 

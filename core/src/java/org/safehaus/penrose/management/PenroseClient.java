@@ -30,6 +30,7 @@ import javax.naming.InitialContext;
 import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
@@ -277,7 +278,37 @@ public class PenroseClient {
         );
     }
 
+    public void download(File localDir, String path) throws Exception {
+
+        log.debug("Downloading "+path+" into "+localDir+".");
+
+        for (String filename : listFiles(path)) {
+            File file = new File(localDir, filename);
+
+            if (filename.endsWith("/")) {
+                file.mkdirs();
+            } else {
+                downloadFile(file, filename);
+            }
+        }
+    }
+
+    public void downloadFile(File file, String path) throws Exception {
+
+        byte content[] = download(path);
+        if (content == null) return;
+
+        file.getParentFile().mkdirs();
+
+        FileOutputStream out = new FileOutputStream(file);
+		out.write(content);
+		out.close();
+	}
+
     public byte[] download(String filename) throws Exception {
+
+        log.debug("Downloading file "+filename+".");
+
         return (byte[])invoke("download",
                 new Object[] { filename },
                 new String[] { String.class.getName() }
