@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.management;
 
-import org.safehaus.penrose.ldap.DN;
-
 import java.util.*;
 
 public interface PenroseServiceMBean {
@@ -34,10 +32,14 @@ public interface PenroseServiceMBean {
     public void restart() throws Exception;
 
     public Collection<String> getPartitionNames() throws Exception;
+    public void startPartition(String partitionName) throws Exception;
+    public void stopPartition(String partitionName) throws Exception;
+    public String getPartitionStatus(String partitionName) throws Exception;
+    
     public Collection<String> getServiceNames() throws Exception;
-    public void start(String serviceName) throws Exception;
-    public void stop(String serviceName) throws Exception;
-    public String getStatus(String serviceName) throws Exception;
+    public void startService(String serviceName) throws Exception;
+    public void stopService(String serviceName) throws Exception;
+    public String getServiceStatus(String serviceName) throws Exception;
 
     public void createDirectory(String path) throws Exception;
     public void removeDirectory(String path) throws Exception;

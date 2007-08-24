@@ -592,7 +592,8 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, baseMapping, entryMapping);
+        //List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, baseMapping, entryMapping);
+        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, baseMapping, entryMapping);
         Interpreter interpreter = getInterpreterManager().newInstance();
 
         if (groupsOfSources.isEmpty()) {

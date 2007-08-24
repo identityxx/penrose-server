@@ -44,14 +44,17 @@ public class Attribute implements Cloneable {
 
     public void setValue(Object value) {
         values.clear();
+        if (value == null) return;
         values.add(value);
     }
 
     public void addValue(Object value) {
+        if (value == null) return;
         values.add(value);
     }
 
     public void removeValue(Object value) {
+        if (value == null) return;
         values.remove(value);
     }
 

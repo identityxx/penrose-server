@@ -32,16 +32,10 @@ public class SchemaReader {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private File home;
-
     public SchemaReader() {
     }
 
-    public SchemaReader(File home) {
-        this.home = home;
-    }
-
-    public Schema read(SchemaConfig schemaConfig) throws Exception {
+    public Schema read(File home, SchemaConfig schemaConfig) throws Exception {
 
         File path = new File(home, schemaConfig.getPath());
 
@@ -56,8 +50,7 @@ public class SchemaReader {
         SchemaParser parser = new SchemaParser(in);
         Collection c = parser.parse();
 
-        for (Iterator i = c.iterator(); i.hasNext();) {
-            Object o = i.next();
+        for (Object o : c) {
             if (o instanceof AttributeType) {
                 AttributeType at = (AttributeType) o;
                 schema.addAttributeType(at);

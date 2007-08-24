@@ -38,6 +38,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     public boolean debug = log.isDebugEnabled();
 
     protected PartitionReader partitionReader = new PartitionReader();
+    protected PartitionWriter partitionWriter = new PartitionWriter();
 
     private Map<String,PartitionConfig> partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
 
@@ -47,21 +48,14 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     public PartitionConfig load(File dir) throws Exception {
         if (debug) log.debug("Loading partition from "+dir+".");
 
-        PartitionConfig partitionConfig = partitionReader.read(dir);
-
-        addPartitionConfig(partitionConfig);
-
-        return partitionConfig;
+        return partitionReader.read(dir);
     }
 
-    public void store(File home, PartitionConfig partitionConfig) throws Exception {
+    public void store(File dir, PartitionConfig partitionConfig) throws Exception {
 
-        File path = new File(home, "partitions"+File.separator+partitionConfig.getName());
+        if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+dir+".");
 
-        if (debug) log.debug("Storing "+partitionConfig.getName()+" partition into "+path+".");
-
-        PartitionWriter partitionWriter = new PartitionWriter();
-        partitionWriter.write(path, partitionConfig);
+        partitionWriter.write(dir, partitionConfig);
     }
 
     public PartitionConfig removePartitionConfig(String name) throws Exception {

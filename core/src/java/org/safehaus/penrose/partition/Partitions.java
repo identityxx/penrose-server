@@ -35,7 +35,7 @@ public class Partitions implements PartitionsMBean {
         partitions.put(partition.getName(), partition);
     }
 
-    public Partition removePartition(String name) throws Exception {
+    public Partition removePartition(String name) {
         return partitions.remove(name);
     }
 

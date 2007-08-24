@@ -49,10 +49,10 @@ public class PartitionReader implements EntityResolver {
 
     Digester digester;
 
-    ConnectionReader connectionReader;
-    SourceReader     sourceReader;
-    MappingReader    mappingReader;
-    ModuleReader     moduleReader;
+    ConnectionReader connectionReader = new ConnectionReader();
+    SourceReader     sourceReader     = new SourceReader();
+    MappingReader    mappingReader    = new MappingReader();
+    ModuleReader     moduleReader     = new ModuleReader();
 
     public PartitionReader() {
 
@@ -65,11 +65,6 @@ public class PartitionReader implements EntityResolver {
         digester.setEntityResolver(this);
         digester.setValidating(true);
         digester.setClassLoader(cl);
-
-        connectionReader = new ConnectionReader();
-        sourceReader     = new SourceReader();
-        mappingReader    = new MappingReader();
-        moduleReader     = new ModuleReader();
     }
 
     public PartitionConfig read(String dir) throws Exception {

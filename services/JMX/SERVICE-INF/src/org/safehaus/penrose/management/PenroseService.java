@@ -20,6 +20,8 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.PartitionConfigs;
+import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.service.Services;
 import org.safehaus.penrose.service.ServiceConfigs;
@@ -36,11 +38,13 @@ import java.io.FileOutputStream;
  */
 public class PenroseService implements PenroseServiceMBean {
 
-    Logger log = Logger.getLogger(PenroseService.class);
+    public Logger log = Logger.getLogger(getClass());
 
+    private PenroseJMXService service;
     private PenroseServer penroseServer;
 
-    public PenroseService(PenroseServer penroseServer) throws Exception {
+    public PenroseService(PenroseJMXService service, PenroseServer penroseServer) throws Exception {
+        this.service = service;
         this.penroseServer = penroseServer;
     }
 
@@ -103,60 +107,150 @@ public class PenroseService implements PenroseServiceMBean {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Partitions
+    ////////////////////////////////////////////////////////////////////////////////
+
     public Collection<String> getPartitionNames() throws Exception {
         try {
             Collection<String> partitionNames = new ArrayList<String>();
+
             Penrose penrose = penroseServer.getPenrose();
             PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
             partitionNames.addAll(partitionConfigs.getPartitionNames());
+
             return partitionNames;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
+
+    public void startPartition(String partitionName) throws Exception {
+        try {
+            Penrose penrose = penroseServer.getPenrose();
+            penrose.startPartition(partitionName);
+
+            PartitionService partitionService = getPartitionService(partitionName);
+            partitionService.register();
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public void stopPartition(String partitionName) throws Exception {
+        try {
+            PartitionService partitionService = getPartitionService(partitionName);
+            partitionService.unregister();
+
+            Penrose penrose = penroseServer.getPenrose();
+            penrose.stopPartition(partitionName);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public String getPartitionStatus(String partitionName) throws Exception {
+        try {
+            Penrose penrose = penroseServer.getPenrose();
+            return penrose.getPartitionStatus(partitionName);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public PartitionService getPartitionService(String partitionName) {
+        Penrose penrose = penroseServer.getPenrose();
+        Partitions partitions = penrose.getPartitions();
+        Partition partition = partitions.getPartition(partitionName);
+        if (partition == null) return null;
+        
+        PartitionService partitionService = new PartitionService();
+        partitionService.setService(service);
+        partitionService.setPartition(partition);
+
+        return partitionService;
+    }
+
+    public Collection<PartitionService> getPartitionServices() {
+
+        Collection<PartitionService> list = new ArrayList<PartitionService>();
+
+        Penrose penrose = penroseServer.getPenrose();
+        Partitions partitions = penrose.getPartitions();
+
+        for (Partition partition : partitions.getPartitions()) {
+            PartitionService partitionService = new PartitionService();
+            partitionService.setService(service);
+            partitionService.setPartition(partition);
+            list.add(partitionService);
+        }
+
+        return list;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Services
+    ////////////////////////////////////////////////////////////////////////////////
 
     public Collection<String> getServiceNames() throws Exception {
         try {
             Collection<String> serviceNames = new ArrayList<String>();
+
             ServiceConfigs serviceConfigs = penroseServer.getServiceConfigs();
             serviceNames.addAll(serviceConfigs.getServiceNames());
+
             return serviceNames;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
 
-    public void start(String serviceName) throws Exception {
+    public void startService(String serviceName) throws Exception {
         try {
             Services serviceManager = penroseServer.getServices();
             serviceManager.start(serviceName);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
 
-    public void stop(String serviceName) throws Exception {
+    public void stopService(String serviceName) throws Exception {
         try {
             Services serviceManager = penroseServer.getServices();
             serviceManager.stop(serviceName);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
 
-    public String getStatus(String serviceName) throws Exception {
+    public String getServiceStatus(String serviceName) throws Exception {
         try {
             Services serviceManager = penroseServer.getServices();
             return serviceManager.getStatus(serviceName);
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Files
+    ////////////////////////////////////////////////////////////////////////////////
 
     public Collection<String> listFiles(String path) throws Exception {
         try {
@@ -189,6 +283,7 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public void createDirectory(String path) throws Exception {
+        log.debug("Creating directory "+path+".");
         try {
             File home = penroseServer.getHome();
             File dir = new File(home, path);
@@ -201,6 +296,7 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public void removeDirectory(String path) throws Exception {
+        log.debug("Removing directory "+path+".");
         try {
             File home = penroseServer.getHome();
             delete(new File(home, path));
@@ -222,19 +318,22 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public byte[] download(String filename) throws Exception {
+        log.debug("Sending file "+filename+".");
         try {
             File home = penroseServer.getHome();
             File file = new File(home, filename);
             if (!file.exists()) return null;
 
-            log.debug("Downloading "+file);
-
+            int length = (int)file.length();
             FileInputStream in = new FileInputStream(file);
-            byte content[] = new byte[(int)file.length()];
-            in.read(content);
+            byte content[] = new byte[length];
+            int len = in.read(content);
             in.close();
 
+            if (length != len) throw new Exception("Unable to read "+filename+".");
+
             return content;
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -242,16 +341,16 @@ public class PenroseService implements PenroseServiceMBean {
     }
 
     public void upload(String filename, byte content[]) throws Exception {
+        log.debug("Receiving file "+filename+".");
         try {
             File home = penroseServer.getHome();
             File file = new File(home, filename);
             file.getParentFile().mkdirs();
 
-            log.debug("Uploading "+file);
-
             FileOutputStream out = new FileOutputStream(file);
             out.write(content);
             out.close();
+            
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -286,5 +385,33 @@ public class PenroseService implements PenroseServiceMBean {
 
     public void setPenroseServer(PenroseServer penroseServer) {
         this.penroseServer = penroseServer;
+    }
+
+    public String getObjectName() {
+        return PenroseClient.getObjectName();
+    }
+
+    public PenroseJMXService getService() {
+        return service;
+    }
+
+    public void setService(PenroseJMXService service) {
+        this.service = service;
+    }
+
+    public void register() throws Exception {
+        service.register(getObjectName(), this);
+
+        for (PartitionService partitionService : getPartitionServices()) {
+            partitionService.register();
+        }
+    }
+
+    public void unregister() throws Exception {
+        for (PartitionService partitionService : getPartitionServices()) {
+            partitionService.unregister();
+        }
+
+        service.unregister(getObjectName());
     }
 }

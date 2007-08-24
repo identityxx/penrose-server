@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 
 /**
  * @author Endi S. Dewata
@@ -54,7 +53,7 @@ public class SourceSync {
     public void init() throws Exception {
 
         String sourceName = sourceSyncConfig.getName();
-        String destinationNames = sourceSyncConfig.getDestinations();
+        Collection<String> destinations = sourceSyncConfig.getDestinations();
         //String sourceName = sourceSyncConfig.getParameter(SOURCE);
         //log.debug("Source: "+ sourceName);
 
@@ -78,14 +77,12 @@ public class SourceSync {
             if (tracker == null) throw new Exception("Tracker "+trackerName+" not found.");
         }
 
-        StringTokenizer st = new StringTokenizer(destinationNames, ", ");
-        while (st.hasMoreTokens()) {
-            String destinationName = st.nextToken();
+        for (String destinationName : destinations) {
 
             Source destination = partition.getSource(destinationName);
             if (destination == null) throw new Exception("Source "+destinationName+" not found.");
 
-            destinations.add(destination);
+            this.destinations.add(destination);
 
             if (changeLogName != null) {
                 ChangeLogUtil changeLogUtil = createChangeLogUtil();

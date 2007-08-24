@@ -76,10 +76,12 @@ public class Connection implements ConnectionMBean {
     }
 
     public void start() throws Exception {
+        log.debug("Starting "+connectionConfig.getName()+" connection.");
         if (adapter != null) adapter.start();
     }
 
     public void stop() throws Exception {
+        log.debug("Stopping "+connectionConfig.getName()+" connection.");
         if (adapter != null) adapter.stop();
     }
 
@@ -334,6 +336,10 @@ public class Connection implements ConnectionMBean {
 
     public void status(Source source) throws Exception {
         adapter.status(source);
+    }
+
+    public long getCount(Source source) throws Exception {
+        return adapter.getCount(source);
     }
 
     public Object openConnection() throws Exception {

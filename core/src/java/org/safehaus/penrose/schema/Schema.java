@@ -30,6 +30,7 @@ import java.util.*;
 public class Schema implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private SchemaConfig schemaConfig;
 
@@ -65,6 +66,9 @@ public class Schema implements Cloneable {
     }
 
     public void addAttributeType(AttributeType at) {
+
+        if (debug) log.debug("Adding attribute type "+at.getName()+" ("+at.getOid()+")");
+
         attributeTypesByName.put(at.getName(), at);
         attributeTypesByOid.put(at.getOid(), at);
 
@@ -107,6 +111,9 @@ public class Schema implements Cloneable {
     }
 
     public void addObjectClass(ObjectClass oc) {
+
+        if (debug) log.debug("Adding object class "+oc.getName()+" ("+oc.getOid()+")");
+
         objectClassesByName.put(oc.getName(), oc);
         objectClassesByOid.put(oc.getOid(), oc);
 

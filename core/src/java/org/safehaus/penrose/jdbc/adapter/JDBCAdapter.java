@@ -161,6 +161,8 @@ public class JDBCAdapter extends Adapter {
 
     public void start() throws Exception {
 
+        log.debug("Starting "+adapterConfig.getName()+" adapter.");
+
         String s = getParameter(INITIAL_SIZE);
         int initialSize = s == null ? 1 : Integer.parseInt(s);
 
@@ -175,6 +177,7 @@ public class JDBCAdapter extends Adapter {
     }
 
     public void stop() throws Exception {
+        log.debug("Stopping "+adapterConfig.getName()+" adapter.");
         client.close();
     }
 
@@ -310,6 +313,17 @@ public class JDBCAdapter extends Adapter {
         }
 
         client.showStatus(source);
+    }
+
+    public long getCount(Source source) throws Exception {
+
+        if (debug) {
+            log.debug(Formatter.displaySeparator(80));
+            log.debug(Formatter.displayLine("Count "+source.getName(), 80));
+            log.debug(Formatter.displaySeparator(80));
+        }
+
+        return client.getCount(source);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

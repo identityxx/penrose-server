@@ -24,7 +24,12 @@ public class Attributes implements Cloneable {
     }
 
     public void setValue(String name, Object value) {
-        if (value == null) return;
+
+        if (value == null) {
+            remove(name);
+            return;
+        }
+
         names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
@@ -35,6 +40,7 @@ public class Attributes implements Cloneable {
     }
 
     public void addValue(String name, Object value) {
+        if (value == null) return;
         names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
@@ -45,6 +51,7 @@ public class Attributes implements Cloneable {
     }
 
     public void removeValue(String name, Object value) {
+        if (value == null) return;
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) return;
 

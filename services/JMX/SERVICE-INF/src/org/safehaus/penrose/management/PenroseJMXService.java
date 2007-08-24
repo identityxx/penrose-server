@@ -60,7 +60,6 @@ public class PenroseJMXService extends Service {
     MBeanServer mbeanServer;
     boolean createdMBeanServer;
 
-    ObjectName penroseServiceName = ObjectName.getInstance(PenroseClient.MBEAN_NAME);
     PenroseService penroseService;
 
     ObjectName registryName = ObjectName.getInstance("naming:type=rmiregistry");
@@ -115,11 +114,7 @@ public class PenroseJMXService extends Service {
         }
 */
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
-
-        if (!mbeanServer.isRegistered(penroseServiceName)) {
-            penroseService = new PenroseService(serviceContext.getPenroseServer());
-            mbeanServer.registerMBean(penroseService, penroseServiceName);
-        }
+        penroseService = new PenroseService(this, serviceContext.getPenroseServer());
 
         register();
 
@@ -185,10 +180,6 @@ public class PenroseJMXService extends Service {
 
         unregister();
 
-        if (penroseService != null) {
-            mbeanServer.unregisterMBean(penroseServiceName);
-        }
-
         if (createdMBeanServer) MBeanServerFactory.releaseMBeanServer(mbeanServer);
 
         setStatus(STOPPED);
@@ -213,19 +204,27 @@ public class PenroseJMXService extends Service {
     }
 
     public void register(String name, Object object) throws Exception {
-        log.debug("Registering "+name);
-        ObjectName on = ObjectName.getInstance(name);
-        if (mbeanServer.isRegistered(on)) mbeanServer.unregisterMBean(on);
-        mbeanServer.registerMBean(object, on);
+        register(ObjectName.getInstance(name), object);
+    }
+
+    public void register(ObjectName objectName, Object object) throws Exception {
+        log.debug("Registering "+objectName);
+        if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName);
+        mbeanServer.registerMBean(object, objectName);
     }
 
     public void unregister(String name) throws Exception {
-        log.debug("Unregistering "+name);
-        ObjectName on = ObjectName.getInstance(name);
-        if (mbeanServer.isRegistered(on)) mbeanServer.unregisterMBean(on);
+        unregister(ObjectName.getInstance(name));
+    }
+
+    public void unregister(ObjectName objectName) throws Exception {
+        log.debug("Unregistering "+objectName);
+        if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName);
     }
 
     public void register() throws Exception {
+
+        penroseService.register();
 
         registerConfigs();
         registerServices();
@@ -237,6 +236,8 @@ public class PenroseJMXService extends Service {
         unregisterPartitions();
         unregisterServices();
         unregisterConfigs();
+
+        penroseService.unregister();
     }
 
     public void registerConfigs() throws Exception {

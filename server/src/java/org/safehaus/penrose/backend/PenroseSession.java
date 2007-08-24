@@ -98,7 +98,7 @@ public class PenroseSession implements com.identyx.javabackend.Session {
             byte[] password
     ) throws Exception {
 
-        log.debug("bind(\""+dn+", \""+password+"\")");
+        log.debug("bind(\""+dn+"\", \""+new String(password)+"\")");
 
         DN penroseDn = ((PenroseDN)dn).getDn();
 

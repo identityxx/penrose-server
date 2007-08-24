@@ -409,7 +409,10 @@ public class HandlerManager {
         boolean allRegularAttributes = requestedAttributes.isEmpty() || requestedAttributes.contains("*");
         boolean allOpAttributes = requestedAttributes.contains("+");
 
-        if (debug) log.debug("Requested: "+request.getAttributes());
+        if (debug) {
+            log.debug("Normalized base DN: "+baseDn);
+            log.debug("Normalized attributes: "+requestedAttributes);
+        }
 
         if (partition == null) {
 

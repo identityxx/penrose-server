@@ -7,6 +7,8 @@
 
   <appender name="access" class="org.apache.log4j.RollingFileAppender">
     <param name="File" value="logs/access.log"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
     </layout>
@@ -14,6 +16,8 @@
 
   <appender name="error" class="org.apache.log4j.RollingFileAppender">
     <param name="File" value="logs/error.log"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
     </layout>
@@ -21,6 +25,8 @@
 
   <appender name="debug" class="org.apache.log4j.RollingFileAppender">
     <param name="File" value="logs/debug.log"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%-20C{1} [%4L] %m%n"/>
     </layout>

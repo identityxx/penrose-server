@@ -45,13 +45,10 @@ public class PenroseConfigWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    File file;
-
-    public PenroseConfigWriter(String filename) throws Exception {
-        file = new File(filename);
+    public PenroseConfigWriter() throws Exception {
     }
 
-    public void write(PenroseConfig penroseConfig) throws Exception {
+    public void write(File file, PenroseConfig penroseConfig) throws Exception {
 
         file.getParentFile().mkdirs();
         Writer writer = new FileWriter(file);

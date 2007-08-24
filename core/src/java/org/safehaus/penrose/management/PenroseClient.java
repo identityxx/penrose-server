@@ -39,8 +39,6 @@ public class PenroseClient {
 
     public static Logger log = Logger.getLogger(PenroseClient.class);
 
-    public final static String MBEAN_NAME = "Penrose:service=Penrose";
-
     public final static String PENROSE = "PENROSE";
     public final static String JBOSS   = "JBOSS";
 
@@ -61,9 +59,9 @@ public class PenroseClient {
     public Context context;
 	public JMXConnector connector;
 
-	public MBeanServerConnection connection;
+	private MBeanServerConnection connection;
 	public String domain;
-	public ObjectName name;
+	public ObjectName objectName;
 
     public PenroseClient(String host, int port, String username, String password) throws Exception {
         this(PENROSE, host, port, username, password);
@@ -133,13 +131,15 @@ public class PenroseClient {
         }
 
 		domain = connection.getDefaultDomain();
-		name = new ObjectName(MBEAN_NAME);
+		objectName = ObjectName.getInstance(getObjectName());
 	}
 
     public void close() throws Exception {
         if (JBOSS.equals(type)) {
+            if (context == null) return;
             context.close();
         } else {
+            if (connector == null) return;
             connector.close();
         }
     }
@@ -169,23 +169,18 @@ public class PenroseClient {
     }
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
-		return connection.invoke(name, method, paramValues, paramClassNames);
+
+        log.debug("Invoking method "+method+"() on "+ objectName +".");
+
+		return connection.invoke(objectName, method, paramValues, paramClassNames);
 	}
 
     public String getProductName() throws Exception {
-        return (String)connection.getAttribute(name, "ProductName");
+        return (String)connection.getAttribute(objectName, "ProductName");
     }
 
     public String getProductVersion() throws Exception {
-        return (String)connection.getAttribute(name, "ProductVersion");
-    }
-
-    public Collection<String> getPartitionNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(name, "PartitionNames");
-    }
-
-    public Collection<String> getServiceNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(name, "ServiceNames");
+        return (String)connection.getAttribute(objectName, "ProductVersion");
     }
 
     public void start() throws Exception {
@@ -230,26 +225,71 @@ public class PenroseClient {
         );
     }
 
-    public void start(String serviceName) throws Exception {
-        invoke("start",
+    ////////////////////////////////////////////////////////////////////////////////
+    // Partitions
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getPartitionNames() throws Exception {
+        return (Collection<String>)connection.getAttribute(objectName, "PartitionNames");
+    }
+
+    public void startPartition(String partitionName) throws Exception {
+        invoke("startPartition",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopPartition(String partitionName) throws Exception {
+        invoke("stopPartition",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public String getPartitionStatus(String partitionName) throws Exception {
+        return (String)invoke("getPartitionStatus",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public PartitionClient getPartitionClient(String partitionName) throws Exception {
+        return new PartitionClient(this, partitionName);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Services
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getServiceNames() throws Exception {
+        return (Collection<String>)connection.getAttribute(objectName, "ServiceNames");
+    }
+
+    public void startService(String serviceName) throws Exception {
+        invoke("startService",
                 new Object[] { serviceName },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void stop(String serviceName) throws Exception {
-        invoke("stop",
+    public void stopService(String serviceName) throws Exception {
+        invoke("stopService",
                 new Object[] { serviceName },
                 new String[] { String.class.getName() }
         );
     }
 
-    public String getStatus(String serviceName) throws Exception {
-        return (String)invoke("getStatus",
+    public String getServiceStatus(String serviceName) throws Exception {
+        return (String)invoke("getServiceStatus",
                 new Object[] { serviceName },
                 new String[] { String.class.getName() }
         );
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Files
+    ////////////////////////////////////////////////////////////////////////////////
 
     public Collection<String> listFiles(String directory) throws Exception {
         return (Collection<String>)invoke("listFiles",
@@ -367,7 +407,7 @@ public class PenroseClient {
     }
 
     public Collection<String> getLoggerNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(name, "LoggerNames");
+        return (Collection<String>)connection.getAttribute(objectName, "LoggerNames");
     }
 
     public String getLoggerLevel(String name) throws Exception {
@@ -513,7 +553,7 @@ public class PenroseClient {
         } else if ("start".equals(command)) {
             if (iterator.hasNext()) {
                 String serviceName = (String)iterator.next();
-                client.start(serviceName);
+                client.startService(serviceName);
             } else {
                 client.start();
             }
@@ -521,7 +561,7 @@ public class PenroseClient {
         } else if ("stop".equals(command)) {
             if (iterator.hasNext()) {
                 String serviceName = (String)iterator.next();
-                client.stop(serviceName);
+                client.stopService(serviceName);
             } else {
                 client.stop();
             }
@@ -547,7 +587,7 @@ public class PenroseClient {
         } else if ("list".equals(command)) {
             Collection<String> serviceNames = client.getServiceNames();
             for (String serviceName : serviceNames) {
-                String status = client.getStatus(serviceName);
+                String status = client.getServiceStatus(serviceName);
 
                 StringBuilder padding = new StringBuilder();
                 for (int j = 0; j < 20 - serviceName.length(); j++) padding.append(" ");
@@ -575,5 +615,17 @@ public class PenroseClient {
         }
 
         client.close();
+    }
+
+    public MBeanServerConnection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(MBeanServerConnection connection) {
+        this.connection = connection;
+    }
+
+    public static String getObjectName() {
+        return "Penrose:service=Penrose";
     }
 }

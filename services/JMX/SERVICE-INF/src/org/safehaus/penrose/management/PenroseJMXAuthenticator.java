@@ -54,10 +54,9 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
             //log.debug(" - "+s[i]);
         //}
 
-        final String username = s[0];
+        final String bindDn = s[0];
         final String bindPassword = s[1];
 
-        final String bindDn = "uid="+username+",ou=system";
         log.debug("Authenticating "+bindDn);
 
         try {

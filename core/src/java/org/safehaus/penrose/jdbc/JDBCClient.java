@@ -23,6 +23,7 @@ import java.util.*;
 import org.safehaus.penrose.jdbc.adapter.JDBCStatementBuilder;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.ldap.LDAP;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -715,5 +716,40 @@ public class JDBCClient {
         };
 
         executeQuery(sql, null, response);
+    }
+
+    public long getCount(final Source source) throws Exception {
+        return getCount(source.getSourceConfig());
+    }
+
+    public long getCount(final SourceConfig sourceConfig) throws Exception {
+
+        final String tableName = getTableName(sourceConfig);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("select count(*) from ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        QueryResponse response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+                Long count = rs.getLong(1);
+                super.add(count);
+            }
+        };
+
+        executeQuery(sql, null, response);
+
+        if (!response.hasNext()) {
+            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+        }
+
+        Long count = (Long)response.next();
+        log.error("Table "+tableName+": "+count);
+
+        return count;
     }
 }

@@ -3,6 +3,7 @@ package org.safehaus.penrose.source;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Administrator
@@ -12,7 +13,7 @@ public class SourceSyncConfig implements Cloneable {
     private boolean enabled = true;
 
     private String name;
-    private String destinations;
+    private Collection<String> destinations = new ArrayList<String>();
     private SourceConfig sourceConfig;
 
     /**
@@ -74,7 +75,9 @@ public class SourceSyncConfig implements Cloneable {
 
     public void copy(SourceSyncConfig sourceSyncConfig) {
         name = sourceSyncConfig.name;
-        destinations = sourceSyncConfig.destinations;
+
+        destinations = new ArrayList<String>();
+        destinations.addAll(sourceSyncConfig.destinations);
 
         parameters = new TreeMap<String,String>();
         parameters.putAll(sourceSyncConfig.parameters);
@@ -94,12 +97,14 @@ public class SourceSyncConfig implements Cloneable {
         this.sourceConfig = sourceConfig;
     }
 
-    public String getDestinations() {
+    public Collection<String> getDestinations() {
         return destinations;
     }
 
-    public void setDestinations(String destinations) {
-        this.destinations = destinations;
+    public void setDestinations(Collection<String> destinations) {
+        if (this.destinations == destinations) return;
+        this.destinations.clear();
+        this.destinations.addAll(destinations);
     }
 
     public boolean isEnabled() {

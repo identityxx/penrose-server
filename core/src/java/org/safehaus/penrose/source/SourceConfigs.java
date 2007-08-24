@@ -5,10 +5,7 @@ import org.safehaus.penrose.mapping.FieldMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.Collection;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -17,6 +14,8 @@ public class SourceConfigs implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
+
+    public final static String SYNC = "sync";
 
     private Map<String,SourceConfig> sourceConfigs = new LinkedHashMap<String,SourceConfig>();
     private Map<String,SourceSyncConfig> sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
@@ -34,19 +33,35 @@ public class SourceConfigs implements Cloneable {
 
         sourceConfigs.put(sourceName, sourceConfig);
 
-        String sync = sourceConfig.getParameter("sync");
-        if (sync != null) {
+        Collection<String> destinations = getSourceSyncNames(sourceConfig);
+        if (!destinations.isEmpty()) {
 
-            log.debug("Sync source with "+sync+".");
+            log.debug("Sync source with "+destinations+".");
 
             SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
             sourceSyncConfig.setName(sourceName);
-            sourceSyncConfig.setDestinations(sync);
+            sourceSyncConfig.setDestinations(destinations);
             sourceSyncConfig.setSourceConfig(sourceConfig);
             sourceSyncConfig.setParameters(sourceConfig.getParameters());
 
             addSourceSyncConfig(sourceSyncConfig);
         }
+    }
+
+    public Collection<String> getSourceSyncNames(SourceConfig sourceConfig) {
+
+        Collection<String> list = new ArrayList<String>();
+
+        String sync = sourceConfig.getParameter(SourceConfigs.SYNC);
+        if (sync == null) return list;
+
+        StringTokenizer st = new StringTokenizer(sync, ", ");
+        while (st.hasMoreTokens()) {
+            String name = st.nextToken();
+            list.add(name);
+        }
+
+        return list;
     }
 
     public SourceConfig removeSourceConfig(String sourceName) {

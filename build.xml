@@ -17,7 +17,7 @@
     </tstamp>
 
     <target name="init">
-        <echo message="Operating System: ${os.name} ${os.version}" />
+        <echo message="Operating System: ${os.name} ${os.version} (${os.arch})" />
         <echo message="Java Version: ${java.version}" />
         <condition property="isWindows">
             <os family="windows"/>

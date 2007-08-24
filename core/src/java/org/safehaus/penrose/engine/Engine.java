@@ -446,6 +446,8 @@ public abstract class Engine {
             EntryMapping entryMapping
     ) throws Exception {
 
+        log.debug("Computing DN:");
+
         Collection<DN> dns = new ArrayList<DN>();
         computeDns(partition, interpreter, entryMapping, dns);
         return dns;
@@ -572,6 +574,48 @@ public abstract class Engine {
 
         if (!list.isEmpty()) results.add(list);
         
+        return results;
+    }
+
+    public List<Collection<SourceRef>> getGroupsOfSources(
+            Partition partition,
+            EntryMapping baseMapping,
+            EntryMapping entryMapping
+    ) throws Exception {
+
+        if (entryMapping == baseMapping) {
+            return getGroupsOfSources(partition, entryMapping);
+        }
+
+        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+
+        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Connection lastConnection = null;
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getRelativePath(baseMapping, entryMapping)) {
+            
+            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
+
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+                Adapter adapter = connection.getAdapter();
+
+                if (lastConnection == null) {
+                    lastConnection = connection;
+
+                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                    results.add(list);
+                    list = new ArrayList<SourceRef>();
+                    lastConnection = connection;
+                }
+
+                list.add(sourceRef);
+            }
+        }
+
+        if (!list.isEmpty()) results.add(list);
+
         return results;
     }
 

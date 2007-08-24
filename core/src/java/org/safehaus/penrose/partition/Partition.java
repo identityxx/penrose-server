@@ -49,6 +49,11 @@ public class Partition implements PartitionMBean, Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
+    public final static String STOPPING = "STOPPING";
+    public final static String STOPPED  = "STOPPED";
+    public final static String STARTING = "STARTING";
+    public final static String STARTED  = "STARTED";
+
     public final static Collection<String> EMPTY_STRINGS = new ArrayList<String>();
     public final static Collection<Source> EMPTY_SOURCES = new ArrayList<Source>();
     public final static Collection<SourceRef> EMPTY_SOURCEREFS = new ArrayList<SourceRef>();
@@ -68,13 +73,19 @@ public class Partition implements PartitionMBean, Cloneable {
     protected Map<String,Entry>      entries     = new LinkedHashMap<String,Entry>();
     protected Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
 
-    protected Map<String,Map<String,SourceRef>> sourceRefs         = new LinkedHashMap<String,Map<String,SourceRef>>();
-    protected Map<String,Map<String,SourceRef>>  primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
+    protected Map<String,Map<String,SourceRef>> sourceRefs        = new LinkedHashMap<String,Map<String,SourceRef>>();
+    protected Map<String,Map<String,SourceRef>> primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
+
+    private String status = STOPPED;
 
     public Partition() {
     }
 
     public void init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
+
+        log.debug("Initializing "+partitionConfig.getName()+" partition.");
+        setStatus(STARTING);
+
         this.partitionConfig = partitionConfig;
         this.partitionContext = partitionContext;
 
@@ -95,6 +106,7 @@ public class Partition implements PartitionMBean, Cloneable {
             if (!connectionConfig.isEnabled()) continue;
 
             Connection connection = createConnection(connectionConfig);
+            connection.start();
             addConnection(connection);
         }
 
@@ -109,6 +121,7 @@ public class Partition implements PartitionMBean, Cloneable {
             if (!sourceSyncConfig.isEnabled()) continue;
 
             SourceSync sourceSync = createSourceSync(sourceSyncConfig);
+            sourceSync.start();
             addSourceSync(sourceSync);
         }
 
@@ -123,8 +136,60 @@ public class Partition implements PartitionMBean, Cloneable {
             if (!moduleConfig.isEnabled()) continue;
 
             Module module = createModule(moduleConfig);
+            module.start();
             addModule(module);
         }
+
+        setStatus(STARTED);
+        log.debug("Partition "+partitionConfig.getName()+" started.");
+    }
+
+    public void start() throws Exception {
+        log.debug("Starting "+partitionConfig.getName()+" partition.");
+        setStatus(STARTING);
+
+        for (Connection connection : connections.values()) {
+            connection.start();
+        }
+
+        for (SourceSync sourceSync : sourceSyncs.values()) {
+            sourceSync.start();
+        }
+
+        for (Module module : modules.values()) {
+            module.start();
+        }
+
+        setStatus(STARTED);
+        log.debug("Partition "+partitionConfig.getName()+" started.");
+    }
+
+    public void stop() throws Exception {
+        log.debug("Stopping "+partitionConfig.getName()+" partition.");
+        setStatus(STOPPING);
+
+        for (Module module : modules.values()) {
+            module.stop();
+        }
+
+        for (SourceSync sourceSync : sourceSyncs.values()) {
+            sourceSync.stop();
+        }
+
+        for (Connection connection : connections.values()) {
+            connection.stop();
+        }
+
+        setStatus(STOPPED);
+        log.debug("Partition "+partitionConfig.getName()+" stopped.");
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getName() {
@@ -266,7 +331,6 @@ public class Partition implements PartitionMBean, Cloneable {
         connection.setPenroseConfig(partitionContext.getPenroseConfig());
         connection.setPenroseContext(partitionContext.getPenroseContext());
         connection.init();
-        connection.start();
 
         return connection;
     }
@@ -342,7 +406,6 @@ public class Partition implements PartitionMBean, Cloneable {
         module.setPenroseConfig(partitionContext.getPenroseConfig());
         module.setPenroseContext(partitionContext.getPenroseContext());
         module.init();
-        module.start();
 
         return module;
     }
@@ -401,7 +464,6 @@ public class Partition implements PartitionMBean, Cloneable {
         sourceSync.setPenroseConfig(partitionContext.getPenroseConfig());
         sourceSync.setPenroseContext(partitionContext.getPenroseContext());
         sourceSync.init();
-        sourceSync.start();
 
         return sourceSync;
     }

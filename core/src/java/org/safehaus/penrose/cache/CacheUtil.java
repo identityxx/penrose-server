@@ -317,6 +317,8 @@ public class CacheUtil {
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
             PartitionConfig partitionConfig = partitionConfigs.load(dir);
+            partitionConfigs.addPartitionConfig(partitionConfig);
+
             String name = partitionConfig.getName();
 
             if (!partitionConfig.isEnabled()) {

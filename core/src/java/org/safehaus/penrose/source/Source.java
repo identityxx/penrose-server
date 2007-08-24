@@ -401,6 +401,10 @@ public class Source implements Cloneable {
         connection.status(this);
     }
 
+    public long getCount() throws Exception {
+        return connection.getCount(this);
+    }
+
     public void copy(Source source) {
         name = source.name;
 

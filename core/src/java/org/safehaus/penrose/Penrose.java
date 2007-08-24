@@ -262,8 +262,6 @@ public class Penrose {
             }
         }
 
-        log.debug("Starting DEFAULT partition.");
-
         PartitionContext partitionContext = new PartitionContext();
         partitionContext.setPenroseConfig(penroseConfig);
         partitionContext.setPenroseContext(penroseContext);
@@ -279,35 +277,14 @@ public class Penrose {
             if (!partitionDir.isDirectory()) continue;
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
+            String partitionName = partitionDir.getName();
+            
+            try {
+                startPartition(partitionName);
 
-            partitionConfig = partitionConfigs.load(partitionDir);
-            String name = partitionConfig.getName();
-
-            if (!partitionConfig.isEnabled()) {
-                log.debug(name+" partition is disabled.");
-                continue;
+            } catch (Exception e) {
+                errorLog.error(e.getMessage(), e);
             }
-
-            results = partitionValidator.validate(partitionConfig);
-
-            for (PartitionValidationResult result : results) {
-                if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                    errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-                } else {
-                    errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-                }
-            }
-
-            log.debug("Starting "+name+" partition.");
-
-            partitionContext = new PartitionContext();
-            partitionContext.setPath(partitionDir);
-            partitionContext.setPenroseConfig(penroseConfig);
-            partitionContext.setPenroseContext(penroseContext);
-
-            partition = new Partition();
-            partition.init(partitionConfig, partitionContext);
-            partitions.addPartition(partition);
         }
 
         sessionContext.start();
@@ -335,7 +312,67 @@ public class Penrose {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Penrose Sessions
+    // Partitions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void startPartition(String partitionName) throws Exception {
+
+        log.debug("Loading "+partitionName+" partition.");
+
+        File partitionDir = new File(home, "partitions"+File.separator+partitionName);
+
+        PartitionConfig partitionConfig = partitionConfigs.load(partitionDir);
+        partitionConfigs.addPartitionConfig(partitionConfig);
+
+        if (!partitionConfig.isEnabled()) {
+            log.debug(partitionName+" partition is disabled.");
+            return;
+        }
+
+        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
+
+        for (PartitionValidationResult result : results) {
+            if (result.getType().equals(PartitionValidationResult.ERROR)) {
+                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
+            } else {
+                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
+            }
+        }
+
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPath(partitionDir);
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        Partition partition = new Partition();
+        partition.init(partitionConfig, partitionContext);
+        partitions.addPartition(partition);
+    }
+
+    public void stopPartition(String partitionName) throws Exception {
+
+        log.debug("Stopping "+partitionName+" partition.");
+
+        Partition partition = partitions.getPartition(partitionName);
+        if (partition == null) return;
+
+        partition.stop();
+
+        partitions.removePartition(partitionName);
+    }
+
+    public String getPartitionStatus(String partitionName) throws Exception {
+
+        log.debug("Getting status of "+partitionName+" partition.");
+
+        Partition partition = partitions.removePartition(partitionName);
+        if (partition == null) return null;
+
+        return partition.getStatus();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Session newSession() throws Exception {

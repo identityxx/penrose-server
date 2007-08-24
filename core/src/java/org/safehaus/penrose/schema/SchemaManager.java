@@ -35,6 +35,7 @@ import java.io.File;
 public class SchemaManager implements SchemaManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
@@ -54,8 +55,8 @@ public class SchemaManager implements SchemaManagerMBean {
         Schema schema = getSchema(schemaConfig.getName());
         if (schema != null) return;
 
-        SchemaReader reader = new SchemaReader(home);
-        schema = reader.read(schemaConfig);
+        SchemaReader reader = new SchemaReader();
+        schema = reader.read(home, schemaConfig);
 
         addSchema(schema);
     }
@@ -122,9 +123,18 @@ public class SchemaManager implements SchemaManagerMBean {
     public String normalizeAttributeName(String attributeName) {
 
         AttributeType attributeType = getAttributeType(attributeName);
-        if (attributeType == null) return attributeName;
 
-        return attributeType.getName();
+        String normalizedAttributeName;
+        if (attributeType == null) {
+            if (debug) log.debug("Attribute type "+attributeName+" is undefined.");
+            normalizedAttributeName = attributeName;
+        } else {
+            normalizedAttributeName = attributeType.getName();
+        }
+
+        if (debug) log.debug("Normalize "+attributeName+" => "+normalizedAttributeName);
+        
+        return normalizedAttributeName;
     }
 
     public PenroseConfig getPenroseConfig() {
