@@ -31,10 +31,10 @@
     </target>
 
     <target name="build" depends="init">
-        <ant dir="apacheds/SERVICE-INF" target="build"/>
-        <ant dir="jmx/SERVICE-INF" target="build"/>
-        <ant dir="ldap/SERVICE-INF" target="build"/>
-        <ant dir="opends/SERVICE-INF" target="build"/>
+        <ant dir="ApacheDS/SERVICE-INF" target="build"/>
+        <ant dir="JMX/SERVICE-INF" target="build"/>
+        <ant dir="LDAP/SERVICE-INF" target="build"/>
+        <ant dir="OpenDS/SERVICE-INF" target="build"/>
     </target>
 
     <target name="dist" depends="init">
@@ -79,10 +79,10 @@
     </target>
 
     <target name="clean">
-        <ant dir="apacheds/SERVICE-INF" target="clean"/>
-        <ant dir="jmx/SERVICE-INF" target="clean"/>
-        <ant dir="ldap/SERVICE-INF" target="clean"/>
-        <ant dir="opends/SERVICE-INF" target="clean"/>
+        <ant dir="ApacheDS/SERVICE-INF" target="clean"/>
+        <ant dir="JMX/SERVICE-INF" target="clean"/>
+        <ant dir="LDAP/SERVICE-INF" target="clean"/>
+        <ant dir="OpenDS/SERVICE-INF" target="clean"/>
     </target>
 
 </project>
