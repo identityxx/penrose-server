@@ -1,19 +1,15 @@
-<!--
- Copyright (c) 2000-2006, Identyx Corporation.
- All rights reserved.
--->
-<project name="penrose-apacheds-service" default="build">
+<project name="penrose-ldap-service" default="build">
 
-    <description>Penrose ApacheDS Service</description>
+    <description>Penrose LDAP Service</description>
 
     <property file="../../build.properties"/>
 
     <property name="prefix" value=""/>
 
-    <property name="service.name" value="apacheds"/>
-    <property name="service.title" value="ApacheDS"/>
+    <property name="service.name" value="ldap"/>
+    <property name="service.title" value="LDAP"/>
     <property name="service.dir" value="services/${service.title}"/>
-    
+
     <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
 
     <tstamp>

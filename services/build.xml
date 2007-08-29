@@ -1,12 +1,11 @@
-<project name="penrose-service" default="build">
+<project name="penrose-services" default="build">
 
-    <description>Penrose Service</description>
+    <description>Penrose Services</description>
 
     <property file="../build.properties"/>
 
     <property name="prefix" value=""/>
-    <property name="module.name" value="${product.name}-server"/>
-    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
+    <property name="penrose.home" value="${prefix}/usr/local/${product.name}-server-${product.version}"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
@@ -31,58 +30,31 @@
     </target>
 
     <target name="build" depends="init">
-        <ant dir="ApacheDS/SERVICE-INF" target="build"/>
-        <ant dir="JMX/SERVICE-INF" target="build"/>
-        <ant dir="LDAP/SERVICE-INF" target="build"/>
-        <ant dir="OpenDS/SERVICE-INF" target="build"/>
+        <ant dir="ApacheDS" target="build"/>
+        <ant dir="JMX" target="build"/>
+        <ant dir="LDAP" target="build"/>
+        <ant dir="OpenDS" target="build"/>
     </target>
 
     <target name="dist" depends="init">
-        <copy todir="../server/target/dist/services">
-            <fileset dir=".">
-                <include name="**/SERVICE-INF/service.xml"/>
-            </fileset>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="../server/target/dist/services">
-            <fileset dir=".">
-                <exclude name="build.xml"/>
-                <exclude name="**/SERVICE-INF/build.xml"/>
-                <exclude name="**/SERVICE-INF/service.xml"/>
-                <exclude name="**/SERVICE-INF/target/**"/>
-                <exclude name="**/SERVICE-INF/src/**"/>
-            </fileset>
-        </copy>
+        <ant dir="ApacheDS" target="dist"/>
+        <ant dir="JMX" target="dist"/>
+        <ant dir="LDAP" target="dist"/>
+        <ant dir="OpenDS" target="dist"/>
     </target>
 
-    <target name="check-install">
-        <mkdir dir="${penrose.home}"/>
-        <condition property="penrose.services.missing">
-          <not>
-            <available file="${penrose.home}/services/ldap/SERVICE-INF/service.xml"/>
-          </not>
-        </condition>
-    </target>
-
-    <target name="install-services" if="penrose.services.missing">
-        <echo message="Installing service files."/>
-        <copy todir="${penrose.home}/services">
-            <fileset dir="../server/target/dist/services">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
-    </target>
-
-    <target name="install" depends="init,check-install,install-services">
+    <target name="install" depends="init">
+        <ant dir="ApacheDS" target="install"/>
+        <ant dir="JMX" target="install"/>
+        <ant dir="LDAP" target="install"/>
+        <ant dir="OpenDS" target="install"/>
     </target>
 
     <target name="clean">
-        <ant dir="ApacheDS/SERVICE-INF" target="clean"/>
-        <ant dir="JMX/SERVICE-INF" target="clean"/>
-        <ant dir="LDAP/SERVICE-INF" target="clean"/>
-        <ant dir="OpenDS/SERVICE-INF" target="clean"/>
+        <ant dir="ApacheDS" target="clean"/>
+        <ant dir="JMX" target="clean"/>
+        <ant dir="LDAP" target="clean"/>
+        <ant dir="OpenDS" target="clean"/>
     </target>
 
 </project>

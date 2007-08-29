@@ -44,13 +44,12 @@ import com.identyx.javabackend.apacheds.JavaBackendInterceptor;
  */
 public class ApacheDSLDAPService extends LDAPService {
 
-    public void start() throws Exception {
-
+    public void init() throws Exception {
+        super.init();
+    
         //log.warn("Starting LDAP Service.");
 
         if (ldapPort < 0) return;
-
-        setStatus(STARTING);
 
         PenroseServer penroseServer = serviceContext.getPenroseServer();
         Penrose penrose = penroseServer.getPenrose();
@@ -80,6 +79,7 @@ public class ApacheDSLDAPService extends LDAPService {
         configuration.setWorkingDirectory(workingDirectory);
 
         // Configure bootstrap schemas
+        ClassLoader classLoader = serviceContext.getClassLoader();
         Set<Object> bootstrapSchemas = new HashSet<Object>();
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
 
@@ -207,15 +207,12 @@ public class ApacheDSLDAPService extends LDAPService {
 
         thread.start();
 */
-        setStatus(STARTED);
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
 
         if (ldapPort < 0) return;
 
-        setStatus(STOPPING);
-        
         Penrose penrose = serviceContext.getPenroseServer().getPenrose();
         PenroseConfig penroseConfig = penrose.getPenroseConfig();
 
@@ -227,8 +224,6 @@ public class ApacheDSLDAPService extends LDAPService {
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
 
         new InitialDirContext(env);
-
-        setStatus(STOPPED);
 
         log.warn("LDAP Service has been shutdown.");
     }

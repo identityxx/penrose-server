@@ -1,19 +1,15 @@
-<!--
- Copyright (c) 2000-2006, Identyx Corporation.
- All rights reserved.
--->
-<project name="penrose-apacheds-service" default="build">
+<project name="penrose-opends-service" default="build">
 
-    <description>Penrose ApacheDS Service</description>
+    <description>Penrose OpenDS Service</description>
 
     <property file="../../build.properties"/>
 
     <property name="prefix" value=""/>
 
-    <property name="service.name" value="apacheds"/>
-    <property name="service.title" value="ApacheDS"/>
+    <property name="service.name" value="opends"/>
+    <property name="service.title" value="OpenDS"/>
     <property name="service.dir" value="services/${service.title}"/>
-    
+
     <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
 
     <tstamp>
@@ -103,6 +99,7 @@
     <target name="install-config" if="config.missing">
         <copy todir="${penrose.home}/${service.dir}">
             <fileset dir="../../server/target/dist/${service.dir}">
+                <include name="config/**/*"/>
                 <include name="SERVICE-INF/service.xml"/>
             </fileset>
         </copy>
@@ -111,6 +108,7 @@
     <target name="install" depends="init,check-install,install-config">
         <copy todir="${penrose.home}/${service.dir}" overwrite="true">
             <fileset dir="../../server/target/dist/${service.dir}">
+                <exclude name="config/**/*"/>
                 <exclude name="SERVICE-INF/service.xml"/>
             </fileset>
         </copy>

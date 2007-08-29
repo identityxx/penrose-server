@@ -112,9 +112,7 @@ public class MinaLDAPService extends LDAPService {
         ((SocketSessionConfig)(acceptorConfig.getSessionConfig())).setTcpNoDelay(true);
 
         acceptor = new SocketAcceptor();
-    }
 
-    public void start() throws Exception {
         //acceptor.setLocalAddress();
         //acceptor.setHandler(handler);
         acceptor.bind(new InetSocketAddress(ldapPort), handler, acceptorConfig);
@@ -122,7 +120,7 @@ public class MinaLDAPService extends LDAPService {
         log.warn("Listening to port "+ldapPort+" (LDAP).");
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
         acceptor.unbind(new InetSocketAddress(ldapPort));
     }
 }

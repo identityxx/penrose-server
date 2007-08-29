@@ -26,6 +26,7 @@ public class OpenDSLDAPService extends LDAPService {
     File configFile;
 
     public void init() throws Exception {
+        super.init();
 
         PenroseServer penroseServer = serviceContext.getPenroseServer();
         System.setProperty("org.opends.server.ServerRoot", penroseServer.getHome().getAbsolutePath());
@@ -52,10 +53,6 @@ public class OpenDSLDAPService extends LDAPService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-
-    }
-
-    public void start() throws Exception {
 
         DirectoryServer directoryServer = DirectoryServer.getInstance();
         directoryServer.bootstrapServer();
@@ -94,7 +91,8 @@ public class OpenDSLDAPService extends LDAPService {
         log.warn("Listening to port "+value.getStringValue()+" (LDAP).");
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
+
         ShutdownTaskThread shutdownThread = new ShutdownTaskThread("Shutdown");
         shutdownThread.start();
 
