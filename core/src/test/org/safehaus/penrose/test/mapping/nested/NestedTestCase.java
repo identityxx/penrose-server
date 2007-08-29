@@ -113,12 +113,12 @@ public class NestedTestCase extends JDBCTestCase {
         PenroseContext penroseContext = penrose.getPenroseContext();
         Partitions partitions = penrose.getPartitions();
 
-        PartitionContext partitionContext = new PartitionContext();
-        partitionContext.setPenroseConfig(penroseConfig);
-        partitionContext.setPenroseContext(penroseContext);
+        PartitionFactory partitionFactory = new PartitionFactory();
+        partitionFactory.setPenroseConfig(penroseConfig);
+        partitionFactory.setPenroseContext(penroseContext);
 
-        Partition partition = new Partition();
-        partition.init(partitionConfig, partitionContext);
+        Partition partition = partitionFactory.createPartition(partitionConfig);
+
         partitions.addPartition(partition);
     }
     

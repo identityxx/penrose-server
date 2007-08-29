@@ -52,9 +52,6 @@ public class SourceSyncModule extends Module {
 
             sourceSyncs.add(sourceSync);
         }
-    }
-
-    public void start() throws Exception {
 
         if (initialize) {
             log.warn("Initializing "+partition.getName()+"/"+sourceNames+".");
@@ -69,7 +66,7 @@ public class SourceSyncModule extends Module {
         thread.start();
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
         runnable.stop();
     }
 

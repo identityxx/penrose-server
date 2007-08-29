@@ -7,6 +7,8 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.Partition;
 
 import java.util.Collection;
 import java.util.Map;
@@ -224,6 +226,7 @@ public class DemoAdapter extends Adapter {
 
         response.setSizeLimit(request.getSizeLimit());
 
+        PenroseContext penroseContext = partition.getPartitionContext().getPenroseContext();
         FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
         for (RDN rdn : entries.keySet()) {

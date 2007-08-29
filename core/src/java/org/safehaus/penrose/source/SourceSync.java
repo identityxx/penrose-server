@@ -1,3 +1,20 @@
+/**
+ * Copyright (c) 2000-2006, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.changelog.ChangeLogUtil;
@@ -8,6 +25,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.jdbc.JDBCClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +51,12 @@ public class SourceSync {
 
     public final static String USER                = "user";
 
+    private SourceSyncConfig sourceSyncConfig;
+    private SourceSyncContext sourceSyncContext;
+
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private SourceSyncConfig sourceSyncConfig;
     private Partition partition;
 
     private Source source;
@@ -50,7 +70,16 @@ public class SourceSync {
     public SourceSync() {
     }
 
-    public void init() throws Exception {
+    public void init(SourceSyncConfig sourceSyncConfig, SourceSyncContext sourceSyncContext) throws Exception {
+
+        this.sourceSyncConfig = sourceSyncConfig;
+        this.sourceSyncContext = sourceSyncContext;
+
+        this.partition = sourceSyncContext.getPartition();
+
+        PartitionContext partitionContext = partition.getPartitionContext();
+        this.penroseConfig = partitionContext.getPenroseConfig();
+        this.penroseContext = partitionContext.getPenroseContext();
 
         String sourceName = sourceSyncConfig.getName();
         Collection<String> destinations = sourceSyncConfig.getDestinations();
@@ -95,9 +124,7 @@ public class SourceSync {
                 changeLogUtils.add(changeLogUtil);
             }
         }
-    }
 
-    public void start() {
         if (tracker != null) {
             try {
                 tracker.create();
@@ -105,9 +132,14 @@ public class SourceSync {
                 log.debug("Failed to create "+tracker.getName()+": "+e.getMessage());
             }
         }
+
+        init();
     }
 
-    public void stop() {
+    public void init() throws Exception {
+    }
+
+    public void destroy() throws Exception {
     }
 
     public ChangeLogUtil createChangeLogUtil() throws Exception {
@@ -297,5 +329,13 @@ public class SourceSync {
         for (Source destination : destinations) {
             destination.status();
         }
+    }
+
+    public SourceSyncContext getSourceSyncContext() {
+        return sourceSyncContext;
+    }
+
+    public void setSourceSyncContext(SourceSyncContext sourceSyncContext) {
+        this.sourceSyncContext = sourceSyncContext;
     }
 }

@@ -43,15 +43,15 @@ public class Partitions implements PartitionsMBean {
         for (Partition partition : partitions.values()) {
 
             for (Module module : partition.getModules()) {
-                module.stop();
+                module.destroy();
             }
 
             for (SourceSync sourceSync : partition.getSourceSyncs()) {
-                sourceSync.stop();
+                sourceSync.destroy();
             }
 
             for (Connection connection : partition.getConnections()) {
-                connection.stop();
+                connection.destroy();
             }
         }
     }

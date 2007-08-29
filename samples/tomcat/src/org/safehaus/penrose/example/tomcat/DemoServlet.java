@@ -7,8 +7,6 @@ import org.safehaus.penrose.Penrose;
 import javax.servlet.*;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -59,11 +57,9 @@ public class DemoServlet extends GenericServlet {
             out.println();
 
             out.println("Penrose Services:");
-            Services serviceManager = penroseServer.getServices();
-            Collection serviceNames = serviceManager.getServiceNames();
-            for (Iterator i=serviceNames.iterator(); i.hasNext(); ) {
-                String serviceName = (String)i.next();
-                out.println(" - "+serviceName+": "+serviceManager.getStatus(serviceName));
+            Services services = penroseServer.getServices();
+            for (String serviceName : services.getServiceNames()) {
+                out.println(" - " + serviceName);
             }
 
         } catch (Exception e) {

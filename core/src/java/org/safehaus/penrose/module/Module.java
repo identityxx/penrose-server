@@ -18,9 +18,8 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.partition.Partition;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -42,18 +41,10 @@ public class Module implements
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static String STOPPING = "STOPPING";
-    public final static String STOPPED  = "STOPPED";
-    public final static String STARTING = "STARTING";
-    public final static String STARTED  = "STARTED";
-
-    public PenroseConfig penroseConfig;
-    public PenroseContext penroseContext;
+    public ModuleConfig moduleConfig;
+    public ModuleContext moduleContext;
 
     public Partition partition;
-    public ModuleConfig moduleConfig;
-
-    private String status = STOPPED;
 
     public String getName() {
         return moduleConfig.getName();
@@ -67,15 +58,19 @@ public class Module implements
         return moduleConfig.getParameterNames();
     }
 
+    public void init(ModuleConfig moduleConfig, ModuleContext moduleContext) throws Exception {
+        this.moduleConfig = moduleConfig;
+        this.moduleContext = moduleContext;
+
+        partition = moduleContext.getPartition();
+
+        init();
+    }
+
     public void init() throws Exception {
     }
 
-    public void start() throws Exception {
-        setStatus(STARTED);
-    }
-
-    public void stop() throws Exception {
-        setStatus(STOPPED);
+    public void destroy() throws Exception {
     }
 
     public void beforeBind(BindEvent event) throws Exception {
@@ -134,14 +129,6 @@ public class Module implements
         return moduleConfig;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public Partition getPartition() {
         return partition;
     }
@@ -150,19 +137,11 @@ public class Module implements
         this.partition = partition;
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
+    public ModuleContext getModuleContext() {
+        return moduleContext;
     }
 
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
-    }
-
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
+    public void setModuleContext(ModuleContext moduleContext) {
+        this.moduleContext = moduleContext;
     }
 }

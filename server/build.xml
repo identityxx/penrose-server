@@ -61,7 +61,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling ${product.title}."/>
+        <echo message="Compiling ${product.title} Server."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -78,12 +78,12 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building ${product.title}."/>
+        <echo message="Building ${product.title} Server."/>
         <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
-              <attribute name="Implementation-Title"   value="${product.title}"/>
+              <attribute name="Implementation-Title"   value="${product.title} Server"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
               <attribute name="Build-Date" value="${TIMESTAMP}"/>

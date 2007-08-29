@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -32,65 +31,10 @@ public class Services implements ServicesMBean {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     private Map<String,Service> services = new LinkedHashMap<String,Service>();
+    private File servicesDir;
 
-    public Service init(ServiceConfig serviceConfig, ServiceContext serviceContext) throws Exception {
-
-        Collection<URL> classPaths = serviceConfig.getClassPaths();
-        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
-
-        Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
-
-        Service service = (Service)clazz.newInstance();
-        service.setClassLoader(classLoader);
-        service.init(serviceConfig, serviceContext);
-
-        return service;
-    }
-
-    public void start() throws Exception {
-        for (String name : getServiceNames()) {
-            start(name);
-        }
-    }
-
-    public void start(String name) throws Exception {
-
-        Service service = getService(name);
-        if (service == null) throw new Exception(name+" not found.");
-
-        ServiceConfig serviceConfig = service.getServiceConfig();
-        if (!serviceConfig.isEnabled()) return;
-
-        log.debug("Starting "+name+".");
-        service.start();
-    }
-
-    public void stop() throws Exception {
-        Collection<String> list = getServiceNames();
-        String names[] = list.toArray(new String[list.size()]);
-
-        for (int i=names.length-1; i>=0; i--) {
-            String name = names[i];
-            stop(name);
-        }
-    }
-
-    public void stop(String name) throws Exception {
-
-        Service service = getService(name);
-        if (service == null) throw new Exception(name+" not found.");
-
-        ServiceConfig serviceConfig = service.getServiceConfig();
-        if (!serviceConfig.isEnabled()) return;
-
-        log.debug("Stopping "+name+".");
-        service.stop();
-    }
-
-    public String getStatus(String name) throws Exception {
-        Service service = getService(name);
-        if (service == null) throw new Exception(name+" not found.");
-        return service.getStatus();
+    public Services(File servicesDir) {
+        this.servicesDir = servicesDir;
     }
 
     public void addService(Service service) {
@@ -115,5 +59,13 @@ public class Services implements ServicesMBean {
 
     public void clear() {
         services.clear();
+    }
+
+    public File getServicesDir() {
+        return servicesDir;
+    }
+
+    public void setServicesDir(File servicesDir) {
+        this.servicesDir = servicesDir;
     }
 }

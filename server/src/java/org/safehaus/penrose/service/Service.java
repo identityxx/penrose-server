@@ -29,17 +29,8 @@ public class Service {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public final static String STOPPING = "STOPPING";
-    public final static String STOPPED  = "STOPPED";
-    public final static String STARTING = "STARTING";
-    public final static String STARTED  = "STARTED";
-
     protected ServiceConfig serviceConfig;
     protected ServiceContext serviceContext;
-
-    protected ClassLoader classLoader;
-
-    protected String status = STOPPED;
 
     public Service() {
     }
@@ -66,12 +57,7 @@ public class Service {
     public void init() throws Exception {
     }
 
-    public void start() throws Exception {
-        setStatus(STARTED);
-    }
-
-    public void stop() throws Exception {
-        setStatus(STOPPED);
+    public void destroy() throws Exception {
     }
 
     public ServiceConfig getServiceConfig() {
@@ -80,22 +66,6 @@ public class Service {
 
     public void setServiceConfig(ServiceConfig serviceConfig) {
         this.serviceConfig = serviceConfig;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public ClassLoader getClassLoader() {
-        return classLoader;
-    }
-
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
     }
 
     public ServiceContext getServiceContext() {

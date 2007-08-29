@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.io.File;
 
 /**
@@ -18,14 +19,26 @@ public class ServiceConfigs implements ServiceConfigsMBean {
     public ServiceReader serviceReader = new ServiceReader();
 
     private Map<String,ServiceConfig> serviceConfigs = new LinkedHashMap<String,ServiceConfig>();
+    private File servicesDir;
 
-    public ServiceConfig load(File dir) throws Exception {
+    public ServiceConfigs(File servicesDir) throws Exception {
+        this.servicesDir = servicesDir;
+    }
+
+    public Collection<String> getAvailableServiceNames() throws Exception {
+        Collection<String> list = new ArrayList<String>();
+        for (File serviceDir : servicesDir.listFiles()) {
+            list.add(serviceDir.getName());
+        }
+        return list;
+    }
+
+    public ServiceConfig load(String serviceName) throws Exception {
+
+        File dir = new File(servicesDir, serviceName);
         log.debug("Loading service from "+dir+".");
-        ServiceConfig serviceConfig = serviceReader.read(dir);
 
-        addServiceConfig(serviceConfig);
-
-        return serviceConfig;
+        return serviceReader.read(dir);
     }
 
     public void addServiceConfig(ServiceConfig serviceConfig) {
@@ -50,5 +63,13 @@ public class ServiceConfigs implements ServiceConfigsMBean {
 
     public void clear() {
         serviceConfigs.clear();
+    }
+
+    public File getServicesDir() {
+        return servicesDir;
+    }
+
+    public void setServicesDir(File servicesDir) {
+        this.servicesDir = servicesDir;
     }
 }

@@ -41,8 +41,23 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     protected PartitionWriter partitionWriter = new PartitionWriter();
 
     private Map<String,PartitionConfig> partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
+    private File partitionsDir;
 
-    public PartitionConfigs() {
+    public PartitionConfigs(File partitionsDir) {
+        this.partitionsDir = partitionsDir;
+    }
+
+    public Collection<String> getAvailablePartitionNames() throws Exception {
+        Collection<String> list = new ArrayList<String>();
+        for (File partitionDir : partitionsDir.listFiles()) {
+            list.add(partitionDir.getName());
+        }
+        return list;
+    }
+
+    public PartitionConfig load(String partitionName) throws Exception {
+        File dir = new File(partitionsDir, partitionName);
+        return load(dir);
     }
 
     public PartitionConfig load(File dir) throws Exception {
@@ -173,5 +188,13 @@ public class PartitionConfigs implements PartitionConfigsMBean {
 
     public void setPartitionReader(PartitionReader partitionReader) {
         this.partitionReader = partitionReader;
+    }
+
+    public File getPartitionsDir() {
+        return partitionsDir;
+    }
+
+    public void setPartitionsDir(File partitionsDir) {
+        this.partitionsDir = partitionsDir;
     }
 }

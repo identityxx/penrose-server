@@ -85,12 +85,12 @@ public class BasicTestCase extends JDBCTestCase {
 
         partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
 
-        PartitionContext partitionContext = new PartitionContext();
-        partitionContext.setPenroseConfig(penroseConfig);
-        partitionContext.setPenroseContext(penroseContext);
+        PartitionFactory partitionFactory = new PartitionFactory();
+        partitionFactory.setPenroseConfig(penroseConfig);
+        partitionFactory.setPenroseContext(penroseContext);
 
-        Partition partition = new Partition();
-        partition.init(partitionConfig, partitionContext);
+        Partition partition = partitionFactory.createPartition(partitionConfig);
+
         partitions.addPartition(partition);
     }
 /*

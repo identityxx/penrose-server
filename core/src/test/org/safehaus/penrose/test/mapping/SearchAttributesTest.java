@@ -245,7 +245,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
         value = attributes.getValue("vendorVersion");
         log.debug("vendorVersion: "+value);
-        assertEquals(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION, value);
+        assertEquals(Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION, value);
 
         hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);

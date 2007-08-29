@@ -13,6 +13,8 @@ public class ServiceContext implements Cloneable {
 
     protected PenroseServer penroseServer;
 
+    private ClassLoader classLoader;
+
     public File getPath() {
         return path;
     }
@@ -31,5 +33,13 @@ public class ServiceContext implements Cloneable {
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 }

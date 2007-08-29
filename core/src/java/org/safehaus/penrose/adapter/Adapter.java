@@ -22,12 +22,13 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.session.Session;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,23 +44,31 @@ public abstract class Adapter {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected PenroseConfig penroseConfig;
-    protected PenroseContext penroseContext;
+    protected InterpreterManager interpreterManager;
+
+    protected AdapterConfig adapterConfig;
+    protected AdapterContext adapterContext;
 
     protected Partition partition;
-    protected AdapterConfig adapterConfig;
     protected Connection connection;
+
+    public void init(AdapterConfig adapterConfig, AdapterContext adapterContext) throws Exception {
+        this.adapterConfig = adapterConfig;
+        this.adapterContext = adapterContext;
+
+        partition = adapterContext.getPartition();
+        connection = adapterContext.getConnection();
+
+        PenroseContext penroseContext = partition.getPartitionContext().getPenroseContext();
+        interpreterManager = penroseContext.getInterpreterManager();
+
+        init();
+    }
 
     public void init() throws Exception {
     }
 
-    public void start() throws Exception {
-    }
-
-    public void stop() throws Exception {
-    }
-
-    public void dispose() throws Exception {
+    public void destroy() throws Exception {
     }
 
     public boolean isJoinSupported() {
@@ -123,7 +132,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -204,7 +213,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -278,7 +287,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -384,7 +393,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -454,7 +463,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -621,7 +630,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -715,7 +724,7 @@ public abstract class Adapter {
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = interpreterManager.newInstance();
 
         FilterBuilder filterBuilder = new FilterBuilder(
                 partition,
@@ -796,27 +805,19 @@ public abstract class Adapter {
         return connection.getConnectionName();
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
-    }
-
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
-    }
-
     public Partition getPartition() {
         return partition;
     }
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public AdapterContext getAdapterContext() {
+        return adapterContext;
+    }
+
+    public void setAdapterContext(AdapterContext adapterContext) {
+        this.adapterContext = adapterContext;
     }
 }

@@ -31,7 +31,6 @@ import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.connection.Connection;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -94,13 +93,13 @@ public class JDBCAdapter extends Adapter {
         Properties properties = new Properties();
         properties.putAll(getParameters());
 
-        String driver = (String)properties.remove(DRIVER);
+        String driverClass = (String)properties.remove(DRIVER);
         String url = (String)properties.remove(URL);
 
         ClassLoader cl = partition.getClassLoader();
-        Class clazz = cl.loadClass(driver);
+        Class clazz = cl.loadClass(driverClass);
 
-        this.driver = (Driver)clazz.newInstance();
+        driver = (Driver)clazz.newInstance();
         DriverManager.registerDriver(this.driver);
 
         String s = (String)properties.remove(INITIAL_SIZE);
@@ -157,14 +156,8 @@ public class JDBCAdapter extends Adapter {
                         false, // read only
                         true // auto commit
                 );
-    }
-
-    public void start() throws Exception {
 
         log.debug("Starting "+adapterConfig.getName()+" adapter.");
-
-        String s = getParameter(INITIAL_SIZE);
-        int initialSize = s == null ? 1 : Integer.parseInt(s);
 
         //log.debug("Initializing "+initialSize+" connections.");
         for (int i = 0; i < initialSize; i++) {
@@ -176,7 +169,7 @@ public class JDBCAdapter extends Adapter {
         client = new JDBCClient(driver, getParameters());
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
         log.debug("Stopping "+adapterConfig.getName()+" adapter.");
         client.close();
     }
@@ -416,7 +409,7 @@ public class JDBCAdapter extends Adapter {
             AddRequestBuilder builder = new AddRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    penroseContext.getInterpreterManager().newInstance(),
+                    interpreterManager.newInstance(),
                     request,
                     response
             );
@@ -540,7 +533,7 @@ public class JDBCAdapter extends Adapter {
             DeleteRequestBuilder builder = new DeleteRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    penroseContext.getInterpreterManager().newInstance(),
+                    interpreterManager.newInstance(),
                     request,
                     response
             );
@@ -661,7 +654,7 @@ public class JDBCAdapter extends Adapter {
             ModifyRequestBuilder builder = new ModifyRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    penroseContext.getInterpreterManager().newInstance(),
+                    interpreterManager.newInstance(),
                     request,
                     response
             );
@@ -767,7 +760,7 @@ public class JDBCAdapter extends Adapter {
             ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    penroseContext.getInterpreterManager().newInstance(),
+                    interpreterManager.newInstance(),
                     request,
                     response
             );
@@ -899,10 +892,8 @@ public class JDBCAdapter extends Adapter {
         try {
             response.setSizeLimit(request.getSizeLimit());
 
-            Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
-
             SearchRequestBuilder builder = new SearchRequestBuilder(
-                    interpreter,
+                    interpreterManager.newInstance(),
                     partition,
                     entryMapping,
                     sourceRefs,

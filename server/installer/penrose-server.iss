@@ -16,11 +16,11 @@
 
 [Setup]
 
-AppName=${product.title}
-AppVerName=${product.title} ${product.version}
-DefaultDirName={pf}\Identyx\${product.title} ${product.version}
-DefaultGroupName=Identyx\${product.title} ${product.version}
-UninstallDisplayName=${product.title} ${product.version}
+AppName=${product.title} Server
+AppVerName=${product.title} Server ${product.version}
+DefaultDirName={pf}\Identyx\${product.title} Server ${product.version}
+DefaultGroupName=Identyx\${product.title} Server ${product.version}
+UninstallDisplayName=${product.title} Server ${product.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
@@ -65,7 +65,7 @@ Name: "{group}\Documentation\Penrose API"; Filename: "{app}\docs\javadoc\index.h
 Name: "{group}\Documentation\Online Documentation"; Filename: "{app}\docs\Online Documentation.url";
 Name: "{group}\Documentation\Penrose Website"; Filename: "{app}\docs\Penrose Website.url";
 Name: "{group}\Documentation\Safehaus Website"; Filename: "{app}\docs\Safehaus Website.url";
-Name: "{group}\${product.title}"; Filename: "{app}\bin\penrose.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\${product.title} Server"; Filename: "{app}\bin\penrose.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";
@@ -73,4 +73,4 @@ Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"
 Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Register Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Unregister Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
-Name: "{group}\Uninstall ${product.title}"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall ${product.title} Server"; Filename: "{uninstallexe}"

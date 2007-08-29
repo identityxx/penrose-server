@@ -31,10 +31,7 @@ import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.AttributeMapping;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.Partitions;
-import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.*;
 
 /**
  * @author Endi S. Dewata
@@ -85,12 +82,12 @@ public class PartitionManagerTest extends TestCase {
         entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
         partitionConfig.getDirectoryConfigs().addEntryMapping(entryMapping);
 
-        PartitionContext partitionContext = new PartitionContext();
-        partitionContext.setPenroseConfig(penroseConfig);
-        partitionContext.setPenroseContext(penroseContext);
+        PartitionFactory partitionFactory = new PartitionFactory();
+        partitionFactory.setPenroseConfig(penroseConfig);
+        partitionFactory.setPenroseContext(penroseContext);
 
-        Partition partition = new Partition();
-        partition.init(partitionConfig, partitionContext);
+        Partition partition = partitionFactory.createPartition(partitionConfig);
+
         partitions.addPartition(partition);
 
         Session session = penrose.newSession();

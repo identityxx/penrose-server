@@ -198,7 +198,7 @@ public class Session {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(String dn, String password) throws LDAPException {
-        bind(new DN(dn), password.getBytes());
+        bind(new DN(dn), password == null ? null : password.getBytes());
     }
 
     public void bind(String dn, byte[] password) throws LDAPException {
@@ -254,7 +254,7 @@ public class Session {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
                 log.debug(" - Bind DN       : "+request.getDn());
-                log.debug(" - Bind Password : "+(request.getPassword() == null ? null : new String(request.getPassword())));
+                log.debug(" - Bind Password : "+(request.getPassword() == null ? "" : new String(request.getPassword())));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -883,7 +883,7 @@ public class Session {
         }
     }
 
-    public void close() throws Exception {
+    public void close() {
         sessionManager.closeSession(this);
     }
 

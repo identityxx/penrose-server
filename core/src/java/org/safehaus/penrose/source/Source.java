@@ -19,8 +19,10 @@ public class Source implements Cloneable {
     protected String name;
     protected Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    protected Partition partition;
     protected SourceConfig sourceConfig;
+    protected SourceContext sourceContext;
+
+    protected Partition partition;
     protected Connection connection;
 
     protected Map<String,Field> fields = new LinkedHashMap<String,Field>();
@@ -34,9 +36,13 @@ public class Source implements Cloneable {
     public Source() {
     }
 
-    public Source(Partition partition, SourceConfig sourceConfig) {
-        this.partition = partition;
+    public void init(SourceConfig sourceConfig, SourceContext sourceContext) {
+
         this.sourceConfig = sourceConfig;
+        this.sourceContext = sourceContext;
+
+        this.partition = sourceContext.getPartition();
+        this.connection = sourceContext.getConnection();
 
         this.name = sourceConfig.getName();
         this.parameters.putAll(sourceConfig.getParameters());
@@ -54,6 +60,9 @@ public class Source implements Cloneable {
 
         primaryKeyNames.addAll(sourceConfig.getPrimaryKeyNames());
         indexFieldNames.addAll(sourceConfig.getIndexFieldNames());
+    }
+
+    public void destroy() throws Exception {
     }
 
     public String getName() {
@@ -435,5 +444,13 @@ public class Source implements Cloneable {
         Source source = (Source)super.clone();
         source.copy(this);
         return source;
+    }
+
+    public SourceContext getSourceContext() {
+        return sourceContext;
+    }
+
+    public void setSourceContext(SourceContext sourceContext) {
+        this.sourceContext = sourceContext;
     }
 }

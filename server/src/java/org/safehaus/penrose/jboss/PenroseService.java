@@ -89,21 +89,6 @@ public class PenroseService implements PenroseServiceMBean {
         return serviceNames;
     }
 
-    public void start(String serviceName) throws Exception {
-        Services serviceManager = penroseServer.getServices();
-        serviceManager.start(serviceName);
-    }
-
-    public void stop(String serviceName) throws Exception {
-        Services serviceManager = penroseServer.getServices();
-        serviceManager.stop(serviceName);
-    }
-
-    public String getStatus(String serviceName) throws Exception {
-        Services serviceManager = penroseServer.getServices();
-        return serviceManager.getStatus(serviceName);
-    }
-
     public Collection<String> listFiles(String path) throws Exception {
         Collection<String> results = new ArrayList<String>();
 

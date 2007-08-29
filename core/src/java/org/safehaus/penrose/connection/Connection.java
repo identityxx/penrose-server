@@ -22,6 +22,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.adapter.AdapterContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
@@ -41,52 +42,60 @@ public class Connection implements ConnectionMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    protected PenroseConfig penroseConfig;
-    protected PenroseContext penroseContext;
-
-    protected Partition partition;
     protected ConnectionConfig connectionConfig;
+    protected ConnectionContext connectionContext;
+
     protected AdapterConfig adapterConfig;
     protected Adapter adapter;
 
-    public Connection(Partition partition, ConnectionConfig connectionConfig, AdapterConfig adapterConfig) {
-        this.partition = partition;
-        this.connectionConfig = connectionConfig;
-        this.adapterConfig = adapterConfig;
+    protected Partition partition;
+    protected PenroseConfig penroseConfig;
+    protected PenroseContext penroseContext;
+
+    public Connection() {
     }
 
     public String getName() {
         return connectionConfig.getName();
     }
 
-    public void init() throws Exception {
+    public void init(
+            ConnectionConfig connectionConfig,
+            ConnectionContext connectionContext,
+            AdapterConfig adapterConfig
+    ) throws Exception {
+
+        this.connectionConfig = connectionConfig;
+        this.connectionContext = connectionContext;
+
+        this.adapterConfig = adapterConfig;
+
+        partition = connectionContext.getPartition();
+        penroseConfig = partition.getPartitionContext().getPenroseConfig();
+        penroseContext = partition.getPartitionContext().getPenroseContext();
+
+        log.debug("Starting "+connectionConfig.getName()+" connection.");
 
         String adapterClass = adapterConfig.getAdapterClass();
         ClassLoader cl = partition.getClassLoader();
         Class clazz = cl.loadClass(adapterClass);
         adapter = (Adapter)clazz.newInstance();
 
-        adapter.setPenroseConfig(penroseConfig);
-        adapter.setPenroseContext(penroseContext);
-        adapter.setAdapterConfig(adapterConfig);
-        adapter.setPartition(partition);
-        adapter.setConnection(this);
+        AdapterContext adapterContext = new AdapterContext();
+        adapterContext.setPartition(partition);
+        adapterContext.setConnection(this);
 
-        adapter.init();
+        adapter.init(adapterConfig, adapterContext);
+
+        init();
     }
 
-    public void start() throws Exception {
-        log.debug("Starting "+connectionConfig.getName()+" connection.");
-        if (adapter != null) adapter.start();
+    public void init() throws Exception {
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
         log.debug("Stopping "+connectionConfig.getName()+" connection.");
-        if (adapter != null) adapter.stop();
-    }
-
-    public void dispose() throws Exception {
-        if (adapter != null) adapter.dispose();
+        adapter.destroy();
     }
 
     public ConnectionConfig getConnectionConfig() {

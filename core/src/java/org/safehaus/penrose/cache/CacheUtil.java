@@ -305,18 +305,15 @@ public class CacheUtil {
         penroseContext.init(penroseConfig);
         penroseContext.start();
 
-        PartitionConfigs partitionConfigs = new PartitionConfigs();
+        File partitionsDir = new File(home, "partitions");
+        PartitionConfigs partitionConfigs = new PartitionConfigs(partitionsDir);
         Partitions partitions = new Partitions();
 
-        File partitionsDir = new File(home, "partitions");
-        if (!partitionsDir.isDirectory()) return;
-
-        for (File dir : partitionsDir.listFiles()) {
-            if (!dir.isDirectory()) continue;
+        for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
-            PartitionConfig partitionConfig = partitionConfigs.load(dir);
+            PartitionConfig partitionConfig = partitionConfigs.load(partitionName);
             partitionConfigs.addPartitionConfig(partitionConfig);
 
             String name = partitionConfig.getName();
@@ -328,13 +325,12 @@ public class CacheUtil {
 
             log.debug("Starting "+name+" partition.");
 
-            PartitionContext partitionContext = new PartitionContext();
-            partitionContext.setPath(dir);
-            partitionContext.setPenroseConfig(penroseConfig);
-            partitionContext.setPenroseContext(penroseContext);
+            PartitionFactory partitionFactory = new PartitionFactory();
+            partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
+            partitionFactory.setPenroseConfig(penroseConfig);
+            partitionFactory.setPenroseContext(penroseContext);
 
-            Partition partition = new Partition();
-            partition.init(partitionConfig, partitionContext);
+            Partition partition = partitionFactory.createPartition(partitionConfig);
             partitions.addPartition(partition);
         }
 

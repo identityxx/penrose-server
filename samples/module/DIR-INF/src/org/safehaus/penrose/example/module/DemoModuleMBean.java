@@ -15,30 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
-
-import org.jboss.system.Service;
-
-import java.util.Collection;
+package org.safehaus.penrose.example.module;
 
 /**
- * @author Endi S. Dewata
+ * @author Endi Sukma Dewata
  */
-public interface PenroseServiceMBean extends Service {
+public interface DemoModuleMBean {
 
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
+    public String getAttribute() throws Exception;
+    public void setAttribute(String attribute) throws Exception;
 
-    public String getHome() throws Exception;
-
-    public void start() throws Exception;
-    public void stop();
-    public void reload() throws Exception;
-    public void restart() throws Exception;
-
-    public Collection getServiceNames() throws Exception;
-
-    public byte[] download(String filename) throws Exception;
-	public void upload(String filename, byte content[]) throws Exception;
-    public Collection listFiles(String directory) throws Exception;
+    public String operation() throws Exception;
+    public String operation(String... params) throws Exception;
 }

@@ -17,7 +17,8 @@
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/core/target/classes" />
@@ -332,24 +333,6 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/jmxri-1.2.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/mx4j-tools.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/services/JMX/SERVICE-INF/lib/mx4j.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

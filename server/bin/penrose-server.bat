@@ -27,8 +27,8 @@ rem by the user or the %0 problem on Windows 9x
 if exist "%PENROSE_HOME%\README.txt" goto checkJava
 
 rem check for Penrose in Program Files on system drive
-if not exist "%SystemDrive%\Program Files\Penrose" goto checkSystemDrive
-set PENROSE_HOME=%SystemDrive%\Program Files\Penrose
+if not exist "%SystemDrive%\Program Files\Penrose Server" goto checkSystemDrive
+set PENROSE_HOME=%SystemDrive%\Program Files\Penrose Server
 goto checkJava
 
 :checkSystemDrive
@@ -63,24 +63,21 @@ echo.
 
 :runPenrose
 
-REM set LOCALCLASSPATH=%PENROSE_HOME%\conf
-REM FOR %%x in ("%PENROSE_HOME%\lib\*.jar") DO call "%PENROSE_HOME%\bin\setcp.bat" %%x
-REM FOR %%x in ("%PENROSE_HOME%\lib\ext\*.jar") DO call "%PENROSE_HOME%\bin\setcp.bat" %%x
-REM FOR %%x in ("%PENROSE_HOME%\server\lib\*.jar") DO call "%PENROSE_HOME%\bin\setcp.bat" %%x
-REM FOR %%x in ("%PENROSE_HOME%\server\lib\ext\*.jar") DO call "%PENROSE_HOME%\bin\setcp.bat" %%x
-REM FOR %%x in ("%PENROSE_HOME%\schema\ext\*.jar") DO call "%PENROSE_HOME%\bin\setcp.bat" %%x
-REM set CLASSPATH=%LOCALCLASSPATH%
+set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar
+set LOCALCLASSPATH=%LOCALCLASSPATH%;%PENROSE_HOME%\conf
 
-set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar;%CLASSPATH%
+set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib\ext
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib\ext
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\schema\ext
 
-set LOCALLIBPATH=%PENROSE_HOME%\lib;%LOCALLIBPATH%
-set LOCALLIBPATH=%PENROSE_HOME%\lib\ext;%LOCALLIBPATH%
-set LOCALLIBPATH=%PENROSE_HOME%\server\lib;%LOCALLIBPATH%
-set LOCALLIBPATH=%PENROSE_HOME%\server\lib\ext;%LOCALLIBPATH%
+cd %PENROSE_HOME%
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.apacheds.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+set JAVA_OPTS=%PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%"
+"%_JAVACMD%" %JAVA_OPTS% org.safehaus.penrose.server.PenroseServer %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
-
 
 :end
 set LOCALCLASSPATH=
@@ -91,4 +88,3 @@ set PENROSE_CMD_LINE_ARGS=
 if "%OS%"=="Windows_NT" @endlocal
 
 :mainEnd
-

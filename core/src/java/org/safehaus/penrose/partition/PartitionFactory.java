@@ -17,32 +17,50 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class PartitionContext implements Cloneable {
+public class PartitionFactory {
 
-    private File path;
-
+    private File partitionsDir;
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private ClassLoader classLoader;
-
-    public PartitionContext() {
+    public PartitionFactory() {
     }
 
-    public File getPath() {
-        return path;
+    public Partition createPartition(PartitionConfig partitionConfig) throws Exception {
+
+        Collection<URL> classPaths = partitionConfig.getClassPaths();
+        ClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+
+        PartitionContext partitionContext = new PartitionContext();
+        partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+        partitionContext.setClassLoader(classLoader);
+
+        Partition partition = new Partition();
+
+        partition.init(partitionConfig, partitionContext);
+
+        return partition;
     }
 
-    public void setPath(File path) {
-        this.path = path;
+    public File getPartitionsDir() {
+        return partitionsDir;
+    }
+
+    public void setPartitionsDir(File partitionsDir) {
+        this.partitionsDir = partitionsDir;
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -59,17 +77,5 @@ public class PartitionContext implements Cloneable {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-
-    public ClassLoader getClassLoader() {
-        return classLoader;
-    }
-
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
     }
 }

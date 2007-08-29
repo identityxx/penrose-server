@@ -222,7 +222,7 @@ public class BasicEngine extends Engine {
                 continue;
             }
 
-            found = true;
+            found |= flag != null;
 
             try {
                 connector.bind(

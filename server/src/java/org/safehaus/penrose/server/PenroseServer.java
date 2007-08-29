@@ -19,8 +19,11 @@ package org.safehaus.penrose.server;
 
 import java.util.*;
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.service.*;
 import org.safehaus.penrose.Penrose;
@@ -33,6 +36,7 @@ import org.safehaus.penrose.config.*;
 public class PenroseServer {
 
     public static Logger log = Logger.getLogger(PenroseServer.class);
+    public static org.slf4j.Logger errorLog = org.safehaus.penrose.log.Error.log;
     public static boolean debug = log.isDebugEnabled();
 
     private PenroseConfig penroseConfig;
@@ -93,8 +97,11 @@ public class PenroseServer {
         
         penroseConfig = penrose.getPenroseConfig();
 
-        serviceConfigs = new ServiceConfigs();
-        services = new Services();
+        File home = penrose.getHome();
+        File servicesDir = new File(home, "services");
+
+        serviceConfigs = new ServiceConfigs(servicesDir);
+        services = new Services(servicesDir);
     }
 
     public void start() throws Exception {
@@ -102,42 +109,88 @@ public class PenroseServer {
 
         if (debug) log.debug("----------------------------------------------------------------------------------");
 
-        File home = penrose.getHome();
+        for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
 
-        File servicesDir = new File(home, "services");
-        if (!servicesDir.isDirectory()) return;
+            try {
+                startService(serviceName);
 
-        for (File serviceDir : servicesDir.listFiles()) {
-            if (!serviceDir.isDirectory()) continue;
-
-            ServiceConfig serviceConfig = serviceConfigs.load(serviceDir);
-            String name = serviceConfig.getName();
-
-            if (!serviceConfig.isEnabled()) {
-                log.debug(name+" service is disabled.");
-                continue;
+            } catch (Exception e) {
+                errorLog.error(e.getMessage(), e);
             }
-
-            log.debug("Starting "+name+" service.");
-
-            ServiceContext serviceContext = new ServiceContext();
-            serviceContext.setPath(serviceDir);
-            serviceContext.setPenroseServer(this);
-
-            Service service = services.init(serviceConfig, serviceContext);
-            services.addService(service);
-
-            service.start();
         }
     }
 
     public void stop() throws Exception {
 
-        for (Service service : services.getServices()) {
-            service.stop();
+        for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
+
+            try {
+                stopService(serviceName);
+
+            } catch (Exception e) {
+                errorLog.error(e.getMessage(), e);
+            }
         }
 
         penrose.stop();
+    }
+
+    public void startService(String serviceName) throws Exception {
+
+        log.debug("Loading "+serviceName+" service.");
+
+        ServiceConfig serviceConfig = serviceConfigs.load(serviceName);
+        serviceConfigs.addServiceConfig(serviceConfig);
+        
+        if (!serviceConfig.isEnabled()) {
+            log.debug(serviceConfig.getName()+" service is disabled.");
+            return;
+        }
+
+        log.debug("Starting "+serviceName+" service.");
+
+        File serviceDir = new File(serviceConfigs.getServicesDir(), serviceName);
+
+        Collection<URL> classPaths = serviceConfig.getClassPaths();
+        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+
+        Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
+
+        Service service = (Service)clazz.newInstance();
+
+        ServiceContext serviceContext = new ServiceContext();
+        serviceContext.setPath(serviceDir);
+        serviceContext.setPenroseServer(this);
+        serviceContext.setClassLoader(classLoader);
+
+        service.init(serviceConfig, serviceContext);
+
+
+        services.addService(service);
+    }
+    
+    public void stopService(String serviceName) throws Exception {
+
+        log.debug("Stopping "+serviceName+" service.");
+
+        Service service = services.getService(serviceName);
+        if (service == null) return;
+
+        service.destroy();
+
+        services.removeService(serviceName);
+        serviceConfigs.removeServiceConfig(serviceName);
+    }
+
+    public String getServiceStatus(String serviceName) {
+
+        Service service = services.getService(serviceName);
+
+        if (service == null) {
+            return "STOPPED";
+        } else {
+            return "STARTED";
+        }
     }
 
     public String getStatus() {
@@ -239,7 +292,7 @@ public class PenroseServer {
             }
 
             if (parameters.contains("--version")) {
-                System.out.println(Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+                System.out.println(Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
                 System.out.println(Penrose.PRODUCT_COPYRIGHT);
                 System.exit(0);
             }
@@ -272,7 +325,7 @@ public class PenroseServer {
                 BasicConfigurator.configure(appender);
             }
 
-            log.warn("Starting "+Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION+".");
+            log.warn("Starting "+Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION+".");
 
             String javaVersion = System.getProperty("java.version");
             log.info("Java version: "+javaVersion);
@@ -304,5 +357,13 @@ public class PenroseServer {
 
     public ServiceConfigs getServiceConfigs() {
         return serviceConfigs;
+    }
+
+    public String getProductName() {
+        return Penrose.PRODUCT_NAME+" Server";
+    }
+
+    public String getProductVersion() {
+        return Penrose.PRODUCT_VERSION;
     }
 }

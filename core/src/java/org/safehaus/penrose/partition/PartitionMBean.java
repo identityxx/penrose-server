@@ -27,8 +27,4 @@ public interface PartitionMBean {
 
     public String getDescription() throws Exception;
     public void setDescription(String description) throws Exception;
-
-    public void start() throws Exception;
-    public void stop() throws Exception;
-    public String getStatus() throws Exception;
 }

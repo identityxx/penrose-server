@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# penrose This shell script takes care of starting and stopping ${product.title}.
+# penrose This shell script takes care of starting and stopping ${product.title} Server.
 #
 # chkconfig: - 38 62
-# description: ${product.title} ${product.version}.
+# description: ${product.title} Server ${product.version}.
 # processname: java
 # pidfile: /usr/local/${product.name}-${product.version}/var/run/penrose.pid
 

@@ -1,4 +1,4 @@
-Summary: ${product.title}
+Summary: ${product.title} Server
 Name: ${module.name}
 Version: ${product.version}
 Release: 1
@@ -23,7 +23,7 @@ ant -Dproduct.version=${product.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT i
 
 %post
 cat << EOF
-${product.title} ${product.version} has been installed in /usr/local/${module.name}-${product.version}.
+${product.title} Server ${product.version} has been installed in /usr/local/${module.name}-${product.version}.
 EOF
 
 %clean

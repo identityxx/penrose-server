@@ -15,30 +15,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.jboss;
+package org.safehaus.penrose.source;
 
-import org.jboss.system.Service;
-
-import java.util.Collection;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.connection.Connection;
 
 /**
- * @author Endi S. Dewata
+ * @author Endi Sukma Dewata
  */
-public interface PenroseServiceMBean extends Service {
+public class SourceContext {
 
-    public String getProductName() throws Exception;
-    public String getProductVersion() throws Exception;
+    private Partition partition;
+    private Connection connection;
 
-    public String getHome() throws Exception;
+    public Partition getPartition() {
+        return partition;
+    }
 
-    public void start() throws Exception;
-    public void stop();
-    public void reload() throws Exception;
-    public void restart() throws Exception;
+    public void setPartition(Partition partition) {
+        this.partition = partition;
+    }
 
-    public Collection getServiceNames() throws Exception;
+    public Connection getConnection() {
+        return connection;
+    }
 
-    public byte[] download(String filename) throws Exception;
-	public void upload(String filename, byte content[]) throws Exception;
-    public Collection listFiles(String directory) throws Exception;
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
 }

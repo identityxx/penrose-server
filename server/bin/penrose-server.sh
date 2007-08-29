@@ -65,8 +65,6 @@ if $cygwin ; then
     PENROSE_HOME=`cygpath --unix "$PENROSE_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
-  [ -n "$CLASSPATH" ] &&
-    CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
 
 if [ -z "$JAVACMD" ] ; then
@@ -91,8 +89,8 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALCLASSPATH=$PENROSE_HOME/conf
-LOCALCLASSPATH=$LOCALCLASSPATH:$JAVA_HOME/lib/tools.jar
+LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
+LOCALCLASSPATH=$LOCALCLASSPATH:$PENROSE_HOME/conf
 
 for i in "$PENROSE_HOME"/lib/*.jar
 do
@@ -138,16 +136,76 @@ do
   fi
 done
 
+for i in "$PENROSE_HOME"/schema/ext/*.jar
+do
+  if [ -f "$i" ] ; then
+    if [ -z "$LOCALCLASSPATH" ] ; then
+      LOCALCLASSPATH="$i"
+    else
+      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
+    fi
+  fi
+done
+
+LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/schema/ext"
+
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
-  CYGHOME=`cygpath --windows "$HOME"`
 fi
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
--classpath "$LOCALCLASSPATH" \
--Dpenrose.home="$PENROSE_HOME" \
-org.safehaus.penrose.apacheds.SchemaGenerator $PENROSE_ARGS "$@"
+cd "$PENROSE_HOME"
+mkdir -p "$PENROSE_HOME/logs"
+PENROSE_PID="$PENROSE_HOME/logs/penrose.pid"
+
+if [ "$1" = "start" ] ; then
+
+  if [ -f "$PENROSE_PID" ] ; then
+    echo Penrose Server is running
+    exit 1
+  else
+    shift
+    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    -Djava.library.path="$LOCALLIBPATH" \
+    -Dpenrose.home="$PENROSE_HOME" \
+    org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
+    >> "$PENROSE_HOME/logs/penrose.out" 2>&1 &
+
+    echo $! > "$PENROSE_PID"
+  fi
+
+elif [ "$1" = "stop" ] ; then
+
+  if [ -f "$PENROSE_PID" ] ; then
+    kill -9 `cat "$PENROSE_PID"` > /dev/null 2>&1
+    rm -f "$PENROSE_PID"
+  else
+    echo Penrose Server is not running
+    exit 1
+  fi
+
+elif [ "$1" = "status" ] ; then
+
+  if [ -f "$PENROSE_PID" ] ; then
+    echo Penrose Server is running
+  else
+    echo Penrose Server is not running
+  fi
+
+else
+
+  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+  -Djava.library.path="$LOCALLIBPATH" \
+  -Dpenrose.home="$PENROSE_HOME" \
+  org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
+
+fi
+

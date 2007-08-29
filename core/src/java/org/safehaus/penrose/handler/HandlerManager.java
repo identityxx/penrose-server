@@ -564,7 +564,7 @@ public class HandlerManager {
         attributes.addValue("objectClass", "top");
         attributes.addValue("objectClass", "extensibleObject");
         attributes.addValue("vendorName", Penrose.VENDOR_NAME);
-        attributes.addValue("vendorVersion", Penrose.PRODUCT_NAME+" "+Penrose.PRODUCT_VERSION);
+        attributes.addValue("vendorVersion", Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
         attributes.addValue("supportedLDAPVersion", "3");
         attributes.addValue("subschemaSubentry", LDAP.SCHEMA_DN.toString());
 
