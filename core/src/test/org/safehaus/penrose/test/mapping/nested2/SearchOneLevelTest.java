@@ -29,7 +29,7 @@ public class SearchOneLevelTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=parent1,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -77,7 +77,7 @@ public class SearchOneLevelTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=parent3,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE

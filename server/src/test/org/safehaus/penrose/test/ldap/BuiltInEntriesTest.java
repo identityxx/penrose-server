@@ -68,7 +68,7 @@ public class BuiltInEntriesTest extends TestCase {
         String baseDn = "ou=system";
         System.out.println("Searching "+baseDn+":");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE

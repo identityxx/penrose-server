@@ -2,6 +2,9 @@ package org.safehaus.penrose.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.source.SourceConfig;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -69,6 +72,10 @@ public class SourceClient implements SourceServiceMBean {
         );
     }
 
+    public SourceConfig getSourceConfig() throws Exception {
+        return (SourceConfig)connection.getAttribute(objectName, "SourceConfig");
+    }
+
     public static String getObjectName(String partitionName, String sourceName) {
         return "Penrose:type=source,partition="+partitionName+",name="+sourceName;
     }
@@ -87,5 +94,16 @@ public class SourceClient implements SourceServiceMBean {
 
     public void setPartitionName(String partitionName) {
         this.partitionName = partitionName;
+    }
+
+    public SearchResponse search(
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+        return (SearchResponse)invoke(
+                "search",
+                new Object[] { request, response },
+                new String[] { SearchRequest.class.getName(), SearchResponse.class.getName() }
+        );
     }
 }

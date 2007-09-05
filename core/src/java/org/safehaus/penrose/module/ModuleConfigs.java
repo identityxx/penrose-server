@@ -7,14 +7,19 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class ModuleConfigs implements Cloneable {
+public class ModuleConfigs implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
+    static {
+        log = LoggerFactory.getLogger(ModuleConfigs.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     private Map<String,ModuleConfig> moduleConfigs = new LinkedHashMap<String,ModuleConfig>();
     private Map<String,Collection<ModuleMapping>> moduleMappings = new LinkedHashMap<String,Collection<ModuleMapping>>();

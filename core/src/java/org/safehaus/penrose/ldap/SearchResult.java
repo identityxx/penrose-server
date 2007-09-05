@@ -8,13 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SearchResult {
+public class SearchResult implements Serializable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+public Logger log = LoggerFactory.getLogger(getClass());
 
     private EntryMapping entryMapping;
 

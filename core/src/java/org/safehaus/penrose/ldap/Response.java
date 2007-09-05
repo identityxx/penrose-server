@@ -7,17 +7,18 @@ import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Response {
+public class Response implements Serializable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
-    protected Collection<Control> controls   = new ArrayList<Control>();
+    protected Collection<Control> controls  = new ArrayList<Control>();
 
     protected LDAPException exception = LDAP.createException(LDAP.SUCCESS);
 

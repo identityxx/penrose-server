@@ -1,5 +1,7 @@
 package org.safehaus.penrose.management;
 
+import org.safehaus.penrose.partition.PartitionConfig;
+
 import java.util.Collection;
 
 /**
@@ -10,7 +12,9 @@ public interface PartitionServiceMBean {
     public String getStatus() throws Exception;
     public void start() throws Exception;
     public void stop() throws Exception;
-    
+
+    public PartitionConfig getPartitionConfig() throws Exception;
+
     public Collection<String> getConnectionNames() throws Exception;
     public Collection<String> getSourceNames() throws Exception;
     public Collection<String> getModuleNames() throws Exception;

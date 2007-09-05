@@ -21,16 +21,23 @@ import org.safehaus.penrose.ldap.DN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class ModuleMapping implements Cloneable {
+public class ModuleMapping implements Serializable, Cloneable {
+
+    static {
+        log = LoggerFactory.getLogger(ModuleMapping.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String OBJECT   = "OBJECT";
     public final static String ONELEVEL = "ONELEVEL";
     public final static String SUBTREE  = "SUBTREE";
-
-    public Logger log = LoggerFactory.getLogger(getClass());
 
     private String moduleName;
     private ModuleConfig moduleConfig;

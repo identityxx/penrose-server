@@ -20,11 +20,12 @@ package org.safehaus.penrose.module;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ModuleConfig implements ModuleConfigMBean, Cloneable {
+public class ModuleConfig implements Serializable, ModuleConfigMBean, Cloneable {
 
     private boolean enabled = true;
 

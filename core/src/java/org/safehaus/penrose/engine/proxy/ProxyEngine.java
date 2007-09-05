@@ -415,7 +415,7 @@ public class ProxyEngine extends Engine {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         final DN baseDn = request.getDn();
@@ -472,7 +472,7 @@ public class ProxyEngine extends Engine {
 
             newRequest.setDn(targetDn);
 
-            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+            SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
 
                     DN dn = convertDn(result.getDn(), proxyBaseDn, proxyDn);

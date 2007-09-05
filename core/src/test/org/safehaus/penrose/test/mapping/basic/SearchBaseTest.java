@@ -29,7 +29,7 @@ public class SearchBaseTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=def,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -75,7 +75,7 @@ public class SearchBaseTest extends BasicTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=jkl,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE

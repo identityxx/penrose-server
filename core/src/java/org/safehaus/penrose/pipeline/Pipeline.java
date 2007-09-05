@@ -24,11 +24,11 @@ import org.ietf.ldap.LDAPException;
 /**
  * @author Endi S. Dewata
  */
-public class Pipeline extends SearchResponse<SearchResult> {
+public class Pipeline extends SearchResponse {
 
-    public SearchResponse<SearchResult> parent;
+    public SearchResponse parent;
 
-    public Pipeline(SearchResponse<SearchResult> parent) {
+    public Pipeline(SearchResponse parent) {
         this.parent = parent;
     }
 
@@ -56,7 +56,7 @@ public class Pipeline extends SearchResponse<SearchResult> {
         return parent;
     }
 
-    public void setParent(SearchResponse<SearchResult> parent) {
+    public void setParent(SearchResponse parent) {
         this.parent = parent;
     }
 }

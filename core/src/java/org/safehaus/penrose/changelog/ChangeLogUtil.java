@@ -26,7 +26,7 @@ public abstract class ChangeLogUtil {
 
         SearchRequest request = createSearchRequest(changeNumber);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>() {
+        SearchResponse response = new SearchResponse() {
             public void add(SearchResult entry) throws Exception {
                 super.add(createChangeLog(entry));
             }
@@ -69,7 +69,7 @@ public abstract class ChangeLogUtil {
 
         DN dn = new DN(rb.toRdn());
 
-        SearchResponse<SearchResult> response = tracker.search(dn, null, SearchRequest.SCOPE_BASE);
+        SearchResponse response = tracker.search(dn, null, SearchRequest.SCOPE_BASE);
 
         if (!response.hasNext()) return null;
 

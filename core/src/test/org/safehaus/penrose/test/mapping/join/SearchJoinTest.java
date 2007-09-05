@@ -22,7 +22,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -61,7 +61,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_ONE
@@ -100,7 +100,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=def,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -137,7 +137,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=jkl,ou=Groups,dc=Example,dc=com",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -162,7 +162,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*b*)",
                 SearchRequest.SCOPE_ONE
@@ -211,7 +211,7 @@ public class SearchJoinTest extends JoinTestCase {
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "ou=Groups,dc=Example,dc=com",
                 "(cn=*f*)",
                 SearchRequest.SCOPE_ONE

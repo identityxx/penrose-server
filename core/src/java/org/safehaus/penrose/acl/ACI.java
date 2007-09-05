@@ -19,10 +19,12 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.ldap.DN;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class ACI implements Cloneable {
+public class ACI implements Serializable, Cloneable {
 
     public final static String SUBJECT_USER          = "user";
     public final static String SUBJECT_GROUP         = "group";

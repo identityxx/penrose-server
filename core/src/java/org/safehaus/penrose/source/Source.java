@@ -246,7 +246,7 @@ public class Source implements Cloneable {
     }
 
     public SearchResult find(DN dn) throws Exception {
-        SearchResponse<SearchResult> response = search(dn, null, SearchRequest.SCOPE_BASE);
+        SearchResponse response = search(dn, null, SearchRequest.SCOPE_BASE);
 
         if (!response.hasNext()) return null;
 
@@ -343,7 +343,7 @@ public class Source implements Cloneable {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             String dn,
             String filter,
             int scope
@@ -351,7 +351,7 @@ public class Source implements Cloneable {
         return search(new DN(dn), FilterTool.parseFilter(filter), scope);
     }
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             RDN rdn,
             Filter filter,
             int scope
@@ -359,7 +359,7 @@ public class Source implements Cloneable {
         return search(new DN(rdn), filter, scope);
     }
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             DN dn,
             Filter filter,
             int scope
@@ -370,7 +370,7 @@ public class Source implements Cloneable {
         request.setFilter(filter);
         request.setScope(scope);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
 
         search(request, response);
 
@@ -379,7 +379,7 @@ public class Source implements Cloneable {
 
     public void search(
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         SourceValues sourceValues = new SourceValues();

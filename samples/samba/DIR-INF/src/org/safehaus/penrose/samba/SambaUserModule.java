@@ -48,7 +48,7 @@ public class SambaUserModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
+        SearchResponse searchResponse = new SearchResponse();
 
         Session session = event.getSession();
         session.search(searchRequest, searchResponse);
@@ -165,7 +165,7 @@ public class SambaUserModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse<SearchResult> searchResponse = new SearchResponse<SearchResult>();
+        SearchResponse searchResponse = new SearchResponse();
 
         session.search(searchRequest, searchResponse);
 

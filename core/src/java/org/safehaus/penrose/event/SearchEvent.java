@@ -35,7 +35,7 @@ public class SearchEvent extends Event {
     protected Partition partition;
 
     protected SearchRequest request;
-    protected SearchResponse<SearchResult> response;
+    protected SearchResponse response;
 
     public SearchEvent(
             Object source,
@@ -43,7 +43,7 @@ public class SearchEvent extends Event {
             Session session,
             Partition partition,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) {
         super(source, type);
         this.session = session;
@@ -76,11 +76,11 @@ public class SearchEvent extends Event {
         this.request = request;
     }
 
-    public SearchResponse<SearchResult> getResponse() {
+    public SearchResponse getResponse() {
         return response;
     }
 
-    public void setResponse(SearchResponse<SearchResult> response) {
+    public void setResponse(SearchResponse response) {
         this.response = response;
     }
 

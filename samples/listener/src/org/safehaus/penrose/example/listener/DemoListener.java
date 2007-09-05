@@ -47,7 +47,7 @@ public class DemoListener implements SearchListener {
 
         session.bind("uid=admin,ou=system", "secret");
 
-        SearchResponse<SearchResult> response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
+        SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
 
         while (response.hasNext()) {
             SearchResult searchResult = response.next();
@@ -95,7 +95,7 @@ public class DemoListener implements SearchListener {
             throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
-        SearchResponse<SearchResult> response = event.getResponse();
+        SearchResponse response = event.getResponse();
 
         response.addListener(new SearchResponseAdapter() {
             public void postAdd(SearchResponseEvent event) {

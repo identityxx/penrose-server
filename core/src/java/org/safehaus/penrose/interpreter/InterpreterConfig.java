@@ -20,11 +20,12 @@ package org.safehaus.penrose.interpreter;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class InterpreterConfig implements Cloneable {
+public class InterpreterConfig implements Serializable, Cloneable {
 
     private String name = "DEFAULT";
     private String interpreterClass = DefaultInterpreter.class.getName();

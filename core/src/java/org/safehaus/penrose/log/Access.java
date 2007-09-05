@@ -266,7 +266,7 @@ public class Access {
         }
     }
 
-    public static void log(Session session, SearchResponse<SearchResult> response) {
+    public static void log(Session session, SearchResponse response) {
 
         if (log.isWarnEnabled()) {
             StringBuilder sb = new StringBuilder();

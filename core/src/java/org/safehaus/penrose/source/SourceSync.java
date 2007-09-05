@@ -20,7 +20,6 @@ package org.safehaus.penrose.source;
 import org.safehaus.penrose.changelog.ChangeLogUtil;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -250,7 +249,7 @@ public class SourceSync {
         Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
 
         SearchRequest sourceRequest = new SearchRequest();
-        SearchResponse<SearchResult> sourceResponse = new SourceSyncSearchResponse(
+        SearchResponse sourceResponse = new SourceSyncSearchResponse(
                 source,
                 targets,
                 interpreter

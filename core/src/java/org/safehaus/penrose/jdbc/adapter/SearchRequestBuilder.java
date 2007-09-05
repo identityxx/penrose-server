@@ -37,7 +37,7 @@ public class SearchRequestBuilder extends RequestBuilder {
     SourceValues sourceValues;
 
     SearchRequest request;
-    SearchResponse<SearchResult> response;
+    SearchResponse response;
 
     SearchFilterBuilder filterBuilder;
 
@@ -48,7 +48,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         this.partition = partition;

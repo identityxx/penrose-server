@@ -360,7 +360,7 @@ public abstract class Handler {
             Partition partition,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> results
+            SearchResponse results
     ) throws Exception {
 
         search(
@@ -379,7 +379,7 @@ public abstract class Handler {
             EntryMapping baseMapping,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception;
 
     public void performSearch(
@@ -388,7 +388,7 @@ public abstract class Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         Partitions partitions = penroseContext.getPartitions();

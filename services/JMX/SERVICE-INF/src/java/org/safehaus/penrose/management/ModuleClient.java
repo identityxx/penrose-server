@@ -2,6 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.module.ModuleConfig;
 
 import javax.management.*;
 
@@ -26,6 +27,10 @@ public class ModuleClient implements ModuleServiceMBean {
 
         connection = client.getConnection();
         objectName = ObjectName.getInstance(getObjectName(partitionName, name));
+    }
+
+    public ModuleConfig getModuleConfig() throws Exception {
+        return (ModuleConfig)connection.getAttribute(objectName, "ModuleConfig");
     }
 
     public static String getObjectName(String partitionName, String sourceName) {

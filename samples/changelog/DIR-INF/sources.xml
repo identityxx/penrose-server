@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="changelog">
+    <connection-name>MySQL</connection-name>
+    <field name="changeNumber" type="INTEGER" primaryKey="true"/>
+    <field name="targetDN" type="VARCHAR"/>
+    <field name="changeType" type="TEXT"/>
+    <field name="changes" type="TEXT"/>
+    <field name="newRDN" type="VARCHAR"/>
+    <field name="deleteOldRDN" type="BOOLEAN"/>
+    <field name="newSuperior" type="VARCHAR"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>changelog</param-value>
+    </parameter>
+  </source>
+
+</sources>

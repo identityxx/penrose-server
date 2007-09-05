@@ -707,7 +707,7 @@ public abstract class Adapter {
             Session session,
             Source source,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
@@ -718,7 +718,7 @@ public abstract class Adapter {
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         final SourceRef sourceRef = sourceRefs.iterator().next();
@@ -744,7 +744,7 @@ public abstract class Adapter {
         SearchRequest newRequest = (SearchRequest)request.clone();
         newRequest.setFilter(filter);
 
-        SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
+        SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
 
                 SearchResult searchResult = new SearchResult();

@@ -4,7 +4,6 @@ import org.safehaus.penrose.service.*;
 import org.safehaus.penrose.server.PenroseServer;
 
 import javax.management.StandardMBean;
-import java.io.File;
 
 /**
  * @author Endi Sukma Dewata
@@ -34,9 +33,9 @@ public class ServiceService extends StandardMBean implements ServiceServiceMBean
         penroseServer.stopService(name);
     }
 
-    public void restart() throws Exception {
-        stop();
-        start();
+    public ServiceConfig getServiceConfig() throws Exception {
+        PenroseServer penroseServer = jmxService.getServiceContext().getPenroseServer();
+        return penroseServer.getServiceConfigs().getServiceConfig(name);
     }
 
     public String getObjectName() {

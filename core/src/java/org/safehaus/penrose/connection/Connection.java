@@ -305,7 +305,7 @@ public class Connection implements ConnectionMBean {
             Source source,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         adapter.search(session, source, request, response);
@@ -317,7 +317,7 @@ public class Connection implements ConnectionMBean {
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         adapter.search(session, entryMapping, sourceRefs, sourceValues, request, response);

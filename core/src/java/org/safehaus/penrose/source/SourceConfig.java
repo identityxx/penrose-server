@@ -21,13 +21,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceConfig implements SourceConfigMBean, Cloneable {
+public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    static {
+        log = LoggerFactory.getLogger(SourceConfig.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     //public final static String AUTO_REFRESH            = "autoRefresh";
 
@@ -72,7 +78,7 @@ public class SourceConfig implements SourceConfigMBean, Cloneable {
 
     private Map<String,String> parameters = new HashMap<String,String>();
 
-    private Map<String, FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+    private Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
     private Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
 
     private Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();

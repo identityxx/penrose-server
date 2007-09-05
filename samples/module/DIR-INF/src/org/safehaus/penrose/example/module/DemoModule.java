@@ -143,7 +143,7 @@ public class DemoModule extends Module implements DemoModuleMBean {
             throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
-        SearchResponse<SearchResult> response = event.getResponse();
+        SearchResponse response = event.getResponse();
 
         // register result listener
         response.addListener(new SearchResponseAdapter() {

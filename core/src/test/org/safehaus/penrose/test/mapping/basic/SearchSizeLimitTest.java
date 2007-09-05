@@ -25,7 +25,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(1);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         assertTrue(response.hasNext());
@@ -62,7 +62,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(2);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         assertTrue(response.hasNext());
@@ -113,7 +113,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         request.setFilter("(objectClass=*)");
         request.setSizeLimit(3);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         assertTrue(response.hasNext());

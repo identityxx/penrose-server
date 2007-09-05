@@ -18,11 +18,12 @@
 package org.safehaus.penrose.engine;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class EngineConfig implements Cloneable {
+public class EngineConfig implements Serializable, Cloneable {
 
     public final static String ALLOW_CONCURRENCY   = "allowConcurrency";
 

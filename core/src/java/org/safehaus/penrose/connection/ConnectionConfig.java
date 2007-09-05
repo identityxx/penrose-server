@@ -18,11 +18,12 @@
 package org.safehaus.penrose.connection;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ConnectionConfig implements ConnectionConfigMBean, Cloneable {
+public class ConnectionConfig implements Serializable, ConnectionConfigMBean, Cloneable {
 
     private boolean enabled = true;
 

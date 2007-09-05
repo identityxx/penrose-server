@@ -22,11 +22,12 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.ArrayList;
 import java.net.URL;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class ServiceConfig implements Cloneable, ServiceConfigMBean {
+public class ServiceConfig implements Serializable, Cloneable, ServiceConfigMBean {
 
     private String name;
     private boolean enabled = true;

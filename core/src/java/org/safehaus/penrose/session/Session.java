@@ -669,14 +669,14 @@ public class Session {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             String baseDn,
             String filter
     ) throws LDAPException {
         return search(baseDn, filter, SearchRequest.SCOPE_SUB);
     }
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             String baseDn,
             String filter,
             int scope
@@ -690,7 +690,7 @@ public class Session {
         }
     }
 
-    public SearchResponse<SearchResult> search(
+    public SearchResponse search(
             DN baseDn,
             Filter filter,
             int scope
@@ -701,14 +701,14 @@ public class Session {
         request.setFilter(filter);
         request.setScope(scope);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
 
         search(request, response);
 
         return response;
     }
 
-    public void search(SearchRequest request, SearchResponse<SearchResult> response) throws LDAPException {
+    public void search(SearchRequest request, SearchResponse response) throws LDAPException {
 
         Partition partition;
 
@@ -729,7 +729,7 @@ public class Session {
     public void search(
             final Partition partition,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws LDAPException {
         try {
             Access.log(this, request);
@@ -769,7 +769,7 @@ public class Session {
 	           	eventManager.postEvent(beforeSearchEvent);
             }
 
-            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+            SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult value) throws Exception {
                     response.add(value);
                 }

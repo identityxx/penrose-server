@@ -21,13 +21,14 @@ import java.util.TreeMap;
 import java.util.Map;
 import java.util.Collection;
 import java.util.Iterator;
+import java.io.Serializable;
 
 /**
  * This class holds source's column values. Each value is an single object, not necessarily a collection.
  *
  * @author Endi S. Dewata
  */
-public class RDN implements Comparable {
+public class RDN implements Serializable, Comparable {
 
     public Map<String,Object> values = new TreeMap<String,Object>();
 

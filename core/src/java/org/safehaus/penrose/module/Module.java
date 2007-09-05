@@ -40,6 +40,7 @@ public class Module implements
 {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public ModuleConfig moduleConfig;
     public ModuleContext moduleContext;

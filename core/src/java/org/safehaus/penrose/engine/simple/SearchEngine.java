@@ -52,7 +52,7 @@ public class SearchEngine {
             final EntryMapping entryMapping,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         try {
@@ -70,7 +70,7 @@ public class SearchEngine {
                 return;
             }
 
-            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+            SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
 
                     EntryMapping em = result.getEntryMapping();

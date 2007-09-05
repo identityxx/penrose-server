@@ -34,7 +34,7 @@ public class BasicSearchEngine {
             final EntryMapping entryMapping,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         try {

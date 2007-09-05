@@ -2,6 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.connection.ConnectionConfig;
 
 import javax.management.StandardMBean;
 
@@ -32,6 +33,10 @@ public class ConnectionService extends StandardMBean implements ConnectionServic
 
     public void setConnection(Connection connection) {
         this.connection = connection;
+    }
+
+    public ConnectionConfig getConnectionConfig() throws Exception {
+        return connection.getConnectionConfig();
     }
 
     public String getObjectName() {

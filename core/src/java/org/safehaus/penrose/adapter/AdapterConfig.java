@@ -20,11 +20,12 @@ package org.safehaus.penrose.adapter;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class AdapterConfig implements Cloneable, AdapterConfigMBean {
+public class AdapterConfig implements Serializable, Cloneable, AdapterConfigMBean {
 
     private String name;
     private String adapterClass;

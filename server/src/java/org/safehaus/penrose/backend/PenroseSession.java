@@ -271,7 +271,7 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         log.debug("search(\""+request.getDn()+"\", \""+request.getFilter()+"\")");
 
         SearchRequest penroseRequest = ((PenroseSearchRequest)request).getSearchRequest();
-        SearchResponse<SearchResult> penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
+        SearchResponse penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
 
         session.search(penroseRequest, penroseResponse);
     }

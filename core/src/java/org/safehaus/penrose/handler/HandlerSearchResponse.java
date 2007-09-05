@@ -14,12 +14,12 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class HandlerSearchResponse extends SearchResponse<SearchResult> {
+public class HandlerSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    SearchResponse<SearchResult> response;
+    SearchResponse response;
 
     Session session;
     Partition partition;
@@ -36,7 +36,7 @@ public class HandlerSearchResponse extends SearchResponse<SearchResult> {
     Map<String,Exception> results = new HashMap<String,Exception>();
 
     public HandlerSearchResponse(
-            SearchResponse<SearchResult> parent,
+            SearchResponse parent,
             Session session,
             Partition partition,
             HandlerManager handlerManager,

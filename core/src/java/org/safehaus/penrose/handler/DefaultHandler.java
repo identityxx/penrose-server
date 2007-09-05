@@ -131,7 +131,7 @@ public class DefaultHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         Link link = entryMapping.getLink();
@@ -177,7 +177,7 @@ public class DefaultHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         String partitionName = link.getPartitionName();
@@ -212,7 +212,7 @@ public class DefaultHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         int scope = request.getScope();
@@ -287,7 +287,7 @@ public class DefaultHandler extends Handler {
             newCache = null;
         }
 
-        SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+        SearchResponse sr = new SearchResponse() {
 
             public void add(SearchResult searchResult) throws Exception {
 
@@ -319,7 +319,7 @@ public class DefaultHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         int scope = request.getScope();

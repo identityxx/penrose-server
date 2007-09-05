@@ -447,7 +447,7 @@ public class JDBCAdapter extends Adapter {
         SimpleFilter filter = new SimpleFilter(request.getAttributeName(), "=", request.getAttributeValue());
         newRequest.setFilter(filter);
 
-        SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>();
+        SearchResponse newResponse = new SearchResponse();
 
         search(session, source, newRequest, newResponse);
 
@@ -788,7 +788,7 @@ public class JDBCAdapter extends Adapter {
             final Session session,
             final Source source,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         if (debug) {
@@ -873,7 +873,7 @@ public class JDBCAdapter extends Adapter {
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         if (debug) {

@@ -5,7 +5,15 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.service.Service;
+import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.source.SourceConfig;
 
 import java.util.*;
 import java.io.File;
@@ -70,6 +78,27 @@ public class Client {
         }
     }
 
+    public void showService(String serviceName) throws Exception {
+        ServiceClient serviceClient = client.getServiceClient(serviceName);
+        ServiceConfig serviceConfig = serviceClient.getServiceConfig();
+
+        System.out.println("Name        : "+serviceConfig.getName());
+        System.out.println("Class       : "+serviceConfig.getServiceClass());
+
+        String description = serviceConfig.getDescription();
+        System.out.println("Description : "+(description == null ? "" : description));
+
+        System.out.println("Enabled     : "+serviceConfig.isEnabled());
+        System.out.println("Status      : "+serviceClient.getStatus());
+        System.out.println();
+
+        System.out.println("Parameters: ");
+        for (String paramName : serviceConfig.getParameterNames()) {
+            String value = serviceConfig.getParameter(paramName);
+            System.out.println(" - " + paramName + ": " + value);
+        }
+    }
+
     public void showPartitions() throws Exception {
         System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
         System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
@@ -89,10 +118,20 @@ public class Client {
     public void showPartition(String partitionName) throws Exception {
 
         PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        PartitionConfig partitionConfig = partitionClient.getPartitionConfig();
+
+        System.out.println("Name        : "+partitionConfig.getName());
+
+        String description = partitionConfig.getDescription();
+        System.out.println("Description : "+(description == null ? "" : description));
+
+        System.out.println("Enabled     : "+partitionConfig.isEnabled());
+        System.out.println("Status      : "+partitionClient.getStatus());
+        System.out.println();
 
         System.out.println("Connections:");
-        for (String connectionName : partitionClient.getConnectionNames()) {
-            System.out.println(" - "+connectionName);
+        for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
+            System.out.println(" - "+connectionConfig.getName());
         }
         System.out.println();
 
@@ -157,29 +196,8 @@ public class Client {
             }
         }
     }
-/*
-    public void printService(String serviceName) throws Exception {
-        ServiceClient serviceClient = client.getServiceManagerClient().getService(serviceName);
-        ServiceConfig serviceConfig = serviceClient.getServiceConfig();
-
-        System.out.println("Service     : "+serviceConfig.getName());
-        System.out.println("Class       : "+serviceConfig.getServiceClass());
-
-        String description = serviceConfig.getDescription();
-        System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Status      : "+serviceClient.getStatus());
-        System.out.println();
-
-        System.out.println("Parameters  : ");
-        for (Iterator i=serviceConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String paramName = (String)i.next();
-            String value = serviceConfig.getParameter(paramName);
-            System.out.println(" - "+paramName +": "+value);
-        }
-    }
-
-    public void printConnection(String partitionName, String connectionName) throws Exception {
+*/
+    public void showConnection(String partitionName, String connectionName) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partitionName);
         ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
         ConnectionConfig connectionConfig = connectionClient.getConnectionConfig();
@@ -190,40 +208,27 @@ public class Client {
 
         String description = connectionConfig.getDescription();
         System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Status      : "+connectionClient.getStatus());
         System.out.println();
 
         System.out.println("Parameters  :");
-        for (Iterator i=connectionConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String paramName = (String)i.next();
+        for (String paramName : connectionConfig.getParameterNames()) {
             String value = connectionConfig.getParameter(paramName);
-            System.out.println(" - "+paramName +": "+value);
+            System.out.println(" - " + paramName + ": " + value);
         }
         System.out.println();
-
-        ConnectionCounter counter = connectionClient.getCounter();
-        System.out.println("Counters    :");
-        System.out.println(" - add      : "+counter.getAddCounter());
-        System.out.println(" - bind     : "+counter.getBindCounter());
-        System.out.println(" - delete   : "+counter.getDeleteCounter());
-        System.out.println(" - load     : "+counter.getLoadCounter());
-        System.out.println(" - modify   : "+counter.getModifyCounter());
-        System.out.println(" - search   : "+counter.getSearchCounter());
     }
 
-    public void printSource(String partitionName, String sourceName) throws Exception {
+    public void showSource(String partitionName, String sourceName) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partitionName);
         SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
         SourceConfig sourceConfig = sourceClient.getSourceConfig();
 
         System.out.println("Source      : "+sourceConfig.getName());
+        System.out.println("Connection  : "+sourceConfig.getConnectionName());
         System.out.println("Partition   : "+partitionName);
 
         String description = sourceConfig.getDescription();
         System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Status      : "+sourceClient.getStatus());
         System.out.println();
 
         System.out.println("Parameters  :");
@@ -233,21 +238,22 @@ public class Client {
             System.out.println(" - "+paramName +": "+value);
         }
         System.out.println();
-
-        SourceCounter counter = sourceClient.getCounter();
-        System.out.println("Counters    :");
-        System.out.println(" - add      : "+counter.getAddCounter());
-        System.out.println(" - bind     : "+counter.getBindCounter());
-        System.out.println(" - delete   : "+counter.getDeleteCounter());
-        System.out.println(" - modify   : "+counter.getModifyCounter());
-        System.out.println(" - modrdn   : "+counter.getModRdnCounter());
-        System.out.println(" - search   : "+counter.getSearchCounter());
     }
-*/
 
     public void showModule(String partitionName, String moduleName) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partitionName);
         ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleConfig moduleConfig = moduleClient.getModuleConfig();
+
+        System.out.println("Name        : "+moduleConfig.getName());
+        System.out.println("Class       : "+moduleConfig.getModuleClass());
+        System.out.println("Partition   : "+partitionName);
+
+        String description = moduleConfig.getDescription();
+        System.out.println("Description : "+(description == null ? "" : description));
+
+        System.out.println("Enabled     : "+moduleConfig.isEnabled());
+        System.out.println();
 
         System.out.println("Attributes:");
         for (MBeanAttributeInfo attributeInfo  : moduleClient.getAttributes()) {
@@ -273,12 +279,26 @@ public class Client {
         if ("services".equals(target)) {
             showServices();
 
+        } else if ("service".equals(target)) {
+            String serviceName = (String)iterator.next();
+            showService(serviceName);
+
         } else if ("partitions".equals(target)) {
             showPartitions();
 
         } else if ("partition".equals(target)) {
             String partitionName = iterator.next();
             showPartition(partitionName);
+
+        } else if ("connection".equals(target)) {
+            String partitionName = iterator.next();
+            String connectionName = iterator.next();
+            showConnection(partitionName, connectionName);
+
+        } else if ("source".equals(target)) {
+            String partitionName = iterator.next();
+            String sourceName = iterator.next();
+            showSource(partitionName, sourceName);
 
         } else if ("module".equals(target)) {
             String partitionName = iterator.next();
@@ -290,34 +310,6 @@ public class Client {
 
         } else if ("modules".equals(target)) {
             printModules();
-
-        } else if ("service".equals(target)) {
-            String serviceName = (String)iterator.next();
-            printService(serviceName);
-
-        } else if ("connection".equals(target)) {
-            String connectionName = (String)iterator.next();
-            String partition = (String)iterator.next();
-
-            if ("partition".equals(partition)) {
-                String partitionName = (String)iterator.next();
-                printConnection(partitionName, connectionName);
-
-            } else {
-                System.out.println("Missing partition name");
-            }
-
-        } else if ("source".equals(target)) {
-            String sourceName = (String)iterator.next();
-            String partition = (String)iterator.next();
-
-            if ("partition".equals(partition)) {
-                String partitionName = (String)iterator.next();
-                printSource(partitionName, sourceName);
-
-            } else {
-                System.out.println("Missing partition name");
-            }
 
 */
         } else {
@@ -530,6 +522,33 @@ public class Client {
         }
     }
 
+    public void processSearchCommand(Iterator iterator) throws Exception {
+
+        String target = (String)iterator.next();
+
+        if ("source".equals(target)) {
+            String partitionName = (String)iterator.next();
+            String sourceName = (String)iterator.next();
+
+            PartitionClient partitionClient = client.getPartitionClient(partitionName);
+            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+
+            SearchRequest request = new SearchRequest();
+            SearchResponse response = new SearchResponse();
+
+            sourceClient.search(request, response);
+
+            System.out.println("Results:");
+            while (response.hasNext()) {
+                SearchResult result = response.next();
+                System.out.println(" - "+result.getDn());
+            }
+
+        } else {
+            System.out.println("Invalid target: "+target);
+        }
+    }
+
     public void execute(Collection<String> parameters) throws Exception {
 
         Iterator<String> iterator = parameters.iterator();
@@ -554,10 +573,10 @@ public class Client {
 
         } else if ("restart".equals(command)) {
             processRestartCommand(iterator);
-/*
+
         } else if ("restart".equals(command)) {
-            client.getServiceManagerClient().restart();
-*/
+            processSearchCommand(iterator);
+
         } else if ("reload".equals(command)) {
             client.reload();
 
@@ -617,6 +636,7 @@ public class Client {
         System.out.println("  start source <partition name> <source name>");
         System.out.println("  stop source <partition name> <source name>");
         System.out.println("  restart source <partition name> <source name>");
+        System.out.println("  search source <partition name> <source name>");
         System.out.println();
         System.out.println("  show modules");
         System.out.println("  show module <partition name> <module name>");

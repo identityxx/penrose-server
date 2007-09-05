@@ -31,11 +31,12 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.net.URL;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig implements PartitionConfigMBean, Cloneable {
+public class PartitionConfig implements Serializable, PartitionConfigMBean, Cloneable {
 
     private boolean enabled = true;
 

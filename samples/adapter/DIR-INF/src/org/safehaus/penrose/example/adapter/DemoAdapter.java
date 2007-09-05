@@ -217,7 +217,7 @@ public class DemoAdapter extends Adapter {
             Session session,
             Source source,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         Filter filter = request.getFilter();

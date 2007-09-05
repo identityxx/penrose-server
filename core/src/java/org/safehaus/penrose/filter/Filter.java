@@ -17,5 +17,7 @@
  */
 package org.safehaus.penrose.filter;
 
-public abstract class Filter {
+import java.io.Serializable;
+
+public abstract class Filter implements Serializable {
 }

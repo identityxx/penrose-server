@@ -30,7 +30,7 @@ public class SearchFilterTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(baseDn, "(description=desc2)");
+        SearchResponse response = session.search(baseDn, "(description=desc2)");
 
         boolean hasNext = response.hasNext();
         log.debug("hasNext: "+hasNext);
@@ -62,7 +62,7 @@ public class SearchFilterTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(baseDn, "(memberOf=group2)");
+        SearchResponse response = session.search(baseDn, "(memberOf=group2)");
 
         while (response.hasNext()) {
             SearchResult searchResult = (SearchResult) response.next();

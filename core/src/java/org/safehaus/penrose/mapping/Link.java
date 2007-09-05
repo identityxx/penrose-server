@@ -2,10 +2,12 @@ package org.safehaus.penrose.mapping;
 
 import org.safehaus.penrose.ldap.DN;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class Link {
+public class Link implements Serializable {
 
     private String partitionName;
     private DN dn;

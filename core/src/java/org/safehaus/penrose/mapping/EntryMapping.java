@@ -25,13 +25,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class EntryMapping implements Cloneable {
+public class EntryMapping implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    static {
+        log = LoggerFactory.getLogger(EntryMapping.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
     public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";

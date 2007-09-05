@@ -25,13 +25,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.StringTokenizer;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class FieldMapping implements Cloneable {
+public class FieldMapping implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    static {
+        log = LoggerFactory.getLogger(FieldMapping.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";

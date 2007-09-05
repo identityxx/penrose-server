@@ -11,16 +11,16 @@
     <property name="test.baseDn" value="dc=Module,dc=Example,dc=com"/>
 
     <path id="lib.path">
-        <fileset dir="../../../lib">
+        <fileset dir="../../lib">
             <include name="**/*.jar"/>
         </fileset>
     </path>
 
     <target name="build">
-        <mkdir dir="classes"/>
+        <mkdir dir="DIR-INF/classes"/>
         <javac
-            srcdir="src"
-            destdir="classes"
+            srcdir="DIR-INF/src"
+            destdir="DIR-INF/classes"
             classpathref="lib.path"
             debug="on"
             debuglevel="lines,vars,source"
@@ -28,7 +28,7 @@
     </target>
 
     <target name="clean">
-        <delete dir="classes" failonerror="false"/>
+        <delete dir="DIR-INF/classes" failonerror="false"/>
     </target>
 
     <target name="test-search">

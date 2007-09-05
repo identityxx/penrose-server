@@ -45,6 +45,11 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         penrose.stopPartition(name);
     }
 
+    public PartitionConfig getPartitionConfig() throws Exception {
+        Partition partition = partitions.getPartition(name);
+        return partition.getPartitionConfig();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // Connections
     ////////////////////////////////////////////////////////////////////////////////

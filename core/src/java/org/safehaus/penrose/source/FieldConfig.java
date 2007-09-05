@@ -21,11 +21,12 @@ import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class FieldConfig implements FieldConfigMBean, Comparable, Cloneable {
+public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, Cloneable {
 
     public final static String TYPE_VARCHAR   = "VARCHAR";
     public final static String TYPE_INTEGER   = "INTEGER";

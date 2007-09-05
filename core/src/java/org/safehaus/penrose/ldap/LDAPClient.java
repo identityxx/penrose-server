@@ -363,7 +363,7 @@ public class LDAPClient {
 
     public void search(
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         DNBuilder db = new DNBuilder();

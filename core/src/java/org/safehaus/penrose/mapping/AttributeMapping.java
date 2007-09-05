@@ -22,13 +22,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class AttributeMapping implements Cloneable {
+public class AttributeMapping implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    static {
+        log = LoggerFactory.getLogger(AttributeMapping.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";

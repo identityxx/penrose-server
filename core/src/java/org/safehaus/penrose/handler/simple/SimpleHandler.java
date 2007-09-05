@@ -61,7 +61,7 @@ public class SimpleHandler extends Handler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         DN baseDn = request.getDn();
@@ -79,7 +79,7 @@ public class SimpleHandler extends Handler {
                 || scope == SearchRequest.SCOPE_ONE && partitionConfig.getDirectoryConfigs().getParent(entryMapping) == baseMapping
                 ) {
 
-            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+            SearchResponse sr = new SearchResponse() {
                  public void add(SearchResult searchResult) throws Exception {
                      response.add(searchResult);
                  }

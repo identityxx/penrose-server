@@ -21,7 +21,7 @@ public class SearchSubtreeTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search("cn=group,"+baseDn, "(objectClass=*)");
+        SearchResponse response = session.search("cn=group,"+baseDn, "(objectClass=*)");
 
         assertTrue(response.hasNext());
 

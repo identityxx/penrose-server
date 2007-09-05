@@ -2,6 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.service.ServiceConfig;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -45,6 +46,10 @@ public class ServiceClient implements ServiceServiceMBean {
 
     public void stop() throws Exception {
         connection.invoke(objectName, "stop", new Object[] {}, new String[] {});
+    }
+
+    public ServiceConfig getServiceConfig() throws Exception {
+        return (ServiceConfig)connection.getAttribute(objectName, "ServiceConfig");
     }
 
     public static String getObjectName(String name) {

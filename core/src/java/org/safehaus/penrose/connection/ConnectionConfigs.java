@@ -6,14 +6,19 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.io.Serializable;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class ConnectionConfigs implements Cloneable {
+public class ConnectionConfigs implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
+    static {
+        log = LoggerFactory.getLogger(ConnectionConfigs.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     private Map<String,ConnectionConfig> connectionConfigs = new LinkedHashMap<String,ConnectionConfig>();
 

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="cn=changelog">
+    <oc>top</oc>
+    <oc>extensibleObject</oc>
+    <at name="cn" rdn="true">
+      <constant>changelog</constant>
+    </at>
+    <at name="o">
+      <constant>changelog</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="changeNumber=...,cn=changelog">
+    <oc>top</oc>
+    <oc>changeLogEntry</oc>
+    <at name="changeNumber" rdn="true">
+      <variable>cl.changeNumber</variable>
+    </at>
+    <at name="targetDN">
+      <variable>cl.targetDN</variable>
+    </at>
+    <at name="changeType">
+      <variable>cl.changeType</variable>
+    </at>
+    <at name="changes">
+      <variable>cl.changes</variable>
+    </at>
+    <at name="newRDN">
+      <variable>cl.newRDN</variable>
+    </at>
+    <at name="deleteOldRDN">
+      <variable>cl.deleteOldRDN</variable>
+    </at>
+    <at name="newSuperior">
+      <variable>cl.newSuperior</variable>
+    </at>
+    <source name="cl">
+      <source-name>changelog</source-name>
+      <field name="changeNumber">
+        <variable>changeNumber</variable>
+      </field>
+      <field name="targetDN">
+        <variable>targetDN</variable>
+      </field>
+      <field name="changeType">
+        <variable>changeType</variable>
+      </field>
+      <field name="changes">
+        <variable>changes</variable>
+      </field>
+      <field name="newRDN">
+        <variable>newRDN</variable>
+      </field>
+      <field name="deleteOldRDN">
+        <variable>deleteOldRDN</variable>
+      </field>
+      <field name="newSuperior">
+        <variable>newSuperior</variable>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

@@ -82,12 +82,16 @@ public class ModuleService implements DynamicMBean {
             }
         }
 
-        Collection<MBeanAttributeInfo> attributeInfos = new TreeSet<MBeanAttributeInfo>();
+        Collection<MBeanAttributeInfo> attributeInfos = new LinkedHashSet<MBeanAttributeInfo>();
         for (String attributeName : attributes) {
             Method getter = getters.get(attributeName);
             Method setter = setters.get(attributeName);
             attributeInfos.add(new MBeanAttributeInfo(attributeName, "", getter, setter));
         }
+
+        Method getter = clazz.getMethod("getModuleConfig");
+        Method setter = clazz.getMethod("setModuleConfig", ModuleConfig.class);
+        attributeInfos.add(new MBeanAttributeInfo("ModuleConfig", "", getter, setter));
 
         Collection<MBeanOperationInfo> operationInfos = new ArrayList<MBeanOperationInfo>();
         for (Method method : operations.values()) {
@@ -134,6 +138,10 @@ public class ModuleService implements DynamicMBean {
 
     public void unregister() throws Exception {
         jmxService.unregister(getObjectName());
+    }
+
+    public ModuleConfig getModuleConfig() throws Exception {
+        return module.getModuleConfig();
     }
 
     public String getObjectName() {

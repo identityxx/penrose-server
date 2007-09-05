@@ -325,7 +325,7 @@ public abstract class Engine {
         request.setDn(dn);
         request.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
 
         search(
                 session,
@@ -378,7 +378,7 @@ public abstract class Engine {
             Partition partition,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         search(
@@ -397,7 +397,7 @@ public abstract class Engine {
             EntryMapping baseMapping,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,6 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.partition.PartitionConfig;
 
 import javax.management.ObjectName;
 import javax.management.MBeanServerConnection;
@@ -46,6 +47,10 @@ public class PartitionClient implements PartitionServiceMBean {
 
     public void stop() throws Exception {
         connection.invoke(objectName, "stop", new Object[] {}, new String[] {});
+    }
+
+    public PartitionConfig getPartitionConfig() throws Exception {
+        return (PartitionConfig)connection.getAttribute(objectName, "PartitionConfig");
     }
 
     ////////////////////////////////////////////////////////////////////////////////

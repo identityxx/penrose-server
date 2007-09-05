@@ -63,7 +63,7 @@
               <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title} ${service.title} Service"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="Identyx Corporation"/>
+              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
               <attribute name="Build-Date" value="${TIMESTAMP}"/>
             </manifest>
         </jar>

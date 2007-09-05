@@ -22,7 +22,7 @@ public class SearchBaseTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=group,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -70,7 +70,7 @@ public class SearchBaseTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "uid=member1,cn=group,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE

@@ -482,7 +482,7 @@ public class BasicEngine extends Engine {
         request.setDn(dn);
         request.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
 
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
         Interpreter interpreter = getInterpreterManager().newInstance();
@@ -544,7 +544,7 @@ public class BasicEngine extends Engine {
             EntryMapping baseMapping,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         DN dn = request.getDn();

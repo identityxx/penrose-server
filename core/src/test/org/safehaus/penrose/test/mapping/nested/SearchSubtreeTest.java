@@ -31,7 +31,7 @@ public class SearchSubtreeTest extends NestedTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_SUB

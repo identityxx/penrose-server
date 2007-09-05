@@ -2,11 +2,12 @@ package org.safehaus.penrose.ldap;
 
 import java.util.*;
 import java.text.MessageFormat;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class DN implements Comparable {
+public class DN implements Serializable, Comparable {
 
     public List<RDN> rdns;
 

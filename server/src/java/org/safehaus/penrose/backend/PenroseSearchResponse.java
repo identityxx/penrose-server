@@ -32,9 +32,9 @@ public class PenroseSearchResponse
         extends PenroseResponse
         implements com.identyx.javabackend.SearchResponse {
 
-    SearchResponse<SearchResult> searchResponse;
+    SearchResponse searchResponse;
 
-    public PenroseSearchResponse(SearchResponse<SearchResult> searchResponse) {
+    public PenroseSearchResponse(SearchResponse searchResponse) {
         super(searchResponse);
         this.searchResponse = searchResponse;
     }
@@ -57,7 +57,7 @@ public class PenroseSearchResponse
         return searchResponse.hasNext();
     }
 
-    public SearchResponse<SearchResult> getSearchResponse() {
+    public SearchResponse getSearchResponse() {
         return searchResponse;
     }
 }

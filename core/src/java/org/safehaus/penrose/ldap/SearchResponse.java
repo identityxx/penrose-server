@@ -22,9 +22,9 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SearchResponse<E> extends Response {
+public class SearchResponse extends Response {
 
-    protected LinkedList<E> buffer = new LinkedList<E>();
+    protected LinkedList<SearchResult> buffer = new LinkedList<SearchResult>();
 
     protected long bufferSize;
     protected long sizeLimit;
@@ -140,7 +140,7 @@ public class SearchResponse<E> extends Response {
         return referrals;
     }
 
-    public synchronized void add(E object) throws Exception {
+    public synchronized void add(SearchResult object) throws Exception {
 
         if (sizeLimit > 0 && totalCount >= sizeLimit) {
             exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
@@ -161,7 +161,7 @@ public class SearchResponse<E> extends Response {
         if (eventsEnabled) {
             event = new SearchResponseEvent(SearchResponseEvent.ADD_EVENT, object);
             if (!firePreAddEvent(event)) return;
-            object = (E)event.getObject();
+            object = (SearchResult)event.getObject();
         }
 
         buffer.add(object);
@@ -174,8 +174,8 @@ public class SearchResponse<E> extends Response {
         notifyAll();
     }
 
-    public void addAll(Collection<E> collection) throws Exception {
-        for (E object : collection) {
+    public void addAll(Collection<SearchResult> collection) throws Exception {
+        for (SearchResult object : collection) {
             add(object);
         }
     }
@@ -193,7 +193,7 @@ public class SearchResponse<E> extends Response {
         return buffer.size() > 0;
     }
 
-    public synchronized E next() throws Exception {
+    public synchronized SearchResult next() throws Exception {
         while (!closed && buffer.size() == 0) {
             try {
                 wait();
@@ -205,13 +205,13 @@ public class SearchResponse<E> extends Response {
 
         if (buffer.size() == 0) return null;
 
-        E object = buffer.getFirst();
+        SearchResult object = buffer.getFirst();
 
         SearchResponseEvent event = null;
         if (eventsEnabled) {
             event = new SearchResponseEvent(SearchResponseEvent.REMOVE_EVENT, object);
             if (!firePreRemoveEvent(event)) return null;
-            object = (E)event.getObject();
+            object = (SearchResult)event.getObject();
         }
 
         buffer.removeFirst();

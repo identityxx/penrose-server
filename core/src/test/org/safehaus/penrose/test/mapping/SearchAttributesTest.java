@@ -23,7 +23,7 @@ public class SearchAttributesTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "cn=group,"+baseDn,
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE
@@ -78,7 +78,7 @@ public class SearchAttributesTest extends StaticTestCase {
         request.setScope(SearchRequest.SCOPE_BASE);
         request.setAttributes(new String[] { "*" });
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         boolean hasNext = response.hasNext();
@@ -130,7 +130,7 @@ public class SearchAttributesTest extends StaticTestCase {
         request.setScope(SearchRequest.SCOPE_BASE);
         request.setAttributes(new String[] { "+" });
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         boolean hasNext = response.hasNext();
@@ -176,7 +176,7 @@ public class SearchAttributesTest extends StaticTestCase {
         request.setScope(SearchRequest.SCOPE_BASE);
         request.setAttributes(new String[] { "cn", "uniqueMember", "creatorsName" });
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
         session.search(request, response);
 
         boolean hasNext = response.hasNext();
@@ -222,7 +222,7 @@ public class SearchAttributesTest extends StaticTestCase {
         Session session = penrose.newSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
-        SearchResponse<SearchResult> response = session.search(
+        SearchResponse response = session.search(
                 "",
                 "(objectClass=*)",
                 SearchRequest.SCOPE_BASE

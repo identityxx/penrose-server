@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class SourceSyncSearchResponse extends SearchResponse<SearchResult> {
+public class SourceSyncSearchResponse extends SearchResponse {
 
     protected Source source;
     protected Collection<Source> destinations;

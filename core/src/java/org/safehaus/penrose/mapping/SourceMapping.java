@@ -21,13 +21,19 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceMapping implements Cloneable {
+public class SourceMapping implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
+    static {
+        log = LoggerFactory.getLogger(SourceMapping.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String REQUIRED   = "required";
     public final static String REQUISITE  = "requisite";

@@ -388,7 +388,7 @@ public class SimpleEngine extends Engine {
             EntryMapping baseMapping,
             EntryMapping entryMapping,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) throws Exception {
 
         if (debug) {

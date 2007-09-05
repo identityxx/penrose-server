@@ -184,7 +184,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
     }
 
     public com.identyx.javabackend.SearchResponse createSearchResponse() throws Exception {
-        return new PenroseSearchResponse(new SearchResponse<SearchResult>());
+        return new PenroseSearchResponse(new SearchResponse());
     }
 
     public com.identyx.javabackend.UnbindRequest createUnbindRequest() throws Exception {

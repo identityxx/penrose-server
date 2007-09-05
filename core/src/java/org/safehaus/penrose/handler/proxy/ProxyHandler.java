@@ -27,7 +27,7 @@ public class ProxyHandler extends DefaultHandler {
             final EntryMapping baseMapping,
             final EntryMapping entryMapping,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         final DN baseDn = request.getDn();
@@ -37,7 +37,7 @@ public class ProxyHandler extends DefaultHandler {
             log.debug("Entry mapping: "+entryMapping.getDn());
         }
 
-        SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>() {
+        SearchResponse sr = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
                 response.add(result);
             }

@@ -2,6 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.connection.ConnectionConfig;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -37,6 +38,10 @@ public class ConnectionClient implements ConnectionServiceMBean {
         this.name = name;
     }
 
+    public ConnectionConfig getConnectionConfig() throws Exception {
+        return (ConnectionConfig)connection.getAttribute(objectName, "ConnectionConfig");
+    }
+    
     public static String getObjectName(String partitionName, String sourceName) {
         return "Penrose:type=connection,partition="+partitionName+",name="+sourceName;
     }

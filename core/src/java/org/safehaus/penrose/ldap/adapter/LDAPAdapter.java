@@ -446,7 +446,7 @@ public class LDAPAdapter extends Adapter {
             final Session session,
             final Source source,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         if (debug) {
@@ -494,7 +494,7 @@ public class LDAPAdapter extends Adapter {
                 newRequest.setTimeLimit(Long.parseLong(timeLimit));
             }
 
-            SearchResponse<SearchResult> newResponse = new SearchResponse<SearchResult>() {
+            SearchResponse newResponse = new SearchResponse() {
                 public void add(SearchResult sr) throws Exception {
 
                     SearchResult searchResult = createSearchResult(source, sr);

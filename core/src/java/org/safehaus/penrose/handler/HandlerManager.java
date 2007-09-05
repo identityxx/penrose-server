@@ -400,7 +400,7 @@ public class HandlerManager {
             final Session session,
             final Partition partition,
             final SearchRequest request,
-            final SearchResponse<SearchResult> response
+            final SearchResponse response
     ) throws Exception {
 
         DN baseDn = request.getDn();

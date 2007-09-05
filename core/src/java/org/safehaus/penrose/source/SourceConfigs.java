@@ -6,14 +6,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceConfigs implements Cloneable {
+public class SourceConfigs implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
+    static {
+        log = LoggerFactory.getLogger(SourceConfigs.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static String SYNC = "sync";
 

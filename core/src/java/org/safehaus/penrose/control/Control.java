@@ -1,11 +1,12 @@
 package org.safehaus.penrose.control;
 
 import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Control {
+public class Control implements Serializable {
 
     private String oid;
     private byte[] value;

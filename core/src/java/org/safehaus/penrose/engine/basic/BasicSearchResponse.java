@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class BasicSearchResponse extends SearchResponse<SearchResult> {
+public class BasicSearchResponse extends SearchResponse {
 
     Session session;
     Partition partition;
@@ -32,7 +32,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
     Interpreter interpreter;
 
     SearchRequest request;
-    SearchResponse<SearchResult> response;
+    SearchResponse response;
 
     DN lastDn;
     Attributes lastAttributes;
@@ -50,7 +50,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
             SourceValues sourceValues,
             Interpreter interpreter,
             SearchRequest request,
-            SearchResponse<SearchResult> response
+            SearchResponse response
     ) {
         this.session = session;
         this.partition = partition;
@@ -188,7 +188,7 @@ public class BasicSearchResponse extends SearchResponse<SearchResult> {
             String flag = sourceRef.getSearch();
             if (debug) log.debug("Flag: "+flag);
 
-            SearchResponse<SearchResult> sr = new SearchResponse<SearchResult>();
+            SearchResponse sr = new SearchResponse();
 
             connector.search(
                     session,

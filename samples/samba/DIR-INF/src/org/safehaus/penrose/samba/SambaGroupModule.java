@@ -110,7 +110,7 @@ public class SambaGroupModule extends Module {
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse<SearchResult> response = new SearchResponse<SearchResult>();
+        SearchResponse response = new SearchResponse();
 
         session.search(searchRequest, response);
 

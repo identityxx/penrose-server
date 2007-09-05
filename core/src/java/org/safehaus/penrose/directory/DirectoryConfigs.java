@@ -8,14 +8,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class DirectoryConfigs implements Cloneable {
+public class DirectoryConfigs implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
+    static {
+        log = LoggerFactory.getLogger(DirectoryConfigs.class);
+    }
+
+    public static transient Logger log;
+    public static boolean debug = log.isDebugEnabled();
 
     public final static Collection<EntryMapping> EMPTY = new ArrayList<EntryMapping>();
 

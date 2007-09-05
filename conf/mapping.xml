@@ -5,6 +5,32 @@
 
 <mapping>
 
+  <entry>
+    <oc>top</oc>
+    <oc>extensibleObject</oc>
+    <at name="vendorName">
+      <constant>${vendor.name}</constant>
+    </at>
+    <at name="vendorVersion">
+      <constant>${product.title} Server ${product.version}</constant>
+    </at>
+    <at name="supportedLDAPVersion">
+      <constant>3</constant>
+    </at>
+    <at name="subschemaSubentry">
+      <constant>cn=schema</constant>
+    </at>
+    <at name="changelog">
+      <constant>cn=changelog</constant>
+    </at>
+    <at name="namingContexts">
+      <constant>dc=Example,dc=com</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
   <entry dn="dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>

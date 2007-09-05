@@ -419,6 +419,7 @@ public class Partition implements PartitionMBean, Cloneable {
         log.debug("Initializing source sync "+sourceSyncConfig.getName()+".");
 
         SourceConfig sourceConfig = sourceSyncConfig.getSourceConfig();
+        String changeLogName = sourceSyncConfig.getParameter(SourceSync.CHANGELOG);
 
         Connection connection = getConnection(sourceConfig.getConnectionName());
         Adapter adapter = connection.getAdapter();

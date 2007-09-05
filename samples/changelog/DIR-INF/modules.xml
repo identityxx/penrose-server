@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="ChangeLogModule">
+    <module-class>org.safehaus.penrose.changelog.module.ChangeLogModule</module-class>
+  </module>
+
+</modules>

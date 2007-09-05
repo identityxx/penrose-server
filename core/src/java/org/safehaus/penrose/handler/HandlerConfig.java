@@ -20,11 +20,12 @@ package org.safehaus.penrose.handler;
 import java.util.Collection;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class HandlerConfig implements HandlerConfigMBean, Cloneable {
+public class HandlerConfig implements Serializable, HandlerConfigMBean, Cloneable {
 
     private String name = "DEFAULT";
     private String handlerClass = DefaultHandler.class.getName();
