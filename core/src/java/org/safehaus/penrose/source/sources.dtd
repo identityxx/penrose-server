@@ -2,7 +2,7 @@
 
 <!ELEMENT sources (source*)>
 
-<!ELEMENT source (connection-name, description?, field*, parameter*)>
+<!ELEMENT source (description?, connection-name, field*, parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
 <!ELEMENT connection-name (#PCDATA)>
 

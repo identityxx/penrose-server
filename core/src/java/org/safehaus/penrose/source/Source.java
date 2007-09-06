@@ -8,6 +8,8 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.SourceValues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -15,6 +17,8 @@ import java.util.*;
  * @author Endi S. Dewata
  */
 public class Source implements Cloneable {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     protected String name;
     protected Map<String,String> parameters = new LinkedHashMap<String,String>();
@@ -37,6 +41,8 @@ public class Source implements Cloneable {
     }
 
     public void init(SourceConfig sourceConfig, SourceContext sourceContext) {
+
+        log.debug("Initializing source "+sourceConfig.getName()+".");
 
         this.sourceConfig = sourceConfig;
         this.sourceContext = sourceContext;

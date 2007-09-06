@@ -18,8 +18,6 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -42,6 +40,9 @@ import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.scheduler.Scheduler;
+import org.safehaus.penrose.scheduler.SchedulerConfig;
+import org.safehaus.penrose.scheduler.SchedulerContext;
 
 /**
  * @author Endi S. Dewata
@@ -58,8 +59,6 @@ public class Partition implements PartitionMBean, Cloneable {
     protected PartitionConfig partitionConfig;
     protected PartitionContext partitionContext;
 
-    protected ClassLoader classLoader;
-
     protected Map<String, Handler> handlers = new LinkedHashMap<String,Handler>();
     protected Map<String, Engine>  engines  = new LinkedHashMap<String,Engine>();
 
@@ -69,6 +68,8 @@ public class Partition implements PartitionMBean, Cloneable {
     protected Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
     protected Map<String,Entry>      entries     = new LinkedHashMap<String,Entry>();
     protected Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
+
+    private Scheduler scheduler;
 
     protected Map<String,Map<String,SourceRef>> sourceRefs        = new LinkedHashMap<String,Map<String,SourceRef>>();
     protected Map<String,Map<String,SourceRef>> primarySourceRefs = new LinkedHashMap<String,Map<String,SourceRef>>();
@@ -82,9 +83,6 @@ public class Partition implements PartitionMBean, Cloneable {
 
         this.partitionConfig = partitionConfig;
         this.partitionContext = partitionContext;
-
-        Collection<URL> classPaths = partitionConfig.getClassPaths();
-        classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
         for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
             Handler handler = createHandler(handlerConfig);
@@ -130,6 +128,8 @@ public class Partition implements PartitionMBean, Cloneable {
             Module module = createModule(moduleConfig);
             addModule(module);
         }
+
+        scheduler = createScheduler(partitionConfig.getSchedulerConfig());
 
         log.debug("Partition "+partitionConfig.getName()+" started.");
     }
@@ -200,21 +200,11 @@ public class Partition implements PartitionMBean, Cloneable {
         return partitionConfig.getName();
     }
 
-    public ClassLoader getClassLoader() {
-        return classLoader;
-    }
-
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
-    }
-
     public Object clone() throws CloneNotSupportedException {
         Partition partition = (Partition)super.clone();
 
         partition.partitionConfig = (PartitionConfig)partitionConfig.clone();
         partition.partitionContext = (PartitionContext)partitionContext.clone();
-
-        partition.classLoader = classLoader;
 
         return partition;
     }
@@ -224,10 +214,10 @@ public class Partition implements PartitionMBean, Cloneable {
         String handlerName = handlerConfig.getName();
         if (handlerName == null) throw new Exception("Missing handler name.");
 
-        log.debug("Initializing handler "+handlerName+".");
+        String className = handlerConfig.getHandlerClass();
 
-        String handlerClass = handlerConfig.getHandlerClass();
-        Class clazz = classLoader.loadClass(handlerClass);
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
         Handler handler = (Handler)clazz.newInstance();
 
         handler.setPartition(this);
@@ -257,10 +247,10 @@ public class Partition implements PartitionMBean, Cloneable {
         String engineName = engineConfig.getName();
         if (engineName == null) throw new Exception("Missing engine name.");
 
-        log.debug("Initializing engine "+engineName+".");
+        String className = engineConfig.getEngineClass();
 
-        String engineClass = engineConfig.getEngineClass();
-        Class clazz = classLoader.loadClass(engineClass);
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
         Engine engine = (Engine)clazz.newInstance();
 
         engine.setPartition(this);
@@ -326,8 +316,6 @@ public class Partition implements PartitionMBean, Cloneable {
             Connection connection
     ) throws Exception {
 
-        log.debug("Initializing source "+sourceConfig.getName()+".");
-
         SourceContext sourceContext = new SourceContext();
         sourceContext.setPartition(this);
         sourceContext.setConnection(connection);
@@ -364,10 +352,10 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public Module createModule(ModuleConfig moduleConfig) throws Exception {
 
-        if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
+        String className = moduleConfig.getModuleClass();
 
-        String moduleClass = moduleConfig.getModuleClass();
-        Class clazz = classLoader.loadClass(moduleClass);
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
         Module module = (Module)clazz.newInstance();
 
         ModuleContext moduleContext = new ModuleContext();
@@ -376,6 +364,24 @@ public class Partition implements PartitionMBean, Cloneable {
         module.init(moduleConfig, moduleContext);
 
         return module;
+    }
+
+    public Scheduler createScheduler(SchedulerConfig schedulerConfig) throws Exception {
+
+        if (schedulerConfig == null) return null;
+
+        String className = schedulerConfig.getSchedulerClass();
+
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
+        Scheduler scheduler = (Scheduler)clazz.newInstance();
+
+        SchedulerContext schedulerContext = new SchedulerContext();
+        schedulerContext.setPartition(this);
+
+        scheduler.init(schedulerConfig, schedulerContext);
+
+        return scheduler;
     }
 
     public void addModule(Module module) {
@@ -423,8 +429,10 @@ public class Partition implements PartitionMBean, Cloneable {
 
         Connection connection = getConnection(sourceConfig.getConnectionName());
         Adapter adapter = connection.getAdapter();
-        String syncClassName = adapter.getSyncClassName();
-        Class clazz = classLoader.loadClass(syncClassName);
+        String className = adapter.getSyncClassName();
+        
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
 
         SourceSync sourceSync = (SourceSync)clazz.newInstance();
 
@@ -558,5 +566,13 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setPartitionContext(PartitionContext partitionContext) {
         this.partitionContext = partitionContext;
+    }
+
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
     }
 }

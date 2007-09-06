@@ -19,6 +19,7 @@ package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.adapter.AdapterConfig;
@@ -71,13 +72,15 @@ public class Connection implements ConnectionMBean {
         this.adapterConfig = adapterConfig;
 
         partition = connectionContext.getPartition();
-        penroseConfig = partition.getPartitionContext().getPenroseConfig();
-        penroseContext = partition.getPartitionContext().getPenroseContext();
+        PartitionContext partitionContext = partition.getPartitionContext();
+
+        penroseConfig = partitionContext.getPenroseConfig();
+        penroseContext = partitionContext.getPenroseContext();
 
         log.debug("Starting "+connectionConfig.getName()+" connection.");
 
         String adapterClass = adapterConfig.getAdapterClass();
-        ClassLoader cl = partition.getClassLoader();
+        ClassLoader cl = partitionContext.getClassLoader();
         Class clazz = cl.loadClass(adapterClass);
         adapter = (Adapter)clazz.newInstance();
 

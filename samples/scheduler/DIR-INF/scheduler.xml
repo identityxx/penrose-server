@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scheduler PUBLIC
+  "-//Penrose/DTD Scheduler ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/scheduler.dtd">
+
+<scheduler>
+
+  <scheduler-class>org.safehaus.penrose.scheduler.quartz.QuartzScheduler</scheduler-class>
+
+  <job name="DemoJob">
+    <job-class>org.safehaus.penrose.example.scheduler.DemoJob</job-class>
+  </job>
+
+  <trigger name="EveryMinute">
+    <trigger-class>org.safehaus.penrose.scheduler.quartz.CronTrigger</trigger-class>
+    <job-name>DemoJob</job-name>
+    <parameter>
+      <param-name>expression</param-name>
+      <param-value>0 * * * * ?</param-value>
+    </parameter>
+  </trigger>
+
+</scheduler>

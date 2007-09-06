@@ -2,7 +2,7 @@
 
 <!ELEMENT connections (connection*)>
 
-<!ELEMENT connection (adapter-name, description?, parameter*)>
+<!ELEMENT connection (description?, adapter-name, parameter*)>
 <!ATTLIST connection name CDATA #REQUIRED>
 <!ELEMENT adapter-name (#PCDATA)>
 

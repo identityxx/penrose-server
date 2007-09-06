@@ -1,5 +1,7 @@
 package org.safehaus.penrose.ldap;
 
+import org.safehaus.penrose.util.BinaryUtil;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -90,4 +92,26 @@ public class Attribute implements Cloneable {
 
         return attribute;
     }
+
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Object value : values) {
+            sb.append(name);
+            sb.append(":");
+
+            if (value instanceof byte[]) {
+                sb.append(":");
+                value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value);
+            }
+
+            sb.append(" ");
+            sb.append(value);
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
 }

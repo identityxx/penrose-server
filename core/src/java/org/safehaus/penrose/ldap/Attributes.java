@@ -183,6 +183,17 @@ public class Attributes implements Cloneable {
         return object;
     }
 
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Attribute attribute : attributes.values()) {
+            sb.append(attribute);
+        }
+
+        return sb.toString();
+    }
+
     public void print() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
 

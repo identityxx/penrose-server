@@ -25,6 +25,7 @@ import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
+import org.safehaus.penrose.scheduler.SchedulerConfig;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -54,6 +55,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
     private SourceConfigs     sourceConfigs     = new SourceConfigs();
     private DirectoryConfigs  directoryConfigs  = new DirectoryConfigs();
     private ModuleConfigs     moduleConfigs     = new ModuleConfigs();
+
+    private SchedulerConfig   schedulerConfig;
 
     private Collection<URL> classPaths = new ArrayList<URL>();
 
@@ -126,6 +129,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
         if (!equals(parameters, partitionConfig.parameters)) return false;
 
+        if (!equals(schedulerConfig, partitionConfig.schedulerConfig)) return false;
+
         return true;
     }
 
@@ -163,6 +168,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         partitionConfig.sourceConfigs = (SourceConfigs) sourceConfigs.clone();
         partitionConfig.directoryConfigs = (DirectoryConfigs) directoryConfigs.clone();
         partitionConfig.moduleConfigs = (ModuleConfigs) moduleConfigs.clone();
+
+        partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
 
         partitionConfig.classPaths = new ArrayList<URL>();
         partitionConfig.classPaths.addAll(classPaths);
@@ -270,4 +277,11 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         return handlerConfigs.remove(name);
     }
 
+    public SchedulerConfig getSchedulerConfig() {
+        return schedulerConfig;
+    }
+
+    public void setSchedulerConfig(SchedulerConfig schedulerConfig) {
+        this.schedulerConfig = schedulerConfig;
+    }
 }

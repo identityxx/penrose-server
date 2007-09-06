@@ -60,6 +60,9 @@ public class Module implements
     }
 
     public void init(ModuleConfig moduleConfig, ModuleContext moduleContext) throws Exception {
+
+        if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
+
         this.moduleConfig = moduleConfig;
         this.moduleContext = moduleContext;
 

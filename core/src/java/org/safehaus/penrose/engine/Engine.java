@@ -72,6 +72,9 @@ public abstract class Engine {
     }
 
     public void init(EngineConfig engineConfig) throws Exception {
+
+        log.debug("Initializing engine "+engineConfig.getName()+".");
+
         this.engineConfig = engineConfig;
         init();
     }

@@ -25,6 +25,8 @@ import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.scheduler.SchedulerReader;
+import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.apache.commons.digester.Digester;
@@ -53,6 +55,7 @@ public class PartitionReader implements EntityResolver {
     SourceReader     sourceReader     = new SourceReader();
     MappingReader    mappingReader    = new MappingReader();
     ModuleReader     moduleReader     = new ModuleReader();
+    SchedulerReader  schedulerReader  = new SchedulerReader();
 
     public PartitionReader() {
 
@@ -114,6 +117,8 @@ public class PartitionReader implements EntityResolver {
         read(dirInf, partitionConfig.getDirectoryConfigs());
         read(dirInf, partitionConfig.getModuleConfigs());
 
+        readSchedulerConfig(dirInf, partitionConfig);
+
         return partitionConfig;
     }
 
@@ -147,6 +152,16 @@ public class PartitionReader implements EntityResolver {
 
         log.debug("Loading "+modulesFile+".");
         moduleReader.read(modulesFile, modules);
+    }
+
+    public void readSchedulerConfig(File dir, PartitionConfig partitionConfig) throws Exception {
+        File schedulerFile = new File(dir, "scheduler.xml");
+        if (!schedulerFile.exists()) return;
+
+        log.debug("Loading "+schedulerFile+".");
+        SchedulerConfig schedulerConfig = schedulerReader.read(schedulerFile);
+        
+        partitionConfig.setSchedulerConfig(schedulerConfig);
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {

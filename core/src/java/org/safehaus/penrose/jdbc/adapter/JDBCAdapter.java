@@ -25,6 +25,7 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.jdbc.*;
 import org.safehaus.penrose.jdbc.Request;
@@ -96,7 +97,8 @@ public class JDBCAdapter extends Adapter {
         String driverClass = (String)properties.remove(DRIVER);
         String url = (String)properties.remove(URL);
 
-        ClassLoader cl = partition.getClassLoader();
+        PartitionContext partitionContext = partition.getPartitionContext();
+        ClassLoader cl = partitionContext.getClassLoader();
         Class clazz = cl.loadClass(driverClass);
 
         driver = (Driver)clazz.newInstance();

@@ -13,6 +13,7 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/lockout/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/module/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/samba/DIR-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/scheduler/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/tomcat/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server/src/test" isTestSource="true" />
@@ -666,6 +667,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/lib/shared-asn1-0.9.5.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/quartz-1.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

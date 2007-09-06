@@ -2,7 +2,7 @@
 
 <!ELEMENT modules (module*, module-mapping*)>
 
-<!ELEMENT module (module-class, description?, parameter*)>
+<!ELEMENT module (description?, module-class, parameter*)>
 <!ATTLIST module name CDATA #IMPLIED>
 <!ATTLIST module enabled CDATA #IMPLIED>
 <!ELEMENT module-class (#PCDATA)>

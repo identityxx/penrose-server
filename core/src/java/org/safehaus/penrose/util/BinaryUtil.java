@@ -37,7 +37,7 @@ public class BinaryUtil {
         return encode(null, bytes);
     }
 
-    public static String encode(String encoding, byte[] bytes) throws Exception {
+    public static String encode(String encoding, byte[] bytes) {
         if (bytes == null) return null;
 
         String string;

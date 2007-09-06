@@ -44,10 +44,6 @@ public class ModuleConfig implements Serializable, ModuleConfigMBean, Cloneable 
         this.name = name;
     }
 
-    public void clearParameters() {
-        parameters.clear();
-    }
-
     public void setParameter(String name, String value) {
         parameters.put(name, value);
     }
@@ -66,6 +62,10 @@ public class ModuleConfig implements Serializable, ModuleConfigMBean, Cloneable 
 
     public Map<String,String> getParameters() {
         return parameters;
+    }
+
+    public void clearParameters() {
+        parameters.clear();
     }
 
     public String getModuleClass() {

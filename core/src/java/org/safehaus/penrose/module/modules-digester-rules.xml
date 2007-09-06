@@ -34,9 +34,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <alias attr-name="class" prop-name="moduleClass" />
             </set-properties-rule>
 
-            <call-method-rule pattern="module-name" methodname="setName" paramcount="0" />
-            <call-method-rule pattern="module-class" methodname="setModuleClass" paramcount="0" />
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <call-method-rule pattern="module-class" methodname="setModuleClass" paramcount="0" />
 
 			<pattern value="parameter">
 				<call-method-rule methodname="setParameter" paramcount="2" />

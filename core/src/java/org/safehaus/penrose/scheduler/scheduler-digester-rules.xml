@@ -24,15 +24,41 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 -->
 <digester-rules>
 
-	<pattern value="connections">
+	<pattern value="scheduler">
 
-        <pattern value="connection">
+        <set-properties-rule/>
 
-            <object-create-rule classname="org.safehaus.penrose.connection.ConnectionConfig" />
+        <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+        <call-method-rule pattern="scheduler-class" methodname="setSchedulerClass" paramcount="0" />
+
+		<pattern value="job">
+
+			<object-create-rule classname="org.safehaus.penrose.scheduler.JobConfig" />
+
             <set-properties-rule/>
 
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
-            <call-method-rule pattern="adapter-name" methodname="setAdapterName" paramcount="0" />
+            <call-method-rule pattern="job-class" methodname="setJobClass" paramcount="0" />
+
+			<pattern value="parameter">
+				<call-method-rule methodname="setParameter" paramcount="2" />
+				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-value" paramnumber="1"/>
+			</pattern>
+
+			<set-next-rule methodname="addJobConfig" />
+
+		</pattern>
+
+        <pattern value="trigger">
+
+            <object-create-rule classname="org.safehaus.penrose.scheduler.TriggerConfig" />
+
+            <set-properties-rule/>
+
+            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <call-method-rule pattern="trigger-class" methodname="setTriggerClass" paramcount="0" />
+            <call-method-rule pattern="job-name" methodname="setJobName" paramcount="0" />
 
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />
@@ -40,7 +66,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
 
-            <set-next-rule methodname="addConnectionConfig" />
+            <set-next-rule methodname="addTriggerConfig" />
 
         </pattern>
 

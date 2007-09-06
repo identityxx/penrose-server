@@ -2,7 +2,7 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="changelog" default="build">
+<project name="scheduler" default="build">
 
     <path id="lib.path">
         <fileset dir="../../lib">

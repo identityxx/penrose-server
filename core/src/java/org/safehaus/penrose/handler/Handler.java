@@ -60,6 +60,9 @@ public abstract class Handler {
     }
 
     public void init(HandlerConfig handlerConfig) throws Exception {
+
+        log.debug("Initializing handler "+handlerConfig.getName()+".");
+
         this.handlerConfig = handlerConfig;
 
         init();

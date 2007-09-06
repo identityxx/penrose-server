@@ -42,24 +42,14 @@ public class ChangeLogModule extends Module {
 
         log.debug("Recording add operation "+request.getDn());
 
-        StringBuilder sb = new StringBuilder();
-
         Attributes attrs = request.getAttributes();
-        for (Attribute attr : attrs.getAll()) {
-            for (Object value : attr.getValues()) {
-                sb.append(attr.getName());
-                sb.append(": ");
-                sb.append(value.toString());
-                sb.append("\n");
-            }
-        }
 
         DN dn = new DN();
 
         Attributes attributes = new Attributes();
         attributes.setValue("targetDN", request.getDn().toString());
         attributes.setValue("changeType", "add");
-        attributes.setValue("changes", sb.toString());
+        attributes.setValue("changes", attrs.toString());
 
         changeLog.add(dn, attributes);
     }
@@ -82,12 +72,7 @@ public class ChangeLogModule extends Module {
             sb.append(attr.getName());
             sb.append("\n");
 
-            for (Object value : attr.getValues()) {
-                sb.append(attr.getName());
-                sb.append(": ");
-                sb.append(value.toString());
-                sb.append("\n");
-            }
+            sb.append(attr);
 
             sb.append("-");
             sb.append("\n");
