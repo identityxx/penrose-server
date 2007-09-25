@@ -17,16 +17,16 @@
  */
 package org.safehaus.penrose.engine.simple;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -49,22 +49,22 @@ public class SearchEngine {
     public void search(
             final Session session,
             final Partition partition,
-            final EntryMapping entryMapping,
+            final Entry entry,
             final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
         try {
-            Collection sourceMappings = entryMapping.getSourceMappings();
+            Collection sourceMappings = entry.getEntryMapping().getSourceMappings();
 
             if (sourceMappings.size() == 0) {
-                if (debug) log.debug("Returning static entry "+entryMapping.getDn());
+                if (debug) log.debug("Returning static entry "+entry.getDn());
                 
-                Attributes attributes = computeAttributes(entryMapping, sourceValues);
+                Attributes attributes = computeAttributes(entry, sourceValues);
 
-                SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
-                searchResult.setEntryMapping(entryMapping);
+                SearchResult searchResult = new SearchResult(entry.getDn(), attributes);
+                searchResult.setEntry(entry);
                 response.add(searchResult);
 
                 return;
@@ -73,20 +73,20 @@ public class SearchEngine {
             SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
 
-                    EntryMapping em = result.getEntryMapping();
+                    //Entry entry = result.getEntry();
 
                     SourceValues sv = result.getSourceValues();
                     sv.add(sourceValues);
 
-                    EngineTool.propagateUp(partition, em, sv);
+                    EngineTool.propagateUp(entry, sv);
 
                     if (debug) {
                         log.debug("Source values:");
                         sv.print();
                     }
 
-                    DN dn = computeDn(partition, em, sv);
-                    Attributes attributes = computeAttributes(em, sv);
+                    DN dn = computeDn(partition, entry, sv);
+                    Attributes attributes = computeAttributes(entry, sv);
 
                     if (debug) {
                         log.debug("Attributes:");
@@ -95,12 +95,12 @@ public class SearchEngine {
 
                     if (debug) log.debug("Generating entry "+dn);
                     SearchResult searchResult = new SearchResult(dn, attributes);
-                    searchResult.setEntryMapping(em);
+                    searchResult.setEntry(entry);
                     response.add(searchResult);
                 }
             };
 
-            Collection<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entryMapping);
+            Collection<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entry);
 
             Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
             Collection<SourceRef> primarySources = iterator.next();
@@ -108,10 +108,13 @@ public class SearchEngine {
             SourceRef sourceRef = primarySources.iterator().next();
             Connector connector = engine.getConnector(sourceRef);
 
+            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
+
             connector.search(
                     session,
-                    partition,
-                    entryMapping,
+                    primarySourceRefs,
+                    localSourceRefs,
                     primarySources,
                     sourceValues,
                     request,
@@ -133,26 +136,26 @@ public class SearchEngine {
 
     public DN computeDn(
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues
     ) throws Exception {
 
         Collection<Object> args = new ArrayList<Object>();
-        computeDnArguments(partition, entryMapping, sourceValues, args);
+        computeDnArguments(partition, entry, sourceValues, args);
 
-        DN dn = entryMapping.getDn();
+        DN dn = entry.getDn();
 
         return new DN(dn.format(args));
     }
 
     public void computeDnArguments(
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             Collection<Object> args
     ) throws Exception {
 
-        EntryMapping em = entryMapping;
+        Entry em = entry;
 
         while (em != null) {
             Collection<AttributeMapping> rdnAttributes = em.getRdnAttributeMappings();
@@ -168,21 +171,19 @@ public class SearchEngine {
 
                 Attributes attributes = sourceValues.get(sourceName);
                 Object value = attributes.getValue(fieldName);
-                value = LDAP.escape(value.toString());
 
                 args.add(value);
             }
 
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
-            em = partitionConfig.getDirectoryConfigs().getParent(em);
+            em = entry.getParent();
         }
     }
 
-    public Attributes computeAttributes(EntryMapping entryMapping, SourceValues sourceValues) {
+    public Attributes computeAttributes(Entry entry, SourceValues sourceValues) {
 
         Attributes attributes = new Attributes();
 
-        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributeMappings = entry.getAttributeMappings();
         for (AttributeMapping attributeMapping : attributeMappings) {
             String name = attributeMapping.getName();
 
@@ -205,7 +206,7 @@ public class SearchEngine {
             attributes.addValues(name, values);
         }
 
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        Collection<String> objectClasses = entry.getObjectClasses();
         for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }

@@ -1,5 +1,18 @@
+INTRODUCTION
+------------
+
 This partition contains a module that captures LDAP operations received by Penrose and stores the changes
 in a database. The partition also contains a mapping that presents the data into as a change log subtree.
+
+INSTALLATION
+------------
+
+Copy the entire PENROSE_SERVER_HOME/samples/changelog folder into a new folder in PENROSE_SERVER_HOME/partitions.
+Prepare a database to store the change log information. Edit DIR-INF/connections.xml if necessary. Initialize
+the database using the sql/create.sql script.
+
+EXAMPLE
+-------
 
 ldapsearch -h localhost -p 10389 -D uid=admin,ou=system -w secret -x -b "cn=changelog"
 

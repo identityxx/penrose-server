@@ -48,7 +48,9 @@ public class PartitionFactory {
         partitionContext.setPenroseContext(penroseContext);
         partitionContext.setClassLoader(classLoader);
 
-        Partition partition = new Partition();
+        String className = partitionConfig.getPartitionClass();
+        Class clazz = classLoader.loadClass(className);
+        Partition partition = (Partition)clazz.newInstance();
 
         partition.init(partitionConfig, partitionContext);
 

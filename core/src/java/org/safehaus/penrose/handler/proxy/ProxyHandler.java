@@ -2,12 +2,9 @@ package org.safehaus.penrose.handler.proxy;
 
 import org.safehaus.penrose.handler.DefaultHandler;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 
 /**
  * @author Endi S. Dewata
@@ -23,9 +20,9 @@ public class ProxyHandler extends DefaultHandler {
 
     public void search(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -34,7 +31,7 @@ public class ProxyHandler extends DefaultHandler {
 
         if (debug) {
             log.debug("Base DN: "+baseDn);
-            log.debug("Entry mapping: "+entryMapping.getDn());
+            log.debug("Entry mapping: "+entry.getDn());
         }
 
         SearchResponse sr = new SearchResponse() {
@@ -45,9 +42,9 @@ public class ProxyHandler extends DefaultHandler {
 
         super.performSearch(
                 session,
-                partition,
-                baseMapping,
-                entryMapping,
+                base,
+                entry,
+                sourceValues,
                 request,
                 sr
         );

@@ -33,8 +33,8 @@ public class ModuleClient implements ModuleServiceMBean {
         return (ModuleConfig)connection.getAttribute(objectName, "ModuleConfig");
     }
 
-    public static String getObjectName(String partitionName, String sourceName) {
-        return "Penrose:type=module,partition="+partitionName+",name="+sourceName;
+    public static String getObjectName(String partitionName, String name) {
+        return "Penrose:type=module,partition="+partitionName+",name="+name;
     }
 
     public MBeanAttributeInfo[] getAttributes() throws Exception {

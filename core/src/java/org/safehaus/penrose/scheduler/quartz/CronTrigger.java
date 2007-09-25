@@ -1,7 +1,8 @@
 package org.safehaus.penrose.scheduler.quartz;
 
+import org.safehaus.penrose.partition.Partition;
+
 import java.text.SimpleDateFormat;
-import java.text.DateFormat;
 import java.util.Date;
 
 /**
@@ -28,6 +29,12 @@ public class CronTrigger extends QuartzTrigger {
         String expression = triggerConfig.getParameter("expression");
         log.debug("Expression: "+expression);
         
-        quartzTrigger = new org.quartz.CronTrigger(name, null, expression);
+        Partition partition = triggerContext.getPartition();
+
+        org.quartz.CronTrigger cronTrigger = new org.quartz.CronTrigger(name, partition.getName(), expression);
+
+        cronTrigger.setMisfireInstruction(org.quartz.CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
+
+        quartzTrigger = cronTrigger;
     }
 }

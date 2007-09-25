@@ -23,6 +23,9 @@ import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.FieldRef;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -40,6 +43,8 @@ public abstract class Interpreter {
     Collection rows;
 
     public void set(RDN rdn) throws Exception {
+        if (rdn == null) return;
+        
         for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
             set(name, value);
@@ -95,11 +100,7 @@ public abstract class Interpreter {
 
             String variable = attributeMapping.getVariable();
             if (variable != null) {
-                Object value = get(variable);
-                if (value == null && variable.startsWith("primaryKey.")) {
-                    value = get(variable.substring(11));
-                }
-                return value;
+                return get(variable);
 
             }
 
@@ -138,6 +139,30 @@ public abstract class Interpreter {
             }
         } catch (Exception e) {
             throw new Exception("Error evaluating field "+field.getName(), e);
+        }
+    }
+
+    public Object eval(FieldRef fieldRef) throws Exception {
+        try {
+            if (fieldRef.getConstant() != null) {
+                return fieldRef.getConstant();
+
+            } else if (fieldRef.getVariable() != null) {
+                String name = fieldRef.getVariable();
+                Object value = get(name);
+                if (value == null && name.startsWith("rdn.")) {
+                    value = get(name.substring(4));
+                }
+                return value;
+
+            } else if (fieldRef.getExpression() != null) {
+                return eval(fieldRef.getExpression());
+
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new Exception("Error evaluating field "+fieldRef.getName(), e);
         }
     }
 

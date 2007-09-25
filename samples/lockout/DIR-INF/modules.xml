@@ -6,7 +6,11 @@
 <modules>
 
   <module name="LockoutModule">
-    <module-class>org.safehaus.penrose.module.LockoutModule</module-class>
+    <module-class>org.safehaus.penrose.lockout.LockoutModule</module-class>
+    <parameter>
+      <param-name>maxAttempts</param-name>
+      <param-value>3</param-value>
+    </parameter>
   </module>
 
   <module-mapping>

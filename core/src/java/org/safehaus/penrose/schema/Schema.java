@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.ldap.RDN;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -143,7 +144,7 @@ public class Schema implements Cloneable {
         return oc;
     }
 
-    public Set getRequiredAttributeNames(EntryMapping entry) {
+    public Set getRequiredAttributeNames(Entry entry) {
         Set<String> set = new HashSet<String>();
         for (String ocName : entry.getObjectClasses()) {
             ObjectClass oc = getObjectClass(ocName);
@@ -155,7 +156,7 @@ public class Schema implements Cloneable {
         return set;
     }
 
-    public Collection<String> getAllObjectClassNames(EntryMapping entry) {
+    public Collection<String> getAllObjectClassNames(Entry entry) {
         Collection<String> list = new ArrayList<String>();
 
         for (String ocName : entry.getObjectClasses()) {
@@ -203,9 +204,13 @@ public class Schema implements Cloneable {
         return false;
     }
 
-    public Collection<ObjectClass> getObjectClasses(EntryMapping entry) {
+    public Collection<ObjectClass> getObjectClasses(Entry entry) {
+        return getObjectClasses(entry.getEntryMapping());
+    }
+
+    public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
         Map<String,ObjectClass> map = new HashMap<String,ObjectClass>();
-        for (String ocName : entry.getObjectClasses()) {
+        for (String ocName : entryMapping.getObjectClasses()) {
             getAllObjectClasses(ocName, map);
         }
 

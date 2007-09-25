@@ -12,7 +12,7 @@ public class JobConfig implements Serializable, Cloneable {
 
     private boolean enabled = true;
 
-    private String name;
+    private String name = "DEFAULT";
     private String description;
 
     private String jobClass;

@@ -200,22 +200,27 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
-            DN dn = db.toDn();
 
-            String objectClasses = source.getParameter(OBJECT_CLASSES);
-            Attribute ocAttribute = new Attribute("objectClass");
-            for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
-                String objectClass = st.nextToken().trim();
-                ocAttribute.addValue(objectClass);
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
             }
 
+            DN dn = db.toDn();
+
             Attributes attributes = (Attributes)request.getAttributes().clone();
-            attributes.set(ocAttribute);
+
+            String objectClasses = source.getParameter(OBJECT_CLASSES);
+            if (objectClasses != null) {
+                Attribute ocAttribute = new Attribute("objectClass");
+                for (StringTokenizer st = new StringTokenizer(objectClasses, ","); st.hasMoreTokens(); ) {
+                    String objectClass = st.nextToken().trim();
+                    ocAttribute.addValue(objectClass);
+                }
+                attributes.set(ocAttribute);
+            }
 
             AddRequest newRequest = new AddRequest(request);
             newRequest.setDn(dn);
@@ -252,11 +257,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = createClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
+
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
+            }
+
             DN dn = db.toDn();
 
             BindRequest newRequest = new BindRequest(request);
@@ -293,11 +301,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
+
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
+            }
+            
             DN dn = db.toDn();
 
             CompareRequest newRequest = (CompareRequest)request.clone();
@@ -335,11 +346,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
+
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
+            }
+
             DN dn = db.toDn();
 
             DeleteRequest newRequest = new DeleteRequest(request);
@@ -376,11 +390,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
+
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
+            }
+
             DN dn = db.toDn();
 
             ModifyRequest newRequest = new ModifyRequest(request);
@@ -417,11 +434,14 @@ public class LDAPAdapter extends Adapter {
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            String baseDn = source.getParameter(BASE_DN);
-
             DNBuilder db = new DNBuilder();
             db.append(request.getDn());
-            db.append(baseDn);
+
+            String baseDn = source.getParameter(BASE_DN);
+            if (baseDn != null) {
+                db.append(baseDn);
+            }
+
             DN dn = db.toDn();
 
             ModRdnRequest newRequest = new ModRdnRequest(request);
@@ -460,7 +480,13 @@ public class LDAPAdapter extends Adapter {
         try {
             response.setSizeLimit(request.getSizeLimit());
 
-            DN dn = new DN(source.getParameter(BASE_DN));
+            DNBuilder db = new DNBuilder();
+            db.append(request.getDn());
+
+            final DN baseDn = new DN(source.getParameter(BASE_DN));
+            db.append(baseDn);
+
+            DN dn = db.toDn();
 
             SearchRequest newRequest = (SearchRequest)request.clone();
             newRequest.setDn(dn);
@@ -497,7 +523,7 @@ public class LDAPAdapter extends Adapter {
             SearchResponse newResponse = new SearchResponse() {
                 public void add(SearchResult sr) throws Exception {
 
-                    SearchResult searchResult = createSearchResult(source, sr);
+                    SearchResult searchResult = createSearchResult(baseDn, source, sr);
                     if (searchResult == null) return;
 
                     if (debug) {
@@ -521,16 +547,23 @@ public class LDAPAdapter extends Adapter {
     }
 
     public SearchResult createSearchResult(
+            DN baseDn,
             Source source,
             SearchResult sr
     ) throws Exception {
 
         DN dn = sr.getDn();
-        RDN rdn = dn.getRdn();
+        int s1 = dn.getSize();
+        int s2 = baseDn.getSize();
+
+        DNBuilder db = new DNBuilder();
+        for (int i=0; i<s1-s2; i++) {
+            db.append(dn.get(i));
+        }
 
         Attributes attributes = sr.getAttributes();
 
-        DN newDn = new DN(rdn);
+        DN newDn = db.toDn();
         Attributes newAttributes;
 
         if (source.getFields().isEmpty()) {
@@ -538,12 +571,12 @@ public class LDAPAdapter extends Adapter {
 
         } else {
             newAttributes = new Attributes();
-
+/*
             for (String name : rdn.getNames()) {
                 Object value = rdn.get(name);
                 newAttributes.addValue("primaryKey." + name, value);
             }
-
+*/
             for (Field field : source.getFields()) {
 
                 Attribute attr = attributes.get(field.getOriginalName());

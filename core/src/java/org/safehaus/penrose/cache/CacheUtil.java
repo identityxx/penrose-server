@@ -21,13 +21,13 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.source.SourceSync;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.scheduler.SchedulerConfig;
+import org.safehaus.penrose.scheduler.JobConfig;
+import org.safehaus.penrose.jdbc.scheduler.JDBCSyncJob;
 import org.apache.log4j.*;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.ArrayList;
+import java.util.*;
 import java.io.File;
 
 import gnu.getopt.LongOpt;
@@ -50,6 +50,52 @@ public class CacheUtil {
         this.partitions = partitions;
     }
 
+    public Collection<Source> getCaches(Partition partition) throws Exception {
+
+        Collection<Source> list = new ArrayList<Source>();
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SchedulerConfig schedulerConfig = partitionConfig.getSchedulerConfig();
+
+        for (JobConfig jobConfig : schedulerConfig.getJobConfigs()) {
+            String jobClass = jobConfig.getJobClass();
+            if (!jobClass.equals(JDBCSyncJob.class.getName())) continue;
+
+            String target = jobConfig.getParameter("target");
+            StringTokenizer st = new StringTokenizer(target, ";, ");
+            while (st.hasMoreTokens()) {
+                String sourceName = st.nextToken();
+                Source s = partition.getSource(sourceName);
+                list.add(s);
+            }
+        }
+
+        return list;
+    }
+
+    public Collection<Source> getCaches(Source source) throws Exception {
+
+        Collection<Source> list = new ArrayList<Source>();
+
+        Partition partition = source.getPartition();
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SchedulerConfig schedulerConfig = partitionConfig.getSchedulerConfig();
+
+        JobConfig jobConfig = schedulerConfig.getJobConfig(source.getName());
+        String jobClass = jobConfig.getJobClass();
+        if (!jobClass.equals(JDBCSyncJob.class.getName())) return list;
+
+        String target = jobConfig.getParameter("target");
+        StringTokenizer st = new StringTokenizer(target, ";, ");
+        while (st.hasMoreTokens()) {
+            String sourceName = st.nextToken();
+            Source s = partition.getSource(sourceName);
+            list.add(s);
+        }
+
+        return list;
+    }
+
     public void status() throws Exception {
         for (Partition partition : partitions.getPartitions()) {
             status(partition);
@@ -57,27 +103,22 @@ public class CacheUtil {
     }
 
     public void status(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            status(sourceSync);
+        for (Source cache : getCaches(partition)) {
+            try {
+                cache.status();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void status(Source source) throws Exception {
-        try {
-            log.warn("Cache status for "+source.getPartition().getName()+"/"+source.getName()+".");
-            source.status();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    public void status(SourceSync sourceSync) throws Exception {
-        try {
-            log.warn("Cache status for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.status();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        for (Source cache : getCaches(source)) {
+            try {
+                cache.status();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -88,69 +129,38 @@ public class CacheUtil {
     }
 
     public void create(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            create(sourceSync);
+        for (Source cache : getCaches(partition)) {
+            try {
+                cache.create();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void create(Source source) throws Exception {
-        try {
-            log.warn("Creating cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
-            source.create();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        for (Source cache : getCaches(source)) {
+            try {
+                cache.create();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
-    public void create(SourceSync sourceSync) throws Exception {
-        try {
-            log.warn("Creating cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.create();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    public void load() throws Exception {
+    public void update() throws Exception {
         for (Partition partition : partitions.getPartitions()) {
-            load(partition);
+            update(partition);
         }
     }
 
-    public void load(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            load(sourceSync);
-        }
+    public void update(Partition partition) throws Exception {
     }
 
-    public void load(SourceSync sourceSync) throws Exception {
+    public void update(Source source) throws Exception {
         try {
-            log.warn("Loading cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.load();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    public void sync() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
-            sync(partition);
-        }
-    }
-
-    public void sync(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            sync(sourceSync);
-        }
-    }
-
-    public void sync(SourceSync sourceSync) throws Exception {
-        try {
-            log.warn("Synchronizing cache data for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.synchronize();
+            log.warn("Cleaning cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
+            source.clear();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -163,27 +173,22 @@ public class CacheUtil {
     }
 
     public void clean(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            clean(sourceSync);
+        for (Source cache : getCaches(partition)) {
+            try {
+                cache.clear();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void clean(Source source) throws Exception {
-        try {
-            log.warn("Cleaning cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
-            source.clean();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    public void clean(SourceSync sourceSync) throws Exception {
-        try {
-            log.warn("Cleaning cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.clean();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        for (Source cache : getCaches(source)) {
+            try {
+                cache.clear();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -194,27 +199,22 @@ public class CacheUtil {
     }
 
     public void drop(Partition partition) throws Exception {
-        Collection<SourceSync> caches = partition.getSourceSyncs();
-        for (SourceSync sourceSync : caches) {
-            drop(sourceSync);
+        for (Source cache : getCaches(partition)) {
+            try {
+                cache.drop();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     public void drop(Source source) throws Exception {
-        try {
-            log.warn("Dropping cache tables for "+source.getPartition().getName()+"/"+source.getName()+".");
-            source.drop();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    public void drop(SourceSync sourceSync) throws Exception {
-        try {
-            log.warn("Dropping cache tables for "+sourceSync.getPartition().getName()+"/"+sourceSync.getName()+".");
-            sourceSync.drop();
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        for (Source cache : getCaches(source)) {
+            try {
+                cache.drop();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -303,7 +303,6 @@ public class CacheUtil {
 
         PenroseContext penroseContext = new PenroseContext(home);
         penroseContext.init(penroseConfig);
-        penroseContext.start();
 
         File partitionsDir = new File(home, "partitions");
         PartitionConfigs partitionConfigs = new PartitionConfigs(partitionsDir);
@@ -334,107 +333,79 @@ public class CacheUtil {
             partitions.addPartition(partition);
         }
 
-        CacheUtil cacheManager = new CacheUtil(partitions);
+        CacheUtil cacheUtil = new CacheUtil(partitions);
 
         Partition partition = null;
         Source source = null;
-        SourceSync sourceSync = null;
 
         Iterator iterator = parameters.iterator();
         String command = (String)iterator.next();
+        System.out.println("Command: "+command);
 
         if (iterator.hasNext()) {
             String partitionName = (String)iterator.next();
+            System.out.println("Partition: "+partitionName);
             partition = partitions.getPartition(partitionName);
 
             if (partition == null) throw new Exception("Partition "+partitionName+" not found.");
 
             if (iterator.hasNext()) {
                 String sourceName = (String)iterator.next();
-                sourceSync = partition.getSourceSync(sourceName);
+                System.out.println("Source: "+sourceName);
 
-                if (sourceSync == null) {
-                    source = partition.getSource(sourceName);
-                    if (source == null) throw new Exception("Source "+sourceName+" not found.");
-                }
+                source = partition.getSource(sourceName);
+                if (source == null) throw new Exception("Source "+sourceName+" not found.");
             }
         }
 
-        if (sourceSync != null) {
+        if (source != null) {
 
             if ("create".equals(command)) {
-                cacheManager.create(sourceSync);
-
-            } else if ("load".equals(command)) {
-                cacheManager.load(sourceSync);
-
-            } else if ("sync".equals(command)) {
-                cacheManager.sync(sourceSync);
+                cacheUtil.create(source);
 
             } else if ("clean".equals(command)) {
-                cacheManager.clean(sourceSync);
+                cacheUtil.clean(source);
 
             } else if ("drop".equals(command)) {
-                cacheManager.drop(sourceSync);
+                cacheUtil.drop(source);
 
             } else if ("status".equals(command)) {
-                cacheManager.status(sourceSync);
-            }
-
-        } else if (source != null) {
-
-            if ("create".equals(command)) {
-                cacheManager.create(source);
-
-            } else if ("clean".equals(command)) {
-                cacheManager.clean(source);
-
-            } else if ("drop".equals(command)) {
-                cacheManager.drop(source);
-
-            } else if ("status".equals(command)) {
-                cacheManager.status(source);
+                cacheUtil.status(source);
             }
 
         } else if (partition != null) {
 
             if ("create".equals(command)) {
-                cacheManager.create(partition);
+                cacheUtil.create(partition);
 
-            } else if ("load".equals(command)) {
-                cacheManager.load(partition);
-
-            } else if ("sync".equals(command)) {
-                cacheManager.sync(partition);
+            } else if ("update".equals(command)) {
+                cacheUtil.update(partition);
 
             } else if ("clean".equals(command)) {
-                cacheManager.clean(partition);
+                cacheUtil.clean(partition);
 
             } else if ("drop".equals(command)) {
-                cacheManager.drop(partition);
+                cacheUtil.drop(partition);
 
             } else if ("status".equals(command)) {
-                cacheManager.status(partition);
+                cacheUtil.status(partition);
             }
 
         } else {
             if ("create".equals(command)) {
-                cacheManager.create();
+                cacheUtil.create();
 
-            } else if ("load".equals(command)) {
-                cacheManager.load();
-
-            } else if ("sync".equals(command)) {
-                cacheManager.sync();
+            } else if ("update".equals(command)) {
+                cacheUtil.update();
 
             } else if ("clean".equals(command)) {
-                cacheManager.clean();
+                cacheUtil.clean();
 
             } else if ("drop".equals(command)) {
-                cacheManager.drop();
+                cacheUtil.drop();
 
             } else if ("status".equals(command)) {
-                cacheManager.status();
+                cacheUtil.status();
             }
         }
 

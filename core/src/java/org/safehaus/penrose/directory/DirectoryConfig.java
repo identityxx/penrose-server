@@ -2,7 +2,6 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +12,10 @@ import java.io.Serializable;
 /**
  * @author Endi Sukma Dewata
  */
-public class DirectoryConfigs implements Serializable, Cloneable {
+public class DirectoryConfig implements Serializable, Cloneable {
 
     static {
-        log = LoggerFactory.getLogger(DirectoryConfigs.class);
+        log = LoggerFactory.getLogger(DirectoryConfig.class);
     }
 
     public static transient Logger log;
@@ -129,73 +128,6 @@ public class DirectoryConfigs implements Serializable, Cloneable {
         if (c.isEmpty()) {
             entryMappingsByDn.remove(entryMapping.getDn().getNormalizedDn());
         }
-    }
-
-    public Collection<EntryMapping> findEntryMappings(DN dn) throws Exception {
-        if (dn == null) return EMPTY;
-        //log.debug("Finding entry mappings \""+dn+"\" in partition "+getName());
-
-        // search for static mappings
-        Collection<EntryMapping> results = entryMappingsByDn.get(dn.getNormalizedDn());
-        if (results != null) {
-            //log.debug("Found "+results.size()+" mapping(s).");
-            return results;
-        }
-
-        // can't find exact match -> search for parent mappings
-
-        DN parentDn = dn.getParentDn();
-
-        results = new ArrayList<EntryMapping>();
-        Collection<EntryMapping> list;
-
-        // if dn has no parent, check against root entries
-        if (parentDn.isEmpty()) {
-            //log.debug("Check root mappings");
-            list = rootEntryMappings;
-
-        } else {
-            if (debug) log.debug("Search parent mappings for \""+parentDn+"\"");
-            Collection<EntryMapping> parentMappings = findEntryMappings(parentDn);
-
-            // if no parent mappings found, the entry doesn't exist in this partition
-            if (parentMappings == null || parentMappings.isEmpty()) {
-            	if (debug) log.debug("Entry mapping \""+parentDn+"\" not found");
-                return EMPTY;
-            }
-
-            list = new ArrayList<EntryMapping>();
-
-            // for each parent mapping found
-            for (EntryMapping parentMapping : parentMappings) {
-                if (debug) log.debug("Found parent " + parentMapping.getDn());
-
-                String handlerName = parentMapping.getHandlerName();
-                if ("PROXY".equals(handlerName)) { // if parent is proxy, include it in results
-                    results.add(parentMapping);
-
-                } else { // otherwise check for matching siblings
-                    Collection<EntryMapping> children = getChildren(parentMapping);
-                    list.addAll(children);
-                }
-            }
-        }
-
-        // check against each mapping in the list
-        for (EntryMapping entryMapping : list) {
-
-            if (debug) {
-                log.debug("Checking DN pattern:");
-                log.debug(" - " + dn);
-                log.debug(" - " + entryMapping.getDn());
-            }
-            if (!dn.matches(entryMapping.getDn())) continue;
-
-            if (debug) log.debug("Found " + entryMapping.getDn());
-            results.add(entryMapping);
-        }
-
-        return results;
     }
 
     public Collection<EntryMapping> getEntryMappings() {
@@ -380,70 +312,8 @@ public class DirectoryConfigs implements Serializable, Cloneable {
         return getEntryMappings(new DN(dn));
     }
 
-    public SourceMapping getEffectiveSourceMapping(EntryMapping entryMapping, String name) {
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(name);
-        if (sourceMapping != null) return sourceMapping;
-
-        EntryMapping parent = getParent(entryMapping);
-        if (parent != null) return getEffectiveSourceMapping(parent, name);
-
-        return null;
-    }
-
-    public Collection<SourceMapping> getEffectiveSourceMappings(EntryMapping entryMapping) {
-         Collection<SourceMapping> list = new ArrayList<SourceMapping>();
-         list.addAll(entryMapping.getSourceMappings());
-
-         EntryMapping parent = getParent(entryMapping);
-         if (parent != null) list.addAll(getEffectiveSourceMappings(parent));
-
-         return list;
-     }
-
-    public Collection<EntryMapping> findEntryMappings(String targetDn) throws Exception {
-        if (targetDn == null) return null;
-        return findEntryMappings(new DN(targetDn));
-    }
-
-    public List<EntryMapping> getPath(EntryMapping entryMapping) {
-        List<EntryMapping> path = new ArrayList<EntryMapping>();
-
-        while (entryMapping != null) {
-            path.add(0, entryMapping);
-            entryMapping = getParent(entryMapping);
-        }
-
-        return path;
-    }
-
-    public List<EntryMapping> getRelativePath(EntryMapping baseMapping, EntryMapping entryMapping) {
-        List<EntryMapping> path = new ArrayList<EntryMapping>();
-
-        while (entryMapping != null) {
-            path.add(0, entryMapping);
-            if (entryMapping == baseMapping) break;
-
-            entryMapping = getParent(entryMapping);
-        }
-
-        return path;
-    }
-
-    public boolean isDynamic(EntryMapping entryMapping) {
-
-        boolean dynamic = entryMapping.isDynamic();
-
-        //log.debug("Mapping "+entryMapping.getDn()+" is "+(dynamic ? "dynamic" : "not dynamic"));
-        if (dynamic) return true;
-
-        EntryMapping parentMapping = getParent(entryMapping);
-        if (parentMapping == null) return false;
-
-        return isDynamic(parentMapping);
-    }
-
     public Object clone() throws CloneNotSupportedException {
-        DirectoryConfigs mappings = (DirectoryConfigs)super.clone();
+        DirectoryConfig mappings = (DirectoryConfig)super.clone();
 
         mappings.entryMappingsById = new LinkedHashMap<String,EntryMapping>();
         mappings.entryMappingsByDn = new LinkedHashMap<String,Collection<EntryMapping>>();

@@ -15,12 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
+import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.mapping.Link;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -65,6 +67,8 @@ public class EntryMapping implements Serializable, Cloneable {
     private String parentId;
 
     private DN dn;
+
+    private String entryClass;
 
     private Collection<String> objectClasses = new TreeSet<String>();
 
@@ -261,7 +265,7 @@ public class EntryMapping implements Serializable, Cloneable {
     }
 
 	public void addAttributeMapping(AttributeMapping attributeMapping) {
-        String name = attributeMapping.getName();
+        String name = attributeMapping.getName().toLowerCase();
         //log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
 
         attributeMappings.add(attributeMapping);
@@ -289,7 +293,7 @@ public class EntryMapping implements Serializable, Cloneable {
     }
 
     public Collection<AttributeMapping> getAttributeMappings(String name) {
-        return attributeMappingsByName.get(name);
+        return attributeMappingsByName.get(name.toLowerCase());
     }
 
     public Collection<AttributeMapping> getAttributeMappings(Collection<String> names) {
@@ -306,7 +310,7 @@ public class EntryMapping implements Serializable, Cloneable {
     }
 
     public void removeAttributeMappings(String name) {
-        attributeMappingsByName.remove(name);
+        attributeMappingsByName.remove(name.toLowerCase());
     }
 
     public void removeAttributeMapping(AttributeMapping attributeMapping) {
@@ -379,6 +383,8 @@ public class EntryMapping implements Serializable, Cloneable {
         if (!equals(parentId, entryMapping.parentId)) return false;
 
         if (!equals(dn, entryMapping.dn)) return false;
+
+        if (!equals(entryClass, entryMapping.entryClass)) return false;
         if (!equals(description, entryMapping.description)) return false;
 
         if (!equals(objectClasses, entryMapping.objectClasses)) return false;
@@ -401,6 +407,8 @@ public class EntryMapping implements Serializable, Cloneable {
         parentId = entryMapping.parentId;
 
         dn = entryMapping.dn;
+
+        entryClass = entryMapping.entryClass;
         description = entryMapping.description;
 
         objectClasses = new TreeSet<String>();
@@ -477,5 +485,33 @@ public class EntryMapping implements Serializable, Cloneable {
 
     public void setLink(Link link) {
         this.link = link;
+    }
+
+    public String getPrimarySourceName() {
+        if (sourceMappings.size() == 0) return null;
+        SourceMapping sourceMapping = sourceMappings.get(0);
+        return sourceMapping.getName();
+/*
+        for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
+
+            String variable = rdnAttributeMapping.getVariable();
+            if (variable == null) continue;
+
+            int i = variable.indexOf('.');
+            if (i < 0) continue;
+
+            return variable.substring(0, i);
+        }
+
+        return null;
+*/
+    }
+
+    public String getEntryClass() {
+        return entryClass;
+    }
+
+    public void setEntryClass(String entryClass) {
+        this.entryClass = entryClass;
     }
 }

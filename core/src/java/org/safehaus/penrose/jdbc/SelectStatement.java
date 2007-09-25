@@ -1,7 +1,7 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;

@@ -174,6 +174,7 @@ if [ "$1" = "start" ] ; then
   else
     shift
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    -Djava.ext.dirs="$LOCALLIBPATH%" \
     -Djava.library.path="$LOCALLIBPATH" \
     -Dpenrose.home="$PENROSE_HOME" \
     org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
@@ -203,6 +204,7 @@ elif [ "$1" = "status" ] ; then
 else
 
   exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+  -Djava.ext.dirs="$LOCALLIBPATH%" \
   -Djava.library.path="$LOCALLIBPATH" \
   -Dpenrose.home="$PENROSE_HOME" \
   org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"

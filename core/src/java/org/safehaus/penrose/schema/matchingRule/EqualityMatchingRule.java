@@ -31,6 +31,7 @@ import java.util.Arrays;
 public class EqualityMatchingRule {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public final static String BOOLEAN            = "booleanMatch";
     public final static String CASE_IGNORE        = "caseIgnoreMatch";
@@ -43,7 +44,7 @@ public class EqualityMatchingRule {
 
     public final static EqualityMatchingRule DEFAULT = new CaseIgnoreEqualityMatchingRule();
 
-    public static Map instances = new TreeMap();
+    public static Map<String,EqualityMatchingRule> instances = new TreeMap<String,EqualityMatchingRule>();
 
     static {
         instances.put(BOOLEAN,            new BooleanEqualityMatchingRule());
@@ -59,7 +60,7 @@ public class EqualityMatchingRule {
     public static EqualityMatchingRule getInstance(String name) {
         if (name == null) return DEFAULT;
 
-        EqualityMatchingRule equalityMatchingRule = (EqualityMatchingRule)instances.get(name);
+        EqualityMatchingRule equalityMatchingRule = instances.get(name);
         if (equalityMatchingRule == null) return DEFAULT;
 
         return equalityMatchingRule;
@@ -69,35 +70,75 @@ public class EqualityMatchingRule {
         if (object1 == null && object2 == null) return true;
         if (object1 == null || object2 == null) return false;
 
+        if (object1 instanceof Integer && object2 instanceof String) {
+            object2 = Integer.parseInt((String)object2);
+            
+            if (debug) {
+                log.debug("Comparing:");
+                log.debug(" - "+object1);
+                log.debug(" - "+object2);
+            }
+
+            return object1.equals(object2);
+        }
+
+        if (object1 instanceof String && object2 instanceof Integer) {
+            object1 = Integer.parseInt((String)object1);
+
+            if (debug) {
+                log.debug("Comparing:");
+                log.debug(" - "+object1);
+                log.debug(" - "+object2);
+            }
+
+            return object1.equals(object2);
+        }
+
         if (object1 instanceof byte[] && object2 instanceof byte[]) {
             byte[] bytes1 = (byte[])object1;
             byte[] bytes2 = (byte[])object2;
-            log.debug("Comparing:");
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
-            return Arrays.equals(bytes1, bytes2);
 
-        } else if (object1 instanceof byte[]) {
+            if (debug) {
+                log.debug("Comparing:");
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
+            }
+
+            return Arrays.equals(bytes1, bytes2);
+        }
+
+        if (object1 instanceof byte[] && object2 instanceof String) {
             byte[] bytes1 = (byte[])object1;
             byte[] bytes2 = ((String)object2).getBytes();
-            log.debug("Comparing:");
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
-            return Arrays.equals(bytes1, bytes2);
 
-        } else if (object2 instanceof byte[]) {
+            if (debug) {
+                log.debug("Comparing:");
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
+            }
+
+            return Arrays.equals(bytes1, bytes2);
+        }
+
+        if (object1 instanceof String && object2 instanceof byte[]) {
             byte[] bytes1 = ((String)object1).getBytes();
             byte[] bytes2 = (byte[])object2;
-            log.debug("Comparing:");
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
-            log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
-            return Arrays.equals(bytes1, bytes2);
 
-        } else {
+            if (debug) {
+                log.debug("Comparing:");
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes1));
+                log.debug(" - "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, bytes2));
+            }
+
+            return Arrays.equals(bytes1, bytes2);
+        }
+
+        if (debug) {
             log.debug("Comparing:");
             log.debug(" - "+object1);
             log.debug(" - "+object2);
-            return object1.equals(object2);
         }
+
+        return object1.equals(object2);
     }
 }

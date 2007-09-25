@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.FieldMapping;
 
 /**
  * @author Endi S. Dewata

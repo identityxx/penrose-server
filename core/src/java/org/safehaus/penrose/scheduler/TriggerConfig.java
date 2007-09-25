@@ -10,11 +10,11 @@ public class TriggerConfig implements Serializable, Cloneable {
 
     private boolean enabled = true;
 
-    private String name;
+    private String name = "DEFAULT";
     private String description;
 
     private String triggerClass;
-    private String jobName;
+    private Collection<String> jobNames = new ArrayList<String>();
 
     private Map<String,String> parameters = new HashMap<String,String>();
 
@@ -100,7 +100,7 @@ public class TriggerConfig implements Serializable, Cloneable {
          if (!equals(description, triggerConfig.description)) return false;
 
          if (!equals(triggerClass, triggerConfig.triggerClass)) return false;
-         if (!equals(jobName, triggerConfig.jobName)) return false;
+         if (!equals(jobNames, triggerConfig.jobNames)) return false;
 
          if (!equals(parameters, triggerConfig.parameters)) return false;
 
@@ -114,7 +114,8 @@ public class TriggerConfig implements Serializable, Cloneable {
          description = triggerConfig.description;
 
          triggerClass = triggerConfig.triggerClass;
-         jobName = triggerConfig.jobName;
+         jobNames = new ArrayList<String>();
+         jobNames.addAll(triggerConfig.jobNames);
 
          parameters = new HashMap<String,String>();
          parameters.putAll(triggerConfig.parameters);
@@ -126,11 +127,19 @@ public class TriggerConfig implements Serializable, Cloneable {
          return triggerConfig;
      }
 
-    public String getJobName() {
-        return jobName;
+    public Collection<String> getJobNames() {
+        return jobNames;
     }
 
-    public void setJobName(String jobName) {
-        this.jobName = jobName;
+    public void addJobName(String jobName) {
+        jobNames.add(jobName);
+    }
+
+    public void setJobNames(Collection<String> jobNames) {
+        this.jobNames = jobNames;
+    }
+
+    public void removeJobName(String jobName) {
+        jobNames.remove(jobName);
     }
 }

@@ -1,6 +1,8 @@
 package org.safehaus.penrose.jdbc.adapter;
 
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
@@ -9,8 +11,6 @@ import org.safehaus.penrose.jdbc.InsertStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.jdbc.Request;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.ldap.AddRequest;
 import org.safehaus.penrose.ldap.AddResponse;
@@ -90,8 +90,7 @@ public class AddRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
@@ -126,15 +125,14 @@ public class AddRequestBuilder extends RequestBuilder {
                 Map<String,Object> values = new HashMap<String,Object>();
 
                 for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                    FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-                    String variable = fieldMapping.getVariable();
+                    String variable = fieldRef.getVariable();
                     if (variable != null) {
                         if (variable.indexOf(".") >= 0) continue; // skip foreign key
                     }
 
                     String fieldName = fieldRef.getName();
-                    Object value = interpreter.eval(fieldMapping);
+                    Object value = interpreter.eval(fieldRef);
                     if (value == null) continue;
 
                     values.put(fieldName, value);
@@ -171,9 +169,7 @@ public class AddRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            String variable = fieldMapping.getVariable();
+            String variable = fieldRef.getVariable();
             if (variable == null) continue;
 
             if (debug) log.debug(" - " + fieldName + ": " + variable);

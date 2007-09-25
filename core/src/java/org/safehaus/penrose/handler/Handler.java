@@ -19,25 +19,15 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.source.SourceConfigs;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
-import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -82,7 +72,7 @@ public abstract class Handler {
     public void add(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -93,22 +83,21 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
-            EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-            DN parentDn = dn.getParentDn();
+            Entry parent = entry.getParent();
+            DN parentDn = parent.getDn();
 
-            SearchResult parent = find(session, partition, parentMapping, parentDn);
-            sourceValues.add(parent.getSourceValues());
+            SearchResult sr = find(session, partition, parent, parentDn);
+            sourceValues.add(sr.getSourceValues());
 
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -116,8 +105,8 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.add(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.add(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +116,7 @@ public abstract class Handler {
     public void bind(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -138,17 +127,17 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(null, partition, entryMapping, dn);
-            sourceValues.add(entry.getSourceValues());
+            SearchResult sr = find(null, partition, entry, dn);
+            sourceValues.add(sr.getSourceValues());
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -156,8 +145,8 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.bind(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.bind(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +156,7 @@ public abstract class Handler {
     public void compare(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
@@ -178,17 +167,17 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(null, partition, entryMapping, dn);
-            sourceValues.add(entry.getSourceValues());
+            SearchResult sr = find(null, partition, entry, dn);
+            sourceValues.add(sr.getSourceValues());
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -196,8 +185,8 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.compare(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.compare(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,15 +196,15 @@ public abstract class Handler {
     public void unbind(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
 
         //Partitions partitions = penroseContext.getPartitions();
-        //Engine engine = getEngine(partition, this, entryMapping);
+        //Engine engine = getEngine(partition, this, entry.getEntryMapping());
 
-        //engine.unbind(session, partition, entryMapping, bindDn);
+        //engine.unbind(session, partition, entry, bindDn);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,13 +214,13 @@ public abstract class Handler {
     public SearchResult find(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN dn
     ) throws Exception {
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        return engine.find(session, partition, entryMapping, dn);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        return engine.find(session, entry, dn);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,7 +230,7 @@ public abstract class Handler {
     public void delete(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -252,17 +241,17 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(session, partition, entryMapping, dn);
-            sourceValues.add(entry.getSourceValues());
+            SearchResult sr = find(session, partition, entry, dn);
+            sourceValues.add(sr.getSourceValues());
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -270,8 +259,8 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.delete(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.delete(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -281,7 +270,7 @@ public abstract class Handler {
     public void modify(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -292,17 +281,17 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(session, partition, entryMapping, dn);
-            sourceValues.add(entry.getSourceValues());
+            SearchResult sr = find(session, partition, entry, dn);
+            sourceValues.add(sr.getSourceValues());
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -310,8 +299,8 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.modify(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.modify(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -321,7 +310,7 @@ public abstract class Handler {
     public void modrdn(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -332,17 +321,17 @@ public abstract class Handler {
 
         boolean fetchEntry = fetch;
 
-        String s = entryMapping.getParameter(FETCH);
+        String s = entry.getParameter(FETCH);
         if (s != null) fetchEntry = Boolean.valueOf(s);
 
         if (fetchEntry) {
-            SearchResult entry = find(session, partition, entryMapping, dn);
-            sourceValues.add(entry.getSourceValues());
+            SearchResult sr = find(session, partition, entry, dn);
+            sourceValues.add(sr.getSourceValues());
         } else {
-            extractSourceValues(partition, entryMapping, dn, sourceValues);
+            EngineTool.extractSourceValues(entry, dn, sourceValues);
         }
 
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -350,57 +339,39 @@ public abstract class Handler {
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
-        engine.modrdn(session, partition, entryMapping, sourceValues, request, response);
+        Engine engine = partitions.getEngine(partition, this, entry);
+        engine.modrdn(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void search(
-            Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            SearchRequest request,
-            SearchResponse results
-    ) throws Exception {
-
-        search(
-                session,
-                partition,
-                entryMapping,
-                entryMapping,
-                request,
-                results
-        );
-    }
-
     public abstract void search(
             Session session,
-            Partition partition,
-            EntryMapping baseMapping,
-            EntryMapping entryMapping,
+            Entry base,
+            Entry entry,
+            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception;
 
     public void performSearch(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
         Partitions partitions = penroseContext.getPartitions();
-        Engine engine = partitions.getEngine(partition, this, entryMapping);
+        Engine engine = partitions.getEngine(partition, this, entry);
         engine.search(
                 session,
-                partition,
-                baseMapping,
-                entryMapping,
+                base,
+                entry,
+                sourceValues,
                 request,
                 response
         );
@@ -424,101 +395,6 @@ public abstract class Handler {
 
     public void setPenroseContext(PenroseContext penroseContext) {
         this.penroseContext = penroseContext;
-    }
-
-    public void extractSourceValues(
-            Partition partition,
-            EntryMapping entryMapping,
-            DN dn,
-            SourceValues sourceValues
-    ) throws Exception {
-
-        InterpreterManager interpreterManager = penroseContext.getInterpreterManager();
-        Interpreter interpreter = interpreterManager.newInstance();
-
-        if (debug) log.debug("Extracting source values from "+dn);
-
-        extractSourceValues(
-                partition,
-                interpreter,
-                dn,
-                entryMapping,
-                sourceValues
-        );
-    }
-
-    public void extractSourceValues(
-            Partition partition,
-            Interpreter interpreter,
-            DN dn,
-            EntryMapping entryMapping,
-            SourceValues sourceValues
-    ) throws Exception {
-
-        DN parentDn = dn.getParentDn();
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping em = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-
-        if (parentDn != null && em != null) {
-            extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
-        }
-
-        RDN rdn = dn.getRdn();
-        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
-
-        //if (sourceMappings.isEmpty()) return;
-        //SourceMapping sourceMapping = sourceMappings.iterator().next();
-
-        //interpreter.set(sourceValues);
-        interpreter.set(rdn);
-
-        for (SourceMapping sourceMapping : sourceMappings) {
-            extractSourceValues(
-                    partition,
-                    interpreter,
-                    rdn,
-                    entryMapping,
-                    sourceMapping,
-                    sourceValues
-            );
-        }
-
-        interpreter.clear();
-    }
-
-    public void extractSourceValues(
-            Partition partition,
-            Interpreter interpreter,
-            RDN rdn,
-            EntryMapping entryMapping,
-            SourceMapping sourceMapping,
-            SourceValues sourceValues
-    ) throws Exception {
-
-        if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
-
-        Attributes attributes = sourceValues.get(sourceMapping.getName());
-
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfigs sources = partitionConfig.getSourceConfigs();
-        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
-
-        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
-        for (FieldMapping fieldMapping : fieldMappings) {
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
-
-            Object value = interpreter.eval(fieldMapping);
-            if (value == null) continue;
-
-            if ("INTEGER".equals(fieldConfig.getType()) && value instanceof String) {
-                value = Integer.parseInt((String)value);
-            }
-
-            attributes.addValue(fieldMapping.getName(), value);
-
-            String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
-            if (debug) log.debug(" => " + fieldName + ": " + value);
-        }
     }
 
     public Partition getPartition() {

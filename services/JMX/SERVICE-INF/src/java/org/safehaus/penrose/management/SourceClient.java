@@ -44,20 +44,16 @@ public class SourceClient implements SourceServiceMBean {
         return (Long)connection.getAttribute(objectName, "Count");
     }
 
-    public void createCache() throws Exception {
-        invoke("createCache", new Object[] {}, new String[] {});
+    public void create() throws Exception {
+        invoke("create", new Object[] {}, new String[] {});
     }
 
-    public void loadCache() throws Exception {
-        invoke("loadCache", new Object[] {}, new String[] {});
+    public void clear() throws Exception {
+        invoke("clear", new Object[] {}, new String[] {});
     }
 
-    public void cleanCache() throws Exception {
-        invoke("cleanCache", new Object[] {}, new String[] {});
-    }
-
-    public void dropCache() throws Exception {
-        invoke("dropCache", new Object[] {}, new String[] {});
+    public void drop() throws Exception {
+        invoke("drop", new Object[] {}, new String[] {});
     }
 
     public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {

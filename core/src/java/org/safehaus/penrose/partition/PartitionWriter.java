@@ -65,7 +65,7 @@ public class PartitionWriter {
         sourceWriter.write(sourcesXml, partitionConfig.getSourceConfigs());
 
         File mappingXml = new File(dirInf, "mapping.xml");
-        mappingWriter.write(mappingXml, partitionConfig.getDirectoryConfigs());
+        mappingWriter.write(mappingXml, partitionConfig.getDirectoryConfig());
 
         File modulesXml = new File(dirInf, "modules.xml");
         moduleWriter.write(modulesXml, partitionConfig.getModuleConfigs());
@@ -103,6 +103,13 @@ public class PartitionWriter {
             Element description = new DefaultElement("description");
             description.add(new DefaultText(s));
             element.add(description);
+        }
+
+        s = partitionConfig.getPartitionClass();
+        if (!PartitionConfig.DEFAULT_PARTITION_CLASS.equals(s)) {
+            Element partitionClass = new DefaultElement("partition-class");
+            partitionClass.add(new DefaultText(s));
+            element.add(partitionClass);
         }
 
         for (InterpreterConfig interpreterConfig : partitionConfig.getInterpreterConfigs()) {

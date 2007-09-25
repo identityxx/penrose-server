@@ -21,7 +21,6 @@ import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.partition.Partition;
@@ -34,6 +33,9 @@ import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.dbcp.*;
 
@@ -54,6 +56,7 @@ public class JDBCAdapter extends Adapter {
     public final static String PASSWORD     = "password";
     public final static String QUOTE        = "quote";
 
+    public final static String BASE_DN      = "baseDn";
     public final static String CATALOG      = "catalog";
     public final static String SCHEMA       = "schema";
     public final static String TABLE        = "table";
@@ -288,7 +291,7 @@ public class JDBCAdapter extends Adapter {
         client.dropTable(source);
     }
 
-    public void clean(Source source) throws Exception {
+    public void clear(Source source) throws Exception {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -387,7 +390,7 @@ public class JDBCAdapter extends Adapter {
 
     public void add(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
@@ -511,7 +514,7 @@ public class JDBCAdapter extends Adapter {
 
     public void delete(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
@@ -632,7 +635,7 @@ public class JDBCAdapter extends Adapter {
 
     public void modify(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
@@ -738,7 +741,7 @@ public class JDBCAdapter extends Adapter {
 
     public void modrdn(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
@@ -871,7 +874,8 @@ public class JDBCAdapter extends Adapter {
 
     public void search(
             final Session session,
-            final EntryMapping entryMapping,
+            final Collection<SourceRef> primarySourceRefs,
+            final Collection<SourceRef> localSourceRefs,
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
@@ -897,7 +901,8 @@ public class JDBCAdapter extends Adapter {
             SearchRequestBuilder builder = new SearchRequestBuilder(
                     interpreterManager.newInstance(),
                     partition,
-                    entryMapping,
+                    primarySourceRefs,
+                    localSourceRefs,
                     sourceRefs,
                     sourceValues,
                     request,
@@ -907,7 +912,7 @@ public class JDBCAdapter extends Adapter {
             QueryRequest queryRequest = builder.generate();
             QueryResponse queryResponse = new QueryResponse() {
 
-                SearchResult lastEntry;
+                SearchResult lastResult;
 
                 public void add(Object object) throws Exception {
                     ResultSet rs = (ResultSet)object;
@@ -916,18 +921,18 @@ public class JDBCAdapter extends Adapter {
                         throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
                     }
 
-                    SearchResult searchResult = createSearchResult(entryMapping, sourceRefs, rs);
+                    SearchResult searchResult = createSearchResult(primarySourceRefs, sourceRefs, rs);
                     if (searchResult == null) return;
 
-                    if (lastEntry == null) {
-                        lastEntry = searchResult;
+                    if (lastResult == null) {
+                        lastResult = searchResult;
 
-                    } else if (searchResult.getDn().equals(lastEntry.getDn())) {
-                        mergeSearchResult(searchResult, lastEntry);
+                    } else if (searchResult.getDn().equals(lastResult.getDn())) {
+                        mergeSearchResult(searchResult, lastResult);
 
                     } else {
-                        response.add(lastEntry);
-                        lastEntry = searchResult;
+                        response.add(lastResult);
+                        lastResult = searchResult;
                     }
 
                     totalCount++;
@@ -938,8 +943,8 @@ public class JDBCAdapter extends Adapter {
                 }
 
                 public void close() throws Exception {
-                    if (lastEntry != null) {
-                        response.add(lastEntry);
+                    if (lastResult != null) {
+                        response.add(lastResult);
                     }
                     response.close();
                 }
@@ -980,24 +985,29 @@ public class JDBCAdapter extends Adapter {
             if (field.isPrimaryKey()) rb.set(fieldName, value);
         }
 
-        DN dn = new DN(rb.toRdn());
+        DNBuilder db = new DNBuilder();
+        db.append(rb.toRdn());
+
+        String baseDn = source.getParameter(BASE_DN);
+        if (baseDn != null) {
+            db.append(baseDn);
+        }
+
+        DN dn = db.toDn();
 
         return new SearchResult(dn, attributes);
     }
 
     public SearchResult createSearchResult(
-            EntryMapping entryMapping,
+            Collection<SourceRef> primarySourceRefs,
             Collection<SourceRef> sourceRefs,
             ResultSet rs
     ) throws Exception {
 
         SearchResult searchResult = new SearchResult();
-        searchResult.setEntryMapping(entryMapping);
 
         SourceValues sourceValues = new SourceValues();
         RDNBuilder rb = new RDNBuilder();
-
-        Collection<SourceRef> primarySourceRefs = partition.getPrimarySourceRefs(entryMapping);
 
         int column = 1;
 
@@ -1017,7 +1027,6 @@ public class JDBCAdapter extends Adapter {
                 if (primarySource && fieldRef.isPrimaryKey()) {
                     if (value == null) return null;
                     rb.set(name, value);
-                    fields.addValue("primaryKey." + fieldName, value);
                 }
 
                 if (value == null) continue;

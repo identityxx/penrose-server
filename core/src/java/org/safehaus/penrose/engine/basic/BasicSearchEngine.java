@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.session.Session;
 
 import java.util.*;
@@ -30,27 +30,27 @@ public class BasicSearchEngine {
     public void search(
             final Session session,
             final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
             final SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
         try {
-            //List<Collection<SourceRef>> groupsOfSources = engine.getLocalGroupsOfSources(partition, entryMapping, baseMapping);
-            List<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entryMapping);
+            //List<Collection<SourceRef>> groupsOfSources = engine.getLocalGroupsOfSources(partition, entry, base);
+            List<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entry);
             final Interpreter interpreter = engine.getInterpreterManager().newInstance();
 
             if (groupsOfSources.isEmpty()) {
-                if (debug) log.debug("Returning static entry "+entryMapping.getDn());
+                if (debug) log.debug("Returning static entry "+ entry.getDn());
 
                 interpreter.set(sourceValues);
-                Attributes attributes = engine.computeAttributes(interpreter, entryMapping);
+                Attributes attributes = engine.computeAttributes(interpreter, entry);
                 interpreter.clear();
 
-                SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
-                searchResult.setEntryMapping(entryMapping);
+                SearchResult searchResult = new SearchResult(entry.getDn(), attributes);
+                searchResult.setEntry(entry);
                 searchResult.setSourceValues((SourceValues)sourceValues.clone());
                 response.add(searchResult);
 
@@ -64,7 +64,7 @@ public class BasicSearchEngine {
                     session,
                     partition,
                     engine,
-                    entryMapping,
+                    entry,
                     groupsOfSources,
                     sourceValues,
                     interpreter,
@@ -72,10 +72,13 @@ public class BasicSearchEngine {
                     response
             );
 
+            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
+
             connector.search(
                     session,
-                    partition,
-                    entryMapping,
+                    primarySourceRefs,
+                    localSourceRefs,
                     sourceRefs,
                     sourceValues,
                     request,

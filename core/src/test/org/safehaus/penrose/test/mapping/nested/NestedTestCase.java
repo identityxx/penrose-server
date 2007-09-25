@@ -5,6 +5,9 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -76,7 +79,7 @@ public class NestedTestCase extends JDBCTestCase {
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfig().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -90,7 +93,7 @@ public class NestedTestCase extends JDBCTestCase {
         groupsMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(groupsMapping);
 
-        partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfig().addEntryMapping(groups);
 
         EntryMapping members = new EntryMapping("uid=...,cn=...,"+baseDn);
         members.addObjectClass("person");
@@ -108,7 +111,7 @@ public class NestedTestCase extends JDBCTestCase {
         membersMapping.addFieldMapping(new FieldMapping("name", FieldMapping.VARIABLE, "cn"));
         members.addSourceMapping(membersMapping);
 
-        partitionConfig.getDirectoryConfigs().addEntryMapping(members);
+        partitionConfig.getDirectoryConfig().addEntryMapping(members);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
         Partitions partitions = penrose.getPartitions();

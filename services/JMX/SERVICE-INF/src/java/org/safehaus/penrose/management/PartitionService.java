@@ -6,6 +6,7 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.scheduler.Scheduler;
 
 import javax.management.StandardMBean;
 import java.util.Collection;
@@ -31,20 +32,6 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         return penrose.getPartitionStatus(name);
     }
     
-    public void start() throws Exception {
-        PenroseServer penroseServer = jmxService.getServiceContext().getPenroseServer();
-        Penrose penrose = penroseServer.getPenrose();
-
-        penrose.startPartition(name);
-    }
-
-    public void stop() throws Exception {
-        PenroseServer penroseServer = jmxService.getServiceContext().getPenroseServer();
-        Penrose penrose = penroseServer.getPenrose();
-
-        penrose.stopPartition(name);
-    }
-
     public PartitionConfig getPartitionConfig() throws Exception {
         Partition partition = partitions.getPartition(name);
         return partition.getPartitionConfig();
@@ -57,7 +44,7 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
     public Collection<String> getConnectionNames() {
         Collection<String> list = new ArrayList<String>();
         Partition partition = partitions.getPartition(name);
-        for (Connection connection : partition.getConnections()) {
+        for (Connection connection : partition.getConnections().getConnections()) {
             list.add(connection.getName());
         }
         return list;
@@ -87,7 +74,9 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         Collection<ConnectionService> list = new ArrayList<ConnectionService>();
 
         Partition partition = partitions.getPartition(name);
-        for (Connection connection : partition.getConnections()) {
+        if (partition == null) return list;
+        
+        for (Connection connection : partition.getConnections().getConnections()) {
             list.add(getConnectionService(connection));
         }
 
@@ -131,6 +120,8 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         Collection<SourceService> list = new ArrayList<SourceService>();
 
         Partition partition = partitions.getPartition(name);
+        if (partition == null) return list;
+
         for (Source source : partition.getSources()) {
             list.add(getSourceService(source));
         }
@@ -173,11 +164,38 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         Collection<ModuleService> list = new ArrayList<ModuleService>();
 
         Partition partition = partitions.getPartition(name);
+        if (partition == null) return list;
+
         for (Module module : partition.getModules()) {
             list.add(getModuleService(module));
         }
 
         return list;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Scheduler
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public SchedulerService getSchedulerService() throws Exception {
+        Partition partition = partitions.getPartition(name);
+        if (partition == null) return null;
+        
+        Scheduler scheduler = partition.getScheduler();
+        if (scheduler == null) return null;
+
+        return getSchedulerService(scheduler);
+    }
+
+    public SchedulerService getSchedulerService(Scheduler scheduler) throws Exception {
+
+        SchedulerService schedulerService = new SchedulerService();
+        schedulerService.setJmxService(jmxService);
+        Partition partition = partitions.getPartition(name);
+        schedulerService.setPartition(partition);
+        schedulerService.setScheduler(scheduler);
+
+        return schedulerService;
     }
 
     public String getObjectName() {
@@ -198,9 +216,15 @@ public class PartitionService extends StandardMBean implements PartitionServiceM
         for (ModuleService moduleService : getModuleServices()) {
             moduleService.register();
         }
+
+        SchedulerService schedulerService = getSchedulerService();
+        if (schedulerService != null) schedulerService.register();
     }
 
     public void unregister() throws Exception {
+
+        SchedulerService schedulerService = getSchedulerService();
+        if (schedulerService != null) schedulerService.unregister();
 
         for (ModuleService moduleService : getModuleServices()) {
             moduleService.unregister();

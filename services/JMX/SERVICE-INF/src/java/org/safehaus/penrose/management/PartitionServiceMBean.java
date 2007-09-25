@@ -10,8 +10,6 @@ import java.util.Collection;
 public interface PartitionServiceMBean {
 
     public String getStatus() throws Exception;
-    public void start() throws Exception;
-    public void stop() throws Exception;
 
     public PartitionConfig getPartitionConfig() throws Exception;
 

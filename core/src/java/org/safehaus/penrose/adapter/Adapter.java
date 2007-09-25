@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.adapter;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SourceValues;
@@ -28,6 +27,10 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -95,7 +98,7 @@ public abstract class Adapter {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
-    public void clean(Source source) throws Exception {
+    public void clear(Source source) throws Exception {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
@@ -122,7 +125,7 @@ public abstract class Adapter {
 
     public void add(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
@@ -166,7 +169,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -203,7 +206,7 @@ public abstract class Adapter {
 
     public void bind(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
@@ -238,7 +241,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -277,7 +280,7 @@ public abstract class Adapter {
 
     public void compare(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             CompareRequest request,
@@ -313,7 +316,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -337,8 +340,7 @@ public abstract class Adapter {
             Collection<String> operations = fieldRef.getOperations();
             if (!operations.isEmpty() && !operations.contains(FieldMapping.COMPARE)) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
             if (value instanceof Collection) {
@@ -383,7 +385,7 @@ public abstract class Adapter {
 
     public void delete(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
@@ -419,7 +421,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -453,7 +455,7 @@ public abstract class Adapter {
 
     public void modify(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
@@ -489,7 +491,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -542,8 +544,7 @@ public abstract class Adapter {
                         String fieldName = fieldRef.getName();
                         if (fieldRef.isPrimaryKey()) continue;
 
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
-                        Object value = interpreter.eval(fieldMapping);
+                        Object value = interpreter.eval(fieldRef);
                         if (value == null) continue;
 
                         if (debug) log.debug(" => Replacing field " + fieldName + ": " + value);
@@ -569,10 +570,9 @@ public abstract class Adapter {
 
                         String fieldName = fieldRef.getName();
 
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
-                        String variable = fieldMapping.getVariable();
+                        String variable = fieldRef.getVariable();
                         if (variable == null) {
-                            Object value = interpreter.eval(fieldMapping);
+                            Object value = interpreter.eval(fieldRef);
                             if (value == null) continue;
 
                             if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+value);
@@ -620,7 +620,7 @@ public abstract class Adapter {
 
     public void modrdn(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
@@ -656,7 +656,7 @@ public abstract class Adapter {
             Object value = attribute == null ? null : attribute.getValue();
 
             if (value == null) {
-                value = interpreter.eval(fieldRef.getFieldMapping());
+                value = interpreter.eval(fieldRef);
             }
 
             if (value == null) continue;
@@ -684,8 +684,7 @@ public abstract class Adapter {
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
             Field field = fieldRef.getField();
@@ -714,7 +713,8 @@ public abstract class Adapter {
 
     public void search(
             final Session session,
-            final EntryMapping entryMapping,
+            final Collection<SourceRef> primarySourceRefs,
+            final Collection<SourceRef> localSourceRefs,
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
@@ -728,7 +728,6 @@ public abstract class Adapter {
 
         FilterBuilder filterBuilder = new FilterBuilder(
                 partition,
-                entryMapping,
                 sourceRefs,
                 sourceValues,
                 interpreter
@@ -749,7 +748,6 @@ public abstract class Adapter {
 
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(result.getDn());
-                searchResult.setEntryMapping(entryMapping);
 
                 SourceValues sourceValues = new SourceValues();
                 sourceValues.set(sourceRef.getAlias(), result.getAttributes());

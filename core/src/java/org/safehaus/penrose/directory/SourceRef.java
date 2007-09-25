@@ -1,7 +1,8 @@
-package org.safehaus.penrose.source;
+package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,17 +11,18 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class SourceRef {
+public class SourceRef implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
+    private Entry entry;
     private Source source;
 
     private String alias;
 
-    Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
     Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
+    Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
 
     private String add;
     private String bind;
@@ -31,9 +33,8 @@ public class SourceRef {
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    public SourceRef(Source source) {
+    public SourceRef(Source source) throws Exception {
         this.source = source;
-
         this.alias = source.getName();
 
         if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
@@ -42,14 +43,15 @@ public class SourceRef {
             String fieldName = field.getName();
             if (debug) log.debug(" - field "+fieldName);
 
-            FieldRef fieldRef = new FieldRef(field, alias, null);
+            FieldRef fieldRef = new FieldRef(this, field);
             fieldRefs.put(fieldName, fieldRef);
 
-            if (field.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
+            if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
         }
     }
 
-    public SourceRef(Source source, SourceMapping sourceMapping) throws Exception {
+    public SourceRef(Entry entry, Source source, SourceMapping sourceMapping) throws Exception {
+        this.entry = entry;
         this.source = source;
 
         this.alias = sourceMapping.getName();
@@ -64,10 +66,10 @@ public class SourceRef {
             Field field = source.getField(fieldName);
             if (field == null) throw new Exception("Unknown field: " + fieldName);
 
-            FieldRef fieldRef = new FieldRef(field, alias, fieldMapping);
+            FieldRef fieldRef = new FieldRef(this, field, fieldMapping);
             fieldRefs.put(fieldName, fieldRef);
 
-            if (field.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
+            if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
         }
 
         add = sourceMapping.getAdd();
@@ -110,6 +112,12 @@ public class SourceRef {
 
     public void setSource(Source source) {
         this.source = source;
+
+        for (FieldRef fieldRef : fieldRefs.values()) {
+            String fieldName = fieldRef.getName();
+            Field field = source.getField(fieldName);
+            fieldRef.setField(field);
+        }
     }
 
     public void setAlias(String alias) {
@@ -170,5 +178,45 @@ public class SourceRef {
 
     public void setModrdn(String modrdn) {
         this.modrdn = modrdn;
+    }
+
+    public Entry getEntry() {
+        return entry;
+    }
+
+    public void setEntry(Entry entry) {
+        this.entry = entry;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+
+        SourceRef sourceRef = (SourceRef)super.clone();
+
+        sourceRef.entry = entry;
+        sourceRef.source = source;
+
+        sourceRef.alias = alias;
+
+        sourceRef.fieldRefs = new LinkedHashMap<String,FieldRef>();
+        sourceRef.primaryKeyFieldRefs = new ArrayList<FieldRef>();
+
+        for (String fieldName : fieldRefs.keySet()) {
+            FieldRef fieldRef = (FieldRef)fieldRefs.get(fieldName).clone();
+            sourceRef.fieldRefs.put(fieldName, fieldRef);
+
+            if (fieldRef.isPrimaryKey()) sourceRef.primaryKeyFieldRefs.add(fieldRef);
+        }
+
+        sourceRef.add = add;
+        sourceRef.bind = bind;
+        sourceRef.delete = delete;
+        sourceRef.modify = modify;
+        sourceRef.modrdn = modrdn;
+        sourceRef.search = search;
+
+        sourceRef.parameters = new LinkedHashMap<String,String>();
+        sourceRef.parameters.putAll(parameters);
+
+        return sourceRef;
     }
 }

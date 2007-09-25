@@ -13,8 +13,8 @@ public class Attributes implements Cloneable {
 
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
-    protected Collection<String> names = new LinkedHashSet<String>();
-    protected Map<String,Attribute> attributes = new LinkedHashMap<String,Attribute>();
+    protected Collection<String> names = new TreeSet<String>();
+    protected Map<String,Attribute> attributes = new TreeMap<String,Attribute>();
 
     public Attributes() {
     }

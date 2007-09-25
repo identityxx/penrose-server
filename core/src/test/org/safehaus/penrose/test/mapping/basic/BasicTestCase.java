@@ -3,15 +3,15 @@ package org.safehaus.penrose.test.mapping.basic;
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.Logger;
 
@@ -69,7 +69,7 @@ public class BasicTestCase extends JDBCTestCase {
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfig().addEntryMapping(ou);
 
         EntryMapping groups = new EntryMapping("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
@@ -83,7 +83,7 @@ public class BasicTestCase extends JDBCTestCase {
         sourceMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
         groups.addSourceMapping(sourceMapping);
 
-        partitionConfig.getDirectoryConfigs().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfig().addEntryMapping(groups);
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPenroseConfig(penroseConfig);

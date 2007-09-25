@@ -156,14 +156,14 @@
 
     <target name="build" depends="compile">
         <echo message="Building Penrose Core."/>
-        <jar jarfile="target/${product.name}-${product.version}.jar">
+        <jar jarfile="../lib/${product.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
-              <attribute name="Build-Date" value="${TIMESTAMP}"/>
+              <attribute name="Build-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>
     </target>
@@ -188,7 +188,7 @@
     <target name="dist" depends="build">
         <mkdir dir="${project.dist}"/>
         <copy todir="${project.dist}"
-            file="target/${product.name}-${product.version}.jar">
+            file="../lib/${product.name}-${product.version}.jar">
         </copy>
     </target>
 
@@ -221,6 +221,7 @@
     </target>
 
     <target name="clean" depends="init">
+        <delete file="../lib/${product.name}-${product.version}.jar"/>
         <delete dir="target" failonerror="false"/>
     </target>
 

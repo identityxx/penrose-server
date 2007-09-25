@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-public class PenroseClient {
+public class PenroseClient implements PenroseServiceMBean {
 
     public static Logger log = Logger.getLogger(PenroseClient.class);
 
@@ -174,7 +174,7 @@ public class PenroseClient {
 
 	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
 
-        log.debug("Invoking method "+method+"() on "+ objectName +".");
+        //log.debug("Invoking method "+method+"() on "+ objectName +".");
 
 		return connection.invoke(objectName, method, paramValues, paramClassNames);
 	}
@@ -187,6 +187,10 @@ public class PenroseClient {
         return (String)connection.getAttribute(objectName, "ProductVersion");
     }
 
+    public String getHome() throws Exception {
+        return (String)connection.getAttribute(objectName, "Home");
+    }
+    
     public void start() throws Exception {
         invoke("start",
                 new Object[] { },
@@ -241,6 +245,20 @@ public class PenroseClient {
         return new PartitionClient(this, partitionName);
     }
 
+    public void startPartition(String partitionName) throws Exception {
+        invoke("startPartition",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopPartition(String partitionName) throws Exception {
+        invoke("stopPartition",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // Services
     ////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +269,20 @@ public class PenroseClient {
 
     public ServiceClient getServiceClient(String serviceName) throws Exception {
         return new ServiceClient(this, serviceName);
+    }
+
+    public void startService(String serviceName) throws Exception {
+        invoke("startService",
+                new Object[] { serviceName },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopService(String serviceName) throws Exception {
+        invoke("stopService",
+                new Object[] { serviceName },
+                new String[] { String.class.getName() }
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,7 @@ package org.safehaus.penrose.mapping;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.directory.FieldMapping;
 
 import java.util.*;
 import java.io.Serializable;

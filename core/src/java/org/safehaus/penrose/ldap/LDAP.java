@@ -175,7 +175,7 @@ public class LDAP {
         return null;
     }
 
-    public static String getModificationOperations(int op) {
+    public static String getModificationOperation(int op) {
 
         switch (op) {
             case DirContext.ADD_ATTRIBUTE:
@@ -189,6 +189,21 @@ public class LDAP {
         }
 
         return null;
+    }
+
+    public static int getModificationOperation(String op) {
+
+        if ("add".equals(op)) {
+            return DirContext.ADD_ATTRIBUTE;
+
+        } else if ("delete".equals(op)) {
+            return DirContext.REMOVE_ATTRIBUTE;
+
+        } else if ("replace".equals(op)) {
+            return DirContext.REPLACE_ATTRIBUTE;
+        }
+
+        return 0;
     }
 
     public static Collection<Modification> createModifications(

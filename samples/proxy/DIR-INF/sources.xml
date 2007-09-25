@@ -5,27 +5,11 @@
 
 <sources>
 
-  <source name="users">
-    <connection-name>OpenLDAP</connection-name>
+  <source name="LDAP">
+    <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Users,dc=my-domain,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>filter</param-name>
-      <param-value>(objectClass=*)</param-value>
-    </parameter>
-  </source>
-
-  <source name="groups">
-    <connection-name>OpenLDAP</connection-name>
-    <parameter>
-      <param-name>baseDn</param-name>
-      <param-value>ou=Groups,dc=my-domain,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>filter</param-name>
-      <param-value>(objectClass=*)</param-value>
+      <param-value>dc=my-domain,dc=com</param-value>
     </parameter>
   </source>
 

@@ -112,6 +112,13 @@ public class DNBuilder {
         if (dn == null || "".equals(dn)) return list;
 
         char[] value = dn.toCharArray();
+        int start = 0;
+        int end = value.length;
+
+        if (value[start] == '"' && value[end-1] == '"') {
+            start++; end--;
+        }
+
         Map<String,Object> map = new TreeMap<String,Object>();
         boolean inName = true;
         boolean sawDQ = false;
@@ -119,7 +126,7 @@ public class DNBuilder {
         String name = null;
         String val;
 
-        for (int i = 0; i < value.length; i++) {
+        for (int i = start; i < end; i++) {
 
             if (inName) {
 

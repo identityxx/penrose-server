@@ -1,9 +1,8 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.ldap.SourceValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,7 @@ public class SearchResult implements Serializable {
 
 public Logger log = LoggerFactory.getLogger(getClass());
 
-    private EntryMapping entryMapping;
+    private Entry entry;
 
     private DN dn;
     private Attributes attributes;
@@ -112,12 +111,12 @@ public Logger log = LoggerFactory.getLogger(getClass());
         this.controls = controls;
     }
 
-    public EntryMapping getEntryMapping() {
-        return entryMapping;
+    public Entry getEntry() {
+        return entry;
     }
 
-    public void setEntryMapping(EntryMapping entryMapping) {
-        this.entryMapping = entryMapping;
+    public void setEntry(Entry entry) {
+        this.entry = entry;
     }
 
     public SourceValues getSourceValues() {

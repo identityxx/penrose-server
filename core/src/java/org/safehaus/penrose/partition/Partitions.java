@@ -6,7 +6,7 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceSync;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.ldap.DN;
@@ -50,7 +50,7 @@ public class Partitions implements PartitionsMBean {
                 sourceSync.destroy();
             }
 
-            for (Connection connection : partition.getConnections()) {
+            for (Connection connection : partition.getConnections().getConnections()) {
                 connection.destroy();
             }
         }
@@ -100,37 +100,23 @@ public class Partitions implements PartitionsMBean {
         return null;
     }
 
-    public Partition getPartition(EntryMapping entryMapping) throws Exception {
-
-        if (entryMapping == null) return null;
-
-        for (Partition partition : partitions.values()) {
-            PartitionConfig partitionConfig = partition.getPartitionConfig();
-            if (partitionConfig.getDirectoryConfigs().contains(entryMapping)) {
-                return partition;
-            }
-        }
-
-        return null;
-    }
-
     public Partition getPartition(DN dn) throws Exception {
 
         if (debug) log.debug("Finding partition for \""+dn+"\".");
 
         if (dn == null) {
             log.debug("DN is null.");
-            return null;
+            return getPartition("DEFAULT");
         }
 
-        Partition p = null;
+        Partition p = getPartition("DEFAULT");
         DN s = null;
 
         for (Partition partition : partitions.values()) {
             if (debug) log.debug("Checking "+partition.getName()+" partition.");
 
             PartitionConfig partitionConfig = partition.getPartitionConfig();
-            Collection<DN> suffixes = partitionConfig.getDirectoryConfigs().getSuffixes();
+            Collection<DN> suffixes = partitionConfig.getDirectoryConfig().getSuffixes();
             for (DN suffix : suffixes) {
                 if (suffix.isEmpty() && dn.isEmpty() // Root DSE
                         || dn.endsWith(suffix)) {
@@ -144,11 +130,7 @@ public class Partitions implements PartitionsMBean {
         }
 
         if (debug) {
-            if (p == null) {
-                log.debug("Partition not found.");
-            } else {
-                log.debug("Found "+p.getName()+" partition.");
-            }
+            log.debug("Found "+p.getName()+" partition.");
         }
 
         return p;
@@ -162,8 +144,8 @@ public class Partitions implements PartitionsMBean {
         return partitions.keySet();
     }
 
-    public Handler getHandler(Partition partition, EntryMapping entryMapping) {
-        String handlerName = entryMapping.getHandlerName();
+    public Handler getHandler(Partition partition, Entry entry) {
+        String handlerName = entry.getHandlerName();
         if (handlerName == null) handlerName = "DEFAULT";
 
         Handler handler = partition.getHandler(handlerName);
@@ -177,9 +159,9 @@ public class Partitions implements PartitionsMBean {
         return partition.getHandler(handlerName);
     }
 
-    public Engine getEngine(Partition partition, Handler handler, EntryMapping entryMapping) {
-        String engineName = entryMapping.getEngineName();
-        if (engineName == null) engineName = handler.getEngineName();
+    public Engine getEngine(Partition partition, Handler handler, Entry entry) {
+        String engineName = entry.getEngineName();
+        if (engineName == null && handler != null) engineName = handler.getEngineName();
         if (engineName == null) engineName = "DEFAULT";
 
         Engine engine = partition.getEngine(engineName);

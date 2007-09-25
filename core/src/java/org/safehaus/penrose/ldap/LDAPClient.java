@@ -183,7 +183,7 @@ public class LDAPClient {
 
         try {
             context = open();
-            context.createSubcontext(dn.toString(), attrs);
+            context.createSubcontext(escape(dn), attrs);
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -206,7 +206,7 @@ public class LDAPClient {
         db.set(bindDn);
         db.append(suffix);
 
-        parameters.put(Context.SECURITY_PRINCIPAL, db.toString());
+        parameters.put(Context.SECURITY_PRINCIPAL, escape(db.toDn()));
         parameters.put(Context.SECURITY_CREDENTIALS, password);
 
         javax.naming.ldap.LdapContext context = null;
@@ -248,7 +248,7 @@ public class LDAPClient {
 
         try {
             context = open();
-            NamingEnumeration ne = context.search(dn.toString(), filter, args, sc);
+            NamingEnumeration ne = context.search(escape(dn), filter, args, sc);
             return ne.hasMore();
 
         } finally {
@@ -278,7 +278,7 @@ public class LDAPClient {
 
         try {
             context = open();
-            context.destroySubcontext(dn.toString());
+            context.destroySubcontext(escape(dn));
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -310,7 +310,7 @@ public class LDAPClient {
 
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
-            if (debug) log.debug(" - "+ LDAP.getModificationOperations(type)+": "+attribute.getName());
+            if (debug) log.debug(" - "+ LDAP.getModificationOperation(type)+": "+attribute.getName());
 
             javax.naming.directory.Attribute attr = convertAttribute(attribute);
             list.add(new javax.naming.directory.ModificationItem(type, attr));
@@ -322,7 +322,7 @@ public class LDAPClient {
 
         try {
             context = open();
-            context.modifyAttributes(dn.toString(), mods);
+            context.modifyAttributes(escape(dn), mods);
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -350,7 +350,7 @@ public class LDAPClient {
 
         try {
             context = open();
-            context.rename(dn.toString(), newRdn.toString());
+            context.rename(escape(dn), escape(newRdn));
 
         } finally {
             if (context != null) try { context.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
@@ -375,6 +375,7 @@ public class LDAPClient {
         Collection<String> attributes = request.getAttributes();
         long sizeLimit = request.getSizeLimit();
         long timeLimit = request.getTimeLimit();
+        boolean typesOnly = request.isTypesOnly();
 
         if (debug) {
             log.debug("Searching "+baseDn);
@@ -392,6 +393,7 @@ public class LDAPClient {
         sc.setReturningAttributes(request.getAttributes().isEmpty() ? null : attributeNames);
         sc.setCountLimit(sizeLimit);
         sc.setTimeLimit((int)timeLimit);
+        sc.setReturningObjFlag(!typesOnly);
 
         javax.naming.ldap.LdapContext context = null;
         NamingEnumeration ne = null;
@@ -439,7 +441,7 @@ public class LDAPClient {
                         context.setRequestControls(requestControls.toArray(new Control[requestControls.size()]));
 
                         if (debug) log.debug("Searching page #"+page);
-                        ne = context.search(baseDn.toString(), filter, sc);
+                        ne = context.search(escape(baseDn), filter, sc);
 
                         while (ne.hasMore()) {
                             javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)ne.next();
@@ -1023,7 +1025,7 @@ public class LDAPClient {
                 
             } else {
                 context = open();
-                NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
+                NamingEnumeration entries = context.search(escape(searchBase), "(objectClass=*)", ctls);
                 if (!entries.hasMore()) return null;
 
                 javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)entries.next();
@@ -1081,7 +1083,7 @@ public class LDAPClient {
                 ctls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
 
                 context = open();
-                NamingEnumeration entries = context.search(searchBase.toString(), "(objectClass=*)", ctls);
+                NamingEnumeration entries = context.search(escape(searchBase), "(objectClass=*)", ctls);
                 try {
                     while (entries.hasMore()) {
                         javax.naming.directory.SearchResult sr = (javax.naming.directory.SearchResult)entries.next();
@@ -1205,5 +1207,20 @@ public class LDAPClient {
         }
 
         return attr;
+    }
+
+
+    public String escape(RDN rdn) {
+        return escape(rdn.toString());
+    }
+
+    public String escape(DN dn) {
+        return escape(dn.toString());
+    }
+
+    public String escape(String string) {
+        String s = string.replaceAll("/", "\\\\/");
+        if (debug) log.debug("Escape ["+string+"] => ["+s+"].");
+        return s;
     }
 }

@@ -3,9 +3,8 @@ package org.safehaus.penrose.handler.simple;
 import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
@@ -28,7 +27,7 @@ public class SimpleHandler extends Handler {
     public void add(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -36,7 +35,7 @@ public class SimpleHandler extends Handler {
         Attributes attributes = request.getAttributes();
         Collection<Object> values = attributes.getValues("objectClass");
 
-        Collection objectClasses = entryMapping.getObjectClasses();
+        Collection objectClasses = entry.getObjectClasses();
         boolean childHasObjectClass = false;
 
         for (Iterator i = objectClasses.iterator(); !childHasObjectClass && i.hasNext(); ) {
@@ -52,14 +51,14 @@ public class SimpleHandler extends Handler {
             throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
         }
 
-        super.add(session, partition, entryMapping, request, response);
+        super.add(session, partition, entry, request, response);
     }
 
     public void search(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -68,15 +67,14 @@ public class SimpleHandler extends Handler {
 
         if (debug) {
             log.debug("Base DN: "+baseDn);
-            log.debug("Entry mapping: "+entryMapping.getDn());
+            log.debug("Entry mapping: "+entry.getDn());
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
         int scope = request.getScope();
         if (scope == SearchRequest.SCOPE_BASE
                 || scope == SearchRequest.SCOPE_SUB
-                || scope == SearchRequest.SCOPE_ONE && partitionConfig.getDirectoryConfigs().getParent(entryMapping) == baseMapping
+                || scope == SearchRequest.SCOPE_ONE && entry.getParent() == base
                 ) {
 
             SearchResponse sr = new SearchResponse() {
@@ -87,27 +85,27 @@ public class SimpleHandler extends Handler {
 
             super.performSearch(
                     session,
-                    partition,
-                    baseMapping,
-                    entryMapping,
+                    base,
+                    entry,
+                    sourceValues,
                     request,
                     sr
             );
         }
 
-        if (scope == SearchRequest.SCOPE_ONE && entryMapping == baseMapping
+        if (scope == SearchRequest.SCOPE_ONE && entry == base
                 || scope == SearchRequest.SCOPE_SUB) {
 
-            Collection<EntryMapping> children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
+            Collection<Entry> children = entry.getChildren();
 
-            for (EntryMapping childMapping : children) {
-                Handler handler = partitions.getHandler(partition, childMapping);
+            for (Entry child : children) {
+                Handler handler = partitions.getHandler(partition, child);
 
                 handler.search(
                         session,
-                        partition,
-                        baseMapping,
-                        childMapping,
+                        base,
+                        child,
+                        sourceValues,
                         request,
                         response
                 );

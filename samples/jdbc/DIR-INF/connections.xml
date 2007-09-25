@@ -13,7 +13,7 @@
     </parameter>
     <parameter>
       <param-name>url</param-name>
-      <param-value>jdbc:mysql://localhost/example?autoReconnect=true</param-value>
+      <param-value>jdbc:mysql://localhost/jdbc?autoReconnect=true</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>

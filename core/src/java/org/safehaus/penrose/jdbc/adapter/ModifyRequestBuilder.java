@@ -2,15 +2,14 @@ package org.safehaus.penrose.jdbc.adapter;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.*;
 import org.safehaus.penrose.jdbc.Request;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
 import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.Filter;
@@ -109,9 +108,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                     for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                         Field field = fieldRef.getField();
 
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-                        Object value = interpreter.eval(fieldMapping);
+                        Object value = interpreter.eval(fieldRef);
                         if (value == null) continue;
 
                         String fieldName = field.getName();
@@ -125,9 +122,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                     for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                         Field field = fieldRef.getField();
 
-                        FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-                        String variable = fieldMapping.getVariable();
+                        String variable = fieldRef.getVariable();
                         if (variable == null) continue;
 
                         if (!variable.equals(attributeName)) continue;
@@ -150,7 +145,6 @@ public class ModifyRequestBuilder extends RequestBuilder {
         Attributes attributes = sourceValues.get(sourceName);
 
         for (String fieldName : attributes.getNames()) {
-            if (fieldName.startsWith("primaryKey.")) continue;
 
             Object value = attributes.getValue(fieldName);
 
@@ -201,9 +195,8 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
             if (attributeValues.isEmpty()) {
                 for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                    FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-                    String variable = fieldMapping.getVariable();
+                    String variable = fieldRef.getVariable();
                     if (variable != null) {
                         if (variable.indexOf(".") >= 0) continue; // skip foreign key
                     }
@@ -215,7 +208,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                         continue;
                     }
 
-                    Expression expression = fieldMapping.getExpression();
+                    Expression expression = fieldRef.getExpression();
                     if (expression == null) continue;
 
                     String foreach = expression.getForeach();
@@ -241,15 +234,14 @@ public class ModifyRequestBuilder extends RequestBuilder {
                 Map<String,Object> values = new HashMap<String,Object>();
 
                 for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                    FieldMapping fieldMapping = fieldRef.getFieldMapping();
 
-                    String variable = fieldMapping.getVariable();
+                    String variable = fieldRef.getVariable();
                     if (variable != null) {
                         if (variable.indexOf(".") >= 0) continue; // skip foreign key
                     }
 
                     String fieldName = fieldRef.getName();
-                    Object value = interpreter.eval(fieldMapping);
+                    Object value = interpreter.eval(fieldRef);
                     if (value == null) continue;
 
                     values.put(fieldName, value);
@@ -307,9 +299,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            String variable = fieldMapping.getVariable();
+            String variable = fieldRef.getVariable();
             if (variable == null) continue;
 
             int i = variable.indexOf(".");
@@ -367,9 +357,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            String variable = fieldMapping.getVariable();
+            String variable = fieldRef.getVariable();
             if (variable == null) continue;
 
             int i = variable.indexOf(".");

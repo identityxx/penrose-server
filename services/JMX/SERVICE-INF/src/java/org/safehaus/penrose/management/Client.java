@@ -4,9 +4,7 @@ import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.util.ClassUtil;
-import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -14,6 +12,7 @@ import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.scheduler.JobConfig;
 
 import java.util.*;
 import java.io.File;
@@ -171,32 +170,45 @@ public class Client {
             }
         }
     }
-
-    public void printModules() throws Exception {
+*/
+    public void showModules(String partitionName) throws Exception {
 
         System.out.print(org.safehaus.penrose.util.Formatter.rightPad("MODULE", 15)+" ");
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
         System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
 
         System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
+        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+
+        PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        for (String moduleName : partitionClient.getModuleNames()) {
+            ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+            String status = "STARTED"; // moduleClient.getStatus();
+
+            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(moduleName, 15)+" ");
+            System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10));
+        }
+    }
+
+    public void showJobs(String partitionName) throws Exception {
+
+        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("JOB", 15)+" ");
+        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+
         System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
         System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
 
-        ModuleManagerClient moduleManagerClient = client.getModuleManagerClient();
-        for (Iterator i=moduleManagerClient.getPartitionNames().iterator(); i.hasNext(); ) {
-            String partitionName = (String)i.next();
+        PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
 
-            for (Iterator j=moduleManagerClient.getModuleNames(partitionName).iterator(); j.hasNext(); ) {
-                String moduleName = (String)j.next();
-                String status = moduleManagerClient.getStatus(partitionName, moduleName);
+        for (String jobName : schedulerClient.getJobNames()) {
+            JobClient jobClient = schedulerClient.getJobClient(jobName);
+            String status = "STARTED"; // jobClient.getStatus();
 
-                System.out.print(org.safehaus.penrose.util.Formatter.rightPad(moduleName, 15)+" ");
-                System.out.print(org.safehaus.penrose.util.Formatter.rightPad(partitionName, 15)+" ");
-                System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10));
-            }
+            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(jobName, 15)+" ");
+            System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10));
         }
     }
-*/
+
     public void showConnection(String partitionName, String connectionName) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partitionName);
         ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
@@ -232,10 +244,9 @@ public class Client {
         System.out.println();
 
         System.out.println("Parameters  :");
-        for (Iterator i=sourceConfig.getParameterNames().iterator(); i.hasNext(); ) {
-            String paramName = (String)i.next();
+        for (String paramName : sourceConfig.getParameterNames()) {
             String value = sourceConfig.getParameter(paramName);
-            System.out.println(" - "+paramName +": "+value);
+            System.out.println(" - " + paramName + ": " + value);
         }
         System.out.println();
     }
@@ -274,6 +285,41 @@ public class Client {
         }
     }
 
+    public void showJob(String partitionName, String jobName) throws Exception {
+        PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
+        JobClient jobClient = schedulerClient.getJobClient(jobName);
+        JobConfig jobConfig = jobClient.getJobConfig();
+
+        System.out.println("Name        : "+jobConfig.getName());
+        System.out.println("Class       : "+jobConfig.getJobClass());
+        System.out.println("Partition   : "+partitionName);
+
+        String description = jobConfig.getDescription();
+        System.out.println("Description : "+(description == null ? "" : description));
+
+        System.out.println("Enabled     : "+jobConfig.isEnabled());
+        System.out.println();
+
+        System.out.println("Attributes:");
+        for (MBeanAttributeInfo attributeInfo  : jobClient.getAttributes()) {
+            System.out.println(" - "+attributeInfo.getName()+" ("+attributeInfo.getType()+")");
+        }
+        System.out.println();
+
+        System.out.println("Operations:");
+        for (MBeanOperationInfo operationInfo : jobClient.getOperations()) {
+
+            Collection<String> paramTypes = new ArrayList<String>();
+            for (MBeanParameterInfo parameterInfo : operationInfo.getSignature()) {
+                paramTypes.add(parameterInfo.getType());
+            }
+
+            String operation = operationInfo.getReturnType()+" "+ClassUtil.getSignature(operationInfo.getName(), paramTypes);
+            System.out.println(" - "+operation);
+        }
+    }
+
     public void processShowCommand(Iterator<String> iterator) throws Exception {
         String target = iterator.next();
         if ("services".equals(target)) {
@@ -291,43 +337,74 @@ public class Client {
             showPartition(partitionName);
 
         } else if ("connection".equals(target)) {
-            String partitionName = iterator.next();
             String connectionName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
             showConnection(partitionName, connectionName);
 
         } else if ("source".equals(target)) {
-            String partitionName = iterator.next();
             String sourceName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
             showSource(partitionName, sourceName);
 
         } else if ("module".equals(target)) {
-            String partitionName = iterator.next();
             String moduleName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
             showModule(partitionName, moduleName);
-/*
-        } else if ("sources".equals(target)) {
-            printSources();
 
         } else if ("modules".equals(target)) {
-            printModules();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
+            showModules(partitionName);
 
+        } else if ("jobs".equals(target)) {
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
+            showJobs(partitionName);
+
+        } else if ("job".equals(target)) {
+            String jobName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
+            showJob(partitionName, jobName);
+
+/*
+        } else if ("sources".equals(target)) {
+            showSources();
 */
+
+
         } else {
             System.out.println("Invalid target: "+target);
         }
     }
 
     public void processInvokeCommand(Iterator<String> iterator) throws Exception {
-        String target = iterator.next();
+        iterator.next(); // method
+        String methodName = iterator.next();
+        iterator.next(); // in
+
+        String target = iterator.next(); // module
         if ("module".equals(target)) {
-            String partitionName = iterator.next();
             String moduleName = iterator.next();
-            String methodName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
 
             Object[] paramValues;
             String[] paramTypes;
 
             if (iterator.hasNext()) {
+                iterator.next(); // with
+
                 Collection<String> args = new ArrayList<String>();
                 while (iterator.hasNext()) {
                     args.add(iterator.next());
@@ -356,6 +433,49 @@ public class Client {
             );
             
             System.out.println("Return value: "+returnValue);
+
+        } else if ("job".equals(target)) {
+
+            String jobName = iterator.next();
+            iterator.next(); // in
+            iterator.next(); // partition
+            String partitionName = iterator.next();
+
+            Object[] paramValues;
+            String[] paramTypes;
+
+            if (iterator.hasNext()) {
+                iterator.next(); // with
+
+                Collection<String> args = new ArrayList<String>();
+                while (iterator.hasNext()) {
+                    args.add(iterator.next());
+                }
+
+                paramValues = new Object[] {
+                        args.toArray(new String[args.size()])
+                };
+
+                paramTypes = new String[] {
+                        ("[L"+String.class.getName()+";")
+                };
+
+            } else {
+                paramValues = new Object[0];
+                paramTypes = new String[0];
+            }
+
+            PartitionClient partitionClient = client.getPartitionClient(partitionName);
+            SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
+            JobClient jobClient = schedulerClient.getJobClient(jobName);
+
+            Object returnValue = jobClient.invoke(
+                    methodName,
+                    paramValues,
+                    paramTypes
+            );
+
+            System.out.println("Return value: "+returnValue);
         }
     }
 
@@ -368,8 +488,7 @@ public class Client {
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            PartitionClient partitionClient = client.getPartitionClient(partitionName);
-            partitionClient.start();
+            client.startPartition(partitionName);
 /*
 
         } else if ("connection".equals(target)) {
@@ -422,8 +541,7 @@ public class Client {
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            PartitionClient partitionClient = client.getPartitionClient(partitionName);
-            partitionClient.stop();
+            client.stopPartition(partitionName);
 /*
         } else if ("connection".equals(target)) {
             String connectionName = (String)iterator.next();
@@ -477,9 +595,8 @@ public class Client {
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            PartitionClient partitionClient = client.getPartitionClient(partitionName);
-            partitionClient.stop();
-            partitionClient.start();
+            client.stopPartition(partitionName);
+            client.startPartition(partitionName);
 /*
         } else if ("connection".equals(target)) {
             String connectionName = (String)iterator.next();
@@ -625,25 +742,32 @@ public class Client {
         System.out.println("  stop partition <partition name>");
         System.out.println("  restart partition <partition name>");
         System.out.println();
-        System.out.println("  show connections");
-        System.out.println("  show connection <partition name> <connection name>");
-        System.out.println("  start connection <partition name> <connection name>");
-        System.out.println("  stop connection <partition name> <connection name>");
-        System.out.println("  restart connection <partition name> <connection name>");
+        System.out.println("  show connections in partition <partition name>");
+        System.out.println("  show connection <connection name> in partition <partition name>");
+        System.out.println("  start connection <connection name> in partition <partition name>");
+        System.out.println("  stop connection <connection name> in partition <partition name>");
+        System.out.println("  restart connection <connection name> in partition <partition name>");
         System.out.println();
-        System.out.println("  show sources");
-        System.out.println("  show source <partition name> <source name>");
-        System.out.println("  start source <partition name> <source name>");
-        System.out.println("  stop source <partition name> <source name>");
-        System.out.println("  restart source <partition name> <source name>");
-        System.out.println("  search source <partition name> <source name>");
+        System.out.println("  show sources in partition <partition name>");
+        System.out.println("  show source <source name> in partition <partition name>>");
+        System.out.println("  start source <source name> in partition <partition name>");
+        System.out.println("  stop source <source name> in partition <partition name>");
+        System.out.println("  restart source <source name> in partition <partition name>");
+        System.out.println("  search source <source name> in partition <partition name>");
         System.out.println();
-        System.out.println("  show modules");
-        System.out.println("  show module <partition name> <module name>");
-        System.out.println("  start module <partition name> <module name>");
-        System.out.println("  stop module <partition name> <module name>");
-        System.out.println("  restart module <partition name> <module name>");
-        System.out.println("  invoke module <partition name> <module name> <method name> [<parameter>...]");
+        System.out.println("  show modules in partition <partition name>");
+        System.out.println("  show module <module name> in partition <partition name>");
+        System.out.println("  start module <module name> in partition <partition name>");
+        System.out.println("  stop module <module name> in partition <partition name>");
+        System.out.println("  restart module <module name> in partition <partition name>");
+        System.out.println("  invoke method <method name> in module <module name> in partition <partition name> [with <parameter>...]");
+        System.out.println();
+        System.out.println("  show jobs in partition <partition name>");
+        System.out.println("  show job <job name> in partition <partition name>");
+        System.out.println("  start job <job name> in partition <partition name>");
+        System.out.println("  stop job <job name> in partition <partition name>");
+        System.out.println("  restart job <job name> in partition <partition name>");
+        System.out.println("  invoke method <method name> in job <job name> in partition <partition name> [with <parameter>...]");
     }
 
     public static void main(String args[]) throws Exception {

@@ -2,9 +2,9 @@ package org.safehaus.penrose.handler;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.Partitions;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
@@ -57,7 +57,7 @@ public class DefaultHandler extends Handler {
     public void add(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -65,7 +65,7 @@ public class DefaultHandler extends Handler {
         Attributes attributes = request.getAttributes();
         Collection<Object> values = attributes.getValues("objectClass");
 
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        Collection<String> objectClasses = entry.getObjectClasses();
         boolean childHasObjectClass = false;
 
         for (Iterator i = objectClasses.iterator(); !childHasObjectClass && i.hasNext(); ) {
@@ -81,7 +81,7 @@ public class DefaultHandler extends Handler {
             throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
         }
 
-        super.add(session, partition, entryMapping, request, response);
+        super.add(session, partition, entry, request, response);
 
         if (cacheManager != null) cacheManager.clear();
     }
@@ -89,12 +89,12 @@ public class DefaultHandler extends Handler {
     public void delete(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        super.delete(session, partition, entryMapping, request, response);
+        super.delete(session, partition, entry, request, response);
 
         if (cacheManager != null) cacheManager.clear();
     }
@@ -102,12 +102,12 @@ public class DefaultHandler extends Handler {
     public void modify(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        super.modify(session, partition, entryMapping, request, response);
+        super.modify(session, partition, entry, request, response);
 
         if (cacheManager != null) cacheManager.clear();
     }
@@ -115,35 +115,35 @@ public class DefaultHandler extends Handler {
     public void modrdn(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        super.modrdn(session, partition, entryMapping, request, response);
+        super.modrdn(session, partition, entry, request, response);
 
         if (cacheManager != null) cacheManager.clear();
     }
 
     public void search(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
-        Link link = entryMapping.getLink();
+        Link link = entry.getLink();
 
         if (link != null) {
 
             forwardSearch(
                     link,
                     session,
-                    partition,
-                    baseMapping,
-                    entryMapping,
+                    base,
+                    entry,
+                    sourceValues,
                     request,
                     response
             );
@@ -153,18 +153,18 @@ public class DefaultHandler extends Handler {
 
         performSearch(
                 session,
-                partition,
-                baseMapping,
-                entryMapping,
+                base,
+                entry,
+                sourceValues,
                 request,
                 response
         );
 
         searchChildren(
                 session,
-                partition,
-                baseMapping,
-                entryMapping,
+                base,
+                entry,
+                sourceValues,
                 request,
                 response
         );
@@ -173,9 +173,9 @@ public class DefaultHandler extends Handler {
     public void forwardSearch(
             final Link link,
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -183,23 +183,23 @@ public class DefaultHandler extends Handler {
         String partitionName = link.getPartitionName();
         DN dn = link.getDn();
 
+        Directory directory = partition.getDirectory();
+        Collection<Entry> c = directory.getEntries(dn == null ? entry.getDn() : dn);
+
         Partitions partitions = penroseContext.getPartitions();
         Partition p = partitionName == null ? partition : partitions.getPartition(partitionName);
 
-        PartitionConfig partitionConfig = p.getPartitionConfig();
-        Collection<EntryMapping> c = partitionConfig.getDirectoryConfigs().getEntryMappings(dn == null ? entryMapping.getDn() : dn);
-
         SearchRequest newRequest = (SearchRequest)request.clone();
 
-        for (EntryMapping em : c) {
+        for (Entry e : c) {
 
-            Handler handler = partitions.getHandler(p, em);
+            Handler handler = partitions.getHandler(p, e);
 
             handler.search(
                     session,
-                    p,
-                    em,
-                    em,
+                    e,
+                    e,
+                    sourceValues,
                     newRequest,
                     response
             );
@@ -208,33 +208,32 @@ public class DefaultHandler extends Handler {
 
     public void performSearch(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
         int scope = request.getScope();
-        final Filter filter = request.getFilter();
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
         if (scope != SearchRequest.SCOPE_BASE
                 && scope != SearchRequest.SCOPE_SUB
-                && (scope != SearchRequest.SCOPE_ONE || partitionConfig.getDirectoryConfigs().getParent(entryMapping) != baseMapping)
+                && (scope != SearchRequest.SCOPE_ONE || entry.getParent() != base)
         ) {
             // if not searching for base or subtree or immediate children) then skip
             return;
         }
 
         if (debug) {
-            log.debug("Searching "+entryMapping.getDn()+" with scope "+ LDAP.getScope(scope));
+            log.debug("Searching "+entry.getDn()+" with scope "+ LDAP.getScope(scope));
         }
 
         final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
-        if (!filterEvaluator.eval(entryMapping, filter)) { // Check LDAP filter
-            if (debug) log.debug("Entry \""+entryMapping.getDn()+"\" doesn't match search filter.");
+        final Filter filter = request.getFilter();
+        if (!filterEvaluator.eval(entry, filter)) { // Check LDAP filter
+            if (debug) log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
             return;
         }
 
@@ -248,7 +247,7 @@ public class DefaultHandler extends Handler {
         } else {
             cacheKey = new CacheKey();
             cacheKey.setSearchRequest(request);
-            cacheKey.setEntryMapping(entryMapping);
+            cacheKey.setEntry(entry);
             cache = cacheManager.get(cacheKey);
         }
 
@@ -263,7 +262,7 @@ public class DefaultHandler extends Handler {
 
         final Cache newCache;
 
-        String s = entryMapping.getParameter(CACHE);
+        String s = entry.getParameter(CACHE);
         boolean cacheEnabled = cacheManager != null && (s == null || Boolean.parseBoolean(s));
 
         if (cacheEnabled) {
@@ -272,11 +271,11 @@ public class DefaultHandler extends Handler {
 
             newCache = cacheManager.create();
 
-            s = entryMapping.getParameter(CACHE_SIZE);
+            s = entry.getParameter(CACHE_SIZE);
             int cacheSize = s == null ? cacheManager.getSize() : Integer.parseInt(s);
             newCache.setSize(cacheSize);
 
-            s = entryMapping.getParameter(CACHE_EXPIRATION);
+            s = entry.getParameter(CACHE_EXPIRATION);
             int cacheExpiration = s == null ? cacheManager.getExpiration() : Integer.parseInt(s);
             newCache.setExpiration(cacheExpiration);
 
@@ -305,9 +304,9 @@ public class DefaultHandler extends Handler {
 
         super.performSearch(
                 session,
-                partition,
-                baseMapping,
-                entryMapping,
+                base,
+                entry,
+                sourceValues,
                 request,
                 sr
         );
@@ -315,9 +314,9 @@ public class DefaultHandler extends Handler {
 
     public void searchChildren(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -325,31 +324,29 @@ public class DefaultHandler extends Handler {
         int scope = request.getScope();
 
         if (scope != SearchRequest.SCOPE_SUB &&
-                (scope != SearchRequest.SCOPE_ONE || entryMapping != baseMapping)
+                (scope != SearchRequest.SCOPE_ONE || entry != base)
         ) {
             // if not searching for subtree or immediate children then skip
             return;
         }
 
         Partitions partitions = penroseContext.getPartitions();
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection children = partitionConfig.getDirectoryConfigs().getChildren(entryMapping);
+        Collection<Entry> children = entry.getChildren();
 
         SearchRequest newRequest = (SearchRequest)request.clone();
         if (scope == SearchRequest.SCOPE_ONE) {
             newRequest.setScope(SearchRequest.SCOPE_BASE);
         }
 
-        for (Object aChildren : children) {
-            EntryMapping childMapping = (EntryMapping) aChildren;
+        for (Entry child : children) {
 
-            Handler handler = partitions.getHandler(partition, childMapping);
+            Handler handler = partitions.getHandler(partition, child);
 
             handler.search(
                     session,
-                    partition,
-                    baseMapping,
-                    childMapping,
+                    base,
+                    child,
+                    sourceValues,
                     newRequest,
                     response
             );

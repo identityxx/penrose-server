@@ -1,7 +1,9 @@
 package org.safehaus.penrose.scheduler.quartz;
 
+import org.quartz.Trigger;
+import org.safehaus.penrose.partition.Partition;
+
 import java.text.SimpleDateFormat;
-import java.text.DateFormat;
 import java.util.Date;
 
 /**
@@ -17,8 +19,12 @@ public class SimpleTrigger extends QuartzTrigger {
         SimpleDateFormat dateFormat = s == null ? new SimpleDateFormat() : new SimpleDateFormat(s);
         log.debug("Date format: "+dateFormat.toPattern());
 
+        s = triggerConfig.getParameter("delay");
+        long delay = s == null ? 0 : Long.parseLong(s);
+        log.debug("Delay: "+delay);
+
         s = triggerConfig.getParameter("startTime");
-        Date startTime = s == null ? null : dateFormat.parse(s);
+        Date startTime = s == null ? new Date(System.currentTimeMillis() + delay * 1000) : dateFormat.parse(s);
         log.debug("Start time: "+startTime);
 
         s = triggerConfig.getParameter("endTime");
@@ -26,20 +32,37 @@ public class SimpleTrigger extends QuartzTrigger {
         log.debug("End time: "+endTime);
 
         s = triggerConfig.getParameter("count");
-        int count = s == null ? 0 : Integer.parseInt(s);
+        Integer count = s == null ? null : Integer.parseInt(s);
         log.debug("Count: "+count);
 
         s = triggerConfig.getParameter("interval");
         long interval = s == null ? 0 : Long.parseLong(s);
         log.debug("Interval: "+interval);
 
-        quartzTrigger = new org.quartz.SimpleTrigger(
-                name,
-                null,
-                startTime,
-                endTime,
-                count,
-                interval
-        );
+        Partition partition = triggerContext.getPartition();
+
+        org.quartz.SimpleTrigger simpleTrigger;
+
+        if (count == null) { // schedule one execution
+            simpleTrigger = new org.quartz.SimpleTrigger(
+                    name,
+                    partition.getName(),
+                    startTime
+            );
+
+        } else { // schedule multiple executions
+            simpleTrigger = new org.quartz.SimpleTrigger(
+                    name,
+                    partition.getName(),
+                    startTime,
+                    endTime,
+                    count,
+                    interval * 1000
+            );
+
+            simpleTrigger.setMisfireInstruction(org.quartz.SimpleTrigger.MISFIRE_INSTRUCTION_RESCHEDULE_NOW_WITH_EXISTING_REPEAT_COUNT);
+        }
+
+        quartzTrigger = simpleTrigger;
     }
 }

@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.connection;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.ldap.SourceValues;
@@ -27,9 +26,10 @@ import org.safehaus.penrose.adapter.AdapterContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.directory.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,14 +154,14 @@ public class Connection implements ConnectionMBean {
 
     public void add(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        adapter.add(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.add(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,14 +181,14 @@ public class Connection implements ConnectionMBean {
 
     public void bind(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        adapter.bind(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.bind(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,14 +208,14 @@ public class Connection implements ConnectionMBean {
 
     public void compare(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
 
-        adapter.compare(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.compare(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,14 +235,14 @@ public class Connection implements ConnectionMBean {
 
     public void delete(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        adapter.delete(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.delete(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,14 +262,14 @@ public class Connection implements ConnectionMBean {
 
     public void modify(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        adapter.modify(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.modify(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,14 +289,14 @@ public class Connection implements ConnectionMBean {
 
     public void modrdn(
             Session session,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        adapter.modrdn(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.modrdn(session, entry, sourceRefs, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -316,14 +316,23 @@ public class Connection implements ConnectionMBean {
 
     public void search(
             Session session,
-            EntryMapping entryMapping,
+            Collection<SourceRef> primarySourceRefs,
+            Collection<SourceRef> localSourceRefs,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
-        adapter.search(session, entryMapping, sourceRefs, sourceValues, request, response);
+        adapter.search(
+                session,
+                primarySourceRefs,
+                localSourceRefs,
+                sourceRefs,
+                sourceValues,
+                request,
+                response
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,8 +351,8 @@ public class Connection implements ConnectionMBean {
         adapter.drop(source);
     }
 
-    public void clean(Source source) throws Exception {
-        adapter.clean(source);
+    public void clear(Source source) throws Exception {
+        adapter.clear(source);
     }
 
     public void status(Source source) throws Exception {

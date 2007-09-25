@@ -170,22 +170,20 @@ public class SearchRequest extends Request implements Serializable, Cloneable {
         return super.equals(object);
     }
 
-    public void copy(SearchRequest request) {
-        dn          = request.dn;
-        filter      = request.filter;
-        scope       = request.scope;
-    	dereference = request.dereference;
-    	typesOnly   = request.typesOnly;
-    	sizeLimit   = request.sizeLimit;
-    	timeLimit   = request.timeLimit;
-
-        attributes = new ArrayList<String>();
-        attributes.addAll(request.attributes);
-    }
-
     public Object clone() throws CloneNotSupportedException {
         SearchRequest request = (SearchRequest)super.clone();
-        request.copy(this);
+
+        request.dn          = dn;
+        request.filter      = filter;
+        request.scope       = scope;
+    	request.dereference = dereference;
+    	request.typesOnly   = typesOnly;
+    	request.sizeLimit   = sizeLimit;
+    	request.timeLimit   = timeLimit;
+
+        request.attributes = new ArrayList<String>();
+        request.attributes.addAll(attributes);
+
         return request;
     }
 }

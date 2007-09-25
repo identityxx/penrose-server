@@ -2,8 +2,9 @@
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (description?,oc*,at*,source*,link?,handler?,engine?,aci*,parameter*)>
+<!ELEMENT entry (description?,entry-class?,oc*,at*,source*,link?,handler?,engine?,aci*,parameter*)>
 <!ATTLIST entry dn CDATA #REQUIRED>
+<!ELEMENT entry-class (#PCDATA)>
 
 <!ELEMENT description (#PCDATA)>
 
@@ -27,6 +28,7 @@
 
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
+<!ATTLIST field rdn CDATA #REQUIRED>
 
 <!ELEMENT binary (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>

@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.mapping.AttributeMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
 
 /**
  * @author Endi S. Dewata

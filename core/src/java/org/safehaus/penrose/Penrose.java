@@ -236,7 +236,7 @@ public class Penrose {
 
         PartitionReader partitionReader = partitionConfigs.getPartitionReader();
 
-        PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
+        PartitionConfig partitionConfig = new DefaultPartitionConfig();
 
         for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
             partitionConfig.addHandlerConfig(handlerConfig);
@@ -248,7 +248,7 @@ public class Penrose {
 
         partitionReader.read(conf, partitionConfig.getConnectionConfigs());
         partitionReader.read(conf, partitionConfig.getSourceConfigs());
-        partitionReader.read(conf, partitionConfig.getDirectoryConfigs());
+        partitionReader.read(conf, partitionConfig.getDirectoryConfig());
         partitionReader.read(conf, partitionConfig.getModuleConfigs());
 
         partitionConfigs.addPartitionConfig(partitionConfig);

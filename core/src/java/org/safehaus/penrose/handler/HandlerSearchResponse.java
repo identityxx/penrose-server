@@ -1,10 +1,10 @@
 package org.safehaus.penrose.handler;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.acl.ACLManager;
+import org.safehaus.penrose.acl.ACLEvaluator;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +24,13 @@ public class HandlerSearchResponse extends SearchResponse {
     Session session;
     Partition partition;
 
-    HandlerManager handlerManager;
-    ACLManager aclManager;
+    ACLEvaluator aclEvaluator;
 
     Collection<String> requestedAttributes;
     boolean allRegularAttributes;
     boolean allOpAttributes;
 
-    Collection<EntryMapping> entryMappings;
+    Collection<Entry> entries;
     Map<String,Collection<String>> attributesToRemove = new HashMap<String,Collection<String>>();
     Map<String,Exception> results = new HashMap<String,Exception>();
 
@@ -39,53 +38,50 @@ public class HandlerSearchResponse extends SearchResponse {
             SearchResponse parent,
             Session session,
             Partition partition,
-            HandlerManager handlerManager,
-            ACLManager aclManager,
             Collection<String> requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
-            Collection<EntryMapping> entryMappings
+            Collection<Entry> entries
     ) {
         this.response = parent;
         this.session = session;
         this.partition = partition;
 
-        this.handlerManager = handlerManager;
-        this.aclManager = aclManager;
+        this.aclEvaluator = partition.getAclEvaluator();
 
         this.requestedAttributes = requestedAttributes;
         this.allRegularAttributes = allRegularAttributes;
         this.allOpAttributes = allOpAttributes;
 
-        this.entryMappings = entryMappings;
+        this.entries = entries;
     }
 
     public void add(SearchResult searchResult) throws Exception {
 
         DN dn = searchResult.getDn();
-        EntryMapping entryMapping = searchResult.getEntryMapping();
+        Entry entry = searchResult.getEntry();
         Attributes attributes = searchResult.getAttributes();
 
         if (!session.isRootUser()) {
             if (debug) log.debug("Checking read permission.");
             
-            int rc = aclManager.checkRead(session, partition, entryMapping, dn);
+            int rc = aclEvaluator.checkRead(session, partition, entry, dn);
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Entry \""+searchResult.getDn()+"\" is not readable.");
                 return;
             }
-            handlerManager.filterAttributes(session, partition, dn, entryMapping, attributes);
+            partition.filterAttributes(session, dn, entry, attributes);
         }
 
-        Collection<String> list = attributesToRemove.get(entryMapping.getId());
+        Collection<String> list = attributesToRemove.get(entry.getId());
         if (list == null) {
-            list = handlerManager.filterAttributes(session, partition, searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
-            attributesToRemove.put(entryMapping.getId(), list);
+            list = partition.filterAttributes(session, searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
+            attributesToRemove.put(entry.getId(), list);
         }
 
         if (!list.isEmpty()) {
             if (debug) log.debug("Removing attributes: "+list);
-            handlerManager.removeAttributes(attributes, list);
+            partition.removeAttributes(attributes, list);
         }
 
         if (debug) {
@@ -98,13 +94,13 @@ public class HandlerSearchResponse extends SearchResponse {
         response.add(result);
     }
 
-    public void setResult(EntryMapping entryMapping, LDAPException exception) {
-        results.put(entryMapping.getId(), exception);
+    public void setResult(Entry entry, LDAPException exception) {
+        results.put(entry.getId(), exception);
     }
 
     public void close() throws Exception {
 
-        int count = entryMappings.size() - results.size();
+        int count = entries.size() - results.size();
 
         if (count > 0) {
             if (debug) log.debug("Search thread ended. Waiting for "+count+" more.");
@@ -117,8 +113,8 @@ public class HandlerSearchResponse extends SearchResponse {
         LDAPException noSuchObject = null;
         LDAPException exception = null;
 
-        for (EntryMapping entryMapping : entryMappings) {
-            LDAPException ldapException = (LDAPException) results.get(entryMapping.getId());
+        for (Entry entry : entries) {
+            LDAPException ldapException = (LDAPException) results.get(entry.getId());
 
             int rc = ldapException.getResultCode();
             switch (rc) {

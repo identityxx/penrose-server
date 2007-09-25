@@ -14,14 +14,14 @@ import org.safehaus.penrose.ldap.*;
 public class ChangeLogModule extends Module {
 
     String sourceName;
-    Source changeLog;
+    Source changelog;
 
     public void init() throws Exception {
 
         sourceName = partition.getParameter("source");
         if (sourceName == null) sourceName = "changelog";
 
-        changeLog = partition.getSource(sourceName);
+        changelog = partition.getSource(sourceName);
 
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
@@ -40,6 +40,38 @@ public class ChangeLogModule extends Module {
 
         if (response.getReturnCode() != LDAP.SUCCESS) return;
 
+        recordAddOperation(request);
+    }
+
+    public void afterModify(ModifyEvent event) throws Exception {
+        ModifyRequest request = event.getRequest();
+        ModifyResponse response = event.getResponse();
+
+        if (response.getReturnCode() != LDAP.SUCCESS) return;
+
+        recordModifyOperation(request);
+    }
+
+    public void afterModRdn(ModRdnEvent event) throws Exception {
+        ModRdnRequest request = event.getRequest();
+        ModRdnResponse response = event.getResponse();
+
+        if (response.getReturnCode() != LDAP.SUCCESS) return;
+
+        recordModRdnOperation(request);
+    }
+
+    public void afterDelete(DeleteEvent event) throws Exception {
+        DeleteRequest request = event.getRequest();
+        DeleteResponse response = event.getResponse();
+
+        if (response.getReturnCode() != LDAP.SUCCESS) return;
+
+        recordDeleteOperation(request);
+    }
+
+    public void recordAddOperation(AddRequest request) throws Exception {
+
         log.debug("Recording add operation "+request.getDn());
 
         Attributes attrs = request.getAttributes();
@@ -51,14 +83,10 @@ public class ChangeLogModule extends Module {
         attributes.setValue("changeType", "add");
         attributes.setValue("changes", attrs.toString());
 
-        changeLog.add(dn, attributes);
+        changelog.add(dn, attributes);
     }
 
-    public void afterModify(ModifyEvent event) throws Exception {
-        ModifyRequest request = event.getRequest();
-        ModifyResponse response = event.getResponse();
-
-        if (response.getReturnCode() != LDAP.SUCCESS) return;
+    public void recordModifyOperation(ModifyRequest request) throws Exception {
 
         log.debug("Recording modify operation "+request.getDn());
 
@@ -67,7 +95,7 @@ public class ChangeLogModule extends Module {
         for (Modification modification : request.getModifications()) {
             Attribute attr = modification.getAttribute();
 
-            sb.append(LDAP.getModificationOperations(modification.getType()));
+            sb.append(LDAP.getModificationOperation(modification.getType()));
             sb.append(": ");
             sb.append(attr.getName());
             sb.append("\n");
@@ -85,14 +113,10 @@ public class ChangeLogModule extends Module {
         attributes.setValue("changeType", "modify");
         attributes.setValue("changes", sb.toString());
 
-        changeLog.add(dn, attributes);
+        changelog.add(dn, attributes);
     }
 
-    public void afterModRdn(ModRdnEvent event) throws Exception {
-        ModRdnRequest request = event.getRequest();
-        ModRdnResponse response = event.getResponse();
-
-        if (response.getReturnCode() != LDAP.SUCCESS) return;
+    public void recordModRdnOperation(ModRdnRequest request) throws Exception {
 
         log.debug("Recording modrdn operation "+request.getDn());
 
@@ -104,14 +128,10 @@ public class ChangeLogModule extends Module {
         attributes.setValue("newRDN", request.getNewRdn().toString());
         attributes.setValue("deleteOldRDN", request.getDeleteOldRdn());
 
-        changeLog.add(dn, attributes);
+        changelog.add(dn, attributes);
     }
 
-    public void afterDelete(DeleteEvent event) throws Exception {
-        DeleteRequest request = event.getRequest();
-        DeleteResponse response = event.getResponse();
-
-        if (response.getReturnCode() != LDAP.SUCCESS) return;
+    public void recordDeleteOperation(DeleteRequest request) throws Exception {
 
         log.debug("Recording delete operation "+request.getDn());
 
@@ -121,6 +141,6 @@ public class ChangeLogModule extends Module {
         attributes.setValue("targetDN", request.getDn().toString());
         attributes.setValue("changeType", "delete");
 
-        changeLog.add(dn, attributes);
+        changelog.add(dn, attributes);
     }
 }

@@ -7,11 +7,11 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.LDAP;
+import org.safehaus.penrose.directory.*;
 
 import java.util.*;
 
@@ -24,7 +24,6 @@ public class FilterBuilder {
     public boolean debug = log.isDebugEnabled();
 
     Partition partition;
-    EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>();
 
@@ -34,14 +33,12 @@ public class FilterBuilder {
 
     public FilterBuilder(
             Partition partition,
-            EntryMapping entryMapping,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
         this.partition = partition;
-        this.entryMapping = entryMapping;
 
         for (SourceRef sourceRef : sourceRefs) {
             this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
@@ -59,7 +56,6 @@ public class FilterBuilder {
             Attributes attributes = sourceValues.get(sourceName);
 
             for (String fieldName : attributes.getNames()) {
-                if (fieldName.startsWith("primaryKey.")) continue;
 
                 FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
                 if (fieldRef == null) {
@@ -159,10 +155,9 @@ public class FilterBuilder {
                 Collection<String> operations = fieldRef.getOperations();
                 if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
 
-                FieldMapping fieldMapping = fieldRef.getFieldMapping();
-                String fieldName = fieldMapping.getName();
+                String fieldName = fieldRef.getName();
 
-                Object value = interpreter.eval(fieldMapping);
+                Object value = interpreter.eval(fieldRef);
                 if (value == null) {
                     //if (debug) log.debug("Field "+fieldName+" is null.");
                     continue;
@@ -187,26 +182,23 @@ public class FilterBuilder {
         String attributeName = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();
 
-        AttributeMapping attributeMapping = entryMapping.getAttributeMapping(attributeName);
-        String variable = attributeMapping.getVariable();
+        Filter f = null;
 
-        if (variable == null) {
-            if (debug) log.debug("Attribute "+attributeName+" is not mapped to a variable.");
-            return null;
+        for (SourceRef sourceRef : sourceRefs.values()) {
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+                String variable = fieldRef.getVariable();
+                if (variable == null || !attributeName.equals(variable)) continue;
+
+                Collection<String> operations = fieldRef.getOperations();
+                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+
+                SubstringFilter sf = new SubstringFilter(fieldRef.getName(), substrings);
+                if (debug) log.debug(" - Filter "+sf);
+
+                f = FilterTool.appendAndFilter(f, sf);
+            }
         }
-
-        int index = variable.indexOf(".");
-        String sourceName = variable.substring(0, index);
-        String fieldName = variable.substring(index+1);
-
-        SourceRef sourceRef = sourceRefs.get(sourceName);
-        FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-
-        Collection<String> operations = fieldRef.getOperations();
-        if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) return null;
-
-        SubstringFilter f = new SubstringFilter(fieldName, substrings);
-        if (debug) log.debug(" - Filter "+f);
 
         return f;
     }
@@ -230,12 +222,11 @@ public class FilterBuilder {
                 Collection<String> operations = fieldRef.getOperations();
                 if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
 
-                FieldMapping fieldMapping = fieldRef.getFieldMapping();
-                String fieldName = fieldMapping.getName();
+                String fieldName = fieldRef.getName();
 
-                String variable = fieldMapping.getVariable();
+                String variable = fieldRef.getVariable();
                 if (variable == null) {
-                    Expression expression = fieldMapping.getExpression();
+                    Expression expression = fieldRef.getExpression();
                     if (expression != null) {
                         variable = expression.getForeach();
                     }

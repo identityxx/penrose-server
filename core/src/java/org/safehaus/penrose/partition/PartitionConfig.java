@@ -19,7 +19,7 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.connection.ConnectionConfigs;
 import org.safehaus.penrose.source.SourceConfigs;
-import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -39,26 +39,28 @@ import java.io.Serializable;
  */
 public class PartitionConfig implements Serializable, PartitionConfigMBean, Cloneable {
 
-    private boolean enabled = true;
+    public final static String DEFAULT_PARTITION_CLASS = Partition.class.getName();
+    protected boolean enabled = true;
 
-    private String name;
-    private String description;
+    protected String name;
+    protected String description;
+    protected String partitionClass = DEFAULT_PARTITION_CLASS;
 
-    private Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
-    private Map<String,EngineConfig>      engineConfigs      = new LinkedHashMap<String,EngineConfig>();
-    private Map<String,HandlerConfig>     handlerConfigs     = new LinkedHashMap<String,HandlerConfig>();
-    private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
+    protected Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
+    protected Map<String,EngineConfig>      engineConfigs      = new LinkedHashMap<String,EngineConfig>();
+    protected Map<String,HandlerConfig>     handlerConfigs     = new LinkedHashMap<String,HandlerConfig>();
+    protected Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    public Map<String,String> parameters = new LinkedHashMap<String,String>();
+    protected Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    private ConnectionConfigs connectionConfigs = new ConnectionConfigs();
-    private SourceConfigs     sourceConfigs     = new SourceConfigs();
-    private DirectoryConfigs  directoryConfigs  = new DirectoryConfigs();
-    private ModuleConfigs     moduleConfigs     = new ModuleConfigs();
+    protected ConnectionConfigs connectionConfigs = new ConnectionConfigs();
+    protected SourceConfigs     sourceConfigs     = new SourceConfigs();
+    protected DirectoryConfig   directoryConfig   = new DirectoryConfig();
+    protected ModuleConfigs     moduleConfigs     = new ModuleConfigs();
 
-    private SchedulerConfig   schedulerConfig;
+    protected SchedulerConfig   schedulerConfig;
 
-    private Collection<URL> classPaths = new ArrayList<URL>();
+    protected Collection<URL>   classPaths = new ArrayList<URL>();
 
     public PartitionConfig() {
     }
@@ -121,6 +123,7 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
         if (!equals(name, partitionConfig.name)) return false;
         if (!equals(description, partitionConfig.description)) return false;
+        if (!equals(partitionClass, partitionConfig.partitionClass)) return false;
 
         if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
         if (!equals(handlerConfigs, partitionConfig.handlerConfigs)) return false;
@@ -137,9 +140,11 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
     public Object clone() throws CloneNotSupportedException {
         PartitionConfig partitionConfig = (PartitionConfig)super.clone();
 
-        partitionConfig.name = name;
         partitionConfig.enabled = enabled;
+
+        partitionConfig.name = name;
         partitionConfig.description = description;
+        partitionConfig.partitionClass = partitionClass;
 
         partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
         for (AdapterConfig adapterConfig : adapterConfigs.values()) {
@@ -166,7 +171,7 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
         partitionConfig.connectionConfigs = (ConnectionConfigs) connectionConfigs.clone();
         partitionConfig.sourceConfigs = (SourceConfigs) sourceConfigs.clone();
-        partitionConfig.directoryConfigs = (DirectoryConfigs) directoryConfigs.clone();
+        partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
         partitionConfig.moduleConfigs = (ModuleConfigs) moduleConfigs.clone();
 
         partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
@@ -185,8 +190,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         return sourceConfigs;
     }
 
-    public DirectoryConfigs getDirectoryConfigs() {
-        return directoryConfigs;
+    public DirectoryConfig getDirectoryConfig() {
+        return directoryConfig;
     }
 
     public ModuleConfigs getModuleConfigs() {
@@ -283,5 +288,13 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
     public void setSchedulerConfig(SchedulerConfig schedulerConfig) {
         this.schedulerConfig = schedulerConfig;
+    }
+
+    public String getPartitionClass() {
+        return partitionClass;
+    }
+
+    public void setPartitionClass(String partitionClass) {
+        this.partitionClass = partitionClass;
     }
 }

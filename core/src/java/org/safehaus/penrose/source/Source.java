@@ -20,9 +20,6 @@ public class Source implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    protected String name;
-    protected Map<String,String> parameters = new LinkedHashMap<String,String>();
-
     protected SourceConfig sourceConfig;
     protected SourceContext sourceContext;
 
@@ -30,11 +27,7 @@ public class Source implements Cloneable {
     protected Connection connection;
 
     protected Map<String,Field> fields = new LinkedHashMap<String,Field>();
-
-    protected Collection<String> primaryKeyNames = new ArrayList<String>();
     protected Collection<Field> primaryKeyFields = new ArrayList<Field>();
-
-    protected Collection<String> indexFieldNames = new ArrayList<String>();
     protected Collection<Field> indexFields = new ArrayList<Field>();
 
     public Source() {
@@ -44,35 +37,31 @@ public class Source implements Cloneable {
 
         log.debug("Initializing source "+sourceConfig.getName()+".");
 
-        this.sourceConfig = sourceConfig;
+        this.sourceConfig  = sourceConfig;
         this.sourceContext = sourceContext;
 
-        this.partition = sourceContext.getPartition();
-        this.connection = sourceContext.getConnection();
-
-        this.name = sourceConfig.getName();
-        this.parameters.putAll(sourceConfig.getParameters());
+        this.partition     = sourceContext.getPartition();
+        this.connection    = sourceContext.getConnection();
 
         Collection<FieldConfig> fieldConfigs = sourceConfig.getFieldConfigs();
         for (FieldConfig fieldConfig : fieldConfigs) {
-            String fieldName = fieldConfig.getName();
-
-            Field field = new Field(fieldConfig);
-            fields.put(fieldName, field);
-
-            if (fieldConfig.isPrimaryKey()) primaryKeyFields.add(field);
-            if (fieldConfig.isIndex()) indexFields.add(field);
+            Field field = new Field(this, fieldConfig);
+            addField(field);
         }
-
-        primaryKeyNames.addAll(sourceConfig.getPrimaryKeyNames());
-        indexFieldNames.addAll(sourceConfig.getIndexFieldNames());
     }
 
     public void destroy() throws Exception {
     }
 
+    public void addField(Field field) {
+        fields.put(field.getName(), field);
+
+        if (field.isPrimaryKey()) primaryKeyFields.add(field);
+        if (field.isIndex()) indexFields.add(field);
+    }
+
     public String getName() {
-        return name;
+        return sourceConfig.getName();
     }
 
     public String getConnectionName() {
@@ -80,7 +69,7 @@ public class Source implements Cloneable {
     }
     
     public void setName(String name) {
-        this.name = name;
+        sourceConfig.setName(name);
     }
 
     public SourceConfig getSourceConfig() {
@@ -108,25 +97,19 @@ public class Source implements Cloneable {
     }
 
     public String getParameter(String name) {
-        return parameters.get(name);
+        return sourceConfig.getParameter(name);
     }
 
     public Map<String,String> getParameters() {
-        return parameters;
+        return sourceConfig.getParameters();
     }
 
     public void setParameter(String name, String value) {
-        parameters.put(name, value);
+        sourceConfig.setParameter(name, value);
     }
 
     public Collection<String> getPrimaryKeyNames() {
-        return primaryKeyNames;
-    }
-
-    public void setPrimaryKeyNames(Collection<String> primaryKeyNames) {
-        if (this.primaryKeyNames == primaryKeyNames) return;
-        this.primaryKeyNames.clear();
-        this.primaryKeyNames.addAll(primaryKeyNames);
+        return sourceConfig.getPrimaryKeyNames();
     }
 
     public Collection<Field> getPrimaryKeyFields() {
@@ -134,13 +117,7 @@ public class Source implements Cloneable {
     }
 
     public Collection<String> getIndexFieldNames() {
-        return indexFieldNames;
-    }
-
-    public void setIndexFieldNames(Collection<String> indexFieldNames) {
-        if (this.indexFieldNames == indexFieldNames) return;
-        this.indexFieldNames.clear();
-        this.indexFieldNames.addAll(indexFieldNames);
+        return sourceConfig.getIndexFieldNames();
     }
 
     public Collection<Field> getIndexFields() {
@@ -408,8 +385,8 @@ public class Source implements Cloneable {
         connection.drop(this);
     }
 
-    public void clean() throws Exception {
-        connection.clean(this);
+    public void clear() throws Exception {
+        connection.clear(this);
     }
 
     public void status() throws Exception {
@@ -420,43 +397,32 @@ public class Source implements Cloneable {
         return connection.getCount(this);
     }
 
-    public void copy(Source source) {
-        name = source.name;
-
-        parameters = new LinkedHashMap<String,String>();
-        parameters.putAll(source.parameters);
-
-        partition = source.partition;
-        sourceConfig = source.sourceConfig;
-        connection = source.connection;
-
-        fields = new LinkedHashMap<String,Field>();
-        fields.putAll(source.fields);
-
-        primaryKeyNames = new ArrayList<String>();
-        primaryKeyNames.addAll(source.primaryKeyNames);
-
-        primaryKeyFields = new ArrayList<Field>();
-        primaryKeyFields.addAll(source.primaryKeyFields);
-
-        indexFieldNames = new ArrayList<String>();
-        indexFieldNames.addAll(source.indexFieldNames);
-
-        indexFields = new ArrayList<Field>();
-        indexFields.addAll(source.indexFields);
-    }
-
-    public Object clone() throws CloneNotSupportedException {
-        Source source = (Source)super.clone();
-        source.copy(this);
-        return source;
-    }
-
     public SourceContext getSourceContext() {
         return sourceContext;
     }
 
     public void setSourceContext(SourceContext sourceContext) {
         this.sourceContext = sourceContext;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        
+        Source source = (Source)super.clone();
+
+        source.sourceConfig     = (SourceConfig)sourceConfig.clone();
+        source.sourceContext    = sourceContext;
+
+        source.partition        = partition;
+        source.connection       = connection;
+
+        source.fields           = new LinkedHashMap<String,Field>();
+        source.primaryKeyFields = new ArrayList<Field>();
+        source.indexFields      = new ArrayList<Field>();
+
+        for (Field field : fields.values()) {
+            source.addField((Field)field.clone());
+        }
+
+        return source;
     }
 }

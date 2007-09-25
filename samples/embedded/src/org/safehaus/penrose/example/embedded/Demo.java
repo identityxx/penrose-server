@@ -5,11 +5,11 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchResponse;
@@ -91,10 +91,10 @@ public class Demo {
         PartitionConfig partitionConfig = new PartitionConfig("Example");
 
         EntryMapping rootEntry = createRootEntry();
-        partitionConfig.getDirectoryConfigs().addEntryMapping(rootEntry);
+        partitionConfig.getDirectoryConfig().addEntryMapping(rootEntry);
 
         EntryMapping usersEntry = createUsersEntry();
-        partitionConfig.getDirectoryConfigs().addEntryMapping(usersEntry);
+        partitionConfig.getDirectoryConfig().addEntryMapping(usersEntry);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
 

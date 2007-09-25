@@ -8,7 +8,10 @@ import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.directory.DirectoryConfig;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
@@ -27,7 +30,7 @@ public class MappingWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public void write(File file, DirectoryConfigs directoryConfigs) throws Exception {
+    public void write(File file, DirectoryConfig directoryConfig) throws Exception {
 
         log.debug("Writing "+file+".");
 
@@ -44,11 +47,11 @@ public class MappingWriter {
                 "http://penrose.safehaus.org/dtd/mapping.dtd"
         );
 
-        writer.write(createElement(directoryConfigs));
+        writer.write(createElement(directoryConfig));
         writer.close();
     }
 
-    public Element createElement(DirectoryConfigs mappings) throws Exception {
+    public Element createElement(DirectoryConfig mappings) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
         for (EntryMapping entryMapping : mappings.getRootEntryMappings()) {
@@ -95,7 +98,7 @@ public class MappingWriter {
         return element;
     }
 
-    public Element createElement(DirectoryConfigs mappings, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element createElement(DirectoryConfig mappings, EntryMapping entryMapping, Element configElement) throws Exception {
 
         Element element = new DefaultElement("entry");
         element.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));

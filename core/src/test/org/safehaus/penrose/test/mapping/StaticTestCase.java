@@ -4,9 +4,9 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.Logger;
 import junit.framework.TestCase;
@@ -42,7 +42,7 @@ public class StaticTestCase extends TestCase {
         EntryMapping ou = new EntryMapping(baseDn);
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getDirectoryConfigs().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfig().addEntryMapping(ou);
 
         EntryMapping group = new EntryMapping("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
@@ -52,7 +52,7 @@ public class StaticTestCase extends TestCase {
         group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member2"));
         group.addAttributeMapping(new AttributeMapping("creatorsName", AttributeMapping.CONSTANT, penroseConfig.getRootDn().toString()));
         
-        partitionConfig.getDirectoryConfigs().addEntryMapping(group);
+        partitionConfig.getDirectoryConfig().addEntryMapping(group);
 
         EntryMapping member1 = new EntryMapping("uid=member1,cn=group,"+baseDn);
         member1.addObjectClass("person");
@@ -61,7 +61,7 @@ public class StaticTestCase extends TestCase {
         member1.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member1", true));
         member1.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partitionConfig.getDirectoryConfigs().addEntryMapping(member1);
+        partitionConfig.getDirectoryConfig().addEntryMapping(member1);
         
         EntryMapping member2 = new EntryMapping("uid=member2,cn=group,"+baseDn);
         member2.addObjectClass("person");
@@ -70,7 +70,7 @@ public class StaticTestCase extends TestCase {
         member2.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member2", true));
         member2.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
 
-        partitionConfig.getDirectoryConfigs().addEntryMapping(member2);
+        partitionConfig.getDirectoryConfig().addEntryMapping(member2);
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPenroseConfig(penroseConfig);

@@ -58,7 +58,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
             <call-method-rule pattern="trigger-class" methodname="setTriggerClass" paramcount="0" />
-            <call-method-rule pattern="job-name" methodname="setJobName" paramcount="0" />
+            <call-method-rule pattern="job-name" methodname="addJobName" paramcount="0" />
 
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />

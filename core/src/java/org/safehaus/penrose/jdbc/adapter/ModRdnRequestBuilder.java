@@ -1,6 +1,8 @@
 package org.safehaus.penrose.jdbc.adapter;
 
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
@@ -91,9 +93,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
             if ("INTEGER".equals(field.getType()) && value instanceof String) {
@@ -111,7 +111,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         attributes = sourceValues.get(alias);
         
         for (String fieldName : attributes.getNames()) {
-            if (fieldName.startsWith("primaryKey.")) continue;
 
             Object value = attributes.getValue(fieldName);
 
@@ -155,9 +154,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            Object value = interpreter.eval(fieldMapping);
+            Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
@@ -170,9 +167,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            String variable = fieldMapping.getVariable();
+            String variable = fieldRef.getVariable();
             if (variable == null) continue;
 
             int i = variable.indexOf(".");

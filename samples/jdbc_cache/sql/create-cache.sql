@@ -1,25 +1,18 @@
-create table users_cache (
-    username varchar(50),
-    firstName varchar(50),
-    lastName varchar(50),
-    encPassword varchar(255),
-    password varchar(10),
-    primary key (username)
+create table users (
+    uid varchar(50),
+    cn varchar(50),
+    sn varchar(50),
+    userPassword varchar(50),
+    primary key (uid)
 );
 
-create table groups_cache (
-    groupname varchar(50),
-    primary key (groupname)
+create table groups (
+    cn varchar(50),
+    primary key (cn)
 );
 
-create table usergroups_cache (
-    groupname varchar(50),
-    username varchar(50),
-    primary key (groupname, username)
-);
-
-create table tracker (
-    sourceName varchar(50),
-    changeNumber integer,
-    primary key (sourceName)
+create table usergroups (
+    cn varchar(50),
+    uniqueMember varchar(200),
+    primary key (cn, uniqueMember)
 );

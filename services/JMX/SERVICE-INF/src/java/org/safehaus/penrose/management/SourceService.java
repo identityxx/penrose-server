@@ -2,10 +2,8 @@ package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceSync;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,24 +45,16 @@ public class SourceService extends StandardMBean implements SourceServiceMBean {
         return source.getCount();
     }
 
-    public void createCache() throws Exception {
-        SourceSync sourceSync = partition.getSourceSync(source.getName());
-        sourceSync.create();
+    public void create() throws Exception {
+        source.create();
     }
 
-    public void loadCache() throws Exception {
-        SourceSync sourceSync = partition.getSourceSync(source.getName());
-        sourceSync.load();
+    public void clear() throws Exception {
+        source.clear();
     }
 
-    public void cleanCache() throws Exception {
-        SourceSync sourceSync = partition.getSourceSync(source.getName());
-        sourceSync.clean();
-    }
-
-    public void dropCache() throws Exception {
-        SourceSync sourceSync = partition.getSourceSync(source.getName());
-        sourceSync.drop();
+    public void drop() throws Exception {
+        source.drop();
     }
 
     public SourceConfig getSourceConfig() throws Exception {

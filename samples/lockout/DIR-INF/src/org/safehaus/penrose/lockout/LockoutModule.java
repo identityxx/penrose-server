@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.module;
+package org.safehaus.penrose.lockout;
 
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.module.Module;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -29,10 +30,21 @@ import java.util.ArrayList;
  */
 public class LockoutModule extends Module {
 
+    public final static String MAX_ATTEMPTS = "maxAttempts";
+    public final static int DEFAULT_MAX_ATTEMPTS = 3;
+
+    public final static String LOCKS = "locks";
+    public final static String DEFAULT_LOCKS = "locks";
+
     public Source source;
+    public int maxAttempts;
 
     public void init() throws Exception {
-        source = partition.getSource("locks");
+        String s = getParameter(LOCKS);
+        source = partition.getSource(s == null ? DEFAULT_LOCKS : s);
+
+        s = getParameter(MAX_ATTEMPTS);
+        maxAttempts = s == null ? DEFAULT_MAX_ATTEMPTS : Integer.parseInt(s);
     }
 
     public void beforeBind(BindEvent event) throws Exception {
@@ -59,7 +71,7 @@ public class LockoutModule extends Module {
 
         log.debug("Counter: "+counter);
 
-        if (counter >= 3) {
+        if (counter >= maxAttempts) {
             log.debug("Account has been locked.");
 
             response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
@@ -106,5 +118,35 @@ public class LockoutModule extends Module {
 
             source.modify(rdn, modifications);
         }
+    }
+
+    public void reset(String dn) throws Exception {
+        RDNBuilder rb = new RDNBuilder();
+        rb.set("dn", dn);
+        RDN rdn = rb.toRdn();
+
+        source.delete(rdn);
+    }
+
+    public Collection<String> list() throws Exception {
+
+        Collection<String> dns = new ArrayList<String>();
+
+        SearchRequest request = new SearchRequest();
+        request.setFilter("(counter>="+maxAttempts+")");
+        
+        SearchResponse response = new SearchResponse();
+
+        source.search(request, response);
+
+        while (response.hasNext()) {
+            SearchResult result = response.next();
+            DN dn = result.getDn();
+            RDN rdn = dn.getRdn();
+            String value = (String)rdn.get("dn");
+            dns.add(value);
+        }
+
+        return dns;
     }
 }

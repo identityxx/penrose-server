@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scheduler PUBLIC
+  "-//Penrose/DTD Scheduler ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/scheduler.dtd">
+
+<scheduler>
+
+  <scheduler-class>org.safehaus.penrose.scheduler.quartz.QuartzScheduler</scheduler-class>
+
+  <job name="LDAPSyncJob">
+    <job-class>org.safehaus.penrose.ldap.scheduler.LDAPSyncJob</job-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>source</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>target</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>changelog</param-value>
+    </parameter>
+    <parameter>
+      <param-name>tracker</param-name>
+      <param-value>tracker</param-value>
+    </parameter>
+  </job>
+
+  <trigger name="Every15Seconds">
+    <trigger-class>org.safehaus.penrose.scheduler.quartz.CronTrigger</trigger-class>
+    <job-name>LDAPSyncJob</job-name>
+    <parameter>
+      <param-name>expression</param-name>
+      <param-value>0/15 * * * * ?</param-value>
+    </parameter>
+  </trigger>
+
+</scheduler>

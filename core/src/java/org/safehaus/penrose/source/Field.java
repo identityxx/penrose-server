@@ -5,29 +5,14 @@ import org.safehaus.penrose.mapping.Expression;
 /**
  * @author Endi S. Dewata
  */
-public class Field {
+public class Field implements Cloneable {
 
+    private Source source;
     private FieldConfig fieldConfig;
-    private String name;
-    private String originalName;
-    private boolean primaryKey;
-    private boolean caseSensitive;
 
-    private int length;
-    private int defaultLength;
-    private String type;
-
-    public Field(FieldConfig fieldConfig) {
+    public Field(Source source, FieldConfig fieldConfig) {
+        this.source = source;
         this.fieldConfig = fieldConfig;
-
-        name = fieldConfig.getName();
-        originalName = fieldConfig.getOriginalName();
-        primaryKey = fieldConfig.isPrimaryKey();
-        caseSensitive = fieldConfig.isCaseSensitive();
-
-        length = fieldConfig.getLength();
-        defaultLength = fieldConfig.getDefaultLength();
-        type = fieldConfig.getType();
     }
     
     public FieldConfig getFieldConfig() {
@@ -39,59 +24,35 @@ public class Field {
     }
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        return fieldConfig.getName();
     }
 
     public boolean isPrimaryKey() {
-        return primaryKey;
+        return fieldConfig.isPrimaryKey();
     }
 
-    public void setPrimaryKey(boolean primaryKey) {
-        this.primaryKey = primaryKey;
+    public boolean isIndex() {
+        return fieldConfig.isIndex();
     }
 
     public String getOriginalName() {
-        return originalName;
-    }
-
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
+        return fieldConfig.getOriginalName();
     }
 
     public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
+        return fieldConfig.getType();
     }
 
     public boolean isCaseSensitive() {
-        return caseSensitive;
-    }
-
-    public void setCaseSensitive(boolean caseSensitive) {
-        this.caseSensitive = caseSensitive;
+        return fieldConfig.isCaseSensitive();
     }
 
     public int getLength() {
-        return length;
+        return fieldConfig.getLength();
     }
 
     public int getDefaultLength() {
-        return defaultLength;
-    }
-
-    public void setDefaultLength(int defaultLength) {
-        this.defaultLength = defaultLength;
-    }
-    
-    public void setLength(int length) {
-        this.length = length;
+        return fieldConfig.getDefaultLength();
     }
 
     public Object getConstant() {
@@ -102,7 +63,25 @@ public class Field {
         return fieldConfig.getVariable();
     }
 
+    public void setVariable(String variable) {
+        fieldConfig.setVariable(variable);
+    }
+
     public Expression getExpression() {
         return fieldConfig.getExpression();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Field field = (Field)super.clone();
+        field.fieldConfig = (FieldConfig)fieldConfig.clone();
+        return field;
+    }
+
+    public Source getSource() {
+        return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 }

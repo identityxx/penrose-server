@@ -1,15 +1,14 @@
 package org.safehaus.penrose.jdbc.adapter;
 
-import org.safehaus.penrose.mapping.FieldMapping;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.DeleteStatement;
 import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Request;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -82,7 +81,6 @@ public class DeleteRequestBuilder extends RequestBuilder {
         Attributes values = sourceValues.get(sourceName);
 
         for (String fieldName : values.getNames()) {
-            if (fieldName.startsWith("primaryKey.")) continue;
 
             Object value = values.getValue(fieldName);
 
@@ -115,9 +113,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
-            FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-            String variable = fieldMapping.getVariable();
+            String variable = fieldRef.getVariable();
             if (variable == null) continue;
 
             int i = variable.indexOf(".");

@@ -23,19 +23,27 @@ package org.safehaus.penrose.schema.matchingRule;
 public class CaseIgnoreEqualityMatchingRule extends EqualityMatchingRule {
 
     public boolean compare(Object object1, Object object2) throws Exception {
-        if (object1 instanceof String || object2 instanceof String) {
-            String s1 = object1 instanceof String ? (String)object1 : new String((byte[])object1);
-            String s2 = object2 instanceof String ? (String)object2 : new String((byte[])object2);
 
+        if (debug) {
             log.debug("Comparing:");
-            log.debug(" - "+s1);
-            log.debug(" - "+s2);
+            log.debug(" - "+object1+" ("+object1.getClass().getSimpleName()+")");
+            log.debug(" - "+object2+" ("+object2.getClass().getSimpleName()+")");
+        }
+
+        if (object1 instanceof String && object2 instanceof byte[]) {
+            String s1 = (String)object1;
+            String s2 = new String((byte[])object2);
 
             return s1.equalsIgnoreCase(s2);
-
-        } else {
-            return super.compare(object1, object2);
         }
-    }
 
+        if (object1 instanceof byte[] && object2 instanceof String) {
+            String s1 = new String((byte[])object1);
+            String s2 = (String)object2;
+
+            return s1.equalsIgnoreCase(s2);
+        }
+
+        return super.compare(object1, object2);
+    }
 }

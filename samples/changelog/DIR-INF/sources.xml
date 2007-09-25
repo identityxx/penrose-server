@@ -7,13 +7,13 @@
 
   <source name="changelog">
     <connection-name>MySQL</connection-name>
-    <field name="changeNumber" type="INTEGER" primaryKey="true"/>
-    <field name="targetDN" type="VARCHAR"/>
-    <field name="changeType" type="TEXT"/>
+    <field name="changeNumber" type="INTEGER" primaryKey="true" autoIncrement="true"/>
+    <field name="targetDN" type="TEXT"/>
+    <field name="changeType" type="VARCHAR" length="255"/>
     <field name="changes" type="TEXT"/>
-    <field name="newRDN" type="VARCHAR"/>
+    <field name="newRDN" type="TEXT"/>
     <field name="deleteOldRDN" type="BOOLEAN"/>
-    <field name="newSuperior" type="VARCHAR"/>
+    <field name="newSuperior" type="TEXT"/>
     <parameter>
       <param-name>table</param-name>
       <param-value>changelog</param-value>

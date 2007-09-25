@@ -28,8 +28,8 @@ import java.io.Serializable;
 public class AdapterConfig implements Serializable, Cloneable, AdapterConfigMBean {
 
     private String name;
-    private String adapterClass;
     private String description;
+    private String adapterClass;
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();
 
@@ -114,8 +114,8 @@ public class AdapterConfig implements Serializable, Cloneable, AdapterConfigMBea
 
     public void copy(AdapterConfig adapterConfig) {
         name = adapterConfig.name;
-        adapterClass = adapterConfig.adapterClass;
         description = adapterConfig.description;
+        adapterClass = adapterConfig.adapterClass;
 
         parameters = new LinkedHashMap<String,String>();
         parameters.putAll(adapterConfig.parameters);

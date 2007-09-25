@@ -1,6 +1,6 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.source.Field;
 
 /**

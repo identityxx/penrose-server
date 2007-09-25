@@ -19,12 +19,12 @@ package org.safehaus.penrose.connector;
 
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.directory.Entry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -86,8 +86,7 @@ public class Connector {
 
     public void add(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             AddRequest request,
@@ -100,7 +99,7 @@ public class Connector {
 
         connection.add(
                 session,
-                entryMapping,
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -114,8 +113,7 @@ public class Connector {
 
     public void bind(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             BindRequest request,
@@ -128,7 +126,7 @@ public class Connector {
 
         connection.bind(
                 session,
-                entryMapping, 
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -142,8 +140,7 @@ public class Connector {
 
     public void compare(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             CompareRequest request,
@@ -156,7 +153,7 @@ public class Connector {
 
         connection.compare(
                 session,
-                entryMapping,
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -170,8 +167,7 @@ public class Connector {
 
     public void delete(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             DeleteRequest request,
@@ -184,7 +180,7 @@ public class Connector {
 
         connection.delete(
                 session,
-                entryMapping,
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -198,8 +194,7 @@ public class Connector {
 
     public void modify(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModifyRequest request,
@@ -212,7 +207,7 @@ public class Connector {
 
         connection.modify(
                 session,
-                entryMapping,
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -226,8 +221,7 @@ public class Connector {
 
     public void modrdn(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             ModRdnRequest request,
@@ -240,7 +234,7 @@ public class Connector {
 
         connection.modrdn(
                 session,
-                entryMapping,
+                entry,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -254,8 +248,8 @@ public class Connector {
 
     public void search(
             final Session session,
-            final Partition partition,
-            final EntryMapping entryMapping,
+            final Collection<SourceRef> primarySourceRefs,
+            final Collection<SourceRef> localSourceRefs,
             final Collection<SourceRef> sourceRefs,
             final SourceValues sourceValues,
             final SearchRequest request,
@@ -268,7 +262,8 @@ public class Connector {
 
         connection.search(
                 session,
-                entryMapping,
+                primarySourceRefs,
+                localSourceRefs,
                 sourceRefs,
                 sourceValues,
                 request,

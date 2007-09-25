@@ -3,7 +3,7 @@ package org.safehaus.penrose.jdbc.adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.jdbc.Assignment;
@@ -93,8 +93,6 @@ public class JDBCFilterBuilder {
             sb1.append(lsourceName);
             sb1.append(".");
         }
-
-        if (lfieldName.startsWith("primaryKey.")) lfieldName = lfieldName.substring(11);
 
         SourceRef lsourceRef = sourceRefs.get(lsourceName);
         Source ls = lsourceRef.getSource();

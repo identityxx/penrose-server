@@ -49,6 +49,7 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
     private boolean unique;
     private boolean index;
     private boolean caseSensitive;
+    private boolean autoIncrement;
 
     private Object constant;
     private String variable;
@@ -215,6 +216,7 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
         if (searchable != fieldConfig.searchable) return false;
         if (unique != fieldConfig.unique) return false;
         if (index != fieldConfig.index) return false;
+        if (autoIncrement != fieldConfig.autoIncrement) return false;
         if (caseSensitive != fieldConfig.caseSensitive) return false;
         if (!equals(type, fieldConfig.type)) return false;
         if (length != fieldConfig.length) return false;
@@ -247,6 +249,7 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
         searchable = fieldConfig.searchable;
         unique = fieldConfig.unique;
         index = fieldConfig.index;
+        autoIncrement = fieldConfig.autoIncrement;
         caseSensitive = fieldConfig.caseSensitive;
         type = fieldConfig.type;
         length = fieldConfig.length;
@@ -266,5 +269,13 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
         FieldConfig fieldConfig = (FieldConfig)super.clone();
         fieldConfig.copy(this);
         return fieldConfig;
+    }
+
+    public boolean isAutoIncrement() {
+        return autoIncrement;
+    }
+
+    public void setAutoIncrement(boolean autoIncrement) {
+        this.autoIncrement = autoIncrement;
     }
 }

@@ -26,6 +26,7 @@ import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.directory.Entry;
 
 import java.util.*;
 
@@ -153,8 +154,7 @@ public class ProxyEngine extends Engine {
 
     public void add(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -163,14 +163,14 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
         Attributes attributes = request.getAttributes();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -196,8 +196,7 @@ public class ProxyEngine extends Engine {
 
     public void bind(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -206,14 +205,14 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = createClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN bindDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -239,8 +238,7 @@ public class ProxyEngine extends Engine {
 
     public void compare(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
@@ -248,14 +246,14 @@ public class ProxyEngine extends Engine {
 
         DN dn = request.getDn();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = createClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -282,8 +280,7 @@ public class ProxyEngine extends Engine {
 
     public void delete(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -291,14 +288,14 @@ public class ProxyEngine extends Engine {
 
         DN dn = request.getDn();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -323,8 +320,7 @@ public class ProxyEngine extends Engine {
 
     public void modify(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -333,14 +329,14 @@ public class ProxyEngine extends Engine {
         DN dn = request.getDn();
         Collection<Modification> modifications = request.getModifications();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -366,8 +362,7 @@ public class ProxyEngine extends Engine {
 
     public void modrdn(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -377,14 +372,14 @@ public class ProxyEngine extends Engine {
         RDN newRdn = request.getNewRdn();
         boolean deleteOldRdn = request.getDeleteOldRdn();
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         Source source = partition.getSource(sourceMapping.getSourceName());
 
         LDAPClient client = getClient(session, partition, source);
 
         try {
-            DN proxyDn = entryMapping.getDn();
+            DN proxyDn = entry.getDn();
             DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             DN targetDn = convertDn(dn, proxyDn, proxyBaseDn);
 
@@ -411,9 +406,9 @@ public class ProxyEngine extends Engine {
 
     public void search(
             final Session session,
-            final Partition partition,
-            final EntryMapping baseMapping,
-            final EntryMapping entryMapping,
+            final Entry base,
+            final Entry entry,
+            SourceValues sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -426,28 +421,28 @@ public class ProxyEngine extends Engine {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Mapping DN: \""+entryMapping.getDn()+"\"", 80));
+            log.debug(Formatter.displayLine("Mapping DN: \""+entry.getDn()+"\"", 80));
             log.debug(Formatter.displayLine("Base DN: "+baseDn, 80));
             log.debug(Formatter.displayLine("Filter: "+filter, 80));
             log.debug(Formatter.displayLine("Scope: "+ LDAP.getScope(scope), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        SourceMapping sourceMapping = entryMapping.getSourceMapping(0);
+        SourceMapping sourceMapping = entry.getEntryMapping().getSourceMapping(0);
 
         final Source source = partition.getSource(sourceMapping.getSourceName());
 
         final LDAPClient client = getClient(session, partition, source);
 
         try {
-            final DN proxyDn = entryMapping.getDn();
+            final DN proxyDn = entry.getDn();
             if (debug) log.debug("Proxy DN: "+proxyDn);
 
             final DN proxyBaseDn = new DN(source.getParameter(BASE_DN));
             if (debug) log.debug("Proxy Base DN: "+proxyBaseDn);
 
-            if (debug) log.debug("Checking whether "+baseDn+" is under "+entryMapping.getDn());
-            boolean found = baseDn.endsWith(entryMapping.getDn());
+            if (debug) log.debug("Checking whether "+baseDn+" is under "+entry.getDn());
+            boolean found = baseDn.endsWith(entry.getDn());
 
             if (debug) log.debug("Result: "+found);
 
@@ -481,7 +476,7 @@ public class ProxyEngine extends Engine {
                     Attributes attributes = (Attributes)result.getAttributes().clone();
 
                     SearchResult searchResult = new SearchResult(dn, attributes);
-                    searchResult.setEntryMapping(entryMapping);
+                    searchResult.setEntry(entry);
                     response.add(searchResult);
                 }
             };

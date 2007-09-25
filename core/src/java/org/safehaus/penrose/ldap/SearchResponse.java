@@ -140,7 +140,7 @@ public class SearchResponse extends Response {
         return referrals;
     }
 
-    public synchronized void add(SearchResult object) throws Exception {
+    public synchronized void add(SearchResult searchResult) throws Exception {
 
         if (sizeLimit > 0 && totalCount >= sizeLimit) {
             exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
@@ -159,12 +159,12 @@ public class SearchResponse extends Response {
         SearchResponseEvent event = null;
 
         if (eventsEnabled) {
-            event = new SearchResponseEvent(SearchResponseEvent.ADD_EVENT, object);
+            event = new SearchResponseEvent(SearchResponseEvent.ADD_EVENT, searchResult);
             if (!firePreAddEvent(event)) return;
-            object = (SearchResult)event.getObject();
+            searchResult = (SearchResult)event.getObject();
         }
 
-        buffer.add(object);
+        buffer.add(searchResult);
         totalCount++;
 
         if (eventsEnabled) {

@@ -24,7 +24,7 @@ import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleConfigs;
-import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.scheduler.SchedulerReader;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.slf4j.LoggerFactory;
@@ -114,7 +114,7 @@ public class PartitionReader implements EntityResolver {
 
         read(dirInf, partitionConfig.getConnectionConfigs());
         read(dirInf, partitionConfig.getSourceConfigs());
-        read(dirInf, partitionConfig.getDirectoryConfigs());
+        read(dirInf, partitionConfig.getDirectoryConfig());
         read(dirInf, partitionConfig.getModuleConfigs());
 
         readSchedulerConfig(dirInf, partitionConfig);
@@ -138,7 +138,7 @@ public class PartitionReader implements EntityResolver {
         sourceReader.read(sourcesXml, sources);
     }
 
-    public void read(File dir, DirectoryConfigs mappings) throws Exception {
+    public void read(File dir, DirectoryConfig mappings) throws Exception {
         File mappingXml = new File(dir, "mapping.xml");
         if (!mappingXml.exists()) return;
 

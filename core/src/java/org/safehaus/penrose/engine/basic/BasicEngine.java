@@ -7,17 +7,19 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
 import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.filter.FilterEvaluator;
+import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
 
@@ -42,7 +44,7 @@ public class BasicEngine extends Engine {
 
     public void extractSourceValues(
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN dn,
             SourceValues sourceValues
     ) throws Exception {
@@ -55,7 +57,7 @@ public class BasicEngine extends Engine {
                 partition,
                 interpreter,
                 dn,
-                entryMapping,
+                entry,
                 sourceValues
         );
     }
@@ -64,20 +66,19 @@ public class BasicEngine extends Engine {
             Partition partition,
             Interpreter interpreter,
             DN dn,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues
     ) throws Exception {
 
         DN parentDn = dn.getParentDn();
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping em = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
+        Entry parent = entry.getParent();
 
-        if (parentDn != null && em != null) {
-            extractSourceValues(partition, interpreter, parentDn, em, sourceValues);
+        if (parentDn != null && parent != null) {
+            extractSourceValues(partition, interpreter, parentDn, parent, sourceValues);
         }
 
         RDN rdn = dn.getRdn();
-        Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+        Collection<SourceMapping> sourceMappings = entry.getSourceMappings();
 
         //if (sourceMappings.isEmpty()) return;
         //SourceMapping sourceMapping = sourceMappings.iterator().next();
@@ -90,7 +91,7 @@ public class BasicEngine extends Engine {
                     partition,
                     interpreter,
                     rdn,
-                    entryMapping,
+                    entry,
                     sourceMapping,
                     sourceValues
             );
@@ -103,7 +104,7 @@ public class BasicEngine extends Engine {
             Partition partition,
             Interpreter interpreter,
             RDN rdn,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceMapping sourceMapping,
             SourceValues sourceValues
     ) throws Exception {
@@ -113,8 +114,8 @@ public class BasicEngine extends Engine {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfigs sources = partitionConfig.getSourceConfigs();
-        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfigs sourceConfigs = partitionConfig.getSourceConfigs();
+        SourceConfig sourceConfig = sourceConfigs.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
         for (FieldMapping fieldMapping : fieldMappings) {
@@ -140,9 +141,9 @@ public class BasicEngine extends Engine {
 
     public void add(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
-            SourceValues sourceValues, AddRequest request,
+            Entry entry,
+            SourceValues sourceValues,
+            AddRequest request,
             AddResponse response
     ) throws Exception {
 
@@ -152,11 +153,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("ADD", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
@@ -166,15 +167,14 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
         connector.add(
                 session,
-                partition,
-                entryMapping,
+                entry,
                 localSourceRefs,
                 sourceValues,
                 request,
@@ -188,8 +188,7 @@ public class BasicEngine extends Engine {
 
     public void bind(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -201,11 +200,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("BIND", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         boolean success = true;
         boolean found = false;
@@ -227,8 +226,7 @@ public class BasicEngine extends Engine {
             try {
                 connector.bind(
                         session,
-                        partition,
-                        entryMapping,
+                        entry,
                         sourceRefs,
                         sourceValues,
                         request,
@@ -257,7 +255,7 @@ public class BasicEngine extends Engine {
 
         if (!found || !success) {
             log.debug("Calling default bind operation.");
-            super.bind(session, partition, entryMapping, sourceValues, request, response);
+            super.bind(session, entry, sourceValues, request, response);
         }
     }
 
@@ -267,8 +265,7 @@ public class BasicEngine extends Engine {
 
     public void compare(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
@@ -280,11 +277,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("COMPARE", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         for (Collection<SourceRef> sourceRefs : groupsOfSources) {
 
@@ -293,8 +290,7 @@ public class BasicEngine extends Engine {
 
             connector.compare(
                     session,
-                    partition,
-                    entryMapping,
+                    entry,
                     sourceRefs,
                     sourceValues,
                     request,
@@ -305,7 +301,7 @@ public class BasicEngine extends Engine {
         }
 
         log.debug("Calling default compare operation.");
-        super.compare(session, partition, entryMapping, sourceValues, request, response);
+        super.compare(session, entry, sourceValues, request, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,8 +310,7 @@ public class BasicEngine extends Engine {
 
     public void delete(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -327,11 +322,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("DELETE", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
@@ -341,15 +336,14 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
         connector.delete(
                 session,
-                partition,
-                entryMapping,
+                entry,
                 localSourceRefs,
                 sourceValues,
                 request,
@@ -363,8 +357,7 @@ public class BasicEngine extends Engine {
 
     public void modify(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -376,11 +369,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
@@ -390,15 +383,14 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
         connector.modify(
                 session,
-                partition,
-                entryMapping,
+                entry,
                 localSourceRefs,
                 sourceValues,
                 request,
@@ -412,8 +404,7 @@ public class BasicEngine extends Engine {
 
     public void modrdn(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -425,11 +416,11 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODRDN", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
 
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
@@ -439,15 +430,14 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entryMapping.getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
         connector.modrdn(
                 session,
-                partition,
-                entryMapping,
+                entry,
                 localSourceRefs,
                 sourceValues,
                 request,
@@ -461,8 +451,7 @@ public class BasicEngine extends Engine {
 
     public SearchResult find(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN dn
     ) throws Exception {
 
@@ -470,13 +459,13 @@ public class BasicEngine extends Engine {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("FIND", 80));
             log.debug(Formatter.displayLine("DN            : "+dn, 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+entry.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
         SourceValues sourceValues = new SourceValues();
-        extractSourceValues(partition, entryMapping, dn, sourceValues);
-        EngineTool.propagateDown(partition, entryMapping, sourceValues);
+        extractSourceValues(partition, entry, dn, sourceValues);
+        EngineTool.propagateDown(entry, sourceValues);
 
         SearchRequest request = new SearchRequest();
         request.setDn(dn);
@@ -484,18 +473,18 @@ public class BasicEngine extends Engine {
 
         SearchResponse response = new SearchResponse();
 
-        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entryMapping);
+        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
         Interpreter interpreter = getInterpreterManager().newInstance();
 
         if (groupsOfSources.isEmpty()) {
-            if (debug) log.debug("Returning static entry "+entryMapping.getDn());
+            if (debug) log.debug("Returning static entry "+entry.getDn());
 
             interpreter.set(sourceValues);
-            Attributes attributes = computeAttributes(interpreter, entryMapping);
+            Attributes attributes = computeAttributes(interpreter, entry);
             interpreter.clear();
 
-            SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
-            searchResult.setEntryMapping(entryMapping);
+            SearchResult searchResult = new SearchResult(entry.getDn(), attributes);
+            searchResult.setEntry(entry);
             searchResult.setSourceValues(sourceValues);
 
             return searchResult;
@@ -508,7 +497,7 @@ public class BasicEngine extends Engine {
                 session,
                 partition,
                 this,
-                entryMapping,
+                entry,
                 groupsOfSources,
                 sourceValues,
                 interpreter,
@@ -516,10 +505,13 @@ public class BasicEngine extends Engine {
                 response
         );
 
+        Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+        Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
+
         connector.search(
                 session,
-                partition,
-                entryMapping,
+                primarySourceRefs,
+                localSourceRefs,
                 sourceRefs,
                 sourceValues,
                 request,
@@ -539,114 +531,106 @@ public class BasicEngine extends Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            Partition partition,
-            EntryMapping baseMapping,
-            EntryMapping entryMapping,
-            SearchRequest request,
-            SearchResponse response
+            final Session session,
+            final Entry base,
+            final Entry entry,
+            final SourceValues sourceValues,
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
-
-        DN dn = request.getDn();
-        int scope = request.getScope();
-
-        SourceValues sourceValues = new SourceValues();
-
-        boolean fetchEntry = fetch;
-
-        String s = entryMapping.getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
-            SearchResult entry = find(session, partition, baseMapping, dn);
-            sourceValues.add(entry.getSourceValues());
-
-            if (entryMapping == baseMapping) {
-
-                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
-                    response.add(entry);
-                    response.close();
-                    return;
-                }
-            }
-            
-        } else {
-           extractSourceValues(partition, baseMapping, dn, sourceValues);
-        }
-
-        //EngineTool.propagateDown(partition, entryMapping, sourceValues);
-
-        if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
-        }
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Base DN       : "+dn, 80));
-            log.debug(Formatter.displayLine("Base Mapping  : "+baseMapping.getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Mapping : "+entryMapping.getDn(), 80));
+            log.debug(Formatter.displayLine("Base DN       : "+request.getDn(), 80));
+            log.debug(Formatter.displayLine("Base Mapping  : "+ base.getDn(), 80));
+            log.debug(Formatter.displayLine("Entry Mapping : "+ entry.getDn(), 80));
             log.debug(Formatter.displayLine("Filter        : "+request.getFilter(), 80));
             log.debug(Formatter.displayLine("Scope         : "+ LDAP.getScope(request.getScope()), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        //List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, baseMapping, entryMapping);
-        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, baseMapping, entryMapping);
+        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+        final Filter filter = request.getFilter();
+
+        //List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, base, entry);
+        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, base, entry);
         Interpreter interpreter = getInterpreterManager().newInstance();
 
         if (groupsOfSources.isEmpty()) {
-            if (debug) log.debug("Returning static entry "+entryMapping.getDn());
+            if (debug) log.debug("Returning static entry "+ entry.getDn());
 
             interpreter.set(sourceValues);
-            Attributes attributes = computeAttributes(interpreter, entryMapping);
+            Attributes attributes = computeAttributes(interpreter, entry);
             interpreter.clear();
 
-            SearchResult searchResult = new SearchResult(entryMapping.getDn(), attributes);
-            searchResult.setEntryMapping(entryMapping);
-            searchResult.setSourceValues(sourceValues);
-            response.add(searchResult);
+            if (filterEvaluator.eval(attributes, filter)) { // Check LDAP filter
+                SearchResult searchResult = new SearchResult(entry.getDn(), attributes);
+                searchResult.setEntry(entry);
+                searchResult.setSourceValues(sourceValues);
+                response.add(searchResult);
+            }
 
-            response.close();
+            return;
+        }
 
+        if (!filterEvaluator.eval(entry, filter)) { // Check LDAP filter
+            if (debug) log.debug("Entry \""+entry.getDn()+"\" doesn't match search filter.");
             return;
         }
 
         Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
         Connector connector = getConnector(sourceRefs.iterator().next());
 
-        BasicSearchResponse sr = new BasicSearchResponse(
+        SearchResponse sr = new SearchResponse() {
+
+            public void add(SearchResult searchResult) throws Exception {
+
+                if (debug) log.debug("Checking filter "+filter);
+
+                if (!filterEvaluator.eval(searchResult.getAttributes(), filter)) { // Check LDAP filter
+                    if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
+                    return;
+                }
+
+                response.add(searchResult);
+            }
+        };
+
+        BasicSearchResponse sr2 = new BasicSearchResponse(
                 session,
                 partition,
                 this,
-                entryMapping,
+                entry,
                 groupsOfSources,
                 sourceValues,
                 interpreter,
                 request,
-                response
+                sr
         );
+
+        Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+        Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
         connector.search(
                 session,
-                partition,
-                entryMapping,
+                primarySourceRefs,
+                localSourceRefs,
                 sourceRefs,
                 sourceValues,
                 request,
-                sr
+                sr2
         );
     }
 
     public Attributes computeAttributes(
             Interpreter interpreter,
-            EntryMapping entryMapping
+            Entry entry
     ) throws Exception {
 
         Attributes attributes = new Attributes();
 
-        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributeMappings = entry.getAttributeMappings();
 
         for (AttributeMapping attributeMapping : attributeMappings) {
 
@@ -660,7 +644,7 @@ public class BasicEngine extends Engine {
             }
         }
 
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        Collection<String> objectClasses = entry.getObjectClasses();
         for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }

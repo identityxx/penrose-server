@@ -6,10 +6,10 @@
 <mapping>
 
   <entry dn="dc=my-domain,dc=com">
-    <source name="tree">
-      <source-name>tree</source-name>
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <source name="LDAP">
+      <source-name>LDAP</source-name>
     </source>
-    <handler>PROXY</handler>
     <aci subject="self">
       <permission>rws</permission>
     </aci>

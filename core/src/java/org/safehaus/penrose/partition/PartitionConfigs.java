@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.connection.ConnectionConfig;
@@ -119,7 +119,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
         if (entryMapping == null) return null;
 
         for (PartitionConfig partitionConfig : partitionConfigs.values()) {
-            if (partitionConfig.getDirectoryConfigs().contains(entryMapping)) {
+            if (partitionConfig.getDirectoryConfig().contains(entryMapping)) {
                 return partitionConfig;
             }
         }
@@ -142,7 +142,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
         for (PartitionConfig partitionConfig : partitionConfigs.values()) {
             if (debug) log.debug("Checking "+partitionConfig.getName()+" partition.");
 
-            Collection<DN> suffixes = partitionConfig.getDirectoryConfigs().getSuffixes();
+            Collection<DN> suffixes = partitionConfig.getDirectoryConfig().getSuffixes();
             for (DN suffix : suffixes) {
                 if (suffix.isEmpty() && dn.isEmpty() // Root DSE
                         || dn.endsWith(suffix)) {

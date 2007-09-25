@@ -497,6 +497,17 @@ public class JDBCClient {
     	ps.setObject(paramIndex, object);
     }
 
+    public boolean checkDatabase(String database) throws Exception {
+        try {
+            createDatabase(database);
+            dropDatabase(database);
+            return false;
+            
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     public void createDatabase(String database) throws Exception {
         executeUpdate("create database "+database);
     }
@@ -569,6 +580,10 @@ public class JDBCClient {
 
             if (fieldConfig.isCaseSensitive()) {
                 sb.append(" binary");
+            }
+
+            if (fieldConfig.isAutoIncrement()) {
+                sb.append(" auto_increment");
             }
         }
 

@@ -33,10 +33,13 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.source.SourceRef;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.FieldMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -125,7 +128,7 @@ public abstract class Engine {
     }
 
     public Attributes createAttributes(
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             Interpreter interpreter
             ) throws Exception {
@@ -134,7 +137,7 @@ public abstract class Engine {
 
         if (sourceValues != null) interpreter.set(sourceValues);
 
-        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributeMappings = entry.getAttributeMappings();
         for (AttributeMapping attributeMapping : attributeMappings) {
 
             Object value = interpreter.eval(attributeMapping);
@@ -146,7 +149,7 @@ public abstract class Engine {
 
         interpreter.clear();
 
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
+        Collection<String> objectClasses = entry.getObjectClasses();
         for (String objectClass : objectClasses) {
             attributes.addValue("objectClass", objectClass);
         }
@@ -154,11 +157,14 @@ public abstract class Engine {
         return attributes;
     }
 
-    public String getStartingSourceName(Partition partition, EntryMapping entryMapping) throws Exception {
+    public String getStartingSourceName(
+            Partition partition,
+            Entry entry
+    ) throws Exception {
 
-        log.debug("Searching the starting sourceMapping for "+entryMapping.getDn());
+        log.debug("Searching the starting sourceMapping for "+ entry.getDn());
 /*
-        Collection relationships = entryMapping.getRelationships();
+        Collection relationships = entry.getRelationships();
         for (Iterator i=relationships.iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
 
@@ -169,8 +175,8 @@ public abstract class Engine {
                 if (index < 0) continue;
 
                 String sourceName = operand.substring(0, index);
-                SourceMapping sourceMapping = entryMapping.getSourceMapping(sourceName);
-                SourceMapping effectiveSourceMapping = partition.getEffectiveSourceMapping(entryMapping, sourceName);
+                SourceMapping sourceMapping = entry.getSourceMapping(sourceName);
+                SourceMapping effectiveSourceMapping = partition.getEffectiveSourceMapping(entry, sourceName);
 
                 if (sourceMapping == null && effectiveSourceMapping != null) {
                     log.debug("Source "+sourceName+" is defined in parent entry");
@@ -180,7 +186,7 @@ public abstract class Engine {
             }
         }
 */
-        Iterator i = entryMapping.getSourceMappings().iterator();
+        Iterator i = entry.getEntryMapping().getSourceMappings().iterator();
         if (!i.hasNext()) return null;
 
         SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -188,18 +194,17 @@ public abstract class Engine {
         return sourceMapping.getName();
     }
 
-    public boolean isStatic(Partition partition, EntryMapping entryMapping) throws Exception {
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection effectiveSources = partitionConfig.getDirectoryConfigs().getEffectiveSourceMappings(entryMapping);
+    public boolean isStatic(Partition partition, Entry entry) throws Exception {
+        Collection<SourceMapping> effectiveSources = entry.getEffectiveSourceMappings();
         if (effectiveSources.size() > 0) return false;
 
-        Collection<AttributeMapping> attributeMappings = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributeMappings = entry.getAttributeMappings();
         for (AttributeMapping attributeMapping : attributeMappings) {
             if (attributeMapping.getConstant() == null) return false;
         }
 
-        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-        return parentMapping == null || isStatic(partition, parentMapping);
+        Entry parent = entry.getParent();
+        return parent == null || isStatic(partition, parent);
 
     }
 
@@ -209,8 +214,7 @@ public abstract class Engine {
 
     public abstract void add(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             AddRequest request,
             AddResponse response
@@ -222,8 +226,7 @@ public abstract class Engine {
 
     public void bind(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             BindRequest request,
             BindResponse response
@@ -232,7 +235,7 @@ public abstract class Engine {
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
-        SearchResult searchResult = find(session, partition, entryMapping, dn);
+        SearchResult searchResult = find(session, entry, dn);
 
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get("userPassword");
@@ -257,8 +260,7 @@ public abstract class Engine {
 
     public void compare(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
@@ -268,7 +270,7 @@ public abstract class Engine {
         String attributeName = request.getAttributeName();
         Object attributeValue = request.getAttributeValue();
 
-        SearchResult searchResult = find(session, partition, entryMapping, dn);
+        SearchResult searchResult = find(session, entry, dn);
 
         Attributes attributes = searchResult.getAttributes();
         Attribute attribute = attributes.get(attributeName);
@@ -306,8 +308,7 @@ public abstract class Engine {
 
     public abstract void delete(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
@@ -319,8 +320,7 @@ public abstract class Engine {
 
     public SearchResult find(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN dn
     ) throws Exception {
 
@@ -330,10 +330,12 @@ public abstract class Engine {
 
         SearchResponse response = new SearchResponse();
 
+        SourceValues sourceValues = new SourceValues();
+
         search(
                 session,
-                partition,
-                entryMapping,
+                entry,
+                sourceValues,
                 request,
                 response
         );
@@ -352,8 +354,7 @@ public abstract class Engine {
 
     public abstract void modify(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
@@ -365,8 +366,7 @@ public abstract class Engine {
 
     public abstract void modrdn(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
@@ -378,17 +378,17 @@ public abstract class Engine {
 
     public void search(
             Session session,
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
+            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
         search(
                 session,
-                partition,
-                entryMapping,
-                entryMapping,
+                entry,
+                entry,
+                sourceValues,
                 request,
                 response
         );
@@ -396,9 +396,9 @@ public abstract class Engine {
 
     public abstract void search(
             Session session,
-            Partition partition,
-            EntryMapping baseMapping,
-            EntryMapping entryMapping,
+            Entry base,
+            Entry entry,
+            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception;
@@ -411,7 +411,7 @@ public abstract class Engine {
             Partition partition,
             Interpreter interpreter,
             SourceMapping sourceMapping,
-            EntryMapping entryMapping,
+            Entry entry,
             RDN rdn
     ) throws Exception {
 
@@ -446,41 +446,40 @@ public abstract class Engine {
     public Collection<DN> computeDns(
             Partition partition,
             Interpreter interpreter,
-            EntryMapping entryMapping
+            Entry entry
     ) throws Exception {
 
         log.debug("Computing DN:");
 
         Collection<DN> dns = new ArrayList<DN>();
-        computeDns(partition, interpreter, entryMapping, dns);
+        computeDns(partition, interpreter, entry, dns);
         return dns;
     }
 
     public void computeDns(
             Partition partition,
             Interpreter interpreter,
-            EntryMapping entryMapping,
+            Entry entry,
             Collection<DN> dns
     ) throws Exception {
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
+        Entry parent = entry.getParent();
 
         Collection<DN> parentDns = new ArrayList<DN>();
-        if (parentMapping != null) {
-            computeDns(partition, interpreter, parentMapping, parentDns);
+        if (parent != null) {
+            computeDns(partition, interpreter, parent, parentDns);
 
-        } else if (!entryMapping.getParentDn().isEmpty()) {
-            parentDns.add(entryMapping.getParentDn());
+        } else if (!entry.getParentDn().isEmpty()) {
+            parentDns.add(entry.getParentDn());
         }
 
         if (parentDns.isEmpty()) {
-            DN dn = entryMapping.getDn();
+            DN dn = entry.getDn();
             if (debug) log.debug("DN: "+dn);
             dns.add(dn);
 
         } else {
-            Collection<RDN> rdns = computeRdns(interpreter, entryMapping);
+            Collection<RDN> rdns = computeRdns(interpreter, entry);
 
             DNBuilder db = new DNBuilder();
 
@@ -503,13 +502,13 @@ public abstract class Engine {
 
     public Collection<RDN> computeRdns(
             Interpreter interpreter,
-            EntryMapping entryMapping
+            Entry entry
     ) throws Exception {
 
         //log.debug("Computing RDNs:");
         Attributes attributes = new Attributes();
 
-        Collection<AttributeMapping> rdnAttributes = entryMapping.getRdnAttributeMappings();
+        Collection<AttributeMapping> rdnAttributes = entry.getRdnAttributeMappings();
         for (AttributeMapping attributeMapping : rdnAttributes) {
             String name = attributeMapping.getName();
 
@@ -545,7 +544,7 @@ public abstract class Engine {
 
     public List<Collection<SourceRef>> getGroupsOfSources(
             Partition partition,
-            EntryMapping entryMapping
+            Entry entry
     ) throws Exception {
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
@@ -553,10 +552,9 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getPath(entryMapping)) {
+        for (Entry e : entry.getPath()) {
 
-            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
+            for (SourceRef sourceRef : e.getLocalSourceRefs()) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -582,12 +580,12 @@ public abstract class Engine {
 
     public List<Collection<SourceRef>> getGroupsOfSources(
             Partition partition,
-            EntryMapping baseMapping,
-            EntryMapping entryMapping
+            Entry base,
+            Entry entry
     ) throws Exception {
 
-        if (entryMapping == baseMapping) {
-            return getGroupsOfSources(partition, entryMapping);
+        if (entry == base) {
+            return getGroupsOfSources(partition, entry);
         }
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
@@ -595,10 +593,9 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getRelativePath(baseMapping, entryMapping)) {
+        for (Entry e : entry.getRelativePath(base)) {
             
-            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
+            for (SourceRef sourceRef : e.getLocalSourceRefs()) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -624,12 +621,12 @@ public abstract class Engine {
 
     public List<Collection<SourceRef>> getLocalGroupsOfSources(
             Partition partition,
-            EntryMapping baseMapping,
-            EntryMapping entryMapping
+            Entry base,
+            Entry entry
     ) throws Exception {
 
-        if (entryMapping == baseMapping) {
-            return getGroupsOfSources(partition, entryMapping);
+        if (entry == base) {
+            return getGroupsOfSources(partition, entry);
         }
 
         List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
@@ -637,11 +634,10 @@ public abstract class Engine {
         Collection<SourceRef> list = new ArrayList<SourceRef>();
         Connection lastConnection = null;
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        for (EntryMapping em : partitionConfig.getDirectoryConfigs().getRelativePath(baseMapping, entryMapping)) {
-            if (em == baseMapping) continue;
+        for (Entry e : entry.getRelativePath(base)) {
+            if (e == base) continue;
             
-            for (SourceRef sourceRef : partition.getSourceRefs(em)) {
+            for (SourceRef sourceRef : e.getLocalSourceRefs()) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -671,6 +667,14 @@ public abstract class Engine {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public void unbind(
+            Session session,
+            Entry entry,
+            UnbindRequest request,
+            UnbindResponse response
+    ) throws Exception {
     }
 }
 

@@ -148,10 +148,11 @@ public class SourceSync {
     public Source createTemporarySource(Source dest) throws Exception {
         String tableName = dest.getParameter(JDBCClient.TABLE);
 
-        Source snapshot = (Source)dest.clone();
-        snapshot.setName(dest.getName()+"_tmp");
-        snapshot.setParameter(JDBCClient.TABLE, tableName+"_tmp");
-        return snapshot;
+        Source tmp = (Source)dest.clone();
+        tmp.setName(dest.getName()+"_tmp");
+        tmp.setParameter(JDBCClient.TABLE, tableName+"_tmp");
+
+        return tmp;
     }
 
     public String getName() {
@@ -225,16 +226,20 @@ public class SourceSync {
         Iterator j = tmps.iterator();
 
         while (i.hasNext() && j.hasNext()) {
-            Source dest = (Source)i.next();
+            Source target = (Source)i.next();
             Source tmp = (Source)j.next();
 
             try {
-                dest.drop();
+                target.drop();
             } catch (Exception e) {
-                log.debug("Failed to drop "+dest.getName()+": "+e.getMessage());
+                log.debug("Failed to drop "+target.getName()+": "+e.getMessage());
             }
 
-            tmp.rename(dest);
+            try {
+                tmp.rename(target);
+            } catch (Exception e) {
+                log.debug("Failed to rename "+tmp.getName()+": "+e.getMessage());
+            }
         }
 
         log.debug("Source synchronization completed.");
@@ -314,7 +319,7 @@ public class SourceSync {
 
     public void clean() throws Exception {
         for (Source destination : destinations) {
-            destination.clean();
+            destination.clear();
         }
     }
 

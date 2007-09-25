@@ -5,7 +5,7 @@
 
 <connections>
 
-  <connection name="OpenLDAP">
+  <connection name="LDAP">
     <adapter-name>LDAP</adapter-name>
     <parameter>
       <param-name>java.naming.factory.initial</param-name>

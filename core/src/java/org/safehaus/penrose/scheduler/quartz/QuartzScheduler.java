@@ -1,33 +1,25 @@
 package org.safehaus.penrose.scheduler.quartz;
 
-import org.quartz.*;
-import org.quartz.spi.JobFactory;
-import org.quartz.spi.TriggerFiredBundle;
-import org.quartz.impl.StdSchedulerFactory;
 import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.scheduler.Scheduler;
 import org.safehaus.penrose.scheduler.Trigger;
-import org.safehaus.penrose.scheduler.TriggerConfig;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class QuartzScheduler extends Scheduler implements JobFactory {
+public class QuartzScheduler extends Scheduler implements org.quartz.spi.JobFactory {
 
     org.quartz.Scheduler scheduler;
 
     public void init() throws Exception {
-        SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+        org.quartz.SchedulerFactory schedulerFactory = new org.quartz.impl.StdSchedulerFactory();
         scheduler = schedulerFactory.getScheduler();
         scheduler.start();
 
         scheduler.setJobFactory(this);
 
         for (Trigger trigger : getTriggers()) {
-
-            Job job = jobs.get(trigger.getJobName());
-
-            schedule(job, trigger);
+            schedule(trigger);
         }
     }
 
@@ -35,11 +27,11 @@ public class QuartzScheduler extends Scheduler implements JobFactory {
         scheduler.shutdown();
     }
 
-    public void schedule(Job job, Trigger trigger) throws Exception {
+    public void schedule(Trigger trigger) throws Exception {
 
-        JobDetail jobDetail = new JobDetail(
-                job.getName(),
-                null,
+        org.quartz.JobDetail jobDetail = new org.quartz.JobDetail(
+                trigger.getName(),
+                partition.getName(),
                 QuartzJob.class
         );
         
@@ -48,14 +40,20 @@ public class QuartzScheduler extends Scheduler implements JobFactory {
         scheduler.scheduleJob(jobDetail, quartzTrigger);
     }
 
-    public org.quartz.Job newJob(TriggerFiredBundle triggerFiredBundle) throws SchedulerException {
-        JobDetail jobDetail = triggerFiredBundle.getJobDetail();
+    public org.quartz.Job newJob(
+            org.quartz.spi.TriggerFiredBundle triggerFiredBundle
+    ) throws org.quartz.SchedulerException {
 
-        String jobName = jobDetail.getName();
-        Job job = getJob(jobName);
+        org.quartz.JobDetail jobDetail = triggerFiredBundle.getJobDetail();
 
+        Trigger trigger = getTrigger(jobDetail.getName());
         QuartzJob quartzJob = new QuartzJob();
-        quartzJob.setJob(job);
+
+        for (String jobName : trigger.getJobNames()) {
+            Job job = getJob(jobName);
+            if (job == null) continue;
+            quartzJob.addJob(job);
+        }
 
         return quartzJob;
     }

@@ -2,13 +2,12 @@ package org.safehaus.penrose.engine.basic;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.source.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
@@ -26,7 +25,7 @@ public class BasicSearchResponse extends SearchResponse {
     Partition partition;
     BasicEngine engine;
 
-    EntryMapping entryMapping;
+    Entry entry;
     List<Collection<SourceRef>> groupsOfSources;
     SourceValues sourceValues;
     Interpreter interpreter;
@@ -36,16 +35,16 @@ public class BasicSearchResponse extends SearchResponse {
 
     DN lastDn;
     Attributes lastAttributes;
-    EntryMapping lastEntryMapping;
+    Entry lastEntry;
     SourceValues lastSourceValues;
 
-    Map<String,Collection<EntryMapping>> paths = new HashMap<String,Collection<EntryMapping>>();
+    Map<String,Collection<Entry>> paths = new HashMap<String,Collection<Entry>>();
 
     public BasicSearchResponse(
             Session session,
             Partition partition,
             BasicEngine engine,
-            EntryMapping entryMapping,
+            Entry entryMapping,
             List<Collection<SourceRef>> groupsOfSources,
             SourceValues sourceValues,
             Interpreter interpreter,
@@ -56,7 +55,7 @@ public class BasicSearchResponse extends SearchResponse {
         this.partition = partition;
         this.engine = engine;
 
-        this.entryMapping = entryMapping;
+        this.entry = entryMapping;
         this.groupsOfSources = groupsOfSources;
         this.sourceValues = sourceValues;
         this.interpreter = interpreter;
@@ -77,26 +76,14 @@ public class BasicSearchResponse extends SearchResponse {
         }
     }
 
-    public Collection<EntryMapping> createPath(EntryMapping entryMapping) {
-        List<EntryMapping> path = new ArrayList<EntryMapping>();
-
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        while (entryMapping != null) {
-            path.add(0, entryMapping);
-            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-        }
-
-        return path;
-    }
-
     public void add(SearchResult result) throws Exception {
 
-        EntryMapping em = result.getEntryMapping();
+        //Entry entry = result.getEntry();
 
-        Collection<EntryMapping> path = paths.get(em.getId());
+        Collection<Entry> path = paths.get(entry.getId());
         if (path == null) {
-            path = createPath(em);
-            paths.put(em.getId(), path);
+            path = entry.getPath();
+            paths.put(entry.getId(), path);
         }
 
         SourceValues sv = (SourceValues)sourceValues.clone();
@@ -116,13 +103,13 @@ public class BasicSearchResponse extends SearchResponse {
             sv.print();
         }
 
-        boolean complete = searchSecondarySources(em, sv);
+        boolean complete = searchSecondarySources(sv);
 
         if (!complete) return;
 
         interpreter.set(sv);
-        Collection<DN> dns = engine.computeDns(partition, interpreter, em);
-        Attributes attributes = engine.computeAttributes(interpreter, em);
+        Collection<DN> dns = engine.computeDns(partition, interpreter, entry);
+        Attributes attributes = engine.computeAttributes(interpreter, entry);
         interpreter.clear();
 
         if (debug) {
@@ -135,7 +122,7 @@ public class BasicSearchResponse extends SearchResponse {
                 if (debug) log.debug("Generating entry "+dn);
                 lastDn = dn;
                 lastAttributes = attributes;
-                lastEntryMapping = em;
+                lastEntry = entry;
                 lastSourceValues = sv;
 
             } else if (lastDn.equals(dn)) {
@@ -146,14 +133,14 @@ public class BasicSearchResponse extends SearchResponse {
             } else {
                 if (debug) log.debug("Returning entry " + lastDn);
                 SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-                searchResult.setEntryMapping(lastEntryMapping);
+                searchResult.setEntry(lastEntry);
                 searchResult.setSourceValues(lastSourceValues);
                 response.add(searchResult);
 
                 if (debug) log.debug("Generating entry "+dn);
                 lastDn = dn;
                 lastAttributes = attributes;
-                lastEntryMapping = em;
+                lastEntry = entry;
                 lastSourceValues = sv;
             }
         }
@@ -164,7 +151,7 @@ public class BasicSearchResponse extends SearchResponse {
         if (lastDn != null) {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-            searchResult.setEntryMapping(lastEntryMapping);
+            searchResult.setEntry(lastEntry);
             searchResult.setSourceValues(lastSourceValues);
             response.add(searchResult);
         }
@@ -173,7 +160,6 @@ public class BasicSearchResponse extends SearchResponse {
     }
 
     public boolean searchSecondarySources(
-            EntryMapping em,
             SourceValues sv
     ) throws Exception {
         if (groupsOfSources.size() <= 1) return true;
@@ -190,10 +176,13 @@ public class BasicSearchResponse extends SearchResponse {
 
             SearchResponse sr = new SearchResponse();
 
+            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
+
             connector.search(
                     session,
-                    partition,
-                    em,
+                    primarySourceRefs,
+                    localSourceRefs,
                     sourceRefs,
                     sv,
                     request,
@@ -211,7 +200,7 @@ public class BasicSearchResponse extends SearchResponse {
             }
 
             interpreter.set(sv);
-            EngineTool.propagateDown(partition, em, sv, interpreter);
+            EngineTool.propagateDown(entry, sv, interpreter);
             interpreter.clear();
 
             if (debug) {

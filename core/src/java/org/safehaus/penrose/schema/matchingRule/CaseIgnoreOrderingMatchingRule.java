@@ -23,10 +23,21 @@ package org.safehaus.penrose.schema.matchingRule;
 public class CaseIgnoreOrderingMatchingRule extends OrderingMatchingRule {
 
     public int compare(Object object1, Object object2) throws Exception {
-        String s1 = object1.toString();
-        String s2 = object2.toString();
+        
+        if (debug) {
+            log.debug("Comparing:");
+            log.debug(" - "+object1+" ("+object1.getClass().getSimpleName()+")");
+            log.debug(" - "+object2+" ("+object2.getClass().getSimpleName()+")");
+        }
 
-        return s1.compareToIgnoreCase(s2);
+        if (object1 instanceof String && object2 instanceof String) {
+            String s1 = (String)object1;
+            String s2 = (String)object2;
+
+            return s1.compareToIgnoreCase(s2);
+        }
+
+        return super.compare(object1, object2);
     }
 
 }

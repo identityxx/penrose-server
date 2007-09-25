@@ -17,6 +17,7 @@
 <!ATTLIST field unique CDATA #IMPLIED>
 <!ATTLIST field index CDATA #IMPLIED>
 <!ATTLIST field caseSensitive CDATA #IMPLIED>
+<!ATTLIST field autoIncrement CDATA #IMPLIED>
 
 <!ELEMENT binary (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>

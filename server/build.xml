@@ -147,7 +147,6 @@
         </copy>
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="../lib" includes="*"/>
-            <fileset dir="${project.dist}" includes="penrose-${product.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
         <mkdir dir="target/dist/locks"/>
@@ -179,7 +178,7 @@
             <fileset dir="bin"/>
         </copy>
         <fixcrlf
-            srcdir="target/dist/bin"
+            srcdir="target/dist"
             includes="**/*.sh"
             eol="unix"
         />
@@ -190,7 +189,9 @@
         </copy>
         <copy todir="target/dist/samples">
             <fileset dir="../samples">
+                <exclude name="build.xml"/>
                 <exclude name="**/*.jar"/>
+                <exclude name="**/DIR-INF/target/**"/>
             </fileset>
             <filterchain>
                 <expandproperties/>

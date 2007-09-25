@@ -17,7 +17,6 @@
  */
 package org.safehaus.penrose.session;
 
-import org.safehaus.penrose.handler.HandlerManager;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
@@ -31,8 +30,8 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.log.Access;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
@@ -56,7 +55,6 @@ public class Session {
 
     private SessionManager sessionManager;
     private EventManager eventManager;
-    private HandlerManager handlerManager;
 
     private Object sessionId;
 
@@ -68,8 +66,8 @@ public class Session {
 
     private Map<String,Object> attributes = new HashMap<String,Object>();
     
-    boolean eventsEnabled = true;
-    long bufferSize;
+    protected boolean eventsEnabled = true;
+    protected long bufferSize;
 
     public Session(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -146,7 +144,11 @@ public class Session {
         add(partition, request, response);
     }
 
-    public void add(Partition partition, AddRequest request, AddResponse response) throws LDAPException {
+    public void add(
+            Partition partition,
+            AddRequest request,
+            AddResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -164,13 +166,14 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
+
             if (eventsEnabled) {
             	AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, partition, request, response);
             	eventManager.postEvent(beforeModifyEvent);
             }
 
             try {
-                handlerManager.add(this, partition, request, response);
+                partition.add(this, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -178,8 +181,8 @@ public class Session {
 
             } finally {
                 if (eventsEnabled) {
-                	AddEvent addEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, partition, request, response);
-                	eventManager.postEvent(addEvent);
+                    AddEvent addEvent = new AddEvent(this, AddEvent.AFTER_ADD, this, partition, request, response);
+                    eventManager.postEvent(addEvent);
                 }
             }
 
@@ -242,7 +245,11 @@ public class Session {
         bind(partition, request, response);
     }
 
-    public void bind(Partition partition, BindRequest request, BindResponse response) throws LDAPException {
+    public void bind(
+            Partition partition,
+            BindRequest request,
+            BindResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -260,25 +267,44 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
             }
 
-            SchemaManager schemaManager = penroseContext.getSchemaManager();
-
-            DN dn = schemaManager.normalize(request.getDn());
-            request.setDn(dn);
+            DN dn = request.getDn();
+            byte[] password = request.getPassword();
 
             if (eventsEnabled) {
             	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, partition, request, response);
             	eventManager.postEvent(beforeBindEvent);
         	}
             
+            if (dn.isEmpty()) {
+                log.debug("Bound as anonymous user.");
+                bindDn = null;
+                rootUser = false;
+                return;
+            }
+
+            DN rootDn = penroseConfig.getRootDn();
+
+            if (dn.matches(rootDn)) {
+                if (PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
+                    log.debug("Bound as root user.");
+                    bindDn = rootDn;
+                    rootUser = true;
+
+                } else {
+                    log.debug("Root password doesn't match.");
+                    response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
+                }
+                return;
+            }
+
             try {
-                handlerManager.bind(this, partition, request, response);
+                partition.bind(this, request, response);
 
                 if (response.getReturnCode() == LDAP.SUCCESS) {
                     log.debug("Bound as "+dn);
-                    bindDn = (dn == null || dn.isEmpty()) ? null : dn;
+                    bindDn = dn;
+                    rootUser = false;
 
-                    rootUser = dn.matches(penroseConfig.getRootDn());
-                    
                 } else {
                     log.debug("Bind failed.");
                 }
@@ -343,7 +369,11 @@ public class Session {
         compare(partition, request, response);
     }
 
-    public void compare(Partition partition, CompareRequest request, CompareResponse response) throws LDAPException {
+    public void compare(
+            Partition partition,
+            CompareRequest request,
+            CompareResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -380,7 +410,7 @@ public class Session {
             }
 
             try {
-                handlerManager.compare(this, partition, request, response);
+                partition.compare(this, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -438,7 +468,11 @@ public class Session {
         delete(partition, request, response);
     }
 
-    public void delete(Partition partition, DeleteRequest request, DeleteResponse response) throws LDAPException {
+    public void delete(
+            Partition partition,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -462,7 +496,7 @@ public class Session {
             }
             
             try {
-                handlerManager.delete(this, partition, request, response);
+                partition.delete(this, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -521,7 +555,11 @@ public class Session {
         modify(partition, request, response);
     }
 
-    public void modify(Partition partition, ModifyRequest request, ModifyResponse response) throws LDAPException {
+    public void modify(
+            Partition partition,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -541,7 +579,7 @@ public class Session {
                 for (Modification modification : modifications) {
                     Attribute attribute = modification.getAttribute();
 
-                    String op = LDAP.getModificationOperations(modification.getType());
+                    String op = LDAP.getModificationOperation(modification.getType());
                     log.debug("   - " + op + ": " + attribute.getName() + " => " + attribute.getValues());
                 }
 
@@ -556,7 +594,7 @@ public class Session {
             }
 
             try {
-                handlerManager.modify(this, partition, request, response);
+                partition.modify(this, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -616,7 +654,11 @@ public class Session {
         modrdn(partition, request, response);
     }
 
-    public void modrdn(Partition partition, ModRdnRequest request, ModRdnResponse response) throws LDAPException {
+    public void modrdn(
+            Partition partition,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -642,7 +684,7 @@ public class Session {
             }
 
             try {
-                handlerManager.modrdn(this, partition, request, response);
+                partition.modrdn(this, request, response);
 
             } catch (LDAPException e) {
                 response.setException(e);
@@ -743,30 +785,22 @@ public class Session {
                 log.debug("SEARCH:");
                 log.debug(" - Bind DN    : "+bindDn);
                 log.debug(" - Base DN    : "+request.getDn());
-                log.debug(" - Scope      : "+ LDAP.getScope(request.getScope()));
+                log.debug(" - Scope      : "+LDAP.getScope(request.getScope()));
                 log.debug(" - Filter     : "+request.getFilter());
                 log.debug(" - Attributes : "+request.getAttributes());
                 log.debug("");
-
+                
                 log.debug("Controls: "+request.getControls());
             }
 
-            SchemaManager schemaManager = penroseContext.getSchemaManager();
-
-            DN baseDn = schemaManager.normalize(request.getDn());
-            request.setDn(baseDn);
-
-            Collection<String> requestedAttributes = schemaManager.normalize(request.getAttributes());
-            request.setAttributes(requestedAttributes);
+            final Session session = this;
 
             response.setEventsEnabled(eventsEnabled);
             response.setBufferSize(bufferSize);
 
-            final Session session = this;
-
             if (eventsEnabled) {
-                SearchEvent beforeSearchEvent = new SearchEvent(session, SearchEvent.BEFORE_SEARCH, this, partition, request, response);
-	           	eventManager.postEvent(beforeSearchEvent);
+                SearchEvent beforeSearchEvent = new SearchEvent(session, SearchEvent.BEFORE_SEARCH, session, partition, request, response);
+                eventManager.postEvent(beforeSearchEvent);
             }
 
             SearchResponse sr = new SearchResponse() {
@@ -790,7 +824,7 @@ public class Session {
                 }
             };
 
-            handlerManager.search(this, partition, request, sr);
+            partition.search(this, request, sr);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -832,7 +866,11 @@ public class Session {
         unbind(partition, request, response);
     }
 
-    public void unbind(Partition partition, UnbindRequest request, UnbindResponse response) throws LDAPException {
+    public void unbind(
+            Partition partition,
+            UnbindRequest request,
+            UnbindResponse response
+    ) throws LDAPException {
         try {
             Access.log(this, request);
 
@@ -855,11 +893,16 @@ public class Session {
             }
 
             try {
-                if (!rootUser && bindDn != null) {
-                    handlerManager.unbind(this, partition, request, response);
+                if (bindDn == null) {
+                    return;
                 }
 
-                rootUser = false;
+                if (rootUser) {
+                    rootUser = false;
+                    return;
+                }
+
+                partition.unbind(this, request, response);
                 bindDn = null;
 
             } catch (LDAPException e) {
@@ -995,14 +1038,6 @@ public class Session {
         this.rootUser = rootUser;
     }
 
-    public HandlerManager getHandlerManager() {
-        return handlerManager;
-    }
-
-    public void setHandlerManager(HandlerManager handlerManager) {
-        this.handlerManager = handlerManager;
-    }
-
     public PenroseContext getPenroseContext() {
         return penroseContext;
     }
@@ -1018,7 +1053,6 @@ public class Session {
     public void setSessionContext(SessionContext sessionContext) {
         this.sessionContext = sessionContext;
         eventManager = sessionContext.getEventManager();
-        handlerManager = sessionContext.getHandlerManager();
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -1027,5 +1061,21 @@ public class Session {
 
     public void setPenroseConfig(PenroseConfig penroseConfig) {
         this.penroseConfig = penroseConfig;
+    }
+
+    public boolean isEventsEnabled() {
+        return eventsEnabled;
+    }
+
+    public void setEventsEnabled(boolean eventsEnabled) {
+        this.eventsEnabled = eventsEnabled;
+    }
+
+    public long getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(long bufferSize) {
+        this.bufferSize = bufferSize;
     }
 }

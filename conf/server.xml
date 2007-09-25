@@ -5,18 +5,20 @@
 
 <server>
 
+  <schema path="schema/apache.schema"/>
+  <schema path="schema/apachedns.schema"/>
   <schema path="schema/autofs.schema"/>
+  <schema path="schema/changelog.schema"/>
+  <schema path="schema/collective.schema"/>
   <schema path="schema/corba.schema"/>
   <schema path="schema/core.schema"/>
   <schema path="schema/cosine.schema"/>
-  <schema path="schema/apache.schema"/>
-  <schema path="schema/collective.schema"/>
   <schema path="schema/inetorgperson.schema"/>
   <schema path="schema/java.schema"/>
   <schema path="schema/krb5kdc.schema"/>
   <schema path="schema/nis.schema"/>
+  <schema path="schema/solaris.schema"/>
   <schema path="schema/system.schema"/>
-  <schema path="schema/apachedns.schema"/>
 
   <engine name="DEFAULT">
     <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>

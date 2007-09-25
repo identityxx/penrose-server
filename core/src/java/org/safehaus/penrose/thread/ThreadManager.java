@@ -54,7 +54,7 @@ public class ThreadManager {
                 maxThreads,
                 60,
                 TimeUnit.SECONDS,
-                new LinkedBlockingQueue()
+                new LinkedBlockingQueue<Runnable>()
         );
 
         executorService.setThreadFactory(new ThreadFactory() {
@@ -66,9 +66,13 @@ public class ThreadManager {
     }
 
     public void stop() throws Exception {
-        executorService.shutdown();
+        if (executorService != null) executorService.shutdown();
     }
 
+    public boolean isRunning() {
+        return executorService != null && !executorService.isShutdown();
+    }
+    
     public void execute(Runnable runnable) throws Exception {
         executorService.execute(runnable);
     }

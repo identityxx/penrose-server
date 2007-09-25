@@ -5,7 +5,7 @@
 
 <connections>
 
-  <connection name="OpenLDAP">
+  <connection name="LDAP">
     <adapter-name>LDAP</adapter-name>
     <parameter>
       <param-name>java.naming.factory.initial</param-name>
@@ -25,7 +25,7 @@
     </parameter>
   </connection>
 
-  <connection name="MySQL">
+  <connection name="JDBC">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>

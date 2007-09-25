@@ -27,14 +27,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <set-properties-rule/>
 
         <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+        <call-method-rule pattern="partition-class" methodname="setPartitionClass" paramcount="0" />
 
         <!-- adapter -->
         <pattern value="adapter">
             <object-create-rule classname="org.safehaus.penrose.adapter.AdapterConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="adapter-name" methodname="setName" paramcount="0" />
+            <call-method-rule pattern="adapter-name"  methodname="setName"         paramcount="0" />
             <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <call-method-rule pattern="description"   methodname="setDescription"  paramcount="0" />
             <set-next-rule methodname="addAdapterConfig" />
         </pattern>
 
@@ -42,9 +43,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="handler">
             <object-create-rule classname="org.safehaus.penrose.handler.HandlerConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="handler-name" methodname="setName" paramcount="0" />
+            <call-method-rule pattern="handler-name"  methodname="setName"         paramcount="0" />
             <call-method-rule pattern="handler-class" methodname="setHandlerClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <call-method-rule pattern="description"   methodname="setDescription"  paramcount="0" />
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />
                 <call-param-rule pattern="param-name" paramnumber="0"/>
@@ -57,12 +58,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 		<pattern value="engine">
 			<object-create-rule classname="org.safehaus.penrose.engine.EngineConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="engine-name" methodname="setName" paramcount="0" />
+            <call-method-rule pattern="engine-name"  methodname="setName"        paramcount="0" />
             <call-method-rule pattern="engine-class" methodname="setEngineClass" paramcount="0" />
-			<call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+			<call-method-rule pattern="description"  methodname="setDescription" paramcount="0" />
 			<pattern value="parameter">
 				<call-method-rule methodname="setParameter" paramcount="2" />
-				<call-param-rule pattern="param-name" paramnumber="0"/>
+				<call-param-rule pattern="param-name"  paramnumber="0"/>
 				<call-param-rule pattern="param-value" paramnumber="1"/>
 			</pattern>
 			<set-next-rule methodname="addEngineConfig" />
@@ -72,12 +73,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="interpreter">
             <object-create-rule classname="org.safehaus.penrose.interpreter.InterpreterConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="interpreter-name" methodname="setName" paramcount="0" />
+            <call-method-rule pattern="interpreter-name"  methodname="setName"             paramcount="0" />
             <call-method-rule pattern="interpreter-class" methodname="setInterpreterClass" paramcount="0" />
-            <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
+            <call-method-rule pattern="description"       methodname="setDescription"      paramcount="0" />
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />
-                <call-param-rule pattern="param-name" paramnumber="0"/>
+                <call-param-rule pattern="param-name"  paramnumber="0"/>
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
             <set-next-rule methodname="addInterpreterConfig" />
@@ -85,7 +86,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
         <pattern value="parameter">
             <call-method-rule methodname="setParameter" paramcount="2" />
-            <call-param-rule pattern="param-name" paramnumber="0"/>
+            <call-param-rule pattern="param-name"  paramnumber="0"/>
             <call-param-rule pattern="param-value" paramnumber="1"/>
         </pattern>
 

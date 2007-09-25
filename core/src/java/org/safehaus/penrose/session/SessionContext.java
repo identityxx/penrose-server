@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.event.EventManager;
-import org.safehaus.penrose.acl.ACLManager;
-import org.safehaus.penrose.handler.HandlerManager;
 
 /**
  * @author Endi S. Dewata
@@ -18,10 +16,8 @@ public class SessionContext {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private ACLManager     aclManager;
     private EventManager   eventManager;
     private SessionManager sessionManager;
-    private HandlerManager handlerManager;
 
     public SessionContext() {
     }
@@ -42,14 +38,6 @@ public class SessionContext {
         this.penroseContext = penroseContext;
     }
 
-    public ACLManager getAclManager() {
-        return aclManager;
-    }
-
-    public void setAclManager(ACLManager aclManager) {
-        this.aclManager = aclManager;
-    }
-
     public EventManager getEventManager() {
         return eventManager;
     }
@@ -66,19 +54,7 @@ public class SessionContext {
         this.sessionManager = sessionManager;
     }
 
-    public HandlerManager getHandlerManager() {
-        return handlerManager;
-    }
-
-    public void setHandlerManager(HandlerManager handlerManager) {
-        this.handlerManager = handlerManager;
-    }
-
     public void init() throws Exception {
-
-        aclManager = new ACLManager();
-        aclManager.setPenroseConfig(penroseConfig);
-        aclManager.setPenroseContext(penroseContext);
 
         eventManager = new EventManager();
         eventManager.setPenroseConfig(penroseConfig);
@@ -89,11 +65,6 @@ public class SessionContext {
         sessionManager.setPenroseConfig(penroseConfig);
         sessionManager.setPenroseContext(penroseContext);
         sessionManager.setSessionContext(this);
-
-        handlerManager = new HandlerManager();
-        handlerManager.setPenroseConfig(penroseConfig);
-        handlerManager.setPenroseContext(penroseContext);
-        handlerManager.setSessionContext(this);
     }
 
     public void load() throws Exception {

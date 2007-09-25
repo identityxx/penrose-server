@@ -40,6 +40,23 @@ public class DN implements Serializable, Comparable {
         }
     }
 
+    public DN getDn(int start, int end) {
+        DNBuilder db = new DNBuilder();
+
+        for (int i=start; i<end; i++) {
+            db.append(rdns.get(i));
+        }
+
+        return db.toDn();
+    }
+
+    public DN append(DN dn) {
+        DNBuilder db = new DNBuilder();
+        db.append(this);
+        db.append(dn);
+        return db.toDn();
+    }
+
     public String getPattern() {
         if (pattern != null) return pattern;
 
@@ -60,12 +77,18 @@ public class DN implements Serializable, Comparable {
         return pattern;
     }
 
-    public String format(Collection args) {
+    public String format(Collection<Object> args) {
         if (formatter == null) {
             formatter = new MessageFormat(getPattern());
         }
 
-        return formatter.format(args.toArray());
+        Collection<String> values = new ArrayList<String>();
+        for (Object arg : args) {
+            String value = arg.toString();
+            values.add(LDAP.escape(value));
+        }
+        
+        return formatter.format(values.toArray());
     }
 
     public boolean isEmpty() {

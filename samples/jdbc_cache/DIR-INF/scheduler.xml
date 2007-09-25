@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE scheduler PUBLIC
+  "-//Penrose/DTD Scheduler ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/scheduler.dtd">
+
+<scheduler>
+
+  <scheduler-class>org.safehaus.penrose.scheduler.quartz.QuartzScheduler</scheduler-class>
+
+  <job name="UsersSyncJob">
+    <job-class>org.safehaus.penrose.jdbc.scheduler.JDBCSyncJob</job-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>orig_users</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>cache_users</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,dc=JDBC Cache,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>changelog</param-value>
+    </parameter>
+  </job>
+
+  <job name="GroupsSyncJob">
+    <job-class>org.safehaus.penrose.jdbc.scheduler.JDBCSyncJob</job-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>orig_groups,orig_usergroups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>cache_groups,cache_usergroups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,dc=JDBC Cache,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>changelog</param-value>
+    </parameter>
+  </job>
+
+  <trigger>
+    <trigger-class>org.safehaus.penrose.scheduler.quartz.CronTrigger</trigger-class>
+    <job-name>UsersSyncJob</job-name>
+    <job-name>GroupsSyncJob</job-name>
+    <parameter>
+      <param-name>expression</param-name>
+      <param-value>0/30 * * * * ?</param-value>
+    </parameter>
+  </trigger>
+
+</scheduler>

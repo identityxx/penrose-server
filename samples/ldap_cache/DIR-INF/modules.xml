@@ -5,16 +5,4 @@
 
 <modules>
 
-  <module name="Source Sync" enabled="true">
-    <module-class>org.safehaus.penrose.source.SourceSyncModule</module-class>
-    <parameter>
-      <param-name>source</param-name>
-      <param-value>users,groups</param-value>
-    </parameter>
-    <parameter>
-      <param-name>interval</param-name>
-      <param-value>30</param-value>
-    </parameter>
-  </module>
-
 </modules>

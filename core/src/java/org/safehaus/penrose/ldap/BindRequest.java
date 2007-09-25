@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class BindRequest extends Request {
+public class BindRequest extends Request implements Cloneable {
 
     protected DN dn;
     protected byte[] password;
@@ -43,5 +43,14 @@ public class BindRequest extends Request {
 
     public void setPassword(byte[] password) {
         this.password = password;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        BindRequest request = (BindRequest)super.clone();
+
+        request.dn = dn;
+        request.password = password;
+
+        return request;
     }
 }

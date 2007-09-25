@@ -1,19 +1,15 @@
 package org.safehaus.penrose.jdbc.adapter;
 
-import org.safehaus.penrose.mapping.EntryMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.mapping.AttributeMapping;
+import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
 import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.jdbc.JoinClause;
-import org.safehaus.penrose.source.SourceRef;
-import org.safehaus.penrose.source.FieldRef;
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -29,7 +25,6 @@ import java.util.*;
 public class SearchRequestBuilder extends RequestBuilder {
 
     Partition partition;
-    EntryMapping entryMapping;
 
     Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
     SourceRef primarySourceRef;
@@ -44,7 +39,8 @@ public class SearchRequestBuilder extends RequestBuilder {
     public SearchRequestBuilder(
             Interpreter interpreter,
             Partition partition,
-            EntryMapping entryMapping,
+            Collection<SourceRef> primarySourceRefs,
+            Collection<SourceRef> localSourceRefs,
             Collection<SourceRef> sourceRefs,
             SourceValues sourceValues,
             SearchRequest request,
@@ -52,7 +48,6 @@ public class SearchRequestBuilder extends RequestBuilder {
     ) throws Exception {
 
         this.partition = partition;
-        this.entryMapping = entryMapping;
 
         for (SourceRef sourceRef : sourceRefs) {
             this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
@@ -68,7 +63,8 @@ public class SearchRequestBuilder extends RequestBuilder {
         filterBuilder = new SearchFilterBuilder(
                 interpreter,
                 partition,
-                entryMapping,
+                primarySourceRefs,
+                localSourceRefs,
                 sourceRefs,
                 sourceValues
         );
@@ -97,17 +93,10 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         if (primarySourceRef == sourceRef) {
 
+            // join using fields that are used as RDN
+            
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-
-                FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-                String variable = fieldMapping.getVariable();
-                if (variable == null) continue;
-
-                AttributeMapping attributeMapping = entryMapping.getAttributeMapping(variable);
-                if (attributeMapping == null) throw new Exception("Unknown attribute "+variable);
-
-                if (!attributeMapping.isRdn()) continue;
+                if (!fieldRef.isRdn()) continue;
 
                 String sn = primarySourceRef.getAlias();
                 String fn = fieldRef.getName();
@@ -126,11 +115,11 @@ public class SearchRequestBuilder extends RequestBuilder {
 
         } else {
 
+            // join using fields that are mapped to another source using variable mapping
+
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
 
-                FieldMapping fieldMapping = fieldRef.getFieldMapping();
-
-                String variable = fieldMapping.getVariable();
+                String variable = fieldRef.getVariable();
                 if (variable == null) continue;
 
                 int p = variable.indexOf(".");
@@ -239,7 +228,10 @@ public class SearchRequestBuilder extends RequestBuilder {
                 statement.addJoin(joinClause);
             }
 
-            statement.addOrders(sourceRef.getPrimaryKeyFieldRefs());
+            Collection<FieldRef> primaryKeyFieldRefs = sourceRef.getPrimaryKeyFieldRefs();
+            if (debug) log.debug("Order by: "+primaryKeyFieldRefs);
+
+            statement.addOrders(primaryKeyFieldRefs);
             sourceCounter++;
         }
 /*

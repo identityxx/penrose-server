@@ -31,7 +31,10 @@ import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionConfigs;
-import org.safehaus.penrose.directory.DirectoryConfigs;
+import org.safehaus.penrose.directory.DirectoryConfig;
+import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.FieldMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -57,7 +60,7 @@ public class PartitionValidator {
 
         results.addAll(validate(partitionConfig, partitionConfig.getConnectionConfigs()));
         results.addAll(validate(partitionConfig, partitionConfig.getSourceConfigs()));
-        results.addAll(validate(partitionConfig, partitionConfig.getDirectoryConfigs()));
+        results.addAll(validate(partitionConfig, partitionConfig.getDirectoryConfig()));
         results.addAll(validateModuleConfigs(partitionConfig, partitionConfig.getModuleConfigs()));
 
         return results;
@@ -139,7 +142,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, DirectoryConfigs mappings) throws Exception {
+    public Collection<PartitionValidationResult> validate(PartitionConfig partitionConfig, DirectoryConfig mappings) throws Exception {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         for (EntryMapping entryMapping : mappings.getEntryMappings()) {
@@ -158,7 +161,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateObjectClasses(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateObjectClasses(PartitionConfig partitionConfig, DirectoryConfig mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         //log.debug("Validating entry "+entryMapping"'s object classes");
@@ -195,7 +198,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateAttributeMappings(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateAttributeMappings(PartitionConfig partitionConfig, DirectoryConfig mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         //log.debug("Validating entry "+entryMapping"'s attributes");
@@ -267,7 +270,7 @@ public class PartitionValidator {
         return results;
     }
 
-    public Collection<PartitionValidationResult> validateSourceMappings(PartitionConfig partitionConfig, DirectoryConfigs mappings, EntryMapping entryMapping) {
+    public Collection<PartitionValidationResult> validateSourceMappings(PartitionConfig partitionConfig, DirectoryConfig mappings, EntryMapping entryMapping) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
         for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {

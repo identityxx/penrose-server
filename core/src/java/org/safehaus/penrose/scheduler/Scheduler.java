@@ -34,11 +34,15 @@ public class Scheduler {
         this.partition = schedulerContext.getPartition();
 
         for (JobConfig jobConfig : schedulerConfig.getJobConfigs()) {
+            if (!jobConfig.isEnabled()) continue;
+
             Job job = createJob(jobConfig);
             addJob(job);
         }
 
         for (TriggerConfig triggerConfig : schedulerConfig.getTriggerConfigs()) {
+            if (!triggerConfig.isEnabled()) continue;
+
             Trigger trigger = createTrigger(triggerConfig);
             addTrigger(trigger);
         }
@@ -52,9 +56,6 @@ public class Scheduler {
     public void destroy() throws Exception {
     }
 
-    public void schedule(Job job, Trigger trigger) throws Exception {
-    }
-
     public Job createJob(JobConfig jobConfig) throws Exception {
 
         String className = jobConfig.getJobClass();
@@ -64,13 +65,21 @@ public class Scheduler {
         Class clazz = classLoader.loadClass(className);
 
         Job job = (Job)clazz.newInstance();
-        job.init(jobConfig);
+
+        JobContext jobContext = new JobContext();
+        jobContext.setPartition(partition);
+
+        job.init(jobConfig, jobContext);
 
         return job;
     }
 
     public void addJob(Job job) {
         jobs.put(job.getName(), job);
+    }
+
+    public Collection<String> getJobNames() {
+        return jobs.keySet();
     }
 
     public Job getJob(String name) {
@@ -94,13 +103,21 @@ public class Scheduler {
         Class clazz = classLoader.loadClass(className);
 
         Trigger trigger = (Trigger)clazz.newInstance();
-        trigger.init(triggerConfig);
+
+        TriggerContext triggerContext = new TriggerContext();
+        triggerContext.setPartition(partition);
+
+        trigger.init(triggerConfig, triggerContext);
 
         return trigger;
     }
 
     public void addTrigger(Trigger trigger) {
         triggers.put(trigger.getName(), trigger);
+    }
+
+    public Collection<String> getTriggerNames() {
+        return triggers.keySet();
     }
 
     public Trigger getTrigger(String name) {

@@ -1,14 +1,19 @@
 package org.safehaus.penrose.engine;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.FieldMapping;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,44 +30,40 @@ public class EngineTool {
     public static boolean debug = log.isDebugEnabled();
 
     public static void propagateUp(
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues
     ) throws Exception {
 
-        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
+        List<Entry> entries = new ArrayList<Entry>();
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        while (entryMapping != null) {
-            mappings.add(entryMapping);
-            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
+        while (entry != null) {
+            entries.add(entry);
+            entry = entry.getParent();
         }
 
-        propagate(mappings, sourceValues);
+        propagate(entries, sourceValues);
     }
 
     public static void propagateDown(
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues
     ) throws Exception {
 
-        List<EntryMapping> mappings = new ArrayList<EntryMapping>();
+        List<Entry> entries = new ArrayList<Entry>();
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        while (entryMapping != null) {
-            mappings.add(0, entryMapping);
-            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
+        while (entry != null) {
+            entries.add(0, entry);
+            entry = entry.getParent();
         }
 
-        propagate(mappings, sourceValues);
+        propagate(entries, sourceValues);
     }
 
-    public static void propagate(Collection<EntryMapping> mappings, SourceValues sourceValues) throws Exception {
+    public static void propagate(Collection<Entry> entries, SourceValues sourceValues) throws Exception {
 
-        for (EntryMapping entryMapping : mappings) {
+        for (Entry entry : entries) {
 
-            Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+            Collection<SourceMapping> sourceMappings = entry.getSourceMappings();
             for (SourceMapping sourceMapping : sourceMappings) {
 
                 if (debug) log.debug("Propagating source " + sourceMapping.getName());
@@ -107,32 +108,30 @@ public class EngineTool {
     }
 
     public static void propagateDown(
-            Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
-        List<EntryMapping> path = new ArrayList<EntryMapping>();
+        List<Entry> path = new ArrayList<Entry>();
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        while (entryMapping != null) {
-            path.add(0, entryMapping);
-            entryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
+        while (entry != null) {
+            path.add(0, entry);
+            entry = entry.getParent();
         }
 
         propagate(path, sourceValues, interpreter);
     }
 
     public static void propagate(
-            Collection<EntryMapping> path,
+            Collection<Entry> path,
             SourceValues sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
-        for (EntryMapping entryMapping : path) {
+        for (Entry entry : path) {
 
-            Collection<SourceMapping> sourceMappings = entryMapping.getSourceMappings();
+            Collection<SourceMapping> sourceMappings = entry.getSourceMappings();
             for (SourceMapping sourceMapping : sourceMappings) {
 
                 if (debug) log.debug("Propagating source " + sourceMapping.getName());
@@ -216,4 +215,100 @@ public class EngineTool {
         if (debug) log.debug("Propagating field " + lsourceName + "." + lfieldName + ": " + rattribute.getValues());
     }
 
+    public static void extractSourceValues(
+            Entry entry,
+            DN dn,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        Directory directory = entry.getDirectory();
+        Partition partition = directory.getPartition();
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PenroseContext penroseContext = partitionContext.getPenroseContext();
+
+        InterpreterManager interpreterManager = penroseContext.getInterpreterManager();
+        Interpreter interpreter = interpreterManager.newInstance();
+
+        if (debug) log.debug("Extracting source values from "+dn);
+
+        extractSourceValues(
+                interpreter,
+                dn,
+                entry,
+                sourceValues
+        );
+    }
+
+    public static void extractSourceValues(
+            Interpreter interpreter,
+            DN dn,
+            Entry entry,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        DN parentDn = dn.getParentDn();
+        Entry parent = entry.getParent();
+
+        if (parentDn != null && parent != null) {
+            extractSourceValues(interpreter, parentDn, parent, sourceValues);
+        }
+
+        RDN rdn = dn.getRdn();
+        Collection<SourceMapping> sourceMappings = entry.getSourceMappings();
+
+        //if (sourceMappings.isEmpty()) return;
+        //SourceMapping sourceMapping = sourceMappings.iterator().next();
+
+        //interpreter.set(sourceValues);
+        interpreter.set(rdn);
+
+        for (SourceMapping sourceMapping : sourceMappings) {
+            extractSourceValues(
+                    interpreter,
+                    rdn,
+                    entry,
+                    sourceMapping,
+                    sourceValues
+            );
+        }
+
+        interpreter.clear();
+    }
+
+    public static void extractSourceValues(
+            Interpreter interpreter,
+            RDN rdn,
+            Entry entry,
+            SourceMapping sourceMapping,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        if (debug) log.debug("Extracting source "+sourceMapping.getName()+" from RDN: "+rdn);
+
+        Directory directory = entry.getDirectory();
+        Partition partition = directory.getPartition();
+
+        Attributes attributes = sourceValues.get(sourceMapping.getName());
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SourceConfigs sources = partitionConfig.getSourceConfigs();
+        SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
+
+        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
+        for (FieldMapping fieldMapping : fieldMappings) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+
+            Object value = interpreter.eval(fieldMapping);
+            if (value == null) continue;
+
+            if ("INTEGER".equals(fieldConfig.getType()) && value instanceof String) {
+                value = Integer.parseInt((String)value);
+            }
+
+            attributes.addValue(fieldMapping.getName(), value);
+
+            String fieldName = sourceMapping.getName() + "." + fieldMapping.getName();
+            if (debug) log.debug(" => " + fieldName + ": " + value);
+        }
+    }
 }

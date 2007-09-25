@@ -24,7 +24,10 @@ public class Attribute implements Cloneable {
 
     public Attribute(String name, Collection<Object> values) {
         this.name = name;
-        this.values.addAll(values);
+        if (values == null) return;
+        for (Object value : values) {
+            if (!containsValue(value)) this.values.add(value);
+        }
     }
 
     public String getName() {
@@ -46,13 +49,31 @@ public class Attribute implements Cloneable {
 
     public void setValue(Object value) {
         values.clear();
-        if (value == null) return;
+        if (value == null || containsValue(value)) return;
         values.add(value);
     }
 
     public void addValue(Object value) {
-        if (value == null) return;
+        if (value == null || containsValue(value)) return;
         values.add(value);
+    }
+
+    public boolean containsValue(Object value) {
+        if (value == null) return false;
+        if (values.contains(value)) return true;
+
+        if (value instanceof String) {
+            String string = (String)value;
+
+            for (Object v : values) {
+                if (!(v instanceof String)) continue;
+
+                String s = (String)v;
+                if (string.equalsIgnoreCase(s)) return true;
+            }
+        }
+
+        return false;
     }
 
     public void removeValue(Object value) {
@@ -61,13 +82,19 @@ public class Attribute implements Cloneable {
     }
 
     public void addValues(Collection<Object> values) {
-        if (values != null) this.values.addAll(values);
+        if (values == null) return;
+        for (Object value : values) {
+            if (!containsValue(value)) this.values.add(value);
+        }
     }
 
     public void setValues(Collection<Object> values) {
         if (this.values == values) return;
         this.values.clear();
-        if (values != null) this.values.addAll(values);
+        if (values == null) return;
+        for (Object value : values) {
+            if (!containsValue(value)) this.values.add(value);
+        }
     }
 
     public void removeValues(Collection<Object> values) {

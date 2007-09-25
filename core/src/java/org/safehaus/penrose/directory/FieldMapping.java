@@ -15,9 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.mapping;
+package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.mapping.Expression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class FieldMapping implements Serializable, Cloneable {
     public final static String SEARCH  = "search";
 
     private String name;
-    private String type;
+    private boolean rdn;
 
     private Object constant;
     private String variable;
@@ -144,7 +145,7 @@ public class FieldMapping implements Serializable, Cloneable {
 
         FieldMapping fieldMapping = (FieldMapping)object;
         if (!equals(name, fieldMapping.name)) return false;
-        if (!equals(type, fieldMapping.type)) return false;
+        if (!equals(rdn, fieldMapping.rdn)) return false;
 
         if (constant instanceof byte[] && fieldMapping.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])fieldMapping.constant)) return false;
@@ -161,7 +162,7 @@ public class FieldMapping implements Serializable, Cloneable {
 
     public void copy(FieldMapping fieldMapping) throws CloneNotSupportedException {
         name = fieldMapping.name;
-        type = fieldMapping.type;
+        rdn = fieldMapping.rdn;
 
         if (fieldMapping.constant instanceof byte[]) {
             constant = ((byte[])fieldMapping.constant).clone();
@@ -182,14 +183,6 @@ public class FieldMapping implements Serializable, Cloneable {
         return fieldMapping;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public Collection<String> getOperations() {
         return operations;
     }
@@ -206,5 +199,13 @@ public class FieldMapping implements Serializable, Cloneable {
             String operation = st.nextToken();
             this.operations.add(operation);
         }
+    }
+
+    public boolean isRdn() {
+        return rdn;
+    }
+
+    public void setRdn(boolean rdn) {
+        this.rdn = rdn;
     }
 }

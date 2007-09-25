@@ -160,6 +160,10 @@ public class PenroseContext {
         threadManager.stop();
     }
 
+    public boolean isRunning() {
+        return threadManager.isRunning();
+    }
+    
     public void clear() throws Exception {
         connectorManager.clear();
         interpreterManager.clear();

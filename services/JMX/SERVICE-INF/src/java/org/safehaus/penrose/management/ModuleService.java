@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 /**
  * @author Endi Sukma Dewata
  */
-public class ModuleService implements DynamicMBean {
+public class ModuleService implements DynamicMBean, ModuleServiceMBean {
 
     public Logger log = Logger.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();

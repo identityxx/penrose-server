@@ -17,13 +17,9 @@
  */
 package org.safehaus.penrose.acl;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.LDAP;
 import org.slf4j.LoggerFactory;
@@ -34,26 +30,21 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class ACLManager {
+public class ACLEvaluator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    PenroseConfig penroseConfig;
-    PenroseContext penroseContext;
-
-    private SchemaManager schemaManager;
-
-    public ACLManager() {
+    public ACLEvaluator() {
     }
 
-    public void addPermission(Set set, String permission) {
+    public void addPermission(Set<String> set, String permission) {
         for (int i=0; i<permission.length(); i++) {
             set.add(permission.substring(i, i+1));
         }
     }
 
-    public void addPermission(ACI aci, Set grants, Set denies) {
+    public void addPermission(ACI aci, Set<String> grants, Set<String> denies) {
         if (aci.getAction().equals(ACI.ACTION_GRANT)) {
             addPermission(grants, aci.getPermission());
 
@@ -65,19 +56,18 @@ public class ACLManager {
     public boolean getObjectPermission(
             DN bindDn,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN targetDn,
             String scope,
             String permission) throws Exception {
 
-        if (entryMapping == null) return true;
+        if (entry == null) return true;
 
-        //log.debug("Checking ACL on \""+entryMapping.getDn()+"\".");
+        //log.debug("Checking ACL on \""+entry.getDn()+"\".");
         //log.debug("Bind DN: "+bindDn);
         //log.debug("Target DN: "+targetDn);
 
-        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
+        for (ACI aci : entry.getACL()) {
             //log.debug(" - "+aci);
 
             if (!aci.getTarget().equals(ACI.TARGET_OBJECT)) {
@@ -104,9 +94,7 @@ public class ACLManager {
                 boolean match = dn.matches(bindDn);
                 //log.debug("User matches \""+aci.getDn()+"\": "+match);
                 if (match) {
-                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                    //log.debug("User access: "+b);
-                    return b;
+                    return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
             }
 
@@ -114,9 +102,7 @@ public class ACLManager {
                 boolean match = targetDn.matches(bindDn);
                 //log.debug("User matches \""+targetDn+"\": "+match);
                 if (match) {
-                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                    //log.debug("Self access: "+b);
-                    return b;
+                    return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
             }
 
@@ -124,9 +110,7 @@ public class ACLManager {
                 boolean anonymous = bindDn == null;
                 //log.debug("User is anonymous: "+anonymous);
                 if (anonymous) {
-                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                    //log.debug("Anonymous access: "+b);
-                    return b;
+                    return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
             }
 
@@ -134,35 +118,30 @@ public class ACLManager {
                 boolean authenticated = bindDn != null;
                 //log.debug("User is authenticated: "+authenticated);
                 if (authenticated) {
-                    boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                    //log.debug("Authenticated access: "+b);
-                    return b;
+                    return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
             }
 
             if (subject.equals(ACI.SUBJECT_ANYBODY)) {
-                boolean b = aci.getAction().equals(ACI.ACTION_GRANT);
-                //log.debug("Anybody access: "+b);
-                return b;
+                return aci.getAction().equals(ACI.ACTION_GRANT);
             }
         }
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentEntryMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-        if (parentEntryMapping == null) {
+        Entry parent = entry.getParent();
+        if (parent == null) {
         	if (debug) {
-        		log.debug("Parent entry for "+entryMapping.getDn()+" not found.");
+        		log.debug("Parent entry for "+ entry.getDn()+" not found.");
         	}
             return false;
         }
 
-        return getObjectPermission(bindDn, partition, parentEntryMapping, targetDn, ACI.SCOPE_SUBTREE, permission);
+        return getObjectPermission(bindDn, partition, parent, targetDn, ACI.SCOPE_SUBTREE, permission);
     }
 
     public int checkPermission(
             Session session,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN dn,
             String permission
     ) throws Exception {
@@ -181,7 +160,7 @@ public class ACLManager {
         }
 
         DN bindDn = session.getBindDn();
-        boolean result = getObjectPermission(bindDn, partition, entryMapping, dn, ACI.SCOPE_OBJECT, permission);
+        boolean result = getObjectPermission(bindDn, partition, entry, dn, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             log.debug("ACL evaluation => SUCCESS");
@@ -193,33 +172,33 @@ public class ACLManager {
         return rc;
     }
 
-    public int checkRead(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_READ);
+    public int checkRead(Session session, Partition partition, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_SEARCH);
+    public int checkSearch(Session session, Partition partition, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_ADD);
+    public int checkAdd(Session session, Partition partition, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_DELETE);
+    public int checkDelete(Session session, Partition partition, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(Session session, Partition partition, EntryMapping entryMapping, DN dn) throws Exception {
-    	return checkPermission(session, partition, entryMapping, dn, ACI.PERMISSION_WRITE);
+    public int checkModify(Session session, Partition partition, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_WRITE);
     }
 
-    public Collection getAttributes(String attributes) {
-        Collection list = new ArrayList();
+    public Collection<String> getAttributes(String attributes) {
+        Collection<String> list = new ArrayList<String>();
         addAttributes(list, attributes);
         return list;
     }
 
-    public void addAttributes(Collection list, String attributes) {
+    public void addAttributes(Collection<String> list, String attributes) {
         //log.debug("Adding attributes: "+attributes);
         StringTokenizer st = new StringTokenizer(attributes, ",");
         while (st.hasMoreTokens()) {
@@ -229,8 +208,8 @@ public class ACLManager {
         }
     }
 
-    public void addAttributes(ACI aci, Collection grants, Collection denies) {
-        Collection attributes = getAttributes(aci.getAttributes());
+    public void addAttributes(ACI aci, Collection<String> grants, Collection<String> denies) {
+        Collection<String> attributes = getAttributes(aci.getAttributes());
 
         if (aci.getAction().equals(ACI.ACTION_GRANT)) {
             attributes.removeAll(denies);
@@ -304,57 +283,54 @@ public class ACLManager {
     public void getReadableAttributes(
             DN bindDn,
             Partition partition,
-            EntryMapping entryMapping,
+            Entry entry,
             DN targetDn,
             String scope,
-            Collection attributeNames,
-            Collection grants,
-            Collection denies
+            Collection<String> attributeNames,
+            Collection<String> grants,
+            Collection<String> denies
     ) throws Exception {
 
-        if (entryMapping == null) return;
+        if (entry == null) return;
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        EntryMapping parentMapping = partitionConfig.getDirectoryConfigs().getParent(entryMapping);
-        getReadableAttributes(bindDn, partition, parentMapping, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
+        Entry parent = entry.getParent();
+        getReadableAttributes(bindDn, partition, parent, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
-        if (debug) log.debug("Checking ACL in "+entryMapping.getDn()+":");
+        if (debug) log.debug("Checking ACL in "+entry.getDn()+":");
 
-        List acls = new ArrayList();
-        for (Iterator i=entryMapping.getACL().iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
+        List<ACI> acls = new ArrayList<ACI>();
+        for (ACI aci : entry.getACL()) {
             acls.add(0, aci);
         }
 
-        for (Iterator i=acls.iterator(); i.hasNext(); ) {
-            ACI aci = (ACI)i.next();
-            if (debug) log.debug(" - "+aci);
+        for (ACI aci : acls) {
+            if (debug) log.debug(" - " + aci);
 
             if (!checkSubject(bindDn, targetDn, aci)) {
-            	if (debug) log.debug("   ==> subject "+bindDn+" doesn't match");
+                if (debug) log.debug("   ==> subject " + bindDn + " doesn't match");
                 continue;
             }
 
             if (scope != null && !scope.equals(aci.getScope())) {
-            	if (debug) log.debug("   ==> scope "+scope+" doesn't match "+aci.getScope());
+                if (debug) log.debug("   ==> scope " + scope + " doesn't match " + aci.getScope());
                 continue;
             }
 
             if (aci.getPermission().indexOf(ACI.PERMISSION_READ) < 0) {
-            	if (debug) log.debug("   ==> read permission not defined");
+                if (debug) log.debug("   ==> read permission not defined");
                 continue;
             }
 
             if (aci.getTarget().equals(ACI.TARGET_ATTRIBUTES)) {
-                Collection attributes = getAttributes(aci.getAttributes());
+                Collection<String> attributes = getAttributes(aci.getAttributes());
 
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                	if (debug) log.debug("   ==> Granting read access to attributes "+attributes);
+                    if (debug) log.debug("   ==> Granting read access to attributes " + attributes);
                     grants.addAll(attributes);
                     denies.removeAll(attributes);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                	if (debug) log.debug("   ==> Denying read access to attributes "+attributes);
+                    if (debug) log.debug("   ==> Denying read access to attributes " + attributes);
                     grants.removeAll(attributes);
                     denies.addAll(attributes);
                 }
@@ -364,45 +340,17 @@ public class ACLManager {
 
             if (aci.getTarget().equals(ACI.TARGET_OBJECT)) {
                 if (aci.getAction().equals(ACI.ACTION_GRANT)) {
-                	if (debug) log.debug("   ==> Granting read access to attributes "+attributeNames);
+                    if (debug) log.debug("   ==> Granting read access to attributes " + attributeNames);
                     grants.addAll(attributeNames);
                     denies.removeAll(attributeNames);
 
                 } else if (aci.getAction().equals(ACI.ACTION_DENY)) {
-                	if (debug) log.debug("   ==> Denying read access to attributes "+attributeNames);
+                    if (debug) log.debug("   ==> Denying read access to attributes " + attributeNames);
                     grants.removeAll(attributeNames);
                     denies.addAll(attributeNames);
                 }
-
-                continue;
             }
 
         }
-    }
-
-    public SchemaManager getSchemaManager() {
-        return schemaManager;
-    }
-
-    public void setSchemaManager(SchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
-    }
-
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
-
-        schemaManager = penroseContext.getSchemaManager();
     }
 }

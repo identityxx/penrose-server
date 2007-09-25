@@ -41,14 +41,6 @@ public class PartitionClient implements PartitionServiceMBean {
         return (String)connection.getAttribute(objectName, "Status");
     }
 
-    public void start() throws Exception {
-        connection.invoke(objectName, "start", new Object[] {}, new String[] {});
-    }
-
-    public void stop() throws Exception {
-        connection.invoke(objectName, "stop", new Object[] {}, new String[] {});
-    }
-
     public PartitionConfig getPartitionConfig() throws Exception {
         return (PartitionConfig)connection.getAttribute(objectName, "PartitionConfig");
     }
@@ -87,6 +79,14 @@ public class PartitionClient implements PartitionServiceMBean {
 
     public ModuleClient getModuleClient(String moduleName) throws Exception {
         return new ModuleClient(client, name, moduleName);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Scheduler
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public SchedulerClient getSchedulerClient() throws Exception {
+        return new SchedulerClient(client, name);
     }
 
     public static String getObjectName(String name) {

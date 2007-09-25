@@ -1,6 +1,6 @@
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.SearchRequest;
 
 /**
@@ -9,7 +9,7 @@ import org.safehaus.penrose.ldap.SearchRequest;
 public class CacheKey {
 
     private SearchRequest searchRequest;
-    private EntryMapping entryMapping;
+    private Entry entry;
 
     public SearchRequest getSearchRequest() {
         return searchRequest;
@@ -19,18 +19,18 @@ public class CacheKey {
         this.searchRequest = searchRequest;
     }
 
-    public EntryMapping getEntryMapping() {
-        return entryMapping;
+    public Entry getEntry() {
+        return entry;
     }
 
-    public void setEntryMapping(EntryMapping entryMapping) {
-        this.entryMapping = entryMapping;
+    public void setEntry(Entry entry) {
+        this.entry = entry;
     }
 
 
     public int hashCode() {
         return (searchRequest == null ? 0 : searchRequest.hashCode()) +
-                (entryMapping == null ? 0 : entryMapping.hashCode());
+                (entry == null ? 0 : entry.hashCode());
     }
 
     private boolean equals(Object o1, Object o2) {
@@ -46,7 +46,7 @@ public class CacheKey {
 
         CacheKey cacheKey = (CacheKey)object;
         if (!equals(searchRequest, cacheKey.searchRequest)) return false;
-        if (!equals(entryMapping.getId(), cacheKey.entryMapping.getId())) return false;
+        if (!equals(entry.getId(), cacheKey.entry.getId())) return false;
 
         return true;
     }

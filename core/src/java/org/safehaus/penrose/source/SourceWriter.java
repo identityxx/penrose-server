@@ -120,6 +120,11 @@ public class SourceWriter {
             element.addAttribute("caseSensitive", "true");
         }
 
+        if (fieldConfig.isAutoIncrement()) {
+            log.debug(" - autoIncrement: "+fieldConfig.isAutoIncrement());
+            element.addAttribute("autoIncrement", "true");
+        }
+
         if (!FieldConfig.DEFAULT_TYPE.equals(fieldConfig.getType())) {
             log.debug(" - type: "+fieldConfig.getType());
             element.addAttribute("type", fieldConfig.getType());

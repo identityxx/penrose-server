@@ -17,7 +17,8 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.mapping.EntryMapping;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.ldap.Attributes;
@@ -102,6 +103,10 @@ public class SchemaManager implements SchemaManagerMBean {
     
     public Collection<String> getAllObjectClassNames(String ocName) {
         return allSchema.getAllObjectClassNames(ocName);
+    }
+
+    public Collection<ObjectClass> getObjectClasses(Entry entry) {
+        return getObjectClasses(entry.getEntryMapping());
     }
 
     public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
