@@ -90,6 +90,7 @@
             </manifest>
         </jar>
         <ant dir="../services" target="build"/>
+        <ant dir="../samples" target="build"/>
     </target>
 
     <target name="docs" depends="init">
@@ -211,6 +212,7 @@
         </copy>
         <mkdir dir="target/dist/logs"/>
         <ant dir="../services" target="dist"/>
+        <ant dir="../samples" target="dist"/>
         <mkdir dir="${project.dist}"/>
         <zip destfile="${project.dist}/${module.name}-${product.version}.zip"
             basedir="target/dist"/>
@@ -372,13 +374,15 @@
             <fileset dir="${penrose.home}" includes="lib/*"/>
             <fileset dir="${penrose.home}" includes="server/lib/*"/>
         </delete>
-        <copy todir="${penrose.home}">
+        <copy todir="${penrose.home}" overwrite="true">
             <fileset dir="target/dist">
                 <exclude name="conf/**/*"/>
+                <exclude name="samples/**/*"/>
                 <exclude name="services/**/*"/>
             </fileset>
         </copy>
         <ant dir="../services" target="install"/>
+        <ant dir="../samples" target="install"/>
         <chmod dir="${penrose.home}" perm="ugo+rw" includes="**/*"/>
         <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
     </target>
@@ -398,6 +402,7 @@
     <target name="clean" depends="init">
         <delete dir="target" failonerror="false"/>
         <ant dir="../services" target="clean"/>
+        <ant dir="../samples" target="clean"/>
     </target>
 
 </project>

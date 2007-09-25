@@ -8,6 +8,9 @@
 
     <property file="../build.properties"/>
 
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
+
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
@@ -41,6 +44,15 @@
 
     <target name="dist" depends="init">
         <ant dir="lockout" target="dist"/>
+    </target>
+
+    <target name="install" depends="init">
+        <copy todir="${penrose.home}/samples" overwrite="true">
+            <fileset dir="../server/target/dist/samples">
+                <exclude name="lockout"/>
+            </fileset>
+        </copy>
+        <ant dir="lockout" target="install"/>
     </target>
 
     <target name="clean" depends="init">

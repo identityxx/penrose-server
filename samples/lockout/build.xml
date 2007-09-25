@@ -8,9 +8,31 @@
 
     <property file="../../build.properties"/>
 
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
+
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
+
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version} (${os.arch})" />
+        <echo message="Java Version: ${java.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
 
     <path id="lib.path">
         <fileset dir="../../lib">
@@ -53,9 +75,15 @@
     <target name="dist" depends="build">
     </target>
 
+    <target name="install" depends="init">
+        <copy todir="${penrose.home}/samples/lockout" overwrite="true">
+            <fileset dir="../../server/target/dist/samples/lockout"/>
+        </copy>
+    </target>
+
     <target name="clean">
-        <delete dir="DIR-INF/lib/${product.name}-lockout-module-${product.version}.jar" failonerror="false"/>
-        <delete dir="DIR-INF/target/classes" failonerror="false"/>
+        <delete file="DIR-INF/lib/${product.name}-lockout-module-${product.version}.jar" failonerror="false"/>
+        <delete dir="DIR-INF/target" failonerror="false"/>
     </target>
 
 </project>
