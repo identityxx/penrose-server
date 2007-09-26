@@ -20,22 +20,6 @@
   <schema path="schema/solaris.schema"/>
   <schema path="schema/system.schema"/>
 
-  <engine name="DEFAULT">
-    <engine-class>org.safehaus.penrose.engine.DefaultEngine</engine-class>
-  </engine>
-
-  <engine name="PROXY">
-    <engine-class>org.safehaus.penrose.engine.proxy.ProxyEngine</engine-class>
-  </engine>
-
-  <handler name="DEFAULT">
-    <handler-class>org.safehaus.penrose.handler.DefaultHandler</handler-class>
-  </handler>
-
-  <handler name="PROXY">
-    <handler-class>org.safehaus.penrose.handler.proxy.ProxyHandler</handler-class>
-  </handler>
-
   <adapter name="JDBC">
     <adapter-class>org.safehaus.penrose.jdbc.adapter.JDBCAdapter</adapter-class>
   </adapter>

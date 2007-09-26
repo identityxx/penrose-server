@@ -24,4 +24,36 @@
     </aci>
   </entry>
 
+  <entry dn="ou=lockout,dc=my-domain,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>lockout</constant>
+    </at>
+  </entry>
+
+  <entry dn="account=...ou=lockout,dc=my-domain,dc=com">
+    <oc>extensibleObject</oc>
+    <at name="account" rdn="true">
+      <variable>l.account</variable>
+    </at>
+    <at name="counter">
+      <variable>l.counter</variable>
+    </at>
+    <at name="timestamp">
+      <variable>l.timestamp</variable>
+    </at>
+    <source name="l">
+      <source-name>locks</source-name>
+      <field name="account">
+        <variable>account</variable>
+      </field>
+      <field name="counter">
+        <variable>counter</variable>
+      </field>
+      <field name="timestamp">
+        <variable>timestamp</variable>
+      </field>
+    </source>
+  </entry>
+
 </mapping>

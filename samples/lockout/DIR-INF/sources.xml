@@ -11,8 +11,9 @@
 
   <source name="locks">
     <connection-name>JDBC</connection-name>
-    <field name="dn" primaryKey="true"/>
+    <field name="account" primaryKey="true"/>
     <field name="counter" type="INTEGER"/>
+    <field name="timestamp" type="DATETIME"/>
     <parameter>
       <param-name>table</param-name>
       <param-value>locks</param-value>

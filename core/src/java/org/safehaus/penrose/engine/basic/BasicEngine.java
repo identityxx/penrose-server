@@ -12,14 +12,15 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.connection.Connection;
 
 import java.util.*;
 
@@ -162,7 +163,6 @@ public class BasicEngine extends Engine {
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
         Collection<SourceRef> sourceRefs = iterator.next();
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
@@ -172,7 +172,10 @@ public class BasicEngine extends Engine {
             }
         }
 
-        connector.add(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.add(
                 session,
                 entry,
                 localSourceRefs,
@@ -212,7 +215,8 @@ public class BasicEngine extends Engine {
         for (Collection<SourceRef> sourceRefs : groupsOfSources) {
 
             SourceRef sourceRef = sourceRefs.iterator().next();
-            Connector connector = getConnector(sourceRef);
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
 
             String flag = sourceRef.getBind();
             if (debug) log.debug("Flag: "+flag);
@@ -224,7 +228,7 @@ public class BasicEngine extends Engine {
             found |= flag != null;
 
             try {
-                connector.bind(
+                connection.bind(
                         session,
                         entry,
                         sourceRefs,
@@ -286,9 +290,10 @@ public class BasicEngine extends Engine {
         for (Collection<SourceRef> sourceRefs : groupsOfSources) {
 
             SourceRef sourceRef = sourceRefs.iterator().next();
-            Connector connector = getConnector(sourceRef);
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
 
-            connector.compare(
+            connection.compare(
                     session,
                     entry,
                     sourceRefs,
@@ -331,7 +336,6 @@ public class BasicEngine extends Engine {
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
         Collection<SourceRef> sourceRefs = iterator.next();
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
@@ -341,7 +345,10 @@ public class BasicEngine extends Engine {
             }
         }
 
-        connector.delete(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+        connection.delete(
                 session,
                 entry,
                 localSourceRefs,
@@ -378,7 +385,6 @@ public class BasicEngine extends Engine {
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
         Collection<SourceRef> sourceRefs = iterator.next();
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
@@ -388,7 +394,11 @@ public class BasicEngine extends Engine {
             }
         }
 
-        connector.modify(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+
+        connection.modify(
                 session,
                 entry,
                 localSourceRefs,
@@ -425,7 +435,6 @@ public class BasicEngine extends Engine {
         Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
 
         Collection<SourceRef> sourceRefs = iterator.next();
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
@@ -435,7 +444,11 @@ public class BasicEngine extends Engine {
             }
         }
 
-        connector.modrdn(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+
+        connection.modrdn(
                 session,
                 entry,
                 localSourceRefs,
@@ -491,7 +504,6 @@ public class BasicEngine extends Engine {
         }
 
         Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         BasicSearchResponse sr = new BasicSearchResponse(
                 session,
@@ -508,7 +520,11 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
         Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
-        connector.search(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+
+        connection.search(
                 session,
                 primarySourceRefs,
                 localSourceRefs,
@@ -580,7 +596,6 @@ public class BasicEngine extends Engine {
         }
 
         Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
-        Connector connector = getConnector(sourceRefs.iterator().next());
 
         SearchResponse sr = new SearchResponse() {
 
@@ -612,7 +627,11 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
         Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
-        connector.search(
+        SourceRef sourceRef = sourceRefs.iterator().next();
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
+
+        connection.search(
                 session,
                 primarySourceRefs,
                 localSourceRefs,

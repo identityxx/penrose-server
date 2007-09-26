@@ -29,8 +29,6 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.engine.EngineConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.source.SourceWriter;
@@ -116,14 +114,6 @@ public class PartitionWriter {
             element.add(createElement(interpreterConfig));
         }
 
-        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
-            element.add(createElement(engineConfig));
-        }
-
-        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
-            element.add(createElement(handlerConfig));
-        }
-
         for (AdapterConfig adapterConfig : partitionConfig.getAdapterConfigs()) {
             element.add(createElement(adapterConfig));
         }
@@ -150,72 +140,6 @@ public class PartitionWriter {
 
         for (String name : interpreterConfig.getParameterNames()) {
             String value = interpreterConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
-    public Element createElement(EngineConfig engineConfig) {
-        Element element = new DefaultElement("engine");
-        element.addAttribute("name", engineConfig.getName());
-
-        Element engineClass = new DefaultElement("engine-class");
-        engineClass.add(new DefaultText(engineConfig.getEngineClass()));
-        element.add(engineClass);
-
-        if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(engineConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : engineConfig.getParameterNames()) {
-            String value = engineConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
-    public Element createElement(HandlerConfig handlerConfig) {
-        Element element = new DefaultElement("handler");
-        element.addAttribute("name", handlerConfig.getName());
-
-        Element handlerClass = new DefaultElement("handler-class");
-        handlerClass.add(new DefaultText(handlerConfig.getHandlerClass()));
-        element.add(handlerClass);
-
-        if (handlerConfig.getDescription() != null && !"".equals(handlerConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(handlerConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : handlerConfig.getParameterNames()) {
-            String value = handlerConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

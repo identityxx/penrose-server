@@ -6,7 +6,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class ModifyRequest extends Request {
+public class ModifyRequest extends Request implements Cloneable {
 
     protected DN dn;
     protected Collection<Modification> modifications = new ArrayList<Modification>();
@@ -48,5 +48,19 @@ public class ModifyRequest extends Request {
         if (this.modifications == modifications) return;
         this.modifications.clear();
         if (modifications != null) this.modifications.addAll(modifications);
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        ModifyRequest request = (ModifyRequest)super.clone();
+
+        request.dn = dn;
+
+        request.modifications = new ArrayList<Modification>();
+        
+        for (Modification modification : modifications) {
+            request.modifications.add((Modification)modification.clone());
+        }
+
+        return request;
     }
 }

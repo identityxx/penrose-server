@@ -57,14 +57,12 @@ public class Request implements Cloneable {
         return true;
     }
 
-    public void copy(Request request) {
-        controls = new ArrayList<Control>();
-        controls.addAll(request.controls);
-    }
-
     public Object clone() throws CloneNotSupportedException {
         Request request = (Request)super.clone();
-        request.copy(this);
+
+        request.controls = new ArrayList<Control>();
+        request.controls.addAll(controls);
+
         return request;
     }
 }

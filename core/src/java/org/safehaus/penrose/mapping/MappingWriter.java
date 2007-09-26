@@ -124,27 +124,6 @@ public class MappingWriter {
             element.add(createElement(sourceMapping));
         }
 
-        Link link = entryMapping.getLink();
-        if (link != null) {
-            Element linkElement = new DefaultElement("link");
-
-            DN dn = link.getDn();
-            if (dn != null) {
-                Element partitionElement = new DefaultElement("dn");
-                partitionElement.add(new DefaultText(dn.toString()));
-                linkElement.add(partitionElement);
-            }
-
-            String partitionName = link.getPartitionName();
-            if (partitionName != null) {
-                Element partitionElement = new DefaultElement("partition");
-                partitionElement.add(new DefaultText(partitionName));
-                linkElement.add(partitionElement);
-            }
-
-            element.add(linkElement);
-        }
-
         String handlerName = entryMapping.getHandlerName();
         if (handlerName != null) {
             Element handler = new DefaultElement("handler");

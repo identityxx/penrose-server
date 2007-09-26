@@ -22,13 +22,10 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -59,7 +56,6 @@ public abstract class Engine {
 
     protected SchemaManager schemaManager;
     protected InterpreterManager interpreterManager;
-    protected ConnectorManager connectorManager;
     protected PartitionConfigs partitionConfigs;
 
     public String getName() {
@@ -107,16 +103,6 @@ public abstract class Engine {
 
     public void setInterpreterManager(InterpreterManager interpreterManager) {
         this.interpreterManager = interpreterManager;
-    }
-
-    public Connector getConnector(SourceRef sourceRef) {
-        Source source = sourceRef.getSource();
-        return getConnector(source.getSourceConfig());
-    }
-
-    public Connector getConnector(SourceConfig sourceConfig) {
-        String connectorName = sourceConfig.getParameter("connectorName");
-        return connectorManager.getConnector(connectorName);
     }
 
     public PartitionConfigs getPartitionManager() {
@@ -521,14 +507,6 @@ public abstract class Engine {
         return TransformEngine.convert(attributes);
     }
 
-    public ConnectorManager getConnectorManager() {
-        return connectorManager;
-    }
-
-    public void setConnectorManager(ConnectorManager connectorManager) {
-        this.connectorManager = connectorManager;
-    }
-
     public PenroseContext getPenroseContext() {
         return penroseContext;
     }
@@ -538,7 +516,6 @@ public abstract class Engine {
 
         schemaManager = penroseContext.getSchemaManager();
         interpreterManager = penroseContext.getInterpreterManager();
-        connectorManager = penroseContext.getConnectorManager();
         partitionConfigs = penroseContext.getPartitionConfigs();
     }
 

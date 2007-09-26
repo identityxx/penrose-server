@@ -1,3 +1,0 @@
-dn: uid=test,ou=Users,dc=Proxy,dc=Example,dc=com
-userPassword: secret
-cn: Secret User

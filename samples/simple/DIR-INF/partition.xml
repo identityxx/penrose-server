@@ -5,10 +5,6 @@
 
 <partition>
 
-    <handler name="SIMPLE">
-        <handler-class>org.safehaus.penrose.handler.simple.SimpleHandler</handler-class>
-    </handler>
-
     <engine name="SIMPLE">
         <engine-class>org.safehaus.penrose.engine.simple.SimpleEngine</engine-class>
     </engine>

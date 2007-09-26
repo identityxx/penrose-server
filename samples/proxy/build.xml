@@ -2,13 +2,13 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="jdbc">
+<project name="proxy">
 
     <property name="test.hostname" value="localhost"/>
-    <property name="test.port" value="10389"/>
-    <property name="test.bindDn" value="uid=admin,ou=system"/>
+    <property name="test.port"     value="10389"/>
+    <property name="test.bindDn"   value="uid=admin,ou=system"/>
     <property name="test.password" value="secret"/>
-    <property name="test.baseDn" value="dc=Proxy,dc=Example,dc=com"/>
+    <property name="test.baseDn"   value="dc=my-domain,dc=Example,dc=com"/>
 
     <target name="test-search">
         <exec executable="ldapsearch">

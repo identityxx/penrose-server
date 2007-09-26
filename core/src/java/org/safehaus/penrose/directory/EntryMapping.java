@@ -22,7 +22,6 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.Link;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -82,7 +81,6 @@ public class EntryMapping implements Serializable, Cloneable {
 
     private List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
     
-    private Link link;
     private String handlerName;
     private String engineName;
 
@@ -391,7 +389,6 @@ public class EntryMapping implements Serializable, Cloneable {
         if (!equals(attributeMappings, entryMapping.attributeMappings)) return false;
 
         if (!equals(sourceMappings, entryMapping.sourceMappings)) return false;
-        if (!equals(link, entryMapping.link)) return false;
         if (!equals(handlerName, entryMapping.handlerName)) return false;
         if (!equals(engineName, entryMapping.engineName)) return false;
         if (!equals(acl, entryMapping.acl)) return false;
@@ -428,7 +425,6 @@ public class EntryMapping implements Serializable, Cloneable {
             addSourceMapping((SourceMapping) sourceMapping.clone());
         }
 
-        link = entryMapping.link == null ? null : (Link)entryMapping.link.clone();
         handlerName = entryMapping.handlerName;
         engineName = entryMapping.engineName;
 
@@ -477,14 +473,6 @@ public class EntryMapping implements Serializable, Cloneable {
 
     public void setParentId(String parentId) {
         this.parentId = parentId;
-    }
-
-    public Link getLink() {
-        return link;
-    }
-
-    public void setLink(Link link) {
-        this.link = link;
     }
 
     public String getPrimarySourceName() {

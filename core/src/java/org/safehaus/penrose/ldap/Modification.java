@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class Modification {
+public class Modification implements Cloneable {
 
     public final static int ADD     = 1;
     public final static int REPLACE = 2;
@@ -31,5 +31,14 @@ public class Modification {
 
     public Attribute getAttribute() {
         return attribute;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Modification modification = (Modification)super.clone();
+
+        modification.type = type;
+        modification.attribute = (Attribute)attribute.clone();
+
+        return modification;
     }
 }

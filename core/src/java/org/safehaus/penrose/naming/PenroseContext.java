@@ -4,7 +4,6 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -45,8 +44,6 @@ public class PenroseContext {
     private FilterEvaluator    filterEvaluator;
 
     private InterpreterManager interpreterManager;
-
-    private ConnectorManager   connectorManager;
 
     private PartitionConfigs   partitionConfigs;
     private Partitions         partitions;
@@ -97,14 +94,6 @@ public class PenroseContext {
         this.interpreterManager = interpreterManager;
     }
 
-    public ConnectorManager getConnectorManager() {
-        return connectorManager;
-    }
-
-    public void setConnectorManager(ConnectorManager connectorManager) {
-        this.connectorManager = connectorManager;
-    }
-
     public SessionContext getSessionContext() {
         return sessionContext;
     }
@@ -137,10 +126,6 @@ public class PenroseContext {
         interpreterManager.setPenroseConfig(penroseConfig);
         interpreterManager.setPenroseContext(this);
 
-        connectorManager = new ConnectorManager();
-        connectorManager.setPenroseConfig(penroseConfig);
-        connectorManager.setPenroseContext(this);
-
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
             schemaManager.init(home, schemaConfig);
         }
@@ -148,8 +133,6 @@ public class PenroseContext {
         for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
             interpreterManager.init(interpreterConfig);
         }
-
-        connectorManager.init(penroseConfig.getConnectorConfig());
     }
 
     public void start() throws Exception {
@@ -165,7 +148,6 @@ public class PenroseContext {
     }
     
     public void clear() throws Exception {
-        connectorManager.clear();
         interpreterManager.clear();
         schemaManager.clear();
     }

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.HashSet;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -68,12 +69,14 @@ public class ObjectClass implements Cloneable, Comparable {
      * Required attribute types. Each element is of type String.
      */
 	public Collection<String> requiredAttributes = new ArrayList<String>();
-    
+    public Collection<String> normalizedRequiredAttributes = new HashSet<String>();
+
     /**
      * Optional attribute types. Each element is of type String.
      */
 	public Collection<String> optionalAttributes = new ArrayList<String>();
-	
+    public Collection<String> normalizedOptionalAttributes = new HashSet<String>();
+
 	public ObjectClass() {
 	}
 
@@ -147,21 +150,25 @@ public class ObjectClass implements Cloneable, Comparable {
 
     public void addRequiredAttribute(String requiredAttribute) {
         requiredAttributes.add(requiredAttribute);
+        normalizedRequiredAttributes.add(requiredAttribute.toLowerCase());
     }
     
     public void addRequiredAttributes(Collection<String> requiredAttributes) {
         if (requiredAttributes == null) return;
-        this.requiredAttributes.addAll(requiredAttributes);
+        for (String requiredAttribute : requiredAttributes) {
+            addRequiredAttribute(requiredAttribute);
+        }
     }
 
     public void setRequiredAttributes(Collection<String> requiredAttributes) {
-        this.requiredAttributes.clear();
-        if (requiredAttributes == null) return;
-        this.requiredAttributes.addAll(requiredAttributes);
+        if (requiredAttributes == this.requiredAttributes) return;
+        removeRequiredAttributes();
+        addRequiredAttributes(requiredAttributes);
     }
 
     public void removeRequiredAttributes() {
         requiredAttributes.clear();
+        normalizedRequiredAttributes.clear();
     }
     
     public Collection<String> getOptionalAttributes() {
@@ -170,21 +177,25 @@ public class ObjectClass implements Cloneable, Comparable {
 
     public void addOptionalAttribute(String optionalAttribute) {
         optionalAttributes.add(optionalAttribute);
+        normalizedOptionalAttributes.add(optionalAttribute.toLowerCase());
     }
 
     public void addOptionalAttributes(Collection<String> optionalAttributes) {
         if (optionalAttributes == null) return;
-        this.optionalAttributes.addAll(optionalAttributes);
+        for (String optionalAttribute : optionalAttributes) {
+            addOptionalAttribute(optionalAttribute);
+        }
     }
 
     public void setOptionalAttributes(Collection<String> optionalAttributes) {
-        this.optionalAttributes.clear();
-        if (optionalAttributes == null) return;
-        this.optionalAttributes.addAll(optionalAttributes);
+        if (optionalAttributes == this.optionalAttributes) return;
+        removeOptionalAttributes();
+        addOptionalAttributes(optionalAttributes);
     }
 
     public void removeOptionalAttributes() {
         optionalAttributes.clear();
+        normalizedOptionalAttributes.clear();
     }
 
 	public boolean isObsolete() {
@@ -222,34 +233,15 @@ public class ObjectClass implements Cloneable, Comparable {
 	}
 	
     public boolean containsRequiredAttribute(String name) {
-        name = name.toLowerCase();
-
-        for (String requiredAttribute : requiredAttributes) {
-            if (name.equals(requiredAttribute.toLowerCase())) return true;
-        }
-
-        return false;
+        return normalizedRequiredAttributes.contains(name.toLowerCase());
     }
 
     public boolean containsOptionalAttribute(String name) {
-        name = name.toLowerCase();
-
-        for (String optionalAttribute : optionalAttributes) {
-            if (name.equals(optionalAttribute.toLowerCase())) return true;
-        }
-
-        return false;
+        return normalizedOptionalAttributes.contains(name.toLowerCase());
     }
 
     public int hashCode() {
-        return (oid == null ? 0 : oid.hashCode()) +
-                (names == null ? 0 : names.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (obsolete ? 0 : 1) +
-                (superClasses == null ? 0 : superClasses.hashCode()) +
-                (type == null ? 0 : type.hashCode()) +
-                (requiredAttributes == null ? 0 : requiredAttributes.hashCode()) +
-                (optionalAttributes == null ? 0 : optionalAttributes.hashCode());
+        return oid == null ? 0 : oid.hashCode();
     }
 
     boolean compare(Object o1, Object o2) {
@@ -282,30 +274,34 @@ public class ObjectClass implements Cloneable, Comparable {
         return o2.equals(o1);
     }
 
-    public void copy(ObjectClass oc) {
-        oid = oc.oid;
-
-        names = new ArrayList<String>();
-        names.addAll(oc.names);
-
-        description = oc.description;
-        obsolete = oc.obsolete;
-
-        superClasses = new ArrayList<String>();
-        superClasses.addAll(oc.superClasses);
-
-        type = oc.type;
-
-        requiredAttributes = new ArrayList<String>();
-        requiredAttributes.addAll(oc.requiredAttributes);
-
-        optionalAttributes = new ArrayList<String>();
-        optionalAttributes.addAll(oc.optionalAttributes);
-    }
-
     public Object clone() throws CloneNotSupportedException {
         ObjectClass oc = (ObjectClass)super.clone();
-        oc.copy(this);
+
+        oc.oid = oid;
+
+        oc.names = new ArrayList<String>();
+        oc.names.addAll(names);
+
+        oc.description = description;
+        oc.obsolete = obsolete;
+
+        oc.superClasses = new ArrayList<String>();
+        oc.superClasses.addAll(superClasses);
+
+        oc.type = type;
+
+        oc.requiredAttributes = new ArrayList<String>();
+        oc.requiredAttributes.addAll(requiredAttributes);
+
+        oc.normalizedRequiredAttributes = new HashSet<String>();
+        oc.normalizedRequiredAttributes.addAll(normalizedRequiredAttributes);
+
+        oc.optionalAttributes = new ArrayList<String>();
+        oc.optionalAttributes.addAll(optionalAttributes);
+
+        oc.normalizedOptionalAttributes = new HashSet<String>();
+        oc.normalizedOptionalAttributes.addAll(normalizedOptionalAttributes);
+
         return oc;
     }
 

@@ -58,8 +58,8 @@ public class LockoutClient {
         String command = iterator.next();
         if ("reset".equals(command)) {
             String partition = iterator.next();
-            String dn = iterator.next();
-            reset(partition, dn);
+            String account = iterator.next();
+            reset(partition, account);
 
         } else if ("list".equals(command)) {
             String partition = iterator.next();
@@ -70,20 +70,20 @@ public class LockoutClient {
         }
     }
 
-    public void reset(String partition, String dn) throws Exception {
+    public void reset(String partition, String account) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partition);
         ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
-        moduleClient.invoke("reset", new Object[] { dn }, new String[] { String.class.getName() });
+        moduleClient.invoke("reset", new Object[] { account }, new String[] { String.class.getName() });
     }
 
     public void list(String partition) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partition);
         ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
-        Collection<String> dns = (Collection<String>)moduleClient.invoke("list", new Object[] {}, new String[] {});
+        Collection<String> accounts = (Collection<String>)moduleClient.invoke("list", new Object[] {}, new String[] {});
 
         System.out.println("Locked accounts:");
-        for (String dn : dns) {
-            System.out.println(" - "+dn);
+        for (String account : accounts) {
+            System.out.println(" - "+account);
         }
     }
 
@@ -102,7 +102,7 @@ public class LockoutClient {
         System.out.println();
         System.out.println("Commands:");
         System.out.println("  list <partition>               List locked accounts .");
-        System.out.println("  reset <partition> <user dn>    Reset user account lockout.");
+        System.out.println("  reset <partition> <account>    Reset account lockout.");
     }
 
     public static void main(String args[]) throws Exception {

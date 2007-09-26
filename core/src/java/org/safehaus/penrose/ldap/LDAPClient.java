@@ -175,14 +175,29 @@ public class LDAPClient {
         db.append(suffix);
         DN dn = db.toDn();
 
-        log.debug("Adding "+dn);
-
         javax.naming.directory.Attributes attrs = convertAttributes(attributes);
 
         javax.naming.ldap.LdapContext context = null;
 
         try {
             context = open();
+
+            if (debug) {
+                log.debug("Adding "+dn+":");
+                for (NamingEnumeration ne = attrs.getAll(); ne.hasMore(); ) {
+                    javax.naming.directory.Attribute attribute = (javax.naming.directory.Attribute)ne.next();
+                    String name = attribute.getID();
+                    for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
+                        Object value = ne2.next();
+                        if (value instanceof byte[]) {
+                            log.debug(" - "+name+": "+BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+                        } else {
+                            log.debug(" - "+name+": "+value);
+                        }
+                    }
+                }
+            }
+
             context.createSubcontext(escape(dn), attrs);
 
         } finally {
@@ -212,6 +227,10 @@ public class LDAPClient {
         javax.naming.ldap.LdapContext context = null;
 
         try {
+            if (debug) {
+                log.debug("Binding as "+db.toDn()+" with password "+password+".");
+            }
+
             context = open();
 
         } finally {
@@ -238,8 +257,6 @@ public class LDAPClient {
         String filter = "("+request.getAttributeName()+"={0})";
         Object args[] = new Object[] { request.getAttributeValue() };
 
-        log.debug("Comparing "+dn);
-
         javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
         sc.setReturningAttributes(new String[] {});
         sc.setSearchScope(SearchControls.OBJECT_SCOPE);
@@ -248,7 +265,19 @@ public class LDAPClient {
 
         try {
             context = open();
+
+            if (debug) {
+                log.debug("Comparing "+dn+":");
+                Object value = request.getAttributeValue();
+                if (value instanceof byte[]) {
+                    log.debug(" - "+request.getAttributeName()+": "+BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+                } else {
+                    log.debug(" - "+request.getAttributeName()+": "+value);
+                }
+            }
+
             NamingEnumeration ne = context.search(escape(dn), filter, args, sc);
+
             return ne.hasMore();
 
         } finally {
@@ -272,12 +301,13 @@ public class LDAPClient {
         db.append(suffix);
         DN dn = db.toDn();
 
-        log.debug("Deleting "+dn);
-
         javax.naming.ldap.LdapContext context = null;
 
         try {
             context = open();
+
+            if (debug) log.debug("Deleting "+dn+".");
+
             context.destroySubcontext(escape(dn));
 
         } finally {
@@ -295,22 +325,17 @@ public class LDAPClient {
     ) throws Exception {
 
         DN targetDn = request.getDn();
-        Collection<Modification> modifications = request.getModifications();
 
         DNBuilder db = new DNBuilder();
         db.set(targetDn);
         db.append(suffix);
         DN dn = db.toDn();
 
-        if (debug) log.debug("Modifying "+dn);
-
         Collection<javax.naming.directory.ModificationItem> list = new ArrayList<javax.naming.directory.ModificationItem>();
 
-        for (Modification modification : modifications) {
-
+        for (Modification modification : request.getModifications()) {
             int type = modification.getType();
             Attribute attribute = modification.getAttribute();
-            if (debug) log.debug(" - "+ LDAP.getModificationOperation(type)+": "+attribute.getName());
 
             javax.naming.directory.Attribute attr = convertAttribute(attribute);
             list.add(new javax.naming.directory.ModificationItem(type, attr));
@@ -322,6 +347,28 @@ public class LDAPClient {
 
         try {
             context = open();
+
+            if (debug) {
+
+                log.debug("Modifying "+dn+":");
+
+                for (javax.naming.directory.ModificationItem mi : mods) {
+                    javax.naming.directory.Attribute attribute = mi.getAttribute();
+                    int type = mi.getModificationOp();
+                    String name = attribute.getID();
+                    log.debug(" - "+LDAP.getModificationOperation(type)+": "+name);
+
+                    for (NamingEnumeration ne2 = attribute.getAll(); ne2.hasMore(); ) {
+                        Object value = ne2.next();
+                        if (value instanceof byte[]) {
+                            log.debug("   - "+name+": "+BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+                        } else {
+                            log.debug("   - "+name+": "+value);
+                        }
+                    }
+                }
+            }
+
             context.modifyAttributes(escape(dn), mods);
 
         } finally {
@@ -378,7 +425,7 @@ public class LDAPClient {
         boolean typesOnly = request.isTypesOnly();
 
         if (debug) {
-            log.debug("Searching "+baseDn);
+            log.debug("Searching "+baseDn+":");
             log.debug(" - filter: "+filter);
             log.debug(" - scope: "+ LDAP.getScope(request.getScope()));
             log.debug(" - attributes: "+attributes);
@@ -453,9 +500,9 @@ public class LDAPClient {
                         cookie = null;
 
                         if (responseControls != null) {
-                            log.debug("Response Controls:");
+                            if (debug) log.debug("Response Controls:");
                             for (Control control : responseControls) {
-                                log.debug(" - "+control.getID());
+                                if (debug) log.debug(" - "+control.getID());
                                 if (control instanceof PagedResultsResponseControl) {
                                     PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                                     cookie = prrc.getCookie();
@@ -478,12 +525,12 @@ public class LDAPClient {
                     moreReferrals = false;
 
                 } catch (PartialResultException e) {
-                    log.debug(e.getMessage(), e);
+                    if (debug) log.debug(e.getMessage(), e);
                     moreReferrals = false;
 
                 } catch (ReferralException e) {
                     String ref = e.getReferralInfo().toString();
-                    log.debug("Referral: "+ ref);
+                    if (debug) log.debug("Referral: "+ ref);
 
                     LDAPUrl url = new LDAPUrl(ref);
                     DN dn = new DN(url.getDN());
@@ -518,7 +565,7 @@ public class LDAPClient {
     ) throws Exception {
 
         String s = sr.getName();
-        log.debug("SearchResult: ["+s+"]");
+        if (debug) log.debug("SearchResult: ["+s+"]");
 
         DNBuilder db = new DNBuilder();
         if (s.startsWith("ldap://")) {
@@ -575,7 +622,7 @@ public class LDAPClient {
 
         if (rootDSE != null) return rootDSE;
 
-        log.debug("Searching Root DSE ...");
+        if (debug) log.debug("Searching Root DSE ...");
 
         LDAPConnection connection = null;
 
@@ -653,7 +700,7 @@ public class LDAPClient {
 
         getRootDSE();
 
-        log.debug("Searching Schema ...");
+        if (debug) log.debug("Searching Schema ...");
 
         try {
             javax.naming.directory.Attribute schemaNamingContext = rootDSE.getAttributes().get("schemaNamingContext");
@@ -663,22 +710,22 @@ public class LDAPClient {
 
             if (schemaNamingContext != null) {
                 schemaDn = (String)schemaNamingContext.get();
-                log.debug("Active Directory Schema: "+schemaDn);
+                if (debug) log.debug("Active Directory Schema: "+schemaDn);
                 schema = getActiveDirectorySchema(schemaDn);
 
             } else if (subschemaSubentry != null) {
                 schemaDn = (String)subschemaSubentry.get();
-                log.debug("Standard LDAP Schema: "+schemaDn);
+                if (debug) log.debug("Standard LDAP Schema: "+schemaDn);
                 schema = getLDAPSchema(schemaDn);
 
             } else {
                 schemaDn = "cn=schema";
-                log.debug("Default Schema: "+schemaDn);
+                if (debug) log.debug("Default Schema: "+schemaDn);
                 schema = getLDAPSchema(schemaDn);
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            if (debug) log.error(e.getMessage(), e);
             throw e;
         }
 
@@ -687,7 +734,7 @@ public class LDAPClient {
 
     public Schema getActiveDirectorySchema(String schemaDn) throws Exception {
 
-        log.debug("Searching "+schemaDn+" ...");
+        if (debug) log.debug("Searching "+schemaDn+" ...");
 
         Schema schema = new Schema();
 
@@ -760,9 +807,9 @@ public class LDAPClient {
                 cookie = null;
 
                 if (responseControls != null) {
-                    log.debug("Response Controls:");
+                    if (debug) log.debug("Response Controls:");
                     for (Control control : responseControls) {
-                        log.debug(" - "+control.getID());
+                        if (debug) log.debug(" - "+control.getID());
                         if (control instanceof PagedResultsResponseControl) {
                             PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
@@ -880,9 +927,9 @@ public class LDAPClient {
                 cookie = null;
 
                 if (responseControls != null) {
-                    log.debug("Response Controls:");
+                    if (debug) log.debug("Response Controls:");
                     for (Control control : responseControls) {
-                        log.debug(" - "+control.getID());
+                        if (debug) log.debug(" - "+control.getID());
                         if (control instanceof PagedResultsResponseControl) {
                             PagedResultsResponseControl prrc = (PagedResultsResponseControl) control;
                             cookie = prrc.getCookie();
@@ -911,7 +958,7 @@ public class LDAPClient {
 
         Schema schema = new Schema();
 
-        log.debug("Searching "+schemaDn+" ...");
+        if (debug) log.debug("Searching "+schemaDn+" ...");
 
         javax.naming.ldap.LdapContext context = null;
 
@@ -973,7 +1020,7 @@ public class LDAPClient {
 
         } catch (Exception e) {
             System.out.println("Error parsing "+line);
-            log.error(e.getMessage(), e);
+            if (debug) log.error(e.getMessage(), e);
             return null;
         }
     }
@@ -988,7 +1035,7 @@ public class LDAPClient {
 
         } catch (Exception e) {
             System.out.println("Error parsing "+line);
-            log.error(e.getMessage(), e);
+            if (debug) log.error(e.getMessage(), e);
             return null;
         }
     }
@@ -1070,14 +1117,14 @@ public class LDAPClient {
 
                 while (values.hasMore()) {
                     String dn = (String)values.next();
-                    log.debug(" - "+dn);
+                    if (debug) log.debug(" - "+dn);
 
                     javax.naming.directory.SearchResult entry = getEntry(dn);
                     results.add(entry);
                 }
 
             } else {
-                log.debug("Searching "+searchBase+":");
+                if (debug) log.debug("Searching "+searchBase+":");
 
                 javax.naming.directory.SearchControls ctls = new javax.naming.directory.SearchControls();
                 ctls.setSearchScope(javax.naming.directory.SearchControls.ONELEVEL_SCOPE);
@@ -1091,12 +1138,12 @@ public class LDAPClient {
                         db.append(baseDn);
                         DN dn = db.toDn();
 
-                        log.debug(" - "+dn);
+                        if (debug) log.debug(" - "+dn);
                         sr.setName(dn.toString());
                         results.add(sr);
                     }
                 } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+                    if (debug) log.error(e.getMessage(), e);
                 }
             }
 
@@ -1197,13 +1244,6 @@ public class LDAPClient {
 
         for (Object value : attribute.getValues()) {
             attr.add(value);
-            if (debug) {
-                if (value instanceof byte[]) {
-                    log.debug(" - "+name+": "+BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
-                } else {
-                    log.debug(" - "+name+": "+value);
-                }
-            }
         }
 
         return attr;

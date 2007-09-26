@@ -182,7 +182,7 @@ public class DN implements Serializable, Comparable {
             RDN rdn1 = rdns.get(i1-1);
             RDN rdn2 = suffix.rdns.get(i2-1);
 
-            if (!rdn1.match(rdn2)) return false;
+            if (!rdn1.matches(rdn2)) return false;
 
             i1--;
             i2--;
@@ -211,7 +211,7 @@ public class DN implements Serializable, Comparable {
             RDN rdn1 = (RDN)i.next();
             RDN rdn2 = (RDN)j.next();
 
-            if (!rdn1.match(rdn2)) return false;
+            if (!rdn1.matches(rdn2)) return false;
         }
 
         return true;
@@ -230,12 +230,18 @@ public class DN implements Serializable, Comparable {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null) return false;
-        if (object.getClass() != this.getClass()) return false;
 
-        DN dn = (DN)object;
-        if (!equals(getOriginalDn(), dn.getOriginalDn())) return false;
+        if (object instanceof String) {
+            String dn = (String)object;
+            return equals(getOriginalDn(), dn);
+        }
 
-        return true;
+        if (object instanceof DN) {
+            DN dn = (DN)object;
+            return equals(getOriginalDn(), dn.getOriginalDn());
+        }
+
+        return false;
     }
 
     public int compareTo(Object object) {

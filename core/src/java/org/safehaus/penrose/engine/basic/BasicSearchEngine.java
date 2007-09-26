@@ -7,9 +7,10 @@ import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.connection.Connection;
 
 import java.util.*;
 
@@ -58,7 +59,6 @@ public class BasicSearchEngine {
             }
 
             Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
-            Connector connector = engine.getConnector(sourceRefs.iterator().next());
 
             BasicSearchResponse sr = new BasicSearchResponse(
                     session,
@@ -75,7 +75,11 @@ public class BasicSearchEngine {
             Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
-            connector.search(
+            SourceRef sourceRef = sourceRefs.iterator().next();
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
+
+            connection.search(
                     session,
                     primarySourceRefs,
                     localSourceRefs,

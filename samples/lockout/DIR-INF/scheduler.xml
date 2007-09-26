@@ -7,13 +7,13 @@
 
   <scheduler-class>org.safehaus.penrose.scheduler.quartz.QuartzScheduler</scheduler-class>
 
-  <job name="DemoJob">
-    <job-class>org.safehaus.penrose.example.scheduler.DemoJob</job-class>
+  <job name="LockoutJob">
+    <job-class>org.safehaus.penrose.lockout.LockoutJob</job-class>
   </job>
 
   <trigger>
     <trigger-class>org.safehaus.penrose.scheduler.quartz.CronTrigger</trigger-class>
-    <job-name>DemoJob</job-name>
+    <job-name>LockoutJob</job-name>
     <parameter>
       <param-name>expression</param-name>
       <param-value>0 * * * * ?</param-value>

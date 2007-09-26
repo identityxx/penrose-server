@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class ModRdnRequest extends Request {
+public class ModRdnRequest extends Request implements Cloneable {
 
     protected DN dn;
     protected RDN newRdn;
@@ -53,5 +53,15 @@ public class ModRdnRequest extends Request {
 
     public void setDeleteOldRdn(boolean deleteOldRdn) {
         this.deleteOldRdn = deleteOldRdn;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        ModRdnRequest request = (ModRdnRequest)super.clone();
+
+        request.dn = dn;
+        request.newRdn = newRdn;
+        request.deleteOldRdn = deleteOldRdn;
+
+        return request;
     }
 }

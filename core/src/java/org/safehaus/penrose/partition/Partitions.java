@@ -10,7 +10,6 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.engine.Engine;
 
 import java.util.Map;
@@ -142,37 +141,6 @@ public class Partitions implements PartitionsMBean {
 
     public Collection<String> getPartitionNames() {
         return partitions.keySet();
-    }
-
-    public Handler getHandler(Partition partition, Entry entry) {
-        String handlerName = entry.getHandlerName();
-        if (handlerName == null) handlerName = "DEFAULT";
-
-        Handler handler = partition.getHandler(handlerName);
-        if (handler != null) {
-            if (debug) log.debug("Using "+handlerName+" handler in "+partition.getName()+" partition.");
-            return handler;
-        }
-
-        if (debug) log.debug("Using "+handlerName+" handler in DEFAULT partition.");
-        partition = partitions.get("DEFAULT");
-        return partition.getHandler(handlerName);
-    }
-
-    public Engine getEngine(Partition partition, Handler handler, Entry entry) {
-        String engineName = entry.getEngineName();
-        if (engineName == null && handler != null) engineName = handler.getEngineName();
-        if (engineName == null) engineName = "DEFAULT";
-
-        Engine engine = partition.getEngine(engineName);
-        if (engine != null) {
-            if (debug) log.debug("Using "+engineName+" engine in "+partition.getName()+" partition.");
-            return engine;
-        }
-
-        if (debug) log.debug("Using "+engineName+" engine in DEFAULT partition.");
-        partition = partitions.get("DEFAULT");
-        return partition.getEngine(engineName);
     }
 
     public int size() {

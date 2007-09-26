@@ -188,21 +188,6 @@
             <fileset dir="src" includes="**/*.dtd"/>
             <fileset dir="../core/src" includes="**/*.dtd"/>
         </copy>
-        <copy todir="target/dist/samples">
-            <fileset dir="../samples">
-                <exclude name="build.xml"/>
-                <exclude name="**/*.jar"/>
-                <exclude name="**/DIR-INF/target/**"/>
-            </fileset>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
-        <copy todir="target/dist/samples">
-            <fileset dir="../samples">
-                <include name="**/*.jar"/>
-            </fileset>
-        </copy>
         <mkdir dir="target/dist/partitions"/>
         <copy todir="target/dist/partitions">
             <fileset dir="../partitions"/>

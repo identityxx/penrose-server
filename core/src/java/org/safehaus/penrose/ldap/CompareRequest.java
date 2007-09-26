@@ -42,14 +42,15 @@ public class CompareRequest extends Request implements Cloneable {
     }
 
     public void copy(CompareRequest request) {
-        dn = request.dn;
-        attributeName = request.attributeName;
-        attributeValue = request.attributeValue;
     }
 
     public Object clone() throws CloneNotSupportedException {
         CompareRequest request = (CompareRequest)super.clone();
-        request.copy(this);
+
+        request.dn = dn;
+        request.attributeName = attributeName;
+        request.attributeValue = attributeValue;
+
         return request;
     }
 }

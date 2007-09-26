@@ -43,16 +43,28 @@
     </target>
 
     <target name="dist" depends="init">
-        <ant dir="lockout" target="dist"/>
+        <copy todir="../server/target/dist/samples">
+            <fileset dir=".">
+                <exclude name="**/build.xml"/>
+                <exclude name="**/*.jar"/>
+                <exclude name="**/DIR-INF/target/**"/>
+            </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="../server/target/dist/samples">
+            <fileset dir=".">
+                <include name="*/**/build.xml"/>
+                <include name="**/*.jar"/>
+            </fileset>
+        </copy>
     </target>
 
     <target name="install" depends="init">
         <copy todir="${penrose.home}/samples" overwrite="true">
-            <fileset dir="../server/target/dist/samples">
-                <exclude name="lockout"/>
-            </fileset>
+            <fileset dir="../server/target/dist/samples"/>
         </copy>
-        <ant dir="lockout" target="install"/>
     </target>
 
     <target name="clean" depends="init">

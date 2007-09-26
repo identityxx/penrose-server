@@ -5,7 +5,6 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -40,10 +39,6 @@ public class PartitionTest extends TestCase {
         EntryMapping users2Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
         users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
         partitionConfig.getDirectoryConfig().addEntryMapping(users2Mapping);
-
-        EntryMapping proxyMapping = new EntryMapping("cn=Proxy,dc=Example,dc=com");
-        proxyMapping.addSourceMapping(new SourceMapping("DEFAULT", "source"));
-        partitionConfig.getDirectoryConfig().addEntryMapping(proxyMapping);
     }
 
     public void tearDown() throws Exception {

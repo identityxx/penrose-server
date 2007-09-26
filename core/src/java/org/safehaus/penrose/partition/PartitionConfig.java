@@ -22,8 +22,6 @@ import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.handler.HandlerConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 
@@ -47,8 +45,6 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
     protected String partitionClass = DEFAULT_PARTITION_CLASS;
 
     protected Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
-    protected Map<String,EngineConfig>      engineConfigs      = new LinkedHashMap<String,EngineConfig>();
-    protected Map<String,HandlerConfig>     handlerConfigs     = new LinkedHashMap<String,HandlerConfig>();
     protected Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
     protected Map<String,String> parameters = new LinkedHashMap<String,String>();
@@ -126,8 +122,6 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         if (!equals(partitionClass, partitionConfig.partitionClass)) return false;
 
         if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
-        if (!equals(handlerConfigs, partitionConfig.handlerConfigs)) return false;
-        if (!equals(engineConfigs, partitionConfig.engineConfigs)) return false;
         if (!equals(interpreterConfigs, partitionConfig.interpreterConfigs)) return false;
 
         if (!equals(parameters, partitionConfig.parameters)) return false;
@@ -149,16 +143,6 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
         for (AdapterConfig adapterConfig : adapterConfigs.values()) {
             partitionConfig.addAdapterConfig((AdapterConfig) adapterConfig.clone());
-        }
-
-        partitionConfig.engineConfigs = new LinkedHashMap<String,EngineConfig>();
-        for (EngineConfig engineConfig : engineConfigs.values()) {
-            partitionConfig.addEngineConfig((EngineConfig) engineConfig.clone());
-        }
-
-        partitionConfig.handlerConfigs = new LinkedHashMap<String,HandlerConfig>();
-        for (HandlerConfig handlerConfig : handlerConfigs.values()) {
-            partitionConfig.addHandlerConfig((HandlerConfig) handlerConfig.clone());
         }
 
         partitionConfig.interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
@@ -222,22 +206,6 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         classPaths.add(library);
     }
 
-    public void addEngineConfig(EngineConfig engineConfig) {
-        engineConfigs.put(engineConfig.getName(), engineConfig);
-    }
-
-    public EngineConfig getEngineConfig(String name) {
-        return engineConfigs.get(name);
-    }
-
-    public Collection<EngineConfig> getEngineConfigs() {
-        return engineConfigs.values();
-    }
-
-    public Collection<String> getEngineNames() {
-        return engineConfigs.keySet();
-    }
-
     public Collection<InterpreterConfig> getInterpreterConfigs() {
         return interpreterConfigs.values();
     }
@@ -260,26 +228,6 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
     public Collection<String> getAdapterNames() {
         return adapterConfigs.keySet();
-    }
-
-    public HandlerConfig getHandlerConfig(String name) {
-        return handlerConfigs.get(name);
-    }
-
-    public Collection<HandlerConfig> getHandlerConfigs() {
-        return handlerConfigs.values();
-    }
-
-    public Collection<String> getHandlerNames() {
-        return handlerConfigs.keySet();
-    }
-
-    public void addHandlerConfig(HandlerConfig handlerConfig) {
-        handlerConfigs.put(handlerConfig.getName(), handlerConfig);
-    }
-
-    public HandlerConfig removeHandlerConfig(String name) {
-        return handlerConfigs.remove(name);
     }
 
     public SchedulerConfig getSchedulerConfig() {

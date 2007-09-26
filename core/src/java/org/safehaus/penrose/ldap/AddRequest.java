@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class AddRequest extends Request {
+public class AddRequest extends Request implements Cloneable {
 
     protected DN dn;
     protected Attributes attributes;
@@ -39,5 +39,14 @@ public class AddRequest extends Request {
 
     public void setAttributes(Attributes attributes) {
         this.attributes = attributes;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        AddRequest request = (AddRequest)super.clone();
+
+        request.dn = dn;
+        request.attributes = (Attributes)attributes.clone();
+
+        return request;
     }
 }

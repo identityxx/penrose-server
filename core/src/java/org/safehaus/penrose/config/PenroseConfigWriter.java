@@ -28,13 +28,10 @@ import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.connector.ConnectorConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.handler.HandlerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -106,19 +103,6 @@ public class PenroseConfigWriter {
         if (penroseConfig.getSessionConfig() != null) {
             SessionConfig sessionConfig = penroseConfig.getSessionConfig();
             element.add(toElement(sessionConfig));
-        }
-
-        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
-            element.add(createElement(engineConfig));
-        }
-
-        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
-            element.add(createElement(handlerConfig));
-        }
-
-        if (penroseConfig.getConnectorConfig() != null) {
-            ConnectorConfig connectorConfig = penroseConfig.getConnectorConfig();
-            element.add(createElement(connectorConfig));
         }
 
         for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
@@ -243,109 +227,4 @@ public class PenroseConfigWriter {
 
         return element;
     }
-
-    public Element createElement(EngineConfig engineConfig) {
-        Element element = new DefaultElement("engine");
-        element.addAttribute("name", engineConfig.getName());
-
-        Element engineClass = new DefaultElement("engine-class");
-        engineClass.add(new DefaultText(engineConfig.getEngineClass()));
-        element.add(engineClass);
-
-        if (engineConfig.getDescription() != null && !"".equals(engineConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(engineConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : engineConfig.getParameterNames()) {
-            String value = engineConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
-    public Element createElement(HandlerConfig handlerConfig) {
-        Element element = new DefaultElement("handler");
-        element.addAttribute("name", handlerConfig.getName());
-
-        Element handlerClass = new DefaultElement("handler-class");
-        handlerClass.add(new DefaultText(handlerConfig.getHandlerClass()));
-        element.add(handlerClass);
-
-        if (handlerConfig.getDescription() != null && !"".equals(handlerConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(handlerConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : handlerConfig.getParameterNames()) {
-            String value = handlerConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
-    public Element createElement(ConnectorConfig connectorConfig) {
-        Element element = new DefaultElement("connector");
-/*
-        Element cacheName = new DefaultElement("connector-name");
-        cacheName.add(new DefaultText(connectorConfig.getName()));
-        element.add(cacheName);
-
-        if (connectorConfig.getConnectorClass() != null && !"".equals(connectorConfig.getConnectorClass())) {
-            Element cacheClass = new DefaultElement("connector-class");
-            cacheClass.add(new DefaultText(connectorConfig.getConnectorClass()));
-            element.add(cacheClass);
-        }
-*/
-        if (connectorConfig.getDescription() != null && !"".equals(connectorConfig.getDescription())) {
-            Element description = new DefaultElement("description");
-            description.add(new DefaultText(connectorConfig.getDescription()));
-            element.add(description);
-        }
-
-        for (String name : connectorConfig.getParameterNames()) {
-            String value = connectorConfig.getParameter(name);
-
-            Element parameter = new DefaultElement("parameter");
-
-            Element paramName = new DefaultElement("param-name");
-            paramName.add(new DefaultText(name));
-            parameter.add(paramName);
-
-            Element paramValue = new DefaultElement("param-value");
-            paramValue.add(new DefaultText(value));
-            parameter.add(paramValue);
-
-            element.add(parameter);
-        }
-
-        return element;
-    }
-
 }

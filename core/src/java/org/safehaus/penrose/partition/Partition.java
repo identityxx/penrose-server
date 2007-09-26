@@ -31,11 +31,9 @@ import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.directory.*;
-import org.safehaus.penrose.handler.Handler;
-import org.safehaus.penrose.handler.HandlerConfig;
-import org.safehaus.penrose.handler.HandlerSearchResponse;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
+import org.safehaus.penrose.engine.basic.BasicEngine;
 import org.safehaus.penrose.scheduler.Scheduler;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.scheduler.SchedulerContext;
@@ -45,7 +43,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.thread.ThreadManager;
-import org.safehaus.penrose.config.PenroseConfig;
 
 /**
  * @author Endi S. Dewata
@@ -62,7 +59,6 @@ public class Partition implements PartitionMBean, Cloneable {
     protected PartitionConfig partitionConfig;
     protected PartitionContext partitionContext;
 
-    protected Map<String, Handler> handlers = new LinkedHashMap<String,Handler>();
     protected Map<String, Engine>  engines  = new LinkedHashMap<String,Engine>();
 
     protected Connections            connections = new Connections();
@@ -71,8 +67,9 @@ public class Partition implements PartitionMBean, Cloneable {
     protected Directory              directory   = new Directory();
     protected Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
 
-    private Scheduler scheduler;
+    protected Scheduler scheduler;
 
+    protected Engine engine;
     SchemaManager schemaManager;
     ThreadManager threadManager;
     protected ACLEvaluator aclEvaluator;
@@ -93,15 +90,13 @@ public class Partition implements PartitionMBean, Cloneable {
 
         aclEvaluator = new ACLEvaluator();
 
-        for (HandlerConfig handlerConfig : partitionConfig.getHandlerConfigs()) {
-            Handler handler = createHandler(handlerConfig);
-            addHandler(handler);
-        }
+        EngineConfig engineConfig = new EngineConfig();
+        engineConfig.setName("DEFAULT");
 
-        for (EngineConfig engineConfig : partitionConfig.getEngineConfigs()) {
-            Engine engine = createEngine(engineConfig);
-            addEngine(engine);
-        }
+        engine = new BasicEngine();
+        engine.setPartition(this);
+        engine.setPenroseContext(partitionContext.getPenroseContext());
+        engine.init(engineConfig);
 
         connections.init(this);
 
@@ -205,61 +200,6 @@ public class Partition implements PartitionMBean, Cloneable {
         return partitionConfig.getName();
     }
 
-    public Handler createHandler(HandlerConfig handlerConfig) throws Exception {
-
-        String handlerName = handlerConfig.getName();
-        if (handlerName == null) throw new Exception("Missing handler name.");
-
-        String className = handlerConfig.getHandlerClass();
-
-        ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
-        Handler handler = (Handler)clazz.newInstance();
-
-        handler.setPartition(this);
-        handler.setPenroseContext(partitionContext.getPenroseContext());
-        handler.init(handlerConfig);
-
-        return handler;
-    }
-
-    public void addHandler(Handler handler) {
-        handlers.put(handler.getName(), handler);
-    }
-
-    public Handler getHandler(String name) {
-        return handlers.get(name);
-    }
-
-    public Handler getHandler(Partition partition, Entry entry) {
-        String handlerName = entry.getHandlerName();
-        if (handlerName != null) return handlers.get(handlerName);
-
-        return handlers.get("DEFAULT");
-    }
-
-    public Engine createEngine(EngineConfig engineConfig) throws Exception {
-
-        String engineName = engineConfig.getName();
-        if (engineName == null) throw new Exception("Missing engine name.");
-
-        String className = engineConfig.getEngineClass();
-
-        ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
-        Engine engine = (Engine)clazz.newInstance();
-
-        engine.setPartition(this);
-        engine.setPenroseContext(partitionContext.getPenroseContext());
-        engine.init(engineConfig);
-
-        return engine;
-    }
-
-    public void addEngine(Engine engine) {
-        engines.put(engine.getName(), engine);
-    }
-
     public Engine getEngine(String name) {
         return engines.get(name);
     }
@@ -302,6 +242,11 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public Collection<Source> getSources() {
         return sources.values();
+    }
+
+    public Source getSource() {
+        if (sources.isEmpty()) return null;
+        return sources.values().iterator().next();
     }
 
     public Source getSource(String name) {
@@ -516,11 +461,17 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setDn(dn);
 
         Collection<Entry> entries = directory.findEntries(dn);
+        if (entries.isEmpty()) {
+            response.setReturnCode(LDAP.NO_SUCH_OBJECT);
+            return;
+        }
 
         for (Entry entry : entries) {
             if (debug) log.debug("Binding " + dn + " in " + entry.getDn());
 
             entry.bind(session, request, response);
+
+            if (response.getReturnCode() == LDAP.SUCCESS) return;
         }
     }
 
@@ -734,7 +685,7 @@ public class Partition implements PartitionMBean, Cloneable {
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        final HandlerSearchResponse sr = new HandlerSearchResponse(
+        final PartitionSearchResponse sr = new PartitionSearchResponse(
                 response,
                 session,
                 this,
@@ -945,5 +896,13 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setAclEvaluator(ACLEvaluator aclEvaluator) {
         this.aclEvaluator = aclEvaluator;
+    }
+
+    public Engine getEngine() {
+        return engine;
+    }
+
+    public void setEngine(Engine engine) {
+        this.engine = engine;
     }
 }

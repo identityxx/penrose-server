@@ -1,4 +1,4 @@
-package org.safehaus.penrose.handler;
+package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class HandlerSearchResponse extends SearchResponse {
+public class PartitionSearchResponse extends SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -34,7 +34,7 @@ public class HandlerSearchResponse extends SearchResponse {
     Map<String,Collection<String>> attributesToRemove = new HashMap<String,Collection<String>>();
     Map<String,Exception> results = new HashMap<String,Exception>();
 
-    public HandlerSearchResponse(
+    public PartitionSearchResponse(
             SearchResponse parent,
             Session session,
             Partition partition,

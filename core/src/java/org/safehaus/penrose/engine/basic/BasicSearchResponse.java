@@ -11,7 +11,6 @@ import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.session.Session;
 
 import java.util.*;
@@ -169,7 +168,6 @@ public class BasicSearchResponse extends SearchResponse {
             if (debug) log.debug("Processing group " + sourceRefs);
 
             SourceRef sourceRef = sourceRefs.iterator().next();
-            Connector connector = engine.getConnector(sourceRef);
 
             String flag = sourceRef.getSearch();
             if (debug) log.debug("Flag: "+flag);
@@ -179,7 +177,10 @@ public class BasicSearchResponse extends SearchResponse {
             Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
-            connector.search(
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
+
+            connection.search(
                     session,
                     primarySourceRefs,
                     localSourceRefs,

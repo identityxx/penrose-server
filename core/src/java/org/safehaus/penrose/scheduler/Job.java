@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 
+import java.util.Collection;
+
 /**
  * @author Endi Sukma Dewata
  */
@@ -15,9 +17,13 @@ public class Job {
     protected JobConfig jobConfig;
     protected JobContext jobContext;
 
+    protected Partition partition;
+
     public void init(JobConfig jobConfig, JobContext jobContext) throws Exception {
         this.jobConfig = jobConfig;
         this.jobContext = jobContext;
+
+        partition = jobContext.getPartition();
 
         log.debug("Initializing "+jobConfig.getName()+" job.");
         
@@ -30,6 +36,14 @@ public class Job {
     public void execute() throws Exception {
     }
 
+    public String getParameter(String name) {
+        return jobConfig.getParameter(name);
+    }
+
+    public Collection<String> getParameterNames() {
+        return jobConfig.getParameterNames();
+    }
+    
     public String getName() {
         return jobConfig.getName();
     }
@@ -52,5 +66,9 @@ public class Job {
 
     public Partition getPartition() {
         return jobContext.getPartition();
+    }
+
+    public void setPartition(Partition partition) {
+        this.partition = partition;
     }
 }

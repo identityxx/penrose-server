@@ -52,11 +52,6 @@
             debug="on"
             debuglevel="lines,vars,source"
         />
-        <fixcrlf
-            srcdir="bin"
-            includes="**/*.sh"
-            eol="unix"
-        />
     </target>
     
     <target name="build" depends="compile">
@@ -70,15 +65,11 @@
               <attribute name="Build-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>
-    </target>
-
-    <target name="dist" depends="build">
-    </target>
-
-    <target name="install" depends="init">
-        <copy todir="${penrose.home}/samples/lockout" overwrite="true">
-            <fileset dir="../../server/target/dist/samples/lockout"/>
-        </copy>
+        <fixcrlf
+            srcdir="bin"
+            includes="**/*.sh"
+            eol="unix"
+        />
     </target>
 
     <target name="clean">

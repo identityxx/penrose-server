@@ -13,8 +13,6 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.connector.Connector;
-import org.safehaus.penrose.connector.ConnectorManager;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -262,18 +260,15 @@ public class JDBCSyncJob extends Job {
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        ConnectorManager connectorManager = penroseContext.getConnectorManager();
-        Connector connector = connectorManager.getConnector(null);
-
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
 
         for (Collection<SourceRef> sourceRefs : groupsOfSources) {
             try {
 
-                SourceRef primarySourceRef = sourceRefs.iterator().next();
+                SourceRef sourceRef = sourceRefs.iterator().next();
 
                 Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
-                primarySourceRefs.add(primarySourceRef);
+                primarySourceRefs.add(sourceRef);
 
                 Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
                 localSourceRefs.addAll(sourceRefs);
@@ -292,7 +287,10 @@ public class JDBCSyncJob extends Job {
 
                 SourceValues sourceValues = new SourceValues();
 
-                connector.search(
+                Source source = sourceRef.getSource();
+                Connection connection = source.getConnection();
+
+                connection.search(
                         null,
                         primarySourceRefs,
                         localSourceRefs,

@@ -27,14 +27,11 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.connector.ConnectorContext;
 import org.safehaus.penrose.log4j.Log4jConfigReader;
 import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.engine.EngineConfig;
-import org.safehaus.penrose.handler.HandlerConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -65,7 +62,6 @@ public class Penrose {
 
     private PenroseConfig      penroseConfig;
     private PenroseContext     penroseContext;
-    private ConnectorContext   connectorContext;
     private SessionContext     sessionContext;
 
     private PartitionConfigs   partitionConfigs;
@@ -177,7 +173,6 @@ public class Penrose {
         }
 
         penroseContext = new PenroseContext(home);
-        connectorContext = new ConnectorContext();
         sessionContext = new SessionContext();
 
         File partitionsDir = new File(home, "partitions");
@@ -193,10 +188,6 @@ public class Penrose {
         penroseContext.setPartitionConfigs(partitionConfigs);
         penroseContext.setPartitions(partitions);
         penroseContext.init(penroseConfig);
-
-        connectorContext.setPenroseConfig(penroseConfig);
-        connectorContext.setPenroseContext(penroseContext);
-        connectorContext.init();
 
         sessionContext.setPenroseConfig(penroseConfig);
         sessionContext.setPenroseContext(penroseContext);
@@ -238,21 +229,13 @@ public class Penrose {
 
         PartitionConfig partitionConfig = new DefaultPartitionConfig();
 
-        for (HandlerConfig handlerConfig : penroseConfig.getHandlerConfigs()) {
-            partitionConfig.addHandlerConfig(handlerConfig);
-        }
-
-        for (EngineConfig engineConfig : penroseConfig.getEngineConfigs()) {
-            partitionConfig.addEngineConfig(engineConfig);
-        }
-
         partitionReader.read(conf, partitionConfig.getConnectionConfigs());
         partitionReader.read(conf, partitionConfig.getSourceConfigs());
         partitionReader.read(conf, partitionConfig.getDirectoryConfig());
         partitionReader.read(conf, partitionConfig.getModuleConfigs());
 
         partitionConfigs.addPartitionConfig(partitionConfig);
-
+/*
         Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
 
         for (PartitionValidationResult result : results) {
@@ -262,7 +245,7 @@ public class Penrose {
                 errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
             }
         }
-
+*/
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
         partitionFactory.setPenroseConfig(penroseConfig);
@@ -329,7 +312,7 @@ public class Penrose {
             if (debug) log.debug(partitionName+" partition is disabled.");
             return;
         }
-
+/*
         Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
 
         for (PartitionValidationResult result : results) {
@@ -339,7 +322,7 @@ public class Penrose {
                 errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
             }
         }
-
+*/
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
         partitionFactory.setPenroseConfig(penroseConfig);
@@ -415,14 +398,6 @@ public class Penrose {
 
     public String getStatus() {
         return status;
-    }
-
-    public ConnectorContext getConnectorContext() {
-        return connectorContext;
-    }
-
-    public void setConnectorContext(ConnectorContext connectorContext) {
-        this.connectorContext = connectorContext;
     }
 
     public SessionContext getSessionContext() {

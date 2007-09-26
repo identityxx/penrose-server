@@ -18,7 +18,6 @@
 package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.engine.Engine;
@@ -27,6 +26,8 @@ import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.connection.Connection;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -106,12 +107,14 @@ public class SearchEngine {
             Collection<SourceRef> primarySources = iterator.next();
 
             SourceRef sourceRef = primarySources.iterator().next();
-            Connector connector = engine.getConnector(sourceRef);
 
             Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
-            connector.search(
+            Source source = sourceRef.getSource();
+            Connection connection = source.getConnection();
+
+            connection.search(
                     session,
                     primarySourceRefs,
                     localSourceRefs,

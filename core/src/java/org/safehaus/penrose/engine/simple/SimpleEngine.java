@@ -23,14 +23,15 @@ import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.engine.*;
-import org.safehaus.penrose.connector.Connector;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.connection.Connection;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -156,9 +157,10 @@ public class SimpleEngine extends Engine {
         Collection<SourceRef> primarySources = iterator.next();
 
         SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
 
-        connector.add(
+        connection.add(
                 session,
                 entry,
                 primarySources,
@@ -204,10 +206,11 @@ public class SimpleEngine extends Engine {
         Collection<SourceRef> primarySources = iterator.next();
 
         SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
 
         try {
-            connector.bind(
+            connection.bind(
                     session,
                     entry,
                     primarySources,
@@ -262,9 +265,10 @@ public class SimpleEngine extends Engine {
         Collection<SourceRef> primarySources = iterator.next();
 
         SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
 
-        connector.delete(
+        connection.delete(
                 session,
                 entry,
                 primarySources,
@@ -310,9 +314,10 @@ public class SimpleEngine extends Engine {
         Collection<SourceRef> primarySources = iterator.next();
 
         SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
 
-        connector.modify(
+        connection.modify(
                 session,
                 entry,
                 primarySources,
@@ -358,9 +363,10 @@ public class SimpleEngine extends Engine {
         Collection<SourceRef> primarySources = iterator.next();
 
         SourceRef sourceRef = primarySources.iterator().next();
-        Connector connector = getConnector(sourceRef);
+        Source source = sourceRef.getSource();
+        Connection connection = source.getConnection();
 
-        connector.modrdn(
+        connection.modrdn(
                 session,
                 entry,
                 primarySources,

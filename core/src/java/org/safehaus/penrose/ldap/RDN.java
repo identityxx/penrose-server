@@ -197,7 +197,7 @@ public class RDN implements Serializable, Comparable {
         return counter;
     }
 
-    public boolean match(RDN rdn) {
+    public boolean matches(RDN rdn) {
 
         if (rdn == null) return false;
         if (getNormalized().equals(rdn.getNormalized())) return true;

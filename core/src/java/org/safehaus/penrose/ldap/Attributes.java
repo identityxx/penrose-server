@@ -119,13 +119,6 @@ public class Attributes implements Cloneable {
         attr.addValues(attribute.getValues());
     }
 
-    /**
-     * Set an attribute.
-     *
-     * This object will take the ownership of the parameters.
-     *
-     * @param attribute Attribute
-     */
     public void set(Attribute attribute) {
         String name = attribute.getName();
         String normalizedName = name.toLowerCase();

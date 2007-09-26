@@ -11,6 +11,10 @@
       <param-name>maxAttempts</param-name>
       <param-value>3</param-value>
     </parameter>
+    <parameter>
+      <param-name>expiration</param-name>
+      <param-value>1</param-value>
+    </parameter>
   </module>
 
   <module-mapping>

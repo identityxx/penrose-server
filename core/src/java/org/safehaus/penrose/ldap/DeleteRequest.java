@@ -3,7 +3,7 @@ package org.safehaus.penrose.ldap;
 /**
  * @author Endi S. Dewata
  */
-public class DeleteRequest extends Request {
+public class DeleteRequest extends Request implements Cloneable {
 
     protected DN dn;
 
@@ -29,5 +29,13 @@ public class DeleteRequest extends Request {
 
     public void setDn(DN dn) {
         this.dn = dn;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        DeleteRequest request = (DeleteRequest)super.clone();
+
+        request.dn = dn;
+
+        return request;
     }
 }

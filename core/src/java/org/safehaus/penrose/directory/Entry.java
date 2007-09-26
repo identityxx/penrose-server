@@ -19,19 +19,23 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.mapping.SourceMapping;
-import org.safehaus.penrose.mapping.Link;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.Partitions;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.handler.Handler;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.InterpreterManager;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.cache.CacheManager;
+import org.safehaus.penrose.cache.CacheKey;
+import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.filter.FilterEvaluator;
+import org.safehaus.penrose.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +49,22 @@ public class Entry implements Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    public final static Collection<Entry> EMPTY_ENTRIES        = new ArrayList<Entry>();
+    public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
 
-    public final static String  FETCH         = "fetch";
-    public final static boolean DEFAULT_FETCH = false;
+    public final static String  FETCH                   = "fetch";
+    public final static boolean DEFAULT_FETCH           = false; // disabled
+
+    public final static String  SCHEMA_CHECKING         = "schemaChecking";
+    public final static boolean DEFAULT_SCHEMA_CHECKING = false; // disabled
+
+    public final static String CACHE                    = "cache";
+    public final static boolean DEFAULT_CACHE           = false; // disabled
+
+    public final static String CACHE_SIZE               = "cacheSize";
+    public final static int DEFAULT_CACHE_SIZE          = 10; // entries
+
+    public final static String CACHE_EXPIRATION         = "cacheExpiration";
+    public final static int DEFAULT_CACHE_EXPIRATION    = 10; // minutes
 
     protected EntryMapping entryMapping;
     protected EntryContext entryContext;
@@ -66,7 +82,10 @@ public class Entry implements Cloneable {
 
     Partition partition;
 
-    protected boolean fetch = DEFAULT_FETCH;
+    protected boolean fetch;
+    protected boolean schemaChecking;
+
+    protected CacheManager cacheManager;
 
     public Entry() {
     }
@@ -118,6 +137,26 @@ public class Entry implements Cloneable {
             parent = parent.getParent();
         }
 
+        String s = getParameter(FETCH);
+        fetch = s == null ? DEFAULT_FETCH : Boolean.valueOf(s);
+
+        s = getParameter(SCHEMA_CHECKING);
+        schemaChecking = s == null ? DEFAULT_SCHEMA_CHECKING : Boolean.valueOf(s);
+
+        s = getParameter(CACHE);
+        boolean cacheEnabled = s == null ? DEFAULT_CACHE : Boolean.parseBoolean(s);
+
+        if (cacheEnabled) {
+            s = getParameter(CACHE_SIZE);
+            int cacheSize = s == null ? DEFAULT_CACHE_SIZE : Integer.parseInt(s);
+    
+            s = getParameter(CACHE_EXPIRATION);
+            int cacheExpiration = s == null ? DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
+
+            cacheManager = new CacheManager(cacheSize);
+            cacheManager.setExpiration(cacheExpiration);
+        }
+
         init();
     }
 
@@ -143,13 +182,17 @@ public class Entry implements Cloneable {
     public String getParentId() {
         return entryMapping.getParentId();
     }
-    
+
     public DN getDn() {
         return entryMapping.getDn();
     }
 
     public DN getParentDn() {
         return entryMapping.getParentDn();
+    }
+
+    public RDN getRdn() {
+        return entryMapping.getRdn();
     }
 
     public EntryMapping getEntryMapping() {
@@ -270,10 +313,6 @@ public class Entry implements Cloneable {
         return entryMapping.getParameterNames();
     }
 
-    public Link getLink() {
-        return entryMapping.getLink();
-    }
-
     public List<Entry> getPath() {
         List<Entry> path = new ArrayList<Entry>();
 
@@ -363,22 +402,54 @@ public class Entry implements Cloneable {
             AddResponse response
     ) throws Exception {
 
+        DN dn = request.getDn();
+
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
+        if (schemaChecking) {
+            SchemaManager schemaManager = penroseContext.getSchemaManager();
+            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
 
-        DN dn = request.getDn();
+            Attributes attributes = request.getAttributes();
+            for (Attribute attribute : attributes.getAll()) {
+                String attributeName = attribute.getName();
+                boolean found = false;
+
+                for (ObjectClass oc : objectClasses) {
+                    if (oc.getName().equalsIgnoreCase("extensibleObject")) {
+                        found = true;
+                        break;
+                    }
+
+                    if (oc.containsRequiredAttribute(attributeName)) {
+                        found = true;
+                        break;
+                    }
+
+                    if (oc.containsOptionalAttribute(attributeName)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                }
+            }
+
+            for (ObjectClass oc : objectClasses) {
+                for (String attributeName : oc.getRequiredAttributes()) {
+                    if (attributes.get(attributeName) == null) {
+                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                    }
+                }
+            }
+        }
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             DN parentDn = parent.getDn();
 
             SearchResult sr = parent.find(session, parentDn);
@@ -395,7 +466,7 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.add(
                 session,
                 this,
@@ -403,6 +474,8 @@ public class Entry implements Cloneable {
                 request,
                 response
         );
+
+        if (cacheManager != null) cacheManager.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,22 +488,11 @@ public class Entry implements Cloneable {
             BindResponse response
     ) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(null, dn);
             sourceValues.add(sr.getSourceValues());
         } else {
@@ -444,7 +506,7 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.bind(
                 session,
                 this,
@@ -464,22 +526,11 @@ public class Entry implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(null, dn);
             sourceValues.add(sr.getSourceValues());
         } else {
@@ -493,7 +544,7 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.compare(
                 session,
                 this,
@@ -513,22 +564,11 @@ public class Entry implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(session, dn);
             sourceValues.add(sr.getSourceValues());
         } else {
@@ -542,7 +582,7 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.delete(
                 session,
                 this,
@@ -550,6 +590,8 @@ public class Entry implements Cloneable {
                 request,
                 response
         );
+
+        if (cacheManager != null) cacheManager.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -558,18 +600,58 @@ public class Entry implements Cloneable {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
-        Collection<Entry> results = new ArrayList<Entry>();
-        if (dn == null) return results;
+        if (debug) log.debug("Finding matching entries for "+dn+":");
 
-        if (getDn().matches(dn)) {
-            results.add(this);
+        if (dn == null) return EMPTY_ENTRIES;
+
+        DN thisDn = getDn();
+        int level = thisDn.getSize() - 1;
+        int length = dn.getSize();
+
+        if (!dn.endsWith(thisDn)) {
+            if (debug) log.debug("Doesn't match "+thisDn);
+            return EMPTY_ENTRIES;
+        }
+
+        if (level < length - 1) { // children has priority
+            Collection<Entry> results = new ArrayList<Entry>();
+            for (Entry child : children.values()) {
+                Collection<Entry> list = child.findEntries(dn, level + 1);
+                results.addAll(list);
+            }
             return results;
         }
 
-        for (Entry child : children.values()) {
-            Collection<Entry> list = child.findEntries(dn);
-            results.addAll(list);
+        Collection<Entry> results = new ArrayList<Entry>();
+        results.add(this);
+        if (debug) log.debug(" - "+getDn());
+
+        return results;
+    }
+
+    public Collection<Entry> findEntries(DN dn, int level) throws Exception {
+
+        RDN thisRdn = getRdn();
+        int length = dn.getSize();
+        RDN rdn = dn.get(length - level - 1);
+
+        if (!thisRdn.matches(rdn)) {
+            if (debug) log.debug("Doesn't match with "+getDn());
+            return EMPTY_ENTRIES;
         }
+
+        if (level < length - 1) { // children has priority
+            Collection<Entry> results = new ArrayList<Entry>();
+            for (Entry child : children.values()) {
+                Collection<Entry> list = child.findEntries(dn, level + 1);
+                results.addAll(list);
+            }
+            return results;
+        }
+
+        Collection<Entry> results = new ArrayList<Entry>();
+        results.add(this);
+        if (debug) log.debug(" - "+getDn());
 
         return results;
     }
@@ -579,13 +661,7 @@ public class Entry implements Cloneable {
             DN dn
     ) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
-
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         return engine.find(session, this, dn);
     }
 
@@ -599,22 +675,67 @@ public class Entry implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
+        DN dn = request.getDn();
+
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
+        if (schemaChecking) {
+            SchemaManager schemaManager = penroseContext.getSchemaManager();
+            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
 
-        DN dn = request.getDn();
+            Collection<Modification> modifications = request.getModifications();
+            for (Modification modification : modifications) {
+                int type = modification.getType();
+                Attribute attribute = modification.getAttribute();
+                String attributeName = attribute.getName();
+
+                if (type == Modification.ADD) {
+
+                    boolean found = false;
+
+                    for (ObjectClass oc : objectClasses) {
+                        if (oc.getName().equalsIgnoreCase("extensibleObject")) {
+                            found = true;
+                            break;
+                        }
+
+                        if (oc.containsRequiredAttribute(attributeName)) {
+                            found = true;
+                            break;
+                        }
+
+                        if (oc.containsOptionalAttribute(attributeName)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                    }
+
+                } else if (type == Modification.DELETE && attribute.isEmpty()) {
+
+                    boolean found = false;
+
+                    for (ObjectClass oc : objectClasses) {
+                        if (oc.containsRequiredAttribute(attributeName)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found) {
+                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                    }
+                }
+            }
+        }
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(session, dn);
             sourceValues.add(sr.getSourceValues());
         } else {
@@ -628,8 +749,10 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.modify(session, this, sourceValues, request, response);
+
+        if (cacheManager != null) cacheManager.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -642,22 +765,55 @@ public class Entry implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
+        DN dn = request.getDn();
+
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
+        if (schemaChecking) {
+            SchemaManager schemaManager = penroseContext.getSchemaManager();
+            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
 
-        DN dn = request.getDn();
+            RDN newRdn = request.getNewRdn();
+            for (String attributeName : newRdn.getNames()) {
+
+                boolean found = false;
+
+                for (ObjectClass oc : objectClasses) {
+                    if (oc.getName().equalsIgnoreCase("extensibleObject")) {
+                        found = true;
+                        break;
+                    }
+
+                    if (oc.containsRequiredAttribute(attributeName)) {
+                        found = true;
+                        break;
+                    }
+
+                    if (oc.containsOptionalAttribute(attributeName)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                }
+            }
+
+            RDN rdn = dn.getRdn();
+            for (String attributeName : newRdn.getNames()) {
+                for (ObjectClass oc : objectClasses) {
+                    if (oc.containsRequiredAttribute(attributeName)) {
+                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
+                    }
+                }
+            }
+        }
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(session, dn);
             sourceValues.add(sr.getSourceValues());
 
@@ -672,7 +828,7 @@ public class Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.modrdn(
                 session,
                 this,
@@ -680,6 +836,8 @@ public class Entry implements Cloneable {
                 request,
                 response
         );
+
+        if (cacheManager != null) cacheManager.clear();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -698,12 +856,7 @@ public class Entry implements Cloneable {
 
         SourceValues sourceValues = new SourceValues();
 
-        boolean fetchEntry = fetch;
-
-        String s = getParameter(FETCH);
-        if (s != null) fetchEntry = Boolean.valueOf(s);
-
-        if (fetchEntry) {
+        if (fetch) {
             SearchResult sr = find(session, dn);
             sourceValues.add(sr.getSourceValues());
 
@@ -767,32 +920,82 @@ public class Entry implements Cloneable {
     }
 
     public void searchEntry(
-            Session session,
-            Entry base,
-            SourceValues sourceValues,
-            SearchRequest request,
-            SearchResponse response
+            final Session session,
+            final Entry base,
+            final SourceValues sourceValues,
+            final SearchRequest request,
+            final SearchResponse response
     ) throws Exception {
 
         if (debug) log.debug("Searching entry "+entryMapping.getDn());
 
-        Directory directory = getDirectory();
-        Partition partition = directory.getPartition();
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
+        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
-        Engine engine = partitions.getEngine(partition, handler, this);
+        final Filter filter = request.getFilter();
+        if (!filterEvaluator.eval(this, filter)) {
+            if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
+            return;
+        }
 
+        final Cache cache;
+
+        if (cacheManager == null) {
+            cache = null;
+
+        } else {
+            CacheKey cacheKey = new CacheKey();
+            cacheKey.setSearchRequest(request);
+            cacheKey.setEntry(this);
+
+            Cache c = cacheManager.get(cacheKey);
+
+            if (c != null) {
+                log.debug("Returning results from cache.");
+                for (SearchResult searchResult : c.getSearchResults()) {
+                    response.add(searchResult);
+                }
+                return;
+            }
+
+            cache = cacheManager.create();
+
+            int cacheSize = cacheManager.getSize();
+            cache.setSize(cacheSize);
+
+            int cacheExpiration = cacheManager.getExpiration();
+            cache.setExpiration(cacheExpiration);
+
+            cacheManager.put(cacheKey, cache);
+        }
+
+        SearchResponse sr = new SearchResponse() {
+
+            public void add(SearchResult searchResult) throws Exception {
+
+                if (debug) log.debug("Checking filter "+filter);
+
+                if (!filterEvaluator.eval(searchResult.getAttributes(), filter)) {
+                    if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
+                    return;
+                }
+
+                response.add(searchResult);
+
+                if (cache != null) cache.add(searchResult);
+            }
+        };
+
+        Engine engine = partition.getEngine();
         engine.search(
                 session,
                 base,
                 this,
                 sourceValues,
                 request,
-                response
+                sr
         );
     }
 
@@ -806,13 +1009,7 @@ public class Entry implements Cloneable {
             UnbindResponse response
     ) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        Partitions partitions = penroseContext.getPartitions();
-        Handler handler = partitions.getHandler(partition, this);
-
-        Engine engine = partitions.getEngine(partition, handler, this);
+        Engine engine = partition.getEngine();
         engine.unbind(
                 session,
                 this,
