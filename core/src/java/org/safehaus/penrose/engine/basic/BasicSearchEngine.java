@@ -41,7 +41,7 @@ public class BasicSearchEngine {
         try {
             //List<Collection<SourceRef>> groupsOfSources = engine.getLocalGroupsOfSources(partition, entry, base);
             List<Collection<SourceRef>> groupsOfSources = engine.getGroupsOfSources(partition, entry);
-            final Interpreter interpreter = engine.getInterpreterManager().newInstance();
+            final Interpreter interpreter = partition.newInterpreter();
 
             if (groupsOfSources.isEmpty()) {
                 if (debug) log.debug("Returning static entry "+ entry.getDn());

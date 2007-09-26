@@ -20,7 +20,6 @@ package org.safehaus.penrose.config;
 import java.util.*;
 
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
@@ -57,7 +56,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void init() {
-        addInterpreterConfig(new InterpreterConfig("DEFAULT", DefaultInterpreter.class.getName()));
     }
 
     public String getSystemProperty(String name) {

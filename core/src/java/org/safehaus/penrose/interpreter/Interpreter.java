@@ -40,7 +40,8 @@ public abstract class Interpreter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    Collection rows;
+    protected Collection rows;
+    protected ClassLoader classLoader;
 
     public void set(RDN rdn) throws Exception {
         if (rdn == null) return;
@@ -238,5 +239,13 @@ public abstract class Interpreter {
         }
 
         return value;
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 }

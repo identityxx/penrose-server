@@ -28,7 +28,6 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.cache.CacheManager;
@@ -1076,12 +1075,7 @@ public class Entry implements Cloneable {
     }
 
     public Attributes getAttributes() throws Exception {
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        InterpreterManager interpreterManager = penroseContext.getInterpreterManager();
-        Interpreter interpreter = interpreterManager.newInstance();
-
+        Interpreter interpreter = partition.newInterpreter();
         return getAttributes(interpreter);
     }
 

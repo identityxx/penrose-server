@@ -25,7 +25,6 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.FieldMapping;
@@ -47,8 +46,6 @@ public abstract class Adapter {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected InterpreterManager interpreterManager;
-
     protected AdapterConfig adapterConfig;
     protected AdapterContext adapterContext;
 
@@ -61,9 +58,6 @@ public abstract class Adapter {
 
         partition = adapterContext.getPartition();
         connection = adapterContext.getConnection();
-
-        PenroseContext penroseContext = partition.getPartitionContext().getPenroseContext();
-        interpreterManager = penroseContext.getInterpreterManager();
 
         init();
     }
@@ -135,7 +129,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -216,7 +210,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -290,7 +284,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -395,7 +389,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -465,7 +459,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -630,7 +624,7 @@ public abstract class Adapter {
         SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -724,7 +718,7 @@ public abstract class Adapter {
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         FilterBuilder filterBuilder = new FilterBuilder(
                 partition,

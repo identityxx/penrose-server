@@ -6,14 +6,11 @@ import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -223,11 +220,8 @@ public class EngineTool {
 
         Directory directory = entry.getDirectory();
         Partition partition = directory.getPartition();
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        InterpreterManager interpreterManager = penroseContext.getInterpreterManager();
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         if (debug) log.debug("Extracting source values from "+dn);
 

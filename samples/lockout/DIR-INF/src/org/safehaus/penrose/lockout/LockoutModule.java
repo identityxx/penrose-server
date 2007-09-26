@@ -26,6 +26,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.sql.Timestamp;
 
 /**
@@ -36,28 +37,30 @@ public class LockoutModule extends Module {
     public final static String LOCKS = "locks";
     public final static String DEFAULT_LOCKS = "locks";
 
-    public final static String MAX_ATTEMPTS = "maxAttempts";
-    public final static int DEFAULT_MAX_ATTEMPTS = 3;
+    public final static String LIMIT = "limit";
+    public final static int DEFAULT_LIMIT = 3;
 
     public final static String EXPIRATION = "expiration";
     public final static int DEFAULT_EXPIRATION = 5; // minutes
 
     public Source source;
-    public int maxAttempts;
+    public int limit;
     public int expiration;
 
     public void init() throws Exception {
         String s = getParameter(LOCKS);
         source = partition.getSource(s == null ? DEFAULT_LOCKS : s);
 
-        s = getParameter(MAX_ATTEMPTS);
-        maxAttempts = s == null ? DEFAULT_MAX_ATTEMPTS : Integer.parseInt(s);
+        s = getParameter(LIMIT);
+        limit = s == null ? DEFAULT_LIMIT : Integer.parseInt(s);
 
         s = getParameter(EXPIRATION);
         expiration = s == null ? DEFAULT_EXPIRATION : Integer.parseInt(s);
     }
 
     public void beforeBind(BindEvent event) throws Exception {
+
+        if (limit == 0) return;
 
         BindRequest request = event.getRequest();
         BindResponse response = event.getResponse();
@@ -76,8 +79,8 @@ public class LockoutModule extends Module {
         Attributes attributes = result.getAttributes();
 
         if (expiration > 0) {
-            Timestamp timestamp = (Timestamp)attributes.getValue("timestamp");
-            log.debug("Timestamp: "+timestamp);
+            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+            log.debug("Timestamp: "+Lock.DATE_FORMAT.format(timestamp));
 
             long elapsed = System.currentTimeMillis() - timestamp.getTime();
             if (elapsed >= expiration * 60 * 1000) {
@@ -90,13 +93,15 @@ public class LockoutModule extends Module {
         int counter = (Integer)attributes.getValue("counter");
         log.debug("Counter: "+counter);
 
-        if (counter >= maxAttempts) {
+        if (counter >= limit) {
             log.debug("Account has been locked.");
             response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
         }
     }
 
     public void afterBind(BindEvent event) throws Exception {
+
+        if (limit == 0) return;
 
         BindRequest request = event.getRequest();
         BindResponse response = event.getResponse();
@@ -159,23 +164,26 @@ public class LockoutModule extends Module {
         source.delete(rdn);
     }
 
-    public Collection<String> list() throws Exception {
+    public Collection<Lock> list() throws Exception {
 
-        Collection<String> accounts = new ArrayList<String>();
+        Collection<Lock> accounts = new ArrayList<Lock>();
+        if (limit == 0) return accounts;
 
         SearchRequest request = new SearchRequest();
-        request.setFilter("(counter>="+maxAttempts+")");
-        
         SearchResponse response = new SearchResponse();
 
         source.search(request, response);
 
         while (response.hasNext()) {
             SearchResult result = response.next();
-            DN dn = result.getDn();
-            RDN rdn = dn.getRdn();
-            String account = (String)rdn.get("account");
-            accounts.add(account);
+            Attributes attributes = result.getAttributes();
+
+            String account = (String)attributes.getValue("account");
+            int counter = (Integer)attributes.getValue("counter");
+            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+
+            Lock lock = new Lock(account, counter, timestamp);
+            accounts.add(lock);
         }
 
         return accounts;
@@ -183,6 +191,8 @@ public class LockoutModule extends Module {
 
     public void purge() throws Exception {
 
+        if (expiration <= 0) return;
+        
         SearchRequest request = new SearchRequest();
         SearchResponse response = new SearchResponse();
 
@@ -190,19 +200,19 @@ public class LockoutModule extends Module {
 
         while (response.hasNext()) {
             SearchResult result = response.next();
-            DN dn = result.getDn();
             Attributes attributes = result.getAttributes();
+            
             String account = (String)attributes.getValue("account");
-            Timestamp timestamp = (Timestamp)attributes.getValue("timestamp");
+            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
 
-            log.debug("Checking lock timestamp for "+account+": "+timestamp);
+            log.debug("Checking lock timestamp for "+account+": "+Lock.DATE_FORMAT.format(timestamp));
 
             long elapsed = System.currentTimeMillis() - timestamp.getTime();
             if (elapsed < expiration * 60 * 1000) continue;
 
             log.debug("Unlocking "+account+".");
 
-            source.delete(dn);
+            source.delete(result.getDn());
         }
     }
 }

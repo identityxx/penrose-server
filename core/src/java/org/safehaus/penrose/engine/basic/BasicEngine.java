@@ -50,7 +50,7 @@ public class BasicEngine extends Engine {
             SourceValues sourceValues
     ) throws Exception {
 
-        Interpreter interpreter = interpreterManager.newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         if (debug) log.debug("Extracting source values from "+dn);
 
@@ -487,7 +487,7 @@ public class BasicEngine extends Engine {
         SearchResponse response = new SearchResponse();
 
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, entry);
-        Interpreter interpreter = getInterpreterManager().newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         if (groupsOfSources.isEmpty()) {
             if (debug) log.debug("Returning static entry "+entry.getDn());
@@ -571,7 +571,7 @@ public class BasicEngine extends Engine {
 
         //List<Collection<SourceRef>> groupsOfSources = getLocalGroupsOfSources(partition, base, entry);
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(partition, base, entry);
-        Interpreter interpreter = getInterpreterManager().newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         if (groupsOfSources.isEmpty()) {
             if (debug) log.debug("Returning static entry "+ entry.getDn());

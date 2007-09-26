@@ -95,7 +95,7 @@ public class EngineFilterTool {
                 return null;
         }
 
-        Interpreter interpreter = engine.getInterpreterManager().newInstance();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(attributeName, attributeValue);
 
         if (parentValues != null) {

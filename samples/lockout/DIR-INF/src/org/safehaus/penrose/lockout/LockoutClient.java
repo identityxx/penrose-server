@@ -79,11 +79,13 @@ public class LockoutClient {
     public void list(String partition) throws Exception {
         PartitionClient partitionClient = client.getPartitionClient(partition);
         ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
-        Collection<String> accounts = (Collection<String>)moduleClient.invoke("list", new Object[] {}, new String[] {});
+        Collection<Lock> accounts = (Collection<Lock>)moduleClient.invoke("list", new Object[] {}, new String[] {});
 
-        System.out.println("Locked accounts:");
-        for (String account : accounts) {
-            System.out.println(" - "+account);
+        for (Lock lock : accounts) {
+            System.out.println("Account: "+lock.getAccount());
+            System.out.println("Counter: "+lock.getCounter());
+            System.out.println("Timestamp: "+Lock.DATE_FORMAT.format(lock.getTimestamp()));
+            System.out.println();
         }
     }
 

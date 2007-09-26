@@ -275,7 +275,7 @@ public class JDBCSyncJob extends Job {
 
                 SearchRequest request = new SearchRequest();
 
-                Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+                Interpreter interpreter = partition.newInterpreter();
                 SearchResponse response = new SplitSearchResponse(
                         tmpTargets.values(),
                         interpreter

@@ -251,7 +251,7 @@ public class SourceSync {
 
     public void load(Collection<Source> targets) throws Exception {
 
-        Interpreter interpreter = penroseContext.getInterpreterManager().newInstance();
+        Interpreter interpreter = partition.newInterpreter();
 
         SearchRequest sourceRequest = new SearchRequest();
         SearchResponse sourceResponse = new SourceSyncSearchResponse(

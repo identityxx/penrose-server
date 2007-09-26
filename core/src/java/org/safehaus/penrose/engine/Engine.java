@@ -20,7 +20,6 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
-import org.safehaus.penrose.interpreter.InterpreterManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.partition.PartitionConfigs;
@@ -55,7 +54,6 @@ public abstract class Engine {
     protected PenroseContext penroseContext;
 
     protected SchemaManager schemaManager;
-    protected InterpreterManager interpreterManager;
     protected PartitionConfigs partitionConfigs;
 
     public String getName() {
@@ -95,14 +93,6 @@ public abstract class Engine {
 
     public void setSchemaManager(SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
-    }
-
-    public InterpreterManager getInterpreterManager() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterManager(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
     }
 
     public PartitionConfigs getPartitionManager() {
@@ -515,7 +505,6 @@ public abstract class Engine {
         this.penroseContext = penroseContext;
 
         schemaManager = penroseContext.getSchemaManager();
-        interpreterManager = penroseContext.getInterpreterManager();
         partitionConfigs = penroseContext.getPartitionConfigs();
     }
 

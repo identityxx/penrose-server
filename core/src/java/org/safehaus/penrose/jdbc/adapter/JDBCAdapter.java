@@ -36,6 +36,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.dbcp.*;
 
@@ -410,11 +411,13 @@ public class JDBCAdapter extends Adapter {
         Source source = sourceRef.getSource();
         JDBCClient client = getClient(session, partition, source);
 
+        Interpreter interpreter = partition.newInterpreter();
+
         try {
             AddRequestBuilder builder = new AddRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    interpreterManager.newInstance(),
+                    interpreter,
                     request,
                     response
             );
@@ -534,11 +537,13 @@ public class JDBCAdapter extends Adapter {
         Source source = sourceRef.getSource();
         JDBCClient client = getClient(session, partition, source);
 
+        Interpreter interpreter = partition.newInterpreter();
+
         try {
             DeleteRequestBuilder builder = new DeleteRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    interpreterManager.newInstance(),
+                    interpreter,
                     request,
                     response
             );
@@ -655,11 +660,13 @@ public class JDBCAdapter extends Adapter {
         Source source = sourceRef.getSource();
         JDBCClient client = getClient(session, partition, source);
 
+        Interpreter interpreter = partition.newInterpreter();
+
         try {
             ModifyRequestBuilder builder = new ModifyRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    interpreterManager.newInstance(),
+                    interpreter,
                     request,
                     response
             );
@@ -761,11 +768,13 @@ public class JDBCAdapter extends Adapter {
         Source source = sourceRef.getSource();
         JDBCClient client = getClient(session, partition, source);
 
+        Interpreter interpreter = partition.newInterpreter();
+
         try {
             ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
                     sourceRefs,
                     sourceValues,
-                    interpreterManager.newInstance(),
+                    interpreter,
                     request,
                     response
             );
@@ -895,11 +904,13 @@ public class JDBCAdapter extends Adapter {
         Source source = sourceRef.getSource();
         JDBCClient client = getClient(session, partition, source);
 
+        Interpreter interpreter = partition.newInterpreter();
+
         try {
             response.setSizeLimit(request.getSizeLimit());
 
             SearchRequestBuilder builder = new SearchRequestBuilder(
-                    interpreterManager.newInstance(),
+                    interpreter,
                     partition,
                     primarySourceRefs,
                     localSourceRefs,

@@ -4,8 +4,6 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.interpreter.InterpreterManager;
-import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.session.SessionContext;
@@ -42,8 +40,6 @@ public class PenroseContext {
     private ThreadManager      threadManager;
     private SchemaManager      schemaManager;
     private FilterEvaluator    filterEvaluator;
-
-    private InterpreterManager interpreterManager;
 
     private PartitionConfigs   partitionConfigs;
     private Partitions         partitions;
@@ -86,14 +82,6 @@ public class PenroseContext {
         this.partitions = partitions;
     }
 
-    public InterpreterManager getInterpreterManager() {
-        return interpreterManager;
-    }
-
-    public void setInterpreterManager(InterpreterManager interpreterManager) {
-        this.interpreterManager = interpreterManager;
-    }
-
     public SessionContext getSessionContext() {
         return sessionContext;
     }
@@ -122,16 +110,8 @@ public class PenroseContext {
         filterEvaluator = new FilterEvaluator();
         filterEvaluator.setSchemaManager(schemaManager);
 
-        interpreterManager = new InterpreterManager();
-        interpreterManager.setPenroseConfig(penroseConfig);
-        interpreterManager.setPenroseContext(this);
-
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
             schemaManager.init(home, schemaConfig);
-        }
-
-        for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
-            interpreterManager.init(interpreterConfig);
         }
     }
 
@@ -148,7 +128,6 @@ public class PenroseContext {
     }
     
     public void clear() throws Exception {
-        interpreterManager.clear();
         schemaManager.clear();
     }
 

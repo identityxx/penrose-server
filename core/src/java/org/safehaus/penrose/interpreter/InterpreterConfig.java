@@ -28,7 +28,7 @@ import java.io.Serializable;
 public class InterpreterConfig implements Serializable, Cloneable {
 
     private String name = "DEFAULT";
-    private String interpreterClass = DefaultInterpreter.class.getName();
+    private String interpreterClass;
     private String description;
 
     private Map<String,String> parameters = new LinkedHashMap<String,String>();

@@ -3,7 +3,7 @@
   "-//Penrose/DTD Scheduler ${product.specification}//EN"
   "http://penrose.safehaus.org/dtd/scheduler.dtd">
 
-<scheduler>
+<scheduler enabled="true">
 
   <scheduler-class>org.safehaus.penrose.scheduler.quartz.QuartzScheduler</scheduler-class>
 

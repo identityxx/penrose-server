@@ -43,6 +43,8 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.thread.ThreadManager;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.interpreter.DefaultInterpreter;
 
 /**
  * @author Endi S. Dewata
@@ -904,5 +906,14 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void setEngine(Engine engine) {
         this.engine = engine;
+    }
+
+    public Interpreter newInterpreter() throws Exception {
+        ClassLoader classLoader = partitionContext.getClassLoader();
+
+        Interpreter interpreter = new DefaultInterpreter();
+        interpreter.setClassLoader(classLoader);
+
+        return interpreter;
     }
 }

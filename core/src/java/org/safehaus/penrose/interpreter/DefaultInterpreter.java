@@ -116,6 +116,8 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
                 //log.debug("# NEW INTERPRETER");
 
                 interpreter = new Interpreter();
+                interpreter.setClassLoader(classLoader);
+                
                 for (Iterator i=variables.keySet().iterator(); i.hasNext(); ) {
                     String name = (String)i.next();
                     Object value = variables.get(name);
