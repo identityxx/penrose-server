@@ -221,7 +221,7 @@ public class JDBCAdapter extends Adapter {
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
-        Connection connection = partition.getConnection(source.getConnectionName());
+        Connection connection = source.getConnection();
         JDBCClient client;
 
         if (AUTHENTICATION_FULL.equals(authentication)) {

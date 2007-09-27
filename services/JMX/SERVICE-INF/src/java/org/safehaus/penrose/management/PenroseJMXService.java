@@ -37,14 +37,14 @@ public class PenroseJMXService extends Service {
     public final static String RMI_PORT           = "rmiPort";
     public final static String RMI_TRANSPORT_PORT = "rmiTransportPort";
 
-    private int rmiPort;
-    private int rmiTransportPort;
+    protected int rmiPort;
+    protected int rmiTransportPort;
 
-    MBeanServer mbeanServer;
-    JMXConnectorServer rmiConnector;
+    protected MBeanServer mbeanServer;
+    protected JMXConnectorServer rmiConnector;
 
-    PenroseJMXAuthenticator authenticator;
-    PenroseService penroseService;
+    protected PenroseJMXAuthenticator authenticator;
+    protected PenroseService penroseService;
 
     static {
         //System.setProperty("jmx.invoke.getters", "true");

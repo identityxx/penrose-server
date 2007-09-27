@@ -21,7 +21,6 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;

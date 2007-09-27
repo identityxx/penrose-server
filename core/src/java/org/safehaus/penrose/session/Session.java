@@ -283,9 +283,10 @@ public class Session {
             }
 
             DN rootDn = penroseConfig.getRootDn();
+            byte[] rootPassword = penroseConfig.getRootPassword();
 
-            if (dn.matches(rootDn)) {
-                if (PasswordUtil.comparePassword(password, penroseConfig.getRootPassword())) {
+            if (rootDn.matches(dn)) {
+                if (PasswordUtil.comparePassword(password, rootPassword)) {
                     log.debug("Bound as root user.");
                     bindDn = rootDn;
                     rootUser = true;

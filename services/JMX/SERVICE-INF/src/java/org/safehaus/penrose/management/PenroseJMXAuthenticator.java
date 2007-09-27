@@ -18,8 +18,9 @@
 package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.session.Session;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -59,25 +60,19 @@ public class PenroseJMXAuthenticator implements JMXAuthenticator {
 
         if (debug) log.debug("Authenticating "+bindDn+".");
 
-        Session session;
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        DN rootDn = penroseConfig.getRootDn();
+        byte[] rootPassword = penroseConfig.getRootPassword();
+
         try {
-            session = penrose.newSession();
+            if (!rootDn.matches(bindDn) ||
+                    !PasswordUtil.comparePassword(bindPassword, rootPassword)) {
+                throw new SecurityException("Authentication failed.");
+            }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("Error: "+e.getMessage());
-        }
-
-        if (session == null) throw new RuntimeException("Unable to create session.");
-
-        try {
-            session.bind(bindDn, bindPassword);
-
-        } catch (LDAPException e) {
-            throw new SecurityException("Authentication failed.");
-
-        } finally {
-            session.close();
         }
 
         Subject subject = new Subject();

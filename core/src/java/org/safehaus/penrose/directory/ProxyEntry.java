@@ -29,14 +29,16 @@ public class ProxyEntry extends Entry {
     DN proxyBaseDn;
     Collection<String> attributeNames = new HashSet<String>();
 
+    String authentication;
+
     public void init() throws Exception {
         source = partition.getSource();
 
-        String baseDn = entryMapping.getParameter(BASE_DN);
-        if (baseDn == null) baseDn = source.getParameter(BASE_DN);
+        String s = entryMapping.getParameter(BASE_DN);
+        if (s == null) s = source.getParameter(BASE_DN);
 
-        if (baseDn != null) {
-            proxyBaseDn = new DN(baseDn);
+        if (s != null) {
+            proxyBaseDn = new DN(s);
             if (debug) log.debug("Proxy Base DN: "+proxyBaseDn);
         }
 
@@ -49,6 +51,10 @@ public class ProxyEntry extends Entry {
             }
             if (debug) log.debug("Attributes: "+attributeNames);
         }
+
+        authentication = entryMapping.getParameter(AUTHENTICATON);
+        if (authentication == null) authentication = source.getParameter(AUTHENTICATON);
+        if (debug) log.debug("Authentication: "+authentication);
     }
 
     public DN convertDn(DN dn, DN oldSuffix, DN newSuffix) throws Exception {
@@ -74,32 +80,23 @@ public class ProxyEntry extends Entry {
 
     public LDAPClient createClient(Session session) throws Exception {
 
-        String authentication = source.getParameter(AUTHENTICATON);
-        //if (debug) log.debug("Authentication: "+authentication);
-
         if (AUTHENTICATON_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        String connectionName = source.getConnectionName();
-        Connection connection = partition.getConnection(connectionName);
-
+        Connection connection = source.getConnection();
         return new LDAPClient(connection.getParameters());
     }
 
     public void storeClient(Session session, LDAPClient client) throws Exception {
 
-        String authentication = source.getParameter(AUTHENTICATON);
-        //if (debug) log.debug("Authentication: "+authentication);
-
         if (AUTHENTICATON_FULL.equals(authentication)) {
             if (debug) log.debug("Storing connection info in session.");
 
-            String connectionName = source.getConnectionName();
-            Connection connection = partition.getConnection(connectionName);
-
+            Connection connection = source.getConnection();
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
+
         } else {
             try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
@@ -107,10 +104,7 @@ public class ProxyEntry extends Entry {
 
     public LDAPClient getClient(Session session) throws Exception {
 
-        String authentication = source.getParameter(AUTHENTICATON);
-        if (debug) log.debug("Authentication: "+authentication);
-
-        Connection connection = partition.getConnection(source.getConnectionName());
+        Connection connection = source.getConnection();
         LDAPClient client;
 
         if (AUTHENTICATON_FULL.equals(authentication)) {
@@ -119,21 +113,12 @@ public class ProxyEntry extends Entry {
             client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
 
             if (client == null) {
-
-                if (session == null || session.isRootUser()) {
-                    if (debug) log.debug("Creating new connection.");
-
-                    client = new LDAPClient(connection.getParameters());
-
-                } else {
-                    if (debug) log.debug("Missing credentials.");
-                    throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-                }
+                if (debug) log.debug("Creating new connection.");
+                client = new LDAPClient(connection.getParameters());
             }
 
         } else {
             if (debug) log.debug("Creating new connection.");
-
             client = new LDAPClient(connection.getParameters());
         }
 
@@ -141,9 +126,6 @@ public class ProxyEntry extends Entry {
     }
 
     public void closeClient(Session session, LDAPClient client) throws Exception {
-
-        String authentication = source.getParameter(AUTHENTICATON);
-        //if (debug) log.debug("Authentication: "+authentication);
 
         if (!AUTHENTICATON_FULL.equals(authentication)) {
             try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }

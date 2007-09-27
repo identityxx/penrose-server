@@ -75,9 +75,7 @@ public class LDAPAdapter extends Adapter {
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        String connectionName = source.getConnectionName();
-        Connection connection = partition.getConnection(connectionName);
-
+        Connection connection = source.getConnection();
         return new LDAPClient(connection.getParameters());
     }
 
@@ -89,10 +87,9 @@ public class LDAPAdapter extends Adapter {
         if (AUTHENTICATION_FULL.equals(authentication)) {
             if (debug) log.debug("Storing connection info in session.");
 
-            String connectionName = source.getConnectionName();
-            Connection connection = partition.getConnection(connectionName);
-
+            Connection connection = source.getConnection();
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
+
         } else {
             try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
         }
@@ -103,7 +100,7 @@ public class LDAPAdapter extends Adapter {
         String authentication = source.getParameter(AUTHENTICATION);
         if (debug) log.debug("Authentication: "+authentication);
 
-        Connection connection = partition.getConnection(source.getConnectionName());
+        Connection connection = source.getConnection();
         LDAPClient client;
 
         if (AUTHENTICATION_FULL.equals(authentication)) {
