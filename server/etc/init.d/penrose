@@ -5,7 +5,7 @@
 # chkconfig: - 38 62
 # description: ${product.title} Server ${product.version}.
 # processname: java
-# pidfile: ${penrose.home}/var/run/penrose.pid
+# pidfile: ${penrose.home}/logs/penrose.pid
 
 # Source function library.
 . /etc/init.d/functions
