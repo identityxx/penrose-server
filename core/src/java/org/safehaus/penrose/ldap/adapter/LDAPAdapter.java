@@ -493,18 +493,23 @@ public class LDAPAdapter extends Adapter {
                 newRequest.setScope(SearchRequest.SCOPE_BASE);
 
             } else if ("ONELEVEL".equals(scope)) {
-                newRequest.setScope(SearchRequest.SCOPE_ONE);
+                if (request.getDn() == null) {
+                    newRequest.setScope(SearchRequest.SCOPE_ONE);
+                } else {
+                    newRequest.setScope(SearchRequest.SCOPE_BASE);
+                }
 
             } else if ("SUBTREE".equals(scope)) {
                 newRequest.setScope(SearchRequest.SCOPE_SUB);
             }
 
-            String filter = source.getParameter(FILTER);
-            if (filter != null) {
-                Filter f1 = request.getFilter();
-                Filter f2 = FilterTool.parseFilter(filter);
-                f1 = FilterTool.appendAndFilter(f1, f2);
-                newRequest.setFilter(f1);
+            Filter filter = request.getFilter();
+
+            String s = source.getParameter(FILTER);
+            if (s != null) {
+                Filter f = FilterTool.parseFilter(s);
+                filter = FilterTool.appendAndFilter(filter, f);
+                newRequest.setFilter(filter);
             }
 
             String sizeLimit = source.getParameter(SIZE_LIMIT);

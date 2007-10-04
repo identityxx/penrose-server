@@ -18,22 +18,25 @@
 package org.safehaus.penrose.filter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collection;
+import java.util.Arrays;
 
 public class SubstringFilter extends ItemFilter {
 
     public final static Character STAR = '*';
 
 	String attribute;
-	Collection<Object> substrings = new ArrayList<Object>();
+	Collection<Object> substrings;
 	
-	public SubstringFilter() {
+	public SubstringFilter(String attribute, Object[] substrings) {
+        this.attribute = attribute;
+        this.substrings = Arrays.asList(substrings);
 	}
 	
-	public SubstringFilter(String attr, Collection<Object> substrings) {
-		this.attribute = attr;
-		this.substrings.addAll(substrings);
+	public SubstringFilter(String attribute, Collection<Object> substrings) {
+		this.attribute = attribute;
+        this.substrings = new ArrayList<Object>();
+        this.substrings.addAll(substrings);
 	}
 	
 	public String getAttribute() {
@@ -77,16 +80,15 @@ public class SubstringFilter extends ItemFilter {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(" + attribute + "=");
-		for (Iterator i=substrings.iterator(); i.hasNext(); ) {
-            Object o = i.next();
+        for (Object o : substrings) {
             if (o.equals(STAR)) {
                 sb.append(o);
             } else {
-                String value = (String)o;
+                String value = (String) o;
                 sb.append(FilterTool.escape(value));
             }
-		}
-		sb.append(")");
+        }
+        sb.append(")");
 		return sb.toString();
 	}
 }

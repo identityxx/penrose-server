@@ -126,6 +126,18 @@ public class SearchResponse extends Response {
         return super.getReturnCode();
     }
 
+    public synchronized Collection<SearchResult> getAll() {
+        while (!closed) {
+            try {
+                wait();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
+        return buffer;
+    }
+
     public synchronized void addReferral(Object referral) {
         referrals.add(referral);
         fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_ADDED, referral));
