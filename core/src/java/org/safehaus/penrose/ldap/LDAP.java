@@ -209,21 +209,12 @@ public class LDAP {
     public static Collection<Modification> createModifications(
             Attributes oldAttributes,
             Attributes newAttributes
-    ) {
+    ) throws Exception {
 
         Collection<Modification> modifications = new ArrayList<Modification>();
 
-        Collection<String> oldNames = oldAttributes.getNames();
-        Collection<String> newNames = newAttributes.getNames();
-
-        Collection<String> adds = new ArrayList<String>();
-        adds.addAll(newNames);
-        adds.removeAll(oldNames);
-
-        for (String name : adds) {
-            Attribute attribute = newAttributes.get(name);
-            modifications.add(new Modification(Modification.ADD, attribute));
-        }
+        Collection<String> oldNames = oldAttributes.getNormalizedNames();
+        Collection<String> newNames = newAttributes.getNormalizedNames();
 
         Collection<String> deletes = new ArrayList<String>();
         deletes.addAll(oldNames);
@@ -234,13 +225,59 @@ public class LDAP {
             modifications.add(new Modification(Modification.DELETE, attribute));
         }
 
+        Collection<String> adds = new ArrayList<String>();
+        adds.addAll(newNames);
+        adds.removeAll(oldNames);
+
+        for (String name : adds) {
+            Attribute attribute = newAttributes.get(name);
+            modifications.add(new Modification(Modification.ADD, attribute));
+        }
+
         Collection<String> modifies = new ArrayList<String>();
         modifies.addAll(oldNames);
         modifies.retainAll(newNames);
 
         for (String name : modifies) {
-            Attribute attribute = newAttributes.get(name);
-            modifications.add(new Modification(Modification.REPLACE, attribute));
+            Attribute oldAttribute = oldAttributes.get(name);
+            Attribute newAttribute = newAttributes.get(name);
+
+            Collection<Modification> mods = createModifications(
+                    oldAttribute,
+                    newAttribute
+            );
+
+            if (mods.isEmpty()) continue;
+
+            modifications.addAll(mods);
+        }
+
+        return modifications;
+    }
+
+    public static Collection<Modification> createModifications(
+            Attribute oldAttribute,
+            Attribute newAttribute
+    ) throws Exception {
+
+        Collection<Modification> modifications = new ArrayList<Modification>();
+
+        boolean objectClass = oldAttribute.getName().equalsIgnoreCase("objectClass");
+
+        Attribute attributeToDelete = (Attribute)oldAttribute.clone();
+        attributeToDelete.removeValues(newAttribute.getValues());
+        if (objectClass) attributeToDelete.removeValue("top");
+
+        if (!attributeToDelete.isEmpty()) {
+            modifications.add(new Modification(Modification.DELETE, attributeToDelete));
+        }
+
+        Attribute attributeToAdd = (Attribute)newAttribute.clone();
+        attributeToAdd.removeValues(oldAttribute.getValues());
+        if (objectClass) attributeToAdd.removeValue("top");
+
+        if (!attributeToAdd.isEmpty()) {
+            modifications.add(new Modification(Modification.ADD, attributeToAdd));
         }
 
         return modifications;
@@ -255,6 +292,11 @@ public class LDAP {
         boolean space = false;
 
         for (char c : chars) {
+            if (c < 0x20 || c > 0x7E) {
+                sb.append('\\').append(hex(c));
+                continue;
+            }
+
             // checking special characters
             if (c == ',' || c == '=' || c == '+'
                     || c == '<' || c == '>'
@@ -307,6 +349,14 @@ public class LDAP {
         }
 
         return sb.toString();
+    }
+
+    private static String hex(char b) {
+        String hex = Integer.toHexString(b);
+        if (hex.length() % 2 == 1) {
+            hex = "0" + hex;
+        }
+        return hex;
     }
 
     public static int getReturnCode(Throwable t) {

@@ -41,12 +41,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         </pattern>
 
         <!-- schema -->
+<!--
         <pattern value="schema">
             <object-create-rule classname="org.safehaus.penrose.schema.SchemaConfig" />
             <set-properties-rule/>
             <set-next-rule methodname="addSchemaConfig" />
         </pattern>
-
+-->
         <!-- session -->
         <pattern value="session">
             <object-create-rule classname="org.safehaus.penrose.session.SessionConfig" />

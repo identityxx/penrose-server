@@ -11,11 +11,24 @@ public class QueryResponse extends Response {
     protected long sizeLimit;
     protected long totalCount;
 
+    protected boolean closed = false;
+
+    public void copy(QueryResponse response) {
+        results = new LinkedList<Object>();
+        results.addAll(response.results);
+
+        sizeLimit = response.sizeLimit;
+        totalCount = response.totalCount;
+
+        closed = response.closed;
+    }
+
     public void add(Object object) throws Exception {
         results.add(object);
     }
 
     public void close() throws Exception {
+        closed = true;
     }
 
     public boolean hasNext() {
@@ -40,5 +53,9 @@ public class QueryResponse extends Response {
 
     public void setTotalCount(long totalCount) {
         this.totalCount = totalCount;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }

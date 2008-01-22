@@ -52,6 +52,9 @@ public abstract class Adapter {
     protected Connection connection;
 
     public void init(AdapterConfig adapterConfig, AdapterContext adapterContext) throws Exception {
+
+        log.debug("Creating "+adapterConfig.getName()+" adapter.");
+
         this.adapterConfig = adapterConfig;
         this.adapterContext = adapterContext;
 
@@ -67,12 +70,24 @@ public abstract class Adapter {
     public void destroy() throws Exception {
     }
 
+    public String getName() {
+        return adapterConfig.getName();
+    }
+
     public boolean isJoinSupported() {
         return false;
     }
 
     public String getSyncClassName() {
         return SourceSync.class.getName();
+    }
+
+    public String getConnectionClassName() {
+        return Connection.class.getName();
+    }
+
+    public String getSourceClassName() throws Exception {
+        return Source.class.getName();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

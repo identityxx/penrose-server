@@ -18,6 +18,25 @@
 package org.safehaus.penrose.filter;
 
 import java.io.Serializable;
+import java.util.Collection;
 
-public abstract class Filter implements Serializable {
+public abstract class Filter implements Serializable, Cloneable {
+
+    ContainerFilter parent;
+
+    public String toString(Collection<Object> args) {
+        return toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    public ContainerFilter getParent() {
+        return parent;
+    }
+
+    public void setParent(ContainerFilter parent) {
+        this.parent = parent;
+    }
 }

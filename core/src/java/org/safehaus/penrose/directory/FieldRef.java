@@ -28,7 +28,7 @@ public class FieldRef implements Cloneable {
         name = field.getName();
     }
     
-    public FieldRef(SourceRef sourceRef, Field field, FieldMapping fieldMapping) throws Exception {
+    public FieldRef(Entry entry, SourceRef sourceRef, Field field, FieldMapping fieldMapping) throws Exception {
         this.sourceName = sourceRef.getAlias();
         this.field = field;
         this.fieldMapping = fieldMapping;
@@ -38,7 +38,6 @@ public class FieldRef implements Cloneable {
         String variable = fieldMapping.getVariable();
 
         if (variable != null && variable.indexOf('.') < 0) {
-            Entry entry = sourceRef.getEntry();
             AttributeMapping attributeMapping = entry.getAttributeMapping(variable);
             if (attributeMapping == null) throw new Exception("Unknown attribute "+variable);
 

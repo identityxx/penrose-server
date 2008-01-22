@@ -35,9 +35,9 @@ public class SchemaReader {
     public SchemaReader() {
     }
 
-    public Schema read(File home, SchemaConfig schemaConfig) throws Exception {
+    public Schema read(SchemaConfig schemaConfig) throws Exception {
 
-        File path = new File(home, schemaConfig.getPath());
+        File path = new File(schemaConfig.getPath());
 
         log.debug("Loading schema "+path+".");
 

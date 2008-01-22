@@ -36,6 +36,13 @@ public class Job {
     public void execute() throws Exception {
     }
 
+    public void destroy() throws Exception {
+    }
+
+    public String getDescription() {
+        return jobConfig.getDescription();
+    }
+    
     public String getParameter(String name) {
         return jobConfig.getParameter(name);
     }

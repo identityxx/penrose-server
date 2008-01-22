@@ -282,7 +282,6 @@ public class ACLEvaluator {
 
     public void getReadableAttributes(
             DN bindDn,
-            Partition partition,
             Entry entry,
             DN targetDn,
             String scope,
@@ -291,10 +290,13 @@ public class ACLEvaluator {
             Collection<String> denies
     ) throws Exception {
 
-        if (entry == null) return;
+        if (entry == null) {
+            //log.debug("ERROR: Entry is null.");
+            return;
+        }
 
         Entry parent = entry.getParent();
-        getReadableAttributes(bindDn, partition, parent, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
+        getReadableAttributes(bindDn, parent, targetDn, ACI.SCOPE_SUBTREE, attributeNames, grants, denies);
 
         if (debug) log.debug("Checking ACL in "+entry.getDn()+":");
 

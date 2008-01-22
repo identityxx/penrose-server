@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.management;
 
+import org.safehaus.penrose.partition.PartitionConfig;
+
 import java.util.*;
 
 public interface PenroseServiceMBean {
@@ -32,6 +34,7 @@ public interface PenroseServiceMBean {
     public void restart() throws Exception;
 
     public Collection<String> getPartitionNames() throws Exception;
+    public PartitionConfig getPartitionConfig(String partitionName) throws Exception;
     public void startPartition(String partitionName) throws Exception;
     public void stopPartition(String partitionName) throws Exception;
 

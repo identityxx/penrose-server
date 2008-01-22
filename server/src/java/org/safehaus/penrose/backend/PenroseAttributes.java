@@ -5,7 +5,6 @@ import org.safehaus.penrose.ldap.Attribute;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -18,14 +17,13 @@ public class PenroseAttributes implements com.identyx.javabackend.Attributes {
         this.attributes = attributes;
     }
 
-    public Collection getNames() throws Exception {
+    public Collection<String> getNames() throws Exception {
         return attributes.getNames();
     }
 
-    public Collection getAll() throws Exception {
-        Collection list = new ArrayList();
-        for (Iterator i=attributes.getAll().iterator(); i.hasNext(); ) {
-            Attribute attribute = (Attribute)i.next();
+    public Collection<com.identyx.javabackend.Attribute> getAll() throws Exception {
+        Collection<com.identyx.javabackend.Attribute> list = new ArrayList<com.identyx.javabackend.Attribute>();
+        for (Attribute attribute : attributes.getAll()) {
             list.add(new PenroseAttribute(attribute));
         }
         return list;

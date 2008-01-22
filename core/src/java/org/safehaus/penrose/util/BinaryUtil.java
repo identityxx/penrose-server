@@ -17,11 +17,11 @@
  */
 package org.safehaus.penrose.util;
 
-import java.math.BigInteger;
-
-import org.slf4j.LoggerFactory;
+import net.iharder.base64.Base64;
 import org.slf4j.Logger;
-import org.bouncycastle.util.encoders.Base64;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigInteger;
 
 /**
  * @author Endi S. Dewata
@@ -43,7 +43,7 @@ public class BinaryUtil {
         String string;
 
         if (BASE64.equals(encoding)) {
-            string = new String(Base64.encode(bytes));
+            string = Base64.encodeBytes(bytes, Base64.DONT_BREAK_LINES);
 
         } else if (BIG_INTEGER.equals(encoding)) {
             string = new BigInteger(1, bytes).toString(16);
@@ -74,9 +74,7 @@ public class BinaryUtil {
             bytes = bigInteger.toByteArray();
             if (bytes.length > length) {
                 byte[] b = new byte[length];
-                for (int i=0; i<length; i++) {
-                    b[i] = bytes[bytes.length-length+i];
-                }
+                System.arraycopy(bytes, bytes.length - length, b, 0, length);
                 bytes = b;
             }
 

@@ -1,13 +1,17 @@
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterProcessor;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.connection.LDAPConnection;
+import org.safehaus.penrose.ldap.source.LDAPSource;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.connection.Connection;
 
 import java.util.*;
 
@@ -17,22 +21,36 @@ import java.util.*;
 public class ProxyEntry extends Entry {
 
     public final static String BASE_DN                = "baseDn";
+    public final static String FILTER                 = "filter";
+    public final static String SCOPE                  = "scope";
     public final static String ATTRIBUTES             = "attributes";
+
+    public final static String SIZE_LIMIT             = "sizeLimit";
+    public final static String TIME_LIMIT             = "timeLimit";
 
     public final static String AUTHENTICATON          = "authentication";
     public final static String AUTHENTICATON_DEFAULT  = "default";
     public final static String AUTHENTICATON_FULL     = "full";
     public final static String AUTHENTICATON_DISABLED = "disabled";
 
-    Source source;
+    SourceRef sourceRef;
+    LDAPSource source;
+    LDAPConnection connection;
 
     DN proxyBaseDn;
+    Filter proxyFilter;
+    int proxyScope = SearchRequest.SCOPE_SUB;
+    long proxySizeLimit;
+    long proxyTimeLimit;
+
     Collection<String> attributeNames = new HashSet<String>();
 
     String authentication;
 
     public void init() throws Exception {
-        source = partition.getSource();
+        sourceRef = localPrimarySourceRefs.values().iterator().next();
+        source = (LDAPSource)sourceRef.getSource();
+        connection = (LDAPConnection)source.getConnection();
 
         String s = entryMapping.getParameter(BASE_DN);
         if (s == null) s = source.getParameter(BASE_DN);
@@ -40,6 +58,31 @@ public class ProxyEntry extends Entry {
         if (s != null) {
             proxyBaseDn = new DN(s);
             if (debug) log.debug("Proxy Base DN: "+proxyBaseDn);
+        }
+
+        s = entryMapping.getParameter(FILTER);
+        if (s == null) s = source.getParameter(FILTER);
+
+        if (s != null) {
+            proxyFilter = FilterTool.parseFilter(s);
+            if (debug) log.debug("Proxy Filter: "+proxyFilter);
+        }
+
+        s = entryMapping.getParameter(SCOPE);
+        if (s == null) s = source.getParameter(SCOPE);
+
+        if (s != null) {
+            if ("OBJECT".equals(s)) {
+                proxyScope = SearchRequest.SCOPE_BASE;
+                
+            } else if ("ONELEVEL".equals(s)) {
+                proxyScope = SearchRequest.SCOPE_ONE;
+
+            } else if ("SUBTREE".equals(s)) {
+                proxyScope = SearchRequest.SCOPE_SUB;
+            }
+
+            if (debug) log.debug("Proxy Scope: "+proxyScope);
         }
 
         String attributes = entryMapping.getParameter(ATTRIBUTES);
@@ -50,6 +93,22 @@ public class ProxyEntry extends Entry {
                 attributeNames.add(attributeName.toLowerCase());
             }
             if (debug) log.debug("Attributes: "+attributeNames);
+        }
+
+        s = entryMapping.getParameter(SIZE_LIMIT);
+        if (s == null) s = source.getParameter(SIZE_LIMIT);
+
+        if (s != null) {
+            proxySizeLimit = Long.parseLong(s);
+            if (debug) log.debug("Proxy Size Limit: "+proxySizeLimit);
+        }
+
+        s = entryMapping.getParameter(TIME_LIMIT);
+        if (s == null) s = source.getParameter(TIME_LIMIT);
+
+        if (s != null) {
+            proxyTimeLimit = Long.parseLong(s);
+            if (debug) log.debug("Proxy Time Limit: "+proxyTimeLimit);
         }
 
         authentication = entryMapping.getParameter(AUTHENTICATON);
@@ -79,17 +138,32 @@ public class ProxyEntry extends Entry {
     }
 
     public LDAPClient createClient(Session session) throws Exception {
-
+/*
         if (AUTHENTICATON_DISABLED.equals(authentication)) {
             if (debug) log.debug("Pass-Through Authentication is disabled.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        Connection connection = source.getConnection();
-        return new LDAPClient(connection.getParameters());
+        return connection.getClient();
+*/
+        if (debug) log.debug("Creating LDAP client.");
+        final LDAPClient client = connection.getClient();
+
+        if (debug) log.debug("Storing LDAP client in session.");
+        if (session != null) {
+            session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
+
+            session.addListener(new SessionListener() {
+                public void sessionClosed() throws Exception {
+                    client.close();
+                }
+            });
+        }
+
+        return client;
     }
 
-    public void storeClient(Session session, LDAPClient client) throws Exception {
+    public void xstoreClient(Session session, LDAPClient client) throws Exception {
 
         if (AUTHENTICATON_FULL.equals(authentication)) {
             if (debug) log.debug("Storing connection info in session.");
@@ -98,13 +172,13 @@ public class ProxyEntry extends Entry {
             if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
 
         } else {
-            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            try { if (client != null) client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
     }
 
     public LDAPClient getClient(Session session) throws Exception {
-
-        Connection connection = source.getConnection();
+/*
+        LDAPConnection connection = (LDAPConnection)source.getConnection();
         LDAPClient client;
 
         if (AUTHENTICATON_FULL.equals(authentication)) {
@@ -114,22 +188,33 @@ public class ProxyEntry extends Entry {
 
             if (client == null) {
                 if (debug) log.debug("Creating new connection.");
-                client = new LDAPClient(connection.getParameters());
+                client = connection.getClient();
+                //client = new LDAPClient(connection.getParameters());
             }
 
         } else {
             if (debug) log.debug("Creating new connection.");
-            client = new LDAPClient(connection.getParameters());
+            client = connection.getClient();
+            //client = new LDAPClient(connection.getParameters());
         }
 
         return client;
+*/
+        if (session == null) return createClient(session);
+
+        if (debug) log.debug("Getting LDAP client from session.");
+        LDAPClient client = (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
+        if (client != null) return client;
+
+        return createClient(session);
     }
 
     public void closeClient(Session session, LDAPClient client) throws Exception {
-
+/*
         if (!AUTHENTICATON_FULL.equals(authentication)) {
-            try { if (client != null) client.close(); } catch (Exception e) { log.debug(e.getMessage(), e); }
+            try { if (client != null) client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }
+*/
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,8 +230,7 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("ADD", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -171,9 +255,6 @@ public class ProxyEntry extends Entry {
 
             client.add(newRequest, response);
 
-        } catch (Exception e) {
-            throw LDAP.createException(e);
-
         } finally {
             closeClient(session, client);
         }
@@ -192,12 +273,11 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("BIND", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = createClient(session);
+        LDAPClient client = getClient(session);
 
         try {
             BindRequest newRequest = (BindRequest)request.clone();
@@ -205,11 +285,8 @@ public class ProxyEntry extends Entry {
 
             client.bind(newRequest, response);
 
-        } catch (Exception e) {
-            throw LDAP.createException(e);
-
         } finally {
-            storeClient(session, client);
+            //storeClient(session, client);
         }
     }
 
@@ -226,8 +303,7 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("COMPARE", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -253,11 +329,8 @@ public class ProxyEntry extends Entry {
 
             response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
-        } catch (Exception e) {
-            throw LDAP.createException(e);
-
         } finally {
-            storeClient(session, client);
+            closeClient(session, client);
         }
     }
 
@@ -282,7 +355,7 @@ public class ProxyEntry extends Entry {
 
         if (level < length - 1) { // children has priority
             Collection<Entry> results = new ArrayList<Entry>();
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 Collection<Entry> list = child.findEntries(dn, level + 1);
                 results.addAll(list);
             }
@@ -309,7 +382,7 @@ public class ProxyEntry extends Entry {
 
         if (level < length - 1) { // children has priority
             Collection<Entry> results = new ArrayList<Entry>();
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 Collection<Entry> list = child.findEntries(dn, level + 1);
                 results.addAll(list);
             }
@@ -336,8 +409,7 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("DELETE", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -348,9 +420,6 @@ public class ProxyEntry extends Entry {
             newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
             client.delete(newRequest, response);
-
-        } catch (Exception e) {
-            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, client);
@@ -370,8 +439,7 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODIFY", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -397,9 +465,6 @@ public class ProxyEntry extends Entry {
 
             client.modify(newRequest, response);
 
-        } catch (Exception e) {
-            throw LDAP.createException(e);
-
         } finally {
             closeClient(session, client);
         }
@@ -418,8 +483,7 @@ public class ProxyEntry extends Entry {
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
             log.debug(Formatter.displayLine("MODRDN", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
+            log.debug(Formatter.displayLine("DN : "+request.getDn(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -430,9 +494,6 @@ public class ProxyEntry extends Entry {
             newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
             client.modrdn(newRequest, response);
-
-        } catch (Exception e) {
-            throw LDAP.createException(e);
 
         } finally {
             closeClient(session, client);
@@ -461,7 +522,7 @@ public class ProxyEntry extends Entry {
 
                 if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
 
-                for (Entry child : children.values()) {
+                for (Entry child : children) {
                     child.search(session, base, sourceValues, request, response);
                 }
             }
@@ -470,7 +531,7 @@ public class ProxyEntry extends Entry {
 
             if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
 
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 child.search(session, base, sourceValues, request, response);
             }
         }
@@ -484,22 +545,36 @@ public class ProxyEntry extends Entry {
             final SearchResponse response
     ) throws Exception {
 
+        final DN dn = request.getDn();
+        final Filter filter = request.getFilter();
+        final int scope = request.getScope();
+
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("SEARCH", 80));
-            log.debug(Formatter.displayLine("Entry DN    : "+getDn(), 80));
-            log.debug(Formatter.displayLine("Entry Class : "+getClass().getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("PROXY SEARCH", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry  : "+getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Base   : "+dn, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter : "+filter, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
         }
 
         LDAPClient client = getClient(session);
 
-        try {
-            SearchRequest newRequest = (SearchRequest)request.clone();
+        SearchRequest newRequest = (SearchRequest)request.clone();
+        boolean subset = newRequest.getDn().getSize() >= getDn().getSize();
 
-            if (request.getDn().getSize() >= getDn().getSize()) {
+        try {
+            if (subset) {
                 newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
+                if (proxyScope == SearchRequest.SCOPE_BASE) {
+                    newRequest.setScope(SearchRequest.SCOPE_BASE);
+
+                } else if (proxyScope == SearchRequest.SCOPE_ONE && newRequest.getScope() == SearchRequest.SCOPE_SUB) {
+                    newRequest.setScope(SearchRequest.SCOPE_ONE);
+                }
+                
             } else {
                 newRequest.setDn(proxyBaseDn);
 
@@ -509,52 +584,45 @@ public class ProxyEntry extends Entry {
             }
 
             FilterProcessor fp = new FilterProcessor() {
-                public void process(Stack<Filter> path, Filter filter) throws Exception {
+                public Filter process(Stack<Filter> path, Filter filter) throws Exception {
                     if (!(filter instanceof SimpleFilter)) {
-                        super.process(path, filter);
-                        return;
+                        return super.process(path, filter);
                     }
 
                     SimpleFilter sf = (SimpleFilter)filter;
 
                     String attribute = sf.getAttribute();
-                    if (!attributeNames.contains(attribute.toLowerCase())) return;
+                    if (!attributeNames.contains(attribute.toLowerCase())) return filter;
 
                     DN dn = new DN(sf.getValue().toString());
                     dn = convertDn(dn, getDn(), proxyBaseDn);
                     sf.setValue(dn.toString());
+
+                    return filter;
                 }
             };
-            
+
             fp.process(newRequest.getFilter());
 
-            final Entry enty = this;
+            if (proxyFilter != null) {
+                newRequest.setFilter(FilterTool.appendAndFilter(proxyFilter, newRequest.getFilter()));
+            }
+
+            if (proxySizeLimit > 0 && newRequest.getSizeLimit() > proxySizeLimit) {
+                newRequest.setSizeLimit(proxySizeLimit);
+            }
+
+            if (proxyTimeLimit > 0 && newRequest.getTimeLimit() > proxyTimeLimit) {
+                newRequest.setTimeLimit(proxyTimeLimit);
+            }
+
+            final Interpreter interpreter = partition.newInterpreter();
 
             SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
 
-                    DN newDn = convertDn(result.getDn(), proxyBaseDn, getDn());
-                    if (debug) log.debug("Entry "+newDn);
-
-                    Attributes newAttributes = (Attributes)result.getAttributes().clone();
-
-                    for (String attributeName : attributeNames) {
-                        Attribute attribute = newAttributes.get(attributeName);
-                        if (attribute == null) continue;
-                        
-                        Collection<Object> newValues = new ArrayList<Object>();
-                        for (Object value : attribute.getValues()) {
-                            DN dn = new DN(value.toString());
-                            dn = convertDn(dn, proxyBaseDn, getDn());
-                            if (debug) log.debug(" - "+attributeName+": "+dn);
-                            newValues.add(dn.toString());
-                        }
-                        
-                        attribute.setValues(newValues);
-                    }
-
-                    SearchResult searchResult = new SearchResult(newDn, newAttributes);
-                    searchResult.setEntry(enty);
+                    SearchResult searchResult = createSearchResult(interpreter, result);
+                    searchResult.setEntry(ProxyEntry.this);
                     response.add(searchResult);
                 }
             };
@@ -562,15 +630,77 @@ public class ProxyEntry extends Entry {
             client.search(newRequest, sr);
 
         } catch (Exception e) {
-            throw LDAP.createException(e);
-
+            if (subset) throw e;
+            
         } finally {
             closeClient(session, client);
         }
     }
 
+    public SearchResult createSearchResult(Interpreter interpreter, SearchResult result) throws Exception {
+
+        DN dn = result.getDn();
+        Attributes attributes = result.getAttributes();
+
+        SourceValues sv = result.getSourceValues();
+        sv.set(sourceRef.getAlias(), attributes);
+        
+        if (debug) {
+            log.debug("Source values:");
+            sv.print();
+        }
+        
+        interpreter.set(sv);
+
+        DN newDn = convertDn(dn, proxyBaseDn, getDn());
+        if (debug) log.debug("Entry "+newDn);
+
+        Attributes newAttributes = (Attributes)attributes.clone();
+
+        for (String attributeName : attributeNames) {
+            Attribute attribute = newAttributes.get(attributeName);
+            if (attribute == null) continue;
+
+            Collection<Object> newValues = new ArrayList<Object>();
+            for (Object value : attribute.getValues()) {
+                DN dnValue = new DN(value.toString());
+                dnValue = convertDn(dnValue, proxyBaseDn, getDn());
+                if (debug) log.debug(" - "+attributeName+": "+dnValue);
+                newValues.add(dnValue.toString());
+            }
+
+            attribute.setValues(newValues);
+        }
+
+        for (AttributeMapping attributeMapping : getAttributeMappings()) {
+            String attributeName = attributeMapping.getName();
+            if (debug) log.debug("Transforming attribute "+attributeName+":");
+            Object object = interpreter.eval(attributeMapping);
+
+            if (object == null) {
+                if (debug) log.debug("Attribute "+attributeName+" removed.");
+                newAttributes.remove(attributeName);
+
+            } else if (object instanceof Collection) {
+                Collection<Object> values = (Collection<Object>)object;
+                for (Object value : values) {
+                    if (debug) log.debug(" - "+value);
+                }
+                newAttributes.setValues(attributeMapping.getName(), values);
+
+            } else {
+                if (debug) log.debug(" - "+object);
+                newAttributes.setValue(attributeMapping.getName(), object);
+            }
+        }
+
+        interpreter.clear();
+
+        return new SearchResult(newDn, newAttributes);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Bind
+    // Unbind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void unbind(

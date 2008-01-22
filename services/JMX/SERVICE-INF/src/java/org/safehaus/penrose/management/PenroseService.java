@@ -21,6 +21,8 @@ import org.apache.log4j.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.service.Services;
 import org.safehaus.penrose.service.ServiceConfigs;
@@ -129,18 +131,24 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         }
     }
 
+    public PartitionConfig getPartitionConfig(String partitionName) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
+        return partitionConfigs.getPartitionConfig(partitionName);
+    }
+
     public PartitionService getPartitionService(String partitionName) throws Exception {
         Penrose penrose = penroseServer.getPenrose();
         Partitions partitions = penrose.getPartitions();
-        return getPartitionService(partitions, partitionName);
+        Partition partition = partitions.getPartition(partitionName);
+        return getPartitionService(partition);
     }
 
-    public PartitionService getPartitionService(Partitions partitions, String partitionName) throws Exception {
+    public PartitionService getPartitionService(Partition partition) throws Exception {
 
-        PartitionService partitionService = new PartitionService();
-        partitionService.setPartitions(partitions);
-        partitionService.setName(partitionName);
+        PartitionService partitionService = new PartitionService(partition);
         partitionService.setJmxService(jmxService);
+        partitionService.init();
 
         return partitionService;
     }
@@ -150,11 +158,10 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         Collection<PartitionService> list = new ArrayList<PartitionService>();
 
         Penrose penrose = penroseServer.getPenrose();
-        PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
         Partitions partitions = penrose.getPartitions();
 
-        for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
-            list.add(getPartitionService(partitions, partitionName));
+        for (Partition partition : partitions.getPartitions()) {
+            list.add(getPartitionService(partition));
         }
 
         return list;

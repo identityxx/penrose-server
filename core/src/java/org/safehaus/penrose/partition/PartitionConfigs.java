@@ -18,7 +18,7 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.directory.EntryMapping;
-import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;

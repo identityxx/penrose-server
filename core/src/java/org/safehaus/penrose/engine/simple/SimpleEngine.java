@@ -19,7 +19,6 @@ package org.safehaus.penrose.engine.simple;
 
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.engine.*;
@@ -31,7 +30,7 @@ import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.ietf.ldap.LDAPException;
 
 import java.util.*;
@@ -158,11 +157,9 @@ public class SimpleEngine extends Engine {
 
         SourceRef sourceRef = primarySources.iterator().next();
         Source source = sourceRef.getSource();
-        Connection connection = source.getConnection();
 
-        connection.add(
+        source.add(
                 session,
-                entry,
                 primarySources,
                 sourceValues,
                 request,
@@ -207,12 +204,10 @@ public class SimpleEngine extends Engine {
 
         SourceRef sourceRef = primarySources.iterator().next();
         Source source = sourceRef.getSource();
-        Connection connection = source.getConnection();
 
         try {
-            connection.bind(
+            source.bind(
                     session,
-                    entry,
                     primarySources,
                     sourceValues,
                     request,
@@ -266,11 +261,9 @@ public class SimpleEngine extends Engine {
 
         SourceRef sourceRef = primarySources.iterator().next();
         Source source = sourceRef.getSource();
-        Connection connection = source.getConnection();
 
-        connection.delete(
+        source.delete(
                 session,
-                entry,
                 primarySources,
                 sourceValues,
                 request,
@@ -315,11 +308,9 @@ public class SimpleEngine extends Engine {
 
         SourceRef sourceRef = primarySources.iterator().next();
         Source source = sourceRef.getSource();
-        Connection connection = source.getConnection();
 
-        connection.modify(
+        source.modify(
                 session,
-                entry,
                 primarySources,
                 sourceValues,
                 request,
@@ -364,11 +355,9 @@ public class SimpleEngine extends Engine {
 
         SourceRef sourceRef = primarySources.iterator().next();
         Source source = sourceRef.getSource();
-        Connection connection = source.getConnection();
 
-        connection.modrdn(
+        source.modrdn(
                 session,
-                entry,
                 primarySources,
                 sourceValues,
                 request,

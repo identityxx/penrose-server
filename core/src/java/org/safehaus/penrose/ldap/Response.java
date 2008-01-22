@@ -1,8 +1,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.control.Control;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
@@ -12,11 +10,7 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class Response implements Serializable {
-
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public Logger errorLog = org.safehaus.penrose.log.Error.log;
-    public boolean debug = log.isDebugEnabled();
+public class Response implements Serializable, Cloneable {
 
     protected Collection<Control> controls  = new ArrayList<Control>();
 
@@ -61,5 +55,18 @@ public class Response implements Serializable {
 
     public String getMessage() {
         return exception.getLDAPErrorMessage();
+    }
+
+    public void copy(Response response) {
+        controls = new ArrayList<Control>();
+        controls.addAll(response.controls);
+
+        exception = response.exception;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Response response = (Response)super.clone();
+        response.copy(this);
+        return response;
     }
 }

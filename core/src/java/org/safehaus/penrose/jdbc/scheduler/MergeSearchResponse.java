@@ -1,11 +1,17 @@
 package org.safehaus.penrose.jdbc.scheduler;
 
 import org.safehaus.penrose.ldap.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Endi S. Dewata
  */
 public class MergeSearchResponse extends SearchResponse {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
+    public boolean debug = log.isDebugEnabled();
 
     SearchResponse response;
 

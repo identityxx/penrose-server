@@ -2,7 +2,7 @@
 
 <!ELEMENT sources (source*)>
 
-<!ELEMENT source (description?, connection-name, field*, parameter*)>
+<!ELEMENT source (description?, source-class?, connection-name, field*, parameter*)>
 <!ATTLIST source name CDATA #REQUIRED>
 <!ELEMENT connection-name (#PCDATA)>
 
@@ -11,6 +11,8 @@
 <!ATTLIST field originalName CDATA #IMPLIED>
 <!ATTLIST field primaryKey (true|first|false) "false">
 <!ATTLIST field type CDATA #IMPLIED>
+<!ATTLIST field originalType CDATA #IMPLIED>
+<!ATTLIST field castType CDATA #IMPLIED>
 <!ATTLIST field length CDATA #IMPLIED>
 <!ATTLIST field precision CDATA #IMPLIED>
 <!ATTLIST field searchable CDATA #IMPLIED>
@@ -29,6 +31,7 @@
 <!ELEMENT class-name (#PCDATA)>
 
 <!ELEMENT description (#PCDATA)>
+<!ELEMENT source-class (#PCDATA)>
 
 <!ELEMENT parameter (param-name, param-value)>
 <!ELEMENT param-name (#PCDATA)>

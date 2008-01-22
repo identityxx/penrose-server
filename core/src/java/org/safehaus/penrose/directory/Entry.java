@@ -18,7 +18,6 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
@@ -35,10 +34,12 @@ import org.safehaus.penrose.cache.CacheKey;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata
@@ -71,15 +72,16 @@ public class Entry implements Cloneable {
     protected Map<String,SourceRef> localSourceRefs = new LinkedHashMap<String,SourceRef>();
     protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-    protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>();
+    protected List<SourceRef> sourceRefs              = new ArrayList<SourceRef>();
+    protected Map<String,SourceRef> sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
     protected Map<String,SourceRef> primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
     protected Entry parent;
 
-    protected Map<String,Entry> children = new LinkedHashMap<String,Entry>();
+    protected Collection<Entry> children = new LinkedHashSet<Entry>();
     protected Map<String,Collection<Entry>> childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
 
-    Partition partition;
+    protected Partition partition;
 
     protected boolean fetch;
     protected boolean schemaChecking;
@@ -106,8 +108,9 @@ public class Entry implements Cloneable {
             SourceRef sourceRef = createSourceRef(sourceMapping);
             String alias = sourceRef.getAlias();
 
+            sourceRefs.add(sourceRef);
             localSourceRefs.put(alias, sourceRef);
-            sourceRefs.put(alias, sourceRef);
+            sourceRefsByName.put(alias, sourceRef);
 
             if (alias.equals(primarySourceName)) {
                 localPrimarySourceRefs.put(alias, sourceRef);
@@ -126,7 +129,8 @@ public class Entry implements Cloneable {
             for (SourceRef sourceRef : parent.getLocalSourceRefs()) {
                 String alias = sourceRef.getAlias();
 
-                sourceRefs.put(alias, sourceRef);
+                sourceRefs.add(sourceRef);
+                sourceRefsByName.put(alias, sourceRef);
 
                 if (alias.equals(psn)) {
                     primarySourceRefs.put(alias, sourceRef);
@@ -227,15 +231,19 @@ public class Entry implements Cloneable {
     }
 
     public Collection<SourceRef> getSourceRefs() {
-        return sourceRefs.values();
+        return sourceRefs;
+    }
+
+    public int getSourceRefsCount() {
+        return sourceRefs.size();
     }
 
     public SourceRef getSourceRef(String name) {
-        return sourceRefs.get(name);
+        return sourceRefsByName.get(name);
     }
 
-    public void setSourceRefs(Map<String,SourceRef> sourceRefs) {
-        this.sourceRefs = sourceRefs;
+    public SourceRef getSourceRef(int index) {
+        return sourceRefs.get(index);
     }
 
     public Collection<SourceRef> getPrimarySourceRefs() {
@@ -247,7 +255,7 @@ public class Entry implements Cloneable {
     }
 
     public Collection<Entry> getChildren() {
-        return children.values();
+        return children;
     }
 
     public Collection<Entry> getChildren(RDN rdn) {
@@ -263,7 +271,7 @@ public class Entry implements Cloneable {
 
         String rdn = child.getDn().getRdn().getNormalized();
 
-        children.put(child.getId(), child);
+        children.add(child);
         child.setParent(this);
 
         Collection<Entry> c = childrenByRdn.get(rdn);
@@ -402,6 +410,7 @@ public class Entry implements Cloneable {
     ) throws Exception {
 
         DN dn = request.getDn();
+        Attributes attributes = request.getAttributes();
 
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
@@ -410,7 +419,6 @@ public class Entry implements Cloneable {
             SchemaManager schemaManager = penroseContext.getSchemaManager();
             Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
 
-            Attributes attributes = request.getAttributes();
             for (Attribute attribute : attributes.getAll()) {
                 String attributeName = attribute.getName();
                 boolean found = false;
@@ -446,16 +454,18 @@ public class Entry implements Cloneable {
             }
         }
 
-        SourceValues sourceValues = new SourceValues();
+        SourceValues sourceValues;
 
         if (fetch) {
             DN parentDn = parent.getDn();
 
             SearchResult sr = parent.find(session, parentDn);
+
+            sourceValues = new SourceValues();
             sourceValues.add(sr.getSourceValues());
 
         } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
+            sourceValues = extractSourceValues(dn, attributes);
         }
 
         EngineTool.propagateDown(this, sourceValues);
@@ -489,10 +499,18 @@ public class Entry implements Cloneable {
 
         DN dn = request.getDn();
 
+        if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("BIND", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry : "+getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("DN    : "+dn, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
+
         SourceValues sourceValues = new SourceValues();
 
         if (fetch) {
-            SearchResult sr = find(null, dn);
+            SearchResult sr = find(dn);
             sourceValues.add(sr.getSourceValues());
         } else {
             EngineTool.extractSourceValues(this, dn, sourceValues);
@@ -530,7 +548,7 @@ public class Entry implements Cloneable {
         SourceValues sourceValues = new SourceValues();
 
         if (fetch) {
-            SearchResult sr = find(null, dn);
+            SearchResult sr = find(dn);
             sourceValues.add(sr.getSourceValues());
         } else {
             EngineTool.extractSourceValues(this, dn, sourceValues);
@@ -608,13 +626,13 @@ public class Entry implements Cloneable {
         int length = dn.getSize();
 
         if (!dn.endsWith(thisDn)) {
-            if (debug) log.debug("Doesn't match "+thisDn);
+            //if (debug) log.debug("Doesn't match "+thisDn);
             return EMPTY_ENTRIES;
         }
 
         if (level < length - 1) { // children has priority
             Collection<Entry> results = new ArrayList<Entry>();
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 Collection<Entry> list = child.findEntries(dn, level + 1);
                 results.addAll(list);
             }
@@ -623,7 +641,8 @@ public class Entry implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
         results.add(this);
-        if (debug) log.debug(" - "+getDn());
+        
+        if (debug) log.debug("Found entry "+getDn());
 
         return results;
     }
@@ -635,13 +654,13 @@ public class Entry implements Cloneable {
         RDN rdn = dn.get(length - level - 1);
 
         if (!thisRdn.matches(rdn)) {
-            if (debug) log.debug("Doesn't match with "+getDn());
+            //if (debug) log.debug("Doesn't match with "+getDn());
             return EMPTY_ENTRIES;
         }
 
         if (level < length - 1) { // children has priority
             Collection<Entry> results = new ArrayList<Entry>();
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 Collection<Entry> list = child.findEntries(dn, level + 1);
                 results.addAll(list);
             }
@@ -650,9 +669,14 @@ public class Entry implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
         results.add(this);
-        if (debug) log.debug(" - "+getDn());
+        
+        if (debug) log.debug("Found entry "+getDn());
 
         return results;
+    }
+
+    public SearchResult find(DN dn) throws Exception {
+        return find(null, dn);
     }
 
     public SearchResult find(
@@ -660,8 +684,32 @@ public class Entry implements Cloneable {
             DN dn
     ) throws Exception {
 
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse response = new SearchResponse();
+
+        SourceValues sourceValues = new SourceValues();
+
+        searchEntry(
+                session,
+                this,
+                sourceValues,
+                request,
+                response
+        );
+
+        if (!response.hasNext()) {
+            if (debug) log.debug("Entry "+dn+" not found");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
+
+        return response.next();
+/*
         Engine engine = partition.getEngine();
         return engine.find(session, this, dn);
+*/
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -800,7 +848,6 @@ public class Entry implements Cloneable {
                 }
             }
 
-            RDN rdn = dn.getRdn();
             for (String attributeName : newRdn.getNames()) {
                 for (ObjectClass oc : objectClasses) {
                     if (oc.containsRequiredAttribute(attributeName)) {
@@ -849,8 +896,6 @@ public class Entry implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Searching "+LDAP.getScope(request.getScope())+" with base "+entryMapping.getDn());
-
         DN dn = request.getDn();
 
         SourceValues sourceValues = new SourceValues();
@@ -898,21 +943,29 @@ public class Entry implements Cloneable {
 
                 if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
 
-                for (Entry child : children.values()) {
+                for (Entry child : children) {
                     child.search(session, base, sourceValues, request, response);
                 }
 
             } else {
-                searchEntry(session, base, sourceValues, request, response);
+                try {
+                    searchEntry(session, base, sourceValues, request, response);
+                } catch (Exception e) {
+                    // ignore
+                }
             }
 
         } else if (scope == SearchRequest.SCOPE_SUB) {
 
-            searchEntry(session, base, sourceValues, request, response);
+            try {
+                searchEntry(session, base, sourceValues, request, response);
+            } catch (Exception e) {
+                // ignore
+            }
 
             if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
 
-            for (Entry child : children.values()) {
+            for (Entry child : children) {
                 child.search(session, base, sourceValues, request, response);
             }
         }
@@ -926,18 +979,31 @@ public class Entry implements Cloneable {
             final SearchResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Searching entry "+entryMapping.getDn());
+        final DN baseDn     = request.getDn();
+        final Filter filter = request.getFilter();
+        final int scope     = request.getScope();
+
+        if (debug) {
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("SEARCH", 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry  : "+getDn(), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Base   : "+baseDn, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter : "+filter, 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
+            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+        }
 
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
         final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
-        final Filter filter = request.getFilter();
         if (!filterEvaluator.eval(this, filter)) {
             if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
             return;
         }
+
+        if (debug) log.debug("Searching entry "+entryMapping.getDn());
 
         final Cache cache;
 
@@ -968,6 +1034,22 @@ public class Entry implements Cloneable {
             cache.setExpiration(cacheExpiration);
 
             cacheManager.put(cacheKey, cache);
+        }
+
+        if (getSourceRefsCount() == 0) {
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set(sourceValues);
+            Attributes attributes = computeAttributes(interpreter);
+            interpreter.clear();
+
+            if (filterEvaluator.eval(attributes, filter)) {
+                SearchResult searchResult = new SearchResult(getDn(), attributes);
+                searchResult.setEntry(this);
+                searchResult.setSourceValues(sourceValues);
+                response.add(searchResult);
+            }
+
+            return;
         }
 
         SearchResponse sr = new SearchResponse() {
@@ -1017,6 +1099,206 @@ public class Entry implements Cloneable {
         );
     }
 
+    public DN computeDn(
+            Interpreter interpreter
+    ) throws Exception {
+
+        DNBuilder db = new DNBuilder();
+
+        RDN rdn = computeRdn(interpreter);
+
+        if (rdn.isEmpty()) {
+            log.error("RDN is empty: "+rdn);
+            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+        }
+
+        db.set(rdn);
+
+        if (parent == null) {
+            db.append(entryMapping.getParentDn());
+
+        } else {
+            db.append(parent.computeDn(interpreter));
+        }
+
+        return db.toDn();
+    }
+
+    public RDN computeRdn(
+            Interpreter interpreter
+    ) throws Exception {
+
+        RDNBuilder rb = new RDNBuilder();
+
+        for (AttributeMapping attributeMapping : entryMapping.getRdnAttributeMappings()) {
+            String name = attributeMapping.getName();
+
+            Object value = interpreter.eval(attributeMapping);
+            if (value == null) continue;
+
+            rb.set(name, value);
+        }
+
+        return rb.toRdn();
+    }
+
+    public Attributes computeAttributes(
+            Interpreter interpreter
+    ) throws Exception {
+
+        Attributes attributes = new Attributes();
+
+        for (AttributeMapping attributeMapping : entryMapping.getAttributeMappings()) {
+
+            Object value = interpreter.eval(attributeMapping);
+            //log.debug("Attribute "+attributeMapping.getName()+": "+value);
+            if (value == null) continue;
+
+            if (value instanceof Collection) {
+                attributes.addValues(attributeMapping.getName(), (Collection) value);
+            } else {
+                attributes.addValue(attributeMapping.getName(), value);
+            }
+        }
+
+        for (String objectClass : entryMapping.getObjectClasses()) {
+            attributes.addValue("objectClass", objectClass);
+        }
+
+        return attributes;
+    }
+
+    public SourceValues extractSourceValues(DN dn) throws Exception {
+
+        if (debug) log.debug("Extracting dn "+dn+":");
+
+        Interpreter interpreter = partition.newInterpreter();
+        SourceValues sourceValues = new SourceValues();
+
+        extractSourceValues(
+                dn,
+                this,
+                interpreter,
+                sourceValues
+        );
+
+        return sourceValues;
+    }
+
+    public void extractSourceValues(
+            DN dn,
+            Entry entry,
+            Interpreter interpreter,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        DN parentDn = dn.getParentDn();
+        Entry parent = entry.getParent();
+
+        if (parentDn != null && parent != null) {
+            extractSourceValues(parentDn, parent, interpreter, sourceValues);
+        }
+
+        RDN rdn = dn.getRdn();
+        interpreter.set(rdn);
+
+        entry.computeSources(interpreter, sourceValues);
+
+        interpreter.clear();
+    }
+
+    public SourceValues extractSourceValues(
+            DN dn,
+            Attributes attributes
+    ) throws Exception {
+
+        if (debug) log.debug("Extracting entry "+dn+":");
+
+        Interpreter interpreter = partition.newInterpreter();
+        SourceValues sourceValues = new SourceValues();
+
+        extractSourceValues(
+                dn,
+                attributes,
+                interpreter,
+                sourceValues
+        );
+
+        return sourceValues;
+    }
+
+    public void extractSourceValues(
+            DN dn,
+            Attributes attributes,
+            Interpreter interpreter,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        DN parentDn = dn.getParentDn();
+
+        if (parentDn != null && parent != null) {
+            extractSourceValues(parentDn, parent, interpreter, sourceValues);
+        }
+
+        RDN rdn = dn.getRdn();
+        interpreter.set(rdn);
+        interpreter.set("rdn", rdn);
+        interpreter.set(attributes);
+
+        computeSources(interpreter, sourceValues);
+
+        interpreter.clear();
+    }
+
+    public void computeSources(
+            Interpreter interpreter,
+            SourceValues sourceValues
+    ) throws Exception {
+
+        for (SourceRef sourceRef : localSourceRefs.values()) {
+
+            if (debug) log.debug("Extracting source "+sourceRef.getAlias()+":");
+
+            Attributes attributes = sourceValues.get(sourceRef.getAlias());
+
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+                Object value = interpreter.eval(fieldRef);
+                if (value == null) continue;
+
+                if ("INTEGER".equals(fieldRef.getType()) && value instanceof String) {
+                    value = Integer.parseInt((String)value);
+                }
+
+                attributes.addValue(fieldRef.getName(), value);
+
+                String fieldName = sourceRef.getAlias() + "." + fieldRef.getName();
+                if (debug) log.debug(" - " + fieldName + ": " + value);
+            }
+        }
+    }
+
+    public int hashCode() {
+        return entryMapping.hashCode();
+    }
+
+    boolean equals(Object o1, Object o2) {
+        if (o1 == null && o2 == null) return true;
+        if (o1 != null) return o1.equals(o2);
+        return o2.equals(o1);
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null) return false;
+        if (object.getClass() != this.getClass()) return false;
+
+        Entry entry = (Entry)object;
+        if (!equals(entryMapping, entry.entryMapping)) return false;
+
+        return true;
+    }
+
     public Object clone() throws CloneNotSupportedException {
 
         Entry entry = (Entry)super.clone();
@@ -1027,12 +1309,17 @@ public class Entry implements Cloneable {
         entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();
         entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-        entry.sourceRefs = new LinkedHashMap<String,SourceRef>();
+        entry.sourceRefs        = new ArrayList<SourceRef>();
+        entry.sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
         entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-        for (String alias : sourceRefs.keySet()) {
-            SourceRef sourceRef = (SourceRef)sourceRefs.get(alias).clone();
-            entry.sourceRefs.put(alias, sourceRef);
+        for (SourceRef origSourceRef : sourceRefs) {
+            SourceRef sourceRef = (SourceRef)origSourceRef.clone();
+
+            String alias = sourceRef.getAlias();
+
+            entry.sourceRefs.add(sourceRef);
+            entry.sourceRefsByName.put(alias, sourceRef);
 
             if (primarySourceRefs.containsKey(alias)) {
                 entry.primarySourceRefs.put(alias, sourceRef);
@@ -1049,14 +1336,14 @@ public class Entry implements Cloneable {
 
         entry.parent = parent;
 
-        entry.children = new LinkedHashMap<String,Entry>();
+        entry.children = new LinkedHashSet<Entry>();
         entry.childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
 
-        for (Entry origChild : children.values()) {
+        for (Entry origChild : children) {
             Entry child = (Entry)origChild.clone();
             child.setParent(entry);
-            
-            entry.children.put(child.getId(), child);
+
+            entry.children.add(child);
 
             String rdn = child.getDn().getRdn().getNormalized();
             Collection<Entry> c = entry.childrenByRdn.get(rdn);
@@ -1073,36 +1360,4 @@ public class Entry implements Cloneable {
 
         return entry;
     }
-
-    public Attributes getAttributes() throws Exception {
-        Interpreter interpreter = partition.newInterpreter();
-        return getAttributes(interpreter);
-    }
-
-    public Attributes getAttributes(
-            Interpreter interpreter
-    ) throws Exception {
-
-        Attributes attributes = new Attributes();
-
-        for (AttributeMapping attributeMapping : entryMapping.getAttributeMappings()) {
-
-            Object value = interpreter.eval(attributeMapping);
-            if (value == null) continue;
-
-            if (value instanceof Collection) {
-                attributes.addValues(attributeMapping.getName(), (Collection) value);
-            } else {
-                attributes.addValue(attributeMapping.getName(), value);
-            }
-        }
-
-        Collection<String> objectClasses = entryMapping.getObjectClasses();
-        for (String objectClass : objectClasses) {
-            attributes.addValue("objectClass", objectClass);
-        }
-
-        return attributes;
-    }
-
 }

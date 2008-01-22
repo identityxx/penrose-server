@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.Collection;
 import java.util.TreeMap;
-import java.util.Iterator;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 
@@ -28,10 +27,9 @@ public class SambaGroupModule extends Module {
 
     public void init() throws Exception {
         log.debug("Initializing SambaGroupModule.");
-        for (Iterator i=getParameterNames().iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (String name : getParameterNames()) {
             String value = getParameter(name);
-            log.debug(" - "+name+": "+value);
+            log.debug(" - " + name + ": " + value);
         }
     }
 
@@ -114,7 +112,7 @@ public class SambaGroupModule extends Module {
 
         session.search(searchRequest, response);
 
-        SearchResult result = (SearchResult) response.next();
+        SearchResult result = response.next();
         Attributes values = result.getAttributes();
 
         Collection<Modification> modifications = modifyRequest.getModifications();
@@ -172,7 +170,7 @@ public class SambaGroupModule extends Module {
         }
     }
 
-    public Map getServerInfo() throws Exception {
+    public Map<String,String> getServerInfo() throws Exception {
         String client = getParameter(SSH_CLIENT);
         String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
@@ -188,10 +186,15 @@ public class SambaGroupModule extends Module {
         Process p = rt.exec(command);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        p.waitFor();
 
         String line = in.readLine();
         log.debug("Response: "+line);
+
+        p.waitFor();
+
+        in.close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
 
         if (line == null) return null;
 
@@ -205,7 +208,7 @@ public class SambaGroupModule extends Module {
         log.debug("Domain: "+domain);
         log.debug("SID   : "+sid);
 
-        Map map = new TreeMap();
+        Map<String,String> map = new TreeMap<String,String>();
         map.put("domain", domain);
         map.put("sid", sid);
 
@@ -227,9 +230,13 @@ public class SambaGroupModule extends Module {
         log.debug(command);
         Process p = rt.exec(command);
         p.waitFor();
+
+        p.getInputStream().close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
     }
 
-    public Map getUserInfo(String username) throws Exception {
+    public Map<String,String> getUserInfo(String username) throws Exception {
         String client = getParameter(SSH_CLIENT);
         String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
@@ -245,10 +252,15 @@ public class SambaGroupModule extends Module {
         Process p = rt.exec(command);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        p.waitFor();
 
         String line = in.readLine();
         log.debug("Response: "+line);
+
+        p.waitFor();
+
+        in.close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
 
         if (line == null) return null;
 
@@ -259,7 +271,7 @@ public class SambaGroupModule extends Module {
 
         log.debug("GID: "+gid);
 
-        Map map = new TreeMap();
+        Map<String,String> map = new TreeMap<String,String>();
         map.put("gid", gid);
 
         return map;

@@ -20,7 +20,6 @@ package org.safehaus.penrose;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 
 import org.safehaus.penrose.config.*;
 import org.safehaus.penrose.session.Session;
@@ -32,6 +31,7 @@ import org.safehaus.penrose.log4j.Log4jConfig;
 import org.safehaus.penrose.log4j.AppenderConfig;
 import org.safehaus.penrose.log4j.LoggerConfig;
 import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -66,7 +66,6 @@ public class Penrose {
 
     private PartitionConfigs   partitionConfigs;
     private PartitionValidator partitionValidator;
-    private Partitions         partitions;
 
     private String status = STOPPED;
 
@@ -144,8 +143,11 @@ public class Penrose {
     }
 
     public PenroseConfig loadConfig(File dir) throws Exception {
+
         File path = new File(dir, "conf"+File.separator+"server.xml");
-        PenroseConfigReader reader = new PenroseConfigReader(path);
+        File schemaDir = new File(dir, "schema");
+
+        PenroseConfigReader reader = new PenroseConfigReader(path, schemaDir);
         return reader.read();
     }
 
@@ -178,15 +180,12 @@ public class Penrose {
         File partitionsDir = new File(home, "partitions");
         partitionConfigs = new PartitionConfigs(partitionsDir);
 
-        partitions = new Partitions();
-
         partitionValidator = new PartitionValidator();
         partitionValidator.setPenroseConfig(penroseConfig);
         partitionValidator.setPenroseContext(penroseContext);
 
         penroseContext.setSessionContext(sessionContext);
         penroseContext.setPartitionConfigs(partitionConfigs);
-        penroseContext.setPartitions(partitions);
         penroseContext.init(penroseConfig);
 
         sessionContext.setPenroseConfig(penroseConfig);
@@ -198,7 +197,10 @@ public class Penrose {
 
     public void clear() throws Exception {
         partitionConfigs.clear();
+
+        Partitions partitions = penroseContext.getPartitions();
         partitions.clear();
+
         penroseContext.clear();
     }
 
@@ -229,6 +231,10 @@ public class Penrose {
 
         PartitionConfig partitionConfig = new DefaultPartitionConfig();
 
+        for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
+            partitionConfig.addAdapterConfig(adapterConfig);
+        }
+        
         partitionReader.read(conf, partitionConfig.getConnectionConfigs());
         partitionReader.read(conf, partitionConfig.getSourceConfigs());
         partitionReader.read(conf, partitionConfig.getDirectoryConfig());
@@ -252,6 +258,8 @@ public class Penrose {
         partitionFactory.setPenroseContext(penroseContext);
 
         Partition partition = partitionFactory.createPartition(partitionConfig);
+
+        Partitions partitions = penroseContext.getPartitions();
         partitions.addPartition(partition);
 
         for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
@@ -330,6 +338,7 @@ public class Penrose {
 
         Partition partition = partitionFactory.createPartition(partitionConfig);
 
+        Partitions partitions = penroseContext.getPartitions();
         partitions.addPartition(partition);
     }
 
@@ -340,6 +349,7 @@ public class Penrose {
             log.debug("Stopping "+partitionName+" partition.");
         }
 
+        Partitions partitions = penroseContext.getPartitions();
         Partition partition = partitions.getPartition(partitionName);
         if (partition == null) return;
 
@@ -351,6 +361,7 @@ public class Penrose {
 
     public String getPartitionStatus(String partitionName) {
 
+        Partitions partitions = penroseContext.getPartitions();
         Partition partition = partitions.getPartition(partitionName);
 
         if (partition == null) {
@@ -426,10 +437,6 @@ public class Penrose {
     }
 
     public Partitions getPartitions() {
-        return partitions;
-    }
-
-    public void setPartitions(Partitions partitions) {
-        this.partitions = partitions;
+        return penroseContext.getPartitions();
     }
 }

@@ -23,12 +23,11 @@ import org.safehaus.penrose.filter.FilterTool;
 import java.util.Collection;
 import java.util.Arrays;
 import java.util.ArrayList;
-import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SearchRequest extends Request implements Serializable, Cloneable {
+public class SearchRequest extends Request implements Cloneable {
 
     public final static int SCOPE_BASE      = 0;
     public final static int SCOPE_ONE       = 1;

@@ -23,11 +23,9 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.schema.SchemaConfig;
 
-import java.io.Reader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.File;
+import java.io.*;
 import java.net.URL;
 
 /**
@@ -40,17 +38,15 @@ public class PenroseConfigReader implements EntityResolver {
     URL penroseDtdUrl;
     Reader reader;
 
-    public PenroseConfigReader(String filename) throws Exception {
-        this(new File(filename));
-    }
+    File configPath;
+    File schemaDir;
 
-    public PenroseConfigReader(File file) throws Exception {
-        log.debug("Loading Penrose configuration: "+file);
-        init(new FileReader(file));
-    }
+    public PenroseConfigReader(File configPath, File schemaDir) throws Exception {
 
-    public PenroseConfigReader(Reader reader) throws Exception {
-        init(reader);
+        this.configPath = configPath;
+        this.schemaDir = schemaDir;
+
+        init(new FileReader(configPath));
     }
 
     public void init(Reader reader) throws Exception {
@@ -62,8 +58,26 @@ public class PenroseConfigReader implements EntityResolver {
     }
 
     public PenroseConfig read() throws Exception {
+
+        log.debug("Loading Penrose configuration: "+configPath);
         PenroseConfig penroseConfig = new PenroseConfig();
         read(penroseConfig);
+
+        File[] schemaFiles = schemaDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".schema");
+            }
+        });
+
+        log.debug("Schema files:");
+        for (File schemaFile : schemaFiles) {
+            String path = schemaFile.getPath();
+            log.debug(" - "+path);
+
+            SchemaConfig schemaConfig = new SchemaConfig(path);
+            penroseConfig.addSchemaConfig(schemaConfig);
+        }
+
         return penroseConfig;
 	}
 

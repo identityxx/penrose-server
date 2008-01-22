@@ -28,7 +28,9 @@ import java.io.Serializable;
  */
 public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, Cloneable {
 
+    public final static String TYPE_CHAR      = "CHAR";
     public final static String TYPE_VARCHAR   = "VARCHAR";
+    public final static String TYPE_TEXT      = "TEXT";
     public final static String TYPE_INTEGER   = "INTEGER";
     public final static String TYPE_DOUBLE    = "DOUBLE";
     public final static String TYPE_DATETIME  = "DATETIME";
@@ -40,12 +42,15 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
 	private String name;
     private String originalName;
 
-    private String type   = DEFAULT_TYPE;
-    private int length    = DEFAULT_LENGTH;
-    private int precision = DEFAULT_PRECISION;
+    private String type           = DEFAULT_TYPE;
+    private String originalType;
+    private String castType;
+
+    private int length            = DEFAULT_LENGTH;
+    private int precision         = DEFAULT_PRECISION;
 
 	private boolean primaryKey;
-    private boolean searchable = true;
+    private boolean searchable    = true;
     private boolean unique;
     private boolean index;
     private boolean caseSensitive;
@@ -110,8 +115,12 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
     }
 
     public int getDefaultLength() {
-        if ("VARCHAR".equals(type)) return 50;
+        if (type.equals(TYPE_VARCHAR)) return 50;
         return 0;
+    }
+
+    public boolean isText() {
+        return type.equals(TYPE_CHAR) || type.equals(TYPE_VARCHAR) || type.equals(TYPE_TEXT);
     }
 
     public void setLength(int length) {
@@ -219,6 +228,8 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
         if (autoIncrement != fieldConfig.autoIncrement) return false;
         if (caseSensitive != fieldConfig.caseSensitive) return false;
         if (!equals(type, fieldConfig.type)) return false;
+        if (!equals(originalType, fieldConfig.originalType)) return false;
+        if (!equals(castType, fieldConfig.castType)) return false;
         if (length != fieldConfig.length) return false;
         if (precision != fieldConfig.precision) return false;
 
@@ -243,17 +254,19 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
     }
 
     public void copy(FieldConfig fieldConfig) throws CloneNotSupportedException {
-        name = fieldConfig.name;
-        originalName = fieldConfig.originalName;
-        primaryKey = fieldConfig.primaryKey;
-        searchable = fieldConfig.searchable;
-        unique = fieldConfig.unique;
-        index = fieldConfig.index;
+        name          = fieldConfig.name;
+        originalName  = fieldConfig.originalName;
+        primaryKey    = fieldConfig.primaryKey;
+        searchable    = fieldConfig.searchable;
+        unique        = fieldConfig.unique;
+        index         = fieldConfig.index;
         autoIncrement = fieldConfig.autoIncrement;
         caseSensitive = fieldConfig.caseSensitive;
-        type = fieldConfig.type;
-        length = fieldConfig.length;
-        precision = fieldConfig.precision;
+        type          = fieldConfig.type;
+        originalType  = fieldConfig.originalType;
+        castType      = fieldConfig.castType;
+        length       = fieldConfig.length;
+        precision     = fieldConfig.precision;
 
         if (fieldConfig.constant instanceof byte[]) {
             constant = ((byte[])fieldConfig.constant).clone();
@@ -277,5 +290,21 @@ public class FieldConfig implements Serializable, FieldConfigMBean, Comparable, 
 
     public void setAutoIncrement(boolean autoIncrement) {
         this.autoIncrement = autoIncrement;
+    }
+
+    public String getCastType() {
+        return castType;
+    }
+
+    public void setCastType(String castType) {
+        this.castType = castType;
+    }
+
+    public String getOriginalType() {
+        return originalType;
+    }
+
+    public void setOriginalType(String originalType) {
+        this.originalType = originalType;
     }
 }

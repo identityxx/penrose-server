@@ -72,16 +72,15 @@ public class BasicSearchEngine {
                     response
             );
 
-            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            //Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
             SourceRef sourceRef = sourceRefs.iterator().next();
             Source source = sourceRef.getSource();
-            Connection connection = source.getConnection();
 
-            connection.search(
+            source.search(
                     session,
-                    primarySourceRefs,
+                    //primarySourceRefs,
                     localSourceRefs,
                     sourceRefs,
                     sourceValues,

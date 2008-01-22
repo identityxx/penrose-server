@@ -86,10 +86,7 @@ public class AdapterConfig implements Serializable, Cloneable, AdapterConfigMBea
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
-                (adapterClass == null ? 0 : adapterClass.hashCode()) +
-                (description == null ? 0 : description.hashCode()) +
-                (parameters == null ? 0 : parameters.hashCode());
+        return name == null ? 0 : name.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -105,8 +102,8 @@ public class AdapterConfig implements Serializable, Cloneable, AdapterConfigMBea
 
         AdapterConfig adapterConfig = (AdapterConfig)object;
         if (!equals(name, adapterConfig.name)) return false;
-        if (!equals(adapterClass, adapterConfig.adapterClass)) return false;
         if (!equals(description, adapterConfig.description)) return false;
+        if (!equals(adapterClass, adapterConfig.adapterClass)) return false;
         if (!equals(parameters, adapterConfig.parameters)) return false;
 
         return true;

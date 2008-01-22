@@ -64,4 +64,23 @@ public class ModRdnRequest extends Request implements Cloneable {
 
         return request;
     }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("dn: ");
+        sb.append(dn);
+        sb.append("\n");
+
+        sb.append("changetype: modrdn\n");
+
+        sb.append("newRdn: ");
+        sb.append(newRdn);
+        sb.append("\n");
+        sb.append("deleteOldRdn: ");
+        sb.append(deleteOldRdn ? 1 : 0);
+        sb.append("\n");
+
+        return sb.toString();
+    }
 }

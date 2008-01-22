@@ -11,6 +11,10 @@
       <param-name>baseDn</param-name>
       <param-value>dc=my-domain,dc=com</param-value>
     </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(|(objectClass=dcObject)(objectClass=organizationalUnit)(objectClass=person)(objectClass=group))</param-value>
+    </parameter>
   </source>
 
 </sources>

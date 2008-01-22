@@ -23,63 +23,76 @@ package org.safehaus.penrose.util;
 public class ActiveDirectoryUtil {      
 
     public static String getGUID(byte[] guid) {
-        String strGUID = "{";
-        strGUID = strGUID + byte2hex(guid[3]);
-        strGUID = strGUID + byte2hex(guid[2]);
-        strGUID = strGUID + byte2hex(guid[1]);
-        strGUID = strGUID + byte2hex(guid[0]);
-        strGUID = strGUID + "-";
-        strGUID = strGUID + byte2hex(guid[5]);
-        strGUID = strGUID + byte2hex(guid[4]);
-        strGUID = strGUID + "-";
-        strGUID = strGUID + byte2hex(guid[7]);
-        strGUID = strGUID + byte2hex(guid[6]);
-        strGUID = strGUID + "-";
-        strGUID = strGUID + byte2hex(guid[8]);
-        strGUID = strGUID + byte2hex(guid[9]);
-        strGUID = strGUID + "-";
-        strGUID = strGUID + byte2hex(guid[10]);
-        strGUID = strGUID + byte2hex(guid[11]);
-        strGUID = strGUID + byte2hex(guid[12]);
-        strGUID = strGUID + byte2hex(guid[13]);
-        strGUID = strGUID + byte2hex(guid[14]);
-        strGUID = strGUID + byte2hex(guid[15]);
-        strGUID = strGUID + "}";
+        try {
+            StringBuilder sb = new StringBuilder();
 
-        return strGUID;
+            sb.append(byte2hex(guid[3]));
+            sb.append(byte2hex(guid[2]));
+            sb.append(byte2hex(guid[1]));
+            sb.append(byte2hex(guid[0]));
+            sb.append("-");
+            sb.append(byte2hex(guid[5]));
+            sb.append(byte2hex(guid[4]));
+            sb.append("-");
+            sb.append(byte2hex(guid[7]));
+            sb.append(byte2hex(guid[6]));
+            sb.append("-");
+            sb.append(byte2hex(guid[8]));
+            sb.append(byte2hex(guid[9]));
+            sb.append("-");
+            sb.append(byte2hex(guid[10]));
+            sb.append(byte2hex(guid[11]));
+            sb.append(byte2hex(guid[12]));
+            sb.append(byte2hex(guid[13]));
+            sb.append(byte2hex(guid[14]));
+            sb.append(byte2hex(guid[15]));
+
+            return sb.toString();
+
+        } catch (Exception e) {
+            return BinaryUtil.encode(BinaryUtil.BIG_INTEGER, guid);
+        }
     }
 
     public static String getSID(byte[] sid) {
-        String strSID = "";
-        int version;
-        long authority;
-        int count;
-        String rid = "";
-        strSID = "S";
 
-         // get version
-        version = sid[0];
-        strSID = strSID + "-" + Integer.toString(version);
-        for (int i=6; i>0; i--) {
-            rid += byte2hex(sid[i]);
-        }
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("S-");
 
-        // get authority
-        authority = Long.parseLong(rid);
-        strSID = strSID + "-" + Long.toString(authority);
+             // get version
+            int version = sid[0];
+            sb.append(Integer.toString(version));
+            sb.append("-");
 
-        //next byte is the count of sub-authorities
-        count = sid[7]&0xFF;
+            // get authority
 
-        //iterate all the sub-auths
-        for (int i=0;i<count;i++) {
-            rid = "";
-            for (int j=11; j>7; j--) {
-                rid += byte2hex(sid[j+(i*4)]);
+            String rid = "";
+            for (int i=6; i>0; i--) {
+                rid += byte2hex(sid[i]);
             }
-            strSID = strSID + "-" + Long.parseLong(rid,16);
+
+            long authority = Long.parseLong(rid);
+            sb.append(Long.toString(authority));
+
+            //next byte is the count of sub-authorities
+            int count = sid[7]&0xFF;
+
+            //iterate all the sub-auths
+            for (int i=0;i<count;i++) {
+                rid = "";
+                for (int j=11; j>7; j--) {
+                    rid += byte2hex(sid[j+(i*4)]);
+                }
+                sb.append("-");
+                sb.append(Long.parseLong(rid, 16));
+            }
+
+            return sb.toString();
+
+        } catch (Exception e) {
+            return BinaryUtil.encode(BinaryUtil.BIG_INTEGER, sid);
         }
-        return strSID;
     }
 
     public static String byte2hex(byte b) {

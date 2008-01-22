@@ -19,9 +19,7 @@ package org.safehaus.penrose.engine;
 
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -29,6 +27,7 @@ import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -157,8 +156,7 @@ public class EngineFilterTool {
         Connection connection = partition.getConnection(sourceConfig.getConnectionName());
         if (connection == null) throw new Exception("Unknown connection: "+sourceConfig.getConnectionName());
 
-        Adapter adapter = connection.getAdapter();
-        Filter newFilter = null; // adapter.convert(entry, filter);
+        Filter newFilter = null;
 
         return newFilter;
     }
@@ -188,7 +186,7 @@ public class EngineFilterTool {
             af.addFilter(nf);
         }
 
-        if (af.size() == 0) return null;
+        if (af.getSize() == 0) return null;
 
         return af;
     }
@@ -208,7 +206,7 @@ public class EngineFilterTool {
             of.addFilter(nf);
         }
 
-        if (of.size() == 0) return null;
+        if (of.getSize() == 0) return null;
 
         return of;
     }

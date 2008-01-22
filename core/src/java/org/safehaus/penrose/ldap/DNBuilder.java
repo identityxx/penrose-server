@@ -122,9 +122,11 @@ public class DNBuilder {
         Map<String,Object> map = new TreeMap<String,Object>();
         boolean inName = true;
         boolean sawDQ = false;
+        boolean inDQ = false;
         StringBuilder sb = new StringBuilder(100);
         String name = null;
-        String val;
+        List<Integer> bytes = new ArrayList<Integer>();
+        Object val;
 
         for (int i = start; i < end; i++) {
 
@@ -133,7 +135,7 @@ public class DNBuilder {
                 switch (value[i]) {
         		case '=':
         			name = sb.toString().trim();
-        			sb.delete(0, sb.length());
+        			sb.setLength(0);
         			inName = false;
         			break;
 
@@ -146,35 +148,66 @@ public class DNBuilder {
                 switch (value[i]) {
         		case '"':
         			sawDQ = true;
-        			break;
+                    inDQ = !inDQ;                    
+                    break;
 
         		case '+':
-        			// an rdn w/multiple attributes
-        			val = sb.toString();
-        			if (!sawDQ) {
-        				val = val.trim();
-        			}
-        			map.put(name, val);
-        			inName = true;
-        			sawDQ = false;
-        			sb.delete(0, sb.length());
-        			break;
+                    if (!inDQ) {
+            			// an rdn w/multiple attributes
+                        if (!bytes.isEmpty()) {
+                            val = toByteArray(bytes);
+                            bytes.clear();
+                        } else {
+                            val = sawDQ ? sb.toString() : sb.toString().trim();
+                            sb.setLength(0);
+                        }
+            			map.put(name, val);
+            			inName = true;
+            			sawDQ = false;
+            			break;
+                    }
 
                 case ',':
         		case ';':
-        			val = sb.toString();
-        			if (!sawDQ) {
-        				val = val.trim();
-        			}
-        			map.put(name, val);
-        			list.add(new RDN(map));
-        			map = new TreeMap<String,Object>();
-        			inName = true;
-        			sb.delete(0, sb.length());
-        			break;
+                    if (!inDQ) {
+                        if (!bytes.isEmpty()) {
+                            val = toByteArray(bytes);
+                            bytes.clear();
+                        } else {
+                            val = sawDQ ? sb.toString() : sb.toString().trim();
+                            sb.setLength(0);
+                        }
+            			map.put(name, val);
+            			list.add(new RDN(map));
+            			map = new TreeMap<String,Object>();
+            			inName = true;
+            			break;
+                    }
+
+                case '#':
+                    if (!inDQ) {
+                        // this is an escape - pick up next character
+                        while (i < value.length && value[i+1] != '+' && value[i+1] != ',' && value[i+1] != ';') {
+                            switch (value[++i])
+                            {
+                            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+                            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+                            case '0': case '1': case '2': case '3': case '4':
+                            case '5': case '6': case '7': case '8': case '9':
+                                // assume hexpair
+                                String x = new String(new char[] { value[i], value[++i] });
+                                bytes.add(Integer.parseInt(x, 16));
+                                break;
+                            default:
+                                // invalid hexchar
+                                break;
+                            }
+                        }
+                        break;
+                    }
 
                 case '\\':
-        			if (!sawDQ) {
+        			if (!inDQ) {
         				// this is an escape - pick up next character
         				switch (value[++i])
         				{
@@ -201,15 +234,24 @@ public class DNBuilder {
         }
 
         // a well formed DN will have left us 1 more RDN at the end
-		val = sb.toString();
-		if (!sawDQ) {
-			val = val.trim();
-		}
+        if (!bytes.isEmpty()) {
+            val = toByteArray(bytes);
+        } else {
+            val = sawDQ ? sb.toString() : sb.toString().trim();
+        }
 
         map.put(name, val);
 		list.add(new RDN(map));
 
         return list;
+    }
+
+    private static byte[] toByteArray(List<Integer> bytes) {
+        byte[] ba = new byte[bytes.size()];
+        for (int i = 0; i < ba.length; i++ ) {
+            ba[i] = bytes.get(i).byteValue();
+        }
+        return ba;
     }
 
     public DN toDn() {

@@ -17,20 +17,45 @@
  */
 package org.safehaus.penrose.filter;
 
-public class NotFilter extends Filter {
+import java.util.Collection;
+
+public class NotFilter extends Filter implements ContainerFilter {
 
 	Filter filter;
 
 	public NotFilter(Filter filter) {
 		this.filter = filter;
-	}
+        filter.setParent(this);
+    }
 
 	public Filter getFilter() {
 		return filter;
 	}
+
 	public void setFilter(Filter filter) {
 		this.filter = filter;
+        filter.setParent(this);
 	}
+
+    public void replace(Filter oldFilter, Filter newFilter) {
+        if (oldFilter != filter) return;
+
+        if (newFilter == null) {
+            if (parent != null) {
+                parent.replace(this, null);
+            }
+
+        } else if (newFilter instanceof BooleanFilter) {
+            BooleanFilter bf = (BooleanFilter)newFilter;
+            bf.setValue(!bf.getValue());
+
+            parent.replace(this, bf);
+
+        } else {
+            filter = newFilter;
+            newFilter.setParent(this);
+        }
+    }
 
     public int hashCode() {
         return (filter == null ? 0 : filter.hashCode());
@@ -54,6 +79,30 @@ public class NotFilter extends Filter {
     }
 
 	public String toString() {
-		return "(!" + filter.toString() + ")";
-	}
+		StringBuilder sb = new StringBuilder();
+
+        sb.append("(!");
+        sb.append(filter);
+        sb.append(")");
+
+        return sb.toString();
+    }
+
+    public String toString(Collection<Object> args) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("(!");
+        sb.append(filter.toString(args));
+        sb.append(")");
+
+        return sb.toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        NotFilter newFilter = (NotFilter)super.clone();
+
+        newFilter.setFilter((Filter)filter.clone());
+
+        return newFilter;
+    }
 }

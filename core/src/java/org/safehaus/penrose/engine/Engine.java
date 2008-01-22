@@ -25,17 +25,12 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.partition.PartitionConfigs;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.util.*;
-import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -524,12 +519,11 @@ public abstract class Engine {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
-                Adapter adapter = connection.getAdapter();
 
                 if (lastConnection == null) {
                     lastConnection = connection;
 
-                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                } else if (lastConnection != connection || !connection.isJoinSupported()) {
                     results.add(list);
                     list = new ArrayList<SourceRef>();
                     lastConnection = connection;
@@ -565,12 +559,11 @@ public abstract class Engine {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
-                Adapter adapter = connection.getAdapter();
 
                 if (lastConnection == null) {
                     lastConnection = connection;
 
-                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                } else if (lastConnection != connection || !connection.isJoinSupported()) {
                     results.add(list);
                     list = new ArrayList<SourceRef>();
                     lastConnection = connection;
@@ -607,12 +600,11 @@ public abstract class Engine {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
-                Adapter adapter = connection.getAdapter();
 
                 if (lastConnection == null) {
                     lastConnection = connection;
 
-                } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+                } else if (lastConnection != connection || !connection.isJoinSupported()) {
                     results.add(list);
                     list = new ArrayList<SourceRef>();
                     lastConnection = connection;

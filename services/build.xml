@@ -41,6 +41,7 @@
         <ant dir="JMX" target="dist"/>
         <ant dir="LDAP" target="dist"/>
         <ant dir="OpenDS" target="dist"/>
+        <chmod dir="../server/target/dist/services" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 
     <target name="install" depends="init">
@@ -48,6 +49,7 @@
         <ant dir="JMX" target="install"/>
         <ant dir="LDAP" target="install"/>
         <ant dir="OpenDS" target="install"/>
+        <chmod dir="${penrose.home}/services" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 
     <target name="clean">

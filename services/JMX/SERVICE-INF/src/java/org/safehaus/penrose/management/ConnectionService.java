@@ -4,27 +4,17 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionConfig;
 
-import javax.management.StandardMBean;
-
 /**
  * @author Endi Sukma Dewata
  */
-public class ConnectionService extends StandardMBean implements ConnectionServiceMBean {
+public class ConnectionService extends JMXService implements ConnectionServiceMBean {
 
-    private PenroseJMXService jmxService;
-    private Partition partition;
     private Connection connection;
 
-    public ConnectionService() throws Exception {
-        super(ConnectionServiceMBean.class);
-    }
+    public ConnectionService(Connection connection) throws Exception {
+        super(connection, connection.getDescription());
 
-    public Partition getPartition() {
-        return partition;
-    }
-
-    public void setPartition(Partition partition) {
-        this.partition = partition;
+        this.connection = connection;
     }
 
     public Connection getConnection() {
@@ -40,22 +30,29 @@ public class ConnectionService extends StandardMBean implements ConnectionServic
     }
 
     public String getObjectName() {
-        return SourceClient.getObjectName(partition.getName(), connection.getName());
+        Partition partition = connection.getPartition();
+        return ConnectionClient.getObjectName(partition.getName(), connection.getName());
     }
 
-    public PenroseJMXService getJmxService() {
-        return jmxService;
+    public void start() throws Exception {
+        Partition partition = connection.getPartition();
+        log.debug("Starting connection "+partition.getName()+"/"+connection.getName()+"...");
+        connection.init();
+        log.debug("Connection started.");
     }
 
-    public void setJmxService(PenroseJMXService jmxService) {
-        this.jmxService = jmxService;
+    public void stop() throws Exception {
+        Partition partition = connection.getPartition();
+        log.debug("Stopping connection "+partition.getName()+"/"+connection.getName()+"...");
+        connection.destroy();
+        log.debug("Connection stopped.");
     }
 
-    public void register() throws Exception {
-        jmxService.register(getObjectName(), this);
-    }
-
-    public void unregister() throws Exception {
-        jmxService.unregister(getObjectName());
+    public void restart() throws Exception {
+        Partition partition = connection.getPartition();
+        log.debug("Restarting connection "+partition.getName()+"/"+connection.getName()+"...");
+        connection.destroy();
+        connection.init();
+        log.debug("Connection restarted.");
     }
 }

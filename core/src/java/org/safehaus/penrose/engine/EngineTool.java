@@ -3,7 +3,7 @@ package org.safehaus.penrose.engine;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.directory.Directory;
-import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;

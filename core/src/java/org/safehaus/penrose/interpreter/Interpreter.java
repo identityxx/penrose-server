@@ -44,17 +44,21 @@ public abstract class Interpreter {
     protected ClassLoader classLoader;
 
     public void set(RDN rdn) throws Exception {
+        set(null, rdn);
+    }
+
+    public void set(String prefix, RDN rdn) throws Exception {
         if (rdn == null) return;
         
         for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
-            set(name, value);
+            set(prefix == null ? name : prefix+"."+name, value);
         }
     }
 
-    public void set(SourceValues av) throws Exception {
-        for (String sourceName : av.getNames()) {
-            Attributes attributes = av.get(sourceName);
+    public void set(SourceValues sv) throws Exception {
+        for (String sourceName : sv.getNames()) {
+            Attributes attributes = sv.get(sourceName);
 
             for (String fieldName : attributes.getNames()) {
                 Attribute attribute = attributes.get(fieldName);
@@ -69,6 +73,10 @@ public abstract class Interpreter {
     }
 
     public void set(Attributes attributes) throws Exception {
+        set(null, attributes);
+    }
+
+    public void set(String prefix, Attributes attributes) throws Exception {
         for (String name : attributes.getNames()) {
             Collection list = attributes.getValues(name);
 
@@ -78,7 +86,8 @@ public abstract class Interpreter {
             } else {
                 value = list;
             }
-            set(name, value);
+
+            set(prefix == null ? name : prefix+"."+name, value);
         }
     }
 
@@ -96,22 +105,24 @@ public abstract class Interpreter {
         try {
             Object constant = attributeMapping.getConstant();
             if (constant != null) {
+                //log.debug("Constant: "+constant);
                 return constant;
             }
 
             String variable = attributeMapping.getVariable();
             if (variable != null) {
+                //log.debug("Variable: "+variable);
                 return get(variable);
-
             }
 
             Expression expression = attributeMapping.getExpression();
             if (expression != null) {
+                //log.debug("Expression: "+expression);
                 return eval(expression);
-
             }
 
-            return null;
+            //log.debug("Variable: "+attributeMapping.getName());
+            return get(attributeMapping.getName());
 
         } catch (Exception e) {
             log.error("Error evaluating attribute "+attributeMapping.getName()+": "+e.getMessage());

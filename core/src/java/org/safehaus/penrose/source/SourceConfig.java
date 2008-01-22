@@ -73,6 +73,7 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
 
 	private String name;
     private String description;
+    private String sourceClass;
 
     private String connectionName;
 
@@ -83,6 +84,8 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
 
     private Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();
     private Collection<FieldConfig> nonPkFieldConfigs = new ArrayList<FieldConfig>();
+
+    private Map<String,IndexConfig> indexConfigs = new LinkedHashMap<String,IndexConfig>();
 
     public SourceConfig() {
 	}
@@ -99,6 +102,22 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
 	public void setName(String name) {
 		this.name = name;
 	}
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getSourceClass() {
+        return sourceClass;
+    }
+
+    public void setSourceClass(String sourceClass) {
+        this.sourceClass = sourceClass;
+    }
 
     public FieldConfig getFieldConfig(String name) {
         return fieldConfigs.get(name);
@@ -219,20 +238,44 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
         return parameters.keySet();
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getConnectionName() {
         return connectionName;
     }
 
     public void setConnectionName(String connectionName) {
         this.connectionName = connectionName;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public Collection<IndexConfig> getIndexConfigs() {
+        return indexConfigs.values();
+    }
+
+    public void addIndexConfig(IndexConfig indexConfig) {
+        String indexName = indexConfig.getName();
+        if (indexName == null) {
+            int i = 0;
+            indexName = name+"_index"+i;
+            while (indexConfigs.containsKey(indexName)) {
+                i++;
+                indexName = name+"_index"+i;
+            }
+            //indexConfig.setName(indexName);
+        }
+        indexConfigs.put(indexName, indexConfig);
+    }
+
+    public void setIndexConfigs(Map<String,IndexConfig> indexConfigs) {
+        if (this.indexConfigs == indexConfigs) return;
+        this.indexConfigs.clear();
+        this.indexConfigs.putAll(indexConfigs);
     }
 
     public int hashCode() {
@@ -255,11 +298,14 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
 
         if (!equals(name, sourceConfig.name)) return false;
         if (!equals(description, sourceConfig.description)) return false;
+        if (!equals(sourceClass, sourceConfig.sourceClass)) return false;
 
         if (!equals(connectionName, sourceConfig.connectionName)) return false;
 
         if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
         if (!equals(parameters, sourceConfig.parameters)) return false;
+
+        if (!equals(indexConfigs, sourceConfig.indexConfigs)) return false;
 
         return true;
     }
@@ -269,32 +315,32 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
 
         name = sourceConfig.name;
         description = sourceConfig.description;
+        sourceClass = sourceConfig.sourceClass;
 
         connectionName = sourceConfig.connectionName;
 
-        fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+        fieldConfigs               = new LinkedHashMap<String,FieldConfig>();
         fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
-        pkFieldConfigs = new ArrayList<FieldConfig>();
-        nonPkFieldConfigs = new ArrayList<FieldConfig>();
+        pkFieldConfigs             = new ArrayList<FieldConfig>();
+        nonPkFieldConfigs          = new ArrayList<FieldConfig>();
+
         for (FieldConfig fieldConfig : sourceConfig.fieldConfigs.values()) {
             addFieldConfig((FieldConfig) fieldConfig.clone());
         }
 
         parameters = new HashMap<String,String>();
         parameters.putAll(sourceConfig.parameters);
+
+        indexConfigs = new LinkedHashMap<String,IndexConfig>();
+
+        for (IndexConfig indexConfig : sourceConfig.indexConfigs.values()) {
+            addIndexConfig((IndexConfig) indexConfig.clone());
+        }
     }
 
     public Object clone() throws CloneNotSupportedException {
         SourceConfig sourceConfig = (SourceConfig)super.clone();
         sourceConfig.copy(this);
         return sourceConfig;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 }

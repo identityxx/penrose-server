@@ -38,4 +38,16 @@ public class DeleteRequest extends Request implements Cloneable {
 
         return request;
     }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("dn: ");
+        sb.append(dn);
+        sb.append("\n");
+
+        sb.append("changetype: delete\n");
+
+        return sb.toString();
+    }
 }

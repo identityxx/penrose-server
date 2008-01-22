@@ -18,6 +18,14 @@ public class ClassUtil {
         return getSignature(method.getName(), parameterTypes);
     }
 
+    public static String getSignature(String methodName, Class[] parameterClasses) {
+        Collection<String> parameterTypes = new ArrayList<String>();
+        for (Class parameterClass : parameterClasses) {
+            parameterTypes.add(parameterClass.getName());
+        }
+        return getSignature(methodName, parameterTypes);
+    }
+
     public static String getSignature(String methodName, String[] parameterTypes) {
         return getSignature(methodName, parameterTypes == null ? null : Arrays.asList(parameterTypes));
     }

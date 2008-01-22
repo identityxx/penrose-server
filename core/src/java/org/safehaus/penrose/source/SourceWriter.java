@@ -66,6 +66,11 @@ public class SourceWriter {
             element.add(fieldElement);
         }
 
+        for (IndexConfig indexConfig : sourceConfig.getIndexConfigs()) {
+            Element indexElement = createElement(indexConfig);
+            element.add(indexElement);
+        }
+
         for (String name : sourceConfig.getParameterNames()) {
             String value = sourceConfig.getParameter(name);
 
@@ -83,6 +88,21 @@ public class SourceWriter {
         }
 
         return element;
+    }
+
+    public Element createElement(IndexConfig indexConfig) throws Exception {
+        log.debug("Index "+indexConfig.getName()+":");
+
+        Element indexElement = new DefaultElement("index");
+        if (indexConfig.getName() != null) indexElement.addAttribute("name", indexConfig.getName());
+
+        for (String fieldName : indexConfig.getFieldNames()) {
+            Element fieldNameElement = new DefaultElement("field-name");
+            fieldNameElement.add(new DefaultText(fieldName));
+            indexElement.add(fieldNameElement);
+        }
+
+        return indexElement;
     }
 
     public Element createElement(FieldConfig fieldConfig) throws Exception {
@@ -128,6 +148,16 @@ public class SourceWriter {
         if (!FieldConfig.DEFAULT_TYPE.equals(fieldConfig.getType())) {
             log.debug(" - type: "+fieldConfig.getType());
             element.addAttribute("type", fieldConfig.getType());
+        }
+
+        if (fieldConfig.getOriginalType() != null) {
+            log.debug(" - originalType: "+fieldConfig.getOriginalType());
+            element.addAttribute("originalType", fieldConfig.getOriginalType());
+        }
+
+        if (fieldConfig.getCastType() != null) {
+            log.debug(" - castType: "+fieldConfig.getCastType());
+            element.addAttribute("castType", fieldConfig.getCastType());
         }
 
         if (fieldConfig.getLength() != fieldConfig.getDefaultLength()) {

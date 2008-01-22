@@ -63,4 +63,30 @@ public class ModifyRequest extends Request implements Cloneable {
 
         return request;
     }
+    
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("dn: ");
+        sb.append(dn);
+        sb.append("\n");
+
+        sb.append("changetype: modify\n");
+
+        for (Modification modification : modifications) {
+            Attribute attr = modification.getAttribute();
+
+            sb.append(LDAP.getModificationOperation(modification.getType()));
+            sb.append(": ");
+            sb.append(attr.getName());
+            sb.append("\n");
+
+            sb.append(attr);
+
+            sb.append("-");
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 }

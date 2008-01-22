@@ -29,7 +29,7 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleContext;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.adapter.Adapters;
 import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineConfig;
@@ -45,6 +45,8 @@ import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.Filter;
 
 /**
  * @author Endi S. Dewata
@@ -52,7 +54,6 @@ import org.safehaus.penrose.interpreter.DefaultInterpreter;
 public class Partition implements PartitionMBean, Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public final static Collection<String> EMPTY_STRINGS       = new ArrayList<String>();
     public final static Collection<Source> EMPTY_SOURCES       = new ArrayList<Source>();
@@ -61,8 +62,8 @@ public class Partition implements PartitionMBean, Cloneable {
     protected PartitionConfig partitionConfig;
     protected PartitionContext partitionContext;
 
-    protected Map<String, Engine>  engines  = new LinkedHashMap<String,Engine>();
-
+    protected Map<String, Engine>    engines     = new LinkedHashMap<String,Engine>();
+    protected Adapters               adapters    = new Adapters();
     protected Connections            connections = new Connections();
     protected Map<String,Source>     sources     = new LinkedHashMap<String,Source>();
     protected Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
@@ -100,6 +101,7 @@ public class Partition implements PartitionMBean, Cloneable {
         engine.setPenroseContext(partitionContext.getPenroseContext());
         engine.init(engineConfig);
 
+        adapters.init(this);
         connections.init(this);
 
         for (SourceConfig sourceConfig : partitionConfig.getSourceConfigs().getSourceConfigs()) {
@@ -107,13 +109,6 @@ public class Partition implements PartitionMBean, Cloneable {
 
             Source source = createSource(sourceConfig);
             addSource(source);
-        }
-
-        for (SourceSyncConfig sourceSyncConfig : partitionConfig.getSourceConfigs().getSourceSyncConfigs()) {
-            if (!sourceSyncConfig.isEnabled()) continue;
-
-            SourceSync sourceSync = createSourceSync(sourceSyncConfig);
-            addSourceSync(sourceSync);
         }
 
         DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
@@ -220,22 +215,7 @@ public class Partition implements PartitionMBean, Cloneable {
         Connection connection = connections.getConnection(sourceConfig.getConnectionName());
         if (connection == null) throw new Exception("Unknown connection "+sourceConfig.getConnectionName()+".");
 
-        return createSource(sourceConfig, connection);
-    }
-
-    public Source createSource(
-            SourceConfig sourceConfig,
-            Connection connection
-    ) throws Exception {
-
-        SourceContext sourceContext = new SourceContext();
-        sourceContext.setPartition(this);
-        sourceContext.setConnection(connection);
-
-        Source source = new Source();
-        source.init(sourceConfig, sourceContext);
-
-        return source;
+        return connection.createSource(sourceConfig);
     }
 
     public void addSource(Source source) {
@@ -319,6 +299,8 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public Collection<Module> getModules(DN dn) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         if (debug) log.debug("Modules:");
 
         Collection<Module> list = new ArrayList<Module>();
@@ -339,30 +321,6 @@ public class Partition implements PartitionMBean, Cloneable {
         }
 
         return list;
-    }
-
-    public SourceSync createSourceSync(SourceSyncConfig sourceSyncConfig) throws Exception {
-
-        log.debug("Initializing source sync "+sourceSyncConfig.getName()+".");
-
-        SourceConfig sourceConfig = sourceSyncConfig.getSourceConfig();
-        String changeLogName = sourceSyncConfig.getParameter(SourceSync.CHANGELOG);
-
-        Connection connection = getConnection(sourceConfig.getConnectionName());
-        Adapter adapter = connection.getAdapter();
-        String className = adapter.getSyncClassName();
-        
-        ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
-
-        SourceSync sourceSync = (SourceSync)clazz.newInstance();
-
-        SourceSyncContext sourceSyncContext = new SourceSyncContext();
-        sourceSyncContext.setPartition(this);
-        
-        sourceSync.init(sourceSyncConfig, sourceSyncContext);
-
-        return sourceSync;
     }
 
     public PartitionContext getPartitionContext() {
@@ -402,11 +360,50 @@ public class Partition implements PartitionMBean, Cloneable {
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public AddResponse add(
+            String dn,
+            Attributes attributes
+    ) throws Exception {
+        return add(new DN(dn), attributes);
+    }
+
+    public AddResponse add(
+            RDN rdn,
+            Attributes attributes
+    ) throws Exception {
+        return add(new DN(rdn), attributes);
+    }
+
+    public AddResponse add(
+            DN dn,
+            Attributes attributes
+    ) throws Exception {
+
+        AddRequest request = new AddRequest();
+        request.setDn(dn);
+        request.setAttributes(attributes);
+
+        AddResponse response = new AddResponse();
+
+        add(request, response);
+
+        return response;
+    }
+
+    public void add(
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        add(null, request, response);
+    }
+
     public void add(
             Session session,
             AddRequest request,
             AddResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -420,6 +417,11 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setAttributes(attributes);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
 
         Exception exception = null;
 
@@ -451,10 +453,19 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+        bind(null, request, response);
+    }
+
+    public void bind(
             Session session,
             BindRequest request, 
             BindResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -463,18 +474,27 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setDn(dn);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
         if (entries.isEmpty()) {
-            response.setReturnCode(LDAP.NO_SUCH_OBJECT);
-            return;
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
+
+        Exception exception = null;
 
         for (Entry entry : entries) {
             if (debug) log.debug("Binding " + dn + " in " + entry.getDn());
 
-            entry.bind(session, request, response);
+            try {
+                entry.bind(session, request, response);
+                return;
 
-            if (response.getReturnCode() == LDAP.SUCCESS) return;
+            } catch (Exception e) {
+                exception = e;
+            }
         }
+
+        throw exception;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,10 +502,19 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void compare(
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+        compare(null, request, response);
+    }
+
+    public void compare(
             Session session,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -497,6 +526,11 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setAttributeName(attributeName);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
 
         Exception exception = null;
 
@@ -513,7 +547,6 @@ public class Partition implements PartitionMBean, Cloneable {
 
             try {
                 entry.compare(session, request, response);
-
                 return;
 
             } catch (Exception e) {
@@ -528,11 +561,46 @@ public class Partition implements PartitionMBean, Cloneable {
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public DeleteResponse delete(
+            String dn
+    ) throws Exception {
+        return delete(new DN(dn));
+    }
+
+    public DeleteResponse delete(
+            RDN rdn
+    ) throws Exception {
+        return delete(new DN(rdn));
+    }
+
+    public DeleteResponse delete(
+            DN dn
+    ) throws Exception {
+
+        DeleteRequest request = new DeleteRequest();
+        request.setDn(dn);
+
+        DeleteResponse response = new DeleteResponse();
+
+        delete(request, response);
+
+        return response;
+    }
+
+    public void delete(
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        delete(null, request, response);
+    }
+
     public void delete(
             Session session,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -541,6 +609,11 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setDn(dn);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
 
         Exception exception = null;
 
@@ -558,6 +631,7 @@ public class Partition implements PartitionMBean, Cloneable {
             try {
                 entry.delete(session, request, response);
                 return;
+
             } catch (Exception e) {
                 exception = e;
             }
@@ -567,14 +641,81 @@ public class Partition implements PartitionMBean, Cloneable {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SearchResult find(String dn) throws Exception {
+        return find(new DN(dn));
+    }
+
+    public SearchResult find(RDN rdn) throws Exception {
+        return find(new DN(rdn));
+    }
+
+    public SearchResult find(DN dn) throws Exception {
+        return find(null, dn);
+    }
+
+    public SearchResult find(Session session, DN dn) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
+        if (debug) log.debug("Finding "+dn);
+
+        SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
+        if (!response.hasNext()) return null;
+
+        return response.next();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public ModifyResponse modify(
+            String dn,
+            Collection<Modification> modifications
+    ) throws Exception {
+        return modify(new DN(dn), modifications);
+    }
+
+    public ModifyResponse modify(
+            RDN rdn,
+            Collection<Modification> modifications
+    ) throws Exception {
+        return modify(new DN(rdn), modifications);
+    }
+
+    public ModifyResponse modify(
+            DN dn,
+            Collection<Modification> modifications
+    ) throws Exception {
+
+        ModifyRequest request = new ModifyRequest();
+        request.setDn(dn);
+        request.setModifications(modifications);
+
+        ModifyResponse response = new ModifyResponse();
+
+        modify(request, response);
+
+        return response;
+    }
+
+    public void modify(
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+        modify(null, request, response);
+    }
 
     public void modify(
             Session session,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -586,6 +727,11 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setModifications(modifications);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
 
         Exception exception = null;
 
@@ -603,6 +749,7 @@ public class Partition implements PartitionMBean, Cloneable {
             try {
                 entry.modify(session, request, response);
                 return;
+
             } catch (Exception e) {
                 exception = e;
             }
@@ -615,11 +762,54 @@ public class Partition implements PartitionMBean, Cloneable {
     // ModRdn
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public ModRdnResponse modrdn(
+            String dn,
+            String newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+        return modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+    }
+
+    public ModRdnResponse modrdn(
+            RDN rdn,
+            RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+        return modrdn(new DN(rdn), newRdn, deleteOldRdn);
+    }
+
+    public ModRdnResponse modrdn(
+            DN dn,
+            RDN newRdn,
+            boolean deleteOldRdn
+    ) throws Exception {
+
+        ModRdnRequest request = new ModRdnRequest();
+        request.setDn(dn);
+        request.setNewRdn(newRdn);
+        request.setDeleteOldRdn(deleteOldRdn);
+
+        ModRdnResponse response = new ModRdnResponse();
+
+        modrdn(request, response);
+
+        return response;
+    }
+
+    public void modrdn(
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+        modrdn(null, request, response);
+    }
+
     public void modrdn(
             Session session,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         SchemaManager schemaManager = penroseContext.getSchemaManager();
@@ -631,6 +821,11 @@ public class Partition implements PartitionMBean, Cloneable {
         request.setNewRdn(newRdn);
 
         Collection<Entry> entries = directory.findEntries(dn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
 
         Exception exception = null;
 
@@ -648,6 +843,7 @@ public class Partition implements PartitionMBean, Cloneable {
             try {
                 entry.modrdn(session, request, response);
                 return;
+
             } catch (Exception e) {
                 exception = e;
             }
@@ -660,11 +856,63 @@ public class Partition implements PartitionMBean, Cloneable {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public SearchResponse search(
+            String dn,
+            String filter,
+            int scope
+    ) throws Exception {
+        return search(new DN(dn), FilterTool.parseFilter(filter), scope);
+    }
+
+    public SearchResponse search(
+            RDN rdn,
+            Filter filter,
+            int scope
+    ) throws Exception {
+        return search(new DN(rdn), filter, scope);
+    }
+
+    public SearchResponse search(
+            DN dn,
+            Filter filter,
+            int scope
+    ) throws Exception {
+        return search(null, dn, filter, scope);
+    }
+
+    public SearchResponse search(
+            Session session,
+            DN dn,
+            Filter filter,
+            int scope
+    ) throws Exception {
+
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setFilter(filter);
+        request.setScope(scope);
+
+        SearchResponse response = new SearchResponse();
+
+        search(session, request, response);
+
+        return response;
+    }
+
+    public void search(
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+        search(null, request, response);
+    }
+
     public void search(
             final Session session,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
 
         DN baseDn = schemaManager.normalize(request.getDn());
         request.setDn(baseDn);
@@ -684,6 +932,7 @@ public class Partition implements PartitionMBean, Cloneable {
 
         if (entries.isEmpty()) {
             if (debug) log.debug("Base DN "+baseDn+" not found.");
+            response.close();
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
@@ -748,28 +997,45 @@ public class Partition implements PartitionMBean, Cloneable {
             UnbindResponse response
     ) throws Exception {
 
-        DN bindDn = request.getDn();
+        boolean debug = log.isDebugEnabled();
+
+        DN bindDn = session.getBindDn();
+        if (bindDn == null || bindDn.isEmpty()) return;
 
         Collection<Entry> entries = directory.findEntries(bindDn);
+
+        if (entries.isEmpty()) {
+            if (debug) log.debug("Entry "+bindDn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
+
+        Exception exception = null;
 
         for (Entry entry : entries) {
             if (debug) log.debug("Unbinding " + bindDn + " from " + entry.getDn());
 
-            entry.unbind(session, request, response);
+            try {
+                entry.unbind(session, request, response);
+                return;
+
+            } catch (Exception e) {
+                exception = e;
+            }
         }
+
+        throw exception;
     }
 
     public Collection<String> filterAttributes(
-            Session session,
             SearchResult searchResult,
             Collection<String> requestedAttributeNames,
             boolean allRegularAttributes,
             boolean allOpAttributes
     ) throws Exception {
 
-        Collection<String> list = new HashSet<String>();
+        boolean debug = log.isDebugEnabled();
 
-        if (session == null) return list;
+        Collection<String> list = new HashSet<String>();
 
         Attributes attributes = searchResult.getAttributes();
         Collection<String> attributeNames = attributes.getNames();
@@ -849,19 +1115,18 @@ public class Partition implements PartitionMBean, Cloneable {
             Attributes attributes
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         if (session == null) return;
 
-        Collection<String> attributeNames = new ArrayList<String>();
-        for (String attributeName : attributes.getNames()) {
-            attributeNames.add(attributeName.toLowerCase());
-        }
+        Collection<String> attributeNames = attributes.getNormalizedNames();
 
         Set<String> grants = new HashSet<String>();
         Set<String> denies = new HashSet<String>();
         denies.addAll(attributeNames);
 
         DN bindDn = session.getBindDn();
-        aclEvaluator.getReadableAttributes(bindDn, this, entry, dn, null, attributeNames, grants, denies);
+        aclEvaluator.getReadableAttributes(bindDn, entry, dn, null, attributeNames, grants, denies);
 
         if (debug) {
             log.debug("Returned: "+attributeNames);
@@ -915,5 +1180,13 @@ public class Partition implements PartitionMBean, Cloneable {
         interpreter.setClassLoader(classLoader);
 
         return interpreter;
+    }
+
+    public Adapters getAdapters() {
+        return adapters;
+    }
+
+    public void setAdapters(Adapters adapters) {
+        this.adapters = adapters;
     }
 }

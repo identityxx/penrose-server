@@ -17,8 +17,6 @@
  */
 package org.safehaus.penrose.module;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import javax.crypto.Cipher;
 import java.security.Provider;
 import java.security.Security;
@@ -34,15 +32,17 @@ public class EncryptionModule extends Module {
 
     public void init() throws Exception {
 
-        Security.addProvider(new BouncyCastleProvider());
+        Class clazz = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
+        Provider provider = (Provider)clazz.newInstance();
+        Security.addProvider(provider);
 
         verbose = Boolean.parseBoolean(getParameter("verbose"));
 
         if (verbose) {
             Provider[] providers = Security.getProviders();
 
-            for (Provider provider : providers) {
-                System.out.println("[EncryptionModule] " + provider.getName() + " " + provider.getVersion() + " security provider available.");
+            for (Provider p : providers) {
+                System.out.println("[EncryptionModule] " + p.getName() + " " + p.getVersion() + " security provider available.");
             }
         }
 

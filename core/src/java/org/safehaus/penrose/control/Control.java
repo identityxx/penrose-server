@@ -6,7 +6,7 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class Control implements Serializable {
+public class Control implements Serializable, Cloneable {
 
     private String oid;
     private byte[] value;
@@ -70,5 +70,20 @@ public class Control implements Serializable {
         if (!equals(critical, control.critical)) return false;
 
         return true;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        Control control = (Control)super.clone();
+
+        control.oid = oid;
+
+        if (value != null) {
+            control.value = new byte[value.length];
+            System.arraycopy(value, 0, control.value, 0, value.length);
+        }
+
+        control.critical = critical;
+
+        return control;
     }
 }

@@ -1,6 +1,6 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.directory.FieldMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

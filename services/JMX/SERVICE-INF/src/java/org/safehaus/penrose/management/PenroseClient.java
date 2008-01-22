@@ -18,6 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
+import org.safehaus.penrose.partition.PartitionConfig;
 
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.JMXConnector;
@@ -239,6 +240,13 @@ public class PenroseClient implements PenroseServiceMBean {
 
     public Collection<String> getPartitionNames() throws Exception {
         return (Collection<String>)connection.getAttribute(objectName, "PartitionNames");
+    }
+
+    public PartitionConfig getPartitionConfig(String partitionName) throws Exception {
+        return (PartitionConfig)invoke("getPartitionConfig",
+                new Object[] { partitionName },
+                new String[] { String.class.getName() }
+        );
     }
 
     public PartitionClient getPartitionClient(String partitionName) throws Exception {

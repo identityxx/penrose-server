@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <object-create-rule classname="org.safehaus.penrose.source.SourceConfig" />
             <set-properties-rule />
 
+            <call-method-rule pattern="source-class" methodname="setSourceClass"  paramcount="0" />
             <call-method-rule pattern="description" methodname="setDescription" paramcount="0" />
             <call-method-rule pattern="connection-name" methodname="setConnectionName" paramcount="0" />
 
@@ -53,6 +54,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 </pattern>
 
                 <set-next-rule methodname="addFieldConfig" />
+
+            </pattern>
+
+            <pattern value="index">
+
+                <object-create-rule classname="org.safehaus.penrose.source.IndexConfig" />
+                <set-properties-rule />
+
+                <call-method-rule pattern="field-name" methodname="addFieldName" paramcount="0" />
+
+                <set-next-rule methodname="addIndexConfig" />
 
             </pattern>
 

@@ -3,6 +3,8 @@ package org.safehaus.penrose.source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -10,6 +12,10 @@ import java.util.Collection;
  * @author Endi S. Dewata
  */
 public class SourceSyncSearchResponse extends SearchResponse {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
+    public boolean debug = log.isDebugEnabled();
 
     protected Source source;
     protected Collection<Source> destinations;

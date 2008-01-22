@@ -12,7 +12,6 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.config.PenroseConfig;
@@ -41,18 +40,25 @@ public class JDBCSyncJob extends Job {
 
     public void init() throws Exception {
 
+        log.debug("Initializing "+this.getName()+" job...");
+
         Partition partition = jobContext.getPartition();
+
+        log.debug("Sources:");
 
         String sourceNames = jobConfig.getParameter("source");
         StringTokenizer st = new StringTokenizer(sourceNames, "; ");
         while (st.hasMoreTokens()) {
             String sourceName = st.nextToken();
+            log.debug(" - "+sourceName);
 
             Source source = partition.getSource(sourceName);
             sources.put(sourceName, source);
         }
 
         Iterator<String> i = sources.keySet().iterator();
+
+        log.debug("Targets:");
 
         String targetNames = jobConfig.getParameter("target");
         st = new StringTokenizer(targetNames, "; ");
@@ -74,6 +80,8 @@ public class JDBCSyncJob extends Job {
 
                 Source tmp = createTmpTarget(target);
                 tmpTargets.put(tmp.getName(), tmp);
+
+                log.debug(" - "+sourceName+": "+target.getParameter(JDBCClient.TABLE)+" => "+tmp.getParameter(JDBCClient.TABLE));
             }
         }
 
@@ -94,10 +102,8 @@ public class JDBCSyncJob extends Job {
         for (Entry entry : directory.findEntries(baseDn)) {
             entries.put(entry.getId(), entry);
 
-            Entry tmp = createTmpEntry(entry);
-            tmpEntries.put(tmp.getId(), tmp);
-
-            createTmpChildren(entry, tmp);
+            Entry tmpEntry = createTmpEntry(entry);
+            tmpEntries.put(tmpEntry.getId(), tmpEntry);
         }
 
         String changeLogName = jobConfig.getParameter("changelog");
@@ -113,21 +119,10 @@ public class JDBCSyncJob extends Job {
         return tmp;
     }
 
-    public void createTmpChildren(Entry entry, Entry tmpEntry) throws Exception {
-        tmpEntry.clearChildren();
-
-        for (Entry child : entry.getChildren()) {
-            Entry tmp = createTmpEntry(child);
-            tmpEntry.addChild(tmp);
-
-            createTmpChildren(child, tmp);
-        }
-    }
-
     public Entry createTmpEntry(Entry entry) throws Exception {
-        Entry tmp = (Entry)entry.clone();
+        Entry tmpEntry = (Entry)entry.clone();
 
-        for (SourceRef sourceRef : tmp.getLocalSourceRefs()) {
+        for (SourceRef sourceRef : tmpEntry.getLocalSourceRefs()) {
             Source source = sourceRef.getSource();
             String name = source.getName();
 
@@ -137,7 +132,29 @@ public class JDBCSyncJob extends Job {
             sourceRef.setSource(tmpSource);
         }
 
-        return tmp;
+        log.debug("Old entry "+entry.getDn());
+
+        for (SourceRef sourceRef : entry.getLocalSourceRefs()) {
+            Source source = sourceRef.getSource();
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCClient.TABLE));
+        }
+
+        log.debug("New entry "+tmpEntry.getDn());
+
+        for (SourceRef sourceRef : tmpEntry.getLocalSourceRefs()) {
+            Source source = sourceRef.getSource();
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCClient.TABLE));
+        }
+
+        tmpEntry.clearChildren();
+
+        for (Entry child : entry.getChildren()) {
+            Entry tmpChild = createTmpEntry(child);
+            tmpChild.setParent(tmpEntry);
+            tmpEntry.addChild(tmpChild);
+        }
+
+        return tmpEntry;
     }
 
     public void execute() throws Exception {
@@ -235,12 +252,11 @@ public class JDBCSyncJob extends Job {
             SourceRef sourceRef = new SourceRef(source);
 
             Connection connection = source.getConnection();
-            Adapter adapter = connection.getAdapter();
 
             if (lastConnection == null) {
                 lastConnection = connection;
 
-            } else if (lastConnection != connection || !adapter.isJoinSupported()) {
+            } else if (lastConnection != connection || !connection.isJoinSupported()) {
                 results.add(list);
                 list = new ArrayList<SourceRef>();
                 lastConnection = connection;
@@ -257,8 +273,8 @@ public class JDBCSyncJob extends Job {
     public void loadSources() throws Exception {
 
         Partition partition = jobContext.getPartition();
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
+        //PartitionContext partitionContext = partition.getPartitionContext();
+        //PenroseContext penroseContext = partitionContext.getPenroseContext();
 
         List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
 
@@ -267,8 +283,8 @@ public class JDBCSyncJob extends Job {
 
                 SourceRef sourceRef = sourceRefs.iterator().next();
 
-                Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
-                primarySourceRefs.add(sourceRef);
+                //Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
+                //primarySourceRefs.add(sourceRef);
 
                 Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
                 localSourceRefs.addAll(sourceRefs);
@@ -288,11 +304,10 @@ public class JDBCSyncJob extends Job {
                 SourceValues sourceValues = new SourceValues();
 
                 Source source = sourceRef.getSource();
-                Connection connection = source.getConnection();
 
-                connection.search(
+                source.search(
                         null,
-                        primarySourceRefs,
+                        //primarySourceRefs,
                         localSourceRefs,
                         sourceRefs,
                         sourceValues,
@@ -321,12 +336,12 @@ public class JDBCSyncJob extends Job {
         for (Entry entry : entries.values()) {
             Entry tmpEntry = tmpEntries.get(entry.getId());
 
-            log.debug("===================================");
+            log.debug("=============================================================================");
             log.debug("Searching old snapshot.");
 
             SearchResponse response1 = search(entry, session);
 
-            log.debug("===================================");
+            log.debug("=============================================================================");
             log.debug("Searching new snapshot.");
 
             SearchResponse response2 = search(tmpEntry, session);
@@ -440,8 +455,8 @@ public class JDBCSyncJob extends Job {
         Collection<Modification> modifications = new ArrayList<Modification>();
 
         Collection<String> oldAttributes = new ArrayList<String>();
-        oldAttributes.addAll(attributes1.getNames());
-        oldAttributes.removeAll(attributes2.getNames());
+        oldAttributes.addAll(attributes1.getNormalizedNames());
+        oldAttributes.removeAll(attributes2.getNormalizedNames());
 
         for (String name : oldAttributes) {
             Attribute oldAttribute = attributes1.get(name);
@@ -449,8 +464,8 @@ public class JDBCSyncJob extends Job {
         }
 
         Collection<String> newAttributes = new ArrayList<String>();
-        newAttributes.addAll(attributes2.getNames());
-        newAttributes.removeAll(attributes1.getNames());
+        newAttributes.addAll(attributes2.getNormalizedNames());
+        newAttributes.removeAll(attributes1.getNormalizedNames());
 
         for (String name : newAttributes) {
             Attribute newAttribute = attributes2.get(name);

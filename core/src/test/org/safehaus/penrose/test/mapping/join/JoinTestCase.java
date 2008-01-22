@@ -2,12 +2,12 @@ package org.safehaus.penrose.test.mapping.join;
 
 import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;

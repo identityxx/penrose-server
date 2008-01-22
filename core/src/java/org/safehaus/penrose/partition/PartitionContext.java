@@ -72,4 +72,8 @@ public class PartitionContext implements Cloneable {
     public void setClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
+
+    public Partition getPartition(String name) {
+        return penroseContext.getPartitions().getPartition(name);
+    }
 }

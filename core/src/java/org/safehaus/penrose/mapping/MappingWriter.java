@@ -8,11 +8,7 @@ import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultAttribute;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.directory.EntryMapping;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.schema.ObjectClass;
@@ -103,6 +99,7 @@ public class MappingWriter {
         Element element = new DefaultElement("entry");
         element.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));
         if (!entryMapping.isEnabled()) element.add(new DefaultAttribute("enabled", "false"));
+        if (!entryMapping.isAttached()) element.add(new DefaultAttribute("attached", "false"));
         configElement.add(element);
 
         for (String objectClass : entryMapping.getObjectClasses()) {

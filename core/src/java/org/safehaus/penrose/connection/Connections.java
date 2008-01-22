@@ -2,10 +2,11 @@ package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -37,31 +38,43 @@ public class Connections {
 
     public void destroy() throws Exception {
         for (Connection connection : connections.values()) {
+            log.debug("Stopping "+connection.getName()+" connection.");
             connection.destroy();
         }
     }
 
     public Connection createConnection(ConnectionConfig connectionConfig) throws Exception {
 
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
         PartitionContext partitionContext = partition.getPartitionContext();
 
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
-        AdapterConfig adapterConfig = partitionConfig.getAdapterConfig(adapterName);
-
-        if (adapterConfig == null) {
-            adapterConfig = partitionContext.getPenroseConfig().getAdapterConfig(adapterName);
+        Adapter adapter = partition.getAdapters().getAdapter(adapterName);
+        if (adapter == null) {
+            PenroseContext penroseContext = partitionContext.getPenroseContext();
+            Partition defaultPartition = penroseContext.getPartitions().getPartition("DEFAULT");
+            if (defaultPartition != null) {
+                adapter = defaultPartition.getAdapters().getAdapter(adapterName);
+            }
         }
 
-        if (adapterConfig == null) throw new Exception("Undefined adapter "+adapterName+".");
+        if (adapter == null) {
+            throw new Exception("Unknown adapter "+adapterName+".");
+        }
+
+        ClassLoader cl = partitionContext.getClassLoader();
 
         ConnectionContext connectionContext = new ConnectionContext();
         connectionContext.setPartition(partition);
+        connectionContext.setAdapter(adapter);
+        connectionContext.setClassLoader(cl);
 
-        Connection connection = new Connection();
-        connection.init(connectionConfig, connectionContext, adapterConfig);
+        String connectionClass = adapter.getConnectionClassName();
+        Class clazz = cl.loadClass(connectionClass);
+        Connection connection = (Connection)clazz.newInstance();
+
+        connection.init(connectionConfig, connectionContext);
 
         return connection;
     }

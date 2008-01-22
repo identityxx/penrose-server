@@ -252,7 +252,7 @@ public class SambaUserModule extends Module {
         }
     }
 
-    public Map getServerInfo() throws Exception {
+    public Map<String,String> getServerInfo() throws Exception {
         String client = getParameter(SSH_CLIENT);
         String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
@@ -268,10 +268,15 @@ public class SambaUserModule extends Module {
         Process p = rt.exec(command);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        p.waitFor();
 
         String line = in.readLine();
         log.debug("Response: "+line);
+
+        p.waitFor();
+
+        in.close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
 
         if (line == null) return null;
 
@@ -285,7 +290,7 @@ public class SambaUserModule extends Module {
         log.debug("Domain: "+domain);
         log.debug("SID   : "+sid);
 
-        Map map = new TreeMap();
+        Map<String,String> map = new TreeMap<String,String>();
         map.put("domain", domain);
         map.put("sid", sid);
 
@@ -307,9 +312,13 @@ public class SambaUserModule extends Module {
         log.debug(command);
         Process p = rt.exec(command);
         p.waitFor();
+
+        p.getInputStream().close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
     }
 
-    public Map getUserInfo(String username) throws Exception {
+    public Map<String,String> getUserInfo(String username) throws Exception {
         String client = getParameter(SSH_CLIENT);
         String admin  = getParameter(SAMBA_ADMIN);
         String server = getParameter(SAMBA_SERVER);
@@ -325,10 +334,15 @@ public class SambaUserModule extends Module {
         Process p = rt.exec(command);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        p.waitFor();
 
         String line = in.readLine();
         log.debug("Response: "+line);
+
+        p.waitFor();
+
+        in.close();
+        p.getErrorStream().close();
+        p.getOutputStream().close();
 
         if (line == null) return null;
 
@@ -343,7 +357,7 @@ public class SambaUserModule extends Module {
         //log.debug("UID: "+uid);
         //log.debug("GID: "+gid);
 
-        Map map = new TreeMap();
+        Map<String,String> map = new TreeMap<String,String>();
         map.put("uid", uid);
         map.put("gid", gid);
 

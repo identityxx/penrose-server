@@ -4,14 +4,15 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -19,6 +20,9 @@ import java.util.*;
  * @author Endi Sukma Dewata
  */
 public class BasicSearchResponse extends SearchResponse {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     Session session;
     Partition partition;
@@ -69,8 +73,7 @@ public class BasicSearchResponse extends SearchResponse {
             for (SourceRef sr : group) {
                 Source source = sr.getSource();
                 Connection connection = source.getConnection();
-                Adapter adapter = connection.getAdapter();
-                log.debug(" - "+sr.getAlias()+" ("+adapter.getClass().getName()+")");
+                log.debug(" - "+sr.getAlias()+" ("+connection.getClass().getName()+")");
             }
         }
     }
@@ -172,23 +175,31 @@ public class BasicSearchResponse extends SearchResponse {
             String flag = sourceRef.getSearch();
             if (debug) log.debug("Flag: "+flag);
 
+            if (SourceMapping.IGNORE.equals(flag)) {
+                continue;
+            }
+
             SearchResponse sr = new SearchResponse();
 
-            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            //Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
             Source source = sourceRef.getSource();
-            Connection connection = source.getConnection();
 
-            connection.search(
-                    session,
-                    primarySourceRefs,
-                    localSourceRefs,
-                    sourceRefs,
-                    sv,
-                    request,
-                    sr
-            );
+            try {
+                source.search(
+                        session,
+                        //primarySourceRefs,
+                        localSourceRefs,
+                        sourceRefs,
+                        sv,
+                        request,
+                        sr
+                );
+                
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
 
             if (SourceMapping.REQUIRED.equals(flag) && !sr.hasNext()) {
                 log.debug("Required entries not found.");

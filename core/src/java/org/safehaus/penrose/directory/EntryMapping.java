@@ -21,7 +21,6 @@ import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -61,6 +60,7 @@ public class EntryMapping implements Serializable, Cloneable {
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
     private boolean enabled = true;
+    private boolean attached = true;
 
     private String id;
     private String parentId;
@@ -174,6 +174,14 @@ public class EntryMapping implements Serializable, Cloneable {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isAttached() {
+        return attached;
+    }
+
+    public void setAttached(boolean attached) {
+        this.attached = attached;
     }
 
     public Collection<AttributeMapping> getAttributeMappings() {
@@ -376,6 +384,7 @@ public class EntryMapping implements Serializable, Cloneable {
 
         EntryMapping entryMapping = (EntryMapping)object;
         if (enabled != entryMapping.enabled) return false;
+        if (attached != entryMapping.attached) return false;
 
         if (!equals(id, entryMapping.id)) return false;
         if (!equals(parentId, entryMapping.parentId)) return false;
@@ -399,6 +408,7 @@ public class EntryMapping implements Serializable, Cloneable {
 
     public void copy(EntryMapping entryMapping) throws CloneNotSupportedException {
         enabled = entryMapping.enabled;
+        attached = entryMapping.attached;
 
         id = entryMapping.id;
         parentId = entryMapping.parentId;

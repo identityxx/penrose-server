@@ -31,10 +31,7 @@ import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfigs;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionConfigs;
-import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.directory.EntryMapping;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

@@ -34,7 +34,7 @@ public class SessionManager implements SessionManagerMBean {
 
     private SessionConfig sessionConfig;
 
-    public Map<Object,Session> sessions = new LinkedHashMap<Object,Session>();
+    //public Map<Object,Session> sessions = new LinkedHashMap<Object,Session>();
 
     public long sessionCounter;
     private Integer maxSessions;
@@ -52,16 +52,13 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public void stop() throws Exception {
-        log.debug("Removing all sessions");
-        sessions.clear();
+        //sessions.clear();
     }
 
     public synchronized Session newSession() throws Exception {
 
         Object sessionId = createSessionId();
-        while (sessions.get(sessionId) != null) {
-            sessionId = createSessionId();
-        }
+        //while (sessions.get(sessionId) != null) sessionId = createSessionId();
 
         return createSession(sessionId);
     }
@@ -69,11 +66,11 @@ public class SessionManager implements SessionManagerMBean {
     public synchronized Session createSession(Object sessionId) throws Exception {
 
         purge();
-
+/*
         if (maxSessions != null && sessions.size() >= maxSessions) {
             throw new Exception("Maximum number of sessions has been reached.");
         }
-
+*/
         //log.debug("Creating session "+sessionId);
         Session session = new Session(this);
         session.setSessionId(sessionId);
@@ -82,7 +79,7 @@ public class SessionManager implements SessionManagerMBean {
         session.setSessionContext(sessionContext);
         session.init();
 
-        sessions.put(sessionId, session);
+        //sessions.put(sessionId, session);
 
         return session;
     }
@@ -92,7 +89,8 @@ public class SessionManager implements SessionManagerMBean {
         purge();
 
         log.debug("Retrieving session "+sessionId);
-        return sessions.get(sessionId);
+        //return sessions.get(sessionId);
+        return null;
     }
 
     public synchronized Session removeSession(Object sessionId) {
@@ -100,7 +98,8 @@ public class SessionManager implements SessionManagerMBean {
         purge();
 
         log.debug("Removing session "+sessionId);
-        return sessions.remove(sessionId);
+        //return sessions.remove(sessionId);
+        return null;
     }
 
     public Object createSessionId() {
@@ -111,7 +110,7 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized void purge() {
         Collection<Object> expiredSessions = new ArrayList<Object>();
-
+/*
         for (Session session : sessions.values()) {
             if (isExpired(session)) expiredSessions.add(session.getSessionId());
         }
@@ -120,6 +119,7 @@ public class SessionManager implements SessionManagerMBean {
             //log.debug("Removing session "+sessionId);
             sessions.remove(sessionId);
         }
+*/
     }
 
     public synchronized boolean isValid(Session session) {
@@ -127,7 +127,8 @@ public class SessionManager implements SessionManagerMBean {
         if (session == null) return true;
 
         //log.debug("Valid sessions: "+sessions.keySet());
-        return sessions.get(session.getSessionId()) != null;
+        //return sessions.get(session.getSessionId()) != null;
+        return true;
     }
 
     public boolean isExpired(Session session) {
@@ -139,18 +140,14 @@ public class SessionManager implements SessionManagerMBean {
         return idleTime > maxIdleTime * 60 * 1000;
     }
 
-    public synchronized void closeSession(Session session) {
-        log.debug("Removing session "+session.getSessionId());
-        sessions.remove(session.getSessionId());
-    }
-
-    public synchronized Collection getSessions() {
+    public synchronized Collection<Session> getSessions() {
         purge();
-        return sessions.values();
+        //return sessions.values();
+        return null;
     }
 
     public int getNumberOfSessions() {
-        return sessions.size();
+        return 0; //sessions.size();
     }
 
     public void setMaxSessions(Integer maxSessions) {

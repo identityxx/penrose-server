@@ -108,15 +108,14 @@ public class SearchEngine {
 
             SourceRef sourceRef = primarySources.iterator().next();
 
-            Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
+            //Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
             Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
 
             Source source = sourceRef.getSource();
-            Connection connection = source.getConnection();
 
-            connection.search(
+            source.search(
                     session,
-                    primarySourceRefs,
+                    //primarySourceRefs,
                     localSourceRefs,
                     primarySources,
                     sourceValues,

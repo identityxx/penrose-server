@@ -83,8 +83,12 @@ public class SchedulerService extends StandardMBean implements SchedulerServiceM
     }
 
     public JobService getJobService(Job job) throws Exception {
-        JobService jobService = new JobService(partition, job);
+
+        JobService jobService = new JobService(job);
+        jobService.setPartition(partition);
+        jobService.setDescription(job.getDescription());
         jobService.setJmxService(jmxService);
+        jobService.init();
 
         return jobService;
     }

@@ -81,7 +81,7 @@ public class SearchSubtreeTest extends BasicTestCase {
             log.debug("hasNext: "+hasNext);
             fail();
         } catch (LDAPException e) {
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             assertEquals(LDAP.NO_SUCH_OBJECT, e.getResultCode());
         }
 

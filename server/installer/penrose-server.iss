@@ -65,7 +65,7 @@ Name: "{group}\Documentation\Penrose API"; Filename: "{app}\docs\javadoc\index.h
 Name: "{group}\Documentation\Online Documentation"; Filename: "{app}\docs\Online Documentation.url";
 Name: "{group}\Documentation\Penrose Website"; Filename: "{app}\docs\Penrose Website.url";
 Name: "{group}\Documentation\Safehaus Website"; Filename: "{app}\docs\Safehaus Website.url";
-Name: "{group}\${product.title} Server"; Filename: "{app}\bin\penrose.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\${product.title} Server"; Filename: "{app}\bin\penrose-server.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";

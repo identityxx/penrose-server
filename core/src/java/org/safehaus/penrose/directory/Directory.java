@@ -1,13 +1,15 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.partition.Partitions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -17,7 +19,6 @@ import java.util.Map;
 public class Directory implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
 
     public final static Collection<Entry> EMPTY_ENTRIES        = new ArrayList<Entry>();
 
@@ -70,20 +71,23 @@ public class Directory implements Cloneable {
         return entry;
     }
 
-    public void addEntry(Entry entry) {
+    public void addEntry(Entry entry) throws Exception {
 
-        String dn = entry.getDn().getNormalizedDn();
-        if (debug) log.debug("Adding entry "+dn+".");
+        boolean debug = log.isDebugEnabled();
+
+        DN dn = entry.getDn();
+        String normalizedDn = dn.getNormalizedDn();
+        if (debug) log.debug("Adding entry "+ dn +".");
 
         // index by id
         String id = entry.getId();
         entries.put(id, entry);
 
         // index by dn
-        Collection<Entry> c = entriesByDn.get(dn);
+        Collection<Entry> c = entriesByDn.get(normalizedDn);
         if (c == null) {
             c = new ArrayList<Entry>();
-            entriesByDn.put(dn, c);
+            entriesByDn.put(normalizedDn, c);
         }
         c.add(entry);
 
@@ -100,23 +104,66 @@ public class Directory implements Cloneable {
         }
 
         String parentId = entry.getParentId();
-        Entry parent = getEntry(parentId);
 
-        if (parent == null) {
-        	//if (debug) log.debug("Suffix: "+dn);
-            rootEntries.add(entry);
-            suffixes.add(entry.getDn());
+        if (parentId != null) {
+            if (debug) log.debug("Searching parent by ID: "+parentId);
+            Entry parent = getEntry(parentId);
 
-        } else {
-        	//if (debug) log.debug("Parent ID: "+parentId);
-            parent.addChild(entry);
+            if (parent != null) {
+                if (debug) log.debug("Found parent: "+parent.getDn());
+                parent.addChild(entry);
+                return;
+            }
         }
+
+        DN parentDn = dn.getParentDn();
+
+        if (entry.getEntryMapping().isAttached() && !parentDn.isEmpty()) {
+
+            if (debug) log.debug("Searching local parent by DN: "+parentDn);
+            Collection<Entry> parents = getEntries(parentDn);
+
+            if (!parents.isEmpty()) {
+                Entry parent = parents.iterator().next();
+                if (debug) log.debug("Found parent: "+parent.getDn());
+                parent.addChild(entry);
+                return;
+            }
+
+            if (debug) log.debug("Searching remote parent by DN: "+parentDn);
+            Partition partition = directoryContext.getPartition();
+            PartitionContext partitionContext = partition.getPartitionContext();
+            PenroseContext penroseContext = partitionContext.getPenroseContext();
+
+            Partitions partitions = penroseContext.getPartitions();
+            Partition p = partitions.getPartition(parentDn);
+
+            if (p != null) {
+                if (debug) log.debug("Found partition: "+p.getName());
+                Directory d = p.getDirectory();
+                parents = d.getEntries(parentDn);
+
+                if (!parents.isEmpty()) {
+                    Entry parent = parents.iterator().next();
+                    if (debug) log.debug("Found parent: "+parent.getDn());
+                    parent.addChild(entry);
+                }
+            }
+        }
+
+        if (debug) log.debug("Suffix: "+normalizedDn);
+        rootEntries.add(entry);
+        suffixes.add(entry.getDn());
     }
 
     public Entry getEntry(String id) {
         return entries.get(id);
     }
 
+    public Collection<Entry> getEntries() {
+        return entries.values();
+    }
+    
     public Collection<Entry> getEntries(DN dn) {
         if (dn == null) return EMPTY_ENTRIES;
 
@@ -132,9 +179,13 @@ public class Directory implements Cloneable {
     }
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
+
+        boolean debug = log.isDebugEnabled();
+
         Collection<Entry> results = new ArrayList<Entry>();
 
         for (Entry entry : rootEntries) {
+            if (debug) log.debug("Searching under "+entry.getDn());
             Collection<Entry> list = entry.findEntries(dn);
             results.addAll(list);
         }

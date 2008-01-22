@@ -1,8 +1,9 @@
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +17,10 @@ public class SourceRef implements Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    private Entry entry;
     private Source source;
 
     private String alias;
+    private boolean primarySourceRef;
 
     Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
     Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
@@ -37,11 +38,11 @@ public class SourceRef implements Cloneable {
         this.source = source;
         this.alias = source.getName();
 
-        if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
+        //if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 
         for (Field field : source.getFields()) {
             String fieldName = field.getName();
-            if (debug) log.debug(" - field "+fieldName);
+            //if (debug) log.debug(" - field "+fieldName);
 
             FieldRef fieldRef = new FieldRef(this, field);
             fieldRefs.put(fieldName, fieldRef);
@@ -51,10 +52,12 @@ public class SourceRef implements Cloneable {
     }
 
     public SourceRef(Entry entry, Source source, SourceMapping sourceMapping) throws Exception {
-        this.entry = entry;
         this.source = source;
 
         this.alias = sourceMapping.getName();
+
+        String primarySourceName = entry.getPrimarySourceName();
+        this.primarySourceRef = alias.equals(primarySourceName);
 
         if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 
@@ -66,7 +69,7 @@ public class SourceRef implements Cloneable {
             Field field = source.getField(fieldName);
             if (field == null) throw new Exception("Unknown field: " + fieldName);
 
-            FieldRef fieldRef = new FieldRef(this, field, fieldMapping);
+            FieldRef fieldRef = new FieldRef(entry, this, field, fieldMapping);
             fieldRefs.put(fieldName, fieldRef);
 
             if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
@@ -135,7 +138,7 @@ public class SourceRef implements Cloneable {
     public String getParameter(String name) {
         return parameters.get(name);
     }
-    
+
     public void setParameters(Map<String, String> parameters) {
         this.parameters = parameters;
     }
@@ -180,22 +183,14 @@ public class SourceRef implements Cloneable {
         this.modrdn = modrdn;
     }
 
-    public Entry getEntry() {
-        return entry;
-    }
-
-    public void setEntry(Entry entry) {
-        this.entry = entry;
-    }
-
     public Object clone() throws CloneNotSupportedException {
 
         SourceRef sourceRef = (SourceRef)super.clone();
 
-        sourceRef.entry = entry;
         sourceRef.source = source;
 
         sourceRef.alias = alias;
+        sourceRef.primarySourceRef = primarySourceRef;
 
         sourceRef.fieldRefs = new LinkedHashMap<String,FieldRef>();
         sourceRef.primaryKeyFieldRefs = new ArrayList<FieldRef>();
@@ -218,5 +213,105 @@ public class SourceRef implements Cloneable {
         sourceRef.parameters.putAll(parameters);
 
         return sourceRef;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Add
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response
+    ) throws Exception {
+        source.add(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response
+    ) throws Exception {
+        source.bind(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Compare
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void compare(
+            Session session,
+            CompareRequest request,
+            CompareResponse response
+    ) throws Exception {
+        source.compare(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Delete
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void delete(
+            Session session,
+            DeleteRequest request,
+            DeleteResponse response
+    ) throws Exception {
+        source.delete(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Find
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SearchResult find(Session session, RDN rdn) throws Exception {
+        return source.find(session, rdn);
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modify
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response
+    ) throws Exception {
+        source.modify(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ModRdj
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void modRdn(
+            Session session,
+            ModRdnRequest request,
+            ModRdnResponse response
+    ) throws Exception {
+        source.modrdn(session, request, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void search(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+        source.search(session, request, response);
+    }
+
+    public boolean isPrimarySourceRef() {
+        return primarySourceRef;
+    }
+
+    public void setPrimarySourceRef(boolean primarySourceRef) {
+        this.primarySourceRef = primarySourceRef;
     }
 }

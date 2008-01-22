@@ -2,16 +2,32 @@ package org.safehaus.penrose.backend;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.session.*;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.ldap.BindRequest;
+import org.safehaus.penrose.ldap.BindResponse;
+import org.safehaus.penrose.ldap.CompareRequest;
+import org.safehaus.penrose.ldap.CompareResponse;
+import org.safehaus.penrose.ldap.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteResponse;
+import org.safehaus.penrose.ldap.Modification;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.ModifyResponse;
+import org.safehaus.penrose.ldap.ModRdnRequest;
+import org.safehaus.penrose.ldap.ModRdnResponse;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.UnbindRequest;
+import org.safehaus.penrose.ldap.UnbindResponse;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class PenroseSession implements com.identyx.javabackend.Session {
 
@@ -185,7 +201,7 @@ public class PenroseSession implements com.identyx.javabackend.Session {
 
     public void modify(
             com.identyx.javabackend.DN dn,
-            Collection modifications
+            Collection<com.identyx.javabackend.Modification> modifications
     ) throws Exception {
 
         log.debug("modify("+dn+")");
@@ -193,9 +209,9 @@ public class PenroseSession implements com.identyx.javabackend.Session {
         DN penroseDn = ((PenroseDN)dn).getDn();
 
         Collection<Modification> penroseModifications = new ArrayList<Modification>();
-        for (Iterator i=modifications.iterator(); i.hasNext(); ) {
-            PenroseModification modification = (PenroseModification)i.next();
-            penroseModifications.add(modification.getModification());
+        for (com.identyx.javabackend.Modification modification : modifications) {
+            PenroseModification penroseModification = (PenroseModification) modification;
+            penroseModifications.add(penroseModification.getModification());
         }
 
         session.modify(penroseDn, penroseModifications);

@@ -132,12 +132,14 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+<!--
         <copy todir="target/dist/config">
             <fileset dir="config" includes="**/*"/>
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
+-->
         <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
         <mkdir dir="target/dist/db"/>
         <copy todir="target/dist/docs">
@@ -150,7 +152,6 @@
             <fileset dir="../lib" includes="*"/>
         </copy>
         <mkdir dir="target/dist/lib/ext"/>
-        <mkdir dir="target/dist/locks"/>
         <mkdir dir="target/dist/logs"/>
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>

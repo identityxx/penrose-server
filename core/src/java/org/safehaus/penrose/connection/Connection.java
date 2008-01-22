@@ -19,17 +19,12 @@ package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.adapter.Adapter;
-import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.adapter.AdapterContext;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.source.SourceContext;
+import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.directory.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,16 +37,10 @@ import java.util.Map;
 public class Connection implements ConnectionMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected ConnectionConfig connectionConfig;
     protected ConnectionContext connectionContext;
-
-    protected AdapterConfig adapterConfig;
-    protected Adapter adapter;
-
-    protected Partition partition;
-    protected PenroseConfig penroseConfig;
-    protected PenroseContext penroseContext;
 
     public Connection() {
     }
@@ -62,33 +51,13 @@ public class Connection implements ConnectionMBean {
 
     public void init(
             ConnectionConfig connectionConfig,
-            ConnectionContext connectionContext,
-            AdapterConfig adapterConfig
+            ConnectionContext connectionContext
     ) throws Exception {
-
-        this.connectionConfig = connectionConfig;
-        this.connectionContext = connectionContext;
-
-        this.adapterConfig = adapterConfig;
-
-        partition = connectionContext.getPartition();
-        PartitionContext partitionContext = partition.getPartitionContext();
-
-        penroseConfig = partitionContext.getPenroseConfig();
-        penroseContext = partitionContext.getPenroseContext();
 
         log.debug("Starting "+connectionConfig.getName()+" connection.");
 
-        String adapterClass = adapterConfig.getAdapterClass();
-        ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(adapterClass);
-        adapter = (Adapter)clazz.newInstance();
-
-        AdapterContext adapterContext = new AdapterContext();
-        adapterContext.setPartition(partition);
-        adapterContext.setConnection(this);
-
-        adapter.init(adapterConfig, adapterContext);
+        this.connectionConfig = connectionConfig;
+        this.connectionContext = connectionContext;
 
         init();
     }
@@ -97,8 +66,14 @@ public class Connection implements ConnectionMBean {
     }
 
     public void destroy() throws Exception {
-        log.debug("Stopping "+connectionConfig.getName()+" connection.");
-        adapter.destroy();
+    }
+
+    public boolean isJoinSupported() {
+        return connectionContext.getAdapter().isJoinSupported();
+    }
+
+    public String getDescription() {
+        return connectionConfig.getDescription();
     }
 
     public ConnectionConfig getConnectionConfig() {
@@ -110,11 +85,7 @@ public class Connection implements ConnectionMBean {
     }
 
     public Adapter getAdapter() {
-        return adapter;
-    }
-
-    public void setAdapter(Adapter adapter) {
-        this.adapter = adapter;
+        return connectionContext.getAdapter();
     }
 
     public String getParameter(String name) {
@@ -137,6 +108,40 @@ public class Connection implements ConnectionMBean {
         return connectionConfig.getName();
     }
 
+    public Partition getPartition() {
+        return connectionContext.getPartition();
+    }
+
+    public Source createSource(SourceConfig sourceConfig) throws Exception {
+
+        Partition partition = connectionContext.getPartition();
+
+        SourceContext sourceContext = new SourceContext();
+        sourceContext.setPartition(partition);
+        sourceContext.setConnection(this);
+
+        PartitionContext partitionContext = partition.getPartitionContext();
+        ClassLoader cl = partitionContext.getClassLoader();
+
+        String className = sourceConfig.getSourceClass();
+
+        if (className == null) {
+            Adapter adapter = connectionContext.getAdapter();
+            className = adapter.getSourceClassName();
+        }
+
+        Class clazz = cl.loadClass(className);
+
+        Source source = (Source)clazz.newInstance();
+        source.init(sourceConfig, sourceContext);
+
+        return source;
+    }
+
+    public String getSourceClassName() throws Exception {
+        return Source.class.getName();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,24 +149,10 @@ public class Connection implements ConnectionMBean {
     public void add(
             Session session,
             Source source,
-            SourceValues sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
-
-        adapter.add(session, source, request, response);
-    }
-
-    public void add(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-
-        adapter.add(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,24 +162,10 @@ public class Connection implements ConnectionMBean {
     public void bind(
             Session session,
             Source source,
-            SourceValues sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
-
-        adapter.bind(session, source, request, response);
-    }
-
-    public void bind(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-
-        adapter.bind(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,24 +175,10 @@ public class Connection implements ConnectionMBean {
     public void compare(
             Session session,
             Source source,
-            SourceValues sourceValues,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
-
-        adapter.compare(session, source, request, response);
-    }
-
-    public void compare(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            CompareRequest request,
-            CompareResponse response
-    ) throws Exception {
-
-        adapter.compare(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,24 +188,10 @@ public class Connection implements ConnectionMBean {
     public void delete(
             Session session,
             Source source,
-            SourceValues sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
-
-        adapter.delete(session, source, request, response);
-    }
-
-    public void delete(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-
-        adapter.delete(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,24 +201,10 @@ public class Connection implements ConnectionMBean {
     public void modify(
             Session session,
             Source source,
-            SourceValues sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
-
-        adapter.modify(session, source, request, response);
-    }
-
-    public void modify(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-
-        adapter.modify(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -279,24 +214,10 @@ public class Connection implements ConnectionMBean {
     public void modrdn(
             Session session,
             Source source,
-            SourceValues sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
-
-        adapter.modrdn(session, source, request, response);
-    }
-
-    public void modrdn(
-            Session session,
-            Entry entry,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-
-        adapter.modrdn(session, entry, sourceRefs, sourceValues, request, response);
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,96 +227,9 @@ public class Connection implements ConnectionMBean {
     public void search(
             Session session,
             Source source,
-            SourceValues sourceValues,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
-
-        adapter.search(session, source, request, response);
-    }
-
-    public void search(
-            Session session,
-            Collection<SourceRef> primarySourceRefs,
-            Collection<SourceRef> localSourceRefs,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-
-        adapter.search(
-                session,
-                primarySourceRefs,
-                localSourceRefs,
-                sourceRefs,
-                sourceValues,
-                request,
-                response
-        );
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Table
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void create(Source source) throws Exception {
-        adapter.create(source);
-    }
-
-    public void rename(Source oldSource, Source newSource) throws Exception {
-        adapter.rename(oldSource, newSource);
-    }
-
-    public void drop(Source source) throws Exception {
-        adapter.drop(source);
-    }
-
-    public void clear(Source source) throws Exception {
-        adapter.clear(source);
-    }
-
-    public void status(Source source) throws Exception {
-        adapter.status(source);
-    }
-
-    public long getCount(Source source) throws Exception {
-        return adapter.getCount(source);
-    }
-
-    public Object openConnection() throws Exception {
-        return adapter.openConnection();
-    }
-
-    public AdapterConfig getAdapterConfig() {
-        return adapterConfig;
-    }
-
-    public void setAdapterConfig(AdapterConfig adapterConfig) {
-        this.adapterConfig = adapterConfig;
-    }
-
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
-    }
-
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
-    }
-
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
-    }
-
-    public Partition getPartition() {
-        return partition;
-    }
-
-    public void setPartition(Partition partition) {
-        this.partition = partition;
+        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 }

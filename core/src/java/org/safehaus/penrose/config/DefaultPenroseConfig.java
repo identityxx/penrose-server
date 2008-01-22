@@ -28,7 +28,7 @@ import org.safehaus.penrose.schema.SchemaConfig;
 public class DefaultPenroseConfig extends PenroseConfig {
 
     public DefaultPenroseConfig() {
-
+/*
         addSchemaConfig(new SchemaConfig("schema/autofs.schema"));
         addSchemaConfig(new SchemaConfig("schema/corba.schema"));
         addSchemaConfig(new SchemaConfig("schema/core.schema"));
@@ -41,7 +41,7 @@ public class DefaultPenroseConfig extends PenroseConfig {
         addSchemaConfig(new SchemaConfig("schema/nis.schema"));
         addSchemaConfig(new SchemaConfig("schema/system.schema"));
         addSchemaConfig(new SchemaConfig("schema/apachedns.schema"));
-
+*/
         addAdapterConfig(new AdapterConfig("JDBC", JDBCAdapter.class.getName()));
         addAdapterConfig(new AdapterConfig("LDAP", LDAPAdapter.class.getName()));
     }

@@ -20,7 +20,6 @@ package org.safehaus.penrose.util;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.Cipher;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.vps.crypt.Crypt;
@@ -43,7 +42,6 @@ public class PasswordUtil {
 
     protected final static boolean DEBUG = true;
 
-    public static Provider SECURITY_PROVIDER = new BouncyCastleProvider();
     public static String SALT_CHARACTERS =
             "abcdefghijklmnopqrstuvwxyz"+
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
@@ -58,14 +56,16 @@ public class PasswordUtil {
                 log.debug(" - "+provider.getName()+" "+provider.getVersion());
             }
 */
-
+/*
             Provider provider = Security.getProvider("BC");
             //log.debug("BouncyCastle: "+provider);
             if (provider == null) {
-                provider = SECURITY_PROVIDER;
+                Class clazz = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
+                provider = (Provider)clazz.newInstance();
                 //log.debug("Registering "+provider);
                 Security.addProvider(provider);
             }
+*/
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

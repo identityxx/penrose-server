@@ -193,7 +193,7 @@ public class SourceSync {
 
     public void synchronize() throws Exception {
         if (changeLog == null) {
-            update();
+            //update();
 
         } else {
             for (ChangeLogUtil changeLogUtil : changeLogUtils) {

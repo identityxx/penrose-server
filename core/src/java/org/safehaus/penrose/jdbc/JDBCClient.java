@@ -20,7 +20,7 @@ package org.safehaus.penrose.jdbc;
 import java.sql.*;
 import java.util.*;
 
-import org.safehaus.penrose.jdbc.adapter.JDBCStatementBuilder;
+import org.safehaus.penrose.jdbc.connection.JDBCStatementBuilder;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
@@ -43,6 +43,7 @@ public class JDBCClient {
     public final static String SCHEMA       = "schema";
     public final static String TABLE        = "table";
     public final static String FILTER       = "filter";
+    public final static String CREATE       = "create";
 
     public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
@@ -64,12 +65,13 @@ public class JDBCClient {
     public Properties properties = new Properties();
     public String quote;
 
-    Driver driver;
-    String url;
     Connection connection;
 
     public JDBCClient(Map<String,?> properties) throws Exception {
 
+        Driver driver = null;
+        String url = null;
+
         for (String key : properties.keySet()) {
             Object value = properties.get(key);
 
@@ -77,9 +79,9 @@ public class JDBCClient {
                 quote = (String)value;
 
             } else if (DRIVER.equals(key)) {
-                String driver = (String)properties.get(DRIVER);
-                Class clazz = Class.forName(driver);
-                this.driver = (Driver)clazz.newInstance();
+                String driverClass = (String)properties.get(DRIVER);
+                Class clazz = Class.forName(driverClass);
+                driver = (Driver)clazz.newInstance();
 
             } else if (URL.equals(key)) {
                 url = (String)properties.get(URL);
@@ -89,12 +91,12 @@ public class JDBCClient {
             }
         }
 
-        connection = this.driver.connect(url, this.properties);
+        connection = driver.connect(url, this.properties);
     }
 
     public JDBCClient(Driver driver, Map<String,?> properties) throws Exception {
 
-        this.driver = driver;
+        String url = null;
 
         for (String key : properties.keySet()) {
             Object value = properties.get(key);
@@ -112,25 +114,23 @@ public class JDBCClient {
             }
         }
 
-        connection = this.driver.connect(url, this.properties);
+        connection = driver.connect(url, this.properties);
     }
 
     public JDBCClient(
-            String driver,
+            String driverClass,
             String url,
             String username,
             String password
     ) throws Exception {
 
-        Class clazz = Class.forName(driver);
-        this.driver = (Driver)clazz.newInstance();
-
-        this.url = url;
+        Class clazz = Class.forName(driverClass);
+        Driver driver = (Driver)clazz.newInstance();
 
         properties.put(USER, username);
         properties.put(PASSWORD, password);
 
-        connection = this.driver.connect(url, this.properties);
+        connection = driver.connect(url, this.properties);
     }
 
     public JDBCClient(
@@ -140,20 +140,26 @@ public class JDBCClient {
             String password
     ) throws Exception {
 
-        this.driver = driver;
-        this.url = url;
-
         properties.put(USER, username);
         properties.put(PASSWORD, password);
 
-        connection = this.driver.connect(url, this.properties);
+        connection = driver.connect(url, this.properties);
     }
 
-    public JDBCClient(
-            Connection connection
-    ) throws Exception {
+    public JDBCClient(Connection connection, Map<String,?> properties) throws Exception {
 
         this.connection = connection;
+
+        for (String key : properties.keySet()) {
+            Object value = properties.get(key);
+
+            if (QUOTE.equals(key)) {
+                quote = (String)value;
+
+            } else {
+                this.properties.put(key, value);
+            }
+        }
     }
 
     public Connection getConnection() throws Exception {
@@ -478,6 +484,7 @@ public class JDBCClient {
             rs = ps.executeQuery();
 
             while (rs.next()) {
+                if (response.isClosed()) return;
                 response.add(rs);
             }
 
@@ -516,10 +523,6 @@ public class JDBCClient {
         executeUpdate("drop database "+database);
     }
 
-    public String getTableName(Source source)  {
-        return getTableName(source.getSourceConfig());
-    }
-
     public String getTableName(SourceConfig sourceConfig)  {
         StringBuilder sb = new StringBuilder();
 
@@ -547,10 +550,6 @@ public class JDBCClient {
         return sb.toString();
     }
 
-    public void createTable(Source source) throws Exception {
-        createTable(source.getSourceConfig());
-    }
-
     public void createTable(SourceConfig sourceConfig) throws Exception {
 
         StringBuilder sb = new StringBuilder();
@@ -570,30 +569,37 @@ public class JDBCClient {
 
             sb.append(fieldConfig.getName());
             sb.append(" ");
-            sb.append(fieldConfig.getType());
 
-            if (fieldConfig.getLength() > 0) {
-                sb.append("(");
-                sb.append(fieldConfig.getLength());
-                sb.append(")");
-            }
+            if (fieldConfig.getOriginalType() == null) {
 
-            if (fieldConfig.isCaseSensitive()) {
-                sb.append(" binary");
-            }
+                sb.append(fieldConfig.getType());
 
-            if (fieldConfig.isAutoIncrement()) {
-                sb.append(" auto_increment");
+                if (fieldConfig.getLength() > 0) {
+                    sb.append("(");
+                    sb.append(fieldConfig.getLength());
+                    sb.append(")");
+                }
+
+                if (fieldConfig.isCaseSensitive()) {
+                    sb.append(" binary");
+                }
+
+                if (fieldConfig.isAutoIncrement()) {
+                    sb.append(" auto_increment");
+                }
+
+            } else {
+                sb.append(fieldConfig.getOriginalType());
             }
         }
-
+/*
         Collection<String> indexFieldNames = sourceConfig.getIndexFieldNames();
         for (String fieldName : indexFieldNames) {
             sb.append(", index (");
             sb.append(fieldName);
             sb.append(")");
         }
-
+*/
         Collection<String> primaryKeyNames = sourceConfig.getPrimaryKeyNames();
         if (!primaryKeyNames.isEmpty()) {
             sb.append(", primary key (");
@@ -620,10 +626,6 @@ public class JDBCClient {
         executeUpdate(sql);
     }
 
-    public void renameTable(Source oldSource, Source newSource) throws Exception {
-        renameTable(oldSource.getSourceConfig(), newSource.getSourceConfig());
-    }
-
     public void renameTable(SourceConfig oldSourceConfig, SourceConfig newSourceConfig) throws Exception {
 
         StringBuilder sb = new StringBuilder();
@@ -638,10 +640,6 @@ public class JDBCClient {
         executeUpdate(sql);
     }
 
-    public void dropTable(Source source) throws Exception {
-        dropTable(source.getSourceConfig());
-    }
-
     public void dropTable(SourceConfig sourceConfig) throws Exception {
 
         StringBuilder sb = new StringBuilder();
@@ -654,10 +652,6 @@ public class JDBCClient {
         executeUpdate(sql);
     }
 
-    public void cleanTable(Source source) throws Exception {
-        cleanTable(source.getSourceConfig());
-    }
-
     public void cleanTable(SourceConfig sourceConfig) throws Exception {
 
         StringBuilder sb = new StringBuilder();
@@ -668,10 +662,6 @@ public class JDBCClient {
         String sql = sb.toString();
 
         executeUpdate(sql);
-    }
-
-    public void showStatus(final Source source) throws Exception {
-        showStatus(source.getSourceConfig());
     }
 
     public void showStatus(final SourceConfig sourceConfig) throws Exception {
@@ -731,10 +721,6 @@ public class JDBCClient {
         };
 
         executeQuery(sql, null, response);
-    }
-
-    public long getCount(final Source source) throws Exception {
-        return getCount(source.getSourceConfig());
     }
 
     public long getCount(final SourceConfig sourceConfig) throws Exception {

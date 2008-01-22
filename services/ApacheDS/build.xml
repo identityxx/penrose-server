@@ -105,6 +105,9 @@
             <fileset dir="../../server/target/dist/${service.dir}">
                 <include name="SERVICE-INF/service.xml"/>
             </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
     </target>
 

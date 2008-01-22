@@ -42,7 +42,7 @@ public class PenroseContext {
     private FilterEvaluator    filterEvaluator;
 
     private PartitionConfigs   partitionConfigs;
-    private Partitions         partitions;
+    private Partitions         partitions = new Partitions();
 
     private SessionContext     sessionContext;
 
@@ -111,7 +111,7 @@ public class PenroseContext {
         filterEvaluator.setSchemaManager(schemaManager);
 
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
-            schemaManager.init(home, schemaConfig);
+            schemaManager.init(schemaConfig);
         }
     }
 

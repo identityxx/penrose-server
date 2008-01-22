@@ -105,9 +105,12 @@ public class PenroseServer {
     }
 
     public void start() throws Exception {
+
+        log.debug("Starting Penrose Server...");
+
         penrose.start();
 
-        if (debug) log.debug("----------------------------------------------------------------------------------");
+        log.debug("----------------------------------------------------------------------------------");
 
         for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
 
@@ -118,9 +121,14 @@ public class PenroseServer {
                 errorLog.error(e.getMessage(), e);
             }
         }
+
+        log.fatal("Server is ready.");
     }
 
     public void stop() throws Exception {
+
+        log.debug("----------------------------------------------------------------------------------");
+        log.debug("Stopping Penrose Server...");
 
         for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
 
@@ -133,6 +141,8 @@ public class PenroseServer {
         }
 
         penrose.stop();
+
+        log.fatal("Server has been shutdown.");
     }
 
     public void startService(String serviceName) throws Exception {
@@ -341,15 +351,24 @@ public class PenroseServer {
 
             log.info("Penrose home: "+homeDirectory);
 
-            PenroseServer server = new PenroseServer(homeDirectory);
-            server.start();
+            final PenroseServer server = new PenroseServer(homeDirectory);
 
-            log.fatal("Server is ready.");
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    try {
+                        server.stop();
+                    } catch (Exception e) {
+                        errorLog.error(e.getMessage(), e);
+                    }
+                }
+            });
+
+            server.start();
 
         } catch (Exception e) {
             String name = e.getClass().getName();
             name = name.substring(name.lastIndexOf(".")+1);
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             log.error("Server failed to start: "+name+": "+e.getMessage());
             System.exit(1);
         }

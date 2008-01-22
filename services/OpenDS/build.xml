@@ -100,8 +100,15 @@
         <copy todir="${penrose.home}/${service.dir}">
             <fileset dir="../../server/target/dist/${service.dir}">
                 <include name="config/**/*"/>
+            </fileset>
+        </copy>
+        <copy todir="${penrose.home}/${service.dir}">
+            <fileset dir="../../server/target/dist/${service.dir}">
                 <include name="SERVICE-INF/service.xml"/>
             </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
     </target>
 

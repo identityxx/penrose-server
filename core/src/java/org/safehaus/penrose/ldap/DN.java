@@ -16,7 +16,7 @@ public class DN implements Serializable, Comparable {
     public DN parentDn;
 
     public String pattern;
-    public MessageFormat formatter;
+    public transient MessageFormat formatter;
     
     public DN() {
         rdns = new ArrayList<RDN>();
@@ -41,8 +41,9 @@ public class DN implements Serializable, Comparable {
     }
 
     public DN getDn(int start, int end) {
-        DNBuilder db = new DNBuilder();
+        parse();
 
+        DNBuilder db = new DNBuilder();
         for (int i=start; i<end; i++) {
             db.append(rdns.get(i));
         }
@@ -50,11 +51,35 @@ public class DN implements Serializable, Comparable {
         return db.toDn();
     }
 
+    public DN append(String dn) {
+        return append(new DN(dn));
+    }
+
+    public DN append(RDN rdn) {
+        return append(new DN(rdn));
+    }
+
     public DN append(DN dn) {
         DNBuilder db = new DNBuilder();
         db.append(this);
         db.append(dn);
         return db.toDn();
+    }
+
+    public DN getSuffix(int i) {
+        return getDn(i, getSize());
+    }
+
+    public DN getPrefix(int i) {
+        return getDn(0, i);
+    }
+
+    public DN getPrefix(String suffix) {
+        return getPrefix(new DN(suffix));
+    }
+
+    public DN getPrefix(DN suffix) {
+        return getPrefix(getSize() - suffix.getSize());
     }
 
     public String getPattern() {

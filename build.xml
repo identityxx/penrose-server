@@ -54,7 +54,7 @@
         <ant dir="server" target="docs"/>
     </target>
 
-    <target name="export" depends="build,docs">
+    <target name="export" depends="build">
         <mkdir dir="target"/>
         <tar destfile="target/${product.name}-bin.tar.gz" compression="gzip">
             <tarfileset dir="server/bin"/>
@@ -76,6 +76,9 @@
                 <exclude name="**/target/"/>
             </tarfileset>
         </tar>
+    </target>
+
+    <target name="export-all" depends="docs,export">
         <tar destfile="target/${product.name}-docs.tar.gz" compression="gzip">
             <tarfileset dir="core/target" includes="javadoc/**"/>
             <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>

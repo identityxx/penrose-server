@@ -4,11 +4,12 @@ import org.safehaus.penrose.control.Control;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Request implements Cloneable {
+public class Request implements Serializable, Cloneable {
 
     protected Collection<Control> controls = new ArrayList<Control>();
 

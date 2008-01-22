@@ -27,34 +27,48 @@ public class FilterProcessor {
     public FilterProcessor() {
     }
 
-    public void process(Filter filter) throws Exception {
+    public Filter process(Filter filter) throws Exception {
         Stack<Filter> path = new Stack<Filter>();
-        process(path, filter);
+        return process(path, filter);
     }
 
-    public void process(Stack<Filter> path, Filter filter) throws Exception {
+    public Filter process(Stack<Filter> path, Filter filter) throws Exception {
 
         if (filter instanceof AndFilter) {
             AndFilter af = (AndFilter)filter;
             path.push(af);
-            for (Filter f2 : af.getFilters()) {
-                process(path, f2);
+
+            for (int i=0; i<af.getSize(); i++) {
+                Filter oldFilter = af.getFilter(i);
+                Filter newFilter = process(path, oldFilter);
+                if (oldFilter != newFilter) af.setFilter(i, newFilter);
             }
+
             path.pop();
 
         } else if (filter instanceof OrFilter) {
-            OrFilter af = (OrFilter)filter;
-            path.push(af);
-            for (Filter f2 : af.getFilters()) {
-                process(path, f2);
+            OrFilter of = (OrFilter)filter;
+            path.push(of);
+
+            for (int i=0; i<of.getSize(); i++) {
+                Filter oldFilter = of.getFilter(i);
+                Filter newFilter = process(path, oldFilter);
+                if (oldFilter != newFilter) of.setFilter(i, newFilter);
             }
+
             path.pop();
 
         } else if (filter instanceof NotFilter) {
             NotFilter nf = (NotFilter)filter;
             path.push(nf);
-            process(path, nf.getFilter());
+
+            Filter oldFilter = nf.getFilter();
+            Filter newFilter = process(path, oldFilter);
+            if (oldFilter != newFilter) nf.setFilter(newFilter);
+
             path.pop();
         }
+
+        return filter;
     }
 }

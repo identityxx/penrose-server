@@ -18,12 +18,12 @@
 package org.safehaus.penrose.filter;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collection;
+import java.util.List;
 
-public class OrFilter extends Filter {
+public class OrFilter extends Filter implements ContainerFilter {
 
-	Collection<Filter> filters = new ArrayList<Filter>();
+	List<Filter> filters = new ArrayList<Filter>();
 
 	public OrFilter() {
 	}
@@ -35,13 +35,61 @@ public class OrFilter extends Filter {
 	public void addFilter(Filter filter) {
         if (filter == null) return;
 		this.filters.add(filter);
-	}
+        filter.setParent(this);
+    }
 
-    public boolean containsFilter(Filter filter) {
+    public void setFilter(int i, Filter filter) {
+        if (filter == null) return;
+		this.filters.set(i, filter);
+        filter.setParent(this);
+    }
+
+    public Filter getFilter(int i) {
+        return filters.get(i);
+    }
+    
+    public boolean contains(Filter filter) {
         return filters.contains(filter);
     }
 
-    public int size() {
+    public void replace(Filter oldFilter, Filter newFilter) {
+        int i = filters.indexOf(oldFilter);
+        if (i < 0) return;
+
+        if (newFilter == null) {
+            filters.remove(i);
+
+            if (filters.size() == 1) {
+                parent.replace(this, filters.get(0));
+
+            } else if (filters.isEmpty()) {
+                parent.replace(this, null);
+            }
+            
+        } else if (newFilter instanceof BooleanFilter) {
+            BooleanFilter bf = (BooleanFilter)newFilter;
+
+            if (bf.getValue()) {
+                parent.replace(this, bf);
+
+            } else {
+                filters.remove(i);
+
+                if (filters.size() == 1) {
+                    parent.replace(this, filters.get(0));
+
+                } else if (filters.isEmpty()) {
+                    parent.replace(this, bf);
+                }
+            }
+
+        } else {
+            filters.set(i, newFilter);
+            newFilter.setParent(this);
+        }
+    }
+
+    public int getSize() {
         return filters.size();
     }
 
@@ -74,4 +122,25 @@ public class OrFilter extends Filter {
         sb.append(")");
 		return sb.toString();
 	}
+
+    public String toString(Collection<Object> args) {
+        StringBuilder sb = new StringBuilder("(|");
+        for (Filter filter : filters) {
+            sb.append(filter.toString(args));
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        OrFilter newFilter = (OrFilter)super.clone();
+
+        newFilter.filters = new ArrayList<Filter>();
+
+        for (Filter filter : filters) {
+            newFilter.addFilter((Filter)filter.clone());
+        }
+
+        return newFilter;
+    }
 }

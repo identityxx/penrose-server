@@ -17,12 +17,15 @@
  */
 package org.safehaus.penrose.ldap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class SearchResponse extends Response {
+public class SearchResponse extends Response implements Cloneable {
 
     protected LinkedList<SearchResult> buffer = new LinkedList<SearchResult>();
 
@@ -32,90 +35,116 @@ public class SearchResponse extends Response {
     protected boolean closed = false;
 
     protected boolean eventsEnabled = true;
-    protected List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
+    protected transient List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
     protected List<Object> referrals = new ArrayList<Object>();
-    protected Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
+    protected transient Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
 
     public SearchResponse() {
     }
 
     public void addListener(SearchResponseListener listener) {
-        listeners.add(0, listener);
+        if (listeners != null) listeners.add(0, listener);
     }
 
     public void removeListener(SearchResponseListener listener) {
-        listeners.remove(listener);
+        if (listeners != null) listeners.remove(listener);
     }
 
     public boolean firePreAddEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            boolean result = listener.preAdd(event);
-            if (!result) return false;
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                boolean result = listener.preAdd(event);
+                if (!result) return false;
+            }
         }
 
         return true;
     }
 
     public void firePostAddEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            listener.postAdd(event);
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                listener.postAdd(event);
+            }
         }
     }
 
     public boolean firePreRemoveEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            boolean result = listener.preRemove(event);
-            if (!result) return false;
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                boolean result = listener.preRemove(event);
+                if (!result) return false;
+            }
         }
 
         return true;
     }
 
     public void firePostRemoveEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            listener.postRemove(event);
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                listener.postRemove(event);
+            }
         }
     }
 
     public boolean firePreCloseEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            boolean result = listener.preClose(event);
-            if (!result) return false;
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                boolean result = listener.preClose(event);
+                if (!result) return false;
+            }
         }
 
         return true;
     }
 
     public void firePostCloseEvent(final SearchResponseEvent event) throws Exception {
-        for (SearchResponseListener listener : listeners) {
-            listener.postClose(event);
+        if (listeners != null) {
+            for (SearchResponseListener listener : listeners) {
+                listener.postClose(event);
+            }
         }
     }
 
     public void addReferralListener(ReferralListener listener) {
-        referralListeners.add(listener);
+        if (referralListeners != null) referralListeners.add(listener);
     }
 
     public void removeReferralListener(ReferralListener listener) {
-        referralListeners.remove(listener);
+        if (referralListeners != null) referralListeners.remove(listener);
     }
 
     public void fireEvent(final ReferralEvent event) {
-        for (ReferralListener listener : referralListeners) {
-            switch (event.getType()) {
-                case ReferralEvent.REFERRAL_ADDED:
-                    listener.referralAdded(event);
-                    break;
-                case ReferralEvent.REFERRAL_REMOVED:
-                    listener.referralRemoved(event);
-                    break;
+        if (referralListeners != null) {
+            for (ReferralListener listener : referralListeners) {
+                switch (event.getType()) {
+                    case ReferralEvent.REFERRAL_ADDED:
+                        listener.referralAdded(event);
+                        break;
+                    case ReferralEvent.REFERRAL_REMOVED:
+                        listener.referralRemoved(event);
+                        break;
+                }
+            }
+        }
+    }
+
+    public synchronized void waitFor() {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (!isClosed()) {
+            try {
+                wait();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
     }
 
     public synchronized int getReturnCode() {
-        while (!closed) {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (!isClosed()) {
             try {
                 wait();
             } catch (Exception e) {
@@ -127,7 +156,8 @@ public class SearchResponse extends Response {
     }
 
     public synchronized Collection<SearchResult> getAll() {
-        while (!closed) {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (!isClosed()) {
             try {
                 wait();
             } catch (Exception e) {
@@ -159,7 +189,8 @@ public class SearchResponse extends Response {
             throw exception;
         }
 
-        while (!closed && bufferSize > 0 && buffer.size() >= bufferSize) {
+        while (!isClosed() && bufferSize > 0 && buffer.size() >= bufferSize) {
+            Logger log = LoggerFactory.getLogger(getClass());
             try {
                 log.debug("Buffer full (size: "+bufferSize+").");
                 wait();
@@ -193,7 +224,8 @@ public class SearchResponse extends Response {
     }
 
     public synchronized boolean hasNext() throws Exception {
-        while (!closed && buffer.size() == 0) {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (!isClosed() && buffer.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
@@ -206,7 +238,8 @@ public class SearchResponse extends Response {
     }
 
     public synchronized SearchResult next() throws Exception {
-        while (!closed && buffer.size() == 0) {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (!isClosed() && buffer.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
@@ -253,6 +286,10 @@ public class SearchResponse extends Response {
         notifyAll();
     }
 
+    public boolean isClosed() {
+        return closed;
+    }
+
     public long getTotalCount() {
         return totalCount;
     }
@@ -279,5 +316,37 @@ public class SearchResponse extends Response {
 
     public void setBufferSize(long bufferSize) {
         this.bufferSize = bufferSize;
+    }
+
+    public void copy(SearchResponse response) {
+        super.copy(response);
+
+        buffer = new LinkedList<SearchResult>();
+        buffer.addAll(response.buffer);
+
+        bufferSize = response.bufferSize;
+        sizeLimit = response.sizeLimit;
+        totalCount = response.totalCount;
+        closed = response.closed;
+
+        eventsEnabled = response.eventsEnabled;
+        if (response.listeners != null) {
+            listeners = new ArrayList<SearchResponseListener>();
+            listeners.addAll(response.listeners);
+        }
+
+        referrals = new ArrayList<Object>();
+        referrals.addAll(response.referrals);
+
+        if (response.referralListeners != null) {
+            referralListeners = new ArrayList<ReferralListener>();
+            referralListeners.addAll(response.referralListeners);
+        }
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SearchResponse response = (SearchResponse)super.clone();
+        response.copy(this);
+        return response;
     }
 }

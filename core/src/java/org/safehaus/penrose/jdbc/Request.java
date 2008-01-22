@@ -1,11 +1,11 @@
 package org.safehaus.penrose.jdbc;
 
-import java.util.Collection;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Request {
+public class Request implements Serializable, Cloneable {
 
     protected Statement statement;
 
@@ -15,5 +15,9 @@ public class Request {
 
     public void setStatement(Statement statement) {
         this.statement = statement;
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

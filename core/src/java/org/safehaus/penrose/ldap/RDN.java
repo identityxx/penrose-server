@@ -54,7 +54,7 @@ public class RDN implements Serializable, Comparable {
     public boolean isEmpty() {
         return values.isEmpty();
     }
-    
+
     public Object get(String name) {
         return values.get(name);
     }
@@ -73,37 +73,45 @@ public class RDN implements Serializable, Comparable {
 
     public String getOriginal() {
         if (original != null) return original;
+        original = buildString(false);
+        return original;
+    }
 
+    public String getNormalized() {
+        if (normalized != null) return normalized;
+        normalized = buildString(true);
+        return normalized;
+    }
+
+    private String buildString(boolean normalize) {
         StringBuilder sb = new StringBuilder();
         for (String name : values.keySet()) {
             Object value = values.get(name);
             if (value == null) continue;
 
             if (sb.length() > 0) sb.append('+');
-            sb.append(name);
+            sb.append(normalize ? name.toLowerCase() : name);
             sb.append('=');
-            sb.append(LDAP.escape(value.toString()));
+            if (value instanceof byte[]) {
+                sb.append('#');
+                byte[] bytes = (byte[]) value;
+                for (byte b : bytes) {
+                    sb.append(hex((char)b));
+                }
+            } else {
+                sb.append(LDAP.escape(normalize ? value.toString().toLowerCase() : value.toString()));
+            }
         }
 
-        original = sb.toString();
-        return original;
+        return sb.toString();
     }
 
-    public String getNormalized() {
-        if (normalized != null) return normalized;
-
-        StringBuilder sb = new StringBuilder();
-        for (String name : values.keySet()) {
-            Object value = values.get(name);
-
-            if (sb.length() > 0) sb.append('+');
-            sb.append(name.toLowerCase());
-            sb.append('=');
-            sb.append(LDAP.escape(value.toString().toLowerCase()));
+    private static String hex(char b) {
+        String hex = Integer.toHexString(b);
+        if (hex.length() % 2 == 1) {
+            hex = "0" + hex;
         }
-
-        normalized = sb.toString();
-        return normalized;
+        return hex;
     }
 
     public int hashCode() {

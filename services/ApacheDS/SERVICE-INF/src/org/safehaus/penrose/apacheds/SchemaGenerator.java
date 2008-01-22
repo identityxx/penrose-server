@@ -23,6 +23,7 @@ import org.apache.maven.embedder.MavenEmbedderConsoleLogger;
 import org.apache.maven.project.MavenProject;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.safehaus.penrose.util.ReaderThread;
 
 import java.io.*;
 import java.util.jar.JarOutputStream;
@@ -195,33 +196,17 @@ public class SchemaGenerator {
         System.out.println();
 
         Runtime runtime = Runtime.getRuntime();
-        final Process process = runtime.exec(command);
+        Process process = runtime.exec(command);
 
-        new Thread() {
-            public void run() {
-                try {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                    String line;
-                    while ((line = in.readLine()) != null) System.out.println(line);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
+        new ReaderThread(process.getInputStream(), System.out).start();
+        new ReaderThread(process.getErrorStream(), System.err).start();
 
-        new Thread() {
-            public void run() {
-                try {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    String line;
-                    while ((line = in.readLine()) != null) System.out.println(line);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(process.getOutputStream()), true);
 
         int rc = process.waitFor();
+
+        out.close();
+
         if (rc != 0) {
             System.out.println("Error: rc="+rc);
             System.exit(rc);

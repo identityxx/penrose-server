@@ -40,6 +40,7 @@ public class Module implements
 {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean warn = log.isWarnEnabled();
     public boolean debug = log.isDebugEnabled();
 
     public ModuleConfig moduleConfig;
@@ -49,6 +50,10 @@ public class Module implements
 
     public String getName() {
         return moduleConfig.getName();
+    }
+
+    public String getDescription() {
+        return moduleConfig.getDescription();
     }
     
     public String getParameter(String name) {

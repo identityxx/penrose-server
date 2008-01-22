@@ -10,18 +10,17 @@ import org.safehaus.penrose.filter.AndFilter;
 import org.safehaus.penrose.filter.NotFilter;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
-import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.jdbc.QueryResponse;
+import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.interpreter.Interpreter;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.ArrayList;
+import java.util.*;
 import java.sql.Timestamp;
 import java.sql.ResultSet;
 
@@ -53,7 +52,7 @@ public class LDAPSyncJob extends Job {
     }
 
     public void execute() throws Exception {
-        synchronize();
+         synchronize();
     }
 
     public void create() throws Exception {
@@ -81,8 +80,11 @@ public class LDAPSyncJob extends Job {
     }
 
     public void create(Entry entry) throws Exception {
-        DN dn = entry.getDn();
-        Attributes attributes = entry.getAttributes();
+
+        Interpreter interpreter = partition.newInterpreter();
+
+        DN dn = entry.computeDn(interpreter);
+        Attributes attributes = entry.computeAttributes(interpreter);
 
         try {
             log.debug("Adding "+dn);
@@ -324,7 +326,62 @@ public class LDAPSyncJob extends Job {
             }
         }
     }
+/*
+    public void synchronize(final DN baseDn) throws Exception {
+        if (source == null) throw new Exception("Source not defined.");
 
+        SearchRequest request = new SearchRequest();
+        request.setDn(baseDn);
+
+        SearchResponse response = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+
+                DN dn = result.getDn();
+                if (baseDn.equals(dn)) return;
+
+                Attributes attributes = result.getAttributes();
+
+                try {
+                    log.debug("Adding "+dn);
+                    target.add(dn, attributes);
+
+                } catch (Throwable e) {
+
+                    if (errors == null) {
+                        throw new Exception(e);
+
+                    } else {
+
+                        Attributes attrs = new Attributes();
+                        attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                        attrs.setValue("title", "Error loading "+dn);
+
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("The following entry cannot be loaded:\n\n");
+
+                        sb.append("dn: ");
+                        sb.append(dn);
+                        sb.append("\n");
+                        sb.append(attributes);
+                        sb.append("\n\n");
+
+                        StringWriter sw = new StringWriter();
+                        e.printStackTrace(new PrintWriter(sw, true));
+
+                        sb.append("Exception:\n");
+                        sb.append(sw);
+
+                        attrs.setValue("description", sb.toString());
+
+                        errors.add(new DN(), attrs);
+                    }
+                }
+            }
+        };
+
+        source.search(request, response);
+    }
+*/
     public void synchronize() throws Exception {
 
         Long changeNumber = getLastChangeNumber();
@@ -392,8 +449,7 @@ public class LDAPSyncJob extends Job {
     public Long getLastChangeNumber() throws Exception {
 
         Connection connection = tracker.getConnection();
-        JDBCAdapter adapter = (JDBCAdapter)connection.getAdapter();
-        JDBCClient client = adapter.getClient();
+        JDBCConnection adapter = (JDBCConnection)connection;
 
         QueryResponse response = new QueryResponse() {
             public void add(Object object) throws Exception {
@@ -402,7 +458,7 @@ public class LDAPSyncJob extends Job {
             }
         };
 
-        client.executeQuery("select max(changeNumber) from "+client.getTableName(tracker), response);
+        adapter.executeQuery("select max(changeNumber) from "+adapter.getTableName(tracker), response);
 
         if (!response.hasNext()) return null;
 
@@ -634,5 +690,313 @@ public class LDAPSyncJob extends Job {
         }
 
         return modifications;
+    }
+
+    public void synchronize(DN dn) throws Exception {
+
+        final Collection<DN> results1 = new TreeSet<DN>();
+        final Collection<DN> results2 = new TreeSet<DN>();
+
+        SearchRequest request1 = new SearchRequest();
+        request1.setDn(dn);
+        request1.setAttributes(new String[] { "dn" });
+
+        SearchResponse response1 = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                results1.add(result.getDn());
+            }
+        };
+
+        target.search(request1, response1);
+
+        SearchRequest request2 = new SearchRequest();
+        request2.setDn(dn);
+        request2.setAttributes(new String[] { "dn" });
+
+        SearchResponse response2 = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                results2.add(result.getDn());
+            }
+        };
+
+        source.search(request2, response2);
+
+        log.debug("Target:");
+        for (DN d : results2) {
+            log.debug(" - "+d);
+        }
+
+        log.debug("Source:");
+        for (DN d : results1) {
+            log.debug(" - "+d);
+        }
+
+        Iterator<DN> i1 = results1.iterator();
+        Iterator<DN> i2 = results2.iterator();
+
+        boolean b1 = i1.hasNext();
+        boolean b2 = i2.hasNext();
+
+        DN dn1 = b1 ? i1.next() : null;
+        DN dn2 = b2 ? i2.next() : null;
+
+        while (b1 && b2) {
+
+            int c = dn1.compareTo(dn2);
+
+            if (debug) log.debug("Comparing ["+dn1+"] with ["+dn2+"] => "+c);
+
+            if (c < 0) { // delete old entry
+                DeleteRequest request = new DeleteRequest();
+                request.setDn(dn1);
+                execute(request);
+
+                b1 = i1.hasNext();
+                if (b1) dn1 = i1.next();
+
+            } else if (c > 0) { // add new entry
+                SearchResult result2 = source.find(dn2);
+
+                AddRequest request = new AddRequest();
+                request.setDn(dn2);
+                request.setAttributes(result2.getAttributes());
+                execute(request);
+
+                b2 = i2.hasNext();
+                if (b2) dn2 = i2.next();
+
+            } else {
+                SearchResult result1 = target.find(dn1);
+                SearchResult result2 = source.find(dn2);
+
+                Collection<Modification> modifications = createModifications(
+                        result1.getAttributes(),
+                        result2.getAttributes()
+                );
+
+                if (!modifications.isEmpty()) { // modify entry
+                    ModifyRequest request = new ModifyRequest();
+                    request.setDn(dn1);
+                    request.setModifications(modifications);
+                    execute(request);
+                }
+
+                b1 = i1.hasNext();
+                if (b1) dn1 = i1.next();
+
+                b2 = i2.hasNext();
+                if (b2) dn2 = i2.next();
+            }
+        }
+
+        while (b1) { // delete old entries
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(dn1);
+            execute(request);
+
+            b1 = i1.hasNext();
+            if (b1) dn1 = i1.next();
+        }
+
+        while (b2) { // add new entries
+            SearchResult result2 = source.find(dn2);
+
+            AddRequest request = new AddRequest();
+            request.setDn(dn2);
+            request.setAttributes(result2.getAttributes());
+            execute(request);
+
+            b2 = i2.hasNext();
+            if (b2) dn2 = i2.next();
+        }
+    }
+
+    public Collection<Modification> createModifications(
+            Attributes attributes1,
+            Attributes attributes2
+    ) throws Exception {
+
+        Collection<Modification> modifications = new ArrayList<Modification>();
+
+        Collection<String> oldAttributes = new ArrayList<String>();
+        oldAttributes.addAll(attributes1.getNormalizedNames());
+        oldAttributes.removeAll(attributes2.getNormalizedNames());
+
+        for (String name : oldAttributes) {
+            Attribute oldAttribute = attributes1.get(name);
+            modifications.add(new Modification(Modification.DELETE, oldAttribute));
+        }
+
+        Collection<String> newAttributes = new ArrayList<String>();
+        newAttributes.addAll(attributes2.getNormalizedNames());
+        newAttributes.removeAll(attributes1.getNormalizedNames());
+
+        for (String name : newAttributes) {
+            Attribute newAttribute = attributes2.get(name);
+            modifications.add(new Modification(Modification.ADD, newAttribute));
+        }
+
+        for (Attribute attribute1 : attributes1.getAll()) {
+            Attribute attribute2 = attributes2.get(attribute1.getName());
+            if (attribute2 == null) continue;
+
+            Collection<Modification> mods = createModifications(
+                    attribute1,
+                    attribute2
+            );
+
+            if (mods.isEmpty()) continue;
+
+            modifications.addAll(mods);
+        }
+
+        return modifications;
+    }
+
+    public Collection<Modification> createModifications(
+            Attribute attribute1,
+            Attribute attribute2
+    ) throws Exception {
+        Collection<Modification> modifications = new ArrayList<Modification>();
+
+        Attribute oldAttribute = (Attribute)attribute1.clone();
+        oldAttribute.removeValues(attribute2.getValues());
+
+        if (!oldAttribute.isEmpty()) {
+            modifications.add(new Modification(Modification.DELETE, oldAttribute));
+        }
+
+        Attribute newAttribute = (Attribute)attribute2.clone();
+        newAttribute.removeValues(attribute1.getValues());
+
+        if (!newAttribute.isEmpty()) {
+            modifications.add(new Modification(Modification.ADD, newAttribute));
+        }
+
+        return modifications;
+    }
+
+    public void execute(AddRequest request) throws Exception {
+
+        try {
+            AddResponse response = new AddResponse();
+            target.add(request, response);
+
+        } catch (Throwable e) {
+
+            String title = "Error creating "+request.getDn();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("The following operation failed:\n\n");
+
+            sb.append(request);
+            sb.append("\n");
+
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw, true));
+
+            sb.append("Exception:\n");
+            sb.append(sw);
+
+            String description = sb.toString();
+
+            recordException(e, title, description);
+        }
+    }
+
+    public void execute(ModifyRequest request) throws Exception {
+
+        try {
+            ModifyResponse response = new ModifyResponse();
+            target.modify(request, response);
+
+        } catch (Throwable e) {
+
+            String title = "Error modifying "+request.getDn();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("The following operation failed:\n\n");
+
+            sb.append(request);
+            sb.append("\n");
+
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw, true));
+
+            sb.append("Exception:\n");
+            sb.append(sw);
+
+            String description = sb.toString();
+
+            recordException(e, title, description);
+        }
+    }
+
+    public void execute(ModRdnRequest request) throws Exception {
+
+        try {
+            ModRdnResponse response = new ModRdnResponse();
+            target.modrdn(request, response);
+
+        } catch (Throwable e) {
+
+            String title = "Error renaming "+request.getDn();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("The following operation failed:\n\n");
+
+            sb.append(request);
+            sb.append("\n");
+
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw, true));
+
+            sb.append("Exception:\n");
+            sb.append(sw);
+
+            String description = sb.toString();
+
+            recordException(e, title, description);
+        }
+    }
+
+    public void execute(DeleteRequest request) throws Exception {
+
+        try {
+            DeleteResponse response = new DeleteResponse();
+            target.delete(request, response);
+
+        } catch (Throwable e) {
+
+            String title = "Error deleting "+request.getDn();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("The following operation failed:\n\n");
+
+            sb.append(request);
+            sb.append("\n");
+
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw, true));
+
+            sb.append("Exception:\n");
+            sb.append(sw);
+
+            String description = sb.toString();
+
+            recordException(e, title, description);
+        }
+    }
+
+    public void recordException(Throwable t, String title, String description) throws Exception {
+
+        if (errors == null) throw new Exception(t);
+
+        Attributes attrs = new Attributes();
+        attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+        attrs.setValue("title", title);
+        attrs.setValue("description", description);
+
+        errors.add(new DN(), attrs);
     }
 }

@@ -6,11 +6,9 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceSync;
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.mapping.SourceMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.engine.Engine;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -129,7 +127,11 @@ public class Partitions implements PartitionsMBean {
         }
 
         if (debug) {
-            log.debug("Found "+p.getName()+" partition.");
+            if (p == null) {
+                log.debug("Partition not found.");
+            } else {
+                log.debug("Found "+p.getName()+" partition.");
+            }
         }
 
         return p;

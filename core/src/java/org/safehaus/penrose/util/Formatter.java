@@ -48,6 +48,12 @@ public class Formatter {
         return "| "+rightPad(string, length-4)+" |";
     }
 
+    public static String leftPad(String s, int length) {
+        if (s == null) s = "";
+        if (s.length() > length) return s.substring(0, length);
+        return repeat(" ", length-s.length())+s;
+    }
+
     public static String rightPad(String s, int length) {
         if (s == null) s = "";
         if (s.length() > length) return s.substring(0, length);

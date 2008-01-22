@@ -77,7 +77,7 @@ public class FilterEvaluator {
             String value = object.toString();
 
             boolean b = substringsMatchingRule.compare(value, substrings);
-            log.debug("Compare [" + value + "] with [" + substrings + "] => " + b);
+            log.debug("Compare [" + value + "] with " + substrings + " => " + b);
 
             if (b) return true;
         }

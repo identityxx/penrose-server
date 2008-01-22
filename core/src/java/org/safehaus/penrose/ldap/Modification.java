@@ -1,9 +1,11 @@
 package org.safehaus.penrose.ldap;
 
+import java.io.Serializable;
+
 /**
  * @author Endi S. Dewata
  */
-public class Modification implements Cloneable {
+public class Modification implements Serializable, Cloneable {
 
     public final static int ADD     = 1;
     public final static int REPLACE = 2;

@@ -17,16 +17,18 @@
  */
 package org.safehaus.penrose.filter;
 
+import java.util.Collection;
+
 public class ExtensibleFilter extends ItemFilter {
 
 	String attribute;
 	String matchingRule;
-	String value;
+	Object value;
 	
 	public ExtensibleFilter() {
 	}
 	
-	public ExtensibleFilter(String attr, String matchingRule, String value) {
+	public ExtensibleFilter(String attr, String matchingRule, Object value) {
 		this.attribute = attr;
 		this.matchingRule = matchingRule;
 		this.value = value;
@@ -48,11 +50,11 @@ public class ExtensibleFilter extends ItemFilter {
 		this.matchingRule = matchingRule;
 	}
 
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 
@@ -82,7 +84,42 @@ public class ExtensibleFilter extends ItemFilter {
     }
 	
 	public String toString() {
-		return "(" + (attribute != null ? attribute : "") +
-		":dn:" + matchingRule + ":=" + value + ")";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("(");
+        if (attribute != null) sb.append(attribute);
+        sb.append(":dn:");
+        sb.append(matchingRule);
+        sb.append(":={");
+        sb.append(value);
+        sb.append("})");
+
+        return sb.toString();
 	}
+
+    public String toString(Collection<Object> args) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("(");
+        if (attribute != null) sb.append(attribute);
+        sb.append(":dn:");
+        sb.append(matchingRule);
+        sb.append(":={");
+        sb.append(args.size());
+        sb.append("})");
+
+        args.add(value);
+
+        return sb.toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        ExtensibleFilter filter = (ExtensibleFilter)super.clone();
+
+        filter.attribute = attribute;
+        filter.matchingRule = matchingRule;
+        filter.value = value;
+
+        return filter;
+    }
 }

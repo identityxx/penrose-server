@@ -38,7 +38,7 @@ public class PenroseFactory {
         if (instance == null) {
 
             String factoryClassName = PenroseFactory.class.getName();
-/*
+
             try {
                 ClassLoader cl = PenroseFactory.class.getClassLoader();
                 URL url = cl.getResource("org/safehaus/penrose/penrose.properties");
@@ -53,7 +53,7 @@ public class PenroseFactory {
             } catch (Exception e) {
                 // ignore
             }
-*/
+
             //log.debug("Initializing "+factoryClassName);
             Class clazz = Class.forName(factoryClassName);
             instance = (PenroseFactory)clazz.newInstance();

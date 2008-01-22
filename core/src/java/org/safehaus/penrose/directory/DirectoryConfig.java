@@ -2,7 +2,6 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

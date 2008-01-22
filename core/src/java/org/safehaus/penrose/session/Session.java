@@ -44,6 +44,7 @@ import java.util.*;
 public class Session {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean warn = log.isWarnEnabled();
     public boolean debug = log.isDebugEnabled();
 
     public final static String EVENTS_ENABLED              = "eventsEnabled";
@@ -69,6 +70,8 @@ public class Session {
     protected boolean eventsEnabled = true;
     protected long bufferSize;
 
+    private Collection<SessionListener> listeners = new ArrayList<SessionListener>();
+
     public Session(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
 
@@ -77,6 +80,9 @@ public class Session {
     }
 
     public void init() {
+
+        if (warn) log.warn("Creating session "+sessionId+".");
+
         String s = penroseConfig.getProperty(EVENTS_ENABLED);
         eventsEnabled = s == null || Boolean.valueOf(s);
 
@@ -105,7 +111,8 @@ public class Session {
     }
 
     public boolean isValid() {
-        return !sessionManager.isExpired(this) || sessionManager.isValid(this);
+        //return !sessionManager.isExpired(this) || sessionManager.isValid(this);
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,20 +159,24 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
             
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
-                log.debug(" - Bind DN : "+bindDn);
+                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Entry   : "+request.getDn());
                 log.debug("");
 
-                log.debug("Controls: "+request.getControls());
-            }
+                log.debug("Attributes:");
+                request.getAttributes().print();
+                log.debug("");
 
+                log.debug("Controls: "+request.getControls());
+                log.debug("");
+            }
 
             if (eventsEnabled) {
             	AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, partition, request, response);
@@ -253,7 +264,7 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
@@ -378,14 +389,14 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
-                log.debug(" - Bind DN         : "+bindDn);
+                log.debug(" - Bind DN         : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN              : "+request.getDn());
                 log.debug(" - Attribute Name  : "+request.getAttributeName());
 
@@ -477,14 +488,14 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
-                log.debug(" - Bind DN : "+bindDn);
+                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN      : "+request.getDn());
                 log.debug("");
 
@@ -564,16 +575,18 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
-                log.debug(" - Bind DN    : "+bindDn);
+                log.debug(" - Bind DN    : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN         : "+request.getDn());
-                log.debug(" - Attributes : ");
+                log.debug("");
+
+                log.debug("Modifications:");
 
                 Collection<Modification> modifications = request.getModifications();
 
@@ -663,14 +676,14 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
-                log.debug(" - Bind DN        : "+bindDn);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+request.getDn());
                 log.debug(" - New RDN        : "+request.getNewRdn());
                 log.debug(" - Delete old RDN : "+request.getDeleteOldRdn());
@@ -777,14 +790,14 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
-                log.debug(" - Bind DN    : "+bindDn);
+                log.debug(" - Bind DN    : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Base DN    : "+request.getDn());
                 log.debug(" - Scope      : "+LDAP.getScope(request.getScope()));
                 log.debug(" - Filter     : "+request.getFilter());
@@ -875,14 +888,14 @@ public class Session {
         try {
             Access.log(this, request);
 
-            if (!isValid()) throw new Exception("Invalid session.");
+            //if (!isValid()) throw new Exception("Invalid session.");
 
             lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("UNBIND:");
-                log.debug(" - Bind DN: "+bindDn);
+                log.debug(" - Bind DN: "+(bindDn == null ? "" : bindDn));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
@@ -927,8 +940,15 @@ public class Session {
         }
     }
 
-    public void close() {
-        sessionManager.closeSession(this);
+    public void close() throws Exception {
+
+        if (warn) log.warn("Closing session "+sessionId+".");
+
+        for (SessionListener listener : listeners) {
+            listener.sessionClosed();
+        }
+
+        sessionManager.removeSession(this);
     }
 
     public Object getSessionId() {
@@ -1078,5 +1098,24 @@ public class Session {
 
     public void setBufferSize(long bufferSize) {
         this.bufferSize = bufferSize;
+    }
+
+    public Collection<SessionListener> getListeners() {
+        return listeners;
+    }
+
+    public void setListeners(Collection<SessionListener> listeners) {
+        if (this.listeners == listeners) return;
+        this.listeners.clear();
+        if (listeners == null) return;
+        this.listeners.addAll(listeners);
+    }
+
+    public void addListener(SessionListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(SessionListener listener) {
+        listeners.remove(listener);
     }
 }

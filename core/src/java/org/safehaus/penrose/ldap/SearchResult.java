@@ -12,11 +12,9 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class SearchResult implements Serializable {
+public class SearchResult implements Serializable, Cloneable {
 
-public Logger log = LoggerFactory.getLogger(getClass());
-
-    private Entry entry;
+    private transient Entry entry;
 
     private DN dn;
     private Attributes attributes;
@@ -136,6 +134,7 @@ public Logger log = LoggerFactory.getLogger(getClass());
 
     public void print() throws Exception {
 
+        Logger log = LoggerFactory.getLogger(getClass());
         log.debug(Formatter.displaySeparator(80));
         log.debug(Formatter.displayLine("Search Result: "+dn, 80));
 
@@ -150,6 +149,8 @@ public Logger log = LoggerFactory.getLogger(getClass());
             }
         }
 
+        boolean first = true;
+
         for (String sourceName : sourceValues.getNames()) {
             Attributes attrs = sourceValues.get(sourceName);
 
@@ -160,11 +161,32 @@ public Logger log = LoggerFactory.getLogger(getClass());
                     String className = value.getClass().getName();
                     className = className.substring(className.lastIndexOf(".") + 1);
 
+                    if (first) {
+                        log.debug(Formatter.displayLine("Source Values:", 80));
+                        first = false;
+                    }
+
                     log.debug(Formatter.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 80));
                 }
             }
         }
 
         log.debug(Formatter.displaySeparator(80));
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SearchResult sr = (SearchResult)super.clone();
+
+        sr.entry = entry;
+        sr.dn = dn;
+        sr.attributes = (Attributes)attributes.clone();
+        sr.sourceValues = (SourceValues)sourceValues.clone();
+
+        sr.controls = new ArrayList<Control>();
+        for (Control control : controls) {
+            sr.controls.add((Control)control.clone());
+        }
+
+        return sr;
     }
 }

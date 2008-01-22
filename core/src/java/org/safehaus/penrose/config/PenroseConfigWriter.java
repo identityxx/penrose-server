@@ -28,7 +28,6 @@ import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.schema.SchemaConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.Penrose;
@@ -86,7 +85,7 @@ public class PenroseConfigWriter {
 
             element.add(parameter);
         }
-
+/*
         for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
 
             Element schema = new DefaultElement("schema");
@@ -95,7 +94,7 @@ public class PenroseConfigWriter {
 
             element.add(schema);
         }
-
+*/
         for (InterpreterConfig interpreterConfig : penroseConfig.getInterpreterConfigs()) {
             element.add(createElement(interpreterConfig));
         }

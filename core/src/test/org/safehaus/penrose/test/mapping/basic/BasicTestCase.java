@@ -6,12 +6,12 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.mapping.SourceMapping;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.Logger;
 

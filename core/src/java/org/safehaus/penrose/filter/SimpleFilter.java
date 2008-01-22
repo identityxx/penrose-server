@@ -17,6 +17,8 @@
  */
 package org.safehaus.penrose.filter;
 
+import java.util.Collection;
+
 public class SimpleFilter extends ItemFilter {
 
 	String attribute;
@@ -79,6 +81,40 @@ public class SimpleFilter extends ItemFilter {
     }
 
 	public String toString() {
-		return "(" + attribute + operator + FilterTool.escape(value.toString()) + ")";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("(");
+        sb.append(attribute);
+        sb.append(operator);
+        sb.append(FilterTool.escape(value.toString()));
+        sb.append(")");
+
+        return sb.toString();
 	}
+
+    public String toString(Collection<Object> args) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("(");
+        sb.append(attribute);
+        sb.append(operator);
+        sb.append("{");
+        sb.append(args.size());
+        sb.append("}");
+        sb.append(")");
+
+        args.add(value);
+
+        return sb.toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SimpleFilter filter = (SimpleFilter)super.clone();
+
+        filter.attribute = attribute;
+        filter.operator = operator;
+        filter.value = value;
+
+        return filter;
+    }
 }

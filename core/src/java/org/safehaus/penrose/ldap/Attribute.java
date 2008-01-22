@@ -4,11 +4,13 @@ import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Arrays;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Attribute implements Cloneable {
+public class Attribute implements Serializable, Cloneable {
 
     protected String name;
     protected Collection<Object> values = new LinkedHashSet<Object>();
@@ -49,7 +51,7 @@ public class Attribute implements Cloneable {
 
     public void setValue(Object value) {
         values.clear();
-        if (value == null || containsValue(value)) return;
+        if (value == null) return;
         values.add(value);
     }
 
@@ -59,32 +61,87 @@ public class Attribute implements Cloneable {
     }
 
     public boolean containsValue(Object value) {
-        if (value == null) return false;
-        if (values.contains(value)) return true;
+        return getValue(value) != null;
+    }
 
-        if (value instanceof String) {
-            String string = (String)value;
+    public Object getValue(Object value) {
+        //Logger log = LoggerFactory.getLogger(getClass());
 
-            for (Object v : values) {
-                if (!(v instanceof String)) continue;
+        if (value == null) return null;
 
+        //log.debug("Searching for ["+value+"] "+value.getClass().getName());
+
+        if (values.contains(value)) {
+            //log.debug("Found ["+value+"] "+value.getClass().getName());
+            return value;
+        }
+
+        for (Object v : values) {
+
+            //log.debug("Comparing with ["+v+"] "+v.getClass().getName());
+
+            if (v instanceof byte[]) {
+                byte[] b = (byte[])v;
+
+                if (value instanceof byte[]) {
+                    byte[] bytes = (byte[])value;
+                    if (Arrays.equals(b, bytes)) {
+                        //log.debug("Found ["+v+"] "+v.getClass().getName());
+                        return v;
+                    }
+
+                } else if (value instanceof String) {
+                    byte[] bytes = ((String)value).getBytes();
+                    if (Arrays.equals(b, bytes)) {
+                        //log.debug("Found ["+v+"] "+v.getClass().getName());
+                        return v;
+                    }
+                }
+
+            } else if (v instanceof String) {
                 String s = (String)v;
-                if (string.equalsIgnoreCase(s)) return true;
+
+                if (value instanceof String) {
+                    String string = (String)value;
+                    if (s.equalsIgnoreCase(string)) {
+                        //log.debug("Found ["+v+"] "+v.getClass().getName());
+                        return v;
+                    }
+
+                } else if (value instanceof byte[]) {
+                    byte[] b = ((String)v).getBytes();
+                    byte[] bytes = (byte[])value;
+                    if (Arrays.equals(b, bytes)) {
+                        //log.debug("Found ["+v+"] "+v.getClass().getName());
+                        return v;
+                    }
+                }
+
+            } else if (v.equals(value)) {
+                //log.debug("Found ["+v+"] "+v.getClass().getName());
+                return v;
             }
         }
 
-        return false;
+        //log.debug("Not found ["+value+"] "+value.getClass().getName());
+        
+        return null;
     }
 
     public void removeValue(Object value) {
         if (value == null) return;
-        values.remove(value);
+
+        Object v = getValue(value);
+        if (v == null) return;
+
+        values.remove(v);
     }
 
     public void addValues(Collection<Object> values) {
         if (values == null) return;
         for (Object value : values) {
-            if (!containsValue(value)) this.values.add(value);
+            Object v = getValue(value);
+            if (v == null) this.values.add(value);
         }
     }
 
@@ -93,12 +150,19 @@ public class Attribute implements Cloneable {
         this.values.clear();
         if (values == null) return;
         for (Object value : values) {
-            if (!containsValue(value)) this.values.add(value);
+            Object v = getValue(value);
+            if (v == null) this.values.add(value);
         }
     }
 
     public void removeValues(Collection<Object> values) {
-        if (values != null) this.values.removeAll(values);
+        if (values == null) return;
+        for (Object value : values) {
+            Object v = getValue(value);
+            if (v != null) {
+                this.values.remove(v);
+            }
+        }
     }
 
     public boolean isEmpty() {

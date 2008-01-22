@@ -23,6 +23,8 @@ public class DefaultPartition extends Partition {
             final SearchResponse response
     ) throws Exception {
 
+        boolean debug = log.isDebugEnabled();
+
         DN baseDn = request.getDn();
         Collection<String> requestedAttributes = request.getAttributes();
 
@@ -34,26 +36,34 @@ public class DefaultPartition extends Partition {
             log.debug("Normalized attributes: "+requestedAttributes);
         }
 
-        if (baseDn.matches(LDAP.ROOT_DSE_DN) && request.getScope() == SearchRequest.SCOPE_BASE) {
-            SearchResult result = createRootDSE();
-            Attributes attrs = result.getAttributes();
-            if (debug) {
-                log.debug("Before: "+result.getDn());
-                attrs.print();
+        if (baseDn.matches(LDAP.ROOT_DSE_DN)) {
+
+             if (request.getScope() != SearchRequest.SCOPE_BASE) {
+                 throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+             }
+
+            if (directory.getEntries(LDAP.ROOT_DSE_DN).isEmpty()) {
+
+                SearchResult result = createRootDSE();
+                Attributes attrs = result.getAttributes();
+                if (debug) {
+                    log.debug("Before: "+result.getDn());
+                    attrs.print();
+                }
+
+                Collection<String> list = filterAttributes(result, requestedAttributes, allRegularAttributes, allOpAttributes);
+                removeAttributes(attrs, list);
+
+                if (debug) {
+                    log.debug("After: "+result.getDn());
+                    attrs.print();
+                }
+
+                response.add(result);
+                response.close();
+
+                return;
             }
-
-            Collection<String> list = filterAttributes(session, result, requestedAttributes, allRegularAttributes, allOpAttributes);
-            removeAttributes(attrs, list);
-
-            if (debug) {
-                log.debug("After: "+result.getDn());
-                attrs.print();
-            }
-
-            response.add(result);
-            response.close();
-
-            return;
 
         } else if (baseDn.matches(LDAP.SCHEMA_DN)) {
 
@@ -64,7 +74,7 @@ public class DefaultPartition extends Partition {
                 attrs.print();
             }
 
-            Collection<String> list = filterAttributes(session, result, requestedAttributes, allRegularAttributes, allOpAttributes);
+            Collection<String> list = filterAttributes(result, requestedAttributes, allRegularAttributes, allOpAttributes);
             removeAttributes(attrs, list);
 
             if (debug) {

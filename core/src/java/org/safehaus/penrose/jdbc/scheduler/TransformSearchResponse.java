@@ -2,7 +2,7 @@ package org.safehaus.penrose.jdbc.scheduler;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
+import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 
 /**
  * @author Endi Sukma Dewata
@@ -18,7 +18,7 @@ public class TransformSearchResponse extends SearchResponse {
         this.source = source;
         this.response = response;
 
-        baseDn = source.getParameter(JDBCAdapter.BASE_DN);
+        baseDn = source.getParameter(JDBCConnection.BASE_DN);
     }
 
     public void add(SearchResult result) throws Exception {

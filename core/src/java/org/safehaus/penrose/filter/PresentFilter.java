@@ -57,4 +57,12 @@ public class PresentFilter extends ItemFilter {
 	public String toString() {
 		return "(" + attribute + "=*)";
 	}
+
+    public Object clone() throws CloneNotSupportedException {
+        PresentFilter filter = (PresentFilter)super.clone();
+
+        filter.attribute = attribute;
+
+        return filter;
+    }
 }

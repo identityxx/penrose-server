@@ -5,6 +5,8 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.TransformEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -13,6 +15,10 @@ import java.util.Collection;
  */
 public class SplitSearchResponse extends SearchResponse {
 
+    public Logger log = LoggerFactory.getLogger(getClass());
+    public Logger errorLog = org.safehaus.penrose.log.Error.log;
+    public boolean debug = log.isDebugEnabled();
+    
     Collection<Source> targets;
     Interpreter interpreter;
 

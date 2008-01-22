@@ -38,23 +38,27 @@ public class LinkEntry extends Entry {
 
         Directory directory = p.getDirectory();
 
-        Entry link;
-
         if (entryId != null) {
-            link = directory.getEntry(entryId);
+            Entry link = directory.getEntry(entryId);
             if (link == null) {
                 throw new Exception("Link entry "+entryId+" not found in partition "+partitionName+".");
             }
+            return link;
+        }
 
-        } else {
+        if (entryDn != null) {
             Collection<Entry> entries = directory.getEntries(new DN(entryDn));
             if (entries.isEmpty()) {
                 throw new Exception("Link entry "+entryDn+" not found in partition "+partitionName+".");
             }
-            link = entries.iterator().next();
+            return entries.iterator().next();
         }
 
-        return link;
+        Collection<Entry> entries = directory.getEntries(getDn());
+        if (entries.isEmpty()) {
+            throw new Exception("Link entry "+entryDn+" not found in partition "+partitionName+".");
+        }
+        return entries.iterator().next();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

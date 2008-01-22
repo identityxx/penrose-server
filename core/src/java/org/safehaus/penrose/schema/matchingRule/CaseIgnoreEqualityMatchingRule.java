@@ -44,6 +44,13 @@ public class CaseIgnoreEqualityMatchingRule extends EqualityMatchingRule {
             return s1.equalsIgnoreCase(s2);
         }
 
+        if (object1 instanceof String && object2 instanceof String) {
+            String s1 = (String)object1;
+            String s2 = (String)object2;
+
+            return s1.equalsIgnoreCase(s2);
+        }
+
         return super.compare(object1, object2);
     }
 }

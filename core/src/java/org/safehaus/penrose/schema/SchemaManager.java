@@ -47,17 +47,13 @@ public class SchemaManager implements SchemaManagerMBean {
     public SchemaManager() throws Exception {
     }
 
-    public void init(String home, SchemaConfig schemaConfig) throws Exception {
-        init(new File(home), schemaConfig);
-    }
-
-    public void init(File home, SchemaConfig schemaConfig) throws Exception {
+    public void init(SchemaConfig schemaConfig) throws Exception {
 
         Schema schema = getSchema(schemaConfig.getName());
         if (schema != null) return;
 
         SchemaReader reader = new SchemaReader();
-        schema = reader.read(home, schemaConfig);
+        schema = reader.read(schemaConfig);
 
         addSchema(schema);
     }
@@ -203,7 +199,7 @@ public class SchemaManager implements SchemaManagerMBean {
 
         for (String name : names) {
 
-            Collection values = attributes.getValues(name);
+            Collection<Object> values = attributes.getValues(name);
             attributes.remove(name);
 
             name = normalizeAttributeName(name);

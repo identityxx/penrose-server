@@ -5,21 +5,29 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class Attributes implements Cloneable {
+public class Attributes implements Serializable, Cloneable {
 
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
-    protected Collection<String> names = new TreeSet<String>();
     protected Map<String,Attribute> attributes = new TreeMap<String,Attribute>();
 
     public Attributes() {
     }
 
+    public Collection<String> getNormalizedNames() {
+        return attributes.keySet();
+    }
+    
     public Collection<String> getNames() {
+        Collection<String> names = new TreeSet<String>();
+        for (Attribute attribute : attributes.values()) {
+            names.add(attribute.getName());
+        }
         return names;
     }
 
@@ -30,7 +38,6 @@ public class Attributes implements Cloneable {
             return;
         }
 
-        names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
@@ -41,7 +48,6 @@ public class Attributes implements Cloneable {
 
     public void addValue(String name, Object value) {
         if (value == null) return;
-        names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
@@ -59,11 +65,9 @@ public class Attributes implements Cloneable {
         if (!attribute.isEmpty()) return;
 
         attributes.remove(name.toLowerCase());
-        names.remove(name);
     }
 
     public void setValues(String name, Collection<Object> values) {
-        names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
@@ -73,7 +77,6 @@ public class Attributes implements Cloneable {
     }
 
     public void addValues(String name, Collection<Object> values) {
-        names.add(name);
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
@@ -90,7 +93,6 @@ public class Attributes implements Cloneable {
         if (!attribute.isEmpty()) return;
 
         attributes.remove(name.toLowerCase());
-        names.remove(name);
     }
 
     public void set(Attributes attributes) {
@@ -109,8 +111,6 @@ public class Attributes implements Cloneable {
         String name = attribute.getName();
         String normalizedName = name.toLowerCase();
 
-        names.add(name);
-
         Attribute attr = attributes.get(normalizedName);
         if (attr == null) {
             attr = new Attribute(name);
@@ -123,7 +123,6 @@ public class Attributes implements Cloneable {
         String name = attribute.getName();
         String normalizedName = name.toLowerCase();
 
-        names.add(name);
         attributes.put(normalizedName, attribute);
     }
 
@@ -144,7 +143,6 @@ public class Attributes implements Cloneable {
     }
 
     public Attribute remove(String name) {
-        names.remove(name);
         return attributes.remove(name.toLowerCase());
     }
 
@@ -153,24 +151,20 @@ public class Attributes implements Cloneable {
     }
     
     public void clear() {
-        names.clear();
         attributes.clear();
     }
 
     public boolean isEmpty() {
-        return names.isEmpty();
+        return attributes.isEmpty();
     }
 
     public Object clone() throws CloneNotSupportedException {
         Attributes object = (Attributes)super.clone();
 
-        object.names = new LinkedHashSet<String>();
-        object.names.addAll(names);
-
         object.attributes = new LinkedHashMap<String,Attribute>();
-        for (String normalizedName : attributes.keySet()) {
-            Attribute attribute = attributes.get(normalizedName);
-            object.attributes.put(normalizedName, (Attribute)attribute.clone());
+        for (String name : attributes.keySet()) {
+            Attribute attribute = attributes.get(name);
+            object.attributes.put(name, (Attribute)attribute.clone());
         }
 
         return object;

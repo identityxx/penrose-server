@@ -298,7 +298,9 @@ public class CacheUtil {
         }
 
         File file = new File(home, "conf"+File.separator+"server.xml");
-        PenroseConfigReader reader = new PenroseConfigReader(file);
+        File schemaDir = new File(home, "schema");
+
+        PenroseConfigReader reader = new PenroseConfigReader(file, schemaDir);
         PenroseConfig penroseConfig = reader.read();
 
         PenroseContext penroseContext = new PenroseContext(home);

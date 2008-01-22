@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.*;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SourceValues implements Cloneable {
-
-    public Logger log = LoggerFactory.getLogger(getClass());
+public class SourceValues implements Serializable, Cloneable {
 
     public Map<String,Attributes> map = new TreeMap<String,Attributes>();
 

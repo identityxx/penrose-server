@@ -43,6 +43,10 @@ public class Field implements Cloneable {
         return fieldConfig.getType();
     }
 
+    public String getCastType() {
+        return fieldConfig.getCastType();
+    }
+
     public boolean isCaseSensitive() {
         return fieldConfig.isCaseSensitive();
     }
@@ -83,5 +87,9 @@ public class Field implements Cloneable {
 
     public void setSource(Source source) {
         this.source = source;
+    }
+
+    public boolean isText() {
+        return fieldConfig.isText();
     }
 }

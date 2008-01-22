@@ -26,16 +26,14 @@ public class SubstringFilter extends ItemFilter {
     public final static Character STAR = '*';
 
 	String attribute;
-	Collection<Object> substrings;
+	Collection<Object> substrings = new ArrayList<Object>();
 	
 	public SubstringFilter(String attribute, Object[] substrings) {
-        this.attribute = attribute;
-        this.substrings = Arrays.asList(substrings);
+        this(attribute, Arrays.asList(substrings));
 	}
 	
 	public SubstringFilter(String attribute, Collection<Object> substrings) {
 		this.attribute = attribute;
-        this.substrings = new ArrayList<Object>();
         this.substrings.addAll(substrings);
 	}
 	
@@ -91,4 +89,32 @@ public class SubstringFilter extends ItemFilter {
         sb.append(")");
 		return sb.toString();
 	}
+
+    public String toString(Collection<Object> args) {
+        StringBuilder sb = new StringBuilder("(" + attribute + "=");
+        for (Object o : substrings) {
+            if (o.equals(STAR)) {
+                sb.append(o);
+            } else {
+                String value = (String) o;
+                sb.append("{");
+                sb.append(args.size());
+                sb.append("}");
+                args.add(value);
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
+
+    public Object clone() throws CloneNotSupportedException {
+        SubstringFilter filter = (SubstringFilter)super.clone();
+
+        filter.attribute = attribute;
+
+        filter.substrings = new ArrayList<Object>();
+        filter.substrings.addAll(substrings);
+
+        return filter;
+    }
 }

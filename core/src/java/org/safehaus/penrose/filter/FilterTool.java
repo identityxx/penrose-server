@@ -31,7 +31,7 @@ public class FilterTool {
     public static Logger log = LoggerFactory.getLogger(FilterTool.class);
 
     public static Filter parseFilter(String filter) throws Exception {
-        if (filter == null) return null;
+        if (filter == null || "".equals(filter)) return null;
         StringReader in = new StringReader(filter);
         FilterParser parser = new FilterParser(in);
         return parser.parse();
@@ -81,10 +81,10 @@ public class FilterTool {
             AndFilter af = (AndFilter)filter;
             if (newFilter instanceof AndFilter) {
                 for (Filter f : ((AndFilter) newFilter).getFilters()) {
-                    if (!af.containsFilter(f)) af.addFilter(f);
+                    if (!af.contains(f)) af.addFilter(f);
                 }
             } else {
-                if (!af.containsFilter(newFilter)) af.addFilter(newFilter);
+                if (!af.contains(newFilter)) af.addFilter(newFilter);
             }
 
         } else {
@@ -108,10 +108,10 @@ public class FilterTool {
             OrFilter of = (OrFilter)filter;
             if (newFilter instanceof OrFilter) {
                 for (Filter f : ((OrFilter) newFilter).getFilters()) {
-                    if (!of.containsFilter(f)) of.addFilter(f);
+                    if (!of.contains(f)) of.addFilter(f);
                 }
             } else {
-                if (!of.containsFilter(newFilter)) of.addFilter(newFilter);
+                if (!of.contains(newFilter)) of.addFilter(newFilter);
             }
 
         } else {

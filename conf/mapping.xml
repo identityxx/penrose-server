@@ -5,7 +5,7 @@
 
 <mapping>
 
-  <entry dn="">
+  <entry>
     <oc>top</oc>
     <oc>extensibleObject</oc>
     <at name="vendorName">
@@ -18,7 +18,7 @@
       <constant>3</constant>
     </at>
     <at name="subschemaSubentry">
-      <constant>cn=schema</constant>
+      <constant>cn=Subschema</constant>
     </at>
     <at name="changelog">
       <constant>cn=changelog</constant>

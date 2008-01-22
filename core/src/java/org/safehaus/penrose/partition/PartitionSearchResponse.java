@@ -3,7 +3,6 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.acl.ACLEvaluator;
 import org.ietf.ldap.LDAPException;
 import org.slf4j.Logger;
@@ -35,7 +34,7 @@ public class PartitionSearchResponse extends SearchResponse {
     Map<String,Exception> results = new HashMap<String,Exception>();
 
     public PartitionSearchResponse(
-            SearchResponse parent,
+            SearchResponse response,
             Session session,
             Partition partition,
             Collection<String> requestedAttributes,
@@ -43,8 +42,8 @@ public class PartitionSearchResponse extends SearchResponse {
             boolean allOpAttributes,
             Collection<Entry> entries
     ) {
-        this.response = parent;
-        this.session = session;
+        this.response  = response;
+        this.session   = session;
         this.partition = partition;
 
         this.aclEvaluator = partition.getAclEvaluator();
@@ -62,7 +61,7 @@ public class PartitionSearchResponse extends SearchResponse {
         Entry entry = searchResult.getEntry();
         Attributes attributes = searchResult.getAttributes();
 
-        if (!session.isRootUser()) {
+        if (session != null && !session.isRootUser()) {
             if (debug) log.debug("Checking read permission.");
             
             int rc = aclEvaluator.checkRead(session, partition, entry, dn);
@@ -75,7 +74,7 @@ public class PartitionSearchResponse extends SearchResponse {
 
         Collection<String> list = attributesToRemove.get(entry.getId());
         if (list == null) {
-            list = partition.filterAttributes(session, searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
+            list = partition.filterAttributes(searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entry.getId(), list);
         }
 
@@ -143,6 +142,7 @@ public class PartitionSearchResponse extends SearchResponse {
             response.setException(noSuchObject);
         } 
 
+        log.debug("Closing response.");
         response.close();
     }
 }
