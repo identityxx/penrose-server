@@ -34,9 +34,11 @@ public class ADGroupFilterProcessor extends FilterProcessor {
         if (field == null) return filter;
 
         if (source.cnField.getName().equals(attributeName)) {
+            log.debug("Cn filter: "+sf);
             cnFilter = sf;
 
         } else if (source.memberField.getName().equals(attributeName)) {
+            log.debug("Member filter: "+sf);
             memberFilter = sf;
         }
 

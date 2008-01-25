@@ -165,7 +165,7 @@ public class SchemaManager implements SchemaManagerMBean {
         return rb.toRdn();
     }
 
-    public DN normalize(DN dn) {
+    public DN normalize(DN dn) throws Exception {
         DNBuilder db = new DNBuilder();
         RDNBuilder rb = new RDNBuilder();
 

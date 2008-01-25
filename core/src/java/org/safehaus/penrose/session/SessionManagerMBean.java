@@ -26,7 +26,6 @@ public interface SessionManagerMBean {
     public void stop() throws Exception;
 
     public int getNumberOfSessions() throws Exception;
-    public void purge() throws Exception;
 
     public void setMaxSessions(Integer maxSessions) throws Exception;
     public Integer getMaxSessions() throws Exception;

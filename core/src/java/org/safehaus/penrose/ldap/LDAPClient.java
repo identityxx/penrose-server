@@ -33,6 +33,8 @@ import org.safehaus.penrose.util.BinaryUtil;
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import com.sun.jndi.ldap.BerDecoder;
+import com.sun.jndi.ldap.Ber;
 
 public class LDAPClient implements Cloneable {
 
@@ -60,7 +62,7 @@ public class LDAPClient implements Cloneable {
     public SearchResult rootDSE;
     public Schema schema;
 
-    public int pageSize = 100;
+    public int defaultPageSize = 100;
 
     public LdapContext context;
 
@@ -521,19 +523,32 @@ public class LDAPClient implements Cloneable {
             Collection<Control> origControls = convertControls(request.getControls());
             Collection<Control> requestControls = new ArrayList<Control>();
 
-            if (pageSize > 0) {
-                requestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
-            }
-
             //String referral = "follow";
             String referral = "throw";
+            int pageSize = defaultPageSize;
 
             for (Control control : origControls) {
-                if (control.getID().equals("2.16.840.1.113730.3.4.2")) {
+                String id = control.getID();
+                
+                if (id.equals(ManageReferralControl.OID)) {
                     referral = "ignore";
-                    continue;
+
+                } else if (id.equals(PagedResultsControl.OID)) {
+
+                    byte[] value = control.getEncodedValue();
+
+                    BerDecoder ber = new BerDecoder(value, 0, value.length);
+                    ber.parseSeq(null);
+                    pageSize = ber.parseInt();
+                    //cookie = ber.parseOctetString(Ber.ASN_OCTET_STR, null);
+
+                } else {
+                    requestControls.add(control);
                 }
-                requestControls.add(control);
+            }
+
+            if (pageSize > 0) {
+                requestControls.add(new PagedResultsControl(pageSize, Control.NONCRITICAL));
             }
 
             //Hashtable<String,Object> env = new Hashtable<String,Object>();
@@ -599,10 +614,21 @@ public class LDAPClient implements Cloneable {
 
                         // pass cookie back to server for the next page
                         requestControls = new ArrayList<Control>();
-                        requestControls.addAll(origControls);
+
+                        for (Control control : origControls) {
+                            String id = control.getID();
+
+                            if (id.equals(ManageReferralControl.OID)) {
+
+                            } else if (id.equals(PagedResultsControl.OID)) {
+
+                            } else {
+                                requestControls.add(control);
+                            }
+                        }
 
                         if (pageSize > 0 && cookie != null) {
-                            requestControls.add(new PagedResultsControl(pageSize, cookie, Control.CRITICAL));
+                            requestControls.add(new PagedResultsControl(pageSize, cookie, Control.NONCRITICAL));
                         }
 
                         page++;
@@ -1434,7 +1460,7 @@ public class LDAPClient implements Cloneable {
         client.rootDSE = rootDSE;
         client.schema = schema;
 
-        client.pageSize = pageSize;
+        client.defaultPageSize = defaultPageSize;
 
         try {
             if (context != null) client.context = context.newInstance(null);

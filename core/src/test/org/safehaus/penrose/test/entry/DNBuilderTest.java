@@ -16,7 +16,7 @@ public class DNBuilderTest extends TestCase {
 
     Logger log = Logger.getLogger(getClass());
 
-    public void testParse() {
+    public void testParse() throws Exception {
 
         Collection rdns = DNBuilder.parse("cn=John Smith,ou=Users,dc=Example,dc=com");
         assertEquals(4, rdns.size());
@@ -36,7 +36,7 @@ public class DNBuilderTest extends TestCase {
         assertEquals("dc=com", rdn.toString());
     }
 
-    public void testParseSpecial() {
+    public void testParseSpecial() throws Exception {
 
         Collection rdns = DNBuilder.parse("cn=Smith\\, John,ou=Users,dc=Example,dc=com");
         assertEquals(4, rdns.size());
@@ -56,7 +56,7 @@ public class DNBuilderTest extends TestCase {
         assertEquals("dc=com", rdn.toString());
     }
 
-    public void testSet() {
+    public void testSet() throws Exception {
 
         DN dn = new DN("cn=John Smith,ou=Users,dc=Example,dc=com");
 
@@ -68,7 +68,7 @@ public class DNBuilderTest extends TestCase {
         assertEquals(dn, dn2);
     }
 
-    public void testSize() {
+    public void testSize() throws Exception {
 
         DNBuilder db = new DNBuilder();
         db.set("cn=John Smith,ou=Users,dc=Example,dc=com");
@@ -83,7 +83,7 @@ public class DNBuilderTest extends TestCase {
         assertTrue(db.isEmpty());
     }
 
-    public void testAppend() {
+    public void testAppend() throws Exception {
 
         DN dn = new DN("cn=John Smith,ou=Users,dc=Example,dc=com");
 
@@ -96,7 +96,7 @@ public class DNBuilderTest extends TestCase {
         assertEquals(dn, db.toDn());
     }
 
-    public void testPrepend() {
+    public void testPrepend() throws Exception {
 
         DN dn = new DN("cn=John Smith,ou=Users,dc=Example,dc=com");
 

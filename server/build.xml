@@ -320,10 +320,23 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+<!--
+        <rpm
+            specFile="target/${rpm.spec}"
+            topDir="${rpm.home}"
+            cleanBuildDir="true"
+            removeSpec="true"
+            removeSource="true"
+            rpmBuildCommand="${rpm.builder}"
+            command="-bb"
+            quiet="false"
+            failOnError="true"
+        />
+-->
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
             file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
         </copy>
-        <exec executable="${rpm.builder}">
+        <exec executable="${rpm.builder}" failonerror="true">
             <arg line="-bb target/${rpm.spec}"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"

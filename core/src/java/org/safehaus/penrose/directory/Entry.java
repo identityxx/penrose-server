@@ -34,12 +34,10 @@ import org.safehaus.penrose.cache.CacheKey;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.Formatter;
 
 /**
  * @author Endi S. Dewata
@@ -190,11 +188,11 @@ public class Entry implements Cloneable {
         return entryMapping.getDn();
     }
 
-    public DN getParentDn() {
+    public DN getParentDn() throws Exception {
         return entryMapping.getParentDn();
     }
 
-    public RDN getRdn() {
+    public RDN getRdn() throws Exception {
         return entryMapping.getRdn();
     }
 
@@ -258,7 +256,7 @@ public class Entry implements Cloneable {
         return children;
     }
 
-    public Collection<Entry> getChildren(RDN rdn) {
+    public Collection<Entry> getChildren(RDN rdn) throws Exception {
         if (rdn == null) return EMPTY_ENTRIES;
 
         Collection<Entry> list = childrenByRdn.get(rdn.getNormalized());
@@ -267,7 +265,7 @@ public class Entry implements Cloneable {
         return new ArrayList<Entry>(list);
     }
 
-    public void addChild(Entry child) {
+    public void addChild(Entry child) throws Exception {
 
         String rdn = child.getDn().getRdn().getNormalized();
 
@@ -282,7 +280,7 @@ public class Entry implements Cloneable {
         c.add(child);
     }
 
-    public void setChildren(Collection<Entry> children) {
+    public void setChildren(Collection<Entry> children) throws Exception {
         if (this.children == children) return;
         this.children.clear();
 
@@ -1058,7 +1056,7 @@ public class Entry implements Cloneable {
 
                 if (debug) log.debug("Checking filter "+filter);
 
-                if (!filterEvaluator.eval(searchResult.getAttributes(), filter)) {
+                if (!filterEvaluator.eval(searchResult, filter)) {
                     if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
                     return;
                 }
@@ -1303,61 +1301,66 @@ public class Entry implements Cloneable {
 
         Entry entry = (Entry)super.clone();
 
-        entry.entryMapping = (EntryMapping)entryMapping.clone();
-        entry.entryContext = entryContext;
+        try {
+            entry.entryMapping = (EntryMapping)entryMapping.clone();
+            entry.entryContext = entryContext;
 
-        entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();
-        entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
+            entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();
+            entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-        entry.sourceRefs        = new ArrayList<SourceRef>();
-        entry.sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
-        entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
+            entry.sourceRefs        = new ArrayList<SourceRef>();
+            entry.sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
+            entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-        for (SourceRef origSourceRef : sourceRefs) {
-            SourceRef sourceRef = (SourceRef)origSourceRef.clone();
+            for (SourceRef origSourceRef : sourceRefs) {
+                SourceRef sourceRef = (SourceRef)origSourceRef.clone();
 
-            String alias = sourceRef.getAlias();
+                String alias = sourceRef.getAlias();
 
-            entry.sourceRefs.add(sourceRef);
-            entry.sourceRefsByName.put(alias, sourceRef);
+                entry.sourceRefs.add(sourceRef);
+                entry.sourceRefsByName.put(alias, sourceRef);
 
-            if (primarySourceRefs.containsKey(alias)) {
-                entry.primarySourceRefs.put(alias, sourceRef);
+                if (primarySourceRefs.containsKey(alias)) {
+                    entry.primarySourceRefs.put(alias, sourceRef);
+                }
+
+                if (localSourceRefs.containsKey(alias)) {
+                    entry.localSourceRefs.put(alias, sourceRef);
+                }
+
+                if (localPrimarySourceRefs.containsKey(alias)) {
+                    entry.localPrimarySourceRefs.put(alias, sourceRef);
+                }
             }
 
-            if (localSourceRefs.containsKey(alias)) {
-                entry.localSourceRefs.put(alias, sourceRef);
+            entry.parent = parent;
+
+            entry.children = new LinkedHashSet<Entry>();
+            entry.childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
+
+            for (Entry origChild : children) {
+                Entry child = (Entry)origChild.clone();
+                child.setParent(entry);
+
+                entry.children.add(child);
+
+                String rdn = child.getDn().getRdn().getNormalized();
+                Collection<Entry> c = entry.childrenByRdn.get(rdn);
+                if (c == null) {
+                    c = new ArrayList<Entry>();
+                    entry.childrenByRdn.put(rdn, c);
+                }
+                c.add(child);
             }
 
-            if (localPrimarySourceRefs.containsKey(alias)) {
-                entry.localPrimarySourceRefs.put(alias, sourceRef);
-            }
+            entry.partition = partition;
+
+            entry.fetch = fetch;
+
+            return entry;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
-
-        entry.parent = parent;
-
-        entry.children = new LinkedHashSet<Entry>();
-        entry.childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
-
-        for (Entry origChild : children) {
-            Entry child = (Entry)origChild.clone();
-            child.setParent(entry);
-
-            entry.children.add(child);
-
-            String rdn = child.getDn().getRdn().getNormalized();
-            Collection<Entry> c = entry.childrenByRdn.get(rdn);
-            if (c == null) {
-                c = new ArrayList<Entry>();
-                entry.childrenByRdn.put(rdn, c);
-            }
-            c.add(child);
-        }
-
-        entry.partition = partition;
-
-        entry.fetch = fetch;
-
-        return entry;
     }
 }

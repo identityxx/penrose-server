@@ -164,7 +164,7 @@ public class Directory implements Cloneable {
         return entries.values();
     }
     
-    public Collection<Entry> getEntries(DN dn) {
+    public Collection<Entry> getEntries(DN dn) throws Exception {
         if (dn == null) return EMPTY_ENTRIES;
 
         Collection<Entry> list = entriesByDn.get(dn.getNormalizedDn());

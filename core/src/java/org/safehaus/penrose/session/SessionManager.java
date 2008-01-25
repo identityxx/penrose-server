@@ -65,7 +65,6 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized Session createSession(Object sessionId) throws Exception {
 
-        purge();
 /*
         if (maxSessions != null && sessions.size() >= maxSessions) {
             throw new Exception("Maximum number of sessions has been reached.");
@@ -86,16 +85,12 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized Session getSession(Object sessionId) {
 
-        purge();
-
         log.debug("Retrieving session "+sessionId);
         //return sessions.get(sessionId);
         return null;
     }
 
     public synchronized Session removeSession(Object sessionId) {
-
-        purge();
 
         log.debug("Removing session "+sessionId);
         //return sessions.remove(sessionId);
@@ -108,40 +103,7 @@ public class SessionManager implements SessionManagerMBean {
         return sessionId;
     }
 
-    public synchronized void purge() {
-        Collection<Object> expiredSessions = new ArrayList<Object>();
-/*
-        for (Session session : sessions.values()) {
-            if (isExpired(session)) expiredSessions.add(session.getSessionId());
-        }
-
-        for (Object sessionId : expiredSessions) {
-            //log.debug("Removing session "+sessionId);
-            sessions.remove(sessionId);
-        }
-*/
-    }
-
-    public synchronized boolean isValid(Session session) {
-        purge();
-        if (session == null) return true;
-
-        //log.debug("Valid sessions: "+sessions.keySet());
-        //return sessions.get(session.getSessionId()) != null;
-        return true;
-    }
-
-    public boolean isExpired(Session session) {
-        if (session == null || maxIdleTime == null) return false;
-
-        long idleTime = System.currentTimeMillis() - session.getLastActivityDate().getTime();
-        //log.debug("Session "+session.getSessionId()+" idleTime = "+idleTime);
-
-        return idleTime > maxIdleTime * 60 * 1000;
-    }
-
     public synchronized Collection<Session> getSessions() {
-        purge();
         //return sessions.values();
         return null;
     }

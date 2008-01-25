@@ -13,12 +13,12 @@ public class DNBuilder {
 
     public List<RDN> rdns = new ArrayList<RDN>();
 
-    public void set(String dn) {
+    public void set(String dn) throws Exception {
         rdns.clear();
         append(dn);
     }
 
-    public void set(DN dn) {
+    public void set(DN dn) throws Exception {
         rdns.clear();
         append(dn);
     }
@@ -28,7 +28,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(String dn) {
+    public void append(String dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = parse(dn);
         for (RDN rdn : list) {
@@ -41,7 +41,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(DN dn) {
+    public void append(DN dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = dn.getRdns();
         for (RDN rdn : list) {
@@ -49,7 +49,7 @@ public class DNBuilder {
         }
     }
 
-    public void prepend(String dn) {
+    public void prepend(String dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = parse(dn);
         for (RDN rdn : list) {
@@ -62,7 +62,7 @@ public class DNBuilder {
         rdns.add(0, rdn);
     }
 
-    public void prepend(DN dn) {
+    public void prepend(DN dn) throws Exception {
         if (dn == null) return;
         Collection<RDN> list = dn.getRdns();
         for (RDN rdn : list) {
@@ -82,7 +82,7 @@ public class DNBuilder {
         rdns.clear();
     }
 
-    public static RDN parseRdn(String rdn) {
+    public static RDN parseRdn(String rdn) throws Exception {
         Collection list = parse(rdn);
         if (list.isEmpty()) return null;
         return (RDN)list.iterator().next();
@@ -105,7 +105,7 @@ public class DNBuilder {
      * @param dn DN
      * @return a Collection of RDN objects
      */
-    public static Collection<RDN> parse(String dn) {
+    public static Collection<RDN> parse(String dn) throws Exception {
 
         Collection<RDN> list = new ArrayList<RDN>();
 
@@ -188,19 +188,13 @@ public class DNBuilder {
                     if (!inDQ) {
                         // this is an escape - pick up next character
                         while (i < value.length && value[i+1] != '+' && value[i+1] != ',' && value[i+1] != ';') {
-                            switch (value[++i])
+                            if (isHexDigit(value[++i]))
                             {
-                            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-                            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-                            case '0': case '1': case '2': case '3': case '4':
-                            case '5': case '6': case '7': case '8': case '9':
                                 // assume hexpair
                                 String x = new String(new char[] { value[i], value[++i] });
                                 bytes.add(Integer.parseInt(x, 16));
-                                break;
-                            default:
+                            } else {
                                 // invalid hexchar
-                                break;
                             }
                         }
                         break;
@@ -209,6 +203,43 @@ public class DNBuilder {
                 case '\\':
         			if (!inDQ) {
         				// this is an escape - pick up next character
+        				if (isHexDigit(value[i+1]) && isHexDigit(value[i+2])) {
+        					// Interpret all immediately follwing "\xx" escaped characters
+        					// using UTF-8 decoding, as individual decoding of each character
+        					// would break for >1 byte UTF-8 sequences.
+
+        					// determine number of escaped characters
+        					int escapedCharacters = 1;
+        					int s = i; // points to slash
+        					i = i + 3;
+        					while(i < value.length - 2
+        							&& value[i] == '\\'
+        							&& isHexDigit(value[i+1])
+        							&& isHexDigit(value[i+2])) {
+        						escapedCharacters ++;
+        						i += 3;
+        					}
+
+        					// store un-escaped characters in byte buffer for decoding
+        					byte utfBytes[] = new byte[escapedCharacters];
+
+        					i = s;
+        					for(int j = 0; j < escapedCharacters; j++) {
+        						String x = new String(new char[] { value[i + 1], value[i + 2] });
+        						utfBytes[j] = (byte) Integer.parseInt(x, 16);
+        						i += 3;
+        					}
+
+        					// decode sequence
+                            sb.append(new String(utfBytes, "utf-8"));
+
+							i--;
+
+        				} else {
+                             // normal escaped special character
+                             sb.append(value[i]);
+                         }
+/*
         				switch (value[++i])
         				{
         				case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
@@ -223,6 +254,7 @@ public class DNBuilder {
     						// normal escaped special character
     						sb.append(value[i]);
         				}
+*/
         				break;
         			}
         			// else no escapes - fall through and keep the backslash literal
@@ -245,6 +277,10 @@ public class DNBuilder {
 
         return list;
     }
+
+    private static boolean isHexDigit(char c) {
+		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+	}
 
     private static byte[] toByteArray(List<Integer> bytes) {
         byte[] ba = new byte[bytes.size()];

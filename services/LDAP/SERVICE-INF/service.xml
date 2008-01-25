@@ -3,7 +3,7 @@
   "-//Penrose/DTD Service ${product.specification}//EN"
   "http://penrose.safehaus.org/dtd/service.dtd">
 
-<service enabled="true">
+<service enabled="false">
 
   <service-class>org.safehaus.penrose.mina.MinaLDAPService</service-class>
 

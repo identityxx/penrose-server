@@ -600,7 +600,7 @@ public class BasicEngine extends Engine {
 
                 if (debug) log.debug("Checking filter "+filter);
 
-                if (!filterEvaluator.eval(searchResult.getAttributes(), filter)) { // Check LDAP filter
+                if (!filterEvaluator.eval(searchResult, filter)) { // Check LDAP filter
                     if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
                     return;
                 }

@@ -1,17 +1,18 @@
 package org.safehaus.penrose.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
-import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
-import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.schema.AttributeType;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
+import org.safehaus.penrose.schema.matchingRule.OrderingMatchingRule;
+import org.safehaus.penrose.schema.matchingRule.SubstringsMatchingRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -27,6 +28,10 @@ public class FilterEvaluator {
     public FilterEvaluator() throws Exception {
     }
 
+    public boolean eval(SearchResult result, Filter filter) throws Exception {
+        return eval(result.getAttributes(), filter);
+    }
+    
     public boolean eval(Attributes attributes, Filter filter) throws Exception {
 
         //log.debug("Checking filter "+filter);

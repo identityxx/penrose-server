@@ -25,8 +25,6 @@ import org.slf4j.Logger;
 import org.vps.crypt.Crypt;
 
 import java.security.MessageDigest;
-import java.security.Security;
-import java.security.Provider;
 import java.math.BigInteger;
 
 import grid.security.MD5Crypt;
@@ -46,30 +44,6 @@ public class PasswordUtil {
             "abcdefghijklmnopqrstuvwxyz"+
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
             "0123456789./";
-
-    static {
-        try {
-/*
-            Provider[] providers = Security.getProviders();
-            log.debug("Providers:");
-            for (Provider provider : providers) {
-                log.debug(" - "+provider.getName()+" "+provider.getVersion());
-            }
-*/
-/*
-            Provider provider = Security.getProvider("BC");
-            //log.debug("BouncyCastle: "+provider);
-            if (provider == null) {
-                Class clazz = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
-                provider = (Provider)clazz.newInstance();
-                //log.debug("Registering "+provider);
-                Security.addProvider(provider);
-            }
-*/
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-    }
 
     public static byte[] encrypt(String method, String password) throws Exception {
         return encrypt(method, null, password.getBytes());

@@ -39,7 +39,7 @@ public class RDN implements Serializable, Comparable {
     public RDN() {
     }
 
-    public RDN(String rdn) {
+    public RDN(String rdn) throws Exception {
         values = new DN(rdn).getRdn().values;
     }
 
@@ -71,19 +71,19 @@ public class RDN implements Serializable, Comparable {
         return values;
     }
 
-    public String getOriginal() {
+    public String getOriginal() throws Exception {
         if (original != null) return original;
         original = buildString(false);
         return original;
     }
 
-    public String getNormalized() {
+    public String getNormalized() throws Exception {
         if (normalized != null) return normalized;
         normalized = buildString(true);
         return normalized;
     }
 
-    private String buildString(boolean normalize) {
+    private String buildString(boolean normalize) throws Exception {
         StringBuilder sb = new StringBuilder();
         for (String name : values.keySet()) {
             Object value = values.get(name);
@@ -115,7 +115,11 @@ public class RDN implements Serializable, Comparable {
     }
 
     public int hashCode() {
-        return getOriginal().hashCode();
+        try {
+            return getOriginal().hashCode();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     boolean equals(Object o1, Object o2) {
@@ -130,7 +134,13 @@ public class RDN implements Serializable, Comparable {
         if (object.getClass() != this.getClass()) return false;
 
         RDN rdn = (RDN)object;
-        if (!equals(getOriginal(), rdn.getOriginal())) return false;
+
+        try {
+            if (!equals(getOriginal(), rdn.getOriginal())) return false;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
 
         return true;
     }
@@ -171,7 +181,12 @@ public class RDN implements Serializable, Comparable {
     }
 
     public String toString() {
-        return getOriginal();
+        try {
+            return getOriginal();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     public String getPattern() {
@@ -205,7 +220,7 @@ public class RDN implements Serializable, Comparable {
         return counter;
     }
 
-    public boolean matches(RDN rdn) {
+    public boolean matches(RDN rdn) throws Exception {
 
         if (rdn == null) return false;
         if (getNormalized().equals(rdn.getNormalized())) return true;

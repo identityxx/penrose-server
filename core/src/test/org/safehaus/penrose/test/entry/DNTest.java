@@ -14,7 +14,7 @@ public class DNTest extends TestCase {
 
     Logger log = Logger.getLogger(getClass());
 
-    public void testGetRdn() {
+    public void testGetRdn() throws Exception {
         DN dn = new DN("cn=James Bond,ou=Users,dc=Example,dc=com");
         RDN rdn = dn.getRdn();
 
@@ -27,7 +27,7 @@ public class DNTest extends TestCase {
         assertEquals(value, "James Bond");
     }
 
-    public void testGetParentDn() {
+    public void testGetParentDn() throws Exception {
         DN dn = new DN("cn=James Bond,ou=Users,dc=Example,dc=com");
 
         DN parentDn1 = new DN("ou=Users,dc=Example,dc=com");
@@ -36,7 +36,7 @@ public class DNTest extends TestCase {
         assertEquals(parentDn1, parentDn2);
     }
 
-    public void testEndsWith() {
+    public void testEndsWith() throws Exception {
         DN dn = new DN("ou=Users,dc=Example,dc=com");
 
         assertTrue(dn.endsWith("ou=Users,dc=Example,dc=com"));
@@ -46,7 +46,7 @@ public class DNTest extends TestCase {
         assertFalse(dn.endsWith("ou=Groups,dc=Example,dc=com"));
     }
 
-    public void testMatches() {
+    public void testMatches() throws Exception {
         DN dn1 = new DN("cn=James Bond,ou=Users,dc=Example,dc=com");
         DN dn2 = new DN("cn=..., ou=Users, DC=example, DC=com");
         DN suffix = new DN("dc=Example,dc=com");
@@ -55,7 +55,7 @@ public class DNTest extends TestCase {
         assertFalse(dn1.matches(suffix));
     }
 
-    public void testParsingSimpleDn() {
+    public void testParsingSimpleDn() throws Exception {
         DN dn = new DN("cn=James Bond,ou=Users,dc=Example,dc=com");
 
         assertEquals(dn.getSize(), 4);
@@ -86,7 +86,7 @@ public class DNTest extends TestCase {
 
     }
 
-    public void testParsingDnWithEscapedCharacters() {
+    public void testParsingDnWithEscapedCharacters() throws Exception {
         DN dn = new DN("cn=Bond\\, James,ou=Agents\\, Secret,dc=Example,dc=com");
 
         assertEquals(dn.getSize(), 4);
@@ -116,7 +116,7 @@ public class DNTest extends TestCase {
         assertEquals(rdn.get("dc"), "com");
     }
 
-    public void testParsingCompositeRdn() {
+    public void testParsingCompositeRdn() throws Exception {
         DN dn = new DN("cn=James Bond+uid=jbond+displayName=007,ou=Users+description=Secret Agents,dc=Example,dc=com");
 
         assertEquals(dn.getSize(), 4);
@@ -152,7 +152,7 @@ public class DNTest extends TestCase {
         assertEquals(rdn.get("dc"), "com");
     }
 
-    public void testPattern() {
+    public void testPattern() throws Exception {
         DN dn = new DN("cn=...+uid=...,ou=...,dc=Example,dc=com");
         String pattern1 = "cn={0}+uid={1},ou={2},dc=Example,dc=com";
 

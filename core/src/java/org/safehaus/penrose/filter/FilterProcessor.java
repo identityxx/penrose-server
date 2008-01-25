@@ -17,12 +17,17 @@
  */
 package org.safehaus.penrose.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Stack;
 
 /**
  * @author Endi S. Dewata
  */
 public class FilterProcessor {
+
+    public Logger log = LoggerFactory.getLogger(getClass());
 
     public FilterProcessor() {
     }

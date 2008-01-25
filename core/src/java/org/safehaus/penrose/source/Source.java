@@ -64,8 +64,8 @@ public class Source implements Cloneable, SourceMBean {
     }
     
     public void addField(Field field) {
-        fields.put(field.getName(), field);
-        fieldsByOriginalName.put(field.getOriginalName(), field);
+        fields.put(field.getName().toLowerCase(), field);
+        fieldsByOriginalName.put(field.getOriginalName().toLowerCase(), field);
 
         if (field.isPrimaryKey()) primaryKeyFields.add(field);
     }
@@ -131,11 +131,11 @@ public class Source implements Cloneable, SourceMBean {
     }
 
     public Field getField(String fieldName) {
-        return fields.get(fieldName);
+        return fields.get(fieldName.toLowerCase());
     }
 
     public Field getFieldByOriginalName(String fieldOriginalName) {
-        return fieldsByOriginalName.get(fieldOriginalName);
+        return fieldsByOriginalName.get(fieldOriginalName.toLowerCase());
     }
 
     public SourceContext getSourceContext() {
@@ -1110,11 +1110,12 @@ public class Source implements Cloneable, SourceMBean {
         
         Source source = (Source)super.clone();
 
-        source.sourceConfig     = (SourceConfig)sourceConfig.clone();
-        source.sourceContext    = sourceContext;
+        source.sourceConfig         = (SourceConfig)sourceConfig.clone();
+        source.sourceContext        = sourceContext;
 
-        source.fields           = new LinkedHashMap<String,Field>();
-        source.primaryKeyFields = new ArrayList<Field>();
+        source.fields               = new LinkedHashMap<String,Field>();
+        source.fieldsByOriginalName = new LinkedHashMap<String,Field>();
+        source.primaryKeyFields     = new ArrayList<Field>();
 
         for (Field field : fields.values()) {
             source.addField((Field)field.clone());

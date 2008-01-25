@@ -56,6 +56,7 @@
   </source>
 
   <source name="groups1">
+    <source-class>org.safehaus.penrose.ldap.source.ADGroupSource</source-class>
     <connection-name>AD</connection-name>
     <field name="dn"/>
     <field name="cn" primaryKey="true"/>

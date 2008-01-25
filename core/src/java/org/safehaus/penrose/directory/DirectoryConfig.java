@@ -30,7 +30,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     private Collection<DN> suffixes = new ArrayList<DN>();
     private Collection<EntryMapping> rootEntryMappings = new ArrayList<EntryMapping>();
 
-    public void addEntryMapping(EntryMapping entryMapping) {
+    public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn().getNormalizedDn();
         if (debug) log.debug("Adding entry "+dn+".");
@@ -107,7 +107,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return entryMappingsById.get(entryMapping.getParentId());
     }
 
-    public void removeEntryMapping(EntryMapping entryMapping) {
+    public void removeEntryMapping(EntryMapping entryMapping) throws Exception {
         entryMappingsById.remove(entryMapping.getId());
 
         EntryMapping parent = getParent(entryMapping);
@@ -137,7 +137,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return list;
     }
 
-    public Collection<EntryMapping> getEntryMappings(DN dn) {
+    public Collection<EntryMapping> getEntryMappings(DN dn) throws Exception {
         if (dn == null) return EMPTY;
 
         Collection<EntryMapping> list = entryMappingsByDn.get(dn.getNormalizedDn());
@@ -146,7 +146,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return new ArrayList<EntryMapping>(list);
     }
 
-    public void renameChildren(EntryMapping entryMapping, String newDn) {
+    public void renameChildren(EntryMapping entryMapping, String newDn) throws Exception {
         if (entryMapping == null) return;
         if (newDn.equals(entryMapping.getDn())) return;
 
@@ -187,7 +187,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         }
     }
 
-    public void renameEntryMapping(EntryMapping entryMapping, DN newDn) {
+    public void renameEntryMapping(EntryMapping entryMapping, DN newDn) throws Exception {
         if (entryMapping == null) return;
         if (entryMapping.getDn().matches(newDn)) return;
 
@@ -294,7 +294,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return rootEntryMappings;
     }
 
-    public boolean contains(DN dn) {
+    public boolean contains(DN dn) throws Exception {
         for (EntryMapping rootEntryMapping : rootEntryMappings) {
             DN suffix = rootEntryMapping.getDn();
 
@@ -307,7 +307,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return false;
     }
 
-    public Collection<EntryMapping> getEntryMappings(String dn) {
+    public Collection<EntryMapping> getEntryMappings(String dn) throws Exception {
         return getEntryMappings(new DN(dn));
     }
 
@@ -323,7 +323,11 @@ public class DirectoryConfig implements Serializable, Cloneable {
         mappings.rootEntryMappings = new ArrayList<EntryMapping>();
 
         for (EntryMapping entryMapping : getEntryMappings()) {
-            mappings.addEntryMapping((EntryMapping)entryMapping.clone());
+            try {
+                mappings.addEntryMapping((EntryMapping)entryMapping.clone());
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         }
 
         return mappings;

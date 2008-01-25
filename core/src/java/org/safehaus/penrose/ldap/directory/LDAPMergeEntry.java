@@ -120,8 +120,6 @@ public class LDAPMergeEntry extends Entry {
             newRequest.setScope(SearchRequest.SCOPE_SUB);
         }
 
-        newRequest.setFilter(filter);
-
         for (SourceRef sourceRef : getSourceRefs()) {
 
             final String alias = sourceRef.getAlias();
@@ -149,7 +147,7 @@ public class LDAPMergeEntry extends Entry {
                     log.debug("New entry:");
                     newResult.print();
 
-                    if (!filterEvaluator.eval(newResult.getAttributes(), filter)) {
+                    if (!filterEvaluator.eval(newResult, filter)) {
                         if (debug) log.debug("Entry \""+newResult.getDn()+"\" doesn't match search filter.");
                         return;
                     }

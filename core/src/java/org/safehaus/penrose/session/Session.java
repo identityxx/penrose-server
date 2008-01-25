@@ -62,9 +62,6 @@ public class Session {
     private DN bindDn;
     private boolean rootUser;
 
-    private Date createDate;
-    private Date lastActivityDate;
-
     private Map<String,Object> attributes = new HashMap<String,Object>();
     
     protected boolean eventsEnabled = true;
@@ -74,9 +71,6 @@ public class Session {
 
     public Session(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
-
-        createDate = new Date();
-        lastActivityDate = (Date)createDate.clone();
     }
 
     public void init() {
@@ -100,19 +94,6 @@ public class Session {
 
     public void setBindDn(DN bindDn) {
         this.bindDn = bindDn;
-    }
-
-    public Date getLastActivityDate() {
-        return lastActivityDate;
-    }
-
-    public void setLastActivityDate(Date lastActivityDate) {
-        this.lastActivityDate = lastActivityDate;
-    }
-
-    public boolean isValid() {
-        //return !sessionManager.isExpired(this) || sessionManager.isValid(this);
-        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,10 +140,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-            
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
@@ -264,10 +241,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
@@ -286,7 +259,7 @@ public class Session {
             	eventManager.postEvent(beforeBindEvent);
         	}
             
-            if (dn.isEmpty()) {
+            if (dn.isEmpty() || password == null || password.length == 0) {
                 log.debug("Bound as anonymous user.");
                 bindDn = null;
                 rootUser = false;
@@ -389,10 +362,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
@@ -488,10 +457,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
@@ -575,10 +540,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
@@ -636,7 +597,11 @@ public class Session {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(String dn, String newRdn, boolean deleteOldRdn) throws LDAPException {
-        modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+        try {
+            modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+        } catch (Exception e) {
+            throw LDAP.createException(e);
+        }
     }
 
     public void modrdn(DN dn, RDN newRdn, boolean deleteOldRdn) throws LDAPException {
@@ -675,10 +640,6 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
-
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -790,10 +751,6 @@ public class Session {
         try {
             Access.log(this, request);
 
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
-
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
@@ -826,8 +783,6 @@ public class Session {
                 }
                 public void close() throws Exception {
                     response.close();
-
-                    lastActivityDate.setTime(System.currentTimeMillis());
 
                     if (eventsEnabled) {
                         SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, partition, request, response);
@@ -887,10 +842,6 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
-
-            //if (!isValid()) throw new Exception("Invalid session.");
-
-            lastActivityDate.setTime(System.currentTimeMillis());
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -957,14 +908,6 @@ public class Session {
 
     public void setSessionId(Object sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public Date getCreateDate() {
-        return createDate;
-    }
-
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
     }
 
     public SessionManager getSessionManager() {

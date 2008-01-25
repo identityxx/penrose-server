@@ -39,7 +39,7 @@ public class ModRdnRequest extends Request implements Cloneable {
         return newRdn;
     }
 
-    public void setNewRdn(String rdn) {
+    public void setNewRdn(String rdn) throws Exception {
         this.newRdn = new RDN(rdn);
     }
 

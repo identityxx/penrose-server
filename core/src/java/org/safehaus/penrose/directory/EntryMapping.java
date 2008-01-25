@@ -99,7 +99,7 @@ public class EntryMapping implements Serializable, Cloneable {
         this.dn = dn;
     }
 
-    public EntryMapping(String rdn, EntryMapping parent) {
+    public EntryMapping(String rdn, EntryMapping parent) throws Exception {
         DNBuilder db = new DNBuilder();
         db.set(rdn);
         db.append(parent.getDn());
@@ -107,7 +107,7 @@ public class EntryMapping implements Serializable, Cloneable {
         dn = db.toDn();
     }
 
-    public EntryMapping(RDN rdn, EntryMapping parent) {
+    public EntryMapping(RDN rdn, EntryMapping parent) throws Exception {
         DNBuilder db = new DNBuilder();
         db.set(rdn);
         db.append(parent.getDn());
@@ -115,11 +115,11 @@ public class EntryMapping implements Serializable, Cloneable {
         dn = db.toDn();
     }
 
-    public RDN getRdn() {
+    public RDN getRdn() throws Exception {
         return dn.getRdn();
     }
     
-    public DN getParentDn() {
+    public DN getParentDn() throws Exception {
         return dn.getParentDn();
     }
 

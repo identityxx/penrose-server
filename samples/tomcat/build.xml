@@ -25,7 +25,7 @@
 
     <target name="build">
         <mkdir dir="samples/tomcat/target/WEB-INF"/>
-        <copy file="samples/tomcat/web.xml" tofile="samples/tomcat/target/WEB-INF/web.xml" overwrite="true">
+        <copy file="samples/tomcat/WEB-INF/web.xml" tofile="samples/tomcat/target/WEB-INF/web.xml" overwrite="true">
             <filterchain>
                 <expandproperties/>
             </filterchain>

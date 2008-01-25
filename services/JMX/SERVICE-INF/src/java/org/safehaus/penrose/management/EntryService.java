@@ -47,7 +47,7 @@ public class EntryService extends StandardMBean implements EntryServiceMBean {
         return entry.getEntryMapping();
     }
 
-    public Collection<String> getChildIds(RDN rdn) {
+    public Collection<String> getChildIds(RDN rdn) throws Exception {
         Collection<String> list = new ArrayList<String>();
         for (Entry child : entry.getChildren(rdn)) {
             list.add(child.getId());

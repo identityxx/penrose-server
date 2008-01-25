@@ -340,6 +340,8 @@ public class Penrose {
 
         Partitions partitions = penroseContext.getPartitions();
         partitions.addPartition(partition);
+
+        log.debug("Partition "+partitionName+" started.");
     }
 
     public void stopPartition(String partitionName) throws Exception {
@@ -357,6 +359,8 @@ public class Penrose {
 
         partitions.removePartition(partitionName);
         partitionConfigs.removePartitionConfig(partitionName);
+
+        log.debug("Partition "+partitionName+" stopped.");
     }
 
     public String getPartitionStatus(String partitionName) {

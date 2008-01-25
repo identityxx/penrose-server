@@ -283,7 +283,7 @@ public class LDAP {
         return modifications;
     }
 
-    public static String escape(String value) {
+    public static String escape(String value) throws Exception {
 
         StringBuilder sb = new StringBuilder();
         char chars[] = value.toCharArray();
@@ -292,7 +292,8 @@ public class LDAP {
         boolean space = false;
 
         for (char c : chars) {
-            if (c < 0x20 || c > 0x7E) {
+            //if (c < 0x20 || c > 0x7E) {
+            if (Character.isISOControl(c) || !Character.isDefined(c)) {
                 sb.append('\\').append(hex(c));
                 continue;
             }
@@ -351,7 +352,7 @@ public class LDAP {
         return sb.toString();
     }
 
-    private static String hex(char b) {
+    private static String hex(int b) {
         String hex = Integer.toHexString(b);
         if (hex.length() % 2 == 1) {
             hex = "0" + hex;

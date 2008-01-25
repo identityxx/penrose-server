@@ -71,26 +71,6 @@ public class OpenDSLDAPService extends LDAPService {
                 configFile.getAbsolutePath()
         );
 
-        ConfigHandler configHandler = DirectoryServer.getConfigHandler();
-        ConfigEntry configEntry = configHandler.getConfigEntry(DN.decode("cn=LDAP Connection Handler,cn=Connection Handlers,cn=config"));
-
-        Entry entry = configEntry.getEntry();
-
-        String attributeName = "ds-cfg-listen-port";
-        List attributes = entry.getAttribute(attributeName);
-        Attribute attribute = (Attribute)attributes.get(0);
-
-        Set values = attribute.getValues();
-        AttributeValue value = (AttributeValue)values.iterator().next();
-/*
-        values.clear();
-
-        AttributeType attributeType = DirectoryServer.getAttributeType(attributeName, true);
-        log.debug("Attribute Type: "+attributeType);
-
-        values.add(new AttributeValue(attributeType, ""+ldapPort));
-        log.debug("New LDAP port: "+ldapPort);
-*/
         directoryServer.startServer();
 
         PluginConfigManager pluginConfigManager = DirectoryServer.getPluginConfigManager();
@@ -100,7 +80,29 @@ public class OpenDSLDAPService extends LDAPService {
             javaBackend.setBackend(new PenroseBackend(serviceContext.getPenroseServer()));
         }
 
-        log.warn("Listening to port "+value.getStringValue()+" (LDAP).");
+        ConfigHandler configHandler = DirectoryServer.getConfigHandler();
+
+        Entry ldapEntry = configHandler.getConfigEntry(DN.decode("cn=LDAP Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
+
+        Attribute ldapEnabledAttribute = ldapEntry.getAttribute("ds-cfg-enabled").get(0);
+        String ldapEnabled = ldapEnabledAttribute.getValues().iterator().next().getStringValue();
+
+        if ("true".equals(ldapEnabled)) {
+            Attribute ldapPortAttribute = ldapEntry.getAttribute("ds-cfg-listen-port").get(0);
+            String ldapPort = ldapPortAttribute.getValues().iterator().next().getStringValue();
+            log.warn("Listening to port "+ldapPort+" (LDAP).");
+        }
+
+        Entry ldapsEntry = configHandler.getConfigEntry(DN.decode("cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
+
+        Attribute ldapsEnabledAttribute = ldapsEntry.getAttribute("ds-cfg-enabled").get(0);
+        String ldapsEnabled = ldapsEnabledAttribute.getValues().iterator().next().getStringValue();
+
+        if ("true".equals(ldapsEnabled)) {
+            Attribute ldapsPortAttribute = ldapsEntry.getAttribute("ds-cfg-listen-port").get(0);
+            String ldapsPort = ldapsPortAttribute.getValues().iterator().next().getStringValue();
+            log.warn("Listening to port "+ldapsPort+" (LDAPS).");
+        }
     }
 
     public void destroy() throws Exception {

@@ -17,4 +17,23 @@
     </parameter>
   </source>
 
+  <source name="groups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+  </source>
+
 </sources>

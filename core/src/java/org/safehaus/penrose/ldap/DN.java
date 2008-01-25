@@ -31,7 +31,7 @@ public class DN implements Serializable, Comparable {
         rdns.add(rdn);
     }
 
-    public void parse() {
+    public void parse() throws Exception {
         if (rdns != null) return;
         rdns = new ArrayList<RDN>();
         Collection<RDN> list = DNBuilder.parse(originalDn);
@@ -40,7 +40,7 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public DN getDn(int start, int end) {
+    public DN getDn(int start, int end) throws Exception {
         parse();
 
         DNBuilder db = new DNBuilder();
@@ -51,38 +51,38 @@ public class DN implements Serializable, Comparable {
         return db.toDn();
     }
 
-    public DN append(String dn) {
+    public DN append(String dn) throws Exception {
         return append(new DN(dn));
     }
 
-    public DN append(RDN rdn) {
+    public DN append(RDN rdn) throws Exception {
         return append(new DN(rdn));
     }
 
-    public DN append(DN dn) {
+    public DN append(DN dn) throws Exception {
         DNBuilder db = new DNBuilder();
         db.append(this);
         db.append(dn);
         return db.toDn();
     }
 
-    public DN getSuffix(int i) {
+    public DN getSuffix(int i) throws Exception {
         return getDn(i, getSize());
     }
 
-    public DN getPrefix(int i) {
+    public DN getPrefix(int i) throws Exception {
         return getDn(0, i);
     }
 
-    public DN getPrefix(String suffix) {
+    public DN getPrefix(String suffix) throws Exception {
         return getPrefix(new DN(suffix));
     }
 
-    public DN getPrefix(DN suffix) {
+    public DN getPrefix(DN suffix) throws Exception {
         return getPrefix(getSize() - suffix.getSize());
     }
 
-    public String getPattern() {
+    public String getPattern() throws Exception {
         if (pattern != null) return pattern;
 
         parse();
@@ -102,7 +102,7 @@ public class DN implements Serializable, Comparable {
         return pattern;
     }
 
-    public String format(Collection<Object> args) {
+    public String format(Collection<Object> args) throws Exception {
         if (formatter == null) {
             formatter = new MessageFormat(getPattern());
         }
@@ -124,28 +124,28 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public int getSize() {
+    public int getSize() throws Exception {
         parse();
         return rdns.size();
     }
 
-    public RDN getRdn() {
+    public RDN getRdn() throws Exception {
         parse();
         if (rdns.size() == 0) return null;
         return rdns.get(0);
     }
 
-    public RDN get(int i) {
+    public RDN get(int i) throws Exception {
         parse();
         return rdns.get(i);
     }
 
-    public Collection<RDN> getRdns() {
+    public Collection<RDN> getRdns() throws Exception {
         parse();
         return rdns;
     }
 
-    public String getOriginalDn() {
+    public String getOriginalDn() throws Exception {
         if (originalDn != null) return originalDn;
 
         StringBuilder sb = new StringBuilder();
@@ -162,7 +162,7 @@ public class DN implements Serializable, Comparable {
         return originalDn;
     }
 
-    public String getNormalizedDn() {
+    public String getNormalizedDn() throws Exception {
         if (normalizedDn != null) return normalizedDn;
 
         parse();
@@ -177,7 +177,7 @@ public class DN implements Serializable, Comparable {
         return normalizedDn;
     }
 
-    public DN getParentDn() {
+    public DN getParentDn() throws Exception {
         if (parentDn != null) return parentDn;
 
         parse();
@@ -191,11 +191,11 @@ public class DN implements Serializable, Comparable {
         return parentDn;
     }
 
-    public boolean endsWith(String suffix) {
+    public boolean endsWith(String suffix) throws Exception {
         return endsWith(new DN(suffix));
     }
     
-    public boolean endsWith(DN suffix) {
+    public boolean endsWith(DN suffix) throws Exception {
         parse();
         suffix.parse();
         int i1 = rdns.size();
@@ -216,11 +216,11 @@ public class DN implements Serializable, Comparable {
         return true;
     }
 
-    public boolean matches(String dn) {
+    public boolean matches(String dn) throws Exception {
         return matches(new DN(dn));
     }
     
-    public boolean matches(DN dn) {
+    public boolean matches(DN dn) throws Exception {
 
         if (dn == null) return false;
         if (getNormalizedDn().equals(dn.getNormalizedDn())) return true;
@@ -243,7 +243,11 @@ public class DN implements Serializable, Comparable {
     }
 
     public int hashCode() {
-        return getOriginalDn().hashCode();
+        try {
+            return getOriginalDn().hashCode();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     boolean equals(Object o1, Object o2) {
@@ -256,14 +260,19 @@ public class DN implements Serializable, Comparable {
         if (this == object) return true;
         if (object == null) return false;
 
-        if (object instanceof String) {
-            String dn = (String)object;
-            return equals(getOriginalDn(), dn);
-        }
+        try {
+            if (object instanceof String) {
+                String dn = (String)object;
+                return equals(getOriginalDn(), dn);
+            }
 
-        if (object instanceof DN) {
-            DN dn = (DN)object;
-            return equals(getOriginalDn(), dn.getOriginalDn());
+            if (object instanceof DN) {
+                DN dn = (DN)object;
+                return equals(getOriginalDn(), dn.getOriginalDn());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
 
         return false;
@@ -295,6 +304,10 @@ public class DN implements Serializable, Comparable {
     }
 
     public String toString() {
-        return getOriginalDn();
+        try {
+            return getOriginalDn();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

@@ -181,7 +181,7 @@ public class ApacheDSLDAPService extends LDAPService {
         log.warn("Listening to port "+ldapPort+" (LDAP).");
 
         if (enableLdaps) {
-            log.warn("Listening to port "+ldapsPort+" (Secure LDAP).");
+            log.warn("Listening to port "+ldapsPort+" (LDAPS).");
         }
 
         // Start ApacheDS synchronization thread

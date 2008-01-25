@@ -82,7 +82,7 @@ public class Partition implements PartitionMBean, Cloneable {
 
     public void init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
 
-        log.debug("Initializing "+partitionConfig.getName()+" partition.");
+        //log.debug("Initializing "+partitionConfig.getName()+" partition.");
 
         this.partitionConfig = partitionConfig;
         this.partitionContext = partitionContext;
@@ -126,11 +126,11 @@ public class Partition implements PartitionMBean, Cloneable {
 
         scheduler = createScheduler(partitionConfig.getSchedulerConfig());
 
-        log.debug("Partition "+partitionConfig.getName()+" started.");
+        //log.debug("Partition "+partitionConfig.getName()+" started.");
     }
 
     public void destroy() throws Exception {
-        log.debug("Stopping "+partitionConfig.getName()+" partition.");
+        //log.debug("Stopping "+partitionConfig.getName()+" partition.");
 
         if (scheduler != null) {
             scheduler.destroy();
@@ -150,7 +150,7 @@ public class Partition implements PartitionMBean, Cloneable {
 
         connections.destroy();
 
-        log.debug("Partition "+partitionConfig.getName()+" stopped.");
+        //log.debug("Partition "+partitionConfig.getName()+" stopped.");
     }
 
     public String getName() {

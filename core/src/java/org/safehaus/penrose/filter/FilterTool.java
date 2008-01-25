@@ -71,11 +71,11 @@ public class FilterTool {
     }
 
     public static Filter appendAndFilter(Filter filter, Filter newFilter) {
-        if (newFilter == null || newFilter.equals(filter)) {
-            // ignore
+        if (filter == null) {
+            return newFilter;
 
-        } else if (filter == null) {
-            filter = newFilter;
+        } else if (newFilter == null || newFilter.equals(filter)) {
+            return filter;
 
         } else if (filter instanceof AndFilter) {
             AndFilter af = (AndFilter)filter;
@@ -86,23 +86,22 @@ public class FilterTool {
             } else {
                 if (!af.contains(newFilter)) af.addFilter(newFilter);
             }
+            return af;
 
         } else {
             AndFilter af = new AndFilter();
             af.addFilter(filter);
             af.addFilter(newFilter);
-            filter = af;
+            return af;
         }
-
-        return filter;
     }
 
     public static Filter appendOrFilter(Filter filter, Filter newFilter) {
-        if (newFilter == null || newFilter.equals(filter)) {
-            // ignore
+        if (filter == null) {
+            return newFilter;
 
-        } else if (filter == null) {
-            filter = newFilter;
+        } else if (newFilter == null || newFilter.equals(filter)) {
+            return filter;
 
         } else if (filter instanceof OrFilter) {
             OrFilter of = (OrFilter)filter;
@@ -113,15 +112,14 @@ public class FilterTool {
             } else {
                 if (!of.contains(newFilter)) of.addFilter(newFilter);
             }
+            return of;
 
         } else {
             OrFilter of = new OrFilter();
             of.addFilter(filter);
             of.addFilter(newFilter);
-            filter = of;
+            return of;
         }
-
-        return filter;
     }
 
     public static String escape(String value) {

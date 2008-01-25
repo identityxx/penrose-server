@@ -1,6 +1,8 @@
 package org.safehaus.penrose.ldap.source;
 
-import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Field;
@@ -40,7 +42,7 @@ public class ADGroupSource extends LDAPSource {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("AD Search "+getName(), 80));
+            log.debug(Formatter.displayLine("AD Group Search "+getName(), 80));
             log.debug(Formatter.displaySeparator(80));
         }
 
@@ -49,23 +51,24 @@ public class ADGroupSource extends LDAPSource {
         try {
             response.setSizeLimit(request.getSizeLimit());
 
+            ADGroupFilterProcessor fp = new ADGroupFilterProcessor(this);
             List<Filter> filters = new ArrayList<Filter>();
 
-            createFilter(session, request, response, filters, client);
+            createFilter(session, request, response, filters, fp, client);
 
             if (filters.isEmpty()) {
                 log.debug("No user found.");
                 return;
             }
 
-            Collection<String> results = new LinkedHashSet<String>();
+            Map<String,SearchResult> results = new LinkedHashMap<String,SearchResult>();
 
             for (int i = 0; i < filters.size(); i++) {
                 Filter f = filters.get(i);
 
                 f = FilterTool.appendAndFilter(f, sourceFilter);
 
-                searchEntries(session, request, response, f, filters, results, client);
+                searchEntries(session, request, response, f, filters, results, fp, client);
             }
 
             log.debug("Search operation completed.");
@@ -81,6 +84,7 @@ public class ADGroupSource extends LDAPSource {
             final SearchRequest request,
             final SearchResponse response,
             final List<Filter> filters,
+            final ADGroupFilterProcessor fp,
             final LDAPClient client
     ) throws Exception {
 
@@ -98,7 +102,6 @@ public class ADGroupSource extends LDAPSource {
             }
         }
 
-        ADGroupFilterProcessor fp = new ADGroupFilterProcessor(this);
         fp.process(filter);
 
         SimpleFilter cnFilter = fp.getCnFilter();
@@ -126,8 +129,6 @@ public class ADGroupSource extends LDAPSource {
             String userDn = dn.toString();
 
             Filter f = new SimpleFilter(memberField.getOriginalName(), memberFilter.getOperator(), userDn);
-            filters.add(f);
-
             newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
@@ -179,7 +180,8 @@ public class ADGroupSource extends LDAPSource {
             final SearchResponse response,
             final Filter filter,
             final List<Filter> filters,
-            final Collection<String> results,
+            final Map<String,SearchResult> results,
+            final ADGroupFilterProcessor fp,
             final LDAPClient client
     ) throws Exception {
 
@@ -201,18 +203,25 @@ public class ADGroupSource extends LDAPSource {
                 SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
                 if (newSearchResult == null) return;
 
-                searchMembers(sourceBaseDn, searchResult, newSearchResult, client);
-
-                if (debug) {
-                    newSearchResult.print();
-                }
-
                 DN dn = newSearchResult.getDn().append(sourceBaseDn);
                 String groupDn = dn.getNormalizedDn();
-                if (!results.contains(groupDn)) {
-                    results.add(groupDn);
-                    filters.add(new SimpleFilter(MEMBER, "=", groupDn));
+
+                Collection<Object> users = searchMembers(sourceBaseDn, searchResult, results, client);
+
+                Attributes attributes = newSearchResult.getAttributes();
+                attributes.setValues(memberField.getName(), users);
+
+                if (!results.containsKey(groupDn)) {
+                    results.put(groupDn, newSearchResult);
+
+                    SimpleFilter memberFilter = fp.getMemberFilter();
+                    if (memberFilter != null) filters.add(new SimpleFilter(MEMBER, "=", groupDn));
+                    
                     response.add(newSearchResult);
+
+                    if (debug) {
+                        newSearchResult.print();
+                    }
                 }
             }
         };
@@ -220,29 +229,47 @@ public class ADGroupSource extends LDAPSource {
         client.search(newRequest, newResponse);
     }
 
-    public void searchMembers(DN baseDn, SearchResult sr, SearchResult searchResult, LDAPClient client) throws Exception {
+    public Collection<Object> searchMembers(
+            DN baseDn,
+            SearchResult searchResult,
+            Map<String,SearchResult> results,
+            LDAPClient client
+    ) throws Exception {
 
         Collection<Object> users = new LinkedHashSet<Object>();
 
         List<String> groups = new ArrayList<String>();
-        groups.add(sr.getDn().getNormalizedDn());
+        groups.add(searchResult.getDn().getNormalizedDn());
 
         for (int i = 0; i < groups.size(); i++) {
             String dn = groups.get(i);
-            expandMembers(dn, baseDn, client, users, groups);
+
+            SearchResult sr = results.get(dn);
+            if (sr == null) {
+                log.debug("Searching for members of group "+dn+".");
+
+                Collection<Object> list = expandMembers(dn, baseDn, client, groups);
+                users.addAll(list);
+
+            } else {
+                log.debug("Getting members of group "+dn+" from cache.");
+
+                Attributes attributes = sr.getAttributes();
+                users.addAll(attributes.getValues(memberField.getName()));
+            }
         }
 
-        Attributes attributes = searchResult.getAttributes();
-        attributes.setValues(memberField.getName(), users);
+        return users;
     }
 
-    public void expandMembers(
+    public Collection<Object> expandMembers(
             String dn,
             DN baseDn,
             LDAPClient client,
-            Collection<Object> users,
             List<String> groups
     ) throws Exception {
+
+        Collection<Object> users = new LinkedHashSet<Object>();
 
         SearchRequest req1 = new SearchRequest();
         req1.setDn(baseDn);
@@ -251,7 +278,7 @@ public class ADGroupSource extends LDAPSource {
 
         SearchResponse res1 = new SearchResponse();
 
-        log.debug("Searching for "+req1.getFilter());
+        log.debug("Filter: "+req1.getFilter());
 
         client.search(req1, res1);
 
@@ -274,6 +301,8 @@ public class ADGroupSource extends LDAPSource {
                 }
             }
         }
+
+        return users;
     }
 
     public SearchResult createSearchResult(
@@ -302,18 +331,9 @@ public class ADGroupSource extends LDAPSource {
             if ("dn".equals(originalName)) {
                 newAttributes.addValue(fieldName, dn.toString());
 
-            } else if (MEMBER.equals(originalName)) {
-                Attribute attr = attributes.remove(originalName);
-                if (attr == null) continue;
-
-                newAttributes.addValues(fieldName, attr.getValues());
-
             } else {
                 Attribute attr = attributes.remove(originalName);
-                if (attr == null) {
-                    //if (field.isPrimaryKey()) return null;
-                    continue;
-                }
+                if (attr == null) continue;
 
                 newAttributes.addValues(fieldName, attr.getValues());
             }
