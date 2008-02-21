@@ -188,7 +188,7 @@ public class LDAPSource extends Source {
         DN dn = db.toDn();
 
         BindRequest newRequest = (BindRequest)request.clone();
-        //newRequest.setDn(dn);
+        newRequest.setDn(dn);
 
         if (debug) log.debug("Binding as "+dn);
 

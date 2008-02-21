@@ -73,7 +73,7 @@ public class LDAPClient implements Cloneable {
     }
 
     public LDAPClient(Map<String,?> parameters) throws Exception {
-        this(parameters, true);
+        this(parameters, false);
     }
 
     public LDAPClient(Map<String,?> parameters, boolean connect) throws Exception {
@@ -93,7 +93,7 @@ public class LDAPClient implements Cloneable {
     public void parseParameters(Map<String,?> parameters) throws Exception {
         this.parameters.putAll(parameters);
 
-        this.parameters.put(Context.REFERRAL, "ignore");
+        //this.parameters.put(Context.REFERRAL, "ignore");
 
         String providerUrl = (String)parameters.get(Context.PROVIDER_URL);
 
@@ -130,8 +130,13 @@ public class LDAPClient implements Cloneable {
 
         this.parameters.put("com.sun.jndi.ldap.connect.pool", "true");
 
-        if (!this.parameters.containsKey("com.sun.jndi.ldap.connect.timeout")) {
-            this.parameters.put("com.sun.jndi.ldap.connect.timeout", "30000"); // 30 seconds
+        String timeout = (String)parameters.get("com.sun.jndi.ldap.connect.timeout");
+        if (timeout == null) {
+
+            timeout = System.getProperty("com.sun.jndi.ldap.connect.pool.timeout");
+            if (timeout == null) timeout = "30000"; // 30 seconds
+
+            this.parameters.put("com.sun.jndi.ldap.connect.timeout", timeout);
         }
     }
 

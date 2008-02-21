@@ -5,6 +5,11 @@
 
 <server>
 
+  <system-property>
+    <property-name>java.rmi.server.hostname</property-name>
+    <property-value>localhost</property-value>
+  </system-property>
+
   <adapter name="JDBC">
     <adapter-class>org.safehaus.penrose.jdbc.adapter.JDBCAdapter</adapter-class>
   </adapter>

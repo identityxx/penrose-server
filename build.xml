@@ -111,6 +111,10 @@
         <ant dir="server" target="dist-win32"/>
     </target>
 
+    <target name="dist-rpm" depends="init">
+        <ant dir="server" target="dist-rpm"/>
+    </target>
+
     <target name="dist-all" depends="init">
         <ant dir="core"   target="dist-all"/>
         <ant dir="server" target="dist-all"/>

@@ -663,9 +663,21 @@ public class Partition implements PartitionMBean, Cloneable {
         if (debug) log.debug("Finding "+dn);
 
         SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
-        if (!response.hasNext()) return null;
 
-        return response.next();
+        if (response.getReturnCode() != LDAP.SUCCESS) {
+            if (debug) log.debug("Entry "+dn+" not found: "+response.getErrorMessage());
+            throw LDAP.createException(response.getReturnCode());
+        }
+
+        if (!response.hasNext()) {
+            if (debug) log.debug("Entry "+dn+" not found.");
+            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+        }
+
+        SearchResult result = response.next();
+        if (debug) log.debug("Found entry "+dn+".");
+        
+        return result;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -937,8 +949,9 @@ public class Partition implements PartitionMBean, Cloneable {
         }
 
         final PartitionSearchResponse sr = new PartitionSearchResponse(
-                response,
                 session,
+                request,
+                response,
                 this,
                 requestedAttributes,
                 allRegularAttributes,

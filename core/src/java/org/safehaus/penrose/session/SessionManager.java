@@ -85,14 +85,14 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized Session getSession(Object sessionId) {
 
-        log.debug("Retrieving session "+sessionId);
+        //log.debug("Retrieving session "+sessionId);
         //return sessions.get(sessionId);
         return null;
     }
 
     public synchronized Session removeSession(Object sessionId) {
 
-        log.debug("Removing session "+sessionId);
+        //log.debug("Removing session "+sessionId);
         //return sessions.remove(sessionId);
         return null;
     }

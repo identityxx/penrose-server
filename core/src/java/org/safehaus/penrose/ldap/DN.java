@@ -31,7 +31,7 @@ public class DN implements Serializable, Comparable {
         rdns.add(rdn);
     }
 
-    public void parse() throws Exception {
+    public void parse() {
         if (rdns != null) return;
         rdns = new ArrayList<RDN>();
         Collection<RDN> list = DNBuilder.parse(originalDn);
@@ -40,7 +40,7 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public DN getDn(int start, int end) throws Exception {
+    public DN getDn(int start, int end) {
         parse();
 
         DNBuilder db = new DNBuilder();
@@ -66,7 +66,7 @@ public class DN implements Serializable, Comparable {
         return db.toDn();
     }
 
-    public DN getSuffix(int i) throws Exception {
+    public DN getSuffix(int i) {
         return getDn(i, getSize());
     }
 
@@ -124,23 +124,23 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public int getSize() throws Exception {
+    public int getSize() {
         parse();
         return rdns.size();
     }
 
-    public RDN getRdn() throws Exception {
+    public RDN getRdn() {
         parse();
         if (rdns.size() == 0) return null;
         return rdns.get(0);
     }
 
-    public RDN get(int i) throws Exception {
+    public RDN get(int i) {
         parse();
         return rdns.get(i);
     }
 
-    public Collection<RDN> getRdns() throws Exception {
+    public Collection<RDN> getRdns() {
         parse();
         return rdns;
     }
@@ -177,7 +177,7 @@ public class DN implements Serializable, Comparable {
         return normalizedDn;
     }
 
-    public DN getParentDn() throws Exception {
+    public DN getParentDn() {
         if (parentDn != null) return parentDn;
 
         parse();

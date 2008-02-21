@@ -53,8 +53,12 @@ public class Response implements Serializable, Cloneable {
         exception = LDAP.createException(returnCode);
     }
 
-    public String getMessage() {
+    public String getErrorMessage() {
         return exception.getLDAPErrorMessage();
+    }
+
+    public String getMessage() {
+        return exception.getMessage();
     }
 
     public void copy(Response response) {

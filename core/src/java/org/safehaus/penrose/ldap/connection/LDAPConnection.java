@@ -1,7 +1,6 @@
 package org.safehaus.penrose.ldap.connection;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.session.Session;

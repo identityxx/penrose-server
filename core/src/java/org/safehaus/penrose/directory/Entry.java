@@ -698,8 +698,13 @@ public class Entry implements Cloneable {
                 response
         );
 
+        if (response.getReturnCode() != LDAP.SUCCESS) {
+            if (debug) log.debug("Entry "+dn+" not found: "+response.getErrorMessage());
+            throw LDAP.createException(response.getReturnCode());
+        }
+
         if (!response.hasNext()) {
-            if (debug) log.debug("Entry "+dn+" not found");
+            if (debug) log.debug("Entry "+dn+" not found.");
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 

@@ -37,6 +37,7 @@ Source: "dist\docs\*"; DestDir: "{app}\docs"; Flags: recursesubdirs; Components:
 Source: "dist\lib\*"; DestDir: "{app}\lib"; Flags: recursesubdirs; Components: main
 Source: "dist\server\lib\*"; DestDir: "{app}\server\lib"; Flags: recursesubdirs; Components: main
 Source: "dist\schema\*"; DestDir: "{app}\schema"; Flags: recursesubdirs; Components: main
+Source: "dist\services\*"; DestDir: "{app}\services"; Flags: recursesubdirs; Components: main
 Source: "dist\samples\*"; DestDir: "{app}\samples"; Flags: recursesubdirs; Components: sample
 
 [Dirs]
@@ -46,6 +47,9 @@ Name: "{app}\lib\ext"
 Name: "{app}\partitions"
 Name: "{app}\samples"
 Name: "{app}\server\lib\ext"
+Name: "{app}\services\OpenDS\db"
+Name: "{app}\services\OpenDS\locks"
+Name: "{app}\services\OpenDS\logs"
 Name: "{app}\schema\ext"
 Name: "{app}\var"
 
@@ -69,8 +73,8 @@ Name: "{group}\${product.title} Server"; Filename: "{app}\bin\penrose-server.bat
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
 Name: "{group}\Sample Files"; Filename: "{app}\samples";
 Name: "{group}\Schema Files"; Filename: "{app}\schema";
-Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "start ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
-Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""Penrose Virtual Directory Server"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Start Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "start ""${product.title} Server ${product.version}"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
+Name: "{group}\Penrose Service\Stop Penrose Service"; Filename: "{sys}\net.exe"; Parameters: "stop ""${product.title} Server ${product.version}"""; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Register Penrose Service"; Filename: "{app}\bin\install-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Penrose Service\Unregister Penrose Service"; Filename: "{app}\bin\uninstall-penrose-service.bat"; IconFilename: "{app}\penrose.ico"; WorkingDir: "{app}"
 Name: "{group}\Uninstall ${product.title} Server"; Filename: "{uninstallexe}"

@@ -56,4 +56,16 @@ public class PenroseResponse implements com.identyx.javabackend.Response {
     public LDAPException getException() {
         return response.getException();
     }
+
+    public int getReturnCode() {
+        return response.getReturnCode();
+    }
+
+    public String getErrorMessage() {
+        return response.getErrorMessage();
+    }
+
+    public String getMessage() {
+        return response.getMessage();
+    }
 }

@@ -1,7 +1,6 @@
 package org.safehaus.penrose.jdbc.connection;
 
 import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.session.Session;

@@ -41,7 +41,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("ADD result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -75,7 +75,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("BIND result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             if (response.getReturnCode() == LDAP.SUCCESS && session.getBindDn() != null) {
@@ -117,7 +117,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("COMPARE result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -151,7 +151,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("DELETE result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -185,7 +185,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("MODIFY result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -223,7 +223,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("MODRDN result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -276,7 +276,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("SEARCH result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\" entries=\"");
 
             sb.append(response.getTotalCount());
@@ -312,7 +312,7 @@ public class Access {
             sb.append("\" - ");
 
             sb.append("UNBIND result=\"");
-            sb.append(response.getMessage());
+            sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());

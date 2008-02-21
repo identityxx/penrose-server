@@ -115,11 +115,11 @@ public class EntryMapping implements Serializable, Cloneable {
         dn = db.toDn();
     }
 
-    public RDN getRdn() throws Exception {
+    public RDN getRdn() {
         return dn.getRdn();
     }
     
-    public DN getParentDn() throws Exception {
+    public DN getParentDn() {
         return dn.getParentDn();
     }
 

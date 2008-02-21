@@ -120,7 +120,7 @@ public class PenroseJMXService extends Service {
     }
 
     public void register(ObjectName objectName, Object object) throws Exception {
-        log.debug("Registering "+objectName);
+        //log.debug("Registering "+objectName);
         if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName);
         mbeanServer.registerMBean(object, objectName);
     }
@@ -130,7 +130,7 @@ public class PenroseJMXService extends Service {
     }
 
     public void unregister(ObjectName objectName) throws Exception {
-        log.debug("Unregistering "+objectName);
+        //log.debug("Unregistering "+objectName);
         if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName);
     }
 }

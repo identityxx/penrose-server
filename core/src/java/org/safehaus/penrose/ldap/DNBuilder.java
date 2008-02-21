@@ -28,7 +28,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(String dn) throws Exception {
+    public void append(String dn) {
         if (dn == null) return;
         Collection<RDN> list = parse(dn);
         for (RDN rdn : list) {
@@ -41,7 +41,7 @@ public class DNBuilder {
         rdns.add(rdn);
     }
 
-    public void append(DN dn) throws Exception {
+    public void append(DN dn) {
         if (dn == null) return;
         Collection<RDN> list = dn.getRdns();
         for (RDN rdn : list) {
@@ -105,7 +105,7 @@ public class DNBuilder {
      * @param dn DN
      * @return a Collection of RDN objects
      */
-    public static Collection<RDN> parse(String dn) throws Exception {
+    public static Collection<RDN> parse(String dn) {
 
         Collection<RDN> list = new ArrayList<RDN>();
 
@@ -230,13 +230,22 @@ public class DNBuilder {
         						i += 3;
         					}
 
-        					// decode sequence
-                            sb.append(new String(utfBytes, "utf-8"));
+                            String str;
+                            try {
+                                str = new String(utfBytes, "utf-8");
+
+                            } catch (Exception e) {
+                                throw new RuntimeException(e.getMessage(), e);
+                            }
+
+                            // decode sequence
+                            sb.append(str);
 
 							i--;
 
         				} else {
                              // normal escaped special character
+                            i++;
                              sb.append(value[i]);
                          }
 /*

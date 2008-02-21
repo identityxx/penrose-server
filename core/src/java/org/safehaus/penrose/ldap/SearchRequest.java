@@ -46,7 +46,7 @@ public class SearchRequest extends Request implements Cloneable {
     protected boolean typesOnly = false;
 
     protected long sizeLimit    = 0;
-    protected long timeLimit    = 0;
+    protected long timeLimit    = 0; // milliseconds
 
     protected Collection<String> attributes = new ArrayList<String>();
 

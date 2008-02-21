@@ -40,7 +40,7 @@ ds-cfg-single-structural-objectclass-behavior: reject
 ds-cfg-notify-abandoned-operations: false
 ds-cfg-proxied-authorization-identity-mapper: cn=Exact Match,cn=Identity Mappers,cn=config
 ds-cfg-size-limit: 0
-ds-cfg-time-limit: 60 seconds
+ds-cfg-time-limit: 0 seconds
 ds-cfg-lookthrough-limit: 5000
 ds-cfg-writability-mode: enabled
 ds-cfg-bind-with-dn-requires-password: true
@@ -437,7 +437,9 @@ ds-cfg-num-request-handlers: 2
 ds-cfg-allow-start-tls: false
 ds-cfg-use-ssl: false
 ds-cfg-ssl-client-auth-policy: optional
-ds-cfg-ssl-cert-nickname: server-cert
+ds-cfg-ssl-cert-nickname: penrose
+ds-cfg-key-manager-provider: cn=JKS,cn=Key Manager Providers,cn=config
+ds-cfg-trust-manager-provider: cn=Blind Trust,cn=Trust Manager Providers,cn=config
 
 dn: cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config
 objectClass: top
@@ -447,7 +449,7 @@ cn: LDAPS Connection Handler
 ds-cfg-java-class: org.opends.server.protocols.ldap.LDAPConnectionHandler
 ds-cfg-enabled: false
 ds-cfg-listen-address: 0.0.0.0
-ds-cfg-listen-port: 636
+ds-cfg-listen-port: 10636
 ds-cfg-accept-backlog: 128
 ds-cfg-allow-ldap-v2: true
 ds-cfg-keep-stats: true
@@ -461,9 +463,9 @@ ds-cfg-num-request-handlers: 2
 ds-cfg-allow-start-tls: false
 ds-cfg-use-ssl: true
 ds-cfg-ssl-client-auth-policy: optional
-ds-cfg-ssl-cert-nickname: server-cert
+ds-cfg-ssl-cert-nickname: penrose
 ds-cfg-key-manager-provider: cn=JKS,cn=Key Manager Providers,cn=config
-ds-cfg-trust-manager-provider: cn=JKS,cn=Trust Manager Providers,cn=config
+ds-cfg-trust-manager-provider: cn=Blind Trust,cn=Trust Manager Providers,cn=config
 
 dn: cn=LDIF Connection Handler,cn=Connection Handlers,cn=config
 objectClass: top
@@ -484,7 +486,7 @@ ds-cfg-java-class: org.opends.server.protocols.jmx.JmxConnectionHandler
 ds-cfg-enabled: false
 ds-cfg-use-ssl: false
 ds-cfg-listen-port: 10689
-ds-cfg-ssl-cert-nickname: server-cert
+ds-cfg-ssl-cert-nickname: penrose
 
 dn: cn=Entry Cache,cn=config
 objectClass: top
@@ -621,9 +623,9 @@ objectClass: ds-cfg-key-manager-provider
 objectClass: ds-cfg-file-based-key-manager-provider
 cn: JKS
 ds-cfg-java-class: org.opends.server.extensions.FileBasedKeyManagerProvider
-ds-cfg-enabled: false
+ds-cfg-enabled: true
 ds-cfg-key-store-type: JKS
-ds-cfg-key-store-file: config/keystore
+ds-cfg-key-store-file: config/penrose.keystore
 ds-cfg-key-store-pin-file: config/keystore.pin
 
 dn: cn=PKCS12,cn=Key Manager Providers,cn=config
@@ -2077,7 +2079,7 @@ objectClass: ds-cfg-trust-manager-provider
 objectClass: ds-cfg-blind-trust-manager-provider
 cn: Blind Trust
 ds-cfg-java-class: org.opends.server.extensions.BlindTrustManagerProvider
-ds-cfg-enabled: false
+ds-cfg-enabled: true
 
 dn: cn=JKS,cn=Trust Manager Providers,cn=config
 objectClass: top
@@ -2215,4 +2217,3 @@ ds-cfg-plugin-type: preParseDelete
 ds-cfg-plugin-type: preParseModify
 ds-cfg-plugin-type: preParseModifyDN
 ds-cfg-plugin-type: preParseSearch
-java-backend-suffix: dc=Example,dc=com

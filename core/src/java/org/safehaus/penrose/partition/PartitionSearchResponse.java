@@ -18,9 +18,11 @@ public class PartitionSearchResponse extends SearchResponse {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
+    Session session;
+
+    SearchRequest request;
     SearchResponse response;
 
-    Session session;
     Partition partition;
 
     ACLEvaluator aclEvaluator;
@@ -34,16 +36,18 @@ public class PartitionSearchResponse extends SearchResponse {
     Map<String,Exception> results = new HashMap<String,Exception>();
 
     public PartitionSearchResponse(
-            SearchResponse response,
             Session session,
+            SearchRequest request,
+            SearchResponse response,
             Partition partition,
             Collection<String> requestedAttributes,
             boolean allRegularAttributes,
             boolean allOpAttributes,
             Collection<Entry> entries
     ) {
-        this.response  = response;
         this.session   = session;
+        this.request   = request;
+        this.response  = response;
         this.partition = partition;
 
         this.aclEvaluator = partition.getAclEvaluator();
@@ -102,10 +106,10 @@ public class PartitionSearchResponse extends SearchResponse {
         int count = entries.size() - results.size();
 
         if (count > 0) {
-            if (debug) log.debug("Search thread ended. Waiting for "+count+" more.");
+            if (debug) log.debug("Search thread ended ("+request.getDn()+"). Waiting for "+count+" more.");
             return;
         } else {
-            if (debug) log.debug("All search threads have ended.");
+            if (debug) log.debug("All search threads ("+request.getDn()+") have ended.");
         }
 
         boolean successes = false;
