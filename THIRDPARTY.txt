@@ -17,8 +17,9 @@ The Penrose (TM) application includes items that have been sourced from third pa
  - DOM4J                      BSD-style License          http://www.dom4j.org/license.html
  - Hibernate                  LGPL                       http://hibernate.org/356.html
  - HSQLDB                     BSD-style License          http://hsqldb.org/web/hsqlLicense.html
+ - Java Activation            Sun License                http://java.sun.com/javase/technologies/desktop/javabeans/jaf/
  - Java GetOpt Library        LGPL                       http://www.urbanophile.com/arenn/hacking/download.html
- - Java Mail                  CDDL                       https://glassfish.dev.java.net/javaee5/mail/
+ - Java Mail                  CDDL & GPL                 https://glassfish.dev.java.net/javaee5/mail/
  - Java Service Wrapper       MIT License                http://wrapper.tanukisoftware.org/doc/english/license.html
  - JDBM                       BSD-style License          http://jdbm.sourceforge.net/
  - JBoss                      LGPL                       http://labs.jboss.com/jbossas/downloads/
