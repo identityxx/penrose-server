@@ -7,9 +7,9 @@ import java.io.Serializable;
  */
 public class Modification implements Serializable, Cloneable {
 
-    public final static int ADD     = 1;
+    public final static int ADD     = 0;
+    public final static int DELETE  = 1;
     public final static int REPLACE = 2;
-    public final static int DELETE  = 3;
 
     protected int type;
     protected Attribute attribute;

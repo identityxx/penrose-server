@@ -17,20 +17,17 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.connection.ConnectionConfigs;
-import org.safehaus.penrose.source.SourceConfigs;
-import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.connection.ConnectionConfigs;
+import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
+import org.safehaus.penrose.module.ModuleConfigs;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
+import org.safehaus.penrose.source.SourceConfigs;
 
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.net.URL;
 import java.io.Serializable;
+import java.net.URL;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -43,6 +40,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
     protected String name;
     protected String description;
     protected String partitionClass = DEFAULT_PARTITION_CLASS;
+
+    protected Collection<String> depends = new ArrayList<String>();
 
     protected Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
     protected Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
@@ -121,6 +120,8 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         if (!equals(description, partitionConfig.description)) return false;
         if (!equals(partitionClass, partitionConfig.partitionClass)) return false;
 
+        if (!equals(depends, partitionConfig.depends)) return false;
+
         if (!equals(adapterConfigs, partitionConfig.adapterConfigs)) return false;
         if (!equals(interpreterConfigs, partitionConfig.interpreterConfigs)) return false;
 
@@ -139,6 +140,9 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         partitionConfig.name = name;
         partitionConfig.description = description;
         partitionConfig.partitionClass = partitionClass;
+
+        partitionConfig.depends = new ArrayList<String>();
+        partitionConfig.depends.addAll(depends);
 
         partitionConfig.adapterConfigs = new LinkedHashMap<String,AdapterConfig>();
         for (AdapterConfig adapterConfig : adapterConfigs.values()) {
@@ -244,5 +248,29 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
 
     public void setPartitionClass(String partitionClass) {
         this.partitionClass = partitionClass;
+    }
+
+    public Collection<String> getDepends() {
+        return depends;
+    }
+
+    public void setDepends(Collection<String> depends) {
+        this.depends.clear();
+        if (depends == null) return;
+        this.depends.addAll(depends);
+    }
+
+    public void setStringDepends(String depends) {
+        for (StringTokenizer st = new StringTokenizer(depends, ", "); st.hasMoreTokens(); ) {
+            String depend = st.nextToken();
+            addDepend(depend);
+        }
+    }
+    public void addDepend(String depend) {
+        depends.add(depend);
+    }
+
+    public void removeDepend(String depend) {
+        depends.remove(depend);
     }
 }

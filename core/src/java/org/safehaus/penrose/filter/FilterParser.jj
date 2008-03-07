@@ -234,7 +234,7 @@ Filter Item() :
         String value = expression.substring(p+length);
         log.debug("Filter: ["+attr+"] ["+type+"] ["+value+"]");
 
-        if (!"=".equals(type.toString())) {
+        if (!"=".equals(type)) {
             filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
@@ -244,7 +244,7 @@ Filter Item() :
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
 
         } else {
-            List values = new ArrayList();
+            Collection values = new ArrayList();
             StringTokenizer st = new StringTokenizer(value, "*", true);
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
@@ -257,7 +257,7 @@ Filter Item() :
             filter = new SubstringFilter(attr, values);
         }
         
-        log.debug("Parsed filter: "+filter);
+        log.debug("Parsed filter: ["+filter+"]");
   	    return filter;
 	}
 }

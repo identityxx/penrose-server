@@ -28,14 +28,14 @@ public class SourceConfigs implements Serializable, Cloneable {
     public void addSourceConfig(SourceConfig sourceConfig) {
 
         String sourceName = sourceConfig.getName();
-
+/*
         if (debug) {
             log.debug("Adding source "+sourceName+":");
             for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
                 log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType());
             }
         }
-
+*/
         sourceConfigs.put(sourceName, sourceConfig);
 
         Collection<String> destinations = getSourceSyncNames(sourceConfig);

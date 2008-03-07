@@ -58,9 +58,14 @@ public class SessionManager implements SessionManagerMBean {
     public synchronized Session newSession() throws Exception {
 
         Object sessionId = createSessionId();
-        //while (sessions.get(sessionId) != null) sessionId = createSessionId();
-
         return createSession(sessionId);
+    }
+
+    public synchronized Session newAdminSession() throws Exception {
+        Session session = newSession();
+        session.setBindDn(penroseConfig.getRootDn());
+        session.setRootUser(true);
+        return session;
     }
 
     public synchronized Session createSession(Object sessionId) throws Exception {

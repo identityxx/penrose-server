@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="schema">
+    <connection-name>Active Directory</connection-name>
+    <field name="lDAPDisplayName" primaryKey="true"/>
+    <field name="objectClass"/>
+    <field name="attributeID"/>
+    <field name="adminDescription"/>
+    <field name="attributeSyntax"/>
+    <field name="isSingleValued"/>
+    <field name="governsID"/>
+    <field name="mustContain"/>
+    <field name="systemMustContain"/>
+    <field name="mayContain"/>
+    <field name="systemMayContain"/>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>cn=Schema,cn=Configuration,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
+    </parameter>
+  </source>
+
+</sources>

@@ -40,18 +40,17 @@ import org.safehaus.penrose.scheduler.SchedulerContext;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
-import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.filter.Filter;
 
 /**
  * @author Endi S. Dewata
  */
-public class Partition implements PartitionMBean, Cloneable {
+public class Partition implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -360,43 +359,6 @@ public class Partition implements PartitionMBean, Cloneable {
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public AddResponse add(
-            String dn,
-            Attributes attributes
-    ) throws Exception {
-        return add(new DN(dn), attributes);
-    }
-
-    public AddResponse add(
-            RDN rdn,
-            Attributes attributes
-    ) throws Exception {
-        return add(new DN(rdn), attributes);
-    }
-
-    public AddResponse add(
-            DN dn,
-            Attributes attributes
-    ) throws Exception {
-
-        AddRequest request = new AddRequest();
-        request.setDn(dn);
-        request.setAttributes(attributes);
-
-        AddResponse response = new AddResponse();
-
-        add(request, response);
-
-        return response;
-    }
-
-    public void add(
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-        add(null, request, response);
-    }
-
     public void add(
             Session session,
             AddRequest request,
@@ -453,13 +415,6 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-        bind(null, request, response);
-    }
-
-    public void bind(
             Session session,
             BindRequest request, 
             BindResponse response
@@ -500,13 +455,6 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void compare(
-            CompareRequest request,
-            CompareResponse response
-    ) throws Exception {
-        compare(null, request, response);
-    }
 
     public void compare(
             Session session,
@@ -561,39 +509,6 @@ public class Partition implements PartitionMBean, Cloneable {
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public DeleteResponse delete(
-            String dn
-    ) throws Exception {
-        return delete(new DN(dn));
-    }
-
-    public DeleteResponse delete(
-            RDN rdn
-    ) throws Exception {
-        return delete(new DN(rdn));
-    }
-
-    public DeleteResponse delete(
-            DN dn
-    ) throws Exception {
-
-        DeleteRequest request = new DeleteRequest();
-        request.setDn(dn);
-
-        DeleteResponse response = new DeleteResponse();
-
-        delete(request, response);
-
-        return response;
-    }
-
-    public void delete(
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-        delete(null, request, response);
-    }
-
     public void delete(
             Session session,
             DeleteRequest request,
@@ -644,25 +559,19 @@ public class Partition implements PartitionMBean, Cloneable {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResult find(String dn) throws Exception {
-        return find(new DN(dn));
-    }
-
-    public SearchResult find(RDN rdn) throws Exception {
-        return find(new DN(rdn));
-    }
-
-    public SearchResult find(DN dn) throws Exception {
-        return find(null, dn);
-    }
-
     public SearchResult find(Session session, DN dn) throws Exception {
 
         boolean debug = log.isDebugEnabled();
 
         if (debug) log.debug("Finding "+dn);
 
-        SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
+        SearchRequest request = new SearchRequest();
+        request.setDn(dn);
+        request.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse response = new SearchResponse();
+
+        search(session, request, response);
 
         if (response.getReturnCode() != LDAP.SUCCESS) {
             if (debug) log.debug("Entry "+dn+" not found: "+response.getErrorMessage());
@@ -683,43 +592,6 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public ModifyResponse modify(
-            String dn,
-            Collection<Modification> modifications
-    ) throws Exception {
-        return modify(new DN(dn), modifications);
-    }
-
-    public ModifyResponse modify(
-            RDN rdn,
-            Collection<Modification> modifications
-    ) throws Exception {
-        return modify(new DN(rdn), modifications);
-    }
-
-    public ModifyResponse modify(
-            DN dn,
-            Collection<Modification> modifications
-    ) throws Exception {
-
-        ModifyRequest request = new ModifyRequest();
-        request.setDn(dn);
-        request.setModifications(modifications);
-
-        ModifyResponse response = new ModifyResponse();
-
-        modify(request, response);
-
-        return response;
-    }
-
-    public void modify(
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-        modify(null, request, response);
-    }
 
     public void modify(
             Session session,
@@ -774,47 +646,6 @@ public class Partition implements PartitionMBean, Cloneable {
     // ModRdn
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public ModRdnResponse modrdn(
-            String dn,
-            String newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-        return modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
-    }
-
-    public ModRdnResponse modrdn(
-            RDN rdn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-        return modrdn(new DN(rdn), newRdn, deleteOldRdn);
-    }
-
-    public ModRdnResponse modrdn(
-            DN dn,
-            RDN newRdn,
-            boolean deleteOldRdn
-    ) throws Exception {
-
-        ModRdnRequest request = new ModRdnRequest();
-        request.setDn(dn);
-        request.setNewRdn(newRdn);
-        request.setDeleteOldRdn(deleteOldRdn);
-
-        ModRdnResponse response = new ModRdnResponse();
-
-        modrdn(request, response);
-
-        return response;
-    }
-
-    public void modrdn(
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-        modrdn(null, request, response);
-    }
-
     public void modrdn(
             Session session,
             ModRdnRequest request,
@@ -867,56 +698,6 @@ public class Partition implements PartitionMBean, Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public SearchResponse search(
-            String dn,
-            String filter,
-            int scope
-    ) throws Exception {
-        return search(new DN(dn), FilterTool.parseFilter(filter), scope);
-    }
-
-    public SearchResponse search(
-            RDN rdn,
-            Filter filter,
-            int scope
-    ) throws Exception {
-        return search(new DN(rdn), filter, scope);
-    }
-
-    public SearchResponse search(
-            DN dn,
-            Filter filter,
-            int scope
-    ) throws Exception {
-        return search(null, dn, filter, scope);
-    }
-
-    public SearchResponse search(
-            Session session,
-            DN dn,
-            Filter filter,
-            int scope
-    ) throws Exception {
-
-        SearchRequest request = new SearchRequest();
-        request.setDn(dn);
-        request.setFilter(filter);
-        request.setScope(scope);
-
-        SearchResponse response = new SearchResponse();
-
-        search(session, request, response);
-
-        return response;
-    }
-
-    public void search(
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-        search(null, request, response);
-    }
 
     public void search(
             final Session session,

@@ -24,7 +24,7 @@ public class ConnectionConfigs implements Serializable, Cloneable {
 
     public void addConnectionConfig(ConnectionConfig connectionConfig) {
         String name = connectionConfig.getName();
-        if (debug) log.debug("Adding connection "+name+".");
+        //if (debug) log.debug("Adding connection "+name+".");
         connectionConfigs.put(name, connectionConfig);
     }
 

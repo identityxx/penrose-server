@@ -175,30 +175,15 @@ public class Attributes implements Serializable, Cloneable {
         StringBuilder sb = new StringBuilder();
 
         for (Attribute attribute : attributes.values()) {
-            sb.append(attribute);
+            sb.append(attribute.toString());
         }
 
         return sb.toString();
     }
 
     public void print() throws Exception {
-        Logger log = LoggerFactory.getLogger(getClass());
-
         for (Attribute attribute : attributes.values()) {
-
-            String name = attribute.getName();
-            Collection list = attribute.getValues();
-
-            for (Object value : list) {
-                String className = value.getClass().getName();
-                className = className.substring(className.lastIndexOf(".") + 1);
-
-                if (value instanceof byte[]) {
-                    value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value);
-                }
-
-                log.debug(" - " + name + ": " + value + " (" + className + ")");
-            }
+            attribute.print();
         }
     }
 }

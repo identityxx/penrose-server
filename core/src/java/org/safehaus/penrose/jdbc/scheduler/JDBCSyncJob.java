@@ -323,33 +323,29 @@ public class JDBCSyncJob extends Job {
 
     public void generateChangeLogs() throws Exception {
 
-        Partition partition = jobContext.getPartition();
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-        PenroseConfig penroseConfig = penroseContext.getPenroseConfig();
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        SessionManager sessionManager = penroseContext.getSessionContext().getSessionManager();
+        try {
+            for (Entry entry : entries.values()) {
+                Entry tmpEntry = tmpEntries.get(entry.getId());
 
-        Session session = sessionManager.newSession();
-        session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
+                log.debug("=============================================================================");
+                log.debug("Searching old snapshot.");
 
-        for (Entry entry : entries.values()) {
-            Entry tmpEntry = tmpEntries.get(entry.getId());
+                SearchResponse response1 = search(entry, session);
 
-            log.debug("=============================================================================");
-            log.debug("Searching old snapshot.");
+                log.debug("=============================================================================");
+                log.debug("Searching new snapshot.");
 
-            SearchResponse response1 = search(entry, session);
+                SearchResponse response2 = search(tmpEntry, session);
 
-            log.debug("=============================================================================");
-            log.debug("Searching new snapshot.");
+                generateChangeLogs(response1, response2);
+            }
 
-            SearchResponse response2 = search(tmpEntry, session);
-
-            generateChangeLogs(response1, response2);
+        } finally {
+            session.close();
         }
-
-        session.close();
     }
 
     public SearchResponse search(Entry entry, Session session) throws Exception {

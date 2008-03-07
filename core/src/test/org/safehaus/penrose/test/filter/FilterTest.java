@@ -20,7 +20,7 @@ public class FilterTest extends TestCase {
 
     public void testUnescape() throws Exception {
         String s1 = "\\28James\\5cBond\\2a\\29";
-        String s2 = FilterTool.unescape(s1);
+        Object s2 = FilterTool.unescape(s1);
         assertTrue("(James\\Bond*)".equals(s2));
     }
 

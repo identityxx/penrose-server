@@ -35,11 +35,15 @@ public class JDBCSource extends Source {
 
     JDBCConnection connection;
 
+    String sourceBaseDn;
+
     public JDBCSource() {
     }
 
     public void init() throws Exception {
         connection = (JDBCConnection)getConnection();
+
+        sourceBaseDn = getParameter(BASE_DN);
 
         boolean create = Boolean.parseBoolean(getParameter(JDBCClient.CREATE));
         if (create) {
@@ -625,12 +629,7 @@ public class JDBCSource extends Source {
 
         DNBuilder db = new DNBuilder();
         db.append(rb.toRdn());
-
-        String baseDn = getParameter(BASE_DN);
-        if (baseDn != null) {
-            db.append(baseDn);
-        }
-
+        db.append(sourceBaseDn);
         DN dn = db.toDn();
 
         return new SearchResult(dn, attributes);

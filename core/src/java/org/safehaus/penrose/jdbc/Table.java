@@ -15,12 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.source;
+package org.safehaus.penrose.jdbc;
 
 /**
  * @author Endi S. Dewata
  */
-public class TableConfig implements Comparable, Cloneable {
+public class Table implements Comparable, Cloneable {
 
 	private String name;
     private String type;
@@ -28,14 +28,14 @@ public class TableConfig implements Comparable, Cloneable {
     private String catalog;
     private String schema;
 
-	public TableConfig() {
+	public Table() {
 	}
 
-    public TableConfig(String name) {
+    public Table(String name) {
         this.name = name;
     }
 
-    public TableConfig(String name, String type, String catalog, String schema) {
+    public Table(String name, String type, String catalog, String schema) {
         this.name = name;
         this.type = type;
         this.catalog = catalog;
@@ -74,7 +74,7 @@ public class TableConfig implements Comparable, Cloneable {
         if (object == null) return false;
         if (object.getClass() != this.getClass()) return false;
 
-        TableConfig fieldConfig = (TableConfig)object;
+        Table fieldConfig = (Table)object;
         if (!equals(name, fieldConfig.name)) return false;
         if (!equals(type, fieldConfig.type)) return false;
 
@@ -83,21 +83,21 @@ public class TableConfig implements Comparable, Cloneable {
 
     public int compareTo(Object object) {
         if (object == null) return 0;
-        if (!(object instanceof TableConfig)) return 0;
+        if (!(object instanceof Table)) return 0;
 
-        TableConfig fd = (TableConfig)object;
-        return name.compareTo(fd.name);
+        Table table = (Table)object;
+        return name.compareTo(table.name);
     }
 
-    public void copy(TableConfig fieldConfig) {
-        name = fieldConfig.name;
-        type = fieldConfig.type;
+    public void copy(Table table) {
+        name = table.name;
+        type = table.type;
     }
 
     public Object clone() throws CloneNotSupportedException {
-        TableConfig fieldConfig = (TableConfig)super.clone();
-        fieldConfig.copy(this);
-        return fieldConfig;
+        Table table = (Table)super.clone();
+        table.copy(this);
+        return table;
     }
 
     public String getCatalog() {

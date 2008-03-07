@@ -33,7 +33,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
     public void addEntryMapping(EntryMapping entryMapping) throws Exception {
 
         String dn = entryMapping.getDn().getNormalizedDn();
-        if (debug) log.debug("Adding entry "+dn+".");
+        //if (debug) log.debug("Adding entry \""+dn+"\".");
 
         String id = entryMapping.getId();
         if (id == null) {

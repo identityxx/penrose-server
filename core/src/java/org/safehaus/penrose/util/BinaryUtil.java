@@ -38,19 +38,33 @@ public class BinaryUtil {
     }
 
     public static String encode(String encoding, byte[] bytes) {
+        return encode(encoding, bytes, 0, bytes.length);
+    }
+
+    public static String encode(String encoding, byte[] bytes, int offset, int length) {
+
         if (bytes == null) return null;
+
+        if (offset + length > bytes.length) length = bytes.length - offset;
 
         String string;
 
         if (BASE64.equals(encoding)) {
-            string = Base64.encodeBytes(bytes, Base64.DONT_BREAK_LINES);
+            string = Base64.encodeBytes(bytes, offset, length, Base64.DONT_BREAK_LINES);
 
         } else if (BIG_INTEGER.equals(encoding)) {
+
+            if (offset != 0 || length != bytes.length) {
+                byte[] b = new byte[length];
+                System.arraycopy(bytes, offset, b, 0, length);
+                bytes = b;
+            }
+
             string = new BigInteger(1, bytes).toString(16);
             while (string.length() < bytes.length*2) string = "0"+string;
 
         } else {
-            string = new String(bytes);
+            string = new String(bytes, offset, length);
         }
 
         return string;

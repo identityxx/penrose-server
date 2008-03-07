@@ -111,11 +111,11 @@ public class DNBuilder {
 
         if (dn == null || "".equals(dn)) return list;
 
-        char[] value = dn.toCharArray();
+        char[] chars = dn.toCharArray();
         int start = 0;
-        int end = value.length;
+        int end = chars.length;
 
-        if (value[start] == '"' && value[end-1] == '"') {
+        if (chars[start] == '"' && chars[end-1] == '"') {
             start++; end--;
         }
 
@@ -132,7 +132,7 @@ public class DNBuilder {
 
             if (inName) {
 
-                switch (value[i]) {
+                switch (chars[i]) {
         		case '=':
         			name = sb.toString().trim();
         			sb.setLength(0);
@@ -140,12 +140,12 @@ public class DNBuilder {
         			break;
 
                 default:
-        			sb.append(value[i]);
+        			sb.append(chars[i]);
         		}
 
             } else {
 
-                switch (value[i]) {
+                switch (chars[i]) {
         		case '"':
         			sawDQ = true;
                     inDQ = !inDQ;                    
@@ -187,11 +187,11 @@ public class DNBuilder {
                 case '#':
                     if (!inDQ) {
                         // this is an escape - pick up next character
-                        while (i < value.length && value[i+1] != '+' && value[i+1] != ',' && value[i+1] != ';') {
-                            if (isHexDigit(value[++i]))
+                        while (i < end && chars[i+1] != '+' && chars[i+1] != ',' && chars[i+1] != ';') {
+                            if (isHexDigit(chars[++i]))
                             {
                                 // assume hexpair
-                                String x = new String(new char[] { value[i], value[++i] });
+                                String x = new String(new char[] { chars[i], chars[++i] });
                                 bytes.add(Integer.parseInt(x, 16));
                             } else {
                                 // invalid hexchar
@@ -203,36 +203,36 @@ public class DNBuilder {
                 case '\\':
         			if (!inDQ) {
         				// this is an escape - pick up next character
-        				if (isHexDigit(value[i+1]) && isHexDigit(value[i+2])) {
+        				if (isHexDigit(chars[i+1]) && isHexDigit(chars[i+2])) {
         					// Interpret all immediately follwing "\xx" escaped characters
         					// using UTF-8 decoding, as individual decoding of each character
         					// would break for >1 byte UTF-8 sequences.
 
         					// determine number of escaped characters
-        					int escapedCharacters = 1;
+        					int counter = 1;
         					int s = i; // points to slash
-        					i = i + 3;
-        					while(i < value.length - 2
-        							&& value[i] == '\\'
-        							&& isHexDigit(value[i+1])
-        							&& isHexDigit(value[i+2])) {
-        						escapedCharacters ++;
+        					i += 3;
+        					while(i < end-2
+        							&& chars[i] == '\\'
+        							&& isHexDigit(chars[i+1])
+        							&& isHexDigit(chars[i+2])) {
+        						counter++;
         						i += 3;
         					}
 
         					// store un-escaped characters in byte buffer for decoding
-        					byte utfBytes[] = new byte[escapedCharacters];
+        					byte utfBytes[] = new byte[counter];
 
         					i = s;
-        					for(int j = 0; j < escapedCharacters; j++) {
-        						String x = new String(new char[] { value[i + 1], value[i + 2] });
-        						utfBytes[j] = (byte) Integer.parseInt(x, 16);
+        					for(int j = 0; j < counter; j++) {
+        						String x = new String(new char[] { chars[i+1], chars[i+2] });
+        						utfBytes[j] = (byte)Integer.parseInt(x, 16);
         						i += 3;
         					}
 
                             String str;
                             try {
-                                str = new String(utfBytes, "utf-8");
+                                str = new String(utfBytes, "UTF-8");
 
                             } catch (Exception e) {
                                 throw new RuntimeException(e.getMessage(), e);
@@ -246,30 +246,14 @@ public class DNBuilder {
         				} else {
                              // normal escaped special character
                             i++;
-                             sb.append(value[i]);
+                             sb.append(chars[i]);
                          }
-/*
-        				switch (value[++i])
-        				{
-        				case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-        				case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-        				case '0': case '1': case '2': case '3': case '4':
-        				case '5': case '6': case '7': case '8': case '9':
-        					// assume hexpair
-        					String x = new String(new char[] { value[i], value[++i] });
-        					sb.append((char) Integer.parseInt(x, 16));
-        					break;
-    					default:
-    						// normal escaped special character
-    						sb.append(value[i]);
-        				}
-*/
         				break;
         			}
         			// else no escapes - fall through and keep the backslash literal
 
                 default:
-    				sb.append(value[i]);
+    				sb.append(chars[i]);
         		}
         	}
         }

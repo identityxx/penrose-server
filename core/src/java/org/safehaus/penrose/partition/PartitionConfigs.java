@@ -17,16 +17,17 @@
  */
 package org.safehaus.penrose.partition;
 
+import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.source.SourceConfig;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
 import java.io.File;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -41,6 +42,7 @@ public class PartitionConfigs implements PartitionConfigsMBean {
     protected PartitionWriter partitionWriter = new PartitionWriter();
 
     private Map<String,PartitionConfig> partitionConfigs = new LinkedHashMap<String,PartitionConfig>();
+
     private File partitionsDir;
 
     public PartitionConfigs(File partitionsDir) {
@@ -172,6 +174,69 @@ public class PartitionConfigs implements PartitionConfigsMBean {
 
     public void addPartitionConfig(PartitionConfig partitionConfig) {
         partitionConfigs.put(partitionConfig.getName(), partitionConfig);
+    }
+
+    public Collection<String> getLoadOrder() throws Exception {
+
+        log.debug("Computing load order.");
+        
+        Map<String,Collection<String>> dependents = new LinkedHashMap<String,Collection<String>>();
+
+        for (String partitionName : partitionConfigs.keySet()) {
+            dependents.put(partitionName, new LinkedHashSet<String>());
+        }
+
+        for (String partitionName : partitionConfigs.keySet()) {
+            PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
+
+            for (String depend : partitionConfig.getDepends()) {
+                Collection<String> list = dependents.get(depend);
+                if (list == null) {
+                    log.error("Partition not found: "+depend);
+                    throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+                }
+                list.add(partitionName);
+            }
+        }
+
+        Collection<String> results = new LinkedHashSet<String>();
+        results.add("DEFAULT");
+
+        Collection<String> visited = new LinkedHashSet<String>();
+        results.add("DEFAULT");
+
+        for (String partitionName : partitionConfigs.keySet()) {
+            PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
+
+            Collection<String> list = dependents.get(partitionName);
+            if (!list.isEmpty()) continue;
+
+            getLoadOrder(partitionConfig, results, visited);
+        }
+
+        return results;
+    }
+
+    public void getLoadOrder(PartitionConfig partitionConfig, Collection<String> results, Collection<String> visited) throws Exception {
+
+        String partitionName = partitionConfig.getName();
+
+        if (visited.contains(partitionName)) {
+            if (!results.contains(partitionName)) {
+                log.error("Circular dependency.");
+                throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+            }
+            return;
+        }
+
+        visited.add(partitionName);
+
+        for (String depend : partitionConfig.getDepends()) {
+            PartitionConfig pc = partitionConfigs.get(depend);
+            getLoadOrder(pc, results, visited);
+        }
+
+        results.add(partitionName);
     }
 
     public Collection<PartitionConfig> getPartitionConfigs() {

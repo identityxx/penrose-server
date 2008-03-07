@@ -63,21 +63,19 @@ echo.
 
 :runPenrose
 
-set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar
-set LOCALCLASSPATH=%LOCALCLASSPATH%;%PENROSE_HOME%\services\ApacheDS\conf
+set APACHEDS_HOME=%PENROSE_HOME%\services\ApacheDS
 
 set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\services\ApacheDS\SERVICE-INF\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%APACHEDS_HOME%\SERVICE-INF\lib
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" -Dorg.safehaus.penrose.apacheds.home="%PENROSE_HOME%\services\ApacheDS" org.safehaus.penrose.apacheds.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" -Dorg.safehaus.penrose.apacheds.home="%APACHEDS_HOME%" org.safehaus.penrose.apacheds.SchemaGenerator %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 :end
-set LOCALCLASSPATH=
 set LOCALLIBPATH=
 set _JAVACMD=
 set PENROSE_CMD_LINE_ARGS=

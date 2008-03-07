@@ -1,6 +1,8 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.util.BinaryUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -205,4 +207,18 @@ public class Attribute implements Serializable, Cloneable {
         return sb.toString();
     }
 
+    public void print() throws Exception {
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        for (Object value : values) {
+            String className = value.getClass().getName();
+            className = className.substring(className.lastIndexOf(".") + 1);
+
+            if (value instanceof byte[]) {
+                value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value, 0, 10)+"...";
+            }
+
+            log.debug(" - " + name + ": " + value + " (" + className + ")");
+        }
+    }
 }

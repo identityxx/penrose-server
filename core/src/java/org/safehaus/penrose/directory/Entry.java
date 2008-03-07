@@ -17,23 +17,25 @@
  */
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.acl.ACI;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.cache.Cache;
+import org.safehaus.penrose.cache.CacheKey;
+import org.safehaus.penrose.cache.CacheManager;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.cache.CacheManager;
-import org.safehaus.penrose.cache.CacheKey;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterEvaluator;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,7 +219,7 @@ public class Entry implements Cloneable {
     }
 
     public Partition getPartition() {
-        return getDirectory().getPartition();
+        return entryContext.getPartition();
     }
 
     public Collection<SourceRef> getLocalSourceRefs() {
@@ -548,6 +550,7 @@ public class Entry implements Cloneable {
         if (fetch) {
             SearchResult sr = find(dn);
             sourceValues.add(sr.getSourceValues());
+
         } else {
             EngineTool.extractSourceValues(this, dn, sourceValues);
         }
@@ -674,7 +677,16 @@ public class Entry implements Cloneable {
     }
 
     public SearchResult find(DN dn) throws Exception {
-        return find(null, dn);
+
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
+
+        try {
+            return find(session, dn);
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResult find(
@@ -697,6 +709,8 @@ public class Entry implements Cloneable {
                 request,
                 response
         );
+
+        response.close();
 
         if (response.getReturnCode() != LDAP.SUCCESS) {
             if (debug) log.debug("Entry "+dn+" not found: "+response.getErrorMessage());
@@ -923,7 +937,7 @@ public class Entry implements Cloneable {
 
         search(session, this, sourceValues, request, response);
 
-        response.close();
+        //response.close();
     }
 
     public void search(

@@ -212,7 +212,7 @@ public class SourceValues implements Serializable, Cloneable {
                     className = className.substring(className.lastIndexOf(".") + 1);
 
                     if (value instanceof byte[]) {
-                        value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value);
+                        value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value, 0, 10)+"...";
                     }
 
                     log.debug(" - " + sourceName + "." + fieldName + ": " + value + " (" + className + ")");

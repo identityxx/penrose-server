@@ -132,7 +132,7 @@ public class JDBCConnection extends Connection {
 
         ConnectionFactory connectionFactory = new DriverConnectionFactory(this.driver, url, properties);
 
-        //PoolableConnectionFactory poolableConnectionFactory =
+        PoolableConnectionFactory poolableConnectionFactory =
                 new PoolableConnectionFactory(
                         connectionFactory,
                         connectionPool,
@@ -141,6 +141,8 @@ public class JDBCConnection extends Connection {
                         false, // read only
                         true // auto commit
                 );
+        
+        connectionPool.setFactory(poolableConnectionFactory);
 
         //log.debug("Initializing "+initialSize+" connections.");
         for (int i = 0; i < initialSize; i++) {
@@ -295,34 +297,6 @@ public class JDBCConnection extends Connection {
         } finally {
             closeClient(session, source, client);
         }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Compare
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public void compare(
-            final Session session,
-            final Source source,
-            final CompareRequest request,
-            final CompareResponse response
-    ) throws Exception {
-
-        SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(request.getDn());
-        newRequest.setScope(SearchRequest.SCOPE_BASE);
-
-        SimpleFilter filter = new SimpleFilter(request.getAttributeName(), "=", request.getAttributeValue());
-        newRequest.setFilter(filter);
-
-        SearchResponse newResponse = new SearchResponse();
-
-        search(session, source, newRequest, newResponse);
-
-        boolean result = newResponse.hasNext();
-
-        if (debug) log.debug("Compare operation completed ["+result+"].");
-        response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -649,23 +623,35 @@ public class JDBCConnection extends Connection {
         return list;
     }
     
-    public Collection<TableConfig> getTables(String catalog, String schema) throws Exception {
+    public Collection<Table> getTables(String catalog, String schema) throws Exception {
         JDBCClient client = getClient();
-        Collection<TableConfig> tables = client.getTables(catalog, schema);
+        Collection<Table> tables = client.getTables(catalog, schema);
         client.close();
         return tables;
     }
     
     public String getTableName(Source source) throws Exception {
+
+        SourceConfig sourceConfig = source.getSourceConfig();
+
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
         JDBCClient client = getClient();
-        String tableName = client.getTableName(source.getSourceConfig());
+        String tableName = client.getTableName(catalog, schema, table);
         client.close();
         return tableName;
     }
 
     public String getTableName(SourceConfig sourceConfig) throws Exception {
+
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
         JDBCClient client = getClient();
-        String tableName = client.getTableName(sourceConfig);
+        String tableName = client.getTableName(catalog, schema, table);
         client.close();
         return tableName;
     }

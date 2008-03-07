@@ -121,6 +121,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+        <copy todir="target/dist" file="../THIRDPARTY.txt"/>
         <copy todir="target/dist" file="../pom.xml">
             <filterchain>
                 <expandproperties/>
@@ -378,15 +379,25 @@
     </target>
 
     <target name="install" depends="init,check-install,install-conf">
-        <delete failonerror="false">
-            <fileset dir="${penrose.home}" includes="lib/*"/>
-            <fileset dir="${penrose.home}" includes="server/lib/*"/>
-        </delete>
         <copy todir="${penrose.home}" overwrite="true">
             <fileset dir="target/dist">
                 <exclude name="conf/**/*"/>
                 <exclude name="samples/**/*"/>
                 <exclude name="services/**/*"/>
+                <exclude name="lib/*"/>
+                <exclude name="server/lib/*"/>
+            </fileset>
+        </copy>
+        <delete failonerror="true">
+            <fileset dir="${penrose.home}">
+                <include name="lib/*"/>
+                <include name="server/lib/*"/>
+            </fileset>
+        </delete>
+        <copy todir="${penrose.home}" overwrite="true">
+            <fileset dir="target/dist">
+                <include name="lib/*"/>
+                <include name="server/lib/*"/>
             </fileset>
         </copy>
         <ant dir="../services" target="install"/>

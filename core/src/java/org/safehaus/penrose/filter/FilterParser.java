@@ -236,7 +236,7 @@ public class FilterParser implements FilterParserConstants {
         String value = expression.substring(p+length);
         log.debug("Filter: ["+attr+"] ["+type+"] ["+value+"]");
 
-        if (!"=".equals(type.toString())) {
+        if (!"=".equals(type)) {
             filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
 
         } else if ("*".equals(value)) {
@@ -246,7 +246,7 @@ public class FilterParser implements FilterParserConstants {
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
 
         } else {
-            List values = new ArrayList();
+            Collection values = new ArrayList();
             StringTokenizer st = new StringTokenizer(value, "*", true);
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();
@@ -259,7 +259,7 @@ public class FilterParser implements FilterParserConstants {
             filter = new SubstringFilter(attr, values);
         }
 
-        log.debug("Parsed filter: "+filter);
+        log.debug("Parsed filter: ["+filter+"]");
             {if (true) return filter;}
     throw new Error("Missing return statement in function");
   }

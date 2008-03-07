@@ -78,11 +78,10 @@ public class SubstringFilter extends ItemFilter {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(" + attribute + "=");
-        for (Object o : substrings) {
-            if (o.equals(STAR)) {
-                sb.append(o);
+        for (Object value : substrings) {
+            if (value.equals(STAR)) {
+                sb.append(value);
             } else {
-                String value = (String) o;
                 sb.append(FilterTool.escape(value));
             }
         }
@@ -92,11 +91,10 @@ public class SubstringFilter extends ItemFilter {
 
     public String toString(Collection<Object> args) {
         StringBuilder sb = new StringBuilder("(" + attribute + "=");
-        for (Object o : substrings) {
-            if (o.equals(STAR)) {
-                sb.append(o);
+        for (Object value : substrings) {
+            if (value.equals(STAR)) {
+                sb.append(value);
             } else {
-                String value = (String) o;
                 sb.append("{");
                 sb.append(args.size());
                 sb.append("}");

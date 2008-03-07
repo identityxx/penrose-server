@@ -1,0 +1,34 @@
+BY USING THIS SOFTWARE YOU AGREE TO THE LICENSING TERMS OF REDISTRIBUTED CONTENT
+--------------------------------------------------------------------------------
+
+The Penrose (TM) application includes items that have been sourced from third parties as follows:
+
+ - ANTLR                      BSD-style License          http://www.antlr.org/license.html
+ - Apache Ant                 Apache Software License    http://ant.apache.org/license.html
+ - Apache Commons             Apache Software License    http://commons.apache.org/license.html
+ - Apache Directory           Apache Software License    http://directory.apache.org/community%26resources/the-license.html
+ - Apache MINA                Apache Software License    http://mina.apache.org/
+ - Apache Maven               Apache Software License    http://maven.apache.org/license.html
+ - Apache Velocity            Apache Software License    http://velocity.apache.org/engine/devel/license.html
+ - Backport Util Concurrent   Public Domain              http://backport-jsr166.sourceforge.net/
+ - BeanShell                  LGPL                       http://www.beanshell.org/license.html
+ - Berkeley DB Java Edition   BSD-style License          http://www.oracle.com/technology/software/products/berkeley-db/htdocs/jeoslicense.html
+ - Checkstyle                 LGPL                       http://checkstyle.sourceforge.net/
+ - DOM4J                      BSD-style License          http://www.dom4j.org/license.html
+ - Hibernate                  LGPL                       http://hibernate.org/356.html
+ - HSQLDB                     BSD-style License          http://hsqldb.org/web/hsqlLicense.html
+ - Java GetOpt Library        LGPL                       http://www.urbanophile.com/arenn/hacking/download.html
+ - Java Mail                  CDDL                       https://glassfish.dev.java.net/javaee5/mail/
+ - Java Service Wrapper       MIT License                http://wrapper.tanukisoftware.org/doc/english/license.html
+ - JDBM                       BSD-style License          http://jdbm.sourceforge.net/
+ - JBoss                      LGPL                       http://labs.jboss.com/jbossas/downloads/
+ - JUnit                      CPL                        http://svn.mindswap.org/swoop/branches/profiling/lib/junit-3.8.1/cpl-v10.html
+ - JLDAP                      Novell Developer License   http://developer.novell.com/wiki/index.php/Jldap
+ - Log4j                      Apache Software License    http://logging.apache.org/log4j/1.2/license.html
+ - MySQL Connector/J          GPL                        http://www.mysql.com/products/connector/j/
+ - OpenDS                     CDDL                       https://opends.dev.java.net/
+ - PostgreSQL JDBC Driver     BSD-style License          http://jdbc.postgresql.org/license.html
+ - Quartz                     Apache Software License    http://www.opensymphony.com/quartz/license.action
+ - SLF4J                      MIT License                http://www.slf4j.org/license.html
+ - Spring Framework           Apache Software License    http://www.springframework.org/
+ - Xerces                     Apache Software License    http://xerces.apache.org/xerces-j/

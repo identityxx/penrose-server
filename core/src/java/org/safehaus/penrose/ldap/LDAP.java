@@ -96,36 +96,6 @@ public class LDAP {
     public static final int AMBIGUOUS_RESPONSE = 101;
     public static final int TLS_NOT_SUPPORTED = 112;
 
-    public static boolean isBinary(javax.naming.directory.Attribute attribute) throws Exception {
-
-        log.debug("Attribute "+attribute.getID()+" definition:");
-
-        try {
-            DirContext ctx = attribute.getAttributeDefinition();
-            for (NamingEnumeration ne = ctx.list(""); ne.hasMore(); ) {
-                Object o = ne.next();
-                log.debug(" - Syntax: "+o+" ("+o.getClass().getName()+")");
-            }
-        } catch (Exception e) {
-            log.debug(" - "+e.getClass().getName()+": "+e.getMessage());
-        }
-
-        boolean binary = false;
-
-        try {
-            DirContext ctx = attribute.getAttributeSyntaxDefinition();
-            for (NamingEnumeration ne = ctx.list(""); ne.hasMore(); ) {
-                Object o = ne.next();
-                log.debug(" - Syntax: "+o+" ("+o.getClass().getName()+")");
-            }
-        } catch (Exception e) {
-            log.debug(" - "+e.getClass().getName()+": "+e.getMessage());
-            binary = "SyntaxDefinition/1.3.6.1.4.1.1466.115.121.1.40".equals(e.getMessage());
-        }
-
-        return binary;
-    }
-
     public static SearchRequest convert(SearchControls sc) {
         SearchRequest request = new SearchRequest();
         request.setScope(sc.getSearchScope());
@@ -178,13 +148,13 @@ public class LDAP {
     public static String getModificationOperation(int op) {
 
         switch (op) {
-            case DirContext.ADD_ATTRIBUTE:
+            case Modification.ADD:
                 return "add";
 
-            case DirContext.REMOVE_ATTRIBUTE:
+            case Modification.DELETE:
                 return "delete";
 
-            case DirContext.REPLACE_ATTRIBUTE:
+            case Modification.REPLACE:
                 return "replace";
         }
 
@@ -194,13 +164,13 @@ public class LDAP {
     public static int getModificationOperation(String op) {
 
         if ("add".equals(op)) {
-            return DirContext.ADD_ATTRIBUTE;
+            return Modification.ADD;
 
         } else if ("delete".equals(op)) {
-            return DirContext.REMOVE_ATTRIBUTE;
+            return Modification.DELETE;
 
         } else if ("replace".equals(op)) {
-            return DirContext.REPLACE_ATTRIBUTE;
+            return Modification.REPLACE;
         }
 
         return 0;

@@ -11,6 +11,8 @@
 )>
 
 <!ATTLIST partition enabled CDATA #IMPLIED>
+<!ATTLIST partition depends CDATA #IMPLIED>
+
 <!ELEMENT partition-class (#PCDATA)>
 
 <!ELEMENT description (#PCDATA)>

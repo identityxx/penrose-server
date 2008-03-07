@@ -7,8 +7,10 @@ import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -38,8 +40,8 @@ public class LDAPMergeEntry extends Entry {
         }
 
         SearchResult sr = find(dn);
-
         SourceValues sourceValues = sr.getSourceValues();
+
         if (debug) {
             log.debug("Source values:");
             sourceValues.print();

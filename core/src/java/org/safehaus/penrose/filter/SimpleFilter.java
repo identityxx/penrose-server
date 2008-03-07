@@ -86,7 +86,7 @@ public class SimpleFilter extends ItemFilter {
         sb.append("(");
         sb.append(attribute);
         sb.append(operator);
-        sb.append(FilterTool.escape(value.toString()));
+        sb.append(FilterTool.escape(value));
         sb.append(")");
 
         return sb.toString();

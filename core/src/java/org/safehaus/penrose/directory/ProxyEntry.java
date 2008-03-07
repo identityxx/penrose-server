@@ -137,86 +137,6 @@ public class ProxyEntry extends Entry {
         return db.toDn();
     }
 
-    public LDAPClient createClient(Session session) throws Exception {
-/*
-        if (AUTHENTICATON_DISABLED.equals(authentication)) {
-            if (debug) log.debug("Pass-Through Authentication is disabled.");
-            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-        }
-
-        return connection.getClient();
-*/
-        if (debug) log.debug("Creating LDAP client.");
-        final LDAPClient client = connection.getClient();
-
-        if (debug) log.debug("Storing LDAP client in session.");
-        if (session != null) {
-            session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
-
-            session.addListener(new SessionListener() {
-                public void sessionClosed() throws Exception {
-                    client.close();
-                }
-            });
-        }
-
-        return client;
-    }
-
-    public void xstoreClient(Session session, LDAPClient client) throws Exception {
-
-        if (AUTHENTICATON_FULL.equals(authentication)) {
-            if (debug) log.debug("Storing connection info in session.");
-
-            Connection connection = source.getConnection();
-            if (session != null) session.setAttribute(partition.getName()+".connection."+connection.getName(), client);
-
-        } else {
-            try { if (client != null) client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-        }
-    }
-
-    public LDAPClient getClient(Session session) throws Exception {
-/*
-        LDAPConnection connection = (LDAPConnection)source.getConnection();
-        LDAPClient client;
-
-        if (AUTHENTICATON_FULL.equals(authentication)) {
-            if (debug) log.debug("Getting connection info from session.");
-
-            client = session == null ? null : (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
-
-            if (client == null) {
-                if (debug) log.debug("Creating new connection.");
-                client = connection.getClient();
-                //client = new LDAPClient(connection.getParameters());
-            }
-
-        } else {
-            if (debug) log.debug("Creating new connection.");
-            client = connection.getClient();
-            //client = new LDAPClient(connection.getParameters());
-        }
-
-        return client;
-*/
-        if (session == null) return createClient(session);
-
-        if (debug) log.debug("Getting LDAP client from session.");
-        LDAPClient client = (LDAPClient)session.getAttribute(partition.getName()+".connection."+connection.getName());
-        if (client != null) return client;
-
-        return createClient(session);
-    }
-
-    public void closeClient(Session session, LDAPClient client) throws Exception {
-/*
-        if (!AUTHENTICATON_FULL.equals(authentication)) {
-            try { if (client != null) client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
-        }
-*/
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +154,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             AddRequest newRequest = (AddRequest)request.clone();
@@ -256,7 +176,7 @@ public class ProxyEntry extends Entry {
             client.add(newRequest, response);
 
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 
@@ -277,7 +197,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             BindRequest newRequest = (BindRequest)request.clone();
@@ -307,7 +227,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = createClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             CompareRequest newRequest = (CompareRequest)request.clone();
@@ -330,7 +250,7 @@ public class ProxyEntry extends Entry {
             response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 
@@ -413,7 +333,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             DeleteRequest newRequest = (DeleteRequest)request.clone();
@@ -422,7 +342,7 @@ public class ProxyEntry extends Entry {
             client.delete(newRequest, response);
 
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 
@@ -443,7 +363,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             ModifyRequest newRequest = (ModifyRequest)request.clone();
@@ -466,7 +386,7 @@ public class ProxyEntry extends Entry {
             client.modify(newRequest, response);
 
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 
@@ -487,7 +407,7 @@ public class ProxyEntry extends Entry {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             ModRdnRequest newRequest = (ModRdnRequest)request.clone();
@@ -496,7 +416,7 @@ public class ProxyEntry extends Entry {
             client.modrdn(newRequest, response);
 
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 
@@ -559,7 +479,7 @@ public class ProxyEntry extends Entry {
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
         boolean subset = newRequest.getDn().getSize() >= getDn().getSize();
@@ -633,7 +553,7 @@ public class ProxyEntry extends Entry {
             if (subset) throw e;
             
         } finally {
-            closeClient(session, client);
+            connection.closeClient(session);
         }
     }
 

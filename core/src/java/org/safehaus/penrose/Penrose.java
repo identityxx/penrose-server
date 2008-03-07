@@ -17,23 +17,27 @@
  */
 package org.safehaus.penrose;
 
-import java.io.*;
+import org.safehaus.penrose.adapter.AdapterConfig;
+import org.safehaus.penrose.config.DefaultPenroseConfig;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.config.PenroseConfigReader;
+import org.safehaus.penrose.log4j.AppenderConfig;
+import org.safehaus.penrose.log4j.Log4jConfig;
+import org.safehaus.penrose.log4j.Log4jConfigReader;
+import org.safehaus.penrose.log4j.LoggerConfig;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.session.SessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
-import org.safehaus.penrose.config.*;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.SessionContext;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.log4j.Log4jConfigReader;
-import org.safehaus.penrose.log4j.Log4jConfig;
-import org.safehaus.penrose.log4j.AppenderConfig;
-import org.safehaus.penrose.log4j.LoggerConfig;
-import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.adapter.AdapterConfig;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -229,18 +233,18 @@ public class Penrose {
 
         PartitionReader partitionReader = partitionConfigs.getPartitionReader();
 
-        PartitionConfig partitionConfig = new DefaultPartitionConfig();
+        DefaultPartitionConfig defaultPartitionConfig = new DefaultPartitionConfig();
 
         for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
-            partitionConfig.addAdapterConfig(adapterConfig);
+            defaultPartitionConfig.addAdapterConfig(adapterConfig);
         }
         
-        partitionReader.read(conf, partitionConfig.getConnectionConfigs());
-        partitionReader.read(conf, partitionConfig.getSourceConfigs());
-        partitionReader.read(conf, partitionConfig.getDirectoryConfig());
-        partitionReader.read(conf, partitionConfig.getModuleConfigs());
+        partitionReader.read(conf, defaultPartitionConfig.getConnectionConfigs());
+        partitionReader.read(conf, defaultPartitionConfig.getSourceConfigs());
+        partitionReader.read(conf, defaultPartitionConfig.getDirectoryConfig());
+        partitionReader.read(conf, defaultPartitionConfig.getModuleConfigs());
 
-        partitionConfigs.addPartitionConfig(partitionConfig);
+        partitionConfigs.addPartitionConfig(defaultPartitionConfig);
 /*
         Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
 
@@ -252,17 +256,27 @@ public class Penrose {
             }
         }
 */
+/*
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
         partitionFactory.setPenroseConfig(penroseConfig);
         partitionFactory.setPenroseContext(penroseContext);
 
-        Partition partition = partitionFactory.createPartition(partitionConfig);
+        Partition partition = partitionFactory.createPartition(defaultPartitionConfig);
 
         Partitions partitions = penroseContext.getPartitions();
         partitions.addPartition(partition);
-
+*/
         for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
+            try {
+                loadPartition(partitionName);
+
+            } catch (Exception e) {
+                errorLog.error(e.getMessage(), e);
+            }
+        }
+
+        for (String partitionName : partitionConfigs.getLoadOrder()) {
             try {
                 startPartition(partitionName);
 
@@ -288,9 +302,15 @@ public class Penrose {
 
         sessionContext.stop();
 
-        for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
+        List<String> stopOrder = new ArrayList<String>();
+        for (String partitionName : partitionConfigs.getLoadOrder()) {
+            stopOrder.add(0, partitionName);
+        }
+
+        for (String partitionName : stopOrder) {
             try {
                 stopPartition(partitionName);
+                unloadPartition(partitionName);
 
             } catch (Exception e) {
                 errorLog.error(e.getMessage(), e);
@@ -306,8 +326,7 @@ public class Penrose {
     // Partitions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void startPartition(String partitionName) throws Exception {
-
+    public void loadPartition(String partitionName) throws Exception {
         if (debug) {
             log.debug("----------------------------------------------------------------------------------");
             log.debug("Loading "+partitionName+" partition.");
@@ -315,11 +334,22 @@ public class Penrose {
 
         PartitionConfig partitionConfig = partitionConfigs.load(partitionName);
         partitionConfigs.addPartitionConfig(partitionConfig);
+    }
+
+    public void startPartition(String partitionName) throws Exception {
+
+        PartitionConfig partitionConfig = partitionConfigs.getPartitionConfig(partitionName);
 
         if (!partitionConfig.isEnabled()) {
-            if (debug) log.debug(partitionName+" partition is disabled.");
+            //if (debug) log.debug(partitionConfig.getName()+" partition is disabled.");
             return;
         }
+
+        if (debug) {
+            log.debug("----------------------------------------------------------------------------------");
+            log.debug("Starting "+partitionName+" partition.");
+        }
+
 /*
         Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
 
@@ -341,26 +371,31 @@ public class Penrose {
         Partitions partitions = penroseContext.getPartitions();
         partitions.addPartition(partition);
 
-        log.debug("Partition "+partitionName+" started.");
+        log.debug("Partition "+partitionConfig.getName()+" started.");
     }
 
     public void stopPartition(String partitionName) throws Exception {
+
+        Partitions partitions = penroseContext.getPartitions();
+        Partition partition = partitions.getPartition(partitionName);
+
+        if (partition == null || !partition.isEnabled()) return;
 
         if (debug) {
             log.debug("----------------------------------------------------------------------------------");
             log.debug("Stopping "+partitionName+" partition.");
         }
 
-        Partitions partitions = penroseContext.getPartitions();
-        Partition partition = partitions.getPartition(partitionName);
-        if (partition == null) return;
-
         partition.destroy();
 
+        log.debug("Partition "+partition.getName()+" stopped.");
+    }
+
+    public void unloadPartition(String partitionName) throws Exception {
+        Partitions partitions = penroseContext.getPartitions();
         partitions.removePartition(partitionName);
         partitionConfigs.removePartitionConfig(partitionName);
 
-        log.debug("Partition "+partitionName+" stopped.");
     }
 
     public String getPartitionStatus(String partitionName) {

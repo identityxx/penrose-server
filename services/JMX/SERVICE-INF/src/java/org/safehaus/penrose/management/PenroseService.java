@@ -172,6 +172,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         log.debug("Starting partition "+partitionName);
 
         Penrose penrose = penroseServer.getPenrose();
+        penrose.loadPartition(partitionName);
         penrose.startPartition(partitionName);
 
         PartitionService partitionService = getPartitionService(partitionName);
@@ -180,13 +181,14 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
 
     public void stopPartition(String partitionName) throws Exception {
 
-        log.debug("Stoppinh partition "+partitionName);
+        log.debug("Stopping partition "+partitionName);
 
         PartitionService partitionService = getPartitionService(partitionName);
         partitionService.unregister();
 
         Penrose penrose = penroseServer.getPenrose();
         penrose.stopPartition(partitionName);
+        penrose.unloadPartition(partitionName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

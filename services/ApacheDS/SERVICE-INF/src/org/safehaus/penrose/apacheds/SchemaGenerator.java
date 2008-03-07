@@ -48,7 +48,7 @@ public class SchemaGenerator {
     File sourceDir;
     File output;
 
-    private Collection dependencies;
+    private Collection<String> dependencies;
 
     public SchemaGenerator(File file) throws Exception {
         this.schemaDir = file.getParentFile();
@@ -85,8 +85,8 @@ public class SchemaGenerator {
         deps[counter++] = "core";
 
         if (dependencies != null) {
-            for (Iterator i=dependencies.iterator(); i.hasNext(); ) {
-                String dep = (String)i.next();
+            for (Object dependency : dependencies) {
+                String dep = (String) dependency;
                 deps[counter++] = dep;
             }
         }
@@ -161,15 +161,15 @@ public class SchemaGenerator {
     }
 
     public void compile() throws Exception {
-        compile(sourceDir.getPath(), sourceDir);
+        compile(sourceDir);
     }
 
-    public void compile(String prefix, File file) throws Exception {
+    public void compile(File file) throws Exception {
 
         File files[] = file.listFiles();
         if (files != null) {
-            for (File file1 : files) {
-                compile(prefix, file1);
+            for (File f : files) {
+                compile(f);
             }
         }
 
@@ -179,9 +179,7 @@ public class SchemaGenerator {
         //String path = file.getPath().substring(prefix.length()+1);
         //System.out.println("Compiling "+path);
 
-        String extdirs = ".."+File.separator+"lib"+File.pathSeparator+
-                ".."+File.separator+"lib"+File.separator+"ext"+File.pathSeparator+
-                ".."+File.separator+"server"+File.separator+"lib";
+        String extdirs = ".."+File.separator+"SERVICE-INF"+File.separator+"lib";
 
         String command[] = new String[] {
                 "javac",
@@ -190,8 +188,8 @@ public class SchemaGenerator {
                 file.getAbsolutePath()
         };
 
-        for (int i=0; i<command.length; i++) {
-            System.out.print(command[i]+" ");
+        for (String s : command) {
+            System.out.print(s + " ");
         }
         System.out.println();
 
@@ -226,8 +224,8 @@ public class SchemaGenerator {
 
         File files[] = file.listFiles();
         if (files != null) {
-            for (int i=0; i<files.length; i++) {
-                addJarEntries(prefix, files[i], os);
+            for (File f : files) {
+                addJarEntries(prefix, f, os);
             }
         }
 
@@ -257,15 +255,15 @@ public class SchemaGenerator {
     }
 
     public void delete() {
-        delete(sourceDir.getPath(), sourceDir);
+        delete(sourceDir);
     }
 
-    public void delete(String prefix, File file) {
+    public void delete(File file) {
 
         File files[] = file.listFiles();
         if (files != null) {
-            for (File file1 : files) {
-                delete(prefix, file1);
+            for (File f : files) {
+                delete(f);
             }
         }
 
@@ -294,7 +292,7 @@ public class SchemaGenerator {
 
         Getopt getopt = new Getopt("SchemaGenerator", args, "-:?d:n", longopts);
 
-        Collection parameters = new ArrayList();
+        Collection<String> parameters = new ArrayList<String>();
         int c;
         while ((c = getopt.getopt()) != -1) {
             switch (c) {
@@ -365,7 +363,7 @@ public class SchemaGenerator {
         return dependencies;
     }
 
-    public void setDependencies(Collection dependencies) {
+    public void setDependencies(Collection<String> dependencies) {
         this.dependencies = dependencies;
     }
 }

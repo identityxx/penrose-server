@@ -33,7 +33,7 @@ public class ApacheDSFilterTool {
 
             String attribute = simpleNode.getAttribute();
             String operation = AbstractExprNode.getOperationString(simpleNode.getAssertionType());
-            String value = simpleNode.getValue().toString();
+            Object value = simpleNode.getValue();
 
             sb.append("(");
             sb.append(attribute);
@@ -63,8 +63,8 @@ public class ApacheDSFilterTool {
                 Collection childNodes = branchNode.getChildren();
 
                 sb.append("(&");
-                for (Iterator i=childNodes.iterator(); i.hasNext(); ) {
-                    ExprNode childNode = (ExprNode)i.next();
+                for (Object o : childNodes) {
+                    ExprNode childNode = (ExprNode) o;
                     convert(childNode, sb);
                 }
                 sb.append(")");
@@ -73,8 +73,8 @@ public class ApacheDSFilterTool {
                 Collection childNodes = branchNode.getChildren();
 
                 sb.append("(|");
-                for (Iterator i=childNodes.iterator(); i.hasNext(); ) {
-                    ExprNode childNode = (ExprNode)i.next();
+                for (Object o : childNodes) {
+                    ExprNode childNode = (ExprNode) o;
                     convert(childNode, sb);
                 }
                 sb.append(")");
@@ -93,8 +93,8 @@ public class ApacheDSFilterTool {
 
             sb.append("*");
 
-            for (Iterator i=substringNode.getAny().iterator(); i.hasNext(); ) {
-                String any = (String)i.next();
+            for (Object o : substringNode.getAny()) {
+                String any = (String) o;
 
                 sb.append(any);
                 sb.append("*");

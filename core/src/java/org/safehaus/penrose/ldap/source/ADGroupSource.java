@@ -46,7 +46,7 @@ public class ADGroupSource extends LDAPSource {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             response.setSizeLimit(request.getSizeLimit());
@@ -75,7 +75,7 @@ public class ADGroupSource extends LDAPSource {
 
         } finally {
             response.close();
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 

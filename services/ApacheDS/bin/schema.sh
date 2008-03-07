@@ -51,7 +51,7 @@ if [ -z "$PENROSE_HOME" ] ; then
     fi
   done
 
-  PENROSE_HOME=`dirname "$PRG"`/..
+  PENROSE_HOME=`dirname "$PRG"`/../../..
 
   cd "$saveddir"
 
@@ -89,80 +89,33 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
-LOCALCLASSPATH=$LOCALCLASSPATH:$PENROSE_HOME/services/ApacheDS/conf
-
-for i in "$PENROSE_HOME"/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/server/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/server/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/services/ApacheDS/SERVICE-INF/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
+APACHEDS_HOME=$PENROSE_HOME/services/ApacheDS
 
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/services/ApacheDS/SERVICE-INF/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$APACHEDS_HOME/SERVICE-INF/lib"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
+  APACHEDS_HOME=`cygpath --windows "$APACHEDS_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
--classpath "$LOCALCLASSPATH" \
+echo "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+-Djava.ext.dirs="$LOCALLIBPATH" \
+-Djava.library.path="$LOCALLIBPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
--Dorg.safehaus.penrose.apacheds.home="$PENROSE_HOME/services/ApacheDS" \
+-Dorg.safehaus.penrose.apacheds.home="$APACHEDS_HOME" \
+org.safehaus.penrose.apacheds.SchemaGenerator $PENROSE_ARGS "$@"
+
+exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+-Djava.ext.dirs="$LOCALLIBPATH" \
+-Djava.library.path="$LOCALLIBPATH" \
+-Dpenrose.home="$PENROSE_HOME" \
+-Dorg.safehaus.penrose.apacheds.home="$APACHEDS_HOME" \
 org.safehaus.penrose.apacheds.SchemaGenerator $PENROSE_ARGS "$@"

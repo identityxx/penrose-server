@@ -26,7 +26,7 @@ public class ModuleConfigs implements Serializable, Cloneable {
 
     public void addModuleConfig(ModuleConfig moduleConfig) {
         String name = moduleConfig.getName();
-        if (debug) log.debug("Adding module "+name+".");
+        //if (debug) log.debug("Adding module "+name+".");
         moduleConfigs.put(name, moduleConfig);
     }
 

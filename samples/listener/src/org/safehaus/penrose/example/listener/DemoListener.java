@@ -36,27 +36,29 @@ public class DemoListener implements SearchListener {
         Logger logger = Logger.getLogger("org.safehaus.penrose");
         logger.setLevel(Level.DEBUG);
 
-        PenroseConfig penroseConfig = new DefaultPenroseConfig();
-
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         Penrose penrose = penroseFactory.createPenrose("../..");
         penrose.start();
 
         Session session = penrose.newSession();
-        session.addSearchListener(this);
 
-        session.bind("uid=admin,ou=system", "secret");
+        try {
+            session.addSearchListener(this);
 
-        SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
+            session.bind("uid=admin,ou=system", "secret");
 
-        while (response.hasNext()) {
-            SearchResult searchResult = response.next();
-            System.out.println(toString(searchResult));
+            SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
+
+            while (response.hasNext()) {
+                SearchResult searchResult = response.next();
+                System.out.println(toString(searchResult));
+            }
+
+            session.unbind();
+
+        } finally {
+            session.close();
         }
-
-        session.unbind();
-
-        session.close();
 
         penrose.stop();
     }

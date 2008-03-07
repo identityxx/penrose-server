@@ -8,6 +8,8 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.scheduler.Scheduler;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -295,12 +297,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Attributes attributes
     ) throws Exception {
 
-        AddResponse response = partition.add(dn, attributes);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            AddRequest request = new AddRequest();
+            request.setDn(dn);
+            request.setAttributes(attributes);
 
-        return response;
+            AddResponse response = new AddResponse();
+
+            partition.add(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public AddResponse add(
@@ -308,12 +324,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Attributes attributes
     ) throws Exception {
 
-        AddResponse response = partition.add(rdn, attributes);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            AddRequest request = new AddRequest();
+            request.setDn(rdn);
+            request.setAttributes(attributes);
 
-        return response;
+            AddResponse response = new AddResponse();
+
+            partition.add(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public AddResponse add(
@@ -321,12 +351,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Attributes attributes
     ) throws Exception {
 
-        AddResponse response = partition.add(dn, attributes);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            AddRequest request = new AddRequest();
+            request.setDn(dn);
+            request.setAttributes(attributes);
 
-        return response;
+            AddResponse response = new AddResponse();
+
+            partition.add(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public AddResponse add(
@@ -334,12 +378,20 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             AddResponse response
     ) throws Exception {
 
-        partition.add(request, response);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            partition.add(session, request, response);
 
-        return response;
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,36 +402,75 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             String dn
     ) throws Exception {
 
-        DeleteResponse response = partition.delete(dn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(dn);
 
-        return response;
+            DeleteResponse response = new DeleteResponse();
+
+            partition.delete(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public DeleteResponse delete(
             RDN rdn
     ) throws Exception {
 
-        DeleteResponse response = partition.delete(rdn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(rdn);
 
-        return response;
+            DeleteResponse response = new DeleteResponse();
+
+            partition.delete(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public DeleteResponse delete(
             DN dn
     ) throws Exception {
 
-        DeleteResponse response = partition.delete(dn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(dn);
 
-        return response;
+            DeleteResponse response = new DeleteResponse();
+
+            partition.delete(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public DeleteResponse delete(
@@ -387,12 +478,20 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             DeleteResponse response
     ) throws Exception {
 
-        partition.delete(request, response);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            partition.delete(session, request, response);
 
-        return response;
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -403,21 +502,45 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             String dn
     ) throws Exception {
 
-        return partition.find(dn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
+
+        try {
+            return partition.find(session, new DN(dn));
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResult find(
             RDN rdn
     ) throws Exception {
 
-        return partition.find(rdn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
+
+        try {
+            return partition.find(session, new DN(rdn));
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResult find(
             DN dn
     ) throws Exception {
 
-        return partition.find(dn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
+
+        try {
+            return partition.find(session, dn);
+
+        } finally {
+            session.close();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,12 +552,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Collection<Modification> modifications
     ) throws Exception {
 
-        ModifyResponse response = partition.modify(dn, modifications);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModifyRequest request = new ModifyRequest();
+            request.setDn(dn);
+            request.setModifications(modifications);
 
-        return response;
+            ModifyResponse response = new ModifyResponse();
+
+            partition.modify(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModifyResponse modify(
@@ -442,12 +579,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Collection<Modification> modifications
     ) throws Exception {
 
-        ModifyResponse response = partition.modify(rdn, modifications);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModifyRequest request = new ModifyRequest();
+            request.setDn(rdn);
+            request.setModifications(modifications);
 
-        return response;
+            ModifyResponse response = new ModifyResponse();
+
+            partition.modify(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModifyResponse modify(
@@ -455,12 +606,26 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Collection<Modification> modifications
     ) throws Exception {
 
-        ModifyResponse response = partition.modify(dn, modifications);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModifyRequest request = new ModifyRequest();
+            request.setDn(dn);
+            request.setModifications(modifications);
 
-        return response;
+            ModifyResponse response = new ModifyResponse();
+
+            partition.modify(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModifyResponse modify(
@@ -468,12 +633,20 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             ModifyResponse response
     ) throws Exception {
 
-        partition.modify(request, response);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            partition.modify(session, request, response);
 
-        return response;
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,12 +659,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             boolean deleteOldRdn
     ) throws Exception {
 
-        ModRdnResponse response = partition.modrdn(dn, newRdn, deleteOldRdn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModRdnRequest request = new ModRdnRequest();
+            request.setDn(dn);
+            request.setNewRdn(newRdn);
+            request.setDeleteOldRdn(deleteOldRdn);
 
-        return response;
+            ModRdnResponse response = new ModRdnResponse();
+
+            partition.modrdn(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModRdnResponse modrdn(
@@ -500,12 +688,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             boolean deleteOldRdn
     ) throws Exception {
 
-        ModRdnResponse response = partition.modrdn(dn, newRdn, deleteOldRdn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModRdnRequest request = new ModRdnRequest();
+            request.setDn(dn);
+            request.setNewRdn(newRdn);
+            request.setDeleteOldRdn(deleteOldRdn);
 
-        return response;
+            ModRdnResponse response = new ModRdnResponse();
+
+            partition.modrdn(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModRdnResponse modrdn(
@@ -514,12 +717,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             boolean deleteOldRdn
     ) throws Exception {
 
-        ModRdnResponse response = partition.modrdn(dn, newRdn, deleteOldRdn);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            ModRdnRequest request = new ModRdnRequest();
+            request.setDn(dn);
+            request.setNewRdn(newRdn);
+            request.setDeleteOldRdn(deleteOldRdn);
 
-        return response;
+            ModRdnResponse response = new ModRdnResponse();
+
+            partition.modrdn(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public ModRdnResponse modrdn(
@@ -527,12 +745,20 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             ModRdnResponse response
     ) throws Exception {
 
-        partition.modrdn(request, response);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            partition.modrdn(session, request, response);
 
-        return response;
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -545,12 +771,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Integer scope
     ) throws Exception {
 
-        SearchResponse response = partition.search(dn, filter, scope);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter(filter);
+            request.setScope(scope);
 
-        return response;
+            SearchResponse response = new SearchResponse();
+
+            partition.search(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResponse search(
@@ -559,12 +800,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Integer scope
     ) throws Exception {
 
-        SearchResponse response = partition.search(rdn, filter, scope);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(rdn);
+            request.setFilter(filter);
+            request.setScope(scope);
 
-        return response;
+            SearchResponse response = new SearchResponse();
+
+            partition.search(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResponse search(
@@ -573,12 +829,27 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             Integer scope
     ) throws Exception {
 
-        SearchResponse response = partition.search(dn, filter, scope);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(dn);
+            request.setFilter(filter);
+            request.setScope(scope);
 
-        return response;
+            SearchResponse response = new SearchResponse();
+
+            partition.search(session, request, response);
+
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchResponse search(
@@ -586,11 +857,19 @@ public class PartitionService extends JMXService implements PartitionServiceMBea
             SearchResponse response
     ) throws Exception {
 
-        partition.search(request, response);
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        Session session = sessionManager.newAdminSession();
 
-        int rc = response.getReturnCode();
-        log.debug("RC: "+rc);
+        try {
+            partition.search(session, request, response);
 
-        return response;
+            int rc = response.getReturnCode();
+            log.debug("RC: "+rc);
+
+            return response;
+
+        } finally {
+            session.close();
+        }
     }
 }

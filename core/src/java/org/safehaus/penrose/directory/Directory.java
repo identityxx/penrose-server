@@ -53,10 +53,12 @@ public class Directory implements Cloneable {
 
         log.debug("Initializing entry "+entryMapping.getDn()+".");
 
+        Partition partition = directoryContext.getPartition();
+
         EntryContext entryContext = new EntryContext();
+        entryContext.setPartition(partition);
         entryContext.setDirectory(this);
 
-        Partition partition = directoryContext.getPartition();
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
 

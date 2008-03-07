@@ -183,14 +183,6 @@ public class JDBCClient {
         return getColumns(null, null, tableName);
     }
 
-    public Collection<FieldConfig> getColumns(SourceConfig sourceConfig) throws Exception {
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        return getColumns(catalog, schema, table);
-    }
-
     public Collection<FieldConfig> getColumns(String catalog, String schema, String tableName) throws Exception {
 
         log.debug("Getting column names for "+tableName+" "+catalog+" "+schema);
@@ -301,15 +293,15 @@ public class JDBCClient {
         return schemas;
     }
 
-    public Collection<TableConfig> getTables() throws Exception {
+    public Collection<Table> getTables() throws Exception {
         return getTables(null, null);
     }
 
-    public Collection<TableConfig> getTables(String catalog, String schema) throws Exception {
+    public Collection<Table> getTables(String catalog, String schema) throws Exception {
 
         log.debug("Getting table names for "+catalog+" "+schema);
 
-        Collection<TableConfig> tables = new TreeSet<TableConfig>();
+        Collection<Table> tables = new TreeSet<Table>();
 
         Connection connection = getConnection();
         ResultSet rs = null;
@@ -330,8 +322,8 @@ public class JDBCClient {
                 //String remarks = rs.getString(5);
 
                 log.debug(" - "+tableCatalog+" "+tableSchema+" "+tableName);
-                TableConfig tableConfig = new TableConfig(tableName, tableType, tableCatalog, tableSchema);
-                tables.add(tableConfig);
+                Table table = new Table(tableName, tableType, tableCatalog, tableSchema);
+                tables.add(table);
             }
 
         } finally {
@@ -523,10 +515,10 @@ public class JDBCClient {
         executeUpdate("drop database "+database);
     }
 
-    public String getTableName(SourceConfig sourceConfig)  {
+    public String getTableName(String catalog, String schema, String table)  {
+
         StringBuilder sb = new StringBuilder();
 
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
         if (catalog != null) {
             if (quote != null) sb.append(quote);
             sb.append(catalog);
@@ -534,7 +526,6 @@ public class JDBCClient {
             sb.append(".");
         }
 
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
         if (schema != null) {
             if (quote != null) sb.append(quote);
             sb.append(schema);
@@ -542,7 +533,6 @@ public class JDBCClient {
             sb.append(".");
         }
 
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
         if (quote != null) sb.append(quote);
         sb.append(table);
         if (quote != null) sb.append(quote);
@@ -552,10 +542,14 @@ public class JDBCClient {
 
     public void createTable(SourceConfig sourceConfig) throws Exception {
 
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("create table ");
-        sb.append(getTableName(sourceConfig));
+        sb.append(getTableName(catalog, schema, table));
         sb.append(" (");
 
         boolean first = true;
@@ -628,12 +622,20 @@ public class JDBCClient {
 
     public void renameTable(SourceConfig oldSourceConfig, SourceConfig newSourceConfig) throws Exception {
 
+        String oldCatalog = oldSourceConfig.getParameter(JDBCClient.CATALOG);
+        String oldSchema = oldSourceConfig.getParameter(JDBCClient.SCHEMA);
+        String oldTable = oldSourceConfig.getParameter(JDBCClient.TABLE);
+
+        String newCatalog = newSourceConfig.getParameter(JDBCClient.CATALOG);
+        String newSchema = newSourceConfig.getParameter(JDBCClient.SCHEMA);
+        String newTable = newSourceConfig.getParameter(JDBCClient.TABLE);
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("rename table ");
-        sb.append(getTableName(oldSourceConfig));
+        sb.append(getTableName(oldCatalog, oldSchema, oldTable));
         sb.append(" to ");
-        sb.append(getTableName(newSourceConfig));
+        sb.append(getTableName(newCatalog, newSchema, newTable));
 
         String sql = sb.toString();
 
@@ -642,10 +644,14 @@ public class JDBCClient {
 
     public void dropTable(SourceConfig sourceConfig) throws Exception {
 
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("drop table ");
-        sb.append(getTableName(sourceConfig));
+        sb.append(getTableName(catalog, schema, table));
 
         String sql = sb.toString();
 
@@ -654,10 +660,14 @@ public class JDBCClient {
 
     public void cleanTable(SourceConfig sourceConfig) throws Exception {
 
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
         StringBuilder sb = new StringBuilder();
 
         sb.append("delete from ");
-        sb.append(getTableName(sourceConfig));
+        sb.append(getTableName(catalog, schema, table));
 
         String sql = sb.toString();
 
@@ -666,7 +676,11 @@ public class JDBCClient {
 
     public void showStatus(final SourceConfig sourceConfig) throws Exception {
 
-        final String tableName = getTableName(sourceConfig);
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
+        final String tableName = getTableName(catalog, schema, table);
 
         StringBuilder sb = new StringBuilder();
 
@@ -725,7 +739,11 @@ public class JDBCClient {
 
     public long getCount(final SourceConfig sourceConfig) throws Exception {
 
-        final String tableName = getTableName(sourceConfig);
+        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+
+        final String tableName = getTableName(catalog, schema, table);
 
         StringBuilder sb = new StringBuilder();
 

@@ -17,10 +17,6 @@
  */
 package org.safehaus.penrose.mapping;
 
-import Zql.ZqlParser;
-import Zql.ZExpression;
-import Zql.ZExp;
-
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
@@ -61,7 +57,7 @@ public class Relationship implements Cloneable {
     public void setExpression(String expression) {
         try {
             //System.out.println("EXPRESSION: "+expression);
-
+/*
             ZqlParser parser = new ZqlParser(new ByteArrayInputStream(expression.getBytes()));
 
             ZExpression exp = (ZExpression)parser.readExpression();
@@ -74,7 +70,7 @@ public class Relationship implements Cloneable {
                 //System.out.println("Operand: "+operand+" ("+operand.getClass()+")");
                 operands.add(operand);
             }
-
+*/
             //System.out.println("Polish: "+exp.toReversePolish());
 
         } catch (Exception e) {

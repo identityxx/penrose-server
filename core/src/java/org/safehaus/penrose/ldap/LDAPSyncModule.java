@@ -18,10 +18,6 @@
 package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.ldap.connection.LDAPConnection;
-
-import javax.naming.directory.*;
 
 /**
  * @author Endi S. Dewata
@@ -40,7 +36,7 @@ public class LDAPSyncModule extends Module {
     public DirContext getConnection() throws Exception {
 
         LDAPConnection connection = (LDAPConnection)partition.getConnection(connectionName);
-        LDAPClient client = connection.getClient();
+        LDAPClient client = connection.createClient();
         return client.open();
     }
 

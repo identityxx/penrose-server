@@ -4,7 +4,6 @@ import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -76,40 +75,6 @@ public class LDAPSource extends Source {
         }
     }
 
-    public LDAPClient createClient(Session session) throws Exception {
-
-        if (debug) log.debug("Creating LDAP client.");
-        final LDAPClient client = connection.getClient();
-
-        if (debug) log.debug("Storing LDAP client in session.");
-
-        if (session != null) {
-            session.setAttribute(getPartition().getName()+".connection."+connection.getName(), client);
-
-            session.addListener(new SessionListener() {
-                public void sessionClosed() throws Exception {
-                    client.close();
-                }
-            });
-        }
-
-        return client;
-    }
-
-    public LDAPClient getClient(Session session) throws Exception {
-
-        if (session == null) return createClient(session);
-
-        if (debug) log.debug("Getting LDAP client from session.");
-        LDAPClient client = (LDAPClient)session.getAttribute(getPartition().getName()+".connection."+connection.getName());
-        if (client != null) return client;
-
-        return createClient(session);
-    }
-
-    public void closeClient(Session session) throws Exception {
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +115,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Adding entry "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         client.add(newRequest, response);
 
         log.debug("Add operation completed.");
@@ -192,7 +157,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Binding as "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         client.bind(newRequest, response);
 
         log.debug("Bind operation completed.");
@@ -226,7 +191,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Comparing entry "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         boolean result = client.compare(newRequest, response);
 
         log.debug("Compare operation completed ["+result+"].");
@@ -261,7 +226,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Deleting entry "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         client.delete(newRequest, response);
 
         log.debug("Delete operation completed.");
@@ -295,7 +260,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Modifying entry "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         client.modify(newRequest, response);
 
         log.debug("Modify operation completed.");
@@ -329,7 +294,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Renaming entry "+dn);
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
         client.modrdn(newRequest, response);
 
         log.debug("ModRdn operation completed.");
@@ -351,7 +316,7 @@ public class LDAPSource extends Source {
             log.debug(Formatter.displaySeparator(80));
         }
 
-        LDAPClient client = getClient(session);
+        LDAPClient client = connection.getClient(session);
 
         try {
             response.setSizeLimit(request.getSizeLimit());
@@ -364,7 +329,7 @@ public class LDAPSource extends Source {
 
         } finally {
             response.close();
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 /*
@@ -720,10 +685,11 @@ public class LDAPSource extends Source {
 
         LDAPClient client = null;
         try {
-            client = connection.getClient();
+            client = connection.createClient();
             client.search(request, response);
 
             return response.getTotalCount();
+
         } finally {
             if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
         }

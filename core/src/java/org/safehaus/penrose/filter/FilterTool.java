@@ -122,61 +122,128 @@ public class FilterTool {
         }
     }
 
-    public static String escape(String value) {
-
+    public static String escape(Object value) {
         StringBuilder sb = new StringBuilder();
-        char chars[] = value.toCharArray();
 
-        for (char c : chars) {
-            if (c == '*' || c == '(' || c == ')' || c == '\\') {
-                String hex = Integer.toHexString(c);
+        if (value instanceof byte[]) {
+            for (byte b : (byte[])value) {
+                int i = 0xff & b;
+                String hex = Integer.toHexString(i);
                 sb.append('\\');
                 if (hex.length() < 2) sb.append('0');
                 sb.append(hex);
-
-            } else {
-                sb.append(c);
             }
+
+        } else {
+            byte[] bytes;
+            try {
+                bytes = value.toString().getBytes("UTF-8");
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+
+            for (byte b : bytes) {
+                int c = 0xff & b;
+                if (c == '*' || c == '(' || c == ')' || c == '\\') {
+                    String hex = Integer.toHexString(c);
+                    sb.append('\\');
+                    if (hex.length() < 2) sb.append('0');
+                    sb.append(hex);
+
+                } else if (Character.isISOControl(c) || c > 0x7f) {
+                    String hex = Integer.toHexString(c);
+                    sb.append('\\');
+                    if (hex.length() < 2) sb.append('0');
+                    sb.append(hex);
+
+                } else {
+                    sb.append((char)b);
+                }
+            }
+/*
+            for (char c : value.toString().toCharArray()) {
+                if (c == '*' || c == '(' || c == ')' || c == '\\') {
+                    String hex = Integer.toHexString(c);
+                    sb.append('\\');
+                    if (hex.length() < 2) sb.append('0');
+                    sb.append(hex);
+
+                } else {
+                    sb.append(c);
+                }
+            }
+*/
         }
+
 
         return sb.toString();
     }
 
-    public static String unescape(String value) {
+    public static Object unescape(String value) {
 
         StringBuilder sb = new StringBuilder();
         char chars[] = value.toCharArray();
+        int start = 0;
+        int end = chars.length;
 
-        for (int i=0; i<chars.length; i++) {
+        for (int i=start; i<end; i++) {
             char c = chars[i];
 
             if (c == '\\') {
-                int h1 = chars[++i];
-                if (h1 >= '0' && h1 <= '9') {
-                    h1 = h1 - '0';
-                } else if (h1 >= 'a' && h1 <= 'f') {
-                    h1 = h1 - 'a' + 10;
-                } else { // 'A' - 'F'
-                    h1 = h1 - 'A' + 10;
-                }
+                
+                if (isHexDigit(chars[i+1]) && isHexDigit(chars[i+2])) {
 
-                int h0 = chars[++i];
-                if (h0 >= '0' && h0 <= '9') {
-                    h0 = h0 - '0';
-                } else if (h0 >= 'a' && h0 <= 'f') {
-                    h0 = h0 - 'a' + 10;
-                } else { // 'A' - 'F'
-                    h0 = h0 - 'A' + 10;
-                }
+                    int counter = 1;
+                    int s = i; // points to slash
+                    i += 3;
+                    while(i < end-2
+                            && chars[i] == '\\'
+                            && isHexDigit(chars[i+1])
+                            && isHexDigit(chars[i+2])) {
+                        counter++;
+                        i += 3;
+                    }
 
-                int dec = h1 * 16 + h0;
-                sb.append((char)dec);
+                    byte bytes[] = new byte[counter];
+
+                    i = s;
+                    for(int j = 0; j < counter; j++) {
+                        String x = new String(new char[] { chars[i+1], chars[i+2] });
+                        bytes[j] = (byte)Integer.parseInt(x, 16);
+                        i += 3;
+                    }
+
+                    String str;
+                    try {
+                        str = new String(bytes, "UTF-8");
+
+                    } catch (Exception e) {
+                        //throw new RuntimeException(e.getMessage(), e);
+                        return bytes;
+                    }
+
+                    sb.append(str);
+
+                    i--;
+
+                } else {
+                    i++;
+                     sb.append(chars[i]);
+                 }
 
             } else {
                 sb.append(c);
             }
         }
 
+        //String s = sb.toString();
+        //log.debug("Unescaped ["+value+"] to ["+s+"]");
+        //return s;
+
         return sb.toString();
     }
+
+    private static boolean isHexDigit(char c) {
+		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+	}
 }

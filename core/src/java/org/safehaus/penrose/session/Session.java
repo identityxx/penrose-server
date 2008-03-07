@@ -75,6 +75,7 @@ public class Session {
 
     public void init() {
 
+        log.debug("----------------------------------------------------------------------------------");
         if (warn) log.warn("Creating session "+sessionId+".");
 
         String s = penroseConfig.getProperty(EVENTS_ENABLED);
@@ -893,6 +894,7 @@ public class Session {
 
     public void close() throws Exception {
 
+        log.debug("----------------------------------------------------------------------------------");
         if (warn) log.warn("Closing session "+sessionId+".");
 
         for (SessionListener listener : listeners) {
@@ -994,6 +996,10 @@ public class Session {
         return attributes.keySet();
     }
 
+    public Object removeAttribute(String name) {
+        return attributes.remove(name);
+    }
+    
     public boolean isRootUser() {
         return rootUser;
     }
