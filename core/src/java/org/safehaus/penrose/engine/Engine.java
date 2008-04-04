@@ -22,9 +22,10 @@ import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.partition.PartitionConfigs;
+import org.safehaus.penrose.partition.PartitionConfigManager;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.util.*;
@@ -49,7 +50,7 @@ public abstract class Engine {
     protected PenroseContext penroseContext;
 
     protected SchemaManager schemaManager;
-    protected PartitionConfigs partitionConfigs;
+    protected PartitionConfigManager partitionConfigManager;
 
     public String getName() {
         return engineConfig.getName();
@@ -90,12 +91,12 @@ public abstract class Engine {
         this.schemaManager = schemaManager;
     }
 
-    public PartitionConfigs getPartitionManager() {
-        return partitionConfigs;
+    public PartitionConfigManager getPartitionManager() {
+        return partitionConfigManager;
     }
 
-    public void setPartitionManager(PartitionConfigs partitionConfigs) throws Exception {
-        this.partitionConfigs = partitionConfigs;
+    public void setPartitionManager(PartitionConfigManager partitionConfigManager) throws Exception {
+        this.partitionConfigManager = partitionConfigManager;
     }
 
     public Attributes createAttributes(
@@ -157,7 +158,7 @@ public abstract class Engine {
             }
         }
 */
-        Iterator i = entry.getEntryMapping().getSourceMappings().iterator();
+        Iterator i = entry.getEntryConfig().getSourceMappings().iterator();
         if (!i.hasNext()) return null;
 
         SourceMapping sourceMapping = (SourceMapping)i.next();
@@ -391,7 +392,7 @@ public abstract class Engine {
         }
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<FieldMapping> fields = partitionConfig.getSourceConfigs().getSearchableFields(sourceMapping);
+        Collection<FieldMapping> fields = partitionConfig.getSourceConfigManager().getSearchableFields(sourceMapping);
 
         interpreter.set(rdn);
 
@@ -500,7 +501,8 @@ public abstract class Engine {
         this.penroseContext = penroseContext;
 
         schemaManager = penroseContext.getSchemaManager();
-        partitionConfigs = penroseContext.getPartitionConfigs();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        partitionConfigManager = partitionManager.getPartitionConfigManager();
     }
 
     public List<Collection<SourceRef>> getGroupsOfSources(

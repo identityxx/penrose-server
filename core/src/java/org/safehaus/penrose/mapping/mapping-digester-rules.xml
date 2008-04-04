@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 -->
         <pattern value="*/entry">
 
-            <object-create-rule classname="org.safehaus.penrose.directory.EntryMapping" />
+            <object-create-rule classname="org.safehaus.penrose.directory.EntryConfig" />
 
             <set-properties-rule>
                 <alias attr-name="dn" prop-name="stringDn" />
@@ -122,7 +122,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
 
-            <set-next-rule methodname="addEntryMapping" />
+            <set-next-rule methodname="addEntryConfig" />
 
         </pattern>
 <!--

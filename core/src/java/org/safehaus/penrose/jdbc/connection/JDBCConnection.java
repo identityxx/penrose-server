@@ -1,28 +1,33 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.source.*;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterTool;
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.dbcp.ConnectionFactory;
 import org.apache.commons.dbcp.DriverConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.jdbc.*;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.util.Formatter;
 
 import javax.sql.DataSource;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.util.Properties;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Properties;
 
 /**
  * @author Endi S. Dewata
@@ -256,7 +261,7 @@ public class JDBCConnection extends Connection {
 
         try {
             InsertStatement statement = new InsertStatement();
-            statement.setSource(source);
+            statement.setSourceName(source.getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -268,7 +273,7 @@ public class JDBCConnection extends Connection {
                     Field field = source.getField(name);
                     if (field == null) throw new Exception("Unknown field: " + name);
 
-                    statement.addAssignment(new Assignment(field, value));
+                    statement.addAssignment(new Assignment(field.getOriginalName(), value));
                 }
             }
 
@@ -282,15 +287,16 @@ public class JDBCConnection extends Connection {
                 Field field = source.getField(name);
                 if (field == null) throw new Exception("Unknown field: " + name);
 
-                statement.addAssignment(new Assignment(field, value));
+                statement.addAssignment(new Assignment(field.getOriginalName(), value));
             }
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(connectionContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Add operation completed.");
 
@@ -321,8 +327,7 @@ public class JDBCConnection extends Connection {
         try {
             DeleteStatement statement = new DeleteStatement();
 
-            SourceRef sourceRef = new SourceRef(source);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(source.getName());
 
             Filter filter = null;
 
@@ -338,12 +343,13 @@ public class JDBCConnection extends Connection {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(connectionContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Delete operation completed.");
 
@@ -374,8 +380,7 @@ public class JDBCConnection extends Connection {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            SourceRef sourceRef = new SourceRef(source);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(source.getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -394,11 +399,11 @@ public class JDBCConnection extends Connection {
                     case Modification.REPLACE:
                         Object value = rdn.get(name);
                         if (value == null) value = attribute.getValue();
-                        statement.addAssignment(new Assignment(field, value));
+                        statement.addAssignment(new Assignment(field.getOriginalName(), value));
                         break;
 
                     case Modification.DELETE:
-                        statement.addAssignment(new Assignment(field, null));
+                        statement.addAssignment(new Assignment(field.getOriginalName(), null));
                         break;
                 }
             }
@@ -413,12 +418,13 @@ public class JDBCConnection extends Connection {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(connectionContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Modify operation completed.");
 
@@ -449,8 +455,7 @@ public class JDBCConnection extends Connection {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            SourceRef sourceRef = new SourceRef(source);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(source.getName());
 
             RDN newRdn = request.getNewRdn();
             for (String name : newRdn.getNames()) {
@@ -459,7 +464,7 @@ public class JDBCConnection extends Connection {
                 Field field = source.getField(name);
                 if (field == null) continue;
 
-                statement.addAssignment(new Assignment(field, value));
+                statement.addAssignment(new Assignment(field.getOriginalName(), value));
             }
 
             RDN rdn = request.getDn().getRdn();
@@ -473,12 +478,13 @@ public class JDBCConnection extends Connection {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(connectionContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("ModRdn operation completed.");
 
@@ -528,8 +534,10 @@ public class JDBCConnection extends Connection {
 
             filter = FilterTool.appendAndFilter(filter, request.getFilter());
 
-            statement.addFieldRefs(sourceRef.getFieldRefs());
-            statement.addSourceRef(sourceRef);
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+            }
+            statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
             statement.setFilter(filter);
 
             String where = source.getParameter(FILTER);
@@ -537,10 +545,9 @@ public class JDBCConnection extends Connection {
                 statement.setWhere(where);
             }
 
-            statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
-
-            QueryRequest queryRequest = new QueryRequest();
-            queryRequest.setStatement(statement);
+            for (FieldRef fieldRef : sourceRef.getPrimaryKeyFieldRefs()) {
+                statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+            }
 
             QueryResponse queryResponse = new QueryResponse() {
                 public void add(Object object) throws Exception {
@@ -566,7 +573,13 @@ public class JDBCConnection extends Connection {
                 queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
             }
 
-            client.executeQuery(queryRequest, queryResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(connectionContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeQuery(sql, parameters, queryResponse);
 
             log.debug("Search operation completed.");
 
@@ -689,20 +702,20 @@ public class JDBCConnection extends Connection {
     
     public void executeQuery(
             String sql,
-            Collection<Assignment> parameters,
-            QueryResponse response
+            Object[] parameters,
+            QueryResponse queryResponse
     ) throws Exception {
         JDBCClient client = getClient();
-        client.executeQuery(sql, parameters, response);
+        client.executeQuery(sql, Arrays.asList(parameters), queryResponse);
         client.close();
     }
 
     public int executeUpdate(
             String sql,
-            Collection<Assignment> assignments
+            Object[] parameters
     ) throws Exception {
         JDBCClient client = getClient();
-        int count = client.executeUpdate(sql, assignments);
+        int count = client.executeUpdate(sql, Arrays.asList(parameters));
         client.close();
         return count;
     }

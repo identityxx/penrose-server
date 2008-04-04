@@ -29,7 +29,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.partition.*;
 
@@ -72,15 +72,15 @@ public class PartitionManagerTest extends TestCase {
         penrose.start();
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        Partitions partitions = penrose.getPartitions();
+        PartitionManager partitionManager = penrose.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
-        EntryMapping entryMapping = new EntryMapping();
-        entryMapping.setDn("ou=Test,dc=Example,dc=com");
-        entryMapping.addObjectClass("organizationalUnit");
-        entryMapping.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(entryMapping);
+        EntryConfig entryConfig = new EntryConfig();
+        entryConfig.setDn("ou=Test,dc=Example,dc=com");
+        entryConfig.addObjectClass("organizationalUnit");
+        entryConfig.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Test", true));
+        partitionConfig.getDirectoryConfig().addEntryConfig(entryConfig);
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPenroseConfig(penroseConfig);
@@ -88,7 +88,7 @@ public class PartitionManagerTest extends TestCase {
 
         Partition partition = partitionFactory.createPartition(partitionConfig);
 
-        partitions.addPartition(partition);
+        partitionManager.addPartition(partition);
 
         Session session = penrose.newSession();
         session.setBindDn("uid=admin,ou=system");
@@ -118,7 +118,7 @@ public class PartitionManagerTest extends TestCase {
         PartitionReader partitionReader = new PartitionReader();
         Partition partition = partitionReader.read(partitionConfig);
 
-        PartitionManager partitionManager = penrose.getPartitionConfigs();
+        PartitionManager partitionManager = penrose.getPartitionConfigManager();
         partitionManager.addPartition(partition);
 
         partitionManager.findPartition("dc=Shop,c=Example,dc=com");

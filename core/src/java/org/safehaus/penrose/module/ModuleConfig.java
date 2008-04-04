@@ -36,6 +36,9 @@ public class ModuleConfig implements Serializable, ModuleConfigMBean, Cloneable 
 
     public Map<String,String> parameters = new LinkedHashMap<String,String>();
 
+    public ModuleConfig() {
+    }
+
     public String getName() {
         return name;
     }

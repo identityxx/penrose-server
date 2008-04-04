@@ -1,6 +1,5 @@
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterProcessor;
 import org.safehaus.penrose.filter.FilterTool;
@@ -10,7 +9,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SessionListener;
 import org.safehaus.penrose.util.Formatter;
 
 import java.util.*;
@@ -52,7 +50,7 @@ public class ProxyEntry extends Entry {
         source = (LDAPSource)sourceRef.getSource();
         connection = (LDAPConnection)source.getConnection();
 
-        String s = entryMapping.getParameter(BASE_DN);
+        String s = entryConfig.getParameter(BASE_DN);
         if (s == null) s = source.getParameter(BASE_DN);
 
         if (s != null) {
@@ -60,7 +58,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Proxy Base DN: "+proxyBaseDn);
         }
 
-        s = entryMapping.getParameter(FILTER);
+        s = entryConfig.getParameter(FILTER);
         if (s == null) s = source.getParameter(FILTER);
 
         if (s != null) {
@@ -68,7 +66,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Proxy Filter: "+proxyFilter);
         }
 
-        s = entryMapping.getParameter(SCOPE);
+        s = entryConfig.getParameter(SCOPE);
         if (s == null) s = source.getParameter(SCOPE);
 
         if (s != null) {
@@ -85,7 +83,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Proxy Scope: "+proxyScope);
         }
 
-        String attributes = entryMapping.getParameter(ATTRIBUTES);
+        String attributes = entryConfig.getParameter(ATTRIBUTES);
         if (attributes != null) {
             StringTokenizer st = new StringTokenizer(attributes, ", ");
             while (st.hasMoreTokens()) {
@@ -95,7 +93,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Attributes: "+attributeNames);
         }
 
-        s = entryMapping.getParameter(SIZE_LIMIT);
+        s = entryConfig.getParameter(SIZE_LIMIT);
         if (s == null) s = source.getParameter(SIZE_LIMIT);
 
         if (s != null) {
@@ -103,7 +101,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Proxy Size Limit: "+proxySizeLimit);
         }
 
-        s = entryMapping.getParameter(TIME_LIMIT);
+        s = entryConfig.getParameter(TIME_LIMIT);
         if (s == null) s = source.getParameter(TIME_LIMIT);
 
         if (s != null) {
@@ -111,7 +109,7 @@ public class ProxyEntry extends Entry {
             if (debug) log.debug("Proxy Time Limit: "+proxyTimeLimit);
         }
 
-        authentication = entryMapping.getParameter(AUTHENTICATON);
+        authentication = entryConfig.getParameter(AUTHENTICATON);
         if (authentication == null) authentication = source.getParameter(AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
     }
@@ -258,60 +256,93 @@ public class ProxyEntry extends Entry {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public boolean contains(DN dn) throws Exception {
 
-        if (debug) log.debug("Finding matching entries for "+dn+":");
+        DN entryDn = getDn();
+
+        if (entryDn.getSize() == dn.getSize()) {
+            return entryDn.matches(dn);
+
+        } else if (entryDn.getSize() < dn.getSize()) {
+            return entryDn.endsWith(dn);
+        }
+
+        return false;
+    }
+
+    public Collection<Entry> findEntries(DN dn) throws Exception {
 
         if (dn == null) return EMPTY_ENTRIES;
 
-        DN thisDn = getDn();
-        int level = thisDn.getSize() - 1;
-        int length = dn.getSize();
+        DN entryDn        = getDn();
+        if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
-        if (!dn.endsWith(thisDn)) {
-            if (debug) log.debug("Doesn't match "+thisDn);
+        int entryDnLength = entryDn.getSize();
+        int dnLength      = dn.getSize();
+
+        if (dnLength == 0 && entryDnLength == 0) { // Root DSE
+            Collection<Entry> results = new ArrayList<Entry>();
+            results.add(this);
+            return results;
+        }
+
+        if (!dn.endsWith(entryDn)) {
+            //if (debug) log.debug("Doesn't match "+entryDn);
             return EMPTY_ENTRIES;
         }
 
-        if (level < length - 1) { // children has priority
-            Collection<Entry> results = new ArrayList<Entry>();
+        if (debug) log.debug("Searching children of \""+entryDn+"\".");
+
+        Collection<Entry> results = new ArrayList<Entry>();
+
+        if (dnLength > entryDnLength) { // children has priority
             for (Entry child : children) {
-                Collection<Entry> list = child.findEntries(dn, level + 1);
+                Collection<Entry> list = child.findEntries(dn);
                 results.addAll(list);
             }
             if (!results.isEmpty()) return results;
         }
 
-        Collection<Entry> results = new ArrayList<Entry>();
         results.add(this);
-        if (debug) log.debug(" - "+getDn());
+
+        if (debug) log.debug("Found entry \""+entryDn+"\".");
 
         return results;
     }
 
     public Collection<Entry> findEntries(DN dn, int level) throws Exception {
 
-        RDN thisRdn = getRdn();
-        int length = dn.getSize();
-        RDN rdn = dn.get(length - level - 1);
+        if (debug) log.debug("Finding matching entries for "+dn+":");
 
-        if (!thisRdn.matches(rdn)) {
-            if (debug) log.debug("Doesn't match with "+getDn());
+        if (dn == null) return EMPTY_ENTRIES;
+
+        DN entryDn        = getDn();
+
+        int entryDnLength = entryDn.getSize();
+        int dnLength      = dn.getSize();
+
+        RDN entryRdn      = getRdn();
+        RDN rdn           = dn.get(dnLength - entryDnLength - 1);
+
+        if (!entryRdn.matches(rdn)) {
+            if (debug) log.debug("Doesn't match with "+entryDn);
             return EMPTY_ENTRIES;
         }
 
-        if (level < length - 1) { // children has priority
-            Collection<Entry> results = new ArrayList<Entry>();
+        Collection<Entry> results = new ArrayList<Entry>();
+
+        if (dnLength > entryDnLength) { // children has priority
             for (Entry child : children) {
-                Collection<Entry> list = child.findEntries(dn, level + 1);
+                Collection<Entry> list = child.findEntries(dn, entryDnLength);
                 results.addAll(list);
             }
             if (!results.isEmpty()) return results;
         }
 
-        Collection<Entry> results = new ArrayList<Entry>();
+
         results.add(this);
-        if (debug) log.debug(" - "+getDn());
+
+        if (debug) log.debug("Found entry "+entryDn);
 
         return results;
     }
@@ -440,7 +471,7 @@ public class ProxyEntry extends Entry {
 
             if (base == this) {
 
-                if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
+                if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
 
                 for (Entry child : children) {
                     child.search(session, base, sourceValues, request, response);
@@ -449,7 +480,7 @@ public class ProxyEntry extends Entry {
 
         } else if (scope == SearchRequest.SCOPE_SUB) {
 
-            if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
+            if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
 
             for (Entry child : children) {
                 child.search(session, base, sourceValues, request, response);
@@ -540,10 +571,14 @@ public class ProxyEntry extends Entry {
 
             SearchResponse sr = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
-
-                    SearchResult searchResult = createSearchResult(interpreter, result);
-                    searchResult.setEntry(ProxyEntry.this);
-                    response.add(searchResult);
+                    SearchResult newResult = createSearchResult(interpreter, result);
+                    newResult.setEntry(ProxyEntry.this);
+                    response.add(newResult);
+                }
+                public void addReferral(SearchResult referral) throws Exception {
+                    SearchResult newReferral = createSearchResult(interpreter, referral);
+                    newReferral.setEntry(ProxyEntry.this);
+                    response.addReferral(newReferral);
                 }
             };
 

@@ -166,4 +166,4 @@ exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
 -Dorg.safehaus.penrose.management.home="$PENROSE_HOME/services/JMX" \
-org.safehaus.penrose.management.PartitionClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.management.partition.PartitionManagerClient $PENROSE_ARGS "$@"

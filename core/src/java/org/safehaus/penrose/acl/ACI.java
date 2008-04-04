@@ -117,7 +117,7 @@ public class ACI implements Serializable, Cloneable {
     }
 
     public void setDn(String dn) {
-        this.dn = new DN(dn);
+        this.dn = dn == null ? null : new DN(dn);
     }
 
     public void setDn(DN dn) {

@@ -23,7 +23,7 @@ public class ConnectionWriter {
     public ConnectionWriter() {
     }
 
-    public void write(File file, ConnectionConfigs connectionConfigs) throws Exception {
+    public void write(File file, ConnectionConfigManager connectionConfigManager) throws Exception {
 
         log.debug("Writing "+file+".");
 
@@ -40,14 +40,14 @@ public class ConnectionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-        writer.write(createElement(connectionConfigs));
+        writer.write(createElement(connectionConfigManager));
         writer.close();
     }
 
-    public Element createElement(ConnectionConfigs connectionConfigs) {
+    public Element createElement(ConnectionConfigManager connectionConfigManager) {
         Element element = new DefaultElement("connections");
 
-        for (ConnectionConfig connectionConfig : connectionConfigs.getConnectionConfigs()) {
+        for (ConnectionConfig connectionConfig : connectionConfigManager.getConnectionConfigs()) {
             element.add(createElement(connectionConfig));
         }
 
@@ -55,8 +55,15 @@ public class ConnectionWriter {
     }
 
     public Element createElement(ConnectionConfig connectionConfig) {
+
         Element element = new DefaultElement("connection");
         element.add(new DefaultAttribute("name", connectionConfig.getName()));
+
+        if (connectionConfig.getDescription() != null) {
+            Element descriptionElement = new DefaultElement("description");
+            descriptionElement.add(new DefaultText(connectionConfig.getDescription()));
+            element.add(descriptionElement);
+        }
 
         Element adapterName = new DefaultElement("adapter-name");
         adapterName.add(new DefaultText(connectionConfig.getAdapterName()));

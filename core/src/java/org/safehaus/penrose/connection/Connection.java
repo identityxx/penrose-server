@@ -88,6 +88,10 @@ public class Connection implements ConnectionMBean {
         return connectionContext.getAdapter();
     }
 
+    public String getAdapterName() {
+        return connectionContext.getAdapter().getName();
+    }
+
     public String getParameter(String name) {
         return connectionConfig.getParameter(name);
     }

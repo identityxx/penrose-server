@@ -10,15 +10,15 @@ import java.util.ArrayList;
  */
 public class InsertStatement extends Statement {
 
-    protected Source source;
+    protected String sourceName;
     protected Collection<Assignment> assignments = new ArrayList<Assignment>();
 
-    public Source getSource() {
-        return source;
+    public String getSourceName() {
+        return sourceName;
     }
 
-    public void setSource(Source source) {
-        this.source = source;
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
     }
 
     public Collection<Assignment> getAssignments() {

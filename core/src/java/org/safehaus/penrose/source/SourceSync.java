@@ -26,6 +26,8 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.jdbc.JDBCClient;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,6 @@ public class SourceSync {
     private SourceSyncConfig sourceSyncConfig;
     private SourceSyncContext sourceSyncContext;
 
-    private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
     private Partition partition;
@@ -77,7 +78,6 @@ public class SourceSync {
         this.partition = sourceSyncContext.getPartition();
 
         PartitionContext partitionContext = partition.getPartitionContext();
-        this.penroseConfig = partitionContext.getPenroseConfig();
         this.penroseContext = partitionContext.getPenroseContext();
 
         String sourceName = sourceSyncConfig.getName();
@@ -95,19 +95,20 @@ public class SourceSync {
         user = sourceSyncConfig.getParameter(USER);
         //log.debug("User: "+user);
 
-        source = partition.getSource(sourceName);
+        SourceManager sourceManager = partition.getSourceManager();
+        source = sourceManager.getSource(sourceName);
 
         if (changeLogName != null) {
-            changeLog = partition.getSource(changeLogName);
+            changeLog = sourceManager.getSource(changeLogName);
             if (changeLog == null) throw new Exception("Change log "+changeLogName+" not found.");
 
-            tracker = partition.getSource(trackerName);
+            tracker = sourceManager.getSource(trackerName);
             if (tracker == null) throw new Exception("Tracker "+trackerName+" not found.");
         }
 
         for (String destinationName : destinations) {
 
-            Source destination = partition.getSource(destinationName);
+            Source destination = sourceManager.getSource(destinationName);
             if (destination == null) throw new Exception("Source "+destinationName+" not found.");
 
             this.destinations.add(destination);
@@ -192,13 +193,21 @@ public class SourceSync {
     }
 
     public void synchronize() throws Exception {
-        if (changeLog == null) {
-            //update();
 
-        } else {
-            for (ChangeLogUtil changeLogUtil : changeLogUtils) {
-                changeLogUtil.update();
+        Session session = getSession();
+
+        try {
+            if (changeLog == null) {
+                //update();
+
+            } else {
+                for (ChangeLogUtil changeLogUtil : changeLogUtils) {
+                    changeLogUtil.update(session);
+                }
             }
+
+        } finally {
+            session.close();
         }
     }
 
@@ -245,30 +254,35 @@ public class SourceSync {
         log.debug("Source synchronization completed.");
     }
 
+    public Session getSession() throws Exception {
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        return sessionManager.newAdminSession();
+    }
+
     public void load() throws Exception {
         load(destinations);
     }
 
     public void load(Collection<Source> targets) throws Exception {
 
-        Interpreter interpreter = partition.newInterpreter();
+        Session session = getSession();
 
-        SearchRequest sourceRequest = new SearchRequest();
-        SearchResponse sourceResponse = new SourceSyncSearchResponse(
-                source,
-                targets,
-                interpreter
-        );
+        try {
+            Interpreter interpreter = partition.newInterpreter();
 
-        source.search(sourceRequest, sourceResponse);
-    }
+            SearchRequest sourceRequest = new SearchRequest();
+            SearchResponse sourceResponse = new SourceSyncSearchResponse(
+                    session,
+                    source,
+                    targets,
+                    interpreter
+            );
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
+            source.search(session, sourceRequest, sourceResponse);
 
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
+        } finally {
+            session.close();
+        }
     }
 
     public PenroseContext getPenroseContext() {

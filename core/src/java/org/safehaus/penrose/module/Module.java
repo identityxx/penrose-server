@@ -19,6 +19,8 @@ package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.Session;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -152,5 +154,10 @@ public class Module implements
 
     public void setModuleContext(ModuleContext moduleContext) {
         this.moduleContext = moduleContext;
+    }
+
+    public Session getSession() throws Exception {
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        return sessionManager.newAdminSession();
     }
 }

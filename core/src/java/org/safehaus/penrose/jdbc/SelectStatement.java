@@ -1,7 +1,5 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.*;
@@ -11,53 +9,41 @@ import java.util.*;
  */
 public class SelectStatement extends Statement {
 
-    protected Collection<FieldRef> fieldRefs = new ArrayList<FieldRef>();
+    protected Collection<String> columnNames = new ArrayList<String>();
 
-    protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // maintain source order
+    protected Map<String,String> sourceNames = new LinkedHashMap<String,String>(); // maintain source order
     protected Collection<JoinClause> joinClauses = new ArrayList<JoinClause>();
 
     protected Filter filter;
     private String where;
 
-    protected Collection<FieldRef> orders = new ArrayList<FieldRef>();
+    protected Collection<String> orders = new ArrayList<String>();
 
-    public Collection<FieldRef> getFieldRefs() {
-        return fieldRefs;
+    public Collection<String> getColumnNames() {
+        return columnNames;
     }
 
-    public void addFieldRef(FieldRef fieldRef) {
-        fieldRefs.add(fieldRef);
+    public void addColumn(String columnName) {
+        columnNames.add(columnName);
     }
 
-    public void addFieldRefs(Collection<FieldRef> fieldRefs) {
-        this.fieldRefs.addAll(fieldRefs);
-    }
-
-    public void setFieldRefs(Collection<FieldRef> fieldRefs) {
-        if (this.fieldRefs == fieldRefs) return;
-        this.fieldRefs.clear();
-        this.fieldRefs.addAll(fieldRefs);
+    public void setColumnNames(Collection<String> columnNames) {
+        if (this.columnNames == columnNames) return;
+        this.columnNames.clear();
+        if (columnNames == null) return;
+        this.columnNames.addAll(columnNames);
     }
 
     public Collection<String> getSourceAliases() {
-        return sourceRefs.keySet();
+        return sourceNames.keySet();
     }
 
-    public SourceRef getSourceRef() {
-        if (sourceRefs.isEmpty()) return null;
-        return sourceRefs.values().iterator().next();
+    public String getSourceName(String alias) {
+        return sourceNames.get(alias);
     }
 
-    public SourceRef getSourceRef(String alias) {
-        return sourceRefs.get(alias);
-    }
-
-    public void addSourceRef(SourceRef sourceRef) {
-        sourceRefs.put(sourceRef.getAlias(), sourceRef);
-    }
-
-    public void addSourceRef(String alias, SourceRef sourceRef) {
-        sourceRefs.put(alias, sourceRef);
+    public void addSourceName(String alias, String sourceName) {
+        sourceNames.put(alias, sourceName);
     }
 
     public void addJoin(JoinClause joinClause) {
@@ -76,21 +62,22 @@ public class SelectStatement extends Statement {
         this.filter = filter;
     }
 
-    public Collection<FieldRef> getOrders() {
+    public Collection<String> getOrders() {
         return orders;
     }
 
-    public void addOrder(FieldRef fieldRef) {
-        orders.add(fieldRef);
+    public void addOrder(String order) {
+        orders.add(order);
     }
 
-    public void addOrders(Collection<FieldRef> orders) {
+    public void addOrders(Collection<String> orders) {
         this.orders.addAll(orders);
     }
 
-    public void setOrders(Collection<FieldRef> orders) {
+    public void setOrders(Collection<String> orders) {
         if (this.orders == orders) return;
         this.orders.clear();
+        if (orders == null) return;
         this.orders.addAll(orders);
     }
 

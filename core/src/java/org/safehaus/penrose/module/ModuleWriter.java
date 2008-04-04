@@ -9,7 +9,6 @@ import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.io.File;
 import java.io.FileWriter;
 
@@ -20,7 +19,7 @@ public class ModuleWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public void write(File file, ModuleConfigs moduleConfigs) throws Exception {
+    public void write(File file, ModuleConfigManager moduleConfigManager) throws Exception {
 
         log.debug("Writing "+file+".");
 
@@ -37,26 +36,23 @@ public class ModuleWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-        writer.write(createElement(moduleConfigs));
+        writer.write(createElement(moduleConfigManager));
         writer.close();
     }
 
-    public Element createElement(ModuleConfigs modules) {
+    public Element createElement(ModuleConfigManager moduleConfigManager) {
         Element modulesElement = new DefaultElement("modules");
 
         // module
-        for (ModuleConfig moduleConfig : modules.getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : moduleConfigManager.getModuleConfigs()) {
             Element moduleElement = createElement(moduleConfig);
             modulesElement.add(moduleElement);
         }
 
         // module-mapping
-        for (Collection<ModuleMapping> moduleMappings : modules.getModuleMappings()) {
-
-            for (ModuleMapping moduleMapping : moduleMappings) {
-                Element mappingElement = createElement(moduleMapping);
-                modulesElement.add(mappingElement);
-            }
+        for (ModuleMapping moduleMapping : moduleConfigManager.getModuleMappings()) {
+            Element mappingElement = createElement(moduleMapping);
+            modulesElement.add(mappingElement);
         }
 
         return modulesElement;
@@ -68,15 +64,15 @@ public class ModuleWriter {
         element.addAttribute("name", moduleConfig.getName());
         if (!moduleConfig.isEnabled()) element.addAttribute("enabled", "false");
 
-        Element moduleClass = new DefaultElement("module-class");
-        moduleClass.add(new DefaultText(moduleConfig.getModuleClass()));
-        element.add(moduleClass);
-
-        if (moduleConfig.getDescription() != null && !"".equals(moduleConfig.getDescription())) {
+        if (moduleConfig.getDescription() != null) {
             Element description = new DefaultElement("description");
             description.add(new DefaultText(moduleConfig.getDescription()));
             element.add(description);
         }
+
+        Element moduleClass = new DefaultElement("module-class");
+        moduleClass.add(new DefaultText(moduleConfig.getModuleClass()));
+        element.add(moduleClass);
 
         // parameters
         for (String name : moduleConfig.getParameterNames()) {

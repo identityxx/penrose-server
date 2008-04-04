@@ -1,14 +1,16 @@
 package org.safehaus.penrose.jdbc.connection;
 
+import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.jdbc.Assignment;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -18,10 +20,11 @@ public class JDBCFilterBuilder {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
+    protected Map<String,String> sourceNames = new LinkedHashMap<String,String>(); // need to maintain order
 
+    Partition partition;
     private String sql;
-    private Collection<Assignment> assignments = new ArrayList<Assignment>();
+    private Collection<Object> parameters = new ArrayList<Object>();
 
     private String quote;
     private boolean extractValues = true;
@@ -29,7 +32,8 @@ public class JDBCFilterBuilder {
 
     private boolean allowCaseSensitive = true;
 
-    public JDBCFilterBuilder() throws Exception {
+    public JDBCFilterBuilder(Partition partition) throws Exception {
+        this.partition = partition;
     }
 
     public void generate(Filter filter) throws Exception {
@@ -74,27 +78,30 @@ public class JDBCFilterBuilder {
 
         StringBuilder sb1 = new StringBuilder();
 
-        String lsourceName;
+        String lsourceAlias;
         String lfieldName;
 
         int i = name.indexOf('.');
         if (i < 0) {
-            lsourceName = sourceRefs.keySet().iterator().next();
+            lsourceAlias = sourceNames.keySet().iterator().next();
             lfieldName = name;
         } else {
-            lsourceName = name.substring(0, i);
+            lsourceAlias = name.substring(0, i);
             lfieldName = name.substring(i+1);
         }
 
         if (appendSourceAlias) {
-            sb1.append(lsourceName);
+            sb1.append(lsourceAlias);
             sb1.append(".");
         }
 
-        SourceRef lsourceRef = sourceRefs.get(lsourceName);
-        Source ls = lsourceRef.getSource();
+        String lsourceName = sourceNames.get(lsourceAlias);
+        SourceConfig ls = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
+        //SourceRef lsourceRef = sourceRefs.get(lsourceName);
+        //Source ls = lsourceRef.getSource();
 
-        Field lField = ls.getField(lfieldName);
+        //Field lField = ls.getField(lfieldName);
+        FieldConfig lField = ls.getFieldConfig(lfieldName);
         if (lField == null) throw new Exception("Unknown field: "+name);
 
         if (quote != null) sb1.append(quote);
@@ -137,7 +144,7 @@ public class JDBCFilterBuilder {
                 rhs = "?";
             }
 
-            assignments.add(new Assignment(lField, value));
+            parameters.add(value);
 
         } else {
             rhs = "\""+value+"\"";
@@ -179,27 +186,30 @@ public class JDBCFilterBuilder {
 
         StringBuilder sb1 = new StringBuilder();
 
-        String lsourceName;
+        String lsourceAlias;
         String lfieldName;
 
         int i = name.indexOf('.');
         if (i < 0) {
-            lsourceName = sourceRefs.keySet().iterator().next();
+            lsourceAlias = sourceNames.keySet().iterator().next();
             lfieldName = name;
         } else {
-            lsourceName = name.substring(0, i);
+            lsourceAlias = name.substring(0, i);
             lfieldName = name.substring(i+1);
         }
 
         if (appendSourceAlias) {
-            sb1.append(lsourceName);
+            sb1.append(lsourceAlias);
             sb1.append(".");
         }
 
-        SourceRef lsourceRef = sourceRefs.get(lsourceName);
-        Source ls = lsourceRef.getSource();
+        String lsourceName = sourceNames.get(lsourceAlias);
+        SourceConfig ls = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
+        //SourceRef lsourceRef = sourceRefs.get(lsourceAlias);
+        //Source ls = lsourceRef.getSource();
 
-        Field lField = ls.getField(lfieldName);
+        //Field lField = ls.getField(lfieldName);
+        FieldConfig lField = ls.getFieldConfig(lfieldName);
         if (lField == null) throw new Exception("Unknown field: "+name);
 
         if (quote != null) sb1.append(quote);
@@ -208,7 +218,6 @@ public class JDBCFilterBuilder {
 
         String lhs = sb1.toString();
 
-        Field rField;
         String rhs;
 
         if (extractValues) {
@@ -231,23 +240,26 @@ public class JDBCFilterBuilder {
                 rhs = "?";
             }
 
-            assignments.add(new Assignment(lField, value));
+            parameters.add(value);
 
         } else {
             rhs = value.toString();
 
             int j = rhs.indexOf('.');
-            String rsourceName = rhs.substring(0, j);
+            String rsourceAlias = rhs.substring(0, j);
             String rfieldName = rhs.substring(j+1);
 
-            SourceRef rsourceRef = sourceRefs.get(rsourceName);
-            Source rs = rsourceRef.getSource();
+            String rsourceName = sourceNames.get(rsourceAlias);
+            SourceConfig rs = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(rsourceName);
+            //SourceRef rsourceRef = sourceRefs.get(rsourceAlias);
+            //Source rs = rsourceRef.getSource();
 
-            rField = rs.getField(rfieldName);
+            //Field rField = rs.getField(rfieldName);
+            FieldConfig rField = rs.getFieldConfig(rfieldName);
             if (rField == null) throw new Exception("Unknown field: "+rhs);
 
             StringBuilder sb2 = new StringBuilder();
-            sb2.append(rsourceName);
+            sb2.append(rsourceAlias);
             sb2.append(".");
 
             if (quote != null) sb2.append(quote);
@@ -364,23 +376,15 @@ public class JDBCFilterBuilder {
     }
 
     public Collection<String> getSourceAliases() {
-        return sourceRefs.keySet();
+        return sourceNames.keySet();
     }
 
-    public SourceRef getSourceRef(String alias) {
-        return sourceRefs.get(alias);
+    public void addSourceName(String alias, String sourceName) {
+        sourceNames.put(alias, sourceName);
     }
 
-    public void addSourceRef(String alias, SourceRef sourceRef) {
-        sourceRefs.put(alias, sourceRef);
-    }
-
-    public Collection<Assignment> getAssignments() {
-        return assignments;
-    }
-
-    public void setAssignments(Collection<Assignment> assignments) {
-        this.assignments = assignments;
+    public Collection<Object> getParameters() {
+        return parameters;
     }
 
     public String getSql() {

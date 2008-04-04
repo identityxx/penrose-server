@@ -1,18 +1,16 @@
 package org.safehaus.penrose.jdbc.connection;
 
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.jdbc.*;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.source.SourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.filter.Filter;
 
-import java.util.Iterator;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -21,12 +19,14 @@ public class JDBCStatementBuilder {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    protected Partition partition;
     protected String sql;
-    protected Collection<Assignment> assigments = new ArrayList<Assignment>();
+    protected Collection<Object> parameters = new ArrayList<Object>();
 
     private String quote;
 
-    public JDBCStatementBuilder() {
+    public JDBCStatementBuilder(Partition partition) {
+        this.partition = partition;
     }
 
     public String generate(Statement statement) throws Exception {
@@ -55,7 +55,7 @@ public class JDBCStatementBuilder {
         sb.append("select distinct ");
 
         boolean first = true;
-        for (FieldRef fieldRef : statement.getFieldRefs()) {
+        for (String columnName : statement.getColumnNames()) {
 
             if (first) {
                 first = false;
@@ -63,11 +63,15 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            sb.append(fieldRef.getSourceName());
+            int i = columnName.indexOf('.');
+            String sourceName = columnName.substring(0, i);
+            String fieldName = columnName.substring(i+1);
+
+            sb.append(sourceName);
             sb.append('.');
 
             if (quote != null) sb.append(quote);
-            sb.append(fieldRef.getOriginalName());
+            sb.append(fieldName);
             if (quote != null) sb.append(quote);
         }
 
@@ -78,10 +82,13 @@ public class JDBCStatementBuilder {
         Iterator j = statement.getJoinClauses().iterator();
 
         String alias = (String)i.next();
-        SourceRef sourceRef = statement.getSourceRef(alias);
 
-        Source source = sourceRef.getSource();
-        String table = getTableName(source.getSourceConfig());
+        String sourceName = statement.getSourceName(alias);
+        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
+        //SourceRef sourceRef = statement.getSourceRef(alias);
+        //Source source = sourceRef.getSource();
+
+        String table = getTableName(sourceConfig);
 
         sb.append(table);
 
@@ -90,9 +97,13 @@ public class JDBCStatementBuilder {
 
         while (i.hasNext() && j.hasNext()) {
             alias = (String)i.next();
-            sourceRef = statement.getSourceRef(alias);
-            source = sourceRef.getSource();
-            table = getTableName(source.getSourceConfig());
+
+            sourceName = statement.getSourceName(alias);
+            sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
+            //sourceRef = statement.getSourceRef(alias);
+            //source = sourceRef.getSource();
+
+            table = getTableName(sourceConfig);
 
             JoinClause joinClause = (JoinClause)j.next();
             String joinType = joinClause.getType();
@@ -114,14 +125,15 @@ public class JDBCStatementBuilder {
                 sb.append("(");
             }
 
-            JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+            JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
             filterBuilder.setExtractValues(false);
             filterBuilder.setQuote(quote);
             filterBuilder.setAllowCaseSensitive(false);
 
             for (String cn : statement.getSourceAliases()) {
-                SourceRef sr = statement.getSourceRef(cn);
-                filterBuilder.addSourceRef(cn, sr);
+                sourceName = statement.getSourceName(cn);
+                //SourceRef sr = statement.getSourceRef(cn);
+                filterBuilder.addSourceName(cn, sourceName);
             }
 
             filterBuilder.generate(joinCondition);
@@ -138,12 +150,13 @@ public class JDBCStatementBuilder {
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
         filterBuilder.setQuote(quote);
 
         for (String cn : statement.getSourceAliases()) {
-            sourceRef = statement.getSourceRef(cn);
-            filterBuilder.addSourceRef(cn, sourceRef);
+            sourceName = statement.getSourceName(cn);
+            //sourceRef = statement.getSourceRef(cn);
+            filterBuilder.addSourceName(cn, sourceName);
         }
 
         filterBuilder.generate(filter);
@@ -162,10 +175,10 @@ public class JDBCStatementBuilder {
             sb.append(sql);
         }
 
-        assigments.addAll(filterBuilder.getAssignments());
+        parameters.addAll(filterBuilder.getParameters());
 
         first = true;
-        for (FieldRef fieldRef : statement.getOrders()) {
+        for (String columnName : statement.getOrders()) {
 
             if (first) {
                 sb.append(" order by ");
@@ -174,11 +187,15 @@ public class JDBCStatementBuilder {
                 sb.append(", ");
             }
 
-            sb.append(fieldRef.getSourceName());
+            int p = columnName.indexOf('.');
+            String sn = columnName.substring(0, p);
+            String fn = columnName.substring(p+1);
+
+            sb.append(sn);
             sb.append('.');
 
             if (quote != null) sb.append(quote);
-            sb.append(fieldRef.getOriginalName());
+            sb.append(fn);
             if (quote != null) sb.append(quote);
         }
 
@@ -207,8 +224,11 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("insert into ");
 
-        Source source = statement.getSource();
-        String table = getTableName(source.getSourceConfig());
+        String sourceName = statement.getSourceName();
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        SourceConfig sourceConfig = partitionConfig.getSourceConfigManager().getSourceConfig(sourceName);
+        String table = getTableName(sourceConfig);
 
         sb.append(table);
 
@@ -217,7 +237,7 @@ public class JDBCStatementBuilder {
         boolean first = true;
 
         for (Assignment assignment : statement.getAssignments()) {
-            Field field = assignment.getField();
+            String name = assignment.getName();
 
             if (first) {
                 first = false;
@@ -227,12 +247,12 @@ public class JDBCStatementBuilder {
             }
 
             if (quote != null) sb1.append(quote);
-            sb1.append(field.getOriginalName());
+            sb1.append(name);
             if (quote != null) sb1.append(quote);
 
             sb2.append("?");
 
-            assigments.add(assignment);
+            parameters.add(assignment.getValue());
         }
 
         sb.append(" (");
@@ -251,8 +271,9 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("update ");
 
-        SourceRef sourceRef = statement.getSourceRef();
-        String table = getTableName(sourceRef.getSource().getSourceConfig());
+        String sourceName = statement.getSourceName();
+        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
+        String table = getTableName(sourceConfig);
 
         sb.append(table);
 
@@ -260,7 +281,7 @@ public class JDBCStatementBuilder {
 
         boolean first = true;
         for (Assignment assignment : statement.getAssignments()) {
-            Field field = assignment.getField();
+            String name = assignment.getName();
 
             if (first) {
                 first = false;
@@ -269,20 +290,20 @@ public class JDBCStatementBuilder {
             }
 
             if (quote != null) sb.append(quote);
-            sb.append(field.getOriginalName());
+            sb.append(name);
             if (quote != null) sb.append(quote);
 
             sb.append("=?");
 
-            assigments.add(assignment);
+            parameters.add(assignment.getValue());
         }
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
-        filterBuilder.setAppendSourceAlias(false);
-        filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
         filterBuilder.setQuote(quote);
+        filterBuilder.setAppendSourceAlias(false);
+        filterBuilder.addSourceName("s", sourceName);
 
         filterBuilder.generate(filter);
 
@@ -292,7 +313,7 @@ public class JDBCStatementBuilder {
             sb.append(whereClause);
         }
 
-        assigments.addAll(filterBuilder.getAssignments());
+        parameters.addAll(filterBuilder.getParameters());
 
         return sb.toString();
     }
@@ -304,18 +325,18 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("delete from ");
 
-        SourceRef sourceRef = statement.getSourceRef();
-        String table = getTableName(sourceRef.getSource().getSourceConfig());
+        String sourceName = statement.getSourceName();
+        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
+        String table = getTableName(sourceConfig);
 
         sb.append(table);
 
         Filter filter = statement.getFilter();
 
-        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder();
-        filterBuilder.setAppendSourceAlias(false);
-        filterBuilder.addSourceRef(sourceRef.getAlias(), sourceRef);
-
+        JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
         filterBuilder.setQuote(quote);
+        filterBuilder.setAppendSourceAlias(false);
+        filterBuilder.addSourceName("s", sourceName);
 
         filterBuilder.generate(filter);
 
@@ -325,7 +346,7 @@ public class JDBCStatementBuilder {
             sb.append(whereClause);
         }
 
-        assigments.addAll(filterBuilder.getAssignments());
+        parameters.addAll(filterBuilder.getParameters());
 
         return sb.toString();
     }
@@ -366,12 +387,8 @@ public class JDBCStatementBuilder {
         this.sql = sql;
     }
 
-    public Collection<Assignment> getAssigments() {
-        return assigments;
-    }
-
-    public void setAssigments(Collection<Assignment> assigments) {
-        this.assigments = assigments;
+    public Collection<Object> getParameters() {
+        return parameters;
     }
 
     public String getQuote() {

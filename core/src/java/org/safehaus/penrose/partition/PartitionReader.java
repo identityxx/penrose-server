@@ -17,14 +17,6 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.connection.ConnectionReader;
-import org.safehaus.penrose.connection.ConnectionConfigs;
-import org.safehaus.penrose.source.SourceReader;
-import org.safehaus.penrose.source.SourceConfigs;
-import org.safehaus.penrose.module.ModuleReader;
-import org.safehaus.penrose.module.ModuleConfigs;
-import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.scheduler.SchedulerReader;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.slf4j.LoggerFactory;
@@ -51,11 +43,7 @@ public class PartitionReader implements EntityResolver {
 
     Digester digester;
 
-    ConnectionReader connectionReader = new ConnectionReader();
-    SourceReader     sourceReader     = new SourceReader();
-    MappingReader    mappingReader    = new MappingReader();
-    ModuleReader     moduleReader     = new ModuleReader();
-    SchedulerReader  schedulerReader  = new SchedulerReader();
+    SchedulerReader  schedulerReader = new SchedulerReader();
 
     public PartitionReader() {
 
@@ -70,17 +58,9 @@ public class PartitionReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public PartitionConfig read(String dir) throws Exception {
-        return read(new File(dir));
-    }
+    public void read(File baseDir, PartitionConfig partitionConfig) throws Exception {
 
-    public PartitionConfig read(File partitionDir) throws Exception {
-
-        PartitionConfig partitionConfig = new PartitionConfig(partitionDir.getName());
-
-        File dirInf = new File(partitionDir, "DIR-INF");
-
-        File partitionXml = new File(dirInf, "partition.xml");
+        File partitionXml = new File(baseDir, "partition.xml");
         if (partitionXml.exists()) {
             log.debug("Loading "+partitionXml+".");
             digester.push(partitionConfig);
@@ -90,14 +70,14 @@ public class PartitionReader implements EntityResolver {
 
         //log.debug("Classpath:");
 
-        File classesDir = new File(dirInf, "classes");
+        File classesDir = new File(baseDir, "classes");
         if (classesDir.isDirectory()) {
             URL url = classesDir.toURL();
             //log.debug(" - "+url);
             partitionConfig.addClassPath(url);
         }
 
-        File libDir = new File(dirInf, "lib");
+        File libDir = new File(baseDir, "lib");
         if (libDir.isDirectory()) {
             File files[] = libDir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
@@ -112,46 +92,7 @@ public class PartitionReader implements EntityResolver {
             }
         }
 
-        read(dirInf, partitionConfig.getConnectionConfigs());
-        read(dirInf, partitionConfig.getSourceConfigs());
-        read(dirInf, partitionConfig.getDirectoryConfig());
-        read(dirInf, partitionConfig.getModuleConfigs());
-
-        readSchedulerConfig(dirInf, partitionConfig);
-
-        return partitionConfig;
-    }
-
-    public void read(File dir, ConnectionConfigs connections) throws Exception {
-        File connectionsXml = new File(dir, "connections.xml");
-        if (!connectionsXml.exists()) return;
-
-        log.debug("Loading "+connectionsXml+".");
-        connectionReader.read(connectionsXml, connections);
-    }
-
-    public void read(File dir, SourceConfigs sources) throws Exception {
-        File sourcesXml = new File(dir, "sources.xml");
-        if (!sourcesXml.exists()) return;
-
-        log.debug("Loading "+sourcesXml+".");
-        sourceReader.read(sourcesXml, sources);
-    }
-
-    public void read(File dir, DirectoryConfig mappings) throws Exception {
-        File mappingXml = new File(dir, "mapping.xml");
-        if (!mappingXml.exists()) return;
-
-        log.debug("Loading "+mappingXml+".");
-        mappingReader.read(mappingXml, mappings);
-    }
-
-    public void read(File dir, ModuleConfigs modules) throws Exception {
-        File modulesFile = new File(dir, "modules.xml");
-        if (!modulesFile.exists()) return;
-
-        log.debug("Loading "+modulesFile+".");
-        moduleReader.read(modulesFile, modules);
+        readSchedulerConfig(baseDir, partitionConfig);
     }
 
     public void readSchedulerConfig(File dir, PartitionConfig partitionConfig) throws Exception {
@@ -159,7 +100,8 @@ public class PartitionReader implements EntityResolver {
         if (!schedulerFile.exists()) return;
 
         log.debug("Loading "+schedulerFile+".");
-        SchedulerConfig schedulerConfig = schedulerReader.read(schedulerFile);
+        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        schedulerReader.read(schedulerFile, schedulerConfig);
         
         partitionConfig.setSchedulerConfig(schedulerConfig);
     }

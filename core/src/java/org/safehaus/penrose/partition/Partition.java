@@ -18,11 +18,12 @@
 package org.safehaus.penrose.partition;
 
 import java.util.*;
+import java.io.File;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.Connections;
+import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleMapping;
@@ -40,7 +41,6 @@ import org.safehaus.penrose.scheduler.SchedulerContext;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.thread.ThreadManager;
@@ -61,20 +61,19 @@ public class Partition implements Cloneable {
     protected PartitionConfig partitionConfig;
     protected PartitionContext partitionContext;
 
-    protected Map<String, Engine>    engines     = new LinkedHashMap<String,Engine>();
-    protected Adapters               adapters    = new Adapters();
-    protected Connections            connections = new Connections();
-    protected Map<String,Source>     sources     = new LinkedHashMap<String,Source>();
-    protected Map<String,SourceSync> sourceSyncs = new LinkedHashMap<String,SourceSync>();
-    protected Directory              directory   = new Directory();
-    protected Map<String,Module>     modules     = new LinkedHashMap<String,Module>();
+    protected Map<String, Engine>    engines           = new LinkedHashMap<String,Engine>();
+    protected Adapters               adapters          = new Adapters();
+    protected ConnectionManager      connectionManager;
+    protected SourceManager          sourceManager;
+    protected Directory              directory;
+    protected Map<String,Module>     modules           = new LinkedHashMap<String,Module>();
 
-    protected Scheduler scheduler;
+    Scheduler scheduler;
 
-    protected Engine engine;
+    Engine engine;
     SchemaManager schemaManager;
     ThreadManager threadManager;
-    protected ACLEvaluator aclEvaluator;
+    ACLEvaluator aclEvaluator;
 
     public Partition() {
     }
@@ -101,26 +100,28 @@ public class Partition implements Cloneable {
         engine.init(engineConfig);
 
         adapters.init(this);
-        connections.init(this);
 
-        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigs().getSourceConfigs()) {
+        connectionManager = new ConnectionManager(this);
+        connectionManager.init();
+
+        sourceManager = new SourceManager(this);
+        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigManager().getSourceConfigs()) {
             if (!sourceConfig.isEnabled()) continue;
 
-            Source source = createSource(sourceConfig);
-            addSource(source);
+            sourceManager.createSource(sourceConfig);
         }
 
         DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         DirectoryContext directoryContext = new DirectoryContext();
         directoryContext.setPartition(this);
 
+        directory = new Directory();
         directory.init(directoryConfig, directoryContext);
 
-        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigs().getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigManager().getModuleConfigs()) {
             if (!moduleConfig.isEnabled()) continue;
 
-            Module module = createModule(moduleConfig);
-            addModule(module);
+            createModule(moduleConfig);
         }
 
         scheduler = createScheduler(partitionConfig.getSchedulerConfig());
@@ -139,15 +140,8 @@ public class Partition implements Cloneable {
             module.destroy();
         }
 
-        for (SourceSync sourceSync : sourceSyncs.values()) {
-            sourceSync.destroy();
-        }
-
-        for (Source source : sources.values()) {
-            source.destroy();
-        }
-
-        connections.destroy();
+        sourceManager.destroy();
+        connectionManager.destroy();
 
         //log.debug("Partition "+partitionConfig.getName()+" stopped.");
     }
@@ -200,66 +194,32 @@ public class Partition implements Cloneable {
         return engines.get(name);
     }
 
-    public Connections getConnections() {
-        return connections;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Connections
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 
-    public Connection getConnection(String name) {
-        return connections.getConnection(name);
+    public Connection getConnection(String connectionName) {
+        return connectionManager.getConnection(connectionName);
     }
 
-    public Source createSource(
-            SourceConfig sourceConfig
-    ) throws Exception {
-        Connection connection = connections.getConnection(sourceConfig.getConnectionName());
-        if (connection == null) throw new Exception("Unknown connection "+sourceConfig.getConnectionName()+".");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Sources
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        return connection.createSource(sourceConfig);
+    public SourceManager getSourceManager() {
+        return sourceManager;
     }
 
-    public void addSource(Source source) {
-        sources.put(source.getName(), source);
+    public SourceConfigManager getSourceConfigManager() {
+        return sourceManager.getSourceConfigManager();
     }
 
-    public Collection<Source> getSources() {
-        return sources.values();
-    }
-
-    public Source getSource() {
-        if (sources.isEmpty()) return null;
-        return sources.values().iterator().next();
-    }
-
-    public Source getSource(String name) {
-        return sources.get(name);
-    }
-
-    public void addSourceSync(SourceSync sourceSync) {
-        sourceSyncs.put(sourceSync.getName(), sourceSync);
-    }
-
-    public Collection<SourceSync> getSourceSyncs() {
-        return sourceSyncs.values();
-    }
-
-    public SourceSync getSourceSync(String name) {
-        return sourceSyncs.get(name);
-    }
-
-    public Module createModule(ModuleConfig moduleConfig) throws Exception {
-
-        String className = moduleConfig.getModuleClass();
-
-        ClassLoader cl = partitionContext.getClassLoader();
-        Class clazz = cl.loadClass(className);
-        Module module = (Module)clazz.newInstance();
-
-        ModuleContext moduleContext = new ModuleContext();
-        moduleContext.setPartition(this);
-
-        module.init(moduleConfig, moduleContext);
-
-        return module;
+    public Source getSource(String sourceName) {
+        return sourceManager.getSource(sourceName);
     }
 
     public Scheduler createScheduler(SchedulerConfig schedulerConfig) throws Exception {
@@ -284,10 +244,37 @@ public class Partition implements Cloneable {
         return scheduler;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Modules
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Module createModule(ModuleConfig moduleConfig) throws Exception {
+
+        String className = moduleConfig.getModuleClass();
+
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
+        Module module = (Module)clazz.newInstance();
+
+        ModuleContext moduleContext = new ModuleContext();
+        moduleContext.setPartition(this);
+
+        module.init(moduleConfig, moduleContext);
+
+        addModule(module);
+
+        return module;
+    }
+
+
     public void addModule(Module module) {
         modules.put(module.getName(), module);
     }
 
+    public Module removeModule(String name) {
+        return modules.remove(name);
+    }
+    
     public Collection<Module> getModules() {
         return modules.values();
     }
@@ -304,19 +291,16 @@ public class Partition implements Cloneable {
 
         Collection<Module> list = new ArrayList<Module>();
 
-        for (Collection<ModuleMapping> moduleMappings : partitionConfig.getModuleConfigs().getModuleMappings()) {
+        for (ModuleMapping moduleMapping : partitionConfig.getModuleConfigManager().getModuleMappings()) {
+            String moduleName = moduleMapping.getModuleName();
 
-            for (ModuleMapping moduleMapping : moduleMappings) {
-                String moduleName = moduleMapping.getModuleName();
+            boolean b = moduleMapping.match(dn);
+            if (debug) log.debug(" - "+moduleName+": "+b);
 
-                boolean b = moduleMapping.match(dn);
-                if (debug) log.debug(" - "+moduleName+": "+b);
+            if (!b) continue;
 
-                if (!b) continue;
-
-                Module module = getModule(moduleName);
-                list.add(module);
-            }
+            Module module = getModule(moduleName);
+            list.add(module);
         }
 
         return list;
@@ -391,7 +375,7 @@ public class Partition implements Cloneable {
             if (debug) log.debug("Adding " + dn + " into " + entry.getDn());
 
             Entry parent = entry.getParent();
-            int rc = aclEvaluator.checkAdd(session, this, parent, parentDn);
+            int rc = aclEvaluator.checkAdd(session, parent, parentDn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to add " + dn);
@@ -485,7 +469,7 @@ public class Partition implements Cloneable {
         for (Entry entry : entries) {
             if (debug) log.debug("Comparing " + dn + " in " + entry.getDn());
 
-            int rc = aclEvaluator.checkRead(session, this, entry, dn);
+            int rc = aclEvaluator.checkRead(session, entry, dn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to compare " + dn);
@@ -535,7 +519,7 @@ public class Partition implements Cloneable {
         for (Entry entry : entries) {
             if (debug) log.debug("Deleting " + dn + " from " + entry.getDn());
 
-            int rc = aclEvaluator.checkDelete(session, this, entry, dn);
+            int rc = aclEvaluator.checkDelete(session, entry, dn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to delete " + dn);
@@ -559,6 +543,10 @@ public class Partition implements Cloneable {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public Collection<Entry> findEntries(DN dn) throws Exception {
+        return directory.findEntries(dn);
+    }
+    
     public SearchResult find(Session session, DN dn) throws Exception {
 
         boolean debug = log.isDebugEnabled();
@@ -622,7 +610,7 @@ public class Partition implements Cloneable {
         for (Entry entry : entries) {
             if (debug) log.debug("Modifying " + dn + " in " + entry.getDn());
 
-            int rc = aclEvaluator.checkModify(session, this, entry, dn);
+            int rc = aclEvaluator.checkModify(session, entry, dn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to modify " + dn);
@@ -675,7 +663,7 @@ public class Partition implements Cloneable {
         for (Entry entry : entries) {
             if (debug) log.debug("Renaming " + dn + " in " + entry.getDn());
 
-            int rc = aclEvaluator.checkModify(session, this, entry, dn);
+            int rc = aclEvaluator.checkModify(session, entry, dn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to modify " + dn);
@@ -743,7 +731,7 @@ public class Partition implements Cloneable {
         for (final Entry entry : entries) {
             if (debug) log.debug("Searching " + baseDn + " in " + entry.getDn());
 
-            int rc = aclEvaluator.checkSearch(session, this, entry, baseDn);
+            int rc = aclEvaluator.checkSearch(session, entry, baseDn);
 
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Not allowed to search " + baseDn);
@@ -903,15 +891,13 @@ public class Partition implements Cloneable {
     }
 
     public void filterAttributes(
-            Session session,
-            DN dn,
+            DN bindDn,
+            DN entryDn,
             Entry entry,
             Attributes attributes
     ) throws Exception {
 
         boolean debug = log.isDebugEnabled();
-
-        if (session == null) return;
 
         Collection<String> attributeNames = attributes.getNormalizedNames();
 
@@ -919,8 +905,7 @@ public class Partition implements Cloneable {
         Set<String> denies = new HashSet<String>();
         denies.addAll(attributeNames);
 
-        DN bindDn = session.getBindDn();
-        aclEvaluator.getReadableAttributes(bindDn, entry, dn, null, attributeNames, grants, denies);
+        aclEvaluator.getReadableAttributes(bindDn, entry, entryDn, null, attributeNames, grants, denies);
 
         if (debug) {
             log.debug("Returned: "+attributeNames);

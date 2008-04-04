@@ -23,7 +23,6 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.schema.SchemaConfig;
 
 import java.io.*;
 import java.net.URL;
@@ -35,62 +34,33 @@ public class PenroseConfigReader implements EntityResolver {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    ClassLoader classLoader;
     URL penroseDtdUrl;
-    Reader reader;
+    URL digesterUrl;
 
-    File configPath;
-    File schemaDir;
+    public PenroseConfigReader() throws Exception {
 
-    public PenroseConfigReader(File configPath, File schemaDir) throws Exception {
-
-        this.configPath = configPath;
-        this.schemaDir = schemaDir;
-
-        init(new FileReader(configPath));
+        classLoader   = getClass().getClassLoader();
+        penroseDtdUrl = classLoader.getResource("org/safehaus/penrose/config/server.dtd");
+        digesterUrl   = classLoader.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
     }
 
-    public void init(Reader reader) throws Exception {
-        this.reader = reader;
+    public PenroseConfig read(File path) throws Exception {
 
-        ClassLoader cl = getClass().getClassLoader();
-        penroseDtdUrl = cl.getResource("org/safehaus/penrose/config/server.dtd");
-        //log.debug("Penrose DTD URL: "+penroseDtdUrl);
-    }
+        log.debug("Loading Penrose configuration: "+ path);
 
-    public PenroseConfig read() throws Exception {
-
-        log.debug("Loading Penrose configuration: "+configPath);
         PenroseConfig penroseConfig = new PenroseConfig();
-        read(penroseConfig);
 
-        File[] schemaFiles = schemaDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".schema");
-            }
-        });
+        Reader reader = new FileReader(path);
 
-        log.debug("Schema files:");
-        for (File schemaFile : schemaFiles) {
-            String path = schemaFile.getPath();
-            log.debug(" - "+path);
-
-            SchemaConfig schemaConfig = new SchemaConfig(path);
-            penroseConfig.addSchemaConfig(schemaConfig);
-        }
-
-        return penroseConfig;
-	}
-
-    public void read(PenroseConfig penroseConfig) throws Exception {
-        ClassLoader cl = getClass().getClassLoader();
-        URL url = cl.getResource("org/safehaus/penrose/config/server-digester-rules.xml");
-
-		Digester digester = DigesterLoader.createDigester(url);
+		Digester digester = DigesterLoader.createDigester(digesterUrl);
         digester.setEntityResolver(this);
 		digester.setValidating(true);
-        digester.setClassLoader(cl);
+        digester.setClassLoader(classLoader);
 		digester.push(penroseConfig);
 		digester.parse(reader);
+
+        return penroseConfig;
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {

@@ -2,7 +2,7 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -33,8 +33,8 @@ public class LinkEntry extends Entry {
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        Partitions partitions = penroseContext.getPartitions();
-        Partition p = partitionName == null ? partition : partitions.getPartition(partitionName);
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
 
         Directory directory = p.getDirectory();
 

@@ -18,11 +18,12 @@
 package org.safehaus.penrose.schema;
 
 import java.io.File;
+import java.io.Serializable;
 
 /**
  * @author Endi S. Dewata
  */
-public class SchemaConfig implements Cloneable, SchemaConfigMBean {
+public class SchemaConfig implements Serializable, Cloneable, SchemaConfigMBean {
 
     private String name;
     private String path;

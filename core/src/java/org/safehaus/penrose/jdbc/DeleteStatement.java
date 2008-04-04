@@ -1,6 +1,5 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.filter.Filter;
 
 /**
@@ -8,15 +7,15 @@ import org.safehaus.penrose.filter.Filter;
  */
 public class DeleteStatement extends Statement {
 
-    protected SourceRef sourceRef;
+    protected String sourceName;
     protected Filter filter;
 
-    public SourceRef getSourceRef() {
-        return sourceRef;
+    public String getSourceName() {
+        return sourceName;
     }
 
-    public void setSourceRef(SourceRef sourceRef) {
-        this.sourceRef = sourceRef;
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
     }
 
     public Filter getFilter() {

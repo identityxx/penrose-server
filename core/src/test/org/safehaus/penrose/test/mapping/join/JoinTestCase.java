@@ -4,7 +4,7 @@ import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.directory.SourceMapping;
@@ -54,7 +54,7 @@ public class JoinTestCase extends JDBCTestCase {
         connectionConfig.setParameter("url", url);
         connectionConfig.setParameter("user", user);
         connectionConfig.setParameter("password", password);
-        partitionConfig.getConnectionConfigs().addConnectionConfig(connectionConfig);
+        partitionConfig.getConnectionConfigManager().addConnectionConfig(connectionConfig);
 
         SourceConfig groupsSource = new SourceConfig();
         groupsSource.setName("groups");
@@ -62,7 +62,7 @@ public class JoinTestCase extends JDBCTestCase {
         groupsSource.setParameter("table", "groups");
         groupsSource.addFieldConfig(new FieldConfig("groupname", true));
         groupsSource.addFieldConfig(new FieldConfig("description"));
-        partitionConfig.getSourceConfigs().addSourceConfig(groupsSource);
+        partitionConfig.getSourceConfigManager().addSourceConfig(groupsSource);
 
         SourceConfig usergroupsSource = new SourceConfig();
         usergroupsSource.setName("usergroups");
@@ -70,14 +70,14 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsSource.setParameter("table", "usergroups");
         usergroupsSource.addFieldConfig(new FieldConfig("groupname", true));
         usergroupsSource.addFieldConfig(new FieldConfig("username", true));
-        partitionConfig.getSourceConfigs().addSourceConfig(usergroupsSource);
+        partitionConfig.getSourceConfigManager().addSourceConfig(usergroupsSource);
 
-        EntryMapping ou = new EntryMapping("ou=Groups,dc=Example,dc=com");
+        EntryConfig ou = new EntryConfig("ou=Groups,dc=Example,dc=com");
         ou.addObjectClass("organizationalUnit");
         ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(ou);
+        partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
-        EntryMapping groups = new EntryMapping("cn=...,ou=Groups,dc=Example,dc=com");
+        EntryConfig groups = new EntryConfig("cn=...,ou=Groups,dc=Example,dc=com");
         groups.addObjectClass("groupOfUniqueNames");
         groups.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "g.groupname", true));
         groups.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "g.description"));
@@ -98,10 +98,10 @@ public class JoinTestCase extends JDBCTestCase {
         usergroupsMapping.setSearch(SourceMapping.REQUIRED);
         groups.addSourceMapping(usergroupsMapping);
 
-        partitionConfig.getDirectoryConfig().addEntryMapping(groups);
+        partitionConfig.getDirectoryConfig().addEntryConfig(groups);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
-        Partitions partitions = penrose.getPartitions();
+        PartitionManager partitionManager = penrose.getPartitionManager();
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPenroseConfig(penroseConfig);
@@ -109,7 +109,7 @@ public class JoinTestCase extends JDBCTestCase {
 
         Partition partition = partitionFactory.createPartition(partitionConfig);
 
-        partitions.addPartition(partition);
+        partitionManager.addPartition(partition);
     }
 
     public void tearDown() throws Exception {

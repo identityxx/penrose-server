@@ -3,6 +3,8 @@ package org.safehaus.penrose.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 
@@ -77,5 +79,10 @@ public class Job {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public Session getSession() throws Exception {
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        return sessionManager.newAdminSession();
     }
 }

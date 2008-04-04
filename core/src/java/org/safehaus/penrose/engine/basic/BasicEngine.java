@@ -12,7 +12,7 @@ import org.safehaus.penrose.directory.SourceMapping;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.FilterEvaluator;
@@ -111,8 +111,8 @@ public class BasicEngine extends Engine {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfigs sourceConfigs = partitionConfig.getSourceConfigs();
-        SourceConfig sourceConfig = sourceConfigs.getSourceConfig(sourceMapping.getSourceName());
+        SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
+        SourceConfig sourceConfig = sourceConfigManager.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
         for (FieldMapping fieldMapping : fieldMappings) {
@@ -169,7 +169,7 @@ public class BasicEngine extends Engine {
 
         for (SourceRef sourceRef : sourceRefs) {
             if (SourceMapping.IGNORE.equals(sourceRef.getAdd())) continue;
-            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) == null) continue;
+            if (entry.getEntryConfig().getSourceMapping(sourceRef.getAlias()) == null) continue;
 
             localSourceRefs.add(sourceRef);
         }
@@ -336,7 +336,7 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryConfig().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
@@ -384,7 +384,7 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryConfig().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
@@ -432,7 +432,7 @@ public class BasicEngine extends Engine {
         Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
 
         for (SourceRef sourceRef : sourceRefs) {
-            if (entry.getEntryMapping().getSourceMapping(sourceRef.getAlias()) != null) {
+            if (entry.getEntryConfig().getSourceMapping(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }

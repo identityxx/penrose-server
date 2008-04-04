@@ -37,14 +37,18 @@ public class SchedulerReader implements EntityResolver {
     }
 
     public SchedulerConfig read(File file) throws Exception {
-
         SchedulerConfig schedulerConfig = new SchedulerConfig();
+        read(file, schedulerConfig);
+        return schedulerConfig;
+    }
+
+    public void read(File file, SchedulerConfig schedulerConfig) throws Exception {
+
+        if (!file.exists()) return;
 
         digester.push(schedulerConfig);
         digester.parse(file);
         digester.pop();
-
-        return schedulerConfig;
     }
 
     public InputSource resolveEntity(String publicId, String systemId) throws IOException {

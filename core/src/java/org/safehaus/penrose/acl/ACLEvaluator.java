@@ -19,7 +19,6 @@ package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.LDAP;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,6 @@ public class ACLEvaluator {
 
     public boolean getObjectPermission(
             DN bindDn,
-            Partition partition,
             Entry entry,
             DN targetDn,
             String scope,
@@ -135,12 +133,11 @@ public class ACLEvaluator {
             return false;
         }
 
-        return getObjectPermission(bindDn, partition, parent, targetDn, ACI.SCOPE_SUBTREE, permission);
+        return getObjectPermission(bindDn, parent, targetDn, ACI.SCOPE_SUBTREE, permission);
     }
 
     public int checkPermission(
             Session session,
-            Partition partition,
             Entry entry,
             DN dn,
             String permission
@@ -160,7 +157,7 @@ public class ACLEvaluator {
         }
 
         DN bindDn = session.getBindDn();
-        boolean result = getObjectPermission(bindDn, partition, entry, dn, ACI.SCOPE_OBJECT, permission);
+        boolean result = getObjectPermission(bindDn, entry, dn, ACI.SCOPE_OBJECT, permission);
 
         if (result) {
             log.debug("ACL evaluation => SUCCESS");
@@ -172,24 +169,24 @@ public class ACLEvaluator {
         return rc;
     }
 
-    public int checkRead(Session session, Partition partition, Entry entry, DN dn) throws Exception {
-    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_READ);
+    public int checkRead(Session session, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, entry, dn, ACI.PERMISSION_READ);
     }
 
-    public int checkSearch(Session session, Partition partition, Entry entry, DN dn) throws Exception {
-    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_SEARCH);
+    public int checkSearch(Session session, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, entry, dn, ACI.PERMISSION_SEARCH);
     }
 
-    public int checkAdd(Session session, Partition partition, Entry entry, DN dn) throws Exception {
-    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_ADD);
+    public int checkAdd(Session session, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, entry, dn, ACI.PERMISSION_ADD);
     }
 
-    public int checkDelete(Session session, Partition partition, Entry entry, DN dn) throws Exception {
-    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_DELETE);
+    public int checkDelete(Session session, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, entry, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(Session session, Partition partition, Entry entry, DN dn) throws Exception {
-    	return checkPermission(session, partition, entry, dn, ACI.PERMISSION_WRITE);
+    public int checkModify(Session session, Entry entry, DN dn) throws Exception {
+    	return checkPermission(session, entry, dn, ACI.PERMISSION_WRITE);
     }
 
     public Collection<String> getAttributes(String attributes) {

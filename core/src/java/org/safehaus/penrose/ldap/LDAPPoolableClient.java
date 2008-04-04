@@ -19,19 +19,17 @@ public class LDAPPoolableClient extends LDAPClient {
         connect();
     }
 
-    public void connect() throws Exception {
+    public synchronized void connect() throws Exception {
 
         if (connection == null) {
             log.debug("Getting LDAP connection from connection pool.");
             connection = (LDAPConnection)objectPool.borrowObject();
-            initConnection();
-            return;
         }
 
-        super.connect();
+        initConnection();
     }
 
-    public void close() throws Exception {
+    public synchronized void close() throws Exception {
         log.debug("Returning LDAP connection to connection pool.");
         objectPool.returnObject(connection);
     }

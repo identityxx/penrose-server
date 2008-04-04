@@ -17,23 +17,22 @@
  */
 package org.safehaus.penrose.config;
 
-import java.util.*;
-
-import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.user.UserConfig;
-import org.safehaus.penrose.session.SessionConfig;
+import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.ldap.DN;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.session.SessionConfig;
+import org.safehaus.penrose.user.UserConfig;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseConfig implements PenroseConfigMBean, Cloneable {
-
-    public Logger log = LoggerFactory.getLogger(getClass());
+public class PenroseConfig implements Serializable, Cloneable, PenroseConfigMBean {
 
     private Map<String,String> systemProperties              = new LinkedHashMap<String,String>();
     private Map<String,String> properties                    = new LinkedHashMap<String,String>();
@@ -42,20 +41,11 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     private Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
     private Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    private SessionConfig   sessionConfig;
+    private SessionConfig sessionConfig = new SessionConfig();
 
-    private UserConfig rootUserConfig;
+    private UserConfig rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
 
     public PenroseConfig() {
-
-        sessionConfig = new SessionConfig();
-
-        rootUserConfig = new UserConfig("uid=admin,ou=system", "secret");
-
-        init();
-    }
-
-    public void init() {
     }
 
     public String getSystemProperty(String name) {
@@ -147,7 +137,7 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
     }
 
     public void setRootUserConfig(UserConfig rootUserConfig) {
-        this.rootUserConfig = rootUserConfig;
+        this.rootUserConfig.copy(rootUserConfig);
     }
 
     public DN getRootDn() {
@@ -253,8 +243,6 @@ public class PenroseConfig implements PenroseConfigMBean, Cloneable {
         schemaConfigs.clear();
         adapterConfigs.clear();
         interpreterConfigs.clear();
-
-        init();
     }
 
     public Object clone() throws CloneNotSupportedException {

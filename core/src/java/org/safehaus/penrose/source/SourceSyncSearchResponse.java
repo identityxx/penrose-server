@@ -1,8 +1,9 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.engine.TransformEngine;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,17 +18,20 @@ public class SourceSyncSearchResponse extends SearchResponse {
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
+    Session session;
     protected Source source;
     protected Collection<Source> destinations;
 
     protected Interpreter interpreter;
 
     public SourceSyncSearchResponse(
+            Session session,
             Source source,
             Collection<Source> snapshots,
             Interpreter interpreter
     ) throws Exception {
 
+        this.session = session;
         this.source = source;
         this.destinations = snapshots;
         this.interpreter = interpreter;
@@ -88,7 +92,7 @@ public class SourceSyncSearchResponse extends SearchResponse {
                 }
 
                 try {
-                    destination.add(newDn, newAttributes);
+                    destination.add(session, newDn, newAttributes);
                 } catch (Exception e) {
                     errorLog.error(e.getMessage(), e);
                 }

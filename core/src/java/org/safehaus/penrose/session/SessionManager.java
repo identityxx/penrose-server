@@ -102,7 +102,7 @@ public class SessionManager implements SessionManagerMBean {
         return null;
     }
 
-    public Object createSessionId() {
+    public synchronized Object createSessionId() {
         Long sessionId = sessionCounter;
         sessionCounter++;
         return sessionId;

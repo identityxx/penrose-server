@@ -20,7 +20,6 @@ package org.safehaus.penrose.jdbc;
 import java.sql.*;
 import java.util.*;
 
-import org.safehaus.penrose.jdbc.connection.JDBCStatementBuilder;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.util.Formatter;
 import org.safehaus.penrose.ldap.LDAP;
@@ -90,6 +89,9 @@ public class JDBCClient {
                 this.properties.put(key, value);
             }
         }
+
+        if (driver == null) throw new Exception("Missing driver.");
+        if (url == null) throw new Exception("Missing URL.");
 
         connection = driver.connect(url, this.properties);
     }
@@ -333,15 +335,6 @@ public class JDBCClient {
         return tables;
     }
 
-    public void executeUpdate(UpdateRequest request, UpdateResponse response) throws Exception {
-        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
-        statementBuilder.setQuote(quote);
-
-        String sql = statementBuilder.generate(request.getStatement());
-        Collection<Assignment> assignments = statementBuilder.getAssigments();
-        executeUpdate(sql, assignments, response);
-    }
-
     public int executeUpdate(
             String sql
     ) throws Exception {
@@ -350,22 +343,27 @@ public class JDBCClient {
         return response.getRowCount();
     }
 
-    public void executeUpdate(String sql, UpdateResponse response) throws Exception {
-        executeUpdate(sql, null, response);
+    public int executeUpdate(
+            String sql,
+            Object[] parameters
+    ) throws Exception {
+        UpdateResponse response = new UpdateResponse();
+        executeUpdate(sql, Arrays.asList(parameters), response);
+        return response.getRowCount();
     }
 
     public int executeUpdate(
             String sql,
-            Collection<Assignment> assignments
+            Collection<Object> parameters
     ) throws Exception {
         UpdateResponse response = new UpdateResponse();
-        executeUpdate(sql, assignments, response);
+        executeUpdate(sql, parameters, response);
         return response.getRowCount();
     }
 
     public void executeUpdate(
             String sql,
-            Collection<Assignment> assignments,
+            Collection<Object> parameters,
             UpdateResponse response
     ) throws Exception {
 
@@ -377,13 +375,12 @@ public class JDBCClient {
             }
             log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
 
-            if (assignments != null && !assignments.isEmpty()) {
+            if (parameters != null && !parameters.isEmpty()) {
                 log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
                 int counter = 1;
-                for (Iterator j=assignments.iterator(); j.hasNext(); counter++) {
-                    Assignment assignment = (Assignment)j.next();
-                    Object value = assignment.getValue();
+                for (Object value : parameters) {
                     log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    counter++;
                 }
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
             }
@@ -395,11 +392,11 @@ public class JDBCClient {
         try {
             ps = connection.prepareStatement(sql);
 
-            if (assignments != null) {
+            if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;
-                for (Iterator j=assignments.iterator(); j.hasNext(); counter++) {
-                    Assignment assignment = (Assignment)j.next();
-                    setParameter(ps, counter, assignment);
+                for (Object value : parameters) {
+                    setParameter(ps, counter, value);
+                    counter++;
                 }
             }
 
@@ -411,22 +408,21 @@ public class JDBCClient {
         }
     }
 
-    public void executeQuery(QueryRequest request, QueryResponse response) throws Exception {
-        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder();
-        statementBuilder.setQuote(quote);
-
-        String sql = statementBuilder.generate(request.getStatement());
-        Collection<Assignment> assignments = statementBuilder.getAssigments();
-        executeQuery(sql, assignments, response);
-    }
-
     public void executeQuery(String sql, QueryResponse response) throws Exception {
-        executeQuery(sql, null, response);
+        executeQuery(sql, (Collection<Object>)null, response);
     }
 
     public void executeQuery(
             String sql,
-            Collection<Assignment> parameters,
+            Object[] parameters,
+            QueryResponse response
+    ) throws Exception {
+        executeQuery(sql, Arrays.asList(parameters), response);
+    }
+
+    public void executeQuery(
+            String sql,
+            Collection<Object> parameters,
             QueryResponse response
     ) throws Exception {
 
@@ -441,9 +437,7 @@ public class JDBCClient {
            if (parameters != null && !parameters.isEmpty()) {
                 log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
                 int counter = 1;
-                for (Iterator j=parameters.iterator(); j.hasNext(); counter++) {
-                    Assignment assignment = (Assignment)j.next();
-                    Object value = assignment.getValue();
+                for (Object value : parameters) {
 
                     String v;
                     if (value instanceof byte[]) {
@@ -453,6 +447,8 @@ public class JDBCClient {
                     }
 
                     log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+v, 80));
+
+                    counter++;
                 }
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
            }
@@ -465,11 +461,11 @@ public class JDBCClient {
         try {
             ps = connection.prepareStatement(sql);
 
-            if (parameters != null) {
+            if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;
-                for (Iterator i=parameters.iterator(); i.hasNext(); counter++) {
-                    Assignment assignment = (Assignment)i.next();
-                    setParameter(ps, counter, assignment);
+                for (Object value : parameters) {
+                    setParameter(ps, counter, value);
+                    counter++;
                 }
             }
 
@@ -486,10 +482,6 @@ public class JDBCClient {
 
             response.close();
         }
-    }
-
-    public void setParameter(PreparedStatement ps, int paramIndex, Assignment assignment) throws Exception {
-    	ps.setObject(paramIndex, assignment.getValue());
     }
 
     public void setParameter(PreparedStatement ps, int paramIndex, Object object) throws Exception {
@@ -696,7 +688,7 @@ public class JDBCClient {
             }
         };
 
-        executeQuery(sql, null, response);
+        executeQuery(sql, response);
 
         sb = new StringBuilder();
 
@@ -734,7 +726,7 @@ public class JDBCClient {
             }
         };
 
-        executeQuery(sql, null, response);
+        executeQuery(sql, response);
     }
 
     public long getCount(final SourceConfig sourceConfig) throws Exception {
@@ -760,7 +752,7 @@ public class JDBCClient {
             }
         };
 
-        executeQuery(sql, null, response);
+        executeQuery(sql, response);
 
         if (!response.hasNext()) {
             throw LDAP.createException(LDAP.OPERATIONS_ERROR);
@@ -770,5 +762,13 @@ public class JDBCClient {
         log.error("Table "+tableName+": "+count);
 
         return count;
+    }
+
+    public String getQuote() {
+        return quote;
+    }
+
+    public void setQuote(String quote) {
+        this.quote = quote;
     }
 }

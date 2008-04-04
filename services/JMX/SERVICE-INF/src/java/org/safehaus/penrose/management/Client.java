@@ -8,6 +8,10 @@ import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.management.partition.PartitionManagerClient;
+import org.safehaus.penrose.management.partition.PartitionClient;
+import org.safehaus.penrose.management.service.ServiceClient;
+import org.safehaus.penrose.management.service.ServiceManagerClient;
 
 import java.util.*;
 import java.io.File;
@@ -59,8 +63,10 @@ public class Client {
         System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
         System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
 
-        for (String serviceName : client.getServiceNames()) {
-            ServiceClient serviceClient = client.getServiceClient(serviceName);
+        ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
+        
+        for (String serviceName : serviceManagerClient.getServiceNames()) {
+            ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
             String status = serviceClient.getStatus();
 
             System.out.print(org.safehaus.penrose.util.Formatter.rightPad(serviceName, 15) + " ");
@@ -69,7 +75,8 @@ public class Client {
     }
 
     public void showService(String serviceName) throws Exception {
-        ServiceClient serviceClient = client.getServiceClient(serviceName);
+        ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
+        ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
         ServiceConfig serviceConfig = serviceClient.getServiceConfig();
 
         System.out.println("Name        : "+serviceConfig.getName());
@@ -96,8 +103,9 @@ public class Client {
         System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
         System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
 
-        for (String partitionName : client.getPartitionNames()) {
-            PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+        for (String partitionName : partitionManagerClient.getPartitionNames()) {
+            PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
             String status = partitionClient.getStatus();
 
             System.out.print(Formatter.rightPad(partitionName, 15) + " ");
@@ -107,8 +115,9 @@ public class Client {
 
     public void showPartition(String partitionName) throws Exception {
 
-        PartitionConfig partitionConfig = client.getPartitionConfig(partitionName);
-        //PartitionClient partitionClient = client.getPartitionClient(partitionName);
+        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+        PartitionConfig partitionConfig = partitionManagerClient.getPartitionConfig(partitionName);
+        //PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
         //PartitionConfig partitionConfig = partitionClient.getPartitionConfig();
 
         System.out.println("Name        : "+partitionConfig.getName());
@@ -121,19 +130,19 @@ public class Client {
         System.out.println();
 
         System.out.println("Connections:");
-        for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigs().getConnectionConfigs()) {
+        for (ConnectionConfig connectionConfig : partitionConfig.getConnectionConfigManager().getConnectionConfigs()) {
             System.out.println(" - "+connectionConfig.getName());
         }
         System.out.println();
 
         System.out.println("Sources:");
-        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigs().getSourceConfigs()) {
+        for (SourceConfig sourceConfig : partitionConfig.getSourceConfigManager().getSourceConfigs()) {
             System.out.println(" - "+sourceConfig.getName());
         }
         System.out.println();
 
         System.out.println("Modules:");
-        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigs().getModuleConfigs()) {
+        for (ModuleConfig moduleConfig : partitionConfig.getModuleConfigManager().getModuleConfigs()) {
             System.out.println(" - "+moduleConfig.getName());
         }
     }
@@ -163,12 +172,15 @@ public class Client {
         String target = (String)iterator.next();
         if ("service".equals(target)) {
             String serviceName = (String)iterator.next();
-            ServiceClient serviceClient = client.getServiceClient(serviceName);
+            ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
+            ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
             serviceClient.start();
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            client.startPartition(partitionName);
+            PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+            PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+            partitionClient.start();
 
         } else {
             System.out.println("Invalid target: "+target);
@@ -179,12 +191,15 @@ public class Client {
         String target = (String)iterator.next();
         if ("service".equals(target)) {
             String serviceName = (String)iterator.next();
-            ServiceClient serviceClient = client.getServiceClient(serviceName);
+            ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
+            ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
             serviceClient.stop();
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            client.stopPartition(partitionName);
+            PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+            PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+            partitionClient.stop();
 
         } else {
             System.out.println("Invalid target: "+target);
@@ -196,14 +211,17 @@ public class Client {
         String target = (String)iterator.next();
         if ("service".equals(target)) {
             String serviceName = (String)iterator.next();
-            ServiceClient serviceClient = client.getServiceClient(serviceName);
+            ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
+            ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
             serviceClient.stop();
             serviceClient.start();
 
         } else if ("partition".equals(target)) {
             String partitionName = (String)iterator.next();
-            client.stopPartition(partitionName);
-            client.startPartition(partitionName);
+            PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+            PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+            partitionClient.stop();
+            partitionClient.start();
 
         } else {
             System.out.println("Invalid target: "+target);
@@ -244,7 +262,7 @@ public class Client {
                 String oldDn = iterator.next();
                 String newDn = iterator.next();
                 log.debug("Renaming "+oldDn+" to "+newDn);
-                client.renameEntryMapping(oldDn, newDn);
+                client.renameEntryConfig(oldDn, newDn);
             }
 
         } else {

@@ -47,7 +47,7 @@ public class BasicSearchResponse extends SearchResponse {
             Session session,
             Partition partition,
             BasicEngine engine,
-            Entry entryMapping,
+            Entry entry,
             List<Collection<SourceRef>> groupsOfSources,
             SourceValues sourceValues,
             Interpreter interpreter,
@@ -58,7 +58,7 @@ public class BasicSearchResponse extends SearchResponse {
         this.partition = partition;
         this.engine = engine;
 
-        this.entry = entryMapping;
+        this.entry = entry;
         this.groupsOfSources = groupsOfSources;
         this.sourceValues = sourceValues;
         this.interpreter = interpreter;

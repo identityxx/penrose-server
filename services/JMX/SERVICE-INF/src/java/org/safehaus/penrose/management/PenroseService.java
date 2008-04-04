@@ -17,22 +17,25 @@
  */
 package org.safehaus.penrose.management;
 
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.partition.PartitionConfigs;
-import org.safehaus.penrose.partition.Partitions;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.management.partition.PartitionManagerService;
+import org.safehaus.penrose.management.schema.SchemaManagerService;
+import org.safehaus.penrose.management.service.ServiceManagerService;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.service.Services;
-import org.safehaus.penrose.service.ServiceConfigs;
+import org.safehaus.penrose.service.ServiceManager;
+import org.safehaus.penrose.user.UserConfig;
 
 import javax.management.StandardMBean;
-import java.util.Collection;
-import java.util.ArrayList;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -111,149 +114,92 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         }
     }
 
+    public DN getRootDn() throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        return penrose.getPenroseConfig().getRootDn();
+    }
+
+    public void setRootDn(DN dn) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        penrose.getPenroseConfig().setRootDn(dn);
+        penrose.store();
+    }
+
+    public byte[] getRootPassword() throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        return penrose.getPenroseConfig().getRootPassword();
+    }
+
+    public void setRootPassword(byte[] password) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        penrose.getPenroseConfig().setRootPassword(password);
+        penrose.store();
+    }
+
+    public UserConfig getRootUserConfig() throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        return penrose.getPenroseConfig().getRootUserConfig();
+    }
+
+    public void setRootUserConfig(UserConfig userConfig) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        penrose.getPenroseConfig().setRootUserConfig(userConfig);
+        penrose.store();
+    }
+
+    public PenroseConfig getPenroseConfig() throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        return penrose.getPenroseConfig();
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) throws Exception {
+        Penrose penrose = penroseServer.getPenrose();
+        penrose.setPenroseConfig(penroseConfig);
+        penrose.store();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Schemas
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public SchemaManagerService getSchemaManagerService() throws Exception {
+
+        Penrose penrose = penroseServer.getPenrose();
+        SchemaManager schemaManager = penrose.getSchemaManager();
+
+        SchemaManagerService service = new SchemaManagerService(jmxService, schemaManager);
+        service.init();
+
+        return service;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // Partitions
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getPartitionNames() throws Exception {
-        try {
-            Collection<String> list = new ArrayList<String>();
-
-            Penrose penrose = penroseServer.getPenrose();
-            PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
-            list.addAll(partitionConfigs.getAvailablePartitionNames());
-
-            return list;
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public PartitionConfig getPartitionConfig(String partitionName) throws Exception {
-        Penrose penrose = penroseServer.getPenrose();
-        PartitionConfigs partitionConfigs = penrose.getPartitionConfigs();
-        return partitionConfigs.getPartitionConfig(partitionName);
-    }
-
-    public PartitionService getPartitionService(String partitionName) throws Exception {
-        Penrose penrose = penroseServer.getPenrose();
-        Partitions partitions = penrose.getPartitions();
-        Partition partition = partitions.getPartition(partitionName);
-        return getPartitionService(partition);
-    }
-
-    public PartitionService getPartitionService(Partition partition) throws Exception {
-
-        PartitionService partitionService = new PartitionService(partition);
-        partitionService.setJmxService(jmxService);
-        partitionService.init();
-
-        return partitionService;
-    }
-
-    public Collection<PartitionService> getPartitionServices() throws Exception {
-
-        Collection<PartitionService> list = new ArrayList<PartitionService>();
+    public PartitionManagerService getPartitionManagerService() throws Exception {
 
         Penrose penrose = penroseServer.getPenrose();
-        Partitions partitions = penrose.getPartitions();
+        PartitionManager partitionManager = penrose.getPartitionManager();
 
-        for (Partition partition : partitions.getPartitions()) {
-            list.add(getPartitionService(partition));
-        }
+        PartitionManagerService service = new PartitionManagerService(jmxService, partitionManager);
+        service.init();
 
-        return list;
-    }
-
-    public void startPartition(String partitionName) throws Exception {
-
-        log.debug("Starting partition "+partitionName);
-
-        Penrose penrose = penroseServer.getPenrose();
-        penrose.loadPartition(partitionName);
-        penrose.startPartition(partitionName);
-
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.register();
-    }
-
-    public void stopPartition(String partitionName) throws Exception {
-
-        log.debug("Stopping partition "+partitionName);
-
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.unregister();
-
-        Penrose penrose = penroseServer.getPenrose();
-        penrose.stopPartition(partitionName);
-        penrose.unloadPartition(partitionName);
+        return service;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Services
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getServiceNames() throws Exception {
-        try {
-            Collection<String> list = new ArrayList<String>();
+    public ServiceManagerService getServiceManagerService() throws Exception {
 
-            ServiceConfigs serviceConfigs = penroseServer.getServiceConfigs();
-            list.addAll(serviceConfigs.getAvailableServiceNames());
+        ServiceManager serviceManager = penroseServer.getServiceManager();
 
-            return list;
+        ServiceManagerService service = new ServiceManagerService(jmxService, serviceManager);
+        service.init();
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public ServiceService getServiceService(String serviceName) throws Exception {
-        Services services = penroseServer.getServices();
-        return getServiceService(services, serviceName);
-    }
-
-    public ServiceService getServiceService(
-            Services services,
-            String serviceName
-    ) throws Exception {
-
-        ServiceService serviceService = new ServiceService();
-        serviceService.setJmxService(jmxService);
-        serviceService.setServices(services);
-        serviceService.setName(serviceName);
-
-        return serviceService;
-    }
-
-    public Collection<ServiceService> getServiceServices() throws Exception {
-
-        Collection<ServiceService> list = new ArrayList<ServiceService>();
-
-        ServiceConfigs serviceConfigs = penroseServer.getServiceConfigs();
-        Services services = penroseServer.getServices();
-
-        for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
-            list.add(getServiceService(services, serviceName));
-        }
-
-        return list;
-    }
-
-    public void startService(String serviceName) throws Exception {
-        penroseServer.startService(serviceName);
-
-        ServiceService serviceService = getServiceService(serviceName);
-        serviceService.register();
-    }
-
-    public void stopService(String serviceName) throws Exception {
-        ServiceService serviceService = getServiceService(serviceName);
-        serviceService.unregister();
-        
-        penroseServer.stopService(serviceName);
+        return service;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -388,23 +334,26 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     public void register() throws Exception {
         jmxService.register(getObjectName(), this);
 
-        for (PartitionService partitionService : getPartitionServices()) {
-            partitionService.register();
-        }
+        SchemaManagerService schemaManagerService = getSchemaManagerService();
+        schemaManagerService.register();
 
-        for (ServiceService serviceService : getServiceServices()) {
-            serviceService.register();
-        }
+        PartitionManagerService partitionManagerService = getPartitionManagerService();
+        partitionManagerService.register();
+
+        ServiceManagerService serviceManagerService = getServiceManagerService();
+        serviceManagerService.register();
     }
 
     public void unregister() throws Exception {
-        for (ServiceService serviceService : getServiceServices()) {
-            serviceService.unregister();
-        }
 
-        for (PartitionService partitionService : getPartitionServices()) {
-            partitionService.unregister();
-        }
+        ServiceManagerService serviceManagerService = getServiceManagerService();
+        serviceManagerService.unregister();
+
+        PartitionManagerService partitionManagerService = getPartitionManagerService();
+        partitionManagerService.unregister();
+
+        SchemaManagerService schemaManagerService = getSchemaManagerService();
+        schemaManagerService.unregister();
 
         jmxService.unregister(getObjectName());
     }

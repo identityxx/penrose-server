@@ -1,6 +1,5 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
@@ -11,16 +10,16 @@ import java.util.ArrayList;
  */
 public class UpdateStatement extends Statement {
 
-    protected SourceRef sourceRef;
+    protected String sourceName;
     protected Collection<Assignment> assignments = new ArrayList<Assignment>();
     protected Filter filter;
 
-    public SourceRef getSourceRef() {
-        return sourceRef;
+    public String getSourceName() {
+        return sourceName;
     }
 
-    public void setSourceRef(SourceRef sourceRef) {
-        this.sourceRef = sourceRef;
+    public void setSourceName(String sourceName) {
+        this.sourceName = sourceName;
     }
 
     public Collection<Assignment> getAssignments() {

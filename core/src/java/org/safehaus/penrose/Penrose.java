@@ -17,16 +17,16 @@
  */
 package org.safehaus.penrose;
 
-import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
-import org.safehaus.penrose.log4j.AppenderConfig;
-import org.safehaus.penrose.log4j.Log4jConfig;
-import org.safehaus.penrose.log4j.Log4jConfigReader;
-import org.safehaus.penrose.log4j.LoggerConfig;
+import org.safehaus.penrose.config.PenroseConfigWriter;
+import org.safehaus.penrose.logger.log4j.Log4jConfigReader;
+import org.safehaus.penrose.logger.log4j.LoggerConfig;
+import org.safehaus.penrose.logger.log4j.*;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.partition.*;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.session.SessionManager;
@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Endi S. Dewata
@@ -62,14 +60,11 @@ public class Penrose {
     public final static String STARTED  = "STARTED";
     public final static String STOPPING = "STOPPING";
 
-    private File               home;
+    private File           home;
 
-    private PenroseConfig      penroseConfig;
-    private PenroseContext     penroseContext;
-    private SessionContext     sessionContext;
-
-    private PartitionConfigs   partitionConfigs;
-    private PartitionValidator partitionValidator;
+    private PenroseConfig  penroseConfig;
+    private PenroseContext penroseContext;
+    private SessionContext sessionContext;
 
     private String status = STOPPED;
 
@@ -149,10 +144,17 @@ public class Penrose {
     public PenroseConfig loadConfig(File dir) throws Exception {
 
         File path = new File(dir, "conf"+File.separator+"server.xml");
-        File schemaDir = new File(dir, "schema");
 
-        PenroseConfigReader reader = new PenroseConfigReader(path, schemaDir);
-        return reader.read();
+        PenroseConfigReader reader = new PenroseConfigReader();
+        return reader.read(path);
+    }
+
+    public void store() throws Exception {
+
+        File conf = new File(home, "conf");
+
+        PenroseConfigWriter writer = new PenroseConfigWriter();
+        writer.write(conf, penroseConfig);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,15 +183,7 @@ public class Penrose {
         penroseContext = new PenroseContext(home);
         sessionContext = new SessionContext();
 
-        File partitionsDir = new File(home, "partitions");
-        partitionConfigs = new PartitionConfigs(partitionsDir);
-
-        partitionValidator = new PartitionValidator();
-        partitionValidator.setPenroseConfig(penroseConfig);
-        partitionValidator.setPenroseContext(penroseContext);
-
         penroseContext.setSessionContext(sessionContext);
-        penroseContext.setPartitionConfigs(partitionConfigs);
         penroseContext.init(penroseConfig);
 
         sessionContext.setPenroseConfig(penroseConfig);
@@ -200,10 +194,9 @@ public class Penrose {
     }
 
     public void clear() throws Exception {
-        partitionConfigs.clear();
 
-        Partitions partitions = penroseContext.getPartitions();
-        partitions.clear();
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        partitionManager.clear();
 
         penroseContext.clear();
     }
@@ -226,64 +219,8 @@ public class Penrose {
 
         penroseContext.start();
 
-        if (debug) log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading DEFAULT partition.");
-
-        File conf = new File(home, "conf");
-
-        PartitionReader partitionReader = partitionConfigs.getPartitionReader();
-
-        DefaultPartitionConfig defaultPartitionConfig = new DefaultPartitionConfig();
-
-        for (AdapterConfig adapterConfig : penroseConfig.getAdapterConfigs()) {
-            defaultPartitionConfig.addAdapterConfig(adapterConfig);
-        }
-        
-        partitionReader.read(conf, defaultPartitionConfig.getConnectionConfigs());
-        partitionReader.read(conf, defaultPartitionConfig.getSourceConfigs());
-        partitionReader.read(conf, defaultPartitionConfig.getDirectoryConfig());
-        partitionReader.read(conf, defaultPartitionConfig.getModuleConfigs());
-
-        partitionConfigs.addPartitionConfig(defaultPartitionConfig);
-/*
-        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
-
-        for (PartitionValidationResult result : results) {
-            if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-            } else {
-                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-            }
-        }
-*/
-/*
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        Partition partition = partitionFactory.createPartition(defaultPartitionConfig);
-
-        Partitions partitions = penroseContext.getPartitions();
-        partitions.addPartition(partition);
-*/
-        for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
-            try {
-                loadPartition(partitionName);
-
-            } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
-            }
-        }
-
-        for (String partitionName : partitionConfigs.getLoadOrder()) {
-            try {
-                startPartition(partitionName);
-
-            } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
-            }
-        }
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        partitionManager.startPartitions();
 
         sessionContext.start();
 
@@ -302,20 +239,8 @@ public class Penrose {
 
         sessionContext.stop();
 
-        List<String> stopOrder = new ArrayList<String>();
-        for (String partitionName : partitionConfigs.getLoadOrder()) {
-            stopOrder.add(0, partitionName);
-        }
-
-        for (String partitionName : stopOrder) {
-            try {
-                stopPartition(partitionName);
-                unloadPartition(partitionName);
-
-            } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
-            }
-        }
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        partitionManager.stopPartitions();
 
         penroseContext.stop();
 
@@ -323,91 +248,19 @@ public class Penrose {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Schemas
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public SchemaManager getSchemaManager() {
+        return penroseContext.getSchemaManager();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Partitions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void loadPartition(String partitionName) throws Exception {
-        if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("Loading "+partitionName+" partition.");
-        }
-
-        PartitionConfig partitionConfig = partitionConfigs.load(partitionName);
-        partitionConfigs.addPartitionConfig(partitionConfig);
-    }
-
-    public void startPartition(String partitionName) throws Exception {
-
-        PartitionConfig partitionConfig = partitionConfigs.getPartitionConfig(partitionName);
-
-        if (!partitionConfig.isEnabled()) {
-            //if (debug) log.debug(partitionConfig.getName()+" partition is disabled.");
-            return;
-        }
-
-        if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("Starting "+partitionName+" partition.");
-        }
-
-/*
-        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
-
-        for (PartitionValidationResult result : results) {
-            if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-            } else {
-                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-            }
-        }
-*/
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        Partition partition = partitionFactory.createPartition(partitionConfig);
-
-        Partitions partitions = penroseContext.getPartitions();
-        partitions.addPartition(partition);
-
-        log.debug("Partition "+partitionConfig.getName()+" started.");
-    }
-
-    public void stopPartition(String partitionName) throws Exception {
-
-        Partitions partitions = penroseContext.getPartitions();
-        Partition partition = partitions.getPartition(partitionName);
-
-        if (partition == null || !partition.isEnabled()) return;
-
-        if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
-            log.debug("Stopping "+partitionName+" partition.");
-        }
-
-        partition.destroy();
-
-        log.debug("Partition "+partition.getName()+" stopped.");
-    }
-
-    public void unloadPartition(String partitionName) throws Exception {
-        Partitions partitions = penroseContext.getPartitions();
-        partitions.removePartition(partitionName);
-        partitionConfigs.removePartitionConfig(partitionName);
-
-    }
-
-    public String getPartitionStatus(String partitionName) {
-
-        Partitions partitions = penroseContext.getPartitions();
-        Partition partition = partitions.getPartition(partitionName);
-
-        if (partition == null) {
-            return "STOPPED";
-        } else {
-            return "STARTED";
-        }
+    public PartitionManager getPartitionManager() {
+        return penroseContext.getPartitionManager();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -442,6 +295,10 @@ public class Penrose {
         return penroseConfig;
     }
 
+    public void setPenroseConfig(PenroseConfig penroseConfig) {
+        this.penroseConfig = penroseConfig;
+    }
+
     public PenroseContext getPenroseContext() {
         return penroseContext;
     }
@@ -465,17 +322,5 @@ public class Penrose {
     public void setHome(String home) {
         this.home = new File(home);
         penroseContext.setHome(this.home);
-    }
-
-    public PartitionConfigs getPartitionConfigs() {
-        return partitionConfigs;
-    }
-
-    public void setPartitionConfigs(PartitionConfigs partitionConfigs) {
-        this.partitionConfigs = partitionConfigs;
-    }
-
-    public Partitions getPartitions() {
-        return penroseContext.getPartitions();
     }
 }

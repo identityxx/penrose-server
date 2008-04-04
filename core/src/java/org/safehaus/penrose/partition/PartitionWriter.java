@@ -25,13 +25,9 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.dom4j.tree.DefaultElement;
 import org.dom4j.tree.DefaultText;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.connection.ConnectionWriter;
-import org.safehaus.penrose.source.SourceWriter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -42,31 +38,13 @@ public class PartitionWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    ConnectionWriter connectionWriter = new ConnectionWriter();
-    SourceWriter sourceWriter = new SourceWriter();
-    MappingWriter mappingWriter = new MappingWriter();
-    ModuleWriter moduleWriter = new ModuleWriter();
-
     public PartitionWriter() {
     }
 
-    public void write(File directory, PartitionConfig partitionConfig) throws Exception {
-        File dirInf = new File(directory, "DIR-INF");
-        dirInf.mkdirs();
+    public void write(File baseDir, PartitionConfig partitionConfig) throws Exception {
+        baseDir.mkdirs();
 
-        writePartitionXml(dirInf, partitionConfig);
-
-        File connectionsXml = new File(dirInf, "connections.xml");
-        connectionWriter.write(connectionsXml, partitionConfig.getConnectionConfigs());
-
-        File sourcesXml = new File(dirInf, "sources.xml");
-        sourceWriter.write(sourcesXml, partitionConfig.getSourceConfigs());
-
-        File mappingXml = new File(dirInf, "mapping.xml");
-        mappingWriter.write(mappingXml, partitionConfig.getDirectoryConfig());
-
-        File modulesXml = new File(dirInf, "modules.xml");
-        moduleWriter.write(modulesXml, partitionConfig.getModuleConfigs());
+        writePartitionXml(baseDir, partitionConfig);
     }
 
     public void writePartitionXml(File directory, PartitionConfig partitionConfig) throws Exception {
@@ -95,6 +73,7 @@ public class PartitionWriter {
         Element element = new DefaultElement("partition");
 
         if (!partitionConfig.isEnabled()) element.addAttribute("enabled", "false");
+        if (!partitionConfig.getDepends().isEmpty()) element.addAttribute("depends", partitionConfig.getStringDepends());
 
         String s = partitionConfig.getDescription();
         if (s != null && !"".equals(s)) {

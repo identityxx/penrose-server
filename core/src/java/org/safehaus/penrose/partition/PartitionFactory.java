@@ -19,8 +19,6 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.session.SessionContext;
-import org.safehaus.penrose.session.SessionManager;
 
 import java.io.File;
 import java.net.URL;
@@ -44,14 +42,17 @@ public class PartitionFactory {
         Collection<URL> classPaths = partitionConfig.getClassPaths();
         ClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
 
-        SessionContext sessionContext = penroseContext.getSessionContext();
-        SessionManager sessionManager = sessionContext.getSessionManager();
-
         PartitionContext partitionContext = new PartitionContext();
-        partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
+
+        if (partitionConfig instanceof DefaultPartitionConfig) {
+            File home = penroseContext.getHome();
+            partitionContext.setPath(home == null ? null : new File(home, "conf"));
+        } else {
+            partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
+        }
+
         partitionContext.setPenroseConfig(penroseConfig);
         partitionContext.setPenroseContext(penroseContext);
-        partitionContext.setSessionManager(sessionManager);
         partitionContext.setClassLoader(classLoader);
 
         String className = partitionConfig.getPartitionClass();

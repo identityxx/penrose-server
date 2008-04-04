@@ -2,6 +2,7 @@ package org.safehaus.penrose.jdbc.scheduler;
 
 import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
@@ -12,9 +13,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.*;
 
@@ -43,8 +42,9 @@ public class JDBCSyncJob extends Job {
         log.debug("Initializing "+this.getName()+" job...");
 
         Partition partition = jobContext.getPartition();
+        SourceManager sourceManager = partition.getSourceManager();
 
-        log.debug("Sources:");
+         log.debug("Sources:");
 
         String sourceNames = jobConfig.getParameter("source");
         StringTokenizer st = new StringTokenizer(sourceNames, "; ");
@@ -52,7 +52,7 @@ public class JDBCSyncJob extends Job {
             String sourceName = st.nextToken();
             log.debug(" - "+sourceName);
 
-            Source source = partition.getSource(sourceName);
+            Source source = sourceManager.getSource(sourceName);
             sources.put(sourceName, source);
         }
 
@@ -75,7 +75,7 @@ public class JDBCSyncJob extends Job {
                 String targetName = st.nextToken();
                 list.add(targetName);
 
-                Source target = partition.getSource(targetName);
+                Source target = sourceManager.getSource(targetName);
                 targets.put(targetName, target);
 
                 Source tmp = createTmpTarget(target);
@@ -107,7 +107,7 @@ public class JDBCSyncJob extends Job {
         }
 
         String changeLogName = jobConfig.getParameter("changelog");
-        changelog = partition.getSource(changeLogName);
+        changelog = sourceManager.getSource(changeLogName);
     }
 
     public Source createTmpTarget(Source target) throws Exception {
@@ -272,59 +272,66 @@ public class JDBCSyncJob extends Job {
 
     public void loadSources() throws Exception {
 
-        Partition partition = jobContext.getPartition();
-        //PartitionContext partitionContext = partition.getPartitionContext();
-        //PenroseContext penroseContext = partitionContext.getPenroseContext();
+        Session session = getSession();
 
-        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
+        try {
+            Partition partition = jobContext.getPartition();
+            //PartitionContext partitionContext = partition.getPartitionContext();
+            //PenroseContext penroseContext = partitionContext.getPenroseContext();
 
-        for (Collection<SourceRef> sourceRefs : groupsOfSources) {
-            try {
+            List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
 
-                SourceRef sourceRef = sourceRefs.iterator().next();
+            for (Collection<SourceRef> sourceRefs : groupsOfSources) {
+                try {
 
-                //Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
-                //primarySourceRefs.add(sourceRef);
+                    SourceRef sourceRef = sourceRefs.iterator().next();
 
-                Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
-                localSourceRefs.addAll(sourceRefs);
+                    //Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
+                    //primarySourceRefs.add(sourceRef);
 
-                SearchRequest request = new SearchRequest();
+                    Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+                    localSourceRefs.addAll(sourceRefs);
 
-                Interpreter interpreter = partition.newInterpreter();
-                SearchResponse response = new SplitSearchResponse(
-                        tmpTargets.values(),
-                        interpreter
-                );
+                    SearchRequest request = new SearchRequest();
 
-                SearchResponse sr = new MergeSearchResponse(
-                        response
-                );
+                    Interpreter interpreter = partition.newInterpreter();
+                    SearchResponse response = new SplitSearchResponse(
+                            session,
+                            tmpTargets.values(),
+                            interpreter
+                    );
 
-                SourceValues sourceValues = new SourceValues();
+                    SearchResponse sr = new MergeSearchResponse(
+                            response
+                    );
 
-                Source source = sourceRef.getSource();
+                    SourceValues sourceValues = new SourceValues();
 
-                source.search(
-                        null,
-                        //primarySourceRefs,
-                        localSourceRefs,
-                        sourceRefs,
-                        sourceValues,
-                        request,
-                        sr
-                );
+                    Source source = sourceRef.getSource();
 
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                    source.search(
+                            null,
+                            //primarySourceRefs,
+                            localSourceRefs,
+                            sourceRefs,
+                            sourceValues,
+                            request,
+                            sr
+                    );
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
             }
+
+        } finally {
+            session.close();
         }
     }
 
     public void generateChangeLogs() throws Exception {
 
-        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
-        Session session = sessionManager.newAdminSession();
+        Session session = getSession();
 
         try {
             for (Entry entry : entries.values()) {
@@ -340,7 +347,7 @@ public class JDBCSyncJob extends Job {
 
                 SearchResponse response2 = search(tmpEntry, session);
 
-                generateChangeLogs(response1, response2);
+                generateChangeLogs(session, response1, response2);
             }
 
         } finally {
@@ -366,6 +373,7 @@ public class JDBCSyncJob extends Job {
     }
 
     public void generateChangeLogs(
+            Session session,
             SearchResponse response1,
             SearchResponse response2
     ) throws Exception {
@@ -388,7 +396,7 @@ public class JDBCSyncJob extends Job {
             if (c < 0) { // delete old entry
                 DeleteRequest request = new DeleteRequest();
                 request.setDn(result1.getDn());
-                recordDeleteOperation(request);
+                recordDeleteOperation(session, request);
 
                 b1 = response1.hasNext();
                 if (b1) result1 = response1.next();
@@ -397,7 +405,7 @@ public class JDBCSyncJob extends Job {
                 AddRequest request = new AddRequest();
                 request.setDn(result2.getDn());
                 request.setAttributes(result2.getAttributes());
-                recordAddOperation(request);
+                recordAddOperation(session, request);
 
                 b2 = response2.hasNext();
                 if (b2) result2 = response2.next();
@@ -413,7 +421,7 @@ public class JDBCSyncJob extends Job {
                     ModifyRequest request = new ModifyRequest();
                     request.setDn(result1.getDn());
                     request.setModifications(modifications);
-                    recordModifyOperation(request);
+                    recordModifyOperation(session, request);
                 }
 
                 b1 = response1.hasNext();
@@ -427,7 +435,7 @@ public class JDBCSyncJob extends Job {
         while (b1) { // delete old entries
             DeleteRequest request = new DeleteRequest();
             request.setDn(result1.getDn());
-            recordDeleteOperation(request);
+            recordDeleteOperation(session, request);
 
             b1 = response1.hasNext();
             if (b1) result1 = response1.next();
@@ -437,7 +445,7 @@ public class JDBCSyncJob extends Job {
             AddRequest request = new AddRequest();
             request.setDn(result2.getDn());
             request.setAttributes(result2.getAttributes());
-            recordAddOperation(request);
+            recordAddOperation(session, request);
 
             b2 = response2.hasNext();
             if (b2) result2 = response2.next();
@@ -512,7 +520,7 @@ public class JDBCSyncJob extends Job {
         return modifications;
     }
 
-    public void recordAddOperation(AddRequest request) throws Exception {
+    public void recordAddOperation(Session session, AddRequest request) throws Exception {
 
         log.debug("Recording add operation "+request.getDn());
 
@@ -525,10 +533,10 @@ public class JDBCSyncJob extends Job {
         attributes.setValue("changeType", "add");
         attributes.setValue("changes", attrs.toString());
 
-        changelog.add(dn, attributes);
+        changelog.add(session, dn, attributes);
     }
 
-    public void recordModifyOperation(ModifyRequest request) throws Exception {
+    public void recordModifyOperation(Session session, ModifyRequest request) throws Exception {
 
         log.debug("Recording modify operation "+request.getDn());
 
@@ -555,10 +563,10 @@ public class JDBCSyncJob extends Job {
         attributes.setValue("changeType", "modify");
         attributes.setValue("changes", sb.toString());
 
-        changelog.add(dn, attributes);
+        changelog.add(session, dn, attributes);
     }
 
-    public void recordModRdnOperation(ModRdnRequest request) throws Exception {
+    public void recordModRdnOperation(Session session, ModRdnRequest request) throws Exception {
 
         log.debug("Recording modrdn operation "+request.getDn());
 
@@ -570,10 +578,10 @@ public class JDBCSyncJob extends Job {
         attributes.setValue("newRDN", request.getNewRdn().toString());
         attributes.setValue("deleteOldRDN", request.getDeleteOldRdn());
 
-        changelog.add(dn, attributes);
+        changelog.add(session, dn, attributes);
     }
 
-    public void recordDeleteOperation(DeleteRequest request) throws Exception {
+    public void recordDeleteOperation(Session session, DeleteRequest request) throws Exception {
 
         log.debug("Recording delete operation "+request.getDn());
 
@@ -583,7 +591,7 @@ public class JDBCSyncJob extends Job {
         attributes.setValue("targetDN", request.getDn().toString());
         attributes.setValue("changeType", "delete");
 
-        changelog.add(dn, attributes);
+        changelog.add(session, dn, attributes);
     }
 
     public void switchSources() throws Exception {

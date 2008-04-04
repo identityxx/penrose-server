@@ -31,19 +31,14 @@ public class Relationship implements Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     private String operator = "=";
-    private List operands = new ArrayList();
+    private List<String> operands = new ArrayList<String>();
 
     public Relationship() {
     }
 
-    public Relationship(String expression) {
-        setExpression(expression);
-    }
-
     public String getExpression() {
         StringBuilder sb = new StringBuilder();
-        for (Iterator i=operands.iterator(); i.hasNext(); ) {
-            String operand = i.next().toString();
+        for (String operand : operands) {
             if (sb.length() > 0) {
                 sb.append(" ");
                 sb.append(operator);
@@ -80,7 +75,7 @@ public class Relationship implements Cloneable {
 
     public String getLhs() {
         if (operands.size() < 1) return null;
-        return operands.get(0).toString();
+        return operands.get(0);
     }
 
     public String getLeftSource() {
@@ -95,8 +90,20 @@ public class Relationship implements Cloneable {
         return lhs.substring(i+1);
     }
 
+    public void addOperand(String operand) {
+        operands.add(operand);
+    }
+
+    public void removeOperand(String operand) {
+        operands.remove(operand);
+    }
+
     public void setLhs(String lhs) {
-        operands.set(0, lhs);
+        if (operands.isEmpty()) {
+            operands.add(lhs);
+        } else {
+            operands.set(0, lhs);
+        }
     }
 
     public String getOperator() {
@@ -109,7 +116,7 @@ public class Relationship implements Cloneable {
 
     public String getRhs() {
         if (operands.size() < 2) return null;
-        return operands.get(1).toString();
+        return operands.get(1);
     }
 
     public String getRightSource() {
@@ -125,7 +132,16 @@ public class Relationship implements Cloneable {
     }
 
     public void setRhs(String rhs) {
-        operands.set(1, rhs);
+        if (operands.isEmpty()) {
+            operands.add(null);
+            operands.add(rhs);
+
+        } else if (operands.size() == 1) {
+            operands.add(rhs);
+
+        } else {
+            operands.set(1, rhs);
+        }
     }
 
     public int hashCode() {
@@ -153,7 +169,7 @@ public class Relationship implements Cloneable {
 
     public void copy(Relationship relationship) {
         operator = relationship.operator;
-        operands = new ArrayList();
+        operands = new ArrayList<String>();
         operands.addAll(relationship.operands);
     }
 

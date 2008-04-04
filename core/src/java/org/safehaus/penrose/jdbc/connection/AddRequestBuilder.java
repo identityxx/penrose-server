@@ -1,20 +1,17 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.jdbc.InsertStatement;
-import org.safehaus.penrose.jdbc.UpdateRequest;
 import org.safehaus.penrose.jdbc.Assignment;
-import org.safehaus.penrose.jdbc.Request;
+import org.safehaus.penrose.jdbc.InsertStatement;
+import org.safehaus.penrose.jdbc.Statement;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.AddResponse;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -46,7 +43,7 @@ public class AddRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection<Request> generate() throws Exception {
+    public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
         for (SourceRef sourceRef : sourceRefs) {
@@ -72,7 +69,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSource(sourceRef.getSource());
+        statement.setSourceName(sourceRef.getSource().getName());
 
         interpreter.set(sourceValues);
 
@@ -93,15 +90,12 @@ public class AddRequestBuilder extends RequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
         interpreter.clear();
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 
     public void generateSecondaryRequests(
@@ -161,7 +155,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSource(sourceRef.getSource());
+        statement.setSourceName(sourceRef.getSource().getName());
 
         if (debug) log.debug("Fields:");
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
@@ -186,7 +180,7 @@ public class AddRequestBuilder extends RequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug("   - value: " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
         if (debug) log.debug("Fields:");
@@ -197,12 +191,9 @@ public class AddRequestBuilder extends RequestBuilder {
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
             Field field = fieldRef.getField();
 
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 }

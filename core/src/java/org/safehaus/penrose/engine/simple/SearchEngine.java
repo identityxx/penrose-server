@@ -27,7 +27,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.connection.Connection;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -57,7 +56,7 @@ public class SearchEngine {
     ) throws Exception {
 
         try {
-            Collection sourceMappings = entry.getEntryMapping().getSourceMappings();
+            Collection sourceMappings = entry.getEntryConfig().getSourceMappings();
 
             if (sourceMappings.size() == 0) {
                 if (debug) log.debug("Returning static entry "+entry.getDn());

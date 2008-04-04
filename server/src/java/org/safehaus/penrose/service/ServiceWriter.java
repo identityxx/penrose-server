@@ -16,10 +16,12 @@ import java.io.File;
  */
 public class ServiceWriter {
 
-    public void write(String filename, ServiceConfig serviceConfig) throws Exception {
+    public void write(File directory, ServiceConfig serviceConfig) throws Exception {
 
-        File file = new File(filename);
-        file.getParentFile().mkdirs();
+        File serviceInf = new File(directory, "SERVICE-INF");
+        serviceInf.mkdirs();
+
+        File file = new File(serviceInf, "service.xml");
 
         Writer writer = new FileWriter(file);
 

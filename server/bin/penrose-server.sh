@@ -89,64 +89,6 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
-LOCALCLASSPATH=$LOCALCLASSPATH:$PENROSE_HOME/conf
-
-for i in "$PENROSE_HOME"/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/server/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/server/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_HOME"/schema/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib/ext"
@@ -159,16 +101,28 @@ if $cygwin; then
   PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
-  LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
 fi
 
 cd "$PENROSE_HOME"
 mkdir -p "$PENROSE_HOME/logs"
+
 PENROSE_PID="$PENROSE_HOME/logs/penrose.pid"
+PID=0
+RUNNING=0
+
+if [ -f "$PENROSE_PID" ] ; then
+  PID=`cat "$PENROSE_PID"`
+  LINES=`ps -p $PID | wc -l`
+  if [ "$LINES" = "2" ]; then
+    RUNNING=1
+  else
+    rm -f "$PENROSE_PID"
+  fi
+fi
 
 if [ "$1" = "start" ] ; then
 
-  if [ -f "$PENROSE_PID" ] ; then
+  if [ "$RUNNING" = "1" ] ; then
     echo Penrose Server is running
     exit 1
   else
@@ -185,8 +139,8 @@ if [ "$1" = "start" ] ; then
 
 elif [ "$1" = "stop" ] ; then
 
-  if [ -f "$PENROSE_PID" ] ; then
-    kill -9 `cat "$PENROSE_PID"` > /dev/null 2>&1
+  if [ "$RUNNING" = "1" ] ; then
+    kill $PID > /dev/null 2>&1
     rm -f "$PENROSE_PID"
   else
     echo Penrose Server is not running
@@ -195,7 +149,7 @@ elif [ "$1" = "stop" ] ; then
 
 elif [ "$1" = "status" ] ; then
 
-  if [ -f "$PENROSE_PID" ] ; then
+  if [ "$RUNNING" = "1" ] ; then
     echo Penrose Server is running
   else
     echo Penrose Server is not running
@@ -203,11 +157,16 @@ elif [ "$1" = "status" ] ; then
 
 else
 
-  exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
-  -Djava.ext.dirs="$LOCALLIBPATH" \
-  -Djava.library.path="$LOCALLIBPATH" \
-  -Dpenrose.home="$PENROSE_HOME" \
-  org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
+  if [ "$RUNNING" = "1" ] ; then
+    echo Penrose Server is running
+    exit 1
+  else
+    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    -Djava.ext.dirs="$LOCALLIBPATH" \
+    -Djava.library.path="$LOCALLIBPATH" \
+    -Dpenrose.home="$PENROSE_HOME" \
+    org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@"
+  fi
 
 fi
 

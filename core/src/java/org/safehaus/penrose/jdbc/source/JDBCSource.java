@@ -101,7 +101,7 @@ public class JDBCSource extends Source {
 
         try {
             InsertStatement statement = new InsertStatement();
-            statement.setSource(this);
+            statement.setSourceName(getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -113,7 +113,7 @@ public class JDBCSource extends Source {
                     Field field = getField(name);
                     if (field == null) throw new Exception("Unknown field: " + name);
 
-                    statement.addAssignment(new Assignment(field, value));
+                    statement.addAssignment(new Assignment(field.getOriginalName(), value));
                 }
             }
 
@@ -127,15 +127,16 @@ public class JDBCSource extends Source {
                 Field field = getField(name);
                 if (field == null) throw new Exception("Unknown field: " + name);
 
-                statement.addAssignment(new Assignment(field, value));
+                statement.addAssignment(new Assignment(field.getOriginalName(), value));
             }
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Add operation completed.");
 
@@ -171,15 +172,19 @@ public class JDBCSource extends Source {
                 response
         );
 
-        Collection<org.safehaus.penrose.jdbc.Request> requests = builder.generate();
+        Collection<Statement> statements = builder.generate();
 
         JDBCClient client = getClient(session);
 
-        for (org.safehaus.penrose.jdbc.Request req : requests) {
-            UpdateRequest updateRequest = (UpdateRequest) req;
-            UpdateResponse updateResponse = new UpdateResponse();
+        for (Statement statement : statements) {
 
-            client.executeUpdate(updateRequest, updateResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeUpdate(sql, parameters);
         }
 
         log.debug("Add operation completed.");
@@ -233,8 +238,7 @@ public class JDBCSource extends Source {
         try {
             DeleteStatement statement = new DeleteStatement();
 
-            SourceRef sourceRef = new SourceRef(this);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(getName());
 
             Filter filter = null;
 
@@ -250,12 +254,13 @@ public class JDBCSource extends Source {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Delete operation completed.");
 
@@ -291,15 +296,19 @@ public class JDBCSource extends Source {
                 response
         );
 
-        Collection<org.safehaus.penrose.jdbc.Request> requests = builder.generate();
+        Collection<Statement> statements = builder.generate();
 
         JDBCClient client = getClient(session);
 
-        for (org.safehaus.penrose.jdbc.Request req : requests) {
-            UpdateRequest updateRequest = (UpdateRequest) req;
-            UpdateResponse updateResponse = new UpdateResponse();
+        for (Statement statement : statements) {
 
-            client.executeUpdate(updateRequest, updateResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeUpdate(sql, parameters);
         }
 
         log.debug("Delete operation completed.");
@@ -326,8 +335,7 @@ public class JDBCSource extends Source {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            SourceRef sourceRef = new SourceRef(this);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -346,11 +354,11 @@ public class JDBCSource extends Source {
                     case Modification.REPLACE:
                         Object value = rdn.get(name);
                         if (value == null) value = attribute.getValue();
-                        statement.addAssignment(new Assignment(field, value));
+                        statement.addAssignment(new Assignment(field.getOriginalName(), value));
                         break;
 
                     case Modification.DELETE:
-                        statement.addAssignment(new Assignment(field, null));
+                        statement.addAssignment(new Assignment(field.getOriginalName(), null));
                         break;
                 }
             }
@@ -365,12 +373,13 @@ public class JDBCSource extends Source {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("Modify operation completed.");
 
@@ -406,15 +415,19 @@ public class JDBCSource extends Source {
                 response
         );
 
-        Collection<org.safehaus.penrose.jdbc.Request> requests = builder.generate();
+        Collection<Statement> statements = builder.generate();
 
         JDBCClient client = getClient(session);
 
-        for (org.safehaus.penrose.jdbc.Request req : requests) {
-            UpdateRequest updateRequest = (UpdateRequest) req;
-            UpdateResponse updateResponse = new UpdateResponse();
+        for (Statement statement : statements) {
 
-            client.executeUpdate(updateRequest, updateResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeUpdate(sql, parameters);
         }
 
         log.debug("Modify operation completed.");
@@ -441,8 +454,7 @@ public class JDBCSource extends Source {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            SourceRef sourceRef = new SourceRef(this);
-            statement.setSourceRef(sourceRef);
+            statement.setSourceName(getName());
 
             RDN newRdn = request.getNewRdn();
             for (String name : newRdn.getNames()) {
@@ -451,7 +463,7 @@ public class JDBCSource extends Source {
                 Field field = getField(name);
                 if (field == null) continue;
 
-                statement.addAssignment(new Assignment(field, value));
+                statement.addAssignment(new Assignment(field.getOriginalName(), value));
             }
 
             RDN rdn = request.getDn().getRdn();
@@ -465,12 +477,13 @@ public class JDBCSource extends Source {
 
             statement.setFilter(filter);
 
-            UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.setStatement(statement);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-            UpdateResponse updateResponse = new UpdateResponse();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(updateRequest, updateResponse);
+            client.executeUpdate(sql, parameters);
 
             log.debug("ModRdn operation completed.");
 
@@ -506,15 +519,19 @@ public class JDBCSource extends Source {
                 response
         );
 
-        Collection<org.safehaus.penrose.jdbc.Request> requests = builder.generate();
+        Collection<Statement> statements = builder.generate();
 
         JDBCClient client = getClient(session);
 
-        for (org.safehaus.penrose.jdbc.Request req : requests) {
-            UpdateRequest updateRequest = (UpdateRequest) req;
-            UpdateResponse updateResponse = new UpdateResponse();
+        for (Statement statement : statements) {
 
-            client.executeUpdate(updateRequest, updateResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeUpdate(sql, parameters);
         }
 
         log.debug("ModRdn operation completed.");
@@ -560,8 +577,10 @@ public class JDBCSource extends Source {
 
             filter = FilterTool.appendAndFilter(filter, request.getFilter());
 
-            statement.addFieldRefs(sourceRef.getFieldRefs());
-            statement.addSourceRef(sourceRef);
+            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+            }
+            statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
             statement.setFilter(filter);
 
             String where = getParameter(FILTER);
@@ -569,10 +588,9 @@ public class JDBCSource extends Source {
                 statement.setWhere(where);
             }
 
-            statement.setOrders(sourceRef.getPrimaryKeyFieldRefs());
-
-            QueryRequest queryRequest = new QueryRequest();
-            queryRequest.setStatement(statement);
+            for (FieldRef fieldRef : sourceRef.getPrimaryKeyFieldRefs()) {
+                statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+            }
 
             QueryResponse queryResponse = new QueryResponse() {
                 public void add(Object object) throws Exception {
@@ -598,7 +616,13 @@ public class JDBCSource extends Source {
                 queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
             }
 
-            client.executeQuery(queryRequest, queryResponse);
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
+
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
+
+            client.executeQuery(sql, parameters, queryResponse);
 
             log.debug("Search operation completed.");
 
@@ -669,7 +693,8 @@ public class JDBCSource extends Source {
                 response
         );
 
-        QueryRequest queryRequest = builder.generate();
+        SelectStatement statement = builder.generate();
+
         QueryResponse queryResponse = new QueryResponse() {
 
             SearchResult lastResult;
@@ -720,7 +745,13 @@ public class JDBCSource extends Source {
 
         JDBCClient client = getClient(session);
 
-        client.executeQuery(queryRequest, queryResponse);
+        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+        statementBuilder.setQuote(client.getQuote());
+
+        String sql = statementBuilder.generate(statement);
+        Collection<Object> parameters = statementBuilder.getParameters();
+
+        client.executeQuery(sql, parameters, queryResponse);
 
         log.debug("Search operation completed.");
     }
@@ -841,7 +872,7 @@ public class JDBCSource extends Source {
         client.showStatus(sourceConfig);
     }
 
-    public long getCount() throws Exception {
+    public long getCount(Session session) throws Exception {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));

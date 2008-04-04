@@ -1,13 +1,13 @@
 package org.safehaus.penrose.naming;
 
-import org.safehaus.penrose.thread.ThreadManager;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.filter.FilterEvaluator;
+import org.safehaus.penrose.logger.LoggerManager;
+import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionValidator;
+import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.SessionContext;
-
+import org.safehaus.penrose.thread.ThreadManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,17 +34,17 @@ public class PenroseContext {
 
     public final static String PARTITION_MANAGER   = "java:comp/org/safehaus/penrose/partition/PartitionManager";
 
-    private File               home;
-    private PenroseConfig      penroseConfig;
+    protected File               home;
+    protected PenroseConfig      penroseConfig;
 
-    private ThreadManager      threadManager;
-    private SchemaManager      schemaManager;
-    private FilterEvaluator    filterEvaluator;
+    protected ThreadManager      threadManager;
+    protected SchemaManager      schemaManager;
+    protected FilterEvaluator    filterEvaluator;
 
-    private PartitionConfigs   partitionConfigs;
-    private Partitions         partitions = new Partitions();
+    protected PartitionManager   partitionManager;
+    protected LoggerManager      loggerManager = new LoggerManager();
 
-    private SessionContext     sessionContext;
+    protected SessionContext     sessionContext;
 
     public PenroseContext(File home) {
         this.home = home;
@@ -66,20 +66,12 @@ public class PenroseContext {
         this.schemaManager = schemaManager;
     }
 
-    public PartitionConfigs getPartitionConfigs() {
-        return partitionConfigs;
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
     }
 
-    public void setPartitionConfigs(PartitionConfigs partitionConfigs) {
-        this.partitionConfigs = partitionConfigs;
-    }
-
-    public Partitions getPartitions() {
-        return partitions;
-    }
-
-    public void setPartitions(Partitions partitions) {
-        this.partitions = partitions;
+    public void setPartitions(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
     }
 
     public SessionContext getSessionContext() {
@@ -99,20 +91,27 @@ public class PenroseContext {
             System.setProperty(name, value);
         }
 
+        partitionManager = new PartitionManager(
+                home,
+                penroseConfig,
+                this
+        );
+
         threadManager = new ThreadManager();
         threadManager.setPenroseConfig(penroseConfig);
         threadManager.setPenroseContext(this);
 
-        schemaManager = new SchemaManager();
+        schemaManager = new SchemaManager(home);
         schemaManager.setPenroseConfig(penroseConfig);
         schemaManager.setPenroseContext(this);
+        schemaManager.loadSchemas();
 
         filterEvaluator = new FilterEvaluator();
         filterEvaluator.setSchemaManager(schemaManager);
 
-        for (SchemaConfig schemaConfig : penroseConfig.getSchemaConfigs()) {
-            schemaManager.init(schemaConfig);
-        }
+        PartitionValidator partitionValidator = new PartitionValidator();
+        partitionValidator.setPenroseConfig(penroseConfig);
+        partitionValidator.setPenroseContext(this);
     }
 
     public void start() throws Exception {

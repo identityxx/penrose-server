@@ -24,7 +24,7 @@ import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.engine.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.Source;
@@ -96,7 +96,7 @@ public class SimpleEngine extends Engine {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfigs sources = partitionConfig.getSourceConfigs();
+        SourceConfigManager sources = partitionConfig.getSourceConfigManager();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
@@ -143,7 +143,7 @@ public class SimpleEngine extends Engine {
         }
 /*
         SourceValues sourceValues = new SourceValues();
-        extractSourceValues(partition, entryMapping, dn, sourceValues);
+        extractSourceValues(partition, entryConfig, dn, sourceValues);
 
         if (debug) {
             log.debug("Source values:");
@@ -190,7 +190,7 @@ public class SimpleEngine extends Engine {
         }
 /*
         SourceValues sourceValues = new SourceValues();
-        extractSourceValues(partition, entryMapping, dn, sourceValues);
+        extractSourceValues(partition, entryConfig, dn, sourceValues);
 
         if (debug) {
             log.debug("Source values:");

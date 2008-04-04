@@ -47,11 +47,11 @@ public class MappingWriter {
         writer.close();
     }
 
-    public Element createElement(DirectoryConfig mappings) throws Exception {
+    public Element createElement(DirectoryConfig directoryConfig) throws Exception {
         Element mappingElement = new DefaultElement("mapping");
 
-        for (EntryMapping entryMapping : mappings.getRootEntryMappings()) {
-            createElement(mappings, entryMapping, mappingElement);
+        for (EntryConfig entryConfig : directoryConfig.getRootEntryConfigs()) {
+            createElement(directoryConfig, entryConfig, mappingElement);
         }
 
         return mappingElement;
@@ -94,21 +94,27 @@ public class MappingWriter {
         return element;
     }
 
-    public Element createElement(DirectoryConfig mappings, EntryMapping entryMapping, Element configElement) throws Exception {
+    public Element createElement(DirectoryConfig directoryConfig, EntryConfig entryConfig, Element configElement) throws Exception {
 
         Element element = new DefaultElement("entry");
-        element.add(new DefaultAttribute("dn", entryMapping.getDn().toString()));
-        if (!entryMapping.isEnabled()) element.add(new DefaultAttribute("enabled", "false"));
-        if (!entryMapping.isAttached()) element.add(new DefaultAttribute("attached", "false"));
+        element.add(new DefaultAttribute("dn", entryConfig.getDn().toString()));
+        if (!entryConfig.isEnabled()) element.add(new DefaultAttribute("enabled", "false"));
+        if (!entryConfig.isAttached()) element.add(new DefaultAttribute("attached", "false"));
         configElement.add(element);
 
-        for (String objectClass : entryMapping.getObjectClasses()) {
+        if (entryConfig.getEntryClass() != null) {
+            Element entryClassElement = new DefaultElement("entry-class");
+            entryClassElement.setText(entryConfig.getEntryClass());
+            element.add(entryClassElement);
+        }
+
+        for (String objectClass : entryConfig.getObjectClasses()) {
             Element objectClassElement = new DefaultElement("oc");
             objectClassElement.setText(objectClass);
             element.add(objectClassElement);
         }
 
-        Collection<AttributeMapping> attributes = entryMapping.getAttributeMappings();
+        Collection<AttributeMapping> attributes = entryConfig.getAttributeMappings();
         for (AttributeMapping attribute : attributes) {
 
             Element child = createElement(attribute);
@@ -117,30 +123,30 @@ public class MappingWriter {
             element.add(child);
         }
 
-        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
+        for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
             element.add(createElement(sourceMapping));
         }
 
-        String handlerName = entryMapping.getHandlerName();
+        String handlerName = entryConfig.getHandlerName();
         if (handlerName != null) {
             Element handler = new DefaultElement("handler");
             handler.add(new DefaultText(handlerName));
             element.add(handler);
         }
 
-        String engineName = entryMapping.getEngineName();
+        String engineName = entryConfig.getEngineName();
         if (engineName != null) {
             Element engine = new DefaultElement("engine");
             engine.add(new DefaultText(engineName));
             element.add(engine);
         }
 
-        for (ACI aci : entryMapping.getACL()) {
+        for (ACI aci : entryConfig.getACL()) {
             element.add(createElement(aci));
         }
 
-        for (String name : entryMapping.getParameterNames()) {
-            String value = entryMapping.getParameter(name);
+        for (String name : entryConfig.getParameterNames()) {
+            String value = entryConfig.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 
@@ -155,9 +161,9 @@ public class MappingWriter {
             element.add(parameter);
         }
 
-        Collection<EntryMapping> children = mappings.getChildren(entryMapping);
-        for (EntryMapping child : children) {
-            createElement(mappings, child, configElement);
+        Collection<EntryConfig> children = directoryConfig.getChildren(entryConfig);
+        for (EntryConfig child : children) {
+            createElement(directoryConfig, child, configElement);
         }
 
         return element;
@@ -276,7 +282,7 @@ public class MappingWriter {
             element.add(new DefaultAttribute("subject", aci.getSubject()));
         }
 
-        if (aci.getDn() != null && aci.getDn() != null) {
+        if (aci.getDn() != null && !aci.getDn().isEmpty()) {
             Element dnElement = new DefaultElement("dn");
             dnElement.add(new DefaultText(aci.getDn().toString()));
             element.add(dnElement);

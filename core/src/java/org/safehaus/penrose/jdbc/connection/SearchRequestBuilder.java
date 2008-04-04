@@ -6,7 +6,6 @@ import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
-import org.safehaus.penrose.jdbc.QueryRequest;
 import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.jdbc.JoinClause;
 import org.safehaus.penrose.directory.FieldRef;
@@ -14,7 +13,6 @@ import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
 
 import java.util.*;
@@ -187,7 +185,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         }
     }
 
-    public QueryRequest generate() throws Exception {
+    public SelectStatement generate() throws Exception {
 
         SelectStatement statement = new SelectStatement();
 
@@ -200,10 +198,10 @@ public class SearchRequestBuilder extends RequestBuilder {
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 if (debug) log.debug(" - field " + fieldRef.getName());
-                statement.addFieldRef(fieldRef);
+                statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
             }
 
-            statement.addSourceRef(sourceRef);
+            statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
 
             if (sourceCounter == 0) { // join previous source
                 String where = sourceRef.getParameter(JDBCClient.FILTER);
@@ -232,11 +230,14 @@ public class SearchRequestBuilder extends RequestBuilder {
             Collection<FieldRef> primaryKeyFieldRefs = sourceRef.getPrimaryKeyFieldRefs();
             if (debug) log.debug("Order by: "+primaryKeyFieldRefs);
 
-            statement.addOrders(primaryKeyFieldRefs);
+            for (FieldRef fieldRef : primaryKeyFieldRefs) {
+                statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+            }
+
             sourceCounter++;
         }
 /*
-        for (Iterator i=entryMapping.getRelationships().iterator(); i.hasNext(); ) {
+        for (Iterator i=entryConfig.getRelationships().iterator(); i.hasNext(); ) {
             Relationship relationship = (Relationship)i.next();
 
             String leftSource = relationship.getLeftSource();
@@ -253,7 +254,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             SourceRef sourceRef = tableAliases.get(alias);
 
             if (debug) log.debug("Adding source " + alias);
-            statement.addSourceRef(alias, sourceRef);
+            statement.addSourceName(alias, sourceRef.getSource().getName());
 
             String joinType = generateJoinType(sourceRef);
             Filter joinCondition = generateJoinOn(sourceRef, alias);
@@ -283,12 +284,9 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.setWhere(sb.toString());
         }
 
-        QueryRequest queryRequest = new QueryRequest();
-        queryRequest.setStatement(statement);
+        requests.add(statement);
 
-        requests.add(queryRequest);
-
-        return queryRequest;
+        return statement;
     }
 
 }

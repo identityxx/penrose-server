@@ -17,14 +17,15 @@
  */
 package org.safehaus.penrose.session;
 
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
  */
-public class SessionConfig implements SessionConfigMBean, Cloneable {
+public class SessionConfig implements Serializable, Cloneable, SessionConfigMBean {
 
     public final static String MAX_SESSIONS       = "maxSessions";
     public final static String MAX_IDLE_TIME      = "maxIdleTime";

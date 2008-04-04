@@ -19,8 +19,6 @@ package org.safehaus.penrose.server;
 
 import java.util.*;
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 import org.apache.log4j.*;
 import org.apache.log4j.Logger;
@@ -39,11 +37,10 @@ public class PenroseServer {
     public static org.slf4j.Logger errorLog = org.safehaus.penrose.log.Error.log;
     public static boolean debug = log.isDebugEnabled();
 
-    private PenroseConfig penroseConfig;
     private Penrose penrose;
 
-    private ServiceConfigs serviceConfigs;
-    private Services services;
+    private ServiceConfigManager serviceConfigManager;
+    private ServiceManager serviceManager;
 
     public PenroseServer() throws Exception {
 
@@ -95,13 +92,11 @@ public class PenroseServer {
 
     public void init() throws Exception {
         
-        penroseConfig = penrose.getPenroseConfig();
-
         File home = penrose.getHome();
         File servicesDir = new File(home, "services");
 
-        serviceConfigs = new ServiceConfigs(servicesDir);
-        services = new Services(servicesDir);
+        serviceConfigManager = new ServiceConfigManager(servicesDir);
+        serviceManager = new ServiceManager(this, serviceConfigManager);
     }
 
     public void start() throws Exception {
@@ -112,10 +107,11 @@ public class PenroseServer {
 
         log.debug("----------------------------------------------------------------------------------");
 
-        for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
+        for (String serviceName : serviceConfigManager.getAvailableServiceNames()) {
 
             try {
-                startService(serviceName);
+                serviceManager.loadServiceConfig(serviceName);
+                serviceManager.startService(serviceName);
 
             } catch (Exception e) {
                 errorLog.error(e.getMessage(), e);
@@ -130,10 +126,11 @@ public class PenroseServer {
         log.debug("----------------------------------------------------------------------------------");
         log.debug("Stopping Penrose Server...");
 
-        for (String serviceName : serviceConfigs.getAvailableServiceNames()) {
+        for (String serviceName : serviceConfigManager.getAvailableServiceNames()) {
 
             try {
-                stopService(serviceName);
+                serviceManager.stopService(serviceName);
+                serviceManager.unloadService(serviceName);
 
             } catch (Exception e) {
                 errorLog.error(e.getMessage(), e);
@@ -143,64 +140,6 @@ public class PenroseServer {
         penrose.stop();
 
         log.fatal("Server has been shutdown.");
-    }
-
-    public void startService(String serviceName) throws Exception {
-
-        log.debug("Loading "+serviceName+" service.");
-
-        ServiceConfig serviceConfig = serviceConfigs.load(serviceName);
-        serviceConfigs.addServiceConfig(serviceConfig);
-        
-        if (!serviceConfig.isEnabled()) {
-            log.debug(serviceConfig.getName()+" service is disabled.");
-            return;
-        }
-
-        log.debug("Starting "+serviceName+" service.");
-
-        File serviceDir = new File(serviceConfigs.getServicesDir(), serviceName);
-
-        Collection<URL> classPaths = serviceConfig.getClassPaths();
-        URLClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
-
-        Class clazz = classLoader.loadClass(serviceConfig.getServiceClass());
-
-        Service service = (Service)clazz.newInstance();
-
-        ServiceContext serviceContext = new ServiceContext();
-        serviceContext.setPath(serviceDir);
-        serviceContext.setPenroseServer(this);
-        serviceContext.setClassLoader(classLoader);
-
-        service.init(serviceConfig, serviceContext);
-
-
-        services.addService(service);
-    }
-    
-    public void stopService(String serviceName) throws Exception {
-
-        log.debug("Stopping "+serviceName+" service.");
-
-        Service service = services.getService(serviceName);
-        if (service == null) return;
-
-        service.destroy();
-
-        services.removeService(serviceName);
-        serviceConfigs.removeServiceConfig(serviceName);
-    }
-
-    public String getServiceStatus(String serviceName) {
-
-        Service service = services.getService(serviceName);
-
-        if (service == null) {
-            return "STOPPED";
-        } else {
-            return "STARTED";
-        }
     }
 
     public String getStatus() {
@@ -255,11 +194,7 @@ public class PenroseServer {
     }
 
     public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
-    }
-
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
+        return penrose.getPenroseConfig();
     }
 
     public Penrose getPenrose() {
@@ -270,20 +205,20 @@ public class PenroseServer {
         this.penrose = penrose;
     }
 
-    public Services getServices() {
-        return services;
+    public ServiceManager getServiceManager() {
+        return serviceManager;
     }
 
-    public void setServices(Services services) {
-        this.services = services;
+    public void setServiceManager(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
     }
 
     public void reload() throws Exception {
 
         penrose.reload();
 
-        services.clear();
-        //serviceManager.load(penroseConfig.getServiceConfigs());
+        serviceManager.clear();
+        //serviceManager.load(penroseConfig.getServiceConfigManager());
     }
 
     public static void main( String[] args ) throws Exception {
@@ -374,8 +309,8 @@ public class PenroseServer {
         }
     }
 
-    public ServiceConfigs getServiceConfigs() {
-        return serviceConfigs;
+    public ServiceConfigManager getServiceConfigs() {
+        return serviceConfigManager;
     }
 
     public String getProductName() {

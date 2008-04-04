@@ -21,7 +21,6 @@ import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.cache.CacheKey;
 import org.safehaus.penrose.cache.CacheManager;
-import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.engine.Engine;
 import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.filter.Filter;
@@ -36,6 +35,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class Entry implements Cloneable {
     public final static String CACHE_EXPIRATION         = "cacheExpiration";
     public final static int DEFAULT_CACHE_EXPIRATION    = 10; // minutes
 
-    protected EntryMapping entryMapping;
+    protected EntryConfig entryConfig;
     protected EntryContext entryContext;
 
     protected Map<String,SourceRef> localSourceRefs = new LinkedHashMap<String,SourceRef>();
@@ -91,8 +91,8 @@ public class Entry implements Cloneable {
     public Entry() {
     }
 
-    public void init(EntryMapping entryMapping, EntryContext entryContext) throws Exception {
-        this.entryMapping = entryMapping;
+    public void init(EntryConfig entryConfig, EntryContext entryContext) throws Exception {
+        this.entryConfig = entryConfig;
         this.entryContext = entryContext;
 
         Directory directory = entryContext.getDirectory();
@@ -101,9 +101,9 @@ public class Entry implements Cloneable {
 
         // create source references
         
-        String primarySourceName = entryMapping.getPrimarySourceName();
+        String primarySourceName = entryConfig.getPrimarySourceName();
 
-        for (SourceMapping sourceMapping : entryMapping.getSourceMappings()) {
+        for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
 
             SourceRef sourceRef = createSourceRef(sourceMapping);
             String alias = sourceRef.getAlias();
@@ -120,7 +120,7 @@ public class Entry implements Cloneable {
 
         // inherit source referencess from the parent entries
 
-        Entry parent = directory.getEntry(entryMapping.getParentId());
+        Entry parent = directory.getEntry(entryConfig.getParentId());
 
         while (parent != null) {
 
@@ -172,38 +172,39 @@ public class Entry implements Cloneable {
 
         Partition partition = getPartition();
 
-        Source source = partition.getSource(sourceMapping.getSourceName());
+        SourceManager sourceManager = partition.getSourceManager();
+        Source source = sourceManager.getSource(sourceMapping.getSourceName());
         if (source == null) throw new Exception("Unknown source "+sourceMapping.getSourceName()+".");
 
         return new SourceRef(this, source, sourceMapping);
     }
 
     public String getId() {
-        return entryMapping.getId();
+        return entryConfig.getId();
     }
 
     public String getParentId() {
-        return entryMapping.getParentId();
+        return entryConfig.getParentId();
     }
 
     public DN getDn() {
-        return entryMapping.getDn();
+        return entryConfig.getDn();
     }
 
     public DN getParentDn() throws Exception {
-        return entryMapping.getParentDn();
+        return entryConfig.getParentDn();
     }
 
     public RDN getRdn() throws Exception {
-        return entryMapping.getRdn();
+        return entryConfig.getRdn();
     }
 
-    public EntryMapping getEntryMapping() {
-        return entryMapping;
+    public EntryConfig getEntryConfig() {
+        return entryConfig;
     }
 
     public String getHandlerName() {
-        return entryMapping.getHandlerName();
+        return entryConfig.getHandlerName();
     }
 
     public EntryContext getEntryContext() {
@@ -258,6 +259,10 @@ public class Entry implements Cloneable {
         return children;
     }
 
+    public void addChildren(Collection<Entry> children) {
+        this.children.addAll(children);
+    }
+
     public Collection<Entry> getChildren(RDN rdn) throws Exception {
         if (rdn == null) return EMPTY_ENTRIES;
 
@@ -280,6 +285,22 @@ public class Entry implements Cloneable {
             childrenByRdn.put(rdn, c);
         }
         c.add(child);
+    }
+
+    public void removeChild(Entry child) throws Exception {
+
+        String rdn = child.getDn().getRdn().getNormalized();
+
+        children.remove(child);
+        child.setParent(null);
+
+        Collection<Entry> c = childrenByRdn.get(rdn);
+        if (c != null) {
+            childrenByRdn.remove(rdn);
+            if (c.isEmpty()) {
+                childrenByRdn.remove(rdn);
+            }
+        }
     }
 
     public void setChildren(Collection<Entry> children) throws Exception {
@@ -305,19 +326,19 @@ public class Entry implements Cloneable {
     }
 
     public String getPrimarySourceName() {
-        return entryMapping.getPrimarySourceName();
+        return entryConfig.getPrimarySourceName();
     }
 
     public Collection<String> getObjectClasses() {
-        return entryMapping.getObjectClasses();
+        return entryConfig.getObjectClasses();
     }
 
     public String getParameter(String name) {
-        return entryMapping.getParameter(name);
+        return entryConfig.getParameter(name);
     }
 
     public Collection<String> getParameterNames() {
-        return entryMapping.getParameterNames();
+        return entryConfig.getParameterNames();
     }
 
     public List<Entry> getPath() {
@@ -346,40 +367,40 @@ public class Entry implements Cloneable {
     }
 
     public boolean containsObjectClass(String objectClass) {
-        return entryMapping.containsObjectClass(objectClass);
+        return entryConfig.containsObjectClass(objectClass);
     }
 
     public Collection<AttributeMapping> getAttributeMappings() {
-        return entryMapping.getAttributeMappings();
+        return entryConfig.getAttributeMappings();
     }
 
     public AttributeMapping getAttributeMapping(String attributeName) {
-        return entryMapping.getAttributeMapping(attributeName);
+        return entryConfig.getAttributeMapping(attributeName);
     }
 
     public Collection<AttributeMapping> getRdnAttributeMappings() {
-        return entryMapping.getRdnAttributeMappings();
+        return entryConfig.getRdnAttributeMappings();
     }
     
     public Collection<ACI> getACL() {
-        return entryMapping.getACL();
+        return entryConfig.getACL();
     }
 
     public Collection<SourceMapping> getSourceMappings() {
-        return entryMapping.getSourceMappings();
+        return entryConfig.getSourceMappings();
     }
 
     public SourceMapping getSourceMapping(int index) {
-        return entryMapping.getSourceMapping(index);
+        return entryConfig.getSourceMapping(index);
     }
     
     public SourceMapping getSourceMapping(String alias) {
-        return entryMapping.getSourceMapping(alias);
+        return entryConfig.getSourceMapping(alias);
     }
 
     public Collection<SourceMapping> getEffectiveSourceMappings() {
          Collection<SourceMapping> list = new ArrayList<SourceMapping>();
-         list.addAll(entryMapping.getSourceMappings());
+         list.addAll(entryConfig.getSourceMappings());
 
          if (parent != null) list.addAll(parent.getEffectiveSourceMappings());
 
@@ -388,15 +409,20 @@ public class Entry implements Cloneable {
 
     public boolean isDynamic() {
 
-        boolean dynamic = entryMapping.isDynamic();
+        boolean dynamic = entryConfig.isDynamic();
 
-        //log.debug("Mapping "+entryMapping.getDn()+" is "+(dynamic ? "dynamic" : "not dynamic"));
+        //log.debug("Mapping "+entryConfig.getDn()+" is "+(dynamic ? "dynamic" : "not dynamic"));
         return dynamic || parent != null && parent.isDynamic();
 
     }
 
     public String getEngineName() {
-        return entryMapping.getEngineName();
+        return entryConfig.getEngineName();
+    }
+
+    public Session getSession() throws Exception {
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        return sessionManager.newAdminSession();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -616,70 +642,112 @@ public class Entry implements Cloneable {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
+    public boolean contains(DN dn) throws Exception {
 
-        if (debug) log.debug("Finding matching entries for "+dn+":");
+        DN entryDn = getDn();
+
+        int entryDnSize = entryDn.getSize();
+        int dnSize      = dn.getSize();
+
+        if (dnSize < entryDnSize) {
+            return false;
+        }
+
+        if (entryDnSize == dnSize) {
+            return dn.matches(entryDn);
+        }
+
+        if (!dn.endsWith(entryDn)) {
+            return false;
+        }
+
+        for (Entry child : children) {
+            boolean b = child.contains(dn);
+            if (b) return true;
+        }
+
+        return false;
+    }
+
+    public Collection<Entry> findEntries(DN dn) throws Exception {
 
         if (dn == null) return EMPTY_ENTRIES;
 
-        DN thisDn = getDn();
-        int level = thisDn.getSize() - 1;
-        int length = dn.getSize();
+        DN entryDn        = getDn();
+        if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
-        if (!dn.endsWith(thisDn)) {
-            //if (debug) log.debug("Doesn't match "+thisDn);
+        int entryDnLength = entryDn.getSize();
+        int dnLength      = dn.getSize();
+
+        if (dnLength == 0 && entryDnLength == 0) { // Root DSE
+            Collection<Entry> results = new ArrayList<Entry>();
+            results.add(this);
+            return results;
+        }
+
+        if (!dn.endsWith(entryDn)) {
+            //if (debug) log.debug("Doesn't match "+entryDn);
             return EMPTY_ENTRIES;
         }
 
-        if (level < length - 1) { // children has priority
-            Collection<Entry> results = new ArrayList<Entry>();
+        if (debug) log.debug("Searching children of \""+entryDn+"\".");
+
+        Collection<Entry> results = new ArrayList<Entry>();
+
+        if (dnLength > entryDnLength) { // children has priority
             for (Entry child : children) {
-                Collection<Entry> list = child.findEntries(dn, level + 1);
+                Collection<Entry> list = child.findEntries(dn);
                 results.addAll(list);
             }
             return results;
         }
 
-        Collection<Entry> results = new ArrayList<Entry>();
         results.add(this);
         
-        if (debug) log.debug("Found entry "+getDn());
+        if (debug) log.debug("Found entry \""+entryDn+"\".");
 
         return results;
     }
 
     public Collection<Entry> findEntries(DN dn, int level) throws Exception {
 
-        RDN thisRdn = getRdn();
-        int length = dn.getSize();
-        RDN rdn = dn.get(length - level - 1);
+        if (debug) log.debug("Finding matching entries for "+dn+":");
 
-        if (!thisRdn.matches(rdn)) {
-            //if (debug) log.debug("Doesn't match with "+getDn());
+        if (dn == null) return EMPTY_ENTRIES;
+
+        DN entryDn        = getDn();
+
+        int entryDnLength = entryDn.getSize();
+        int dnLength      = dn.getSize();
+
+        RDN entryRdn      = getRdn();
+        RDN rdn           = dn.get(dnLength - entryDnLength - 1);
+
+        if (!entryRdn.matches(rdn)) {
+            if (debug) log.debug("Doesn't match with "+entryDn);
             return EMPTY_ENTRIES;
         }
 
-        if (level < length - 1) { // children has priority
-            Collection<Entry> results = new ArrayList<Entry>();
+        Collection<Entry> results = new ArrayList<Entry>();
+
+        if (dnLength > entryDnLength) { // children has priority
             for (Entry child : children) {
-                Collection<Entry> list = child.findEntries(dn, level + 1);
+                Collection<Entry> list = child.findEntries(dn, entryDnLength);
                 results.addAll(list);
             }
             return results;
         }
 
-        Collection<Entry> results = new ArrayList<Entry>();
         results.add(this);
         
-        if (debug) log.debug("Found entry "+getDn());
+        if (debug) log.debug("Found entry "+entryDn);
 
         return results;
     }
 
     public SearchResult find(DN dn) throws Exception {
 
-        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
-        Session session = sessionManager.newAdminSession();
+        Session session = getSession();
 
         try {
             return find(session, dn);
@@ -958,7 +1026,7 @@ public class Entry implements Cloneable {
 
             if (base == this) {
 
-                if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
+                if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
 
                 for (Entry child : children) {
                     child.search(session, base, sourceValues, request, response);
@@ -980,7 +1048,7 @@ public class Entry implements Cloneable {
                 // ignore
             }
 
-            if (debug) log.debug("Searching children of "+entryMapping.getDn()+" ("+children.size()+")");
+            if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
 
             for (Entry child : children) {
                 child.search(session, base, sourceValues, request, response);
@@ -1020,7 +1088,7 @@ public class Entry implements Cloneable {
             return;
         }
 
-        if (debug) log.debug("Searching entry "+entryMapping.getDn());
+        if (debug) log.debug("Searching entry "+ entryConfig.getDn());
 
         final Cache cache;
 
@@ -1132,7 +1200,7 @@ public class Entry implements Cloneable {
         db.set(rdn);
 
         if (parent == null) {
-            db.append(entryMapping.getParentDn());
+            db.append(entryConfig.getParentDn());
 
         } else {
             db.append(parent.computeDn(interpreter));
@@ -1147,7 +1215,7 @@ public class Entry implements Cloneable {
 
         RDNBuilder rb = new RDNBuilder();
 
-        for (AttributeMapping attributeMapping : entryMapping.getRdnAttributeMappings()) {
+        for (AttributeMapping attributeMapping : entryConfig.getRdnAttributeMappings()) {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(attributeMapping);
@@ -1165,7 +1233,7 @@ public class Entry implements Cloneable {
 
         Attributes attributes = new Attributes();
 
-        for (AttributeMapping attributeMapping : entryMapping.getAttributeMappings()) {
+        for (AttributeMapping attributeMapping : entryConfig.getAttributeMappings()) {
 
             Object value = interpreter.eval(attributeMapping);
             //log.debug("Attribute "+attributeMapping.getName()+": "+value);
@@ -1178,7 +1246,7 @@ public class Entry implements Cloneable {
             }
         }
 
-        for (String objectClass : entryMapping.getObjectClasses()) {
+        for (String objectClass : entryConfig.getObjectClasses()) {
             attributes.addValue("objectClass", objectClass);
         }
 
@@ -1296,7 +1364,7 @@ public class Entry implements Cloneable {
     }
 
     public int hashCode() {
-        return entryMapping.hashCode();
+        return entryConfig.hashCode();
     }
 
     boolean equals(Object o1, Object o2) {
@@ -1311,7 +1379,7 @@ public class Entry implements Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         Entry entry = (Entry)object;
-        if (!equals(entryMapping, entry.entryMapping)) return false;
+        if (!equals(entryConfig, entry.entryConfig)) return false;
 
         return true;
     }
@@ -1321,7 +1389,7 @@ public class Entry implements Cloneable {
         Entry entry = (Entry)super.clone();
 
         try {
-            entry.entryMapping = (EntryMapping)entryMapping.clone();
+            entry.entryConfig = (EntryConfig) entryConfig.clone();
             entry.entryContext = entryContext;
 
             entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();

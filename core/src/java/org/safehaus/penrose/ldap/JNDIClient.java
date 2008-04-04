@@ -926,7 +926,7 @@ public class JNDIClient implements Cloneable {
 
         if (debug) log.debug("Searching "+schemaDn+" ...");
 
-        Schema schema = new Schema();
+        Schema schema = new Schema("ad");
 
         getActiveDirectoryAttributeTypes(schema, schemaDn);
         getActiveDirectoryObjectClasses(schema, schemaDn);
@@ -1172,7 +1172,7 @@ public class JNDIClient implements Cloneable {
         LdapContext context = getConnection();
 
         try {
-            Schema schema = new Schema();
+            Schema schema = new Schema("ldap");
 
             if (debug) log.debug("Searching "+schemaDn+" ...");
 

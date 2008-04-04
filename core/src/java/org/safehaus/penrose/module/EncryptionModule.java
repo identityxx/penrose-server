@@ -32,10 +32,6 @@ public class EncryptionModule extends Module {
 
     public void init() throws Exception {
 
-        Class clazz = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
-        Provider provider = (Provider)clazz.newInstance();
-        Security.addProvider(provider);
-
         verbose = Boolean.parseBoolean(getParameter("verbose"));
 
         if (verbose) {

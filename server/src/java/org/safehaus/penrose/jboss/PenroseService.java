@@ -19,7 +19,7 @@ package org.safehaus.penrose.jboss;
 
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.service.Services;
+import org.safehaus.penrose.service.ServiceManager;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -84,7 +84,7 @@ public class PenroseService implements PenroseServiceMBean {
 
     public Collection getServiceNames() throws Exception {
         Collection serviceNames = new ArrayList();
-        Services serviceManager = penroseServer.getServices();
+        ServiceManager serviceManager = penroseServer.getServiceManager();
         serviceNames.addAll(serviceManager.getServiceNames());
         return serviceNames;
     }

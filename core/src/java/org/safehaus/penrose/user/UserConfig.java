@@ -19,12 +19,13 @@ package org.safehaus.penrose.user;
 
 import org.safehaus.penrose.ldap.DN;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * @author Endi S. Dewata
  */
-public class UserConfig implements Cloneable {
+public class UserConfig implements Serializable, Cloneable {
 
     private DN dn;
     private byte[] password;

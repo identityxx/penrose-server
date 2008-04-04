@@ -18,13 +18,22 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.connection.ConnectionConfigs;
+import org.safehaus.penrose.connection.ConnectionConfigManager;
+import org.safehaus.penrose.connection.ConnectionReader;
+import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
-import org.safehaus.penrose.module.ModuleConfigs;
+import org.safehaus.penrose.module.ModuleConfigManager;
+import org.safehaus.penrose.module.ModuleReader;
+import org.safehaus.penrose.module.ModuleWriter;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
-import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.SourceConfigManager;
+import org.safehaus.penrose.source.SourceReader;
+import org.safehaus.penrose.source.SourceWriter;
+import org.safehaus.penrose.mapping.MappingReader;
+import org.safehaus.penrose.mapping.MappingWriter;
 
+import java.io.File;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.*;
@@ -32,7 +41,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class PartitionConfig implements Serializable, PartitionConfigMBean, Cloneable {
+public class PartitionConfig implements Serializable, Cloneable {
 
     public final static String DEFAULT_PARTITION_CLASS = Partition.class.getName();
     protected boolean enabled = true;
@@ -41,24 +50,21 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
     protected String description;
     protected String partitionClass = DEFAULT_PARTITION_CLASS;
 
-    protected Collection<String> depends = new ArrayList<String>();
+    protected Collection<String>     depends = new ArrayList<String>();
 
     protected Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
     protected Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    protected Map<String,String> parameters = new LinkedHashMap<String,String>();
+    protected Map<String,String>      parameters = new LinkedHashMap<String,String>();
 
-    protected ConnectionConfigs connectionConfigs = new ConnectionConfigs();
-    protected SourceConfigs     sourceConfigs     = new SourceConfigs();
-    protected DirectoryConfig   directoryConfig   = new DirectoryConfig();
-    protected ModuleConfigs     moduleConfigs     = new ModuleConfigs();
+    protected ConnectionConfigManager connectionConfigManager = new ConnectionConfigManager();
+    protected SourceConfigManager     sourceConfigManager     = new SourceConfigManager();
+    protected DirectoryConfig         directoryConfig         = new DirectoryConfig();
+    protected ModuleConfigManager     moduleConfigManager     = new ModuleConfigManager();
 
-    protected SchedulerConfig   schedulerConfig;
+    protected SchedulerConfig         schedulerConfig;
 
-    protected Collection<URL>   classPaths = new ArrayList<URL>();
-
-    public PartitionConfig() {
-    }
+    protected Collection<URL>         classPaths              = new ArrayList<URL>();
 
     public PartitionConfig(String name) {
         this.name = name;
@@ -157,10 +163,10 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         partitionConfig.parameters = new LinkedHashMap<String,String>();
         partitionConfig.parameters.putAll(parameters);
 
-        partitionConfig.connectionConfigs = (ConnectionConfigs) connectionConfigs.clone();
-        partitionConfig.sourceConfigs = (SourceConfigs) sourceConfigs.clone();
+        partitionConfig.connectionConfigManager = (ConnectionConfigManager) connectionConfigManager.clone();
+        partitionConfig.sourceConfigManager = (SourceConfigManager) sourceConfigManager.clone();
         partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
-        partitionConfig.moduleConfigs = (ModuleConfigs) moduleConfigs.clone();
+        partitionConfig.moduleConfigManager = (ModuleConfigManager) moduleConfigManager.clone();
 
         partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
 
@@ -170,20 +176,20 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
         return partitionConfig;
     }
 
-    public ConnectionConfigs getConnectionConfigs() {
-        return connectionConfigs;
+    public ConnectionConfigManager getConnectionConfigManager() {
+        return connectionConfigManager;
     }
 
-    public SourceConfigs getSourceConfigs() {
-        return sourceConfigs;
+    public SourceConfigManager getSourceConfigManager() {
+        return sourceConfigManager;
     }
 
     public DirectoryConfig getDirectoryConfig() {
         return directoryConfig;
     }
 
-    public ModuleConfigs getModuleConfigs() {
-        return moduleConfigs;
+    public ModuleConfigManager getModuleConfigManager() {
+        return moduleConfigManager;
     }
 
     public boolean isEnabled() {
@@ -266,11 +272,69 @@ public class PartitionConfig implements Serializable, PartitionConfigMBean, Clon
             addDepend(depend);
         }
     }
+
+    public String getStringDepends() {
+        StringBuilder sb = new StringBuilder();
+        for (String depend : depends) {
+            if (sb.length() > 0) sb.append(",");
+            sb.append(depend);
+        }
+        return sb.toString();
+    }
+
     public void addDepend(String depend) {
         depends.add(depend);
     }
 
     public void removeDepend(String depend) {
         depends.remove(depend);
+    }
+
+    public void load(File partitionDir) throws Exception {
+
+        File baseDir = new File(partitionDir, "DIR-INF");
+
+        PartitionReader reader = new PartitionReader();
+        reader.read(baseDir, this);
+
+        File connectionsXml = new File(baseDir, "connections.xml");
+        ConnectionReader connectionReader = new ConnectionReader();
+        connectionReader.read(connectionsXml, connectionConfigManager);
+
+        File sourcesXml = new File(baseDir, "sources.xml");
+        SourceReader sourceReader = new SourceReader();
+        sourceReader.read(sourcesXml, sourceConfigManager);
+
+        File mappingXml = new File(baseDir, "mapping.xml");
+        MappingReader mappingReader = new MappingReader();
+        mappingReader.read(mappingXml, directoryConfig);
+
+        File modulesXml = new File(baseDir, "modules.xml");
+        ModuleReader moduleReader = new ModuleReader();
+        moduleReader.read(modulesXml, moduleConfigManager);
+    }
+
+    public void store(File partitionDir) throws Exception {
+
+        File baseDir = new File(partitionDir, "DIR-INF");
+
+        PartitionWriter partitionWriter = new PartitionWriter();
+        partitionWriter.write(baseDir, this);
+
+        File connectionsXml = new File(baseDir, "connections.xml");
+        ConnectionWriter connectionWriter = new ConnectionWriter();
+        connectionWriter.write(connectionsXml, connectionConfigManager);
+
+        File sourcesXml = new File(baseDir, "sources.xml");
+        SourceWriter sourceWriter = new SourceWriter();
+        sourceWriter.write(sourcesXml, sourceConfigManager);
+
+        File mappingXml = new File(baseDir, "mapping.xml");
+        MappingWriter mappingWriter = new MappingWriter();
+        mappingWriter.write(mappingXml, directoryConfig);
+
+        File modulesXml = new File(baseDir, "modules.xml");
+        ModuleWriter moduleWriter = new ModuleWriter();
+        moduleWriter.write(modulesXml, moduleConfigManager);
     }
 }

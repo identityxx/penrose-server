@@ -18,15 +18,11 @@
 package org.safehaus.penrose.ldap;
 
 import org.ietf.ldap.*;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.SchemaParser;
+import org.safehaus.penrose.schema.*;
 import org.safehaus.penrose.util.BinaryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StringReader;
 import java.util.*;
 
 public class LDAPClient implements Cloneable, LDAPAuthHandler {
@@ -55,6 +51,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public String bindDn;
     public byte[] bindPassword;
+
+    public String referral;
 
     public LDAPClient(String url) throws Exception {
         this(new LDAPConnectionFactory(url), false);
@@ -87,24 +85,28 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         bindDn       = connectionFactory.bindDn;
         bindPassword = connectionFactory.bindPassword;
 
+        referral     = connectionFactory.referral;
+        
         binaryAttributes.addAll(connectionFactory.binaryAttributes);
     }
 
-    public void connect() throws Exception {
+    public synchronized void connect() throws Exception {
 
         if (connection == null) {
             log.debug("Creating new LDAP connection.");
             connection = connectionFactory.createConnection();
-            initConnection();
-
-        } else if (!connection.isConnected()) {
-            log.debug("Not connected, creating LDAP connection.");
-            connectionFactory.connect(connection);
-            initConnection();
         }
+
+        initConnection();
     }
 
     public void initConnection() throws Exception {
+        
+        if (!connection.isConnected()) {
+            log.debug("Disconnected, recreating LDAP connection.");
+            connectionFactory.connect(connection);
+        }
+
         if (bindDn != null && bindPassword != null) {
             log.debug("Binding as "+bindDn+".");
             connection.bind(3, bindDn, bindPassword);
@@ -121,21 +123,26 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return new LDAPAuthProvider(bindDn, bindPassword);
     }
 
-    public void close() throws Exception {
+    public synchronized void close() throws Exception {
         log.debug("Closing LDAP connection.");
-        connection.disconnect();
+        if (connection != null) connection.disconnect();
     }
 
-    public LDAPConnection getConnection() throws Exception {
+    public synchronized LDAPConnection getConnection() throws Exception {
         connect();
         return connection;
+    }
+
+    public void initConstraints(LDAPConstraints constraints) throws Exception {
+        boolean referralFollowing = "follow".equals(referral);
+        constraints.setReferralFollowing(referralFollowing);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void add(
+    public synchronized void add(
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -167,7 +174,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         }
 
         LDAPConstraints constraints = new LDAPConstraints();
-        constraints.setReferralFollowing(true);
+        initConstraints(constraints);
 
         Collection<LDAPControl> requestControls = convertControls(request.getControls());
         constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
@@ -187,7 +194,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connection.add(entry, constraints);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -197,7 +204,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Bind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void bind(
+    public synchronized void bind(
             BindRequest request,
             BindResponse response
     ) throws Exception {
@@ -220,7 +227,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             this.bindPassword = bindPassword;
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -230,7 +237,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public boolean compare(
+    public synchronized boolean compare(
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
@@ -259,7 +266,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         }
 
         LDAPConstraints constraints = new LDAPConstraints();
-        constraints.setReferralFollowing(true);
+        initConstraints(constraints);
 
         Collection<LDAPControl> requestControls = convertControls(request.getControls());
         constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
@@ -277,7 +284,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             return connection.compare(dn, attr, constraints);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -287,7 +294,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Delete
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void delete(
+    public synchronized void delete(
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -297,7 +304,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         if (warn) log.warn("Deleting "+dn+".");
 
         LDAPConstraints constraints = new LDAPConstraints();
-        constraints.setReferralFollowing(true);
+        initConstraints(constraints);
 
         Collection<LDAPControl> requestControls = convertControls(request.getControls());
         constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
@@ -315,7 +322,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connection.delete(dn, constraints);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -325,7 +332,11 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResult find(String dn) throws Exception {
+    public synchronized SearchResult find(String dn) throws Exception {
+        return find(new DN(dn));
+    }
+
+    public synchronized SearchResult find(DN dn) throws Exception {
 
         SearchRequest request = new SearchRequest();
         request.setDn(dn);
@@ -344,7 +355,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Modify
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void modify(
+    public synchronized void modify(
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -393,7 +404,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPModification modifications[] = list.toArray(new LDAPModification[list.size()]);
 
         LDAPConstraints constraints = new LDAPConstraints();
-        constraints.setReferralFollowing(true);
+        initConstraints(constraints);
 
         Collection<LDAPControl> requestControls = convertControls(request.getControls());
         constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
@@ -411,7 +422,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connection.modify(dn, modifications, constraints);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -421,7 +432,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // ModRdn
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void modrdn(
+    public synchronized void modrdn(
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -433,7 +444,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         if (warn) log.warn("Renaming "+dn+" to "+newRdn+".");
 
         LDAPConstraints constraints = new LDAPConstraints();
-        constraints.setReferralFollowing(true);
+        initConstraints(constraints);
 
         Collection<LDAPControl> requestControls = convertControls(request.getControls());
         constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
@@ -451,7 +462,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connection.rename(dn, newRdn, deleteOldRdn, constraints);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -461,7 +472,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void search(
+    public synchronized void search(
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
@@ -473,7 +484,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
                 log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
             }
 
-            String baseDn = request.getDn().toString();
+            String baseDn = request.getDn() == null ? "" : request.getDn().toString();
             String filter = request.getFilter() == null ? "(objectClass=*)" : request.getFilter().toString();
             int scope = request.getScope();
 
@@ -494,7 +505,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             }
 
             LDAPSearchConstraints constraints = new LDAPSearchConstraints();
-            constraints.setReferralFollowing(true);
+            initConstraints(constraints);
+
             constraints.setMaxResults((int)sizeLimit);
             constraints.setTimeLimit((int)timeLimit);
 
@@ -513,13 +525,31 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
             while (rs.hasMore()) {
                 if (response.isClosed()) return;
-                LDAPEntry entry = rs.next();
-                response.add(createSearchResult(entry));
+
+                try {
+                    LDAPEntry entry = rs.next();
+                    SearchResult result = createSearchResult(entry);
+                    response.add(result);
+
+                } catch (LDAPReferralException e) {
+                    log.debug("Referrals:");
+                    for (String ref : e.getReferrals()) {
+                        log.debug(" - "+ref);
+                    }
+
+                    if ("throw".equals(referral)) {
+                        SearchResult reference = createReference(e);
+                        //response.add(reference);
+                        response.addReferral(reference);
+
+                    } else { // ignore
+
+                    }
+                }
             }
 
-
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
 
@@ -532,7 +562,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Unbind
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void unbind(
+    public synchronized void unbind(
             UnbindRequest request,
             UnbindResponse response
     ) throws Exception {
@@ -543,7 +573,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connection.bind(3, null, null);
 
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
             response.setException(e);
             throw e;
         }
@@ -584,6 +614,31 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return new SearchResult(dn, attributes);
     }
 
+    public SearchResult createReference(LDAPReferralException e) throws Exception {
+
+        DN dn = new DN();
+
+        Attributes attributes = new Attributes();
+        attributes.addValue("objectClass", "referral");
+        attributes.addValue("objectClass", "extensibleObject");
+
+        for (String ref : e.getReferrals()) {
+            attributes.addValue("ref", ref);
+
+            if (dn.isEmpty()) {
+                LDAPUrl url = new LDAPUrl(ref);
+                dn = new DN(url.getDN());
+                RDN rdn = dn.getRdn();
+                for (String name : rdn.getNames()) {
+                    Object value = rdn.get(name);
+                    attributes.addValue(name, value);
+                }
+            }
+        }
+        
+        return new SearchResult(dn, attributes);
+    }
+
     public SearchResult getRootDSE() throws Exception {
 
         if (rootDSE != null) return rootDSE;
@@ -607,22 +662,6 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return rootDSE;
     }
 
-    public Collection<String> getNamingContexts() throws Exception {
-        getRootDSE();
-
-        Collection<String> list = new ArrayList<String>();
-
-        Attribute namingContexts = rootDSE.getAttributes().get("namingContexts");
-        if (namingContexts == null) return list;
-
-        for (Object value : namingContexts.getValues()) {
-            String namingContext = (String)value;
-            list.add(namingContext);
-        }
-
-        return list;
-    }
-
     public Schema getSchema() throws Exception {
 
         if (schema != null) return schema;
@@ -635,22 +674,23 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             Attribute schemaNamingContext = rootDSE.getAttributes().get("schemaNamingContext");
             Attribute subschemaSubentry = rootDSE.getAttributes().get("subschemaSubentry");
 
+            SchemaUtil schemaUtil = new SchemaUtil();
             String schemaDn;
 
             if (schemaNamingContext != null) {
                 schemaDn = (String)schemaNamingContext.getValue();
                 if (debug) log.debug("Active Directory Schema: "+schemaDn);
-                schema = getActiveDirectorySchema(schemaDn);
+                schema = schemaUtil.getActiveDirectorySchema(this, schemaDn);
 
             } else if (subschemaSubentry != null) {
                 schemaDn = (String)subschemaSubentry.getValue();
                 if (debug) log.debug("Standard LDAP Schema: "+schemaDn);
-                schema = getLDAPSchema(schemaDn);
+                schema = schemaUtil.getLDAPSchema(this, schemaDn);
 
             } else {
                 schemaDn = "cn=schema";
                 if (debug) log.debug("Default Schema: "+schemaDn);
-                schema = getLDAPSchema(schemaDn);
+                schema = schemaUtil.getLDAPSchema(this, schemaDn);
             }
 
         } catch (Exception e) {
@@ -659,195 +699,6 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         }
 
         return schema;
-    }
-
-    public Schema getActiveDirectorySchema(String schemaDn) throws Exception {
-
-        if (debug) log.debug("Searching "+schemaDn+" ...");
-
-        Schema schema = new Schema();
-
-        getActiveDirectoryAttributeTypes(schema, schemaDn);
-        getActiveDirectoryObjectClasses(schema, schemaDn);
-
-        return schema;
-    }
-
-    public void getActiveDirectoryAttributeTypes(Schema schema, String schemaDn) throws Exception {
-
-        if (debug) log.debug("Search \""+ schemaDn +"\"");
-
-        LDAPSearchConstraints constraints = new LDAPSearchConstraints();
-
-        LDAPConnection connection = getConnection();
-        LDAPSearchResults ne = connection.search(schemaDn, LDAPConnection.SCOPE_ONE, "(objectClass=attributeSchema)", null, false, constraints);
-
-        while (ne.hasMore()) {
-            LDAPEntry sr = ne.next();
-            LDAPAttributeSet attributes = sr.getAttributeSet();
-
-            LDAPAttribute lDAPDisplayName = attributes.getAttribute("lDAPDisplayName");
-            String atName = (String)lDAPDisplayName.getStringValues().nextElement();
-
-            AttributeType at = new AttributeType();
-            at.setName(atName);
-
-            LDAPAttribute attributeID = attributes.getAttribute("attributeID");
-            if (attributeID != null) at.setOid((String)attributeID.getStringValues().nextElement());
-
-            LDAPAttribute adminDescription = attributes.getAttribute("adminDescription");
-            if (adminDescription != null) at.setDescription((String)adminDescription.getStringValues().nextElement());
-
-            LDAPAttribute attributeSyntax = attributes.getAttribute("attributeSyntax");
-            if (attributeSyntax != null) at.setSyntax((String)attributeSyntax.getStringValues().nextElement());
-
-            LDAPAttribute isSingleValued = attributes.getAttribute("isSingleValued");
-            if (isSingleValued != null) at.setSingleValued(Boolean.valueOf((String)isSingleValued.getStringValues().nextElement()));
-
-            schema.addAttributeType(at);
-        }
-    }
-
-    public void getActiveDirectoryObjectClasses(Schema schema, String schemaDn) throws Exception {
-
-        if (debug) log.debug("Search \""+ schemaDn +"\"");
-
-        LDAPSearchConstraints constraints = new LDAPSearchConstraints();
-
-        LDAPConnection connection = getConnection();
-        LDAPSearchResults ne = connection.search(schemaDn, LDAPConnection.SCOPE_ONE, "(objectClass=classSchema)", null, false, constraints);
-
-        while (ne.hasMore()) {
-            LDAPEntry sr = ne.next();
-            LDAPAttributeSet attributes = sr.getAttributeSet();
-
-            LDAPAttribute lDAPDisplayName = attributes.getAttribute("lDAPDisplayName");
-            String ocName = (String)lDAPDisplayName.getStringValues().nextElement();
-
-            ObjectClass oc = new ObjectClass();
-            oc.setName(ocName);
-
-            LDAPAttribute governsID = attributes.getAttribute("governsID");
-            if (governsID != null) oc.setOid((String)governsID.getStringValues().nextElement());
-
-            LDAPAttribute adminDescription = attributes.getAttribute("adminDescription");
-            if (adminDescription != null) oc.setDescription((String)adminDescription.getStringValues().nextElement());
-
-            LDAPAttribute mustContain = attributes.getAttribute("mustContain");
-            if (mustContain != null) {
-                Enumeration ne2 = mustContain.getStringValues();
-                while (ne2.hasMoreElements()) {
-                    String requiredAttribute = (String)ne2.nextElement();
-                    oc.addRequiredAttribute(requiredAttribute);
-                }
-            }
-
-            LDAPAttribute systemMustContain = attributes.getAttribute("systemMustContain");
-            if (systemMustContain != null) {
-                Enumeration ne2 = systemMustContain.getStringValues();
-                while (ne2.hasMoreElements()) {
-                    String requiredAttribute = (String)ne2.nextElement();
-                    oc.addRequiredAttribute(requiredAttribute);
-                }
-            }
-
-            LDAPAttribute mayContain = attributes.getAttribute("mayContain");
-            if (mayContain != null) {
-                Enumeration ne2 = mayContain.getStringValues();
-                while (ne2.hasMoreElements()) {
-                    String optionalAttribute = (String)ne2.nextElement();
-                    oc.addOptionalAttribute(optionalAttribute);
-                }
-            }
-
-            LDAPAttribute systemMayContain = attributes.getAttribute("systemMayContain");
-            if (systemMayContain != null) {
-                Enumeration ne2 = systemMayContain.getStringValues();
-                while (ne2.hasMoreElements()) {
-                    String optionalAttribute = (String)ne2.nextElement();
-                    oc.addOptionalAttribute(optionalAttribute);
-                }
-            }
-
-            schema.addObjectClass(oc);
-        }
-    }
-
-    public Schema getLDAPSchema(String schemaDn) throws Exception {
-
-        Schema schema = new Schema();
-
-        if (debug) log.debug("Searching "+schemaDn+" ...");
-
-        LDAPSearchConstraints ctls = new LDAPSearchConstraints();
-
-        LDAPConnection connection = getConnection();
-        LDAPSearchResults ne = connection.search(
-                schemaDn,
-                LDAPConnection.SCOPE_BASE,
-                "(objectClass=*)",
-                new String[] { "attributeTypes", "objectClasses" },
-                false,
-                ctls
-        );
-
-        LDAPEntry sr = ne.next();
-
-        LDAPAttributeSet attributes = sr.getAttributeSet();
-
-        //log.debug("Object Classes:");
-        LDAPAttribute objectClasses = attributes.getAttribute("objectClasses");
-
-        Enumeration ne2 = objectClasses.getStringValues();
-        while (ne2.hasMoreElements()) {
-            String value = (String)ne2.nextElement();
-            ObjectClass oc = parseObjectClass(value);
-            if (oc == null) continue;
-
-            //log.debug(" - "+oc.getName());
-            schema.addObjectClass(oc);
-        }
-
-        //log.debug("Attribute Types:");
-        LDAPAttribute attributeTypes = attributes.getAttribute("attributeTypes");
-
-        Enumeration ne3 = attributeTypes.getStringValues();
-        while (ne3.hasMoreElements()) {
-            String value = (String)ne3.nextElement();
-            AttributeType at = parseAttributeType(value);
-            if (at == null) continue;
-
-            //log.debug(" - "+at.getName());
-            schema.addAttributeType(at);
-        }
-
-        return schema;
-    }
-
-    public AttributeType parseAttributeType(String line) throws Exception {
-        try {
-            line = "attributetype "+line;
-            SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (AttributeType)schema.iterator().next();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return null;
-        }
-    }
-
-    public ObjectClass parseObjectClass(String line) throws Exception {
-        try {
-            line = "objectclass "+line;
-            SchemaParser parser = new SchemaParser(new StringReader(line));
-            Collection schema = parser.parse();
-            return (ObjectClass)schema.iterator().next();
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return null;
-        }
     }
 
     public Collection<LDAPControl> convertControls(Collection<org.safehaus.penrose.control.Control> controls) throws Exception {
@@ -864,7 +715,11 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return list;
     }
 
-    public Collection<SearchResult> getChildren(String baseDn) throws Exception {
+    public Collection<SearchResult> findChildren(String baseDn) throws Exception {
+        return findChildren(new DN(baseDn));
+    }
+
+    public Collection<SearchResult> findChildren(DN baseDn) throws Exception {
 
         Collection<SearchResult> results = new ArrayList<SearchResult>();
 

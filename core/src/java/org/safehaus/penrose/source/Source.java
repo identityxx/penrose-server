@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Endi S. Dewata
  */
-public class Source implements Cloneable, SourceMBean {
+public class Source implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
@@ -72,6 +72,11 @@ public class Source implements Cloneable, SourceMBean {
 
     public String getName() {
         return sourceConfig.getName();
+    }
+
+    public String getAdapterName() {
+        Connection connection = sourceContext.getConnection();
+        return connection.getAdapterName();
     }
 
     public String getConnectionName() {
@@ -151,20 +156,23 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public AddResponse add(
+            Session session,
             String dn,
             Attributes attributes
     ) throws Exception {
-        return add(new DN(dn), attributes);
+        return add(session, new DN(dn), attributes);
     }
 
     public AddResponse add(
+            Session session,
             RDN rdn,
             Attributes attributes
     ) throws Exception {
-        return add(new DN(rdn), attributes);
+        return add(session, new DN(rdn), attributes);
     }
 
     public AddResponse add(
+            Session session,
             DN dn,
             Attributes attributes
     ) throws Exception {
@@ -175,17 +183,9 @@ public class Source implements Cloneable, SourceMBean {
 
         AddResponse response = new AddResponse();
 
-        add(request, response);
+        add(session, request, response);
 
         return response;
-    }
-
-    public void add(
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-
-        add(null, request, response);
     }
 
     public void add(
@@ -270,20 +270,23 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public BindResponse bind(
+            Session session,
             String dn,
             byte[] password
     ) throws Exception {
-        return bind(new DN(dn), password);
+        return bind(session, new DN(dn), password);
     }
 
     public BindResponse bind(
+            Session session,
             RDN rdn,
             byte[] password
     ) throws Exception {
-        return bind(new DN(rdn), password);
+        return bind(session, new DN(rdn), password);
     }
 
     public BindResponse bind(
+            Session session,
             DN dn,
             byte[] password
     ) throws Exception {
@@ -294,17 +297,9 @@ public class Source implements Cloneable, SourceMBean {
 
         BindResponse response = new BindResponse();
 
-        bind(request, response);
+        bind(session, request, response);
 
         return response;
-    }
-
-    public void bind(
-            BindRequest request,
-            BindResponse response
-    ) throws Exception {
-
-        bind(null, request, response);
     }
 
     public void bind(
@@ -487,18 +482,21 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public DeleteResponse delete(
+            Session session,
             String dn
     ) throws Exception {
-        return delete(new DN(dn));
+        return delete(session, new DN(dn));
     }
 
     public DeleteResponse delete(
+            Session session,
             RDN rdn
     ) throws Exception {
-        return delete(new DN(rdn));
+        return delete(session, new DN(rdn));
     }
 
     public DeleteResponse delete(
+            Session session,
             DN dn
     ) throws Exception {
 
@@ -507,17 +505,9 @@ public class Source implements Cloneable, SourceMBean {
 
         DeleteResponse response = new DeleteResponse();
 
-        delete(request, response);
+        delete(session, request, response);
 
         return response;
-    }
-
-    public void delete(
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-
-        delete(null, request, response);
     }
 
     public void delete(
@@ -590,18 +580,6 @@ public class Source implements Cloneable, SourceMBean {
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchResult find(String dn) throws Exception {
-        return find(new DN(dn));
-    }
-
-    public SearchResult find(RDN rdn) throws Exception {
-        return find(new DN(rdn));
-    }
-
-    public SearchResult find(DN dn) throws Exception {
-        return find(null, dn);
-    }
-
     public SearchResult find(Session session, String dn) throws Exception {
         return find(session, new DN(dn));
     }
@@ -625,20 +603,23 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public ModifyResponse modify(
+            Session session,
             String dn,
             Collection<Modification> modifications
     ) throws Exception {
-        return modify(new DN(dn), modifications);
+        return modify(session, new DN(dn), modifications);
     }
 
     public ModifyResponse modify(
+            Session session,
             RDN rdn,
             Collection<Modification> modifications
     ) throws Exception {
-        return modify(new DN(rdn), modifications);
+        return modify(session, new DN(rdn), modifications);
     }
 
     public ModifyResponse modify(
+            Session session,
             DN dn,
             Collection<Modification> modifications
     ) throws Exception {
@@ -649,17 +630,9 @@ public class Source implements Cloneable, SourceMBean {
 
         ModifyResponse response = new ModifyResponse();
 
-        modify(request, response);
+        modify(session, request, response);
 
         return response;
-    }
-
-    public void modify(
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-
-        modify(null, request, response);
     }
 
     public void modify(
@@ -828,22 +801,25 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public ModRdnResponse modrdn(
+            Session session,
             String dn,
             String newRdn,
             boolean deleteOldRdn
     ) throws Exception {
-        return modrdn(new DN(dn), new RDN(newRdn), deleteOldRdn);
+        return modrdn(session, new DN(dn), new RDN(newRdn), deleteOldRdn);
     }
 
     public ModRdnResponse modrdn(
+            Session session,
             RDN rdn,
             RDN newRdn,
             boolean deleteOldRdn
     ) throws Exception {
-        return modrdn(new DN(rdn), newRdn, deleteOldRdn);
+        return modrdn(session, new DN(rdn), newRdn, deleteOldRdn);
     }
 
     public ModRdnResponse modrdn(
+            Session session,
             DN dn,
             RDN newRdn,
             boolean deleteOldRdn
@@ -856,17 +832,9 @@ public class Source implements Cloneable, SourceMBean {
 
         ModRdnResponse response = new ModRdnResponse();
 
-        modrdn(request, response);
+        modrdn(session, request, response);
 
         return response;
-    }
-
-    public void modrdn(
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-
-        modrdn(null, request, response);
     }
 
     public void modrdn(
@@ -963,27 +931,21 @@ public class Source implements Cloneable, SourceMBean {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public SearchResponse search(
+            Session session,
             String dn,
             String filter,
             int scope
     ) throws Exception {
-        return search(new DN(dn), FilterTool.parseFilter(filter), scope);
+        return search(session, new DN(dn), FilterTool.parseFilter(filter), scope);
     }
 
     public SearchResponse search(
+            Session session,
             RDN rdn,
             Filter filter,
             int scope
     ) throws Exception {
-        return search(new DN(rdn), filter, scope);
-    }
-
-    public SearchResponse search(
-            DN dn,
-            Filter filter,
-            int scope
-    ) throws Exception {
-        return search(null, dn, filter, scope);
+        return search(session, new DN(rdn), filter, scope);
     }
 
     public SearchResponse search(
@@ -1003,13 +965,6 @@ public class Source implements Cloneable, SourceMBean {
         search(session, request, response);
 
         return response;
-    }
-
-    public void search(
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-        search(null, request, response);
     }
 
     public void search(
@@ -1098,7 +1053,7 @@ public class Source implements Cloneable, SourceMBean {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
-    public long getCount() throws Exception {
+    public long getCount(Session session) throws Exception {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 

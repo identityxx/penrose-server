@@ -1,18 +1,16 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.jdbc.UpdateStatement;
-import org.safehaus.penrose.jdbc.UpdateRequest;
-import org.safehaus.penrose.jdbc.Assignment;
-import org.safehaus.penrose.jdbc.Request;
-import org.safehaus.penrose.source.*;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.jdbc.Assignment;
+import org.safehaus.penrose.jdbc.Statement;
+import org.safehaus.penrose.jdbc.UpdateStatement;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.source.Field;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,7 +48,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection<Request> generate() throws Exception {
+    public Collection<Statement> generate() throws Exception {
 
         int sourceCounter = 0;
         for (Iterator i= sources.iterator(); i.hasNext(); sourceCounter++) {
@@ -75,7 +73,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         interpreter.set(sourceValues);
 
@@ -100,7 +98,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             }
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
 
             attributes.setValue(fieldName, value);
         }
@@ -123,10 +121,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         interpreter.clear();
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 
     public void generateSecondaryRequests(
@@ -138,7 +133,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         interpreter.set(newSourceValues);
 
@@ -157,7 +152,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             if (value == null) continue;
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
         Filter filter = null;
@@ -189,9 +184,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         interpreter.clear();
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(0, updateRequest);
+        requests.add(0, statement);
     }
 }

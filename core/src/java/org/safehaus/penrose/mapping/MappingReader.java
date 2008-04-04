@@ -38,6 +38,9 @@ public class MappingReader implements EntityResolver {
     }
 
     public void read(File file, DirectoryConfig mappings) throws Exception {
+
+        if (!file.exists()) return;
+
 		digester.push(mappings);
 		digester.parse(file);
         digester.pop();

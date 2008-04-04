@@ -1,27 +1,19 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.source.Field;
-
 /**
  * @author Endi S. Dewata
  */
 public class Assignment {
 
-    protected Field field;
+    protected String name;
     protected Object value;
 
     public Assignment(Object value) {
         this.value = value;
     }
     
-    public Assignment(FieldRef fieldRef, Object value) {
-        this.field = fieldRef.getField();
-        this.value = value;
-    }
-
-    public Assignment(Field field, Object value) {
-        this.field = field;
+    public Assignment(String name, Object value) {
+        this.name = name;
         this.value = value;
     }
 
@@ -33,11 +25,11 @@ public class Assignment {
         return value;
     }
 
-    public Field getField() {
-        return field;
+    public String getName() {
+        return name;
     }
 
-    public void setField(Field field) {
-        this.field = field;
+    public void setName(String name) {
+        this.name = name;
     }
 }

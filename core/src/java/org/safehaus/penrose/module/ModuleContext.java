@@ -26,6 +26,9 @@ public class ModuleContext {
 
     private Partition partition;
 
+    public ModuleContext() {
+    }
+
     public Partition getPartition() {
         return partition;
     }

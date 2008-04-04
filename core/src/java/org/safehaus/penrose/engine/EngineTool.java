@@ -8,7 +8,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.source.SourceConfigs;
+import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
 import org.slf4j.Logger;
@@ -285,7 +285,7 @@ public class EngineTool {
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfigs sources = partitionConfig.getSourceConfigs();
+        SourceConfigManager sources = partitionConfig.getSourceConfigManager();
         SourceConfig sourceConfig = sources.getSourceConfig(sourceMapping.getSourceName());
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();

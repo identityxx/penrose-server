@@ -17,19 +17,15 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.HashSet;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.Iterator;
 
-public class ObjectClass implements Cloneable, Comparable {
-
-    public Logger log = LoggerFactory.getLogger(getClass());
+public class ObjectClass implements Serializable, Cloneable, Comparable {
 
 	public final static String ABSTRACT   = "ABSTRACT";
 	public final static String STRUCTURAL = "STRUCTURAL";

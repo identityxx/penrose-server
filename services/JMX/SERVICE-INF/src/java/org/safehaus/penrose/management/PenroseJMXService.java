@@ -17,17 +17,16 @@
  */
 package org.safehaus.penrose.management;
 
+import org.safehaus.penrose.service.Service;
+import org.safehaus.penrose.service.ServiceConfig;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
-import javax.management.remote.JMXConnectorServerFactory;
-import java.util.HashMap;
 import java.lang.management.ManagementFactory;
 import java.rmi.registry.LocateRegistry;
-
-import org.safehaus.penrose.service.Service;
-import org.safehaus.penrose.service.ServiceConfig;
+import java.util.HashMap;
 
 /**
  * @author Endi S. Dewata
@@ -41,9 +40,9 @@ public class PenroseJMXService extends Service {
     protected int rmiTransportPort;
 
     protected MBeanServer mbeanServer;
-    protected JMXConnectorServer rmiConnector;
+    protected PenroseConnectorServer connectorServer;
 
-    protected PenroseJMXAuthenticator authenticator;
+    protected PenroseAuthenticator authenticator;
     protected PenroseService penroseService;
 
     static {
@@ -83,13 +82,13 @@ public class PenroseJMXService extends Service {
             //String url = "service:jmx:rmi://localhost:rmiTransportProtocol/jndi:rmi://localhost:rmiProtocol/penrose";
 
             JMXServiceURL serviceURL = new JMXServiceURL(url);
-            authenticator = new PenroseJMXAuthenticator(serviceContext.getPenroseServer().getPenrose());
+            authenticator = new PenroseAuthenticator(serviceContext.getPenroseServer().getPenrose());
 
             HashMap<String,Object> environment = new HashMap<String,Object>();
-            environment.put("jmx.remote.authenticator", authenticator);
+            environment.put(JMXConnectorServer.AUTHENTICATOR, authenticator);
 
-            rmiConnector = JMXConnectorServerFactory.newJMXConnectorServer(serviceURL, environment, mbeanServer);
-            rmiConnector.start();
+            connectorServer = new PenroseConnectorServer(serviceURL, environment, mbeanServer);
+            connectorServer.start();
 
             log.warn("Listening to port "+rmiPort+" (RMI).");
             if (rmiTransportPort != PenroseClient.DEFAULT_RMI_TRANSPORT_PORT) log.warn("Listening to port "+rmiTransportPort+" (RMI Transport).");
@@ -99,7 +98,7 @@ public class PenroseJMXService extends Service {
     public void destroy() throws Exception {
 
         if (rmiPort > 0) {
-            rmiConnector.stop();
+            connectorServer.stop();
         }
 
         penroseService.unregister();
@@ -132,5 +131,45 @@ public class PenroseJMXService extends Service {
     public void unregister(ObjectName objectName) throws Exception {
         //log.debug("Unregistering "+objectName);
         if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName);
+    }
+
+    public int getRmiTransportPort() {
+        return rmiTransportPort;
+    }
+
+    public void setRmiTransportPort(int rmiTransportPort) {
+        this.rmiTransportPort = rmiTransportPort;
+    }
+
+    public MBeanServer getMbeanServer() {
+        return mbeanServer;
+    }
+
+    public void setMbeanServer(MBeanServer mbeanServer) {
+        this.mbeanServer = mbeanServer;
+    }
+
+    public JMXConnectorServer getConnectorServer() {
+        return connectorServer;
+    }
+
+    public void setConnectorServer(PenroseConnectorServer connectorServer) {
+        this.connectorServer = connectorServer;
+    }
+
+    public PenroseAuthenticator getAuthenticator() {
+        return authenticator;
+    }
+
+    public void setAuthenticator(PenroseAuthenticator authenticator) {
+        this.authenticator = authenticator;
+    }
+
+    public PenroseService getPenroseService() {
+        return penroseService;
+    }
+
+    public void setPenroseService(PenroseService penroseService) {
+        this.penroseService = penroseService;
     }
 }

@@ -12,6 +12,9 @@ import org.safehaus.penrose.source.Field;
  */
 public class JDBCChangeLogUtil extends ChangeLogUtil {
 
+    public JDBCChangeLogUtil() {
+    }
+
     public SearchRequest createSearchRequest(Number changeNumber) throws Exception {
 
         SearchRequest request = new SearchRequest();

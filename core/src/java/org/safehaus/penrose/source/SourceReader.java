@@ -36,7 +36,10 @@ public class SourceReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public void read(File file, SourceConfigs sources) throws Exception {
+    public void read(File file, SourceConfigManager sources) throws Exception {
+
+        if (!file.exists()) return;
+
         digester.push(sources);
         digester.parse(file);
         digester.pop();

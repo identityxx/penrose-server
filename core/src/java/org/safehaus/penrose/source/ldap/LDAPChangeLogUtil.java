@@ -14,6 +14,9 @@ import org.safehaus.penrose.source.Field;
  */
 public class LDAPChangeLogUtil extends ChangeLogUtil {
 
+    public LDAPChangeLogUtil() {
+    }
+
     public SearchRequest createSearchRequest(Number changeNumber) throws Exception {
 
         Filter changeLogFilter = null;

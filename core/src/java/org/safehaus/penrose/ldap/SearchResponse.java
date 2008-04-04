@@ -37,7 +37,7 @@ public class SearchResponse extends Response implements Cloneable {
     protected boolean eventsEnabled = true;
     protected transient List<SearchResponseListener> listeners = new ArrayList<SearchResponseListener>();
 
-    protected List<Object> referrals = new ArrayList<Object>();
+    protected LinkedList<SearchResult> referrals = new LinkedList<SearchResult>();
     protected transient Collection<ReferralListener> referralListeners = new ArrayList<ReferralListener>();
 
     public SearchResponse() {
@@ -168,14 +168,15 @@ public class SearchResponse extends Response implements Cloneable {
         return buffer;
     }
 
-    public synchronized void addReferral(Object referral) {
+    public synchronized void addReferral(SearchResult referral) throws Exception {
+        
         referrals.add(referral);
-        fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_ADDED, referral));
-    }
 
-    public synchronized void removeReferral(Object referral) {
-        referrals.remove(referral);
-        fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_REMOVED, referral));
+        if (eventsEnabled) {
+            fireEvent(new ReferralEvent(ReferralEvent.REFERRAL_ADDED, referral));
+        }
+
+        notifyAll();
     }
 
     public synchronized List getReferrals() {
@@ -225,21 +226,21 @@ public class SearchResponse extends Response implements Cloneable {
 
     public synchronized boolean hasNext() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
-        while (!isClosed() && buffer.size() == 0) {
+        while (!isClosed() && buffer.size() == 0 && referrals.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
-        if (buffer.size() == 0 && exception.getResultCode() != LDAP.SUCCESS) throw exception;
+        if (buffer.size() == 0 && referrals.size() == 0 && exception.getResultCode() != LDAP.SUCCESS) throw exception;
 
-        return buffer.size() > 0;
+        return buffer.size() > 0 || referrals.size() > 0;
     }
 
     public synchronized SearchResult next() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
-        while (!isClosed() && buffer.size() == 0) {
+        while (!isClosed() && buffer.size() == 0 && referrals.size() == 0) {
             try {
                 wait();
             } catch (Exception e) {
@@ -248,26 +249,36 @@ public class SearchResponse extends Response implements Cloneable {
             if (exception.getResultCode() != LDAP.SUCCESS) throw exception;
         }
 
-        if (buffer.size() == 0) return null;
+        if (buffer.size() != 0) {
+            SearchResult object = buffer.getFirst();
 
-        SearchResult object = buffer.getFirst();
+            SearchResponseEvent event = null;
+            if (eventsEnabled) {
+                event = new SearchResponseEvent(SearchResponseEvent.REMOVE_EVENT, object);
+                if (!firePreRemoveEvent(event)) return null;
+                object = (SearchResult)event.getObject();
+            }
 
-        SearchResponseEvent event = null;
-        if (eventsEnabled) {
-            event = new SearchResponseEvent(SearchResponseEvent.REMOVE_EVENT, object);
-            if (!firePreRemoveEvent(event)) return null;
-            object = (SearchResult)event.getObject();
+            buffer.removeFirst();
+
+            if (eventsEnabled) {
+                firePostRemoveEvent(event);
+            }
+
+            notifyAll();
+
+            return object;
+
+        } else if (referrals.size() != 0) {
+
+            SearchResult reference = referrals.removeFirst();
+
+            notifyAll();
+
+            throw new SearchReferenceException(reference);
         }
 
-        buffer.removeFirst();
-
-        if (eventsEnabled) {
-            firePostRemoveEvent(event);
-        }
-
-        notifyAll();
-
-        return object;
+        return null;
     }
 
     public synchronized void close() throws Exception {
@@ -335,7 +346,7 @@ public class SearchResponse extends Response implements Cloneable {
             listeners.addAll(response.listeners);
         }
 
-        referrals = new ArrayList<Object>();
+        referrals = new LinkedList<SearchResult>();
         referrals.addAll(response.referrals);
 
         if (response.referralListeners != null) {

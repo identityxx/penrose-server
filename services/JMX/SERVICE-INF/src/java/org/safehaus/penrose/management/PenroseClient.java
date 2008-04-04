@@ -17,20 +17,27 @@
  */
 package org.safehaus.penrose.management;
 
-import org.apache.log4j.*;
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.apache.log4j.Logger;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.management.partition.PartitionManagerClient;
+import org.safehaus.penrose.management.schema.SchemaManagerClient;
+import org.safehaus.penrose.management.service.ServiceManagerClient;
+import org.safehaus.penrose.user.UserConfig;
 
-import javax.management.remote.JMXServiceURL;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
+import javax.management.Attribute;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Collection;
+import java.util.Hashtable;
 
 public class PenroseClient implements PenroseServiceMBean {
 
@@ -139,13 +146,17 @@ public class PenroseClient implements PenroseServiceMBean {
 		objectName = ObjectName.getInstance(getObjectName());
 	}
 
-    public void close() throws Exception {
-        if (JBOSS.equals(type)) {
-            if (context == null) return;
-            context.close();
-        } else {
-            if (connector == null) return;
-            connector.close();
+    public void close() {
+        try {
+            if (JBOSS.equals(type)) {
+                if (context == null) return;
+                context.close();
+            } else {
+                if (connector == null) return;
+                connector.close();
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -173,23 +184,38 @@ public class PenroseClient implements PenroseServiceMBean {
         this.rmiTransportPort = rmiTransportPort;
     }
 
-	public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
+    public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
 
-        //log.debug("Invoking method "+method+"() on "+ objectName +".");
+        log.debug("Invoking method "+method+"() on "+ objectName +".");
 
-		return connection.invoke(objectName, method, paramValues, paramClassNames);
-	}
+        return connection.invoke(objectName, method, paramValues, paramClassNames);
+    }
+
+    public Object getAttribute(String attributeName) throws Exception {
+
+        log.debug("Getting attribute "+ attributeName +" from "+objectName+".");
+
+        return connection.getAttribute(objectName, attributeName);
+    }
+
+    public void setAttribute(String attributeName, Object attributeValue) throws Exception {
+
+        log.debug("Setting attribute "+ attributeName +" from "+objectName+".");
+
+        Attribute attribute = new Attribute(attributeName, attributeValue);
+        connection.setAttribute(objectName, attribute);
+    }
 
     public String getProductName() throws Exception {
-        return (String)connection.getAttribute(objectName, "ProductName");
+        return (String)getAttribute("ProductName");
     }
 
     public String getProductVersion() throws Exception {
-        return (String)connection.getAttribute(objectName, "ProductVersion");
+        return (String)getAttribute("ProductVersion");
     }
 
     public String getHome() throws Exception {
-        return (String)connection.getAttribute(objectName, "Home");
+        return (String)getAttribute("Home");
     }
     
     public void start() throws Exception {
@@ -220,8 +246,8 @@ public class PenroseClient implements PenroseServiceMBean {
         );
     }
 
-    public void renameEntryMapping(String oldDn, String newDn) throws Exception {
-        invoke("renameEntryMapping",
+    public void renameEntryConfig(String oldDn, String newDn) throws Exception {
+        invoke("renameEntryConfig",
                 new Object[] { oldDn, newDn },
                 new String[] { String.class.getName(), String.class.getName() }
         );
@@ -235,62 +261,27 @@ public class PenroseClient implements PenroseServiceMBean {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
+    // Schemas
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public SchemaManagerClient getSchemaManagerClient() throws Exception {
+        return new SchemaManagerClient(this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
     // Partitions
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getPartitionNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(objectName, "PartitionNames");
-    }
-
-    public PartitionConfig getPartitionConfig(String partitionName) throws Exception {
-        return (PartitionConfig)invoke("getPartitionConfig",
-                new Object[] { partitionName },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public PartitionClient getPartitionClient(String partitionName) throws Exception {
-        return new PartitionClient(this, partitionName);
-    }
-
-    public void startPartition(String partitionName) throws Exception {
-        invoke("startPartition",
-                new Object[] { partitionName },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public void stopPartition(String partitionName) throws Exception {
-        invoke("stopPartition",
-                new Object[] { partitionName },
-                new String[] { String.class.getName() }
-        );
+    public PartitionManagerClient getPartitionManagerClient() throws Exception {
+        return new PartitionManagerClient(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Services
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getServiceNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(objectName, "ServiceNames");
-    }
-
-    public ServiceClient getServiceClient(String serviceName) throws Exception {
-        return new ServiceClient(this, serviceName);
-    }
-
-    public void startService(String serviceName) throws Exception {
-        invoke("startService",
-                new Object[] { serviceName },
-                new String[] { String.class.getName() }
-        );
-    }
-
-    public void stopService(String serviceName) throws Exception {
-        invoke("stopService",
-                new Object[] { serviceName },
-                new String[] { String.class.getName() }
-        );
+    public ServiceManagerClient getServiceManagerClient() throws Exception {
+        return new ServiceManagerClient(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -422,5 +413,37 @@ public class PenroseClient implements PenroseServiceMBean {
 
     public static String getObjectName() {
         return "Penrose:service=Penrose";
+    }
+
+    public DN getRootDn() throws Exception {
+        return (DN)getAttribute("RootDn");
+    }
+
+    public void setRootDn(DN dn) throws Exception {
+        setAttribute("RootDn", dn);
+    }
+
+    public byte[] getRootPassword() throws Exception {
+        return (byte[])getAttribute("RootPassword");
+    }
+
+    public void setRootPassword(byte[] password) throws Exception {
+        setAttribute("RootPassword", password);
+    }
+
+    public UserConfig getRootUserConfig() throws Exception {
+        return (UserConfig)getAttribute("RootUserConfig");
+    }
+
+    public void setRootUserConfig(UserConfig userConfig) throws Exception {
+        setAttribute("RootUserConfig", userConfig);
+    }
+
+    public PenroseConfig getPenroseConfig() throws Exception {
+        return (PenroseConfig)getAttribute("PenroseConfig");
+    }
+
+    public void setPenroseConfig(PenroseConfig penroseConfig) throws Exception {
+        setAttribute("PenroseConfig", penroseConfig);
     }
 }

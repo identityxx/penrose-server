@@ -106,13 +106,6 @@ if $cygwin; then
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
-echo "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
--Djava.ext.dirs="$LOCALLIBPATH" \
--Djava.library.path="$LOCALLIBPATH" \
--Dpenrose.home="$PENROSE_HOME" \
--Dorg.safehaus.penrose.apacheds.home="$APACHEDS_HOME" \
-org.safehaus.penrose.apacheds.SchemaGenerator $PENROSE_ARGS "$@"
-
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \

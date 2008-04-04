@@ -1,11 +1,11 @@
 package org.safehaus.penrose.jdbc.connection;
 
+import org.safehaus.penrose.jdbc.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.jdbc.Request;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,13 +16,13 @@ public class RequestBuilder {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected List<Request> requests = new ArrayList<Request>();
+    protected List<Statement> requests = new ArrayList<Statement>();
 
-    public Collection<Request> getRequests() {
+    public Collection<Statement> getRequests() {
         return requests;
     }
 
-    public void setRequests(Collection<Request> requests) {
+    public void setRequests(Collection<Statement> requests) {
         this.requests.clear();
         this.requests.addAll(requests);
     }

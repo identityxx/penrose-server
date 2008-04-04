@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
@@ -33,39 +32,23 @@ public class SchemaWriter {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    File baseDir;
-
     public SchemaWriter() {
     }
 
-    public SchemaWriter(File directory) {
-        this.baseDir = directory;
-    }
-
-    public void write(Schema schema) throws Exception {
-        File file = new File(baseDir, schema.getSchemaConfig().getPath());
-        write(file, schema);
-    }
-
-    public void write(String path, Schema schema) throws Exception {
-        write(new File(path), schema);
-    }
-
     public void write(File file, Schema schema) throws Exception {
+
         file.getParentFile().mkdirs();
 
         PrintWriter out = new PrintWriter(new FileWriter(file), true);
 
-        Collection attributeTypes = schema.getAttributeTypes();
-        for (Iterator i=attributeTypes.iterator(); i.hasNext(); ) {
-            AttributeType at = (AttributeType)i.next();
-            write(out, at);
+        Collection<AttributeType> attributeTypes = schema.getAttributeTypes();
+        for (AttributeType attributeType : attributeTypes) {
+            write(out, attributeType);
         }
 
-        Collection objectClasses = schema.getObjectClasses();
-        for (Iterator i=objectClasses.iterator(); i.hasNext(); ) {
-            ObjectClass oc = (ObjectClass)i.next();
-            write(out, oc);
+        Collection<ObjectClass> objectClasses = schema.getObjectClasses();
+        for (ObjectClass objectClass : objectClasses) {
+            write(out, objectClass);
         }
 
         out.close();

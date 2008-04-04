@@ -36,7 +36,10 @@ public class ModuleReader implements EntityResolver {
         digester.setClassLoader(cl);
     }
 
-    public void read(File file, ModuleConfigs modules) throws Exception {
+    public void read(File file, ModuleConfigManager modules) throws Exception {
+
+        if (!file.exists()) return;
+
 		digester.push(modules);
 		digester.parse(file);
         digester.pop();

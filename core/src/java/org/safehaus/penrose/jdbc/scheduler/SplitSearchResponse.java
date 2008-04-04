@@ -1,10 +1,11 @@
 package org.safehaus.penrose.jdbc.scheduler;
 
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.engine.TransformEngine;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,15 +19,18 @@ public class SplitSearchResponse extends SearchResponse {
     public Logger log = LoggerFactory.getLogger(getClass());
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
-    
+
+    Session session;
     Collection<Source> targets;
     Interpreter interpreter;
 
     public SplitSearchResponse(
+            Session session,
             Collection<Source> targets,
             Interpreter interpreter
     ) {
-        this.targets = targets;
+        this.session     = session;
+        this.targets     = targets;
         this.interpreter = interpreter;
     }
 
@@ -84,7 +88,7 @@ public class SplitSearchResponse extends SearchResponse {
                 }
 
                 try {
-                    target.add(newDn, attributes);
+                    target.add(session, newDn, attributes);
                 } catch (Exception e) {
                     errorLog.error(e.getMessage());
                 }

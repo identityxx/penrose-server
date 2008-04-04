@@ -18,11 +18,14 @@
 package org.safehaus.penrose.lockout;
 
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.event.BindEvent;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.Session;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -49,7 +52,9 @@ public class LockoutModule extends Module {
 
     public void init() throws Exception {
         String s = getParameter(LOCKS);
-        source = partition.getSource(s == null ? DEFAULT_LOCKS : s);
+
+        SourceManager sourceManager = partition.getSourceManager();
+        source = sourceManager.getSource(s == null ? DEFAULT_LOCKS : s);
 
         s = getParameter(LIMIT);
         limit = s == null ? DEFAULT_LIMIT : Integer.parseInt(s);
@@ -62,40 +67,47 @@ public class LockoutModule extends Module {
 
         if (limit == 0) return;
 
-        BindRequest request = event.getRequest();
-        BindResponse response = event.getResponse();
+        Session session = getSession();
 
-        String account = request.getDn().getNormalizedDn();
+        try {
+            BindRequest request = event.getRequest();
+            BindResponse response = event.getResponse();
 
-        log.debug("Checking account lockout for "+account+".");
+            String account = request.getDn().getNormalizedDn();
 
-        RDNBuilder rb = new RDNBuilder();
-        rb.set("account", account);
-        RDN rdn = rb.toRdn();
+            log.debug("Checking account lockout for "+account+".");
 
-        SearchResult result = source.find(rdn);
-        if (result == null) return;
+            RDNBuilder rb = new RDNBuilder();
+            rb.set("account", account);
+            RDN rdn = rb.toRdn();
 
-        Attributes attributes = result.getAttributes();
+            SearchResult result = source.find(session, rdn);
+            if (result == null) return;
 
-        if (expiration > 0) {
-            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
-            log.debug("Timestamp: "+Lock.DATE_FORMAT.format(timestamp));
+            Attributes attributes = result.getAttributes();
 
-            long elapsed = System.currentTimeMillis() - timestamp.getTime();
-            if (elapsed >= expiration * 60 * 1000) {
-                log.debug("Lock has expired, removing lock.");
-                source.delete(rdn);
-                return;
+            if (expiration > 0) {
+                Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+                log.debug("Timestamp: "+Lock.DATE_FORMAT.format(timestamp));
+
+                long elapsed = System.currentTimeMillis() - timestamp.getTime();
+                if (elapsed >= expiration * 60 * 1000) {
+                    log.debug("Lock has expired, removing lock.");
+                    source.delete(session, rdn);
+                    return;
+                }
             }
-        }
 
-        int counter = (Integer)attributes.getValue("counter");
-        log.debug("Counter: "+counter);
+            int counter = (Integer)attributes.getValue("counter");
+            log.debug("Counter: "+counter);
 
-        if (counter >= limit) {
-            log.debug("Account has been locked.");
-            response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
+            if (counter >= limit) {
+                log.debug("Account has been locked.");
+                response.setException(LDAP.createException(LDAP.INVALID_CREDENTIALS));
+            }
+
+        } finally {
+            session.close();
         }
     }
 
@@ -103,52 +115,59 @@ public class LockoutModule extends Module {
 
         if (limit == 0) return;
 
-        BindRequest request = event.getRequest();
-        BindResponse response = event.getResponse();
+        Session session = getSession();
 
-        String account = request.getDn().getNormalizedDn();
+        try {
+            BindRequest request = event.getRequest();
+            BindResponse response = event.getResponse();
 
-        RDNBuilder rb = new RDNBuilder();
-        rb.set("account", account);
-        RDN rdn = rb.toRdn();
+            String account = request.getDn().getNormalizedDn();
 
-        if (response.getReturnCode() == LDAP.SUCCESS) {
-            log.debug("Bind succeeded, removing lock.");
-            source.delete(rdn);
-            return;
-        }
+            RDNBuilder rb = new RDNBuilder();
+            rb.set("account", account);
+            RDN rdn = rb.toRdn();
 
-        log.debug("Bind failed, incrementing counter.");
+            if (response.getReturnCode() == LDAP.SUCCESS) {
+                log.debug("Bind succeeded, removing lock.");
+                source.delete(session, rdn);
+                return;
+            }
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseConfig penroseConfig = partitionContext.getPenroseConfig();
-        if (penroseConfig.getRootDn().matches(account)) return;
+            log.debug("Bind failed, incrementing counter.");
 
-        SearchResult result = source.find(rdn);
+            PartitionContext partitionContext = partition.getPartitionContext();
+            PenroseConfig penroseConfig = partitionContext.getPenroseConfig();
+            if (penroseConfig.getRootDn().matches(account)) return;
 
-        if (result == null) {
-            Attributes attributes = new Attributes();
-            attributes.add(new Attribute("account", account));
-            attributes.add(new Attribute("counter", 1));
-            attributes.add(new Attribute("timestamp", new Timestamp(System.currentTimeMillis())));
+            SearchResult result = source.find(session, rdn);
 
-            source.add(rdn, attributes);
+            if (result == null) {
+                Attributes attributes = new Attributes();
+                attributes.add(new Attribute("account", account));
+                attributes.add(new Attribute("counter", 1));
+                attributes.add(new Attribute("timestamp", new Timestamp(System.currentTimeMillis())));
 
-        } else {
-            Attributes attributes = result.getAttributes();
-            int counter = (Integer)attributes.getValue("counter");
+                source.add(session, rdn, attributes);
 
-            counter++;
+            } else {
+                Attributes attributes = result.getAttributes();
+                int counter = (Integer)attributes.getValue("counter");
 
-            Collection<Modification> modifications = new ArrayList<Modification>();
-            modifications.add(
-                    new Modification(Modification.REPLACE, new Attribute("counter", counter))
-            );
-            modifications.add(
-                    new Modification(Modification.REPLACE, new Attribute("timestamp", new Timestamp(System.currentTimeMillis())))
-            );
+                counter++;
 
-            source.modify(rdn, modifications);
+                Collection<Modification> modifications = new ArrayList<Modification>();
+                modifications.add(
+                        new Modification(Modification.REPLACE, new Attribute("counter", counter))
+                );
+                modifications.add(
+                        new Modification(Modification.REPLACE, new Attribute("timestamp", new Timestamp(System.currentTimeMillis())))
+                );
+
+                source.modify(session, rdn, modifications);
+            }
+
+        } finally {
+            session.close();
         }
     }
 
@@ -157,11 +176,19 @@ public class LockoutModule extends Module {
     }
     
     public void reset(DN account) throws Exception {
-        RDNBuilder rb = new RDNBuilder();
-        rb.set("account", account.getNormalizedDn());
-        RDN rdn = rb.toRdn();
 
-        source.delete(rdn);
+        Session session = getSession();
+
+        try {
+            RDNBuilder rb = new RDNBuilder();
+            rb.set("account", account.getNormalizedDn());
+            RDN rdn = rb.toRdn();
+
+            source.delete(session, rdn);
+
+        } finally {
+            session.close();
+        }
     }
 
     public Collection<Lock> list() throws Exception {
@@ -169,50 +196,64 @@ public class LockoutModule extends Module {
         Collection<Lock> accounts = new ArrayList<Lock>();
         if (limit == 0) return accounts;
 
-        SearchRequest request = new SearchRequest();
-        SearchResponse response = new SearchResponse();
+        Session session = getSession();
 
-        source.search(request, response);
+        try {
+            SearchRequest request = new SearchRequest();
+            SearchResponse response = new SearchResponse();
 
-        while (response.hasNext()) {
-            SearchResult result = response.next();
-            Attributes attributes = result.getAttributes();
+            source.search(session, request, response);
 
-            String account = (String)attributes.getValue("account");
-            int counter = (Integer)attributes.getValue("counter");
-            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+            while (response.hasNext()) {
+                SearchResult result = response.next();
+                Attributes attributes = result.getAttributes();
 
-            Lock lock = new Lock(account, counter, timestamp);
-            accounts.add(lock);
+                String account = (String)attributes.getValue("account");
+                int counter = (Integer)attributes.getValue("counter");
+                Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+
+                Lock lock = new Lock(account, counter, timestamp);
+                accounts.add(lock);
+            }
+
+            return accounts;
+
+        } finally {
+            session.close();
         }
-
-        return accounts;
     }
 
     public void purge() throws Exception {
 
         if (expiration <= 0) return;
         
-        SearchRequest request = new SearchRequest();
-        SearchResponse response = new SearchResponse();
+        Session session = getSession();
 
-        source.search(request, response);
+        try {
+            SearchRequest request = new SearchRequest();
+            SearchResponse response = new SearchResponse();
 
-        while (response.hasNext()) {
-            SearchResult result = response.next();
-            Attributes attributes = result.getAttributes();
-            
-            String account = (String)attributes.getValue("account");
-            Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
+            source.search(session, request, response);
 
-            log.debug("Checking lock timestamp for "+account+": "+Lock.DATE_FORMAT.format(timestamp));
+            while (response.hasNext()) {
+                SearchResult result = response.next();
+                Attributes attributes = result.getAttributes();
 
-            long elapsed = System.currentTimeMillis() - timestamp.getTime();
-            if (elapsed < expiration * 60 * 1000) continue;
+                String account = (String)attributes.getValue("account");
+                Date timestamp = new Date(((Timestamp)attributes.getValue("timestamp")).getTime());
 
-            log.debug("Unlocking "+account+".");
+                log.debug("Checking lock timestamp for "+account+": "+Lock.DATE_FORMAT.format(timestamp));
 
-            source.delete(result.getDn());
+                long elapsed = System.currentTimeMillis() - timestamp.getTime();
+                if (elapsed < expiration * 60 * 1000) continue;
+
+                log.debug("Unlocking "+account+".");
+
+                source.delete(session, result.getDn());
+            }
+
+        } finally {
+            session.close();
         }
     }
 }

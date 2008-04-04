@@ -17,7 +17,9 @@
  */
 package org.safehaus.penrose.management;
 
-import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.user.UserConfig;
+import org.safehaus.penrose.config.PenroseConfig;
 
 import java.util.*;
 
@@ -33,14 +35,14 @@ public interface PenroseServiceMBean {
     public void reload() throws Exception;
     public void restart() throws Exception;
 
-    public Collection<String> getPartitionNames() throws Exception;
-    public PartitionConfig getPartitionConfig(String partitionName) throws Exception;
-    public void startPartition(String partitionName) throws Exception;
-    public void stopPartition(String partitionName) throws Exception;
-
-    public Collection<String> getServiceNames() throws Exception;
-    public void startService(String serviceName) throws Exception;
-    public void stopService(String serviceName) throws Exception;
+    public DN getRootDn() throws Exception;        
+    public void setRootDn(DN dn) throws Exception;
+    public byte[] getRootPassword() throws Exception;
+    public void setRootPassword(byte[] password) throws Exception;
+    public UserConfig getRootUserConfig() throws Exception;
+    public void setRootUserConfig(UserConfig userConfig) throws Exception;
+    public PenroseConfig getPenroseConfig() throws Exception;
+    public void setPenroseConfig(PenroseConfig penroseConfig) throws Exception;
 
     public void createDirectory(String path) throws Exception;
     public void removeDirectory(String path) throws Exception;

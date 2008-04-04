@@ -1,21 +1,20 @@
 package org.safehaus.penrose.jdbc.connection;
 
+import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.DeleteStatement;
-import org.safehaus.penrose.jdbc.UpdateRequest;
-import org.safehaus.penrose.jdbc.Request;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.jdbc.Statement;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DeleteRequest;
 import org.safehaus.penrose.ldap.DeleteResponse;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.source.Field;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -47,7 +46,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection<Request> generate() throws Exception {
+    public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
         for (SourceRef sourceRef : sourceRefs) {
@@ -73,7 +72,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         Filter filter = null;
 
@@ -89,10 +88,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         statement.setFilter(filter);
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 
     public void generateSecondaryRequests(
@@ -104,7 +100,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         Filter filter = null;
 
@@ -135,9 +131,6 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         statement.setFilter(filter);
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(0, updateRequest);
+        requests.add(0, statement);
     }
 }

@@ -166,4 +166,4 @@ exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
 -Dorg.safehaus.penrose.management.home="$PENROSE_HOME/services/JMX" \
-org.safehaus.penrose.management.SourceClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.management.source.SourceClient $PENROSE_ARGS "$@"

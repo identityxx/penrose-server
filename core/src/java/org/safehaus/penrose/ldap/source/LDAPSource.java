@@ -319,11 +319,36 @@ public class LDAPSource extends Source {
         LDAPClient client = connection.getClient(session);
 
         try {
-            response.setSizeLimit(request.getSizeLimit());
+            // Create new request to ensure all attributes returned
+            SearchRequest newRequest = new SearchRequest();
+            newRequest.setDn(sourceBaseDn);
+            newRequest.setScope(sourceScope);
+            newRequest.setFilter(createFilter(request));
+            newRequest.setSizeLimit(sourceSizeLimit);
+            newRequest.setTimeLimit(sourceTimeLimit);
 
-            Filter filter = createFilter(session, request, response);
+            SearchResponse newResponse = new SearchResponse() {
+                public void add(SearchResult searchResult) throws Exception {
 
-            searchEntries(session, request, response, filter, client);
+                    if (response.isClosed()) {
+                        close();
+                        return;
+                    }
+
+                    SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+                    if (newSearchResult == null) return;
+
+                    if (debug) {
+                        newSearchResult.print();
+                    }
+
+                    response.add(newSearchResult);
+                }
+            };
+
+            newResponse.setSizeLimit(request.getSizeLimit());
+
+            client.search(newRequest, newResponse);
 
             log.debug("Search operation completed.");
 
@@ -331,6 +356,49 @@ public class LDAPSource extends Source {
             response.close();
             connection.closeClient(session);
         }
+    }
+
+    public Filter createFilter(
+            final SearchRequest request
+    ) throws Exception {
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+        Filter filter = request.getFilter();
+
+        Filter newFilter = null;
+
+        if (scope == SearchRequest.SCOPE_BASE && baseDn != null) { // use RDN to create filter
+            RDN rdn = baseDn.getRdn();
+            for (String name : rdn.getNames()) {
+
+                Field field = getField(name);
+                if (field == null) return filter;
+
+                Object value = rdn.get(name);
+
+                Filter f = new SimpleFilter(field.getOriginalName(), "=", value);
+                newFilter = FilterTool.appendAndFilter(newFilter, f);
+            }
+        }
+
+        // extract attribute values 
+        LDAPSourceFilterProcessor fp = new LDAPSourceFilterProcessor(this);
+        fp.process(filter);
+
+        for (Field field : getFields()) {
+            ItemFilter fieldFilter = fp.getFilter(field);
+            if (fieldFilter == null) continue;
+
+            ItemFilter f = (ItemFilter)fieldFilter.clone();
+            f.setAttribute(field.getOriginalName());
+
+            newFilter = FilterTool.appendAndFilter(newFilter, f);
+        }
+
+        newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
+
+        return newFilter;
     }
 /*
     public Filter createFilter(
@@ -420,88 +488,6 @@ public class LDAPSource extends Source {
         return FilterTool.appendAndFilter(newFilter, sourceFilter);
     }
 */
-    public Filter createFilter(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
-        Filter filter = request.getFilter();
-
-        Filter newFilter = null;
-
-        if (scope == SearchRequest.SCOPE_BASE) {
-            RDN rdn = baseDn.getRdn();
-            for (String name : rdn.getNames()) {
-
-                Field field = getField(name);
-                if (field == null) return filter;
-
-                Object value = rdn.get(name);
-
-                Filter f = new SimpleFilter(field.getOriginalName(), "=", value);
-                newFilter = FilterTool.appendAndFilter(newFilter, f);
-            }
-        }
-
-        LDAPSourceFilterProcessor fp = new LDAPSourceFilterProcessor(this);
-        fp.process(filter);
-
-        for (Field field : getFields()) {
-            ItemFilter fieldFilter = fp.getFilter(field);
-            if (fieldFilter == null) continue;
-
-            ItemFilter f = (ItemFilter)fieldFilter.clone();
-            f.setAttribute(field.getOriginalName());
-
-            newFilter = FilterTool.appendAndFilter(newFilter, f);
-        }
-
-        newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
-
-        return newFilter;
-    }
-
-    public void searchEntries(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response,
-            final Filter filter,
-            final LDAPClient client
-    ) throws Exception {
-
-        SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(sourceBaseDn);
-        newRequest.setScope(sourceScope);
-        newRequest.setFilter(filter);
-        newRequest.setSizeLimit(sourceSizeLimit);
-        newRequest.setTimeLimit(sourceTimeLimit);
-
-        SearchResponse newResponse = new SearchResponse() {
-            public void add(SearchResult searchResult) throws Exception {
-
-                if (response.isClosed()) {
-                    close();
-                    return;
-                }
-
-                SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
-                if (newSearchResult == null) return;
-
-                if (debug) {
-                    newSearchResult.print();
-                }
-
-                response.add(newSearchResult);
-            }
-        };
-
-        client.search(newRequest, newResponse);
-
-    }
-
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
@@ -603,9 +589,11 @@ public class LDAPSource extends Source {
             newAttributes = new Attributes();
 
             RDN rdn = newDn.getRdn();
-            for (String name : rdn.getNames()) {
-                Object value = rdn.get(name);
-                newAttributes.addValue("primaryKey." + name, value);
+            if (rdn != null) {
+                for (String name : rdn.getNames()) {
+                    Object value = rdn.get(name);
+                    newAttributes.addValue("primaryKey." + name, value);
+                }
             }
 
             for (Field field : getFields()) {
@@ -659,7 +647,7 @@ public class LDAPSource extends Source {
         }
     }
 
-    public long getCount() throws Exception {
+    public long getCount(Session session) throws Exception {
 
         if (debug) {
             log.debug(Formatter.displaySeparator(80));
@@ -683,15 +671,14 @@ public class LDAPSource extends Source {
 
         SearchResponse response = new SearchResponse();
 
-        LDAPClient client = null;
-        try {
-            client = connection.createClient();
-            client.search(request, response);
+        LDAPClient client = connection.getClient(session);
 
+        try {
+            client.search(request, response);
             return response.getTotalCount();
 
         } finally {
-            if (client != null) try { client.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+            connection.closeClient(session);
         }
     }
 

@@ -1,9 +1,10 @@
 package org.safehaus.penrose.changelog;
 
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Endi S. Dewata
@@ -20,9 +21,12 @@ public abstract class ChangeLogUtil {
 
     protected String user;
 
-    public void update() throws Exception {
+    public ChangeLogUtil() {
+    }
 
-        Number changeNumber = getLastChangeNumber();
+    public void update(Session session) throws Exception {
+
+        Number changeNumber = getLastChangeNumber(session);
 
         SearchRequest request = createSearchRequest(changeNumber);
 
@@ -32,7 +36,7 @@ public abstract class ChangeLogUtil {
             }
         };
 
-        changeLog.search(request, response);
+        changeLog.search(session, request, response);
 
         if (!response.hasNext()) {
             if (debug) log.debug("There is no new changes.");
@@ -41,16 +45,16 @@ public abstract class ChangeLogUtil {
 
         do {
             ChangeLog changeLog = (ChangeLog)response.next();
-            execute(changeLog);
+            execute(session, changeLog);
 
             Number cn = changeLog.getChangeNumber();
 
             if (changeNumber == null) {
-                setLastChangeNumber(cn);
+                setLastChangeNumber(session, cn);
                 changeNumber = cn;
 
             } else {
-                updateLastChangeNumber(cn);
+                updateLastChangeNumber(session, cn);
             }
 
         } while (response.hasNext());
@@ -62,14 +66,14 @@ public abstract class ChangeLogUtil {
 
     public abstract ChangeLog createChangeLog(SearchResult changeLogEntry) throws Exception;
 
-    public Number getLastChangeNumber() throws Exception {
+    public Number getLastChangeNumber(Session session) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("sourceName", source.getName());
 
         DN dn = new DN(rb.toRdn());
 
-        SearchResponse response = tracker.search(dn, null, SearchRequest.SCOPE_BASE);
+        SearchResponse response = tracker.search(session, dn, null, SearchRequest.SCOPE_BASE);
 
         if (!response.hasNext()) return null;
 
@@ -84,7 +88,7 @@ public abstract class ChangeLogUtil {
         return (Number)attributes.getValue("changeNumber");
     }
 
-    public void setLastChangeNumber(Number changeNumber) throws Exception {
+    public void setLastChangeNumber(Session session, Number changeNumber) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("sourceName", source.getName());
@@ -95,10 +99,10 @@ public abstract class ChangeLogUtil {
         attributes.setValue("sourceName", source.getName());
         attributes.setValue("changeNumber", changeNumber);
 
-        tracker.add(dn, attributes);
+        tracker.add(session, dn, attributes);
     }
 
-    public void updateLastChangeNumber(Number changeNumber) throws Exception {
+    public void updateLastChangeNumber(Session session, Number changeNumber) throws Exception {
 
         RDNBuilder rb = new RDNBuilder();
         rb.set("sourceName", source.getName());
@@ -114,10 +118,10 @@ public abstract class ChangeLogUtil {
 
         ModifyResponse response = new ModifyResponse();
 
-        tracker.modify(request, response);
+        tracker.modify(session, request, response);
     }
 
-    public void execute(ChangeLog changeLog) throws Exception {
+    public void execute(Session session, ChangeLog changeLog) throws Exception {
 
         if (user != null && user.equals(changeLog.getChangeUser())) {
             if (debug) log.debug("Ignore changes from "+user);
@@ -128,25 +132,25 @@ public abstract class ChangeLogUtil {
             case ChangeLog.ADD:
                 AddRequest addRequest = (AddRequest)changeLog.getRequest();
                 AddResponse addResponse = new AddResponse();
-                destination.add(addRequest, addResponse);
+                destination.add(session, addRequest, addResponse);
                 break;
 
             case ChangeLog.MODIFY:
                 ModifyRequest modifyRequest = (ModifyRequest)changeLog.getRequest();
                 ModifyResponse modifyResponse = new ModifyResponse();
-                destination.modify(modifyRequest, modifyResponse);
+                destination.modify(session, modifyRequest, modifyResponse);
                 break;
 
             case ChangeLog.MODRDN:
                 ModRdnRequest modRdnRequest = (ModRdnRequest)changeLog.getRequest();
                 ModRdnResponse modRdnResponse = new ModRdnResponse();
-                destination.modrdn(modRdnRequest, modRdnResponse);
+                destination.modrdn(session, modRdnRequest, modRdnResponse);
                 break;
 
             case ChangeLog.DELETE:
                 DeleteRequest deleteRequest = (DeleteRequest)changeLog.getRequest();
                 DeleteResponse deleteResponse = new DeleteResponse();
-                destination.delete(deleteRequest, deleteResponse);
+                destination.delete(session, deleteRequest, deleteResponse);
                 break;
         }
     }

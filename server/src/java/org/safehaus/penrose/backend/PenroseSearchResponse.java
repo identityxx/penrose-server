@@ -17,11 +17,14 @@
  */
 package org.safehaus.penrose.backend;
 
+import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.SearchReferenceException;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.control.Control;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -32,6 +35,8 @@ public class PenroseSearchResponse
         extends PenroseResponse
         implements com.identyx.javabackend.SearchResponse {
 
+    public Logger log = LoggerFactory.getLogger(getClass());
+
     SearchResponse searchResponse;
 
     public PenroseSearchResponse(SearchResponse searchResponse) {
@@ -39,18 +44,26 @@ public class PenroseSearchResponse
         this.searchResponse = searchResponse;
     }
 
-    public Object next() throws Exception {
-        SearchResult result = searchResponse.next();
-
+    public PenroseSearchResult createSearchResult(SearchResult result) {
         PenroseEntry entry = new PenroseEntry(result.getDn(), result.getAttributes());
 
         Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
-        for (Iterator i= result.getControls().iterator(); i.hasNext(); ) {
-            Control control = (Control)i.next();
+        for (Control control : result.getControls()) {
             controls.add(new PenroseControl(control));
         }
 
         return new PenroseSearchResult(entry, controls);
+    }
+
+    public Object next() throws Exception {
+        try {
+            SearchResult result = searchResponse.next();
+            return createSearchResult(result);
+
+        } catch (SearchReferenceException e) {
+            SearchResult reference = e.getReference();
+            throw new PenroseSearchReferenceException(createSearchResult(reference));
+        }
     }
 
     public boolean hasNext() throws Exception {

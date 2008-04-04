@@ -22,6 +22,8 @@ public class LDAPConnectionFactory {
     public String bindDn;
     public byte[] bindPassword;
 
+    public String referral = "follow";
+
     public LDAPConnectionFactory(Map<String,?> parameters) throws Exception {
         init();
         parseParameters(parameters);
@@ -60,7 +62,12 @@ public class LDAPConnectionFactory {
             bindPassword = stringPassword.getBytes("UTF-8");
         }
 
-        String s = (String)parameters.get("java.naming.ldap.attributes.binary");
+        String s = (String)parameters.get(Context.REFERRAL);
+        if (s != null) {
+            referral = s;
+        }
+
+        s = (String)parameters.get("java.naming.ldap.attributes.binary");
         if (s != null) {
             StringTokenizer st = new StringTokenizer(s);
             while (st.hasMoreTokens()) {

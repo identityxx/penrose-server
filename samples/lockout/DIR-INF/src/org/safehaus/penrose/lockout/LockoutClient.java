@@ -3,6 +3,9 @@ package org.safehaus.penrose.lockout;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.management.*;
+import org.safehaus.penrose.management.module.ModuleClient;
+import org.safehaus.penrose.management.partition.PartitionClient;
+import org.safehaus.penrose.management.partition.PartitionManagerClient;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -70,14 +73,16 @@ public class LockoutClient {
         }
     }
 
-    public void reset(String partition, String account) throws Exception {
-        PartitionClient partitionClient = client.getPartitionClient(partition);
+    public void reset(String partitionName, String account) throws Exception {
+        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+        PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
         ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
         moduleClient.invoke("reset", new Object[] { account }, new String[] { String.class.getName() });
     }
 
-    public void list(String partition) throws Exception {
-        PartitionClient partitionClient = client.getPartitionClient(partition);
+    public void list(String partitionName) throws Exception {
+        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
+        PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
         ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
         Collection<Lock> accounts = (Collection<Lock>)moduleClient.invoke("list", new Object[] {}, new String[] {});
 

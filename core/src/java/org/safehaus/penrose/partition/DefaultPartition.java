@@ -11,11 +11,15 @@ import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 
 import java.util.Collection;
+import java.io.File;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class DefaultPartition extends Partition {
+
+    public DefaultPartition() {
+    }
 
     public void search(
             final Session session,
@@ -102,8 +106,8 @@ public class DefaultPartition extends Partition {
         attributes.addValue("subschemaSubentry", LDAP.SCHEMA_DN.toString());
 
         PenroseContext penroseContext = partitionContext.getPenroseContext();
-        Partitions partitions = penroseContext.getPartitions();
-        for (Partition partition : partitions.getPartitions()) {
+        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        for (Partition partition : partitionManager.getPartitions()) {
             Directory directory = partition.getDirectory();
             for (Entry entry : directory.getRootEntries()) {
                 if (entry.getDn().isEmpty()) continue;

@@ -40,7 +40,6 @@ public class ModuleMapping implements Serializable, Cloneable {
     public final static String SUBTREE  = "SUBTREE";
 
     private String moduleName;
-    private ModuleConfig moduleConfig;
 
     private DN baseDn;
     private String filter;
@@ -101,14 +100,6 @@ public class ModuleMapping implements Serializable, Cloneable {
         }
     }
 
-    public ModuleConfig getModuleConfig() {
-        return moduleConfig;
-    }
-
-    public void setModuleConfig(ModuleConfig moduleConfig) {
-        this.moduleConfig = moduleConfig;
-    }
-
     public int hashCode() {
         return moduleName.hashCode() + baseDn.hashCode() + scope.hashCode() + filter.hashCode();
     }
@@ -135,7 +126,6 @@ public class ModuleMapping implements Serializable, Cloneable {
 
     public void copy(ModuleMapping mapping) throws CloneNotSupportedException {
         moduleName = mapping.moduleName;
-        moduleConfig = mapping.moduleConfig == null ? null : (ModuleConfig)mapping.moduleConfig.clone();
         baseDn = mapping.baseDn;
         filter = mapping.filter;
         scope = mapping.scope;

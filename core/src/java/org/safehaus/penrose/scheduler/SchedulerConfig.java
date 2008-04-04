@@ -1,8 +1,5 @@
 package org.safehaus.penrose.scheduler;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Collection;
@@ -83,6 +80,10 @@ public class SchedulerConfig implements Serializable, Cloneable {
         return jobConfigs.get(name);
     }
 
+    public Collection<String> getJobNames() {
+        return jobConfigs.keySet();
+    }
+    
     public Collection<JobConfig> getJobConfigs() {
         return jobConfigs.values();
     }
@@ -97,6 +98,10 @@ public class SchedulerConfig implements Serializable, Cloneable {
 
     public TriggerConfig getTriggerConfig(String name) {
         return triggerConfigs.get(name);
+    }
+
+    public Collection<String> getTriggerNames() {
+        return triggerConfigs.keySet();
     }
 
     public Collection<TriggerConfig> getTriggerConfigs() {

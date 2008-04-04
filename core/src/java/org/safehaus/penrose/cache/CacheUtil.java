@@ -22,6 +22,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.scheduler.JobConfig;
 import org.safehaus.penrose.jdbc.scheduler.JDBCSyncJob;
@@ -41,13 +42,13 @@ public class CacheUtil {
     public static Logger log = Logger.getLogger(CacheUtil.class);
     public static boolean debug = log.isDebugEnabled();
 
-    Partitions partitions;
+    PartitionManager partitionManager;
 
     public CacheUtil(
-            Partitions partitions
+            PartitionManager partitionManager
     ) throws Exception {
 
-        this.partitions = partitions;
+        this.partitionManager = partitionManager;
     }
 
     public Collection<Source> getCaches(Partition partition) throws Exception {
@@ -56,6 +57,7 @@ public class CacheUtil {
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         SchedulerConfig schedulerConfig = partitionConfig.getSchedulerConfig();
+        SourceManager sourceManager = partition.getSourceManager();
 
         for (JobConfig jobConfig : schedulerConfig.getJobConfigs()) {
             String jobClass = jobConfig.getJobClass();
@@ -65,7 +67,7 @@ public class CacheUtil {
             StringTokenizer st = new StringTokenizer(target, ";, ");
             while (st.hasMoreTokens()) {
                 String sourceName = st.nextToken();
-                Source s = partition.getSource(sourceName);
+                Source s = sourceManager.getSource(sourceName);
                 list.add(s);
             }
         }
@@ -80,6 +82,7 @@ public class CacheUtil {
         Partition partition = source.getPartition();
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         SchedulerConfig schedulerConfig = partitionConfig.getSchedulerConfig();
+        SourceManager sourceManager = partition.getSourceManager();
 
         JobConfig jobConfig = schedulerConfig.getJobConfig(source.getName());
         String jobClass = jobConfig.getJobClass();
@@ -89,7 +92,7 @@ public class CacheUtil {
         StringTokenizer st = new StringTokenizer(target, ";, ");
         while (st.hasMoreTokens()) {
             String sourceName = st.nextToken();
-            Source s = partition.getSource(sourceName);
+            Source s = sourceManager.getSource(sourceName);
             list.add(s);
         }
 
@@ -97,7 +100,7 @@ public class CacheUtil {
     }
 
     public void status() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
+        for (Partition partition : partitionManager.getPartitions()) {
             status(partition);
         }
     }
@@ -123,7 +126,7 @@ public class CacheUtil {
     }
 
     public void create() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
+        for (Partition partition : partitionManager.getPartitions()) {
             create(partition);
         }
     }
@@ -149,7 +152,7 @@ public class CacheUtil {
     }
 
     public void update() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
+        for (Partition partition : partitionManager.getPartitions()) {
             update(partition);
         }
     }
@@ -167,7 +170,7 @@ public class CacheUtil {
     }
 
     public void clean() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
+        for (Partition partition : partitionManager.getPartitions()) {
             clean(partition);
         }
     }
@@ -193,7 +196,7 @@ public class CacheUtil {
     }
 
     public void drop() throws Exception {
-        for (Partition partition : partitions.getPartitions()) {
+        for (Partition partition : partitionManager.getPartitions()) {
             drop(partition);
         }
     }
@@ -298,24 +301,31 @@ public class CacheUtil {
         }
 
         File file = new File(home, "conf"+File.separator+"server.xml");
-        File schemaDir = new File(home, "schema");
 
-        PenroseConfigReader reader = new PenroseConfigReader(file, schemaDir);
-        PenroseConfig penroseConfig = reader.read();
+        PenroseConfigReader reader = new PenroseConfigReader();
+        PenroseConfig penroseConfig = reader.read(file);
 
         PenroseContext penroseContext = new PenroseContext(home);
         penroseContext.init(penroseConfig);
 
-        File partitionsDir = new File(home, "partitions");
-        PartitionConfigs partitionConfigs = new PartitionConfigs(partitionsDir);
-        Partitions partitions = new Partitions();
+        PartitionManager partitionManager = new PartitionManager(
+                home,
+                penroseConfig,
+                penroseContext
+        );
 
-        for (String partitionName : partitionConfigs.getAvailablePartitionNames()) {
+        PartitionConfigManager partitionConfigManager = partitionManager.getPartitionConfigManager();
+
+        for (String partitionName : partitionManager.getAvailablePartitionNames()) {
 
             if (debug) log.debug("----------------------------------------------------------------------------------");
 
-            PartitionConfig partitionConfig = partitionConfigs.load(partitionName);
-            partitionConfigs.addPartitionConfig(partitionConfig);
+            File dir = new File(partitionManager.getPartitionsDir(), partitionName);
+
+            PartitionConfig partitionConfig = new PartitionConfig(partitionName);
+            partitionConfig.load(dir);
+            
+            partitionConfigManager.addPartitionConfig(partitionConfig);
 
             String name = partitionConfig.getName();
 
@@ -327,15 +337,15 @@ public class CacheUtil {
             log.debug("Starting "+name+" partition.");
 
             PartitionFactory partitionFactory = new PartitionFactory();
-            partitionFactory.setPartitionsDir(partitionConfigs.getPartitionsDir());
+            partitionFactory.setPartitionsDir(partitionManager.getPartitionsDir());
             partitionFactory.setPenroseConfig(penroseConfig);
             partitionFactory.setPenroseContext(penroseContext);
 
             Partition partition = partitionFactory.createPartition(partitionConfig);
-            partitions.addPartition(partition);
+            partitionManager.addPartition(partition);
         }
 
-        CacheUtil cacheUtil = new CacheUtil(partitions);
+        CacheUtil cacheUtil = new CacheUtil(partitionManager);
 
         Partition partition = null;
         Source source = null;
@@ -347,7 +357,7 @@ public class CacheUtil {
         if (iterator.hasNext()) {
             String partitionName = (String)iterator.next();
             System.out.println("Partition: "+partitionName);
-            partition = partitions.getPartition(partitionName);
+            partition = partitionManager.getPartition(partitionName);
 
             if (partition == null) throw new Exception("Partition "+partitionName+" not found.");
 
@@ -355,7 +365,8 @@ public class CacheUtil {
                 String sourceName = (String)iterator.next();
                 System.out.println("Source: "+sourceName);
 
-                source = partition.getSource(sourceName);
+                SourceManager sourceManager = partition.getSourceManager();
+                source = sourceManager.getSource(sourceName);
                 if (source == null) throw new Exception("Source "+sourceName+" not found.");
             }
         }
@@ -411,7 +422,7 @@ public class CacheUtil {
             }
         }
 
-        partitions.stop();
+        partitionManager.stopPartitions();
         penroseContext.stop();
 
         System.exit(0);

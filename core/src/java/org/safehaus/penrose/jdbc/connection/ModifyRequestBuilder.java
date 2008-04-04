@@ -7,7 +7,6 @@ import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.*;
-import org.safehaus.penrose.jdbc.Request;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -45,7 +44,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         this.response = response;
     }
 
-    public Collection<Request> generate() throws Exception {
+    public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
         for (SourceRef sourceRef : sourceRefs) {
@@ -71,7 +70,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         Collection<Modification> modifications = request.getModifications();
         for (Modification modification : modifications) {
@@ -113,7 +112,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                         String fieldName = field.getName();
                         if (debug) log.debug("Setting field " + fieldName + " to " + value);
 
-                        statement.addAssignment(new Assignment(fieldRef, value));
+                        statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
                     }
                     break;
 
@@ -129,7 +128,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                         String fieldName = field.getName();
                         if (debug) log.debug("Setting field " + fieldName + " to null");
 
-                        statement.addAssignment(new Assignment(fieldRef, null));
+                        statement.addAssignment(new Assignment(fieldRef.getOriginalName(), null));
                     }
                     break;
             }
@@ -156,10 +155,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         statement.setFilter(filter);
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 
     public void generateSecondaryRequests(
@@ -293,7 +289,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSource(sourceRef.getSource());
+        statement.setSourceName(sourceRef.getSource().getName());
 
         for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
             Field field = fieldRef.getField();
@@ -314,7 +310,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
             String fieldName = field.getName();
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
         for (String fieldName : values.keySet()) {
@@ -324,13 +320,10 @@ public class ModifyRequestBuilder extends RequestBuilder {
             Field field = fieldRef.getField();
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
-            statement.addAssignment(new Assignment(fieldRef, value));
+            statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 
     public void generateDeleteStatement(
@@ -349,7 +342,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceRef(sourceRef);
+        statement.setSourceName(sourceRef.getSource().getName());
 
         Filter filter = null;
 
@@ -393,9 +386,6 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         statement.setFilter(filter);
 
-        UpdateRequest updateRequest = new UpdateRequest();
-        updateRequest.setStatement(statement);
-
-        requests.add(updateRequest);
+        requests.add(statement);
     }
 }

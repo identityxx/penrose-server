@@ -18,22 +18,20 @@
 package org.safehaus.penrose.schema;
 
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.RDN;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class Schema implements Cloneable {
+public class Schema implements Serializable, Cloneable {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-    public boolean debug = log.isDebugEnabled();
-
-    private SchemaConfig schemaConfig;
+    private String name;
 
     protected Map<String,AttributeType> attributeTypes = new TreeMap<String,AttributeType>();
     protected Map<String,AttributeType> attributeTypesByName = new TreeMap<String,AttributeType>();
@@ -43,17 +41,18 @@ public class Schema implements Cloneable {
     protected Map<String,ObjectClass> objectClassesByName = new TreeMap<String,ObjectClass>();
     protected Map<String,ObjectClass> objectClassesByOid = new TreeMap<String,ObjectClass>();
 
-    public Schema() {
-    }
-
-    public Schema(SchemaConfig schemaConfig) {
-        this.schemaConfig = schemaConfig;
+    public Schema(String name) {
+        this.name = name;
     }
 
     public String getName() {
-        return schemaConfig == null ? null : schemaConfig.getName();
+        return name;
     }
-    
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Collection<AttributeType> getAttributeTypes() {
         return attributeTypesByName.values();
     }
@@ -68,7 +67,9 @@ public class Schema implements Cloneable {
 
     public void addAttributeType(AttributeType at) {
 
-        if (debug) log.debug("Adding attribute type "+at.getName()+" ("+at.getOid()+")");
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        if (log.isDebugEnabled()) log.debug("Adding attribute type "+at.getName()+" ("+at.getOid()+")");
 
         attributeTypesByName.put(at.getName(), at);
         attributeTypesByOid.put(at.getOid(), at);
@@ -113,7 +114,9 @@ public class Schema implements Cloneable {
 
     public void addObjectClass(ObjectClass oc) {
 
-        if (debug) log.debug("Adding object class "+oc.getName()+" ("+oc.getOid()+")");
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        if (log.isDebugEnabled()) log.debug("Adding object class "+oc.getName()+" ("+oc.getOid()+")");
 
         objectClassesByName.put(oc.getName(), oc);
         objectClassesByOid.put(oc.getOid(), oc);
@@ -205,12 +208,12 @@ public class Schema implements Cloneable {
     }
 
     public Collection<ObjectClass> getObjectClasses(Entry entry) {
-        return getObjectClasses(entry.getEntryMapping());
+        return getObjectClasses(entry.getEntryConfig());
     }
 
-    public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
+    public Collection<ObjectClass> getObjectClasses(EntryConfig entryConfig) {
         Map<String,ObjectClass> map = new HashMap<String,ObjectClass>();
-        for (String ocName : entryMapping.getObjectClasses()) {
+        for (String ocName : entryConfig.getObjectClasses()) {
             getAllObjectClasses(ocName, map);
         }
 
@@ -330,7 +333,7 @@ public class Schema implements Cloneable {
     }
 
     public int hashCode() {
-        return (schemaConfig == null ? 0 : schemaConfig.hashCode()) +
+        return (name == null ? 0 : name.hashCode()) +
                 (attributeTypesByName == null ? 0 : attributeTypesByName.hashCode()) +
                 (objectClassesByName == null ? 0 : objectClassesByName.hashCode());
     }
@@ -347,7 +350,7 @@ public class Schema implements Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         Schema schema = (Schema)object;
-        if (!equals(schemaConfig, schema.schemaConfig)) return false;
+        if (!equals(name, schema.name)) return false;
         if (!equals(attributeTypesByName, schema.attributeTypesByName)) return false;
         if (!equals(objectClassesByName, schema.objectClassesByName)) return false;
 
@@ -355,7 +358,8 @@ public class Schema implements Cloneable {
     }
 
     public void copy(Schema schema) throws CloneNotSupportedException {
-        schemaConfig = schema.schemaConfig == null ? null : (SchemaConfig)schema.schemaConfig.clone();
+
+        name = schema.name;
 
         attributeTypes = new TreeMap<String,AttributeType>();
         attributeTypesByName = new TreeMap<String,AttributeType>();
@@ -376,13 +380,5 @@ public class Schema implements Cloneable {
         Schema schema = (Schema)super.clone();
         schema.copy(this);
         return schema;
-    }
-
-    public SchemaConfig getSchemaConfig() {
-        return schemaConfig;
-    }
-
-    public void setSchemaConfig(SchemaConfig schemaConfig) {
-        this.schemaConfig = schemaConfig;
     }
 }

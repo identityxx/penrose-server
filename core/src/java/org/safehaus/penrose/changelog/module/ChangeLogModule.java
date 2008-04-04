@@ -1,12 +1,14 @@
 package org.safehaus.penrose.changelog.module;
 
-import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionContext;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 
 /**
  * @author Endi Sukma Dewata
@@ -21,7 +23,8 @@ public class ChangeLogModule extends Module {
         sourceName = partition.getParameter("source");
         if (sourceName == null) sourceName = "changelog";
 
-        changelog = partition.getSource(sourceName);
+        SourceManager sourceManager = partition.getSourceManager();
+        changelog = sourceManager.getSource(sourceName);
 
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
@@ -74,73 +77,101 @@ public class ChangeLogModule extends Module {
 
         log.debug("Recording add operation "+request.getDn());
 
-        Attributes attrs = request.getAttributes();
+        Session session = getSession();
 
-        DN dn = new DN();
+        try {
+            Attributes attrs = request.getAttributes();
 
-        Attributes attributes = new Attributes();
-        attributes.setValue("targetDN", request.getDn().toString());
-        attributes.setValue("changeType", "add");
-        attributes.setValue("changes", attrs.toString());
+            DN dn = new DN();
 
-        changelog.add(dn, attributes);
+            Attributes attributes = new Attributes();
+            attributes.setValue("targetDN", request.getDn().toString());
+            attributes.setValue("changeType", "add");
+            attributes.setValue("changes", attrs.toString());
+
+            changelog.add(session, dn, attributes);
+
+        } finally {
+            session.close();
+        }
     }
 
     public void recordModifyOperation(ModifyRequest request) throws Exception {
 
         log.debug("Recording modify operation "+request.getDn());
 
-        StringBuilder sb = new StringBuilder();
+        Session session = getSession();
 
-        for (Modification modification : request.getModifications()) {
-            Attribute attr = modification.getAttribute();
+        try {
+            StringBuilder sb = new StringBuilder();
 
-            sb.append(LDAP.getModificationOperation(modification.getType()));
-            sb.append(": ");
-            sb.append(attr.getName());
-            sb.append("\n");
+            for (Modification modification : request.getModifications()) {
+                Attribute attr = modification.getAttribute();
 
-            sb.append(attr);
+                sb.append(LDAP.getModificationOperation(modification.getType()));
+                sb.append(": ");
+                sb.append(attr.getName());
+                sb.append("\n");
 
-            sb.append("-");
-            sb.append("\n");
+                sb.append(attr);
+
+                sb.append("-");
+                sb.append("\n");
+            }
+
+            DN dn = new DN();
+
+            Attributes attributes = new Attributes();
+            attributes.setValue("targetDN", request.getDn().toString());
+            attributes.setValue("changeType", "modify");
+            attributes.setValue("changes", sb.toString());
+
+            changelog.add(session, dn, attributes);
+
+        } finally {
+            session.close();
         }
-
-        DN dn = new DN();
-
-        Attributes attributes = new Attributes();
-        attributes.setValue("targetDN", request.getDn().toString());
-        attributes.setValue("changeType", "modify");
-        attributes.setValue("changes", sb.toString());
-
-        changelog.add(dn, attributes);
     }
 
     public void recordModRdnOperation(ModRdnRequest request) throws Exception {
 
         log.debug("Recording modrdn operation "+request.getDn());
 
-        DN dn = new DN();
+        Session session = getSession();
 
-        Attributes attributes = new Attributes();
-        attributes.setValue("targetDN", request.getDn().toString());
-        attributes.setValue("changeType", "modrdn");
-        attributes.setValue("newRDN", request.getNewRdn().toString());
-        attributes.setValue("deleteOldRDN", request.getDeleteOldRdn());
+        try {
+            DN dn = new DN();
 
-        changelog.add(dn, attributes);
+            Attributes attributes = new Attributes();
+            attributes.setValue("targetDN", request.getDn().toString());
+            attributes.setValue("changeType", "modrdn");
+            attributes.setValue("newRDN", request.getNewRdn().toString());
+            attributes.setValue("deleteOldRDN", request.getDeleteOldRdn());
+
+            changelog.add(session, dn, attributes);
+
+        } finally {
+            session.close();
+        }
     }
 
     public void recordDeleteOperation(DeleteRequest request) throws Exception {
 
         log.debug("Recording delete operation "+request.getDn());
 
-        DN dn = new DN();
+        Session session = getSession();
 
-        Attributes attributes = new Attributes();
-        attributes.setValue("targetDN", request.getDn().toString());
-        attributes.setValue("changeType", "delete");
+        try {
+            DN dn = new DN();
 
-        changelog.add(dn, attributes);
+            Attributes attributes = new Attributes();
+            attributes.setValue("targetDN", request.getDn().toString());
+            attributes.setValue("changeType", "delete");
+
+            changelog.add(session, dn, attributes);
+
+        } finally {
+            session.close();
+        }
     }
 }

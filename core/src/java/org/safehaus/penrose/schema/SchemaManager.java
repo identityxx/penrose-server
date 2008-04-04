@@ -17,18 +17,21 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.EntryMapping;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.*;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.util.FileUtil;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
 import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Endi S. Dewata
@@ -41,84 +44,182 @@ public class SchemaManager implements SchemaManagerMBean {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
-    private Map<String,Schema> schemas = new TreeMap<String,Schema>();
-    private Schema allSchema = new Schema();
+    File home;
+    File schemaDir;
+    File extDir;
 
-    public SchemaManager() throws Exception {
+    SchemaReader reader = new SchemaReader();
+    SchemaWriter writer = new SchemaWriter();
+
+    private Map<String,Schema> schemas = new TreeMap<String,Schema>();
+    private Map<String,Schema> builtInSchemas = new TreeMap<String,Schema>();
+    private Map<String,Schema> customSchemas = new TreeMap<String,Schema>();
+
+    private Schema mergedSchema = new Schema("merged");
+
+    public SchemaManager(File home) throws Exception {
+        this.home      = home;
+        this.schemaDir = new File(home, "schema");
+        this.extDir    = new File(schemaDir, "ext");
     }
 
-    public void init(SchemaConfig schemaConfig) throws Exception {
+    public File[] getSchemaFiles(File dir) {
 
-        Schema schema = getSchema(schemaConfig.getName());
-        if (schema != null) return;
+        return dir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".schema");
+            }
+        });
+    }
 
-        SchemaReader reader = new SchemaReader();
-        schema = reader.read(schemaConfig);
+    public void loadSchemas() throws Exception {
 
-        addSchema(schema);
+        log.debug("Built-in schema files:");
+        for (File schemaFile : getSchemaFiles(schemaDir)) {
+            log.debug(" - "+schemaFile);
+
+            Schema schema = reader.read(schemaFile);
+            addSchema(schema);
+            builtInSchemas.put(schema.getName(), schema);
+        }
+
+        log.debug("Custom schema files:");
+        for (File schemaFile : getSchemaFiles(extDir)) {
+            log.debug(" - "+schemaFile);
+
+            Schema schema = reader.read(schemaFile);
+            addSchema(schema);
+            customSchemas.put(schema.getName(), schema);
+        }
     }
 
     public void addSchema(Schema schema) {
         schemas.put(schema.getName(), schema);
-        allSchema.add(schema);
+        mergedSchema.add(schema);
     }
 
-    public void removeSchema(String name) {
-        Schema schema = schemas.remove(name);
-        allSchema.remove(schema);
+    public void createSchema(Schema schema) throws Exception {
+
+        File file = new File(extDir, schema.getName()+".schema");
+
+        writer.write(file, schema);
+
+        addSchema(schema);
+    }
+
+    public void updateSchema(String schemaName, Schema schema) throws Exception {
+
+        Schema oldSchema = schemas.get(schemaName);
+        oldSchema.copy(schema);
+
+        if (!schemaName.equals(schema.getName())) {
+            
+            File oldFile = new File(extDir, schemaName+".schema");
+            FileUtil.delete(oldFile);
+
+            schemas.remove(schemaName);
+            schemas.put(schema.getName(), schema);
+
+            if (builtInSchemas.containsKey(schemaName)) {
+                builtInSchemas.remove(schemaName);
+                builtInSchemas.put(schemaName, schema);
+            }
+
+            if (customSchemas.containsKey(schemaName)) {
+                customSchemas.remove(schemaName);
+                customSchemas.put(schemaName, schema);
+            }
+        }
+
+        File newFile = new File(extDir, schema.getName()+".schema");
+        writer.write(newFile, schema);
+
+        mergedSchema.clear();
+        for (Schema s : schemas.values()) {
+            mergedSchema.add(s);
+        }
+    }
+
+    public void removeSchema(String schemaName) {
+
+        File oldFile = new File(extDir, schemaName+".schema");
+        FileUtil.delete(oldFile);
+
+        schemas.remove(schemaName);
+        builtInSchemas.remove(schemaName);
+        customSchemas.remove(schemaName);
+
+        mergedSchema.clear();
+        for (Schema s : schemas.values()) {
+            mergedSchema.add(s);
+        }
     }
 
     public void clear() {
         schemas.clear();
-        allSchema.clear();
+        builtInSchemas.clear();
+        customSchemas.clear();
+        mergedSchema.clear();
+    }
+
+    public Collection<String> getSchemaNames() {
+        return schemas.keySet();
+    }
+    
+    public Collection<String> getBuiltInSchemaNames() {
+        return builtInSchemas.keySet();
+    }
+
+    public Collection<String> getCustomSchemaNames() {
+        return customSchemas.keySet();
     }
 
     public Schema getSchema(String name) {
         return schemas.get(name);
     }
 
-    public Schema getAllSchema() {
-        return allSchema;
+    public Schema getMergedSchema() {
+        return mergedSchema;
     }
 
     public Collection<ObjectClass> getObjectClasses() {
-        return allSchema.getObjectClasses();
+        return mergedSchema.getObjectClasses();
     }
 
     public Collection<String> getObjectClassNames() {
-        return allSchema.getObjectClassNames();
+        return mergedSchema.getObjectClassNames();
     }
 
     public ObjectClass getObjectClass(String ocName) {
-        return allSchema.getObjectClass(ocName);
+        return mergedSchema.getObjectClass(ocName);
     }
 
     public Collection<ObjectClass> getAllObjectClasses(String ocName) {
-        return allSchema.getAllObjectClasses(ocName);
+        return mergedSchema.getAllObjectClasses(ocName);
     }
     
     public Collection<String> getAllObjectClassNames(String ocName) {
-        return allSchema.getAllObjectClassNames(ocName);
+        return mergedSchema.getAllObjectClassNames(ocName);
     }
 
     public Collection<ObjectClass> getObjectClasses(Entry entry) {
-        return getObjectClasses(entry.getEntryMapping());
+        return getObjectClasses(entry.getEntryConfig());
     }
 
-    public Collection<ObjectClass> getObjectClasses(EntryMapping entryMapping) {
-        return allSchema.getObjectClasses(entryMapping);
+    public Collection<ObjectClass> getObjectClasses(EntryConfig entryConfig) {
+        return mergedSchema.getObjectClasses(entryConfig);
     }
 
     public Collection<AttributeType> getAttributeTypes() {
-        return allSchema.getAttributeTypes();
+        return mergedSchema.getAttributeTypes();
     }
 
     public Collection<String> getAttributeTypeNames() {
-        return allSchema.getAttributeTypeNames();
+        return mergedSchema.getAttributeTypeNames();
     }
 
     public AttributeType getAttributeType(String attributeName) {
-        return allSchema.getAttributeType(attributeName);
+        return mergedSchema.getAttributeType(attributeName);
     }
 
     public String normalizeAttributeName(String attributeName) {

@@ -3,6 +3,7 @@ package org.safehaus.penrose.ldap.scheduler;
 import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -15,6 +16,7 @@ import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.session.Session;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -43,12 +45,13 @@ public class LDAPSyncJob extends Job {
         String errorsName    = jobConfig.getParameter("errors");
 
         Partition partition = getPartition();
+        SourceManager sourceManager = partition.getSourceManager();
 
-        source    = partition.getSource(sourceName);
-        target    = partition.getSource(targetName);
-        changelog = partition.getSource(changeLogName);
-        tracker   = partition.getSource(trackerName);
-        errors    = partition.getSource(errorsName);
+        source    = sourceManager.getSource(sourceName);
+        target    = sourceManager.getSource(targetName);
+        changelog = sourceManager.getSource(changeLogName);
+        tracker   = sourceManager.getSource(trackerName);
+        errors    = sourceManager.getSource(errorsName);
     }
 
     public void execute() throws Exception {
@@ -56,14 +59,22 @@ public class LDAPSyncJob extends Job {
     }
 
     public void create() throws Exception {
-        Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
 
-        Entry entry = directory.getRootEntries().iterator().next();
-        create(entry);
+        Session session = getSession();
 
-        for (Entry child : entry.getChildren()) {
-            create(child);
+        try {
+            Partition partition = getPartition();
+            Directory directory = partition.getDirectory();
+
+            Entry entry = directory.getRootEntries().iterator().next();
+            create(session, entry);
+
+            for (Entry child : entry.getChildren()) {
+                create(session, child);
+            }
+
+        } finally {
+            session.close();
         }
     }
     
@@ -72,14 +83,22 @@ public class LDAPSyncJob extends Job {
     }
 
     public void create(DN dn) throws Exception {
-        Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
 
-        Entry entry = directory.getEntries(dn).iterator().next();
-        create(entry);
+        Session session = getSession();
+
+        try {
+            Partition partition = getPartition();
+            Directory directory = partition.getDirectory();
+
+            Entry entry = directory.getEntries(dn).iterator().next();
+            create(session, entry);
+
+        } finally {
+            session.close();
+        }
     }
 
-    public void create(Entry entry) throws Exception {
+    public void create(Session session, Entry entry) throws Exception {
 
         Interpreter interpreter = partition.newInterpreter();
 
@@ -88,7 +107,7 @@ public class LDAPSyncJob extends Job {
 
         try {
             log.debug("Adding "+dn);
-            target.add(dn, attributes);
+            target.add(session, dn, attributes);
 
         } catch (Throwable e) {
 
@@ -118,7 +137,7 @@ public class LDAPSyncJob extends Job {
 
                 attrs.setValue("description", sb.toString());
 
-                errors.add(new DN(), attrs);
+                errors.add(session, new DN(), attrs);
             }
         }
     }
@@ -134,56 +153,63 @@ public class LDAPSyncJob extends Job {
     public void load(final DN baseDn) throws Exception {
         if (source == null) throw new Exception("Source not defined.");
 
-        SearchRequest request = new SearchRequest();
-        request.setDn(baseDn);
+        final Session session = getSession();
 
-        SearchResponse response = new SearchResponse() {
-            public void add(SearchResult result) throws Exception {
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(baseDn);
 
-                DN dn = result.getDn();
-                if (baseDn.equals(dn)) return;
+            SearchResponse response = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
 
-                Attributes attributes = result.getAttributes();
+                    DN dn = result.getDn();
+                    if (baseDn.equals(dn)) return;
 
-                try {
-                    log.debug("Adding "+dn);
-                    target.add(dn, attributes);
+                    Attributes attributes = result.getAttributes();
 
-                } catch (Throwable e) {
-                    
-                    if (errors == null) {
-                        throw new Exception(e);
+                    try {
+                        log.debug("Adding "+dn);
+                        target.add(session, dn, attributes);
 
-                    } else {
+                    } catch (Throwable e) {
 
-                        Attributes attrs = new Attributes();
-                        attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
-                        attrs.setValue("title", "Error loading "+dn);
+                        if (errors == null) {
+                            throw new Exception(e);
 
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("The following entry cannot be loaded:\n\n");
-                        
-                        sb.append("dn: ");
-                        sb.append(dn);
-                        sb.append("\n");
-                        sb.append(attributes);
-                        sb.append("\n\n");
+                        } else {
 
-                        StringWriter sw = new StringWriter();
-                        e.printStackTrace(new PrintWriter(sw, true));
+                            Attributes attrs = new Attributes();
+                            attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                            attrs.setValue("title", "Error loading "+dn);
 
-                        sb.append("Exception:\n");
-                        sb.append(sw);
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("The following entry cannot be loaded:\n\n");
 
-                        attrs.setValue("description", sb.toString());
+                            sb.append("dn: ");
+                            sb.append(dn);
+                            sb.append("\n");
+                            sb.append(attributes);
+                            sb.append("\n\n");
 
-                        errors.add(new DN(), attrs);
+                            StringWriter sw = new StringWriter();
+                            e.printStackTrace(new PrintWriter(sw, true));
+
+                            sb.append("Exception:\n");
+                            sb.append(sw);
+
+                            attrs.setValue("description", sb.toString());
+
+                            errors.add(session, new DN(), attrs);
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        source.search(request, response);
+            source.search(session, request, response);
+
+        } finally {
+            session.close();
+        }
     }
 
     public void clear() throws Exception {
@@ -195,70 +221,86 @@ public class LDAPSyncJob extends Job {
     }
 
     public void clear(final DN baseDn) throws Exception {
-        final ArrayList<DN> dns = new ArrayList<DN>();
 
-        SearchRequest request = new SearchRequest();
-        request.setDn(baseDn);
+        Session session = getSession();
 
-        SearchResponse response = new SearchResponse() {
-            public void add(SearchResult result) throws Exception {
-                DN dn = result.getDn();
-                if (baseDn.equals(dn)) return;
-                dns.add(dn);
-            }
-        };
+        try {
+            final ArrayList<DN> dns = new ArrayList<DN>();
 
-        target.search(request, response);
+            SearchRequest request = new SearchRequest();
+            request.setDn(baseDn);
 
-        for (int i=dns.size()-1; i>=0; i--) {
-            DN dn = dns.get(i);
+            SearchResponse response = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
+                    DN dn = result.getDn();
+                    if (baseDn.equals(dn)) return;
+                    dns.add(dn);
+                }
+            };
 
-            try {
-                log.debug("Deleting "+dn);
-                target.delete(dn);
+            target.search(session, request, response);
 
-            } catch (Throwable e) {
+            for (int i=dns.size()-1; i>=0; i--) {
+                DN dn = dns.get(i);
 
-                if (errors == null) {
-                    throw new Exception(e);
+                try {
+                    log.debug("Deleting "+dn);
+                    target.delete(session, dn);
 
-                } else {
+                } catch (Throwable e) {
 
-                    Attributes attrs = new Attributes();
-                    attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
-                    attrs.setValue("title", "Error deleting "+dn);
+                    if (errors == null) {
+                        throw new Exception(e);
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("The following entry cannot be deleted:\n\n");
+                    } else {
 
-                    sb.append(dn);
-                    sb.append("\n\n");
+                        Attributes attrs = new Attributes();
+                        attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                        attrs.setValue("title", "Error deleting "+dn);
 
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw, true));
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("The following entry cannot be deleted:\n\n");
 
-                    sb.append("Exception:\n");
-                    sb.append(sw);
+                        sb.append(dn);
+                        sb.append("\n\n");
 
-                    attrs.setValue("description", sb.toString());
+                        StringWriter sw = new StringWriter();
+                        e.printStackTrace(new PrintWriter(sw, true));
 
-                    errors.add(new DN(), attrs);
+                        sb.append("Exception:\n");
+                        sb.append(sw);
+
+                        attrs.setValue("description", sb.toString());
+
+                        errors.add(session, new DN(), attrs);
+                    }
                 }
             }
+
+        } finally {
+            session.close();
         }
     }
 
     public void remove() throws Exception {
-        Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
 
-        Entry entry = directory.getRootEntries().iterator().next();
+        final Session session = getSession();
 
-        for (Entry child : entry.getChildren()) {
-            remove(child);
+        try {
+            Partition partition = getPartition();
+            Directory directory = partition.getDirectory();
+
+            Entry entry = directory.getRootEntries().iterator().next();
+
+            for (Entry child : entry.getChildren()) {
+                remove(session, child);
+            }
+
+            remove(session, entry);
+
+        } finally {
+            session.close();
         }
-
-        remove(entry);
     }
 
     public void remove(String dn) throws Exception {
@@ -266,14 +308,23 @@ public class LDAPSyncJob extends Job {
     }
 
     public void remove(DN dn) throws Exception {
-        Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
 
-        Entry entry = directory.getEntries(dn).iterator().next();
-        remove(entry);
+        final Session session = getSession();
+
+        try {
+            Partition partition = getPartition();
+            Directory directory = partition.getDirectory();
+
+            Entry entry = directory.getEntries(dn).iterator().next();
+            remove(session, entry);
+
+        } finally {
+            session.close();
+        }
     }
 
-    public void remove(Entry entry) throws Exception {
+    public void remove(Session session, Entry entry) throws Exception {
+
         DN baseDn = entry.getDn();
         final ArrayList<DN> dns = new ArrayList<DN>();
 
@@ -287,14 +338,14 @@ public class LDAPSyncJob extends Job {
             }
         };
 
-        target.search(request, response);
+        target.search(session, request, response);
 
         for (int i=dns.size()-1; i>=0; i--) {
             DN dn = dns.get(i);
 
             try {
                 log.debug("Deleting "+dn);
-                target.delete(dn);
+                target.delete(session, dn);
 
             } catch (Throwable e) {
 
@@ -321,7 +372,7 @@ public class LDAPSyncJob extends Job {
 
                     attrs.setValue("description", sb.toString());
 
-                    errors.add(new DN(), attrs);
+                    errors.add(session, new DN(), attrs);
                 }
             }
         }
@@ -384,66 +435,73 @@ public class LDAPSyncJob extends Job {
 */
     public void synchronize() throws Exception {
 
-        Long changeNumber = getLastChangeNumber();
+        Session session = getSession();
 
-        SearchRequest request = createSearchRequest(changeNumber);
-        SearchResponse response = new SearchResponse();
+        try {
+            Long changeNumber = getLastChangeNumber();
 
-        changelog.search(request, response);
+            SearchRequest request = createSearchRequest(changeNumber);
+            SearchResponse response = new SearchResponse();
 
-        if (!response.hasNext()) {
-            if (debug) log.debug("There is no new changes.");
-            return;
-        }
+            changelog.search(session, request, response);
 
-        do {
-            SearchResult result = response.next();
-            DN dn = result.getDn();
-            Attributes attributes = result.getAttributes();
-
-            if (debug) {
-                log.debug("Processing: "+dn);
-                attributes.print();
+            if (!response.hasNext()) {
+                if (debug) log.debug("There is no new changes.");
+                return;
             }
 
-            try {
-                process(attributes);
+            do {
+                SearchResult result = response.next();
+                DN dn = result.getDn();
+                Attributes attributes = result.getAttributes();
 
-            } catch (Throwable e) {
-
-                if (errors != null) {
-
-                    Attributes attrs = new Attributes();
-                    attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
-                    attrs.setValue("title", "Error processing "+dn);
-
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("The following change log cannot be processed:\n\n");
-
-                    sb.append(dn);
-                    sb.append("\n\n");
-
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw, true));
-
-                    sb.append("Exception:\n");
-                    sb.append(sw);
-
-                    attrs.setValue("description", sb.toString());
-
-                    errors.add(new DN(), attrs);
+                if (debug) {
+                    log.debug("Processing: "+dn);
+                    attributes.print();
                 }
 
-                throw new Exception(e);
-            }
+                try {
+                    process(session, attributes);
 
-            Long newChangeNumber = Long.parseLong(attributes.getValue("changeNumber").toString());
+                } catch (Throwable e) {
 
-            addTracker(newChangeNumber);
+                    if (errors != null) {
 
-        } while (response.hasNext());
+                        Attributes attrs = new Attributes();
+                        attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                        attrs.setValue("title", "Error processing "+dn);
 
-        log.debug("LDAP synchronization completed.");
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("The following change log cannot be processed:\n\n");
+
+                        sb.append(dn);
+                        sb.append("\n\n");
+
+                        StringWriter sw = new StringWriter();
+                        e.printStackTrace(new PrintWriter(sw, true));
+
+                        sb.append("Exception:\n");
+                        sb.append(sw);
+
+                        attrs.setValue("description", sb.toString());
+
+                        errors.add(session, new DN(), attrs);
+                    }
+
+                    throw new Exception(e);
+                }
+
+                Long newChangeNumber = Long.parseLong(attributes.getValue("changeNumber").toString());
+
+                addTracker(newChangeNumber);
+
+            } while (response.hasNext());
+
+            log.debug("LDAP synchronization completed.");
+
+        } finally {
+            session.close();
+        }
     }
 
     public Long getLastChangeNumber() throws Exception {
@@ -467,19 +525,33 @@ public class LDAPSyncJob extends Job {
 
     public void addTracker(Long changeNumber) throws Exception {
 
-        Attributes attributes = new Attributes();
-        attributes.setValue("changeNumber", changeNumber);
-        attributes.setValue("changeTimestamp", new Timestamp(System.currentTimeMillis()));
+        Session session = getSession();
 
-        tracker.add(new DN(), attributes);
+        try {
+            Attributes attributes = new Attributes();
+            attributes.setValue("changeNumber", changeNumber);
+            attributes.setValue("changeTimestamp", new Timestamp(System.currentTimeMillis()));
+
+            tracker.add(session, new DN(), attributes);
+
+        } finally {
+            session.close();
+        }
     }
 
     public void removeTracker(Long changeNumber) throws Exception {
 
-        RDNBuilder rb = new RDNBuilder();
-        rb.set("changeNumber", changeNumber);
+        Session session = getSession();
 
-        tracker.delete(new DN(rb.toRdn()));
+        try {
+            RDNBuilder rb = new RDNBuilder();
+            rb.set("changeNumber", changeNumber);
+
+            tracker.delete(session, new DN(rb.toRdn()));
+
+        } finally {
+            session.close();
+        }
     }
 
     public SearchRequest createSearchRequest(Number changeNumber) throws Exception {
@@ -504,7 +576,7 @@ public class LDAPSyncJob extends Job {
         return request;
     }
 
-    public void process(Attributes attributes) throws Exception {
+    public void process(Session session, Attributes attributes) throws Exception {
 
         DN targetDn = new DN((String)attributes.getValue("targetDN"));
 
@@ -525,7 +597,7 @@ public class LDAPSyncJob extends Job {
 
             AddResponse response = new AddResponse();
 
-            target.add(request, response);
+            target.add(session, request, response);
 
         } else if ("modify".equals(changeType)) {
 
@@ -540,7 +612,7 @@ public class LDAPSyncJob extends Job {
 
             ModifyResponse response = new ModifyResponse();
 
-            target.modify(request, response);
+            target.modify(session, request, response);
 
         } else if ("modrdn".equals(changeType)) {
 
@@ -556,7 +628,7 @@ public class LDAPSyncJob extends Job {
 
             ModRdnResponse response = new ModRdnResponse();
 
-            target.modrdn(request, response);
+            target.modrdn(session, request, response);
 
         } else if ("delete".equals(changeType)) {
 
@@ -567,7 +639,7 @@ public class LDAPSyncJob extends Job {
 
             DeleteResponse response = new DeleteResponse();
             
-            target.delete(request, response);
+            target.delete(session, request, response);
         }
     }
 
@@ -694,120 +766,127 @@ public class LDAPSyncJob extends Job {
 
     public void synchronize(DN dn) throws Exception {
 
-        final Collection<DN> results1 = new TreeSet<DN>();
-        final Collection<DN> results2 = new TreeSet<DN>();
+        Session session = getSession();
 
-        SearchRequest request1 = new SearchRequest();
-        request1.setDn(dn);
-        request1.setAttributes(new String[] { "dn" });
+        try {
+            final Collection<DN> results1 = new TreeSet<DN>();
+            final Collection<DN> results2 = new TreeSet<DN>();
 
-        SearchResponse response1 = new SearchResponse() {
-            public void add(SearchResult result) throws Exception {
-                results1.add(result.getDn());
+            SearchRequest request1 = new SearchRequest();
+            request1.setDn(dn);
+            request1.setAttributes(new String[] { "dn" });
+
+            SearchResponse response1 = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
+                    results1.add(result.getDn());
+                }
+            };
+
+            target.search(session, request1, response1);
+
+            SearchRequest request2 = new SearchRequest();
+            request2.setDn(dn);
+            request2.setAttributes(new String[] { "dn" });
+
+            SearchResponse response2 = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
+                    results2.add(result.getDn());
+                }
+            };
+
+            source.search(session, request2, response2);
+
+            log.debug("Target:");
+            for (DN d : results2) {
+                log.debug(" - "+d);
             }
-        };
 
-        target.search(request1, response1);
-
-        SearchRequest request2 = new SearchRequest();
-        request2.setDn(dn);
-        request2.setAttributes(new String[] { "dn" });
-
-        SearchResponse response2 = new SearchResponse() {
-            public void add(SearchResult result) throws Exception {
-                results2.add(result.getDn());
+            log.debug("Source:");
+            for (DN d : results1) {
+                log.debug(" - "+d);
             }
-        };
 
-        source.search(request2, response2);
+            Iterator<DN> i1 = results1.iterator();
+            Iterator<DN> i2 = results2.iterator();
 
-        log.debug("Target:");
-        for (DN d : results2) {
-            log.debug(" - "+d);
-        }
+            boolean b1 = i1.hasNext();
+            boolean b2 = i2.hasNext();
 
-        log.debug("Source:");
-        for (DN d : results1) {
-            log.debug(" - "+d);
-        }
+            DN dn1 = b1 ? i1.next() : null;
+            DN dn2 = b2 ? i2.next() : null;
 
-        Iterator<DN> i1 = results1.iterator();
-        Iterator<DN> i2 = results2.iterator();
+            while (b1 && b2) {
 
-        boolean b1 = i1.hasNext();
-        boolean b2 = i2.hasNext();
+                int c = dn1.compareTo(dn2);
 
-        DN dn1 = b1 ? i1.next() : null;
-        DN dn2 = b2 ? i2.next() : null;
+                if (debug) log.debug("Comparing ["+dn1+"] with ["+dn2+"] => "+c);
 
-        while (b1 && b2) {
+                if (c < 0) { // delete old entry
+                    DeleteRequest request = new DeleteRequest();
+                    request.setDn(dn1);
+                    execute(session, request);
 
-            int c = dn1.compareTo(dn2);
+                    b1 = i1.hasNext();
+                    if (b1) dn1 = i1.next();
 
-            if (debug) log.debug("Comparing ["+dn1+"] with ["+dn2+"] => "+c);
+                } else if (c > 0) { // add new entry
+                    SearchResult result2 = source.find(session, dn2);
 
-            if (c < 0) { // delete old entry
+                    AddRequest request = new AddRequest();
+                    request.setDn(dn2);
+                    request.setAttributes(result2.getAttributes());
+                    execute(session, request);
+
+                    b2 = i2.hasNext();
+                    if (b2) dn2 = i2.next();
+
+                } else {
+                    SearchResult result1 = target.find(session, dn1);
+                    SearchResult result2 = source.find(session, dn2);
+
+                    Collection<Modification> modifications = createModifications(
+                            result1.getAttributes(),
+                            result2.getAttributes()
+                    );
+
+                    if (!modifications.isEmpty()) { // modify entry
+                        ModifyRequest request = new ModifyRequest();
+                        request.setDn(dn1);
+                        request.setModifications(modifications);
+                        execute(session, request);
+                    }
+
+                    b1 = i1.hasNext();
+                    if (b1) dn1 = i1.next();
+
+                    b2 = i2.hasNext();
+                    if (b2) dn2 = i2.next();
+                }
+            }
+
+            while (b1) { // delete old entries
                 DeleteRequest request = new DeleteRequest();
                 request.setDn(dn1);
-                execute(request);
+                execute(session, request);
 
                 b1 = i1.hasNext();
                 if (b1) dn1 = i1.next();
+            }
 
-            } else if (c > 0) { // add new entry
-                SearchResult result2 = source.find(dn2);
+            while (b2) { // add new entries
+                SearchResult result2 = source.find(session, dn2);
 
                 AddRequest request = new AddRequest();
                 request.setDn(dn2);
                 request.setAttributes(result2.getAttributes());
-                execute(request);
-
-                b2 = i2.hasNext();
-                if (b2) dn2 = i2.next();
-
-            } else {
-                SearchResult result1 = target.find(dn1);
-                SearchResult result2 = source.find(dn2);
-
-                Collection<Modification> modifications = createModifications(
-                        result1.getAttributes(),
-                        result2.getAttributes()
-                );
-
-                if (!modifications.isEmpty()) { // modify entry
-                    ModifyRequest request = new ModifyRequest();
-                    request.setDn(dn1);
-                    request.setModifications(modifications);
-                    execute(request);
-                }
-
-                b1 = i1.hasNext();
-                if (b1) dn1 = i1.next();
+                execute(session, request);
 
                 b2 = i2.hasNext();
                 if (b2) dn2 = i2.next();
             }
-        }
 
-        while (b1) { // delete old entries
-            DeleteRequest request = new DeleteRequest();
-            request.setDn(dn1);
-            execute(request);
-
-            b1 = i1.hasNext();
-            if (b1) dn1 = i1.next();
-        }
-
-        while (b2) { // add new entries
-            SearchResult result2 = source.find(dn2);
-
-            AddRequest request = new AddRequest();
-            request.setDn(dn2);
-            request.setAttributes(result2.getAttributes());
-            execute(request);
-
-            b2 = i2.hasNext();
-            if (b2) dn2 = i2.next();
+        } finally {
+            session.close();
         }
     }
 
@@ -876,11 +955,11 @@ public class LDAPSyncJob extends Job {
         return modifications;
     }
 
-    public void execute(AddRequest request) throws Exception {
+    public void execute(Session session, AddRequest request) throws Exception {
 
         try {
             AddResponse response = new AddResponse();
-            target.add(request, response);
+            target.add(session, request, response);
 
         } catch (Throwable e) {
 
@@ -900,15 +979,15 @@ public class LDAPSyncJob extends Job {
 
             String description = sb.toString();
 
-            recordException(e, title, description);
+            recordException(session, e, title, description);
         }
     }
 
-    public void execute(ModifyRequest request) throws Exception {
+    public void execute(Session session, ModifyRequest request) throws Exception {
 
         try {
             ModifyResponse response = new ModifyResponse();
-            target.modify(request, response);
+            target.modify(session, request, response);
 
         } catch (Throwable e) {
 
@@ -928,15 +1007,15 @@ public class LDAPSyncJob extends Job {
 
             String description = sb.toString();
 
-            recordException(e, title, description);
+            recordException(session, e, title, description);
         }
     }
 
-    public void execute(ModRdnRequest request) throws Exception {
+    public void execute(Session session, ModRdnRequest request) throws Exception {
 
         try {
             ModRdnResponse response = new ModRdnResponse();
-            target.modrdn(request, response);
+            target.modrdn(session, request, response);
 
         } catch (Throwable e) {
 
@@ -956,15 +1035,15 @@ public class LDAPSyncJob extends Job {
 
             String description = sb.toString();
 
-            recordException(e, title, description);
+            recordException(session, e, title, description);
         }
     }
 
-    public void execute(DeleteRequest request) throws Exception {
+    public void execute(Session session, DeleteRequest request) throws Exception {
 
         try {
             DeleteResponse response = new DeleteResponse();
-            target.delete(request, response);
+            target.delete(session, request, response);
 
         } catch (Throwable e) {
 
@@ -984,11 +1063,11 @@ public class LDAPSyncJob extends Job {
 
             String description = sb.toString();
 
-            recordException(e, title, description);
+            recordException(session, e, title, description);
         }
     }
 
-    public void recordException(Throwable t, String title, String description) throws Exception {
+    public void recordException(Session session, Throwable t, String title, String description) throws Exception {
 
         if (errors == null) throw new Exception(t);
 
@@ -997,6 +1076,6 @@ public class LDAPSyncJob extends Job {
         attrs.setValue("title", title);
         attrs.setValue("description", description);
 
-        errors.add(new DN(), attrs);
+        errors.add(session, new DN(), attrs);
     }
 }

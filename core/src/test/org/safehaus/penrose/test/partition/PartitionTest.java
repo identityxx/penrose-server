@@ -3,7 +3,7 @@ package org.safehaus.penrose.test.partition;
 import junit.framework.TestCase;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.apache.log4j.Logger;
 
@@ -24,75 +24,75 @@ public class PartitionTest extends TestCase {
     public void setUp() throws Exception {
         partitionConfig = new PartitionConfig("example");
 
-        EntryMapping rootEntry = new EntryMapping("dc=Example,dc=com");
+        EntryConfig rootEntry = new EntryConfig("dc=Example,dc=com");
         rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(rootEntry);
+        partitionConfig.getDirectoryConfig().addEntryConfig(rootEntry);
 
-        EntryMapping usersEntry = new EntryMapping("cn=Users,dc=Example,dc=com");
+        EntryConfig usersEntry = new EntryConfig("cn=Users,dc=Example,dc=com");
         usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(usersEntry);
+        partitionConfig.getDirectoryConfig().addEntryConfig(usersEntry);
 
-        EntryMapping users1Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
+        EntryConfig users1Mapping = new EntryConfig("cn=...,cn=Users,dc=Example,dc=com");
         users1Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "users.cn", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(users1Mapping);
+        partitionConfig.getDirectoryConfig().addEntryConfig(users1Mapping);
 
-        EntryMapping users2Mapping = new EntryMapping("cn=...,cn=Users,dc=Example,dc=com");
+        EntryConfig users2Mapping = new EntryConfig("cn=...,cn=Users,dc=Example,dc=com");
         users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
-        partitionConfig.getDirectoryConfig().addEntryMapping(users2Mapping);
+        partitionConfig.getDirectoryConfig().addEntryConfig(users2Mapping);
     }
 
     public void tearDown() throws Exception {
     }
 /*
     public void testAddingEntry() throws Exception {
-        partition.addEntryMapping(new EntryMapping("cn=Groups,dc=Example,dc=com"));
+        partition.addEntryConfig(new EntryConfig("cn=Groups,dc=Example,dc=com"));
         print(partition);
     }
 */
     public void testFindingRootEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getDirectoryConfig().getEntryMappings("dc=Example,dc=com");
-        assertNotNull(entryMappings);
-        assertFalse(entryMappings.isEmpty());
+        Collection<EntryConfig> entryConfigs = partitionConfig.getDirectoryConfig().getEntryConfigs("dc=Example,dc=com");
+        assertNotNull(entryConfigs);
+        assertFalse(entryConfigs.isEmpty());
 
-        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertTrue(entryMapping.getDn().matches("dc=Example,dc=com"));
+        EntryConfig entryConfig = (EntryConfig)entryConfigs.iterator().next();
+        assertTrue(entryConfig.getDn().matches("dc=Example,dc=com"));
     }
 
     public void testFindingStaticEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getDirectoryConfig().getEntryMappings("cn=Users,dc=Example,dc=com");
-        assertNotNull(entryMappings);
-        assertFalse(entryMappings.isEmpty());
+        Collection<EntryConfig> entryConfigs = partitionConfig.getDirectoryConfig().getEntryConfigs("cn=Users,dc=Example,dc=com");
+        assertNotNull(entryConfigs);
+        assertFalse(entryConfigs.isEmpty());
 
-        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertTrue(entryMapping.getDn().matches("cn=Users,dc=Example,dc=com"));
+        EntryConfig entryConfig = (EntryConfig)entryConfigs.iterator().next();
+        assertTrue(entryConfig.getDn().matches("cn=Users,dc=Example,dc=com"));
     }
 
     public void testFindingDynamicEntry() throws Exception {
-        Collection entryMappings = partitionConfig.getDirectoryConfig().getEntryMappings("cn=...,cn=Users,dc=Example,dc=com");
-        assertNotNull(entryMappings);
-        assertFalse(entryMappings.isEmpty());
+        Collection<EntryConfig> entryConfigs = partitionConfig.getDirectoryConfig().getEntryConfigs("cn=...,cn=Users,dc=Example,dc=com");
+        assertNotNull(entryConfigs);
+        assertFalse(entryConfigs.isEmpty());
 
-        EntryMapping entryMapping = (EntryMapping)entryMappings.iterator().next();
-        assertTrue(entryMapping.getDn().matches("cn=...,cn=Users,dc=Example,dc=com"));
+        EntryConfig entryConfig = (EntryConfig)entryConfigs.iterator().next();
+        assertTrue(entryConfig.getDn().matches("cn=...,cn=Users,dc=Example,dc=com"));
     }
 
     public void print(Partition partition) throws Exception {
         log.debug("Entries:");
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection<EntryMapping> c = partitionConfig.getDirectoryConfig().getRootEntryMappings();
+        Collection<EntryConfig> c = partitionConfig.getDirectoryConfig().getRootEntryConfigs();
         print(partition, c, 0);
     }
 
-    public void print(Partition partition, Collection<EntryMapping> entryMappings, int level) throws Exception {
+    public void print(Partition partition, Collection<EntryConfig> entryConfigs, int level) throws Exception {
 
         PartitionConfig partitionConfig = partition.getPartitionConfig();
 
-        for (EntryMapping entryMapping : entryMappings) {
+        for (EntryConfig entryConfig : entryConfigs) {
 
             for (int l = 0; l < level; l++) System.out.print("  ");
-            log.debug(" - " + entryMapping.getRdn());
+            log.debug(" - " + entryConfig.getRdn());
 
-            Collection<EntryMapping> children = partitionConfig.getDirectoryConfig().getChildren(entryMapping);
+            Collection<EntryConfig> children = partitionConfig.getDirectoryConfig().getChildren(entryConfig);
             print(partition, children, level + 1);
         }
     }

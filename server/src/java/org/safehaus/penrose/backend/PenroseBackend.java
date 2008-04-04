@@ -27,7 +27,7 @@ import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.partition.Partitions;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -77,12 +77,12 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
     }
 
     public boolean contains(DN dn) throws Exception {
-        PenroseConfig penroseConfig = penroseServer.getPenroseConfig();
-        if (penroseConfig.getRootDn().matches(dn)) return true;
-        
         Penrose penrose = penroseServer.getPenrose();
-        Partitions partitions = penrose.getPartitions();
-        return partitions.getPartition(dn) != null;
+        PenroseConfig penroseConfig = penrose.getPenroseConfig();
+        if (penroseConfig.getRootDn().matches(dn)) return true;
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        return !partitionManager.findEntries(dn).isEmpty();
     }
 
     public com.identyx.javabackend.Session getSession(Object id) throws Exception {
@@ -100,7 +100,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
     public void closeSession(Object id) throws Exception {
         log.debug("closeConnection("+id+")");
         PenroseSession session = sessions.remove(id);
-        if (session != null) session.close();
+        session.close();
     }
 
     public com.identyx.javabackend.Control createControl(String oid, byte[] value, boolean critical) throws Exception {

@@ -17,13 +17,13 @@
  */
 package org.safehaus.penrose.schema;
 
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.io.StringWriter;
-import java.io.PrintWriter;
 
-public class AttributeType implements Cloneable, Comparable {
+public class AttributeType implements Serializable, Cloneable, Comparable {
 
 	public final static String USER_APPLICATIONS     = "userApplications";
 	public final static String DIRECTORY_OPERATION   = "directoryOperation";

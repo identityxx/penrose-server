@@ -266,7 +266,7 @@
 
     <target name="dist-unix" depends="docs,dist" if="isUnix">
         <echo message="Creating ${module.name}-${product.version}.tar.gz"/>
-        <mkdir dir="target"/>
+        <mkdir dir="${project.dist}"/>
         <tar destfile="${project.dist}/${module.name}-${product.version}.tar.gz" compression="gzip">
             <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
                 <include name="bin/*.sh"/>
@@ -294,22 +294,24 @@
     <target name="dist-rpm" depends="dist-rpm-unix,dist-rpm-win32">
     </target>
 
-    <target name="dist-rpm-unix" if="isUnix">
+    <target name="dist-rpm-unix" depends="init" if="isUnix">
         <antcall target="rpm">
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
             <param name="rpm.spec" value="${module.name}.spec"/>
+            <param name="rpm.arch" value="i386"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.i386.rpm"/>
         </antcall>
     </target>
 
-    <target name="dist-rpm-win32" if="isWindows">
+    <target name="dist-rpm-win32" depends="init" if="isWindows">
         <antcall target="rpm">
             <param name="rpm.prefix" value="${cygwin.home}"/>
             <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
             <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
             <param name="rpm.spec" value="${module.name}.spec"/>
+            <param name="rpm.arch" value="i386"/>
             <param name="rpm.name" value="${module.name}-${product.version}-1.cygwin.i386.rpm"/>
         </antcall>
     </target>
@@ -350,11 +352,11 @@
             <arg line="-bb target/${rpm.spec}"/>
         </exec>
         <copy todir="${project.dist}" failonerror="false"
-            file="${rpm.home}/RPMS/i386/${rpm.name}">
+            file="${rpm.home}/RPMS/${rpm.arch}/${rpm.name}">
         </copy>
     </target>
 
-    <target name="dist-all" depends="dist-macosx,dist-unix,dist-win32">
+    <target name="dist-all" depends="dist-src,dist-macosx,dist-unix,dist-win32">
         <copy todir="${project.dist}"
             file="target/${module.name}-${product.version}.jar">
         </copy>

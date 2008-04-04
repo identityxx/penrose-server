@@ -13,20 +13,20 @@ import java.util.*;
  */
 public class LDAPConnection extends Connection {
 
-    public final static String BASE_DN        = "baseDn";
-    public final static String SCOPE          = "scope";
-    public final static String FILTER         = "filter";
-    public final static String OBJECT_CLASSES = "objectClasses";
-    public final static String SIZE_LIMIT     = "sizeLimit";
-    public final static String TIME_LIMIT     = "timeLimit";
+    public final static String BASE_DN                             = "baseDn";
+    public final static String SCOPE                               = "scope";
+    public final static String FILTER                              = "filter";
+    public final static String OBJECT_CLASSES                      = "objectClasses";
+    public final static String SIZE_LIMIT                          = "sizeLimit";
+    public final static String TIME_LIMIT                          = "timeLimit";
 
-    public final static String PAGE_SIZE      = "pageSize";
-    public final static int    DEFAULT_PAGE_SIZE = 1000;
+    public final static String PAGE_SIZE                           = "pageSize";
+    public final static int    DEFAULT_PAGE_SIZE                   = 1000;
 
-    public final static String AUTHENTICATION          = "authentication";
-    public final static String AUTHENTICATION_DEFAULT  = "default";
-    public final static String AUTHENTICATION_FULL     = "full";
-    public final static String AUTHENTICATION_DISABLED = "disabled";
+    public final static String AUTHENTICATION                      = "authentication";
+    public final static String AUTHENTICATION_DEFAULT              = "default";
+    public final static String AUTHENTICATION_FULL                 = "full";
+    public final static String AUTHENTICATION_DISABLED             = "disabled";
 
     public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
@@ -41,6 +41,11 @@ public class LDAPConnection extends Connection {
     public final static String TIME_BETWEEN_EVICTION_RUNS_MILLIS    = "timeBetweenEvictionRunsMillis";
     public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
     public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
+
+    public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
+    public final static String WHEN_EXHAUSTED_FAIL                  = "fail";
+    public final static String WHEN_EXHAUSTED_BLOCK                 = "block";
+    public final static String WHEN_EXHAUSTED_GROW                  = "grow";
 
     public GenericObjectPool.Config config = new GenericObjectPool.Config();
     public GenericObjectPool connectionPool;
@@ -65,7 +70,7 @@ public class LDAPConnection extends Connection {
         if (s != null) config.maxIdle = Integer.parseInt(s);
 
         s = (String)properties.remove(MAX_WAIT);
-        if (s != null) config.maxWait = Integer.parseInt(s);
+        if (s != null) config.maxWait = Long.parseLong(s);
 
         s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
         if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
@@ -91,8 +96,19 @@ public class LDAPConnection extends Connection {
         //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
         //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
 
-        //s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
-        //if (s != null) config.whenExhaustedAction = Byte.parseByte(s);
+        s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
+        if (WHEN_EXHAUSTED_FAIL.equals(s)) {
+            config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_FAIL;
+
+        } else if (WHEN_EXHAUSTED_BLOCK.equals(s)) {
+            config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
+
+        } else if (WHEN_EXHAUSTED_GROW.equals(s)) {
+            config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_GROW;
+
+        } else {
+            config.whenExhaustedAction = GenericObjectPool.DEFAULT_WHEN_EXHAUSTED_ACTION;
+        }
 
         connectionPool = new GenericObjectPool(null, config);
 
@@ -130,22 +146,22 @@ public class LDAPConnection extends Connection {
         LDAPClient client = (LDAPClient)session.getAttribute(attributeName);
         if (client != null) return client;
 
-        client = createClient();
+        final LDAPClient newClient = createClient();
 
         if (debug) log.debug("Storing LDAP client in session.");
-        session.setAttribute(attributeName, client);
+        session.setAttribute(attributeName, newClient);
 
         session.addListener(new SessionListener() {
             public void sessionClosed() throws Exception {
 
                 if (debug) log.debug("Closing LDAP client.");
 
-                LDAPClient client = (LDAPClient)session.removeAttribute(attributeName);
-                client.close();
+                session.removeAttribute(attributeName);
+                newClient.close();
             }
         });
 
-        return client;
+        return newClient;
     }
 
     public void closeClient(Session session) throws Exception {

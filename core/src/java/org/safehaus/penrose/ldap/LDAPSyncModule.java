@@ -106,12 +106,12 @@ public class LDAPSyncModule extends Module {
 
         DN baseDn = (DN)event.getSource();
 
-        PartitionManager partitionManager = penroseContext.getPartitionConfigs();
+        PartitionManager partitionManager = penroseContext.getPartitionConfigManager();
         Partition partition = partitionManager.getPartition(baseDn);
         PartitionConfig partitionConfig = partition.getPartitionConfig();
-        Collection entryMappings = partitionConfig.getMappings().findEntryMappings(baseDn);
+        Collection<EntryConfig> entryConfigs = partitionConfig.getMappings().findEntryConfigs(baseDn);
 
-        if (entryMappings == null || entryMappings.isEmpty()) return;
+        if (entryConfigs == null || entryConfigs.isEmpty()) return;
 
         DirContext ctx = null;
 

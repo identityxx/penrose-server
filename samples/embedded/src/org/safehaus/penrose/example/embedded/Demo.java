@@ -5,7 +5,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.directory.EntryMapping;
+import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
@@ -35,45 +35,45 @@ public class Demo {
         logger.setLevel(Level.WARN);
     }
 
-    public EntryMapping createRootEntry() {
+    public EntryConfig createRootEntry() {
 
-        EntryMapping entryMapping = new EntryMapping();
-        entryMapping.setDn("dc=Example,dc=com");
+        EntryConfig entryConfig = new EntryConfig();
+        entryConfig.setDn("dc=Example,dc=com");
 
-        entryMapping.addObjectClass("dcObject");
-        entryMapping.addObjectClass("organization");
+        entryConfig.addObjectClass("dcObject");
+        entryConfig.addObjectClass("organization");
 
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("dc");
         attribute.setConstant("Example");
         attribute.setRdn(true);
 
-        entryMapping.addAttributeMapping(attribute);
+        entryConfig.addAttributeMapping(attribute);
 
         attribute = new AttributeMapping();
         attribute.setName("o");
         attribute.setConstant("Example");
 
-        entryMapping.addAttributeMapping(attribute);
+        entryConfig.addAttributeMapping(attribute);
 
-        return entryMapping;
+        return entryConfig;
     }
 
-    public EntryMapping createUsersEntry() {
+    public EntryConfig createUsersEntry() {
 
-        EntryMapping entryMapping = new EntryMapping();
-        entryMapping.setDn("ou=Users,dc=Example,dc=com");
+        EntryConfig entryConfig = new EntryConfig();
+        entryConfig.setDn("ou=Users,dc=Example,dc=com");
 
-        entryMapping.addObjectClass("organizationalUnit");
+        entryConfig.addObjectClass("organizationalUnit");
 
         AttributeMapping attribute = new AttributeMapping();
         attribute.setName("ou");
         attribute.setConstant("Users");
         attribute.setRdn(true);
 
-        entryMapping.addAttributeMapping(attribute);
+        entryConfig.addAttributeMapping(attribute);
 
-        return entryMapping;
+        return entryConfig;
     }
 
     public void run() throws Exception {
@@ -90,22 +90,22 @@ public class Demo {
 
         PartitionConfig partitionConfig = new PartitionConfig("Example");
 
-        EntryMapping rootEntry = createRootEntry();
-        partitionConfig.getDirectoryConfig().addEntryMapping(rootEntry);
+        EntryConfig rootEntry = createRootEntry();
+        partitionConfig.getDirectoryConfig().addEntryConfig(rootEntry);
 
-        EntryMapping usersEntry = createUsersEntry();
-        partitionConfig.getDirectoryConfig().addEntryMapping(usersEntry);
+        EntryConfig usersEntry = createUsersEntry();
+        partitionConfig.getDirectoryConfig().addEntryConfig(usersEntry);
 
         PenroseContext penroseContext = penrose.getPenroseContext();
 
-        Partitions partitions = penrose.getPartitions();
+        PartitionManager partitionManager = penrose.getPartitionManager();
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPenroseConfig(penroseConfig);
         partitionFactory.setPenroseContext(penroseContext);
 
         Partition partition = partitionFactory.createPartition(partitionConfig);
-        partitions.addPartition(partition);
+        partitionManager.addPartition(partition);
 
         log.warn("Connecting to Penrose.");
 

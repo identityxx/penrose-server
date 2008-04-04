@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.io.FileReader;
 import java.io.File;
 
@@ -35,13 +34,15 @@ public class SchemaReader {
     public SchemaReader() {
     }
 
-    public Schema read(SchemaConfig schemaConfig) throws Exception {
-
-        File path = new File(schemaConfig.getPath());
+    public Schema read(File path) throws Exception {
 
         log.debug("Loading schema "+path+".");
 
-        Schema schema = new Schema(schemaConfig);
+        String fileName = path.getName();
+        int i = fileName.lastIndexOf(".");
+        String name = i < 0 ? fileName : fileName.substring(0, i);
+        
+        Schema schema = new Schema(name);
 
         if (!path.exists()) return schema;
 

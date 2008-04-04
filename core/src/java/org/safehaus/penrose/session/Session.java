@@ -17,26 +17,24 @@
  */
 package org.safehaus.penrose.session;
 
-import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.Partitions;
-import org.safehaus.penrose.ldap.LDAP;
+import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.log.Access;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.PasswordUtil;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.ietf.ldap.LDAPException;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -117,20 +115,17 @@ public class Session {
     
     public void add(AddRequest request, AddResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            add(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        add(partition, request, response);
     }
 
     public void add(
@@ -218,20 +213,17 @@ public class Session {
 
     public void bind(BindRequest request, BindResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            bind(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        bind(partition, request, response);
     }
 
     public void bind(
@@ -339,20 +331,17 @@ public class Session {
 
     public void compare(CompareRequest request, CompareResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            compare(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        compare(partition, request, response);
     }
 
     public void compare(
@@ -434,20 +423,17 @@ public class Session {
 
     public void delete(DeleteRequest request, DeleteResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            delete(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        delete(partition, request, response);
     }
 
     public void delete(
@@ -517,20 +503,17 @@ public class Session {
 
     public void modify(ModifyRequest request, ModifyResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            modify(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        modify(partition, request, response);
     }
 
     public void modify(
@@ -618,20 +601,17 @@ public class Session {
 
     public void modrdn(ModRdnRequest request, ModRdnResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            modrdn(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        modrdn(partition, request, response);
     }
 
     public void modrdn(
@@ -728,20 +708,17 @@ public class Session {
 
     public void search(SearchRequest request, SearchResponse response) throws LDAPException {
 
-        Partition partition;
-
         try {
             DN dn = request.getDn();
 
-            Partitions partitions = penroseContext.getPartitions();
-            partition = partitions.getPartition(dn);
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
+            search(partition, request, response);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        search(partition, request, response);
     }
 
     public void search(
@@ -776,8 +753,11 @@ public class Session {
             }
 
             SearchResponse sr = new SearchResponse() {
-                public void add(SearchResult value) throws Exception {
-                    response.add(value);
+                public void add(SearchResult result) throws Exception {
+                    response.add(result);
+                }
+                public void addReferral(SearchResult reference) throws Exception {
+                    response.addReferral(reference);
                 }
                 public void setException(LDAPException exception) {
                     response.setException(exception);
@@ -820,20 +800,20 @@ public class Session {
 
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
 
-        Partition partition = null;
-
         try {
             if (!rootUser && bindDn != null) {
-                Partitions partitions = penroseContext.getPartitions();
-                partition = partitions.getPartition(bindDn);
-            }
+                PartitionManager partitionManager = penroseContext.getPartitionManager();
+                Partition partition = partitionManager.getPartition(bindDn);
+                unbind(partition, request, response);
 
+            } else {
+                unbind(null, request, response);
+            }
+            
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw LDAP.createException(e);
         }
-
-        unbind(partition, request, response);
     }
 
     public void unbind(

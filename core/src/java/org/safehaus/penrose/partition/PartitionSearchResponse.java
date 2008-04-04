@@ -68,20 +68,24 @@ public class PartitionSearchResponse extends SearchResponse {
         if (session != null && !session.isRootUser()) {
             if (debug) log.debug("Checking read permission.");
             
-            int rc = aclEvaluator.checkRead(session, partition, entry, dn);
+            int rc = aclEvaluator.checkRead(session, entry, dn);
             if (rc != LDAP.SUCCESS) {
                 if (debug) log.debug("Entry \""+searchResult.getDn()+"\" is not readable.");
                 return;
             }
-            partition.filterAttributes(session, dn, entry, attributes);
+
+            DN bindDn = session.getBindDn();
+            partition.filterAttributes(bindDn, dn, entry, attributes);
         }
 
+        Collection<String> list = partition.filterAttributes(searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
+/*
         Collection<String> list = attributesToRemove.get(entry.getId());
         if (list == null) {
             list = partition.filterAttributes(searchResult, requestedAttributes, allRegularAttributes, allOpAttributes);
             attributesToRemove.put(entry.getId(), list);
         }
-
+*/
         if (!list.isEmpty()) {
             if (debug) log.debug("Removing attributes: "+list);
             partition.removeAttributes(attributes, list);
@@ -97,6 +101,10 @@ public class PartitionSearchResponse extends SearchResponse {
         response.add(result);
     }
 
+    public void addReferral(SearchResult reference) throws Exception {
+        response.addReferral(reference);
+    }
+    
     public void setResult(Entry entry, LDAPException exception) {
         results.put(entry.getId(), exception);
     }

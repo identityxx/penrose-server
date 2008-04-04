@@ -20,6 +20,7 @@ package org.safehaus.penrose.partition;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.SessionContext;
 
 import java.io.File;
 
@@ -32,7 +33,6 @@ public class PartitionContext implements Cloneable {
 
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
-    private SessionManager sessionManager;
 
     private ClassLoader classLoader;
 
@@ -76,14 +76,11 @@ public class PartitionContext implements Cloneable {
     }
 
     public Partition getPartition(String name) {
-        return penroseContext.getPartitions().getPartition(name);
+        return penroseContext.getPartitionManager().getPartition(name);
     }
 
     public SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
+        SessionContext sessionContext = penroseContext.getSessionContext();
+        return sessionContext.getSessionManager();
     }
 }
