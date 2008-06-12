@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!ELEMENT monitor (description?, monitor-class, parameter*)>
+<!ATTLIST monitor enabled CDATA #IMPLIED>
+
+<!ELEMENT monitor-class (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

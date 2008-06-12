@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <module name="FederationModule" enabled="true">
+    <module-class>org.safehaus.penrose.federation.module.FederationModule</module-class>
+  </module>
+
+</mapping>

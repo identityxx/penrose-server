@@ -2,6 +2,7 @@ package org.safehaus.penrose.jdbc.connection;
 
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.jdbc.*;
+import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -52,7 +53,7 @@ public class JDBCStatementBuilder {
         log.debug("Generating select statement.");
 
         StringBuilder sb = new StringBuilder();
-        sb.append("select distinct ");
+        sb.append("select distinct\n    ");
 
         boolean first = true;
         for (String columnName : statement.getColumnNames()) {
@@ -60,7 +61,7 @@ public class JDBCStatementBuilder {
             if (first) {
                 first = false;
             } else {
-                sb.append(", ");
+                sb.append(",\n    ");
             }
 
             int i = columnName.indexOf('.');
@@ -75,7 +76,7 @@ public class JDBCStatementBuilder {
             if (quote != null) sb.append(quote);
         }
 
-        sb.append(" from ");
+        sb.append("\nfrom\n    ");
 
         Collection<String> aliases = statement.getSourceAliases();
         Iterator i = aliases.iterator();
@@ -110,10 +111,10 @@ public class JDBCStatementBuilder {
             Filter joinCondition = joinClause.getCondition();
             String joinWhere = joinClause.getWhere();
 
-            sb.append(" ");
+            sb.append("\n");
             sb.append(joinType);
 
-            sb.append(" ");
+            sb.append("\n    ");
             sb.append(table);
 
             sb.append(" ");
@@ -171,7 +172,7 @@ public class JDBCStatementBuilder {
         }
 
         if (sql.length() > 0) {
-            sb.append(" where ");
+            sb.append("\nwhere\n    ");
             sb.append(sql);
         }
 
@@ -181,7 +182,7 @@ public class JDBCStatementBuilder {
         for (String columnName : statement.getOrders()) {
 
             if (first) {
-                sb.append(" order by ");
+                sb.append("\norder by\n    ");
                 first = false;
             } else {
                 sb.append(", ");
@@ -355,7 +356,7 @@ public class JDBCStatementBuilder {
 
         StringBuilder sb = new StringBuilder();
 
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
+        String catalog = sourceConfig.getParameter(JDBCSource.CATALOG);
         if (catalog != null) {
             if (quote != null) sb.append(quote);
             sb.append(catalog);
@@ -363,7 +364,7 @@ public class JDBCStatementBuilder {
             sb.append(".");
         }
 
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
+        String schema = sourceConfig.getParameter(JDBCSource.SCHEMA);
         if (schema != null) {
             if (quote != null) sb.append(quote);
             sb.append(schema);
@@ -371,7 +372,7 @@ public class JDBCStatementBuilder {
             sb.append(".");
         }
 
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
+        String table = sourceConfig.getParameter(JDBCSource.TABLE);
         if (quote != null) sb.append(quote);
         sb.append(table);
         if (quote != null) sb.append(quote);

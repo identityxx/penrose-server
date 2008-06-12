@@ -5,8 +5,16 @@
 
 <mapping>
 
-  <entry dn="dc=my-domain,dc=com">
+  <entry dn="dc=Lockout,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Lockout</constant>
+    </at>
+    <at name="o">
+      <constant>Lockout</constant>
+    </at>
     <source name="LDAP">
       <source-name>LDAP</source-name>
     </source>
@@ -32,6 +40,7 @@
   </entry>
 
   <entry dn="account=...,cn=lockout">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>extensibleObject</oc>
     <at name="account" rdn="true">
       <variable>l.account</variable>
@@ -53,9 +62,9 @@ return org.safehaus.penrose.lockout.Lock.DATE_FORMAT.format(l.timestamp);
         <variable>counter</variable>
       </field>
       <field name="timestamp">
-        <variable>
+        <expression>
 return new java.sql.Timestamp(org.safehaus.penrose.lockout.Lock.DATE_FORMAT.parse(timestamp));
-        </variable>
+        </expression>
       </field>
     </source>
   </entry>

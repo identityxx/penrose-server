@@ -1,6 +1,6 @@
 package org.safehaus.penrose.jdbc.scheduler;
 
-import org.safehaus.penrose.engine.TransformEngine;
+import org.safehaus.penrose.util.TransformationUtil;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
@@ -77,7 +77,7 @@ public class SplitSearchResponse extends SearchResponse {
             sv.add(target.getName(), attributes);
             interpreter.set(sv);
 
-            Collection<RDN> rdns = TransformEngine.convert(primaryAttributes);
+            Collection<RDN> rdns = TransformationUtil.convert(primaryAttributes);
 
             for (RDN rdn : rdns) {
                 DN newDn = new DN(rdn);

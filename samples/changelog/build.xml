@@ -1,0 +1,81 @@
+<!--
+ Copyright (c) 2000-2006, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="changelog" default="build">
+
+    <description>Penrose Change Log Example</description>
+
+    <property file="../../build.properties"/>
+
+    <property name="prefix" value=""/>
+    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
+
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version} (${os.arch})" />
+        <echo message="Java Version: ${java.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <path id="lib.path">
+        <fileset dir="../../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="../../services/JMX/SERVICE-INF/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="compile">
+        <mkdir dir="DIR-INF/target/classes"/>
+        <javac
+            srcdir="DIR-INF/src"
+            destdir="DIR-INF/target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+        />
+    </target>
+
+    <target name="build" depends="compile">
+        <mkdir dir="DIR-INF/lib"/>
+        <jar jarfile="DIR-INF/lib/${product.name}-changelog-module-${product.version}.jar">
+            <fileset dir="DIR-INF/target/classes"/>
+            <manifest>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
+              <attribute name="Implementation-Title"   value="${product.title} Server"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
+              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Build-Date"             value="${TIMESTAMP}"/>
+            </manifest>
+        </jar>
+        <fixcrlf
+            srcdir="bin"
+            includes="**/*.sh"
+            eol="unix"
+        />
+    </target>
+
+    <target name="clean">
+        <delete file="DIR-INF/lib/${product.name}-changelog-module-${product.version}.jar" failonerror="false"/>
+        <delete dir="DIR-INF/target" failonerror="false"/>
+    </target>
+
+</project>

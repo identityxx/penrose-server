@@ -15,7 +15,7 @@ import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.management.*;
 import org.safehaus.penrose.management.module.ModuleClient;
 import org.safehaus.penrose.management.scheduler.SchedulerClient;
@@ -535,19 +535,19 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static void showPartitions(PenroseClient client) throws Exception {
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("PARTITION", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         for (String partitionName : partitionManagerClient.getPartitionNames()) {
             PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
             String status = partitionClient.getStatus();
 
-            System.out.print(Formatter.rightPad(partitionName, 15) + " ");
-            System.out.println(Formatter.rightPad(status, 10));
+            System.out.print(TextUtil.rightPad(partitionName, 15) + " ");
+            System.out.println(TextUtil.rightPad(status, 10));
         }
     }
 

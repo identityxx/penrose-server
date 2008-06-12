@@ -31,7 +31,7 @@ public class DN implements Serializable, Comparable {
         rdns.add(rdn);
     }
 
-    public void parse() {
+    public synchronized void parse() {
         if (rdns != null) return;
         rdns = new ArrayList<RDN>();
         Collection<RDN> list = DNBuilder.parse(originalDn);
@@ -40,7 +40,7 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public DN getDn(int start, int end) {
+    public synchronized DN getDn(int start, int end) {
         parse();
 
         DNBuilder db = new DNBuilder();
@@ -51,38 +51,53 @@ public class DN implements Serializable, Comparable {
         return db.toDn();
     }
 
-    public DN append(String dn) throws Exception {
+    public synchronized DN append(String dn) throws Exception {
         return append(new DN(dn));
     }
 
-    public DN append(RDN rdn) throws Exception {
+    public synchronized DN append(RDN rdn) throws Exception {
         return append(new DN(rdn));
     }
 
-    public DN append(DN dn) throws Exception {
+    public synchronized DN append(DN dn) throws Exception {
         DNBuilder db = new DNBuilder();
         db.append(this);
         db.append(dn);
         return db.toDn();
     }
 
-    public DN getSuffix(int i) {
+    public synchronized DN prepend(String dn) throws Exception {
+        return prepend(new DN(dn));
+    }
+    
+    public synchronized DN prepend(RDN rdn) throws Exception {
+        return prepend(new DN(rdn));
+    }
+
+    public synchronized DN prepend(DN dn) throws Exception {
+        DNBuilder db = new DNBuilder();
+        db.append(dn);
+        db.append(this);
+        return db.toDn();
+    }
+
+    public synchronized DN getSuffix(int i) {
         return getDn(i, getSize());
     }
 
-    public DN getPrefix(int i) throws Exception {
+    public synchronized DN getPrefix(int i) throws Exception {
         return getDn(0, i);
     }
 
-    public DN getPrefix(String suffix) throws Exception {
+    public synchronized DN getPrefix(String suffix) throws Exception {
         return getPrefix(new DN(suffix));
     }
 
-    public DN getPrefix(DN suffix) throws Exception {
+    public synchronized DN getPrefix(DN suffix) throws Exception {
         return getPrefix(getSize() - suffix.getSize());
     }
 
-    public String getPattern() throws Exception {
+    public synchronized String getPattern() throws Exception {
         if (pattern != null) return pattern;
 
         parse();
@@ -102,7 +117,7 @@ public class DN implements Serializable, Comparable {
         return pattern;
     }
 
-    public String format(Collection<Object> args) throws Exception {
+    public synchronized String format(Collection<Object> args) throws Exception {
         if (formatter == null) {
             formatter = new MessageFormat(getPattern());
         }
@@ -116,7 +131,7 @@ public class DN implements Serializable, Comparable {
         return formatter.format(values.toArray());
     }
 
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         if (originalDn == null) {
             return rdns.isEmpty();
         } else {
@@ -124,28 +139,28 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    public int getSize() {
+    public synchronized int getSize() {
         parse();
         return rdns.size();
     }
 
-    public RDN getRdn() {
+    public synchronized RDN getRdn() {
         parse();
         if (rdns.size() == 0) return null;
         return rdns.get(0);
     }
 
-    public RDN get(int i) {
+    public synchronized RDN get(int i) {
         parse();
         return rdns.get(i);
     }
 
-    public Collection<RDN> getRdns() {
+    public synchronized Collection<RDN> getRdns() {
         parse();
         return rdns;
     }
 
-    public String getOriginalDn() throws Exception {
+    public synchronized String getOriginalDn() throws Exception {
         if (originalDn != null) return originalDn;
 
         StringBuilder sb = new StringBuilder();
@@ -162,7 +177,7 @@ public class DN implements Serializable, Comparable {
         return originalDn;
     }
 
-    public String getNormalizedDn() throws Exception {
+    public synchronized String getNormalizedDn() throws Exception {
         if (normalizedDn != null) return normalizedDn;
 
         parse();
@@ -177,7 +192,7 @@ public class DN implements Serializable, Comparable {
         return normalizedDn;
     }
 
-    public DN getParentDn() {
+    public synchronized DN getParentDn() {
         if (parentDn != null) return parentDn;
 
         parse();
@@ -191,11 +206,11 @@ public class DN implements Serializable, Comparable {
         return parentDn;
     }
 
-    public boolean endsWith(String suffix) throws Exception {
+    public synchronized boolean endsWith(String suffix) throws Exception {
         return endsWith(new DN(suffix));
     }
     
-    public boolean endsWith(DN suffix) throws Exception {
+    public synchronized boolean endsWith(DN suffix) throws Exception {
         parse();
         suffix.parse();
         int i1 = rdns.size();
@@ -216,11 +231,11 @@ public class DN implements Serializable, Comparable {
         return true;
     }
 
-    public boolean matches(String dn) throws Exception {
+    public synchronized boolean matches(String dn) throws Exception {
         return matches(new DN(dn));
     }
     
-    public boolean matches(DN dn) throws Exception {
+    public synchronized boolean matches(DN dn) throws Exception {
 
         if (dn == null) return false;
         if (getNormalizedDn().equals(dn.getNormalizedDn())) return true;
@@ -242,7 +257,7 @@ public class DN implements Serializable, Comparable {
         return true;
     }
 
-    public int hashCode() {
+    public synchronized int hashCode() {
         try {
             return getOriginalDn().hashCode();
         } catch (Exception e) {
@@ -250,13 +265,13 @@ public class DN implements Serializable, Comparable {
         }
     }
 
-    boolean equals(Object o1, Object o2) {
+    synchronized boolean equals(Object o1, Object o2) {
         if (o1 == null && o2 == null) return true;
         if (o1 != null) return o1.equals(o2);
         return o2.equals(o1);
     }
 
-    public boolean equals(Object object) {
+    public synchronized boolean equals(Object object) {
         if (this == object) return true;
         if (object == null) return false;
 
@@ -278,7 +293,7 @@ public class DN implements Serializable, Comparable {
         return false;
     }
 
-    public int compareTo(Object object) {
+    public synchronized int compareTo(Object object) {
 
         if (object == null) return 0;
         if (!(object instanceof DN)) return 0;
@@ -303,7 +318,7 @@ public class DN implements Serializable, Comparable {
         return 0;
     }
 
-    public String toString() {
+    public synchronized String toString() {
         try {
             return getOriginalDn();
         } catch (Exception e) {

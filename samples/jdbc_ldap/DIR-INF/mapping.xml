@@ -36,6 +36,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=JDBC-LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -52,7 +53,7 @@
       <variable>ju.password</variable>
     </at>
     <source name="ju">
-      <source-name>jdbc.users</source-name>
+      <source-name>jdbc_users</source-name>
       <field name="username">
         <variable>uid</variable>
       </field>
@@ -61,7 +62,7 @@
       </field>
     </source>
     <source name="lu">
-      <source-name>ldap.users</source-name>
+      <source-name>ldap_users</source-name>
       <field name="uid">
         <variable>ju.username</variable>
       </field>
@@ -82,6 +83,7 @@
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=JDBC-LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>jg.groupname</variable>
@@ -94,13 +96,13 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=JDBC-LDAP,dc=Example,dc=com";
       </expression>
     </at>
     <source name="jg">
-      <source-name>jdbc.groups</source-name>
+      <source-name>jdbc_groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
     </source>
     <source name="lg">
-      <source-name>ldap.groups</source-name>
+      <source-name>ldap_groups</source-name>
       <field name="cn">
         <variable>jg.groupname</variable>
       </field>

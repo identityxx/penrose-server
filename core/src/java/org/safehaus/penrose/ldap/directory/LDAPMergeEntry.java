@@ -1,15 +1,15 @@
 package org.safehaus.penrose.ldap.directory;
 
-import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.DynamicEntry;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.source.LDAPSource;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -17,10 +17,14 @@ import java.util.Set;
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPMergeEntry extends Entry {
+public class LDAPMergeEntry extends DynamicEntry {
 
     public final static int USE_FIRST = 0;
     public final static int MERGE_ALL = 1;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
             Session session,
@@ -31,11 +35,11 @@ public class LDAPMergeEntry extends Entry {
         DN bindDn = request.getDn();
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("MERGE BIND", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry : "+getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("DN    : "+bindDn, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("MERGE BIND", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+bindDn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         SearchResult sr = find(bindDn);
@@ -81,15 +85,18 @@ public class LDAPMergeEntry extends Entry {
         BindRequest newRequest = (BindRequest)request.clone();
         newRequest.setDn(newBindDn);
 
-        sourceRef.bind(session, newRequest, response);
+        Source source = sourceRef.getSource();
+        source.bind(session, newRequest, response);
     }
 
-    public void searchEntry(
-            final Session session,
-            final Entry base,
-            final SourceValues sourceValues,
-            final SearchRequest request,
-            final SearchResponse response
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void search(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
 
         final DN baseDn     = request.getDn();
@@ -97,31 +104,49 @@ public class LDAPMergeEntry extends Entry {
         final int scope     = request.getScope();
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("MERGE SEARCH", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry  : "+getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Base   : "+baseDn, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter : "+filter, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("MERGE SEARCH", 80));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
+        response = createSearchResponse(session, request, response);
 
-        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+        try {
+            validateScope(request);
+            validatePermission(session, request);
+            validateFilter(filter);
 
-        if (!filterEvaluator.eval(this, filter)) {
-            if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
+        } catch (Exception e) {
+            response.close();
             return;
         }
 
-        final Set<String> results = new LinkedHashSet<String>();
+        try {
+            generateSearchResults(session, request, response);
+
+        } finally {
+            response.close();
+        }
+    }
+
+    public void generateSearchResults(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        DN baseDn = request.getDn();
+
+        final Set<String> keys = new LinkedHashSet<String>();
         final Interpreter interpreter = partition.newInterpreter();
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
-        if (base == this) {
+        if (getDn().matches(baseDn)) {
             newRequest.setDn(baseDn.getRdn());
             newRequest.setScope(SearchRequest.SCOPE_BASE);
 
@@ -134,7 +159,7 @@ public class LDAPMergeEntry extends Entry {
             final String alias = sourceRef.getAlias();
             log.debug("Searching source "+alias+":");
 
-            SearchResponse newResponse = new SearchResponse() {
+            SearchResponse newResponse = new Pipeline(response) {
                 public void add(SearchResult result) throws Exception {
 
                     SourceValues sv = new SourceValues();
@@ -156,22 +181,18 @@ public class LDAPMergeEntry extends Entry {
                     log.debug("New entry:");
                     newResult.print();
 
-                    if (!filterEvaluator.eval(newResult, filter)) {
-                        if (debug) log.debug("Entry \""+newResult.getDn()+"\" doesn't match search filter.");
-                        return;
-                    }
-
                     String key = newDn.getNormalizedDn();
-                    if (!results.contains(key)) {
-                        response.add(newResult);
-                        results.add(key);
-                    }
+                    if (keys.contains(key)) return;
+
+                    keys.add(key);
+                    super.add(newResult);
                 }
             };
 
             try {
-                sourceRef.search(session, newRequest, newResponse);
-                
+                Source source = sourceRef.getSource();
+                source.search(session, newRequest, newResponse);
+
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

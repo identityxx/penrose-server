@@ -20,6 +20,7 @@ package org.safehaus.penrose.session;
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.event.*;
+import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
@@ -27,14 +28,12 @@ import org.safehaus.penrose.log.Access;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -52,7 +51,6 @@ public class Session {
     private PenroseContext penroseContext;
     private SessionContext sessionContext;
 
-    private SessionManager sessionManager;
     private EventManager eventManager;
 
     private Object sessionId;
@@ -65,22 +63,49 @@ public class Session {
     protected boolean eventsEnabled = true;
     protected long bufferSize;
 
-    private Collection<SessionListener> listeners = new ArrayList<SessionListener>();
+    private List<SessionListener> listeners = new ArrayList<SessionListener>();
 
-    public Session(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
+    public Session() {
     }
 
     public void init() {
 
-        log.debug("----------------------------------------------------------------------------------");
-        if (warn) log.warn("Creating session "+sessionId+".");
+        if (debug) {
+            log.debug("----------------------------------------------------------------------------------");
+            log.debug("Creating session "+sessionId+".");
+        }
 
         String s = penroseConfig.getProperty(EVENTS_ENABLED);
         eventsEnabled = s == null || Boolean.valueOf(s);
 
         s = penroseConfig.getProperty(SEARCH_RESPONSE_BUFFER_SIZE);
         bufferSize = s == null ? 0 : Long.parseLong(s);
+
+        if (debug) log.debug("Session "+sessionId+" created.");
+    }
+
+    public void connect(ConnectRequest request) throws Exception {
+        Access.log(this, request);
+        if (warn) log.warn("Session "+sessionId+": Connect from "+request.getClientAddress()+".");
+    }
+
+    public void disconnect(DisconnectRequest request) throws Exception {
+        Access.log(this, request);
+        if (warn) log.warn("Session "+sessionId+": Disconnect.");
+    }
+
+    public void close() throws Exception {
+
+        if (debug) {
+            log.debug("----------------------------------------------------------------------------------");
+            log.debug("Closing session "+sessionId+".");
+        }
+
+        for (SessionListener listener : listeners) {
+            listener.sessionClosed();
+        }
+
+        if (debug) log.debug("Session "+sessionId+" closed.");
     }
 
     public DN getBindDn() {
@@ -135,10 +160,12 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Add "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
+                log.debug(" - Session : "+sessionId);
                 log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Entry   : "+request.getDn());
                 log.debug("");
@@ -232,20 +259,22 @@ public class Session {
             BindResponse response
     ) throws LDAPException {
         try {
+            DN dn = request.getDn();
+            byte[] password = request.getPassword();
+
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
-                log.debug(" - Bind DN       : "+request.getDn());
-                log.debug(" - Bind Password : "+(request.getPassword() == null ? "" : new String(request.getPassword())));
+                log.debug(" - Session       : "+sessionId);
+                log.debug(" - Bind DN       : "+dn);
+                log.debug(" - Bind Password : "+(password == null ? "" : new String(password)));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
             }
-
-            DN dn = request.getDn();
-            byte[] password = request.getPassword();
 
             if (eventsEnabled) {
             	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, partition, request, response);
@@ -279,7 +308,7 @@ public class Session {
                 partition.bind(this, request, response);
 
                 if (response.getReturnCode() == LDAP.SUCCESS) {
-                    log.debug("Bound as "+dn);
+                    if (debug) log.debug("Bound as "+dn);
                     bindDn = dn;
                     rootUser = false;
 
@@ -351,10 +380,12 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Compare "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
+                log.debug(" - Session         : "+sessionId);
                 log.debug(" - Bind DN         : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN              : "+request.getDn());
                 log.debug(" - Attribute Name  : "+request.getAttributeName());
@@ -443,10 +474,12 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Delete "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
+                log.debug(" - Session : "+sessionId);
                 log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN      : "+request.getDn());
                 log.debug("");
@@ -523,12 +556,14 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Modify "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
-                log.debug(" - Bind DN    : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - DN         : "+request.getDn());
+                log.debug(" - Session : "+sessionId);
+                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - DN      : "+request.getDn());
                 log.debug("");
 
                 log.debug("Modifications:");
@@ -621,10 +656,12 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": ModRDN "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
+                log.debug(" - Session        : "+sessionId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+request.getDn());
                 log.debug(" - New RDN        : "+request.getNewRdn());
@@ -728,10 +765,12 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Search "+request.getDn()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
+                log.debug(" - Session    : "+sessionId);
                 log.debug(" - Bind DN    : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Base DN    : "+request.getDn());
                 log.debug(" - Scope      : "+LDAP.getScope(request.getScope()));
@@ -744,31 +783,26 @@ public class Session {
 
             final Session session = this;
 
-            response.setEventsEnabled(eventsEnabled);
             response.setBufferSize(bufferSize);
+            response.setSizeLimit(request.getSizeLimit());
 
-            if (eventsEnabled) {
-                SearchEvent beforeSearchEvent = new SearchEvent(session, SearchEvent.BEFORE_SEARCH, session, partition, request, response);
-                eventManager.postEvent(beforeSearchEvent);
-            }
-
-            SearchResponse sr = new SearchResponse() {
+            SearchResponse sr = new Pipeline(response) {
                 public void add(SearchResult result) throws Exception {
-                    response.add(result);
+                    if (debug) log.debug("Returning search result \""+result.getDn()+"\".");
+                    //if (debug) result.getAttributes().print();
+                    super.add(result);
                 }
-                public void addReferral(SearchResult reference) throws Exception {
-                    response.addReferral(reference);
+                public void add(SearchReference reference) throws Exception {
+                    if (debug) log.debug("Returning search referral \""+ reference.getDn()+"\".");
+                    super.add(reference);
                 }
                 public void setException(LDAPException exception) {
-                    response.setException(exception);
+                    if (debug) log.debug("Returning error \""+exception.getMessage()+"\".");
+                    super.setException(exception);
                 }
                 public void close() throws Exception {
-                    response.close();
-
-                    if (eventsEnabled) {
-                        SearchEvent afterSearchEvent = new SearchEvent(session, SearchEvent.AFTER_SEARCH, session, partition, request, response);
-                        eventManager.postEvent(afterSearchEvent);
-                    }
+                    if (debug) log.debug("Closing search response.");
+                    super.close();
 
                     Access.log(session, response);
                 }
@@ -823,6 +857,7 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
+            if (warn) log.warn("Session "+sessionId+": Unbind.");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
@@ -872,32 +907,12 @@ public class Session {
         }
     }
 
-    public void close() throws Exception {
-
-        log.debug("----------------------------------------------------------------------------------");
-        if (warn) log.warn("Closing session "+sessionId+".");
-
-        for (SessionListener listener : listeners) {
-            listener.sessionClosed();
-        }
-
-        sessionManager.removeSession(this);
-    }
-
     public Object getSessionId() {
         return sessionId;
     }
 
     public void setSessionId(Object sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public SessionManager getSessionManager() {
-        return sessionManager;
-    }
-
-    public void setSessionManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
     }
 
     public EventManager getEventManager() {
@@ -1042,6 +1057,10 @@ public class Session {
 
     public void addListener(SessionListener listener) {
         listeners.add(listener);
+    }
+
+    public void addListener(int i, SessionListener listener) {
+        listeners.add(i, listener);
     }
 
     public void removeListener(SessionListener listener) {

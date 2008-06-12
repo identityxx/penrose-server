@@ -35,9 +35,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="adapter">
             <object-create-rule classname="org.safehaus.penrose.adapter.AdapterConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="adapter-name"  methodname="setName"         paramcount="0" />
-            <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
             <call-method-rule pattern="description"   methodname="setDescription"  paramcount="0" />
+            <call-method-rule pattern="adapter-class" methodname="setAdapterClass" paramcount="0" />
             <set-next-rule methodname="addAdapterConfig" />
         </pattern>
 
@@ -45,15 +44,23 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
         <pattern value="interpreter">
             <object-create-rule classname="org.safehaus.penrose.interpreter.InterpreterConfig" />
             <set-properties-rule/>
-            <call-method-rule pattern="interpreter-name"  methodname="setName"             paramcount="0" />
-            <call-method-rule pattern="interpreter-class" methodname="setInterpreterClass" paramcount="0" />
             <call-method-rule pattern="description"       methodname="setDescription"      paramcount="0" />
+            <call-method-rule pattern="interpreter-class" methodname="setInterpreterClass" paramcount="0" />
             <pattern value="parameter">
                 <call-method-rule methodname="setParameter" paramcount="2" />
                 <call-param-rule pattern="param-name"  paramnumber="0"/>
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
             <set-next-rule methodname="addInterpreterConfig" />
+        </pattern>
+
+        <!-- thread manager -->
+        <pattern value="thread-manager">
+            <object-create-rule classname="org.safehaus.penrose.thread.ThreadManagerConfig" />
+            <set-properties-rule/>
+            <call-method-rule pattern="description"   methodname="setDescription"  paramcount="0" />
+            <call-method-rule pattern="thread-manager-class" methodname="setThreadManagerClass" paramcount="0" />
+            <set-next-rule methodname="setThreadManagerConfig" />
         </pattern>
 
         <pattern value="parameter">

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="global_users">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="uid"/>
+    <field name="cn"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+    <field name="seeAlso"/>
+    <field name="seeAlsoObjectGUID"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>account,posixAccount,shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,${GLOBAL_SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_users">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="uid"/>
+    <field name="cn"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>account,posixAccount,shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,${NIS_SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="ad_users">
+    <connection-name>AD</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="objectGuid"/>
+    <field name="userAccountControl"/>
+    <field name="accountExpires"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>user</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=user)</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>${AD_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="global_groups">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <field name="seeAlso"/>
+    <field name="seeAlsoObjectGUID"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,${GLOBAL_SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_groups">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,${NIS_SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="ad_groups">
+    <connection-name>AD</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="objectGuid"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>group</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=group)</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>${AD_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_hosts">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Hosts,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_services">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Services,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_rpcs">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=RPCs,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_netids">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=NetIDs,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_protocols">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Protocols,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_aliases">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Aliases,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_netgroups">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Netgroups,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_ethers">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Ethers,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_bootparams">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=BootParams,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_networks">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Networks,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_automounts">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Automounts,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="profile">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Profile,${NIS_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+</sources>        

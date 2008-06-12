@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+
+<connections>
+
+  <connection name="LDAP">
+    <adapter-name>LDAP</adapter-name>
+    <parameter>
+      <param-name>java.naming.factory.initial</param-name>
+      <param-value>com.sun.jndi.ldap.LdapCtxFactory</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.provider.url</param-name>
+      <param-value>${LDAP_URL}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.security.principal</param-name>
+      <param-value>${LDAP_USER}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.security.credentials</param-name>
+      <param-value>${LDAP_PASSWORD}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.ldap.attributes.binary</param-name>
+      <param-value>seeAlsoObjectGUID</param-value>
+    </parameter>
+    <parameter>
+      <param-name>maxActive</param-name>
+      <param-value>10</param-value>
+    </parameter>
+    <parameter>
+      <param-name>maxIdle</param-name>
+      <param-value>5</param-value>
+    </parameter>
+    <parameter>
+      <param-name>maxWait</param-name>
+      <param-value>10000</param-value>
+    </parameter>
+    <parameter>
+      <param-name>timeBetweenEvictionRunsMillis</param-name>
+      <param-value>10000</param-value>
+    </parameter>
+    <parameter>
+      <param-name>minEvictableIdleTimeMillis</param-name>
+      <param-value>30000</param-value>
+    </parameter>
+    <parameter>
+      <param-name>testWhileIdle</param-name>
+      <param-value>true</param-value>
+    </parameter>
+    <parameter>
+      <param-name>whenExhaustedAction</param-name>
+      <param-value>grow</param-value>
+    </parameter>
+  </connection>
+
+</connections>

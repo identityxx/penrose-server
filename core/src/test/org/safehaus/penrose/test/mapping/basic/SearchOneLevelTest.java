@@ -19,7 +19,7 @@ public class SearchOneLevelTest extends BasicTestCase {
 
     public void testSearchEmptyDatabase() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -44,7 +44,7 @@ public class SearchOneLevelTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

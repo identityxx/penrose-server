@@ -77,7 +77,7 @@ public class NestedTestCase extends JDBCTestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Parents", true));
+        ou.addAttributeMappingsFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig groups = new EntryConfig("cn=...,"+baseDn);
@@ -98,7 +98,7 @@ public class NestedTestCase extends JDBCTestCase {
         members.addObjectClass("person");
         members.addObjectClass("organizationalPerson");
         members.addObjectClass("inetOrgPerson");
-        members.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "child", true));
+        members.addAttributeMappingsFromRdn();
         members.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "c.description"));
 
         SourceMapping membersMapping = new SourceMapping();

@@ -22,6 +22,8 @@ import org.safehaus.penrose.connection.ConnectionConfigManager;
 import org.safehaus.penrose.connection.ConnectionReader;
 import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.directory.DirectoryConfig;
+import org.safehaus.penrose.directory.DirectoryReader;
+import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.module.ModuleConfigManager;
 import org.safehaus.penrose.module.ModuleReader;
@@ -30,8 +32,7 @@ import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.source.SourceWriter;
-import org.safehaus.penrose.mapping.MappingReader;
-import org.safehaus.penrose.mapping.MappingWriter;
+import org.safehaus.penrose.thread.ThreadManagerConfig;
 
 import java.io.File;
 import java.io.Serializable;
@@ -44,30 +45,40 @@ import java.util.*;
 public class PartitionConfig implements Serializable, Cloneable {
 
     public final static String DEFAULT_PARTITION_CLASS = Partition.class.getName();
+
     protected boolean enabled = true;
 
     protected String name;
     protected String description;
     protected String partitionClass = DEFAULT_PARTITION_CLASS;
 
-    protected Collection<String>     depends = new ArrayList<String>();
+    protected Collection<String>      depends                  = new ArrayList<String>();
 
     protected Map<String,AdapterConfig>     adapterConfigs     = new LinkedHashMap<String,AdapterConfig>();
     protected Map<String,InterpreterConfig> interpreterConfigs = new LinkedHashMap<String,InterpreterConfig>();
 
-    protected Map<String,String>      parameters = new LinkedHashMap<String,String>();
+    protected Map<String,String>      parameters               = new LinkedHashMap<String,String>();
 
-    protected ConnectionConfigManager connectionConfigManager = new ConnectionConfigManager();
-    protected SourceConfigManager     sourceConfigManager     = new SourceConfigManager();
-    protected DirectoryConfig         directoryConfig         = new DirectoryConfig();
-    protected ModuleConfigManager     moduleConfigManager     = new ModuleConfigManager();
+    protected ConnectionConfigManager connectionConfigManager  = new ConnectionConfigManager();
+    protected SourceConfigManager     sourceConfigManager      = new SourceConfigManager();
+    protected DirectoryConfig         directoryConfig          = new DirectoryConfig();
+    protected ModuleConfigManager     moduleConfigManager      = new ModuleConfigManager();
 
+    protected ThreadManagerConfig     threadManagerConfig;
     protected SchedulerConfig         schedulerConfig;
 
-    protected Collection<URL>         classPaths              = new ArrayList<URL>();
+    protected Collection<URL>         classPaths               = new ArrayList<URL>();
 
     public PartitionConfig(String name) {
         this.name = name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getName() {
@@ -76,6 +87,22 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public ThreadManagerConfig getThreadManagerConfig() {
+        return threadManagerConfig;
+    }
+
+    public void setThreadManagerConfig(ThreadManagerConfig threadManagerConfig) {
+        this.threadManagerConfig = threadManagerConfig;
     }
 
     public Map<String,String> getParameters() {
@@ -133,6 +160,7 @@ public class PartitionConfig implements Serializable, Cloneable {
 
         if (!equals(parameters, partitionConfig.parameters)) return false;
 
+        if (!equals(threadManagerConfig, partitionConfig.threadManagerConfig)) return false;
         if (!equals(schedulerConfig, partitionConfig.schedulerConfig)) return false;
 
         return true;
@@ -168,6 +196,7 @@ public class PartitionConfig implements Serializable, Cloneable {
         partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
         partitionConfig.moduleConfigManager = (ModuleConfigManager) moduleConfigManager.clone();
 
+        partitionConfig.threadManagerConfig = threadManagerConfig == null ? null : (ThreadManagerConfig)threadManagerConfig.clone();
         partitionConfig.schedulerConfig = schedulerConfig == null ? null : (SchedulerConfig)schedulerConfig.clone();
 
         partitionConfig.classPaths = new ArrayList<URL>();
@@ -190,22 +219,6 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     public ModuleConfigManager getModuleConfigManager() {
         return moduleConfigManager;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public Collection<URL> getClassPaths() {
@@ -306,8 +319,8 @@ public class PartitionConfig implements Serializable, Cloneable {
         sourceReader.read(sourcesXml, sourceConfigManager);
 
         File mappingXml = new File(baseDir, "mapping.xml");
-        MappingReader mappingReader = new MappingReader();
-        mappingReader.read(mappingXml, directoryConfig);
+        DirectoryReader directoryReader = new DirectoryReader();
+        directoryReader.read(mappingXml, directoryConfig);
 
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
@@ -330,8 +343,8 @@ public class PartitionConfig implements Serializable, Cloneable {
         sourceWriter.write(sourcesXml, sourceConfigManager);
 
         File mappingXml = new File(baseDir, "mapping.xml");
-        MappingWriter mappingWriter = new MappingWriter();
-        mappingWriter.write(mappingXml, directoryConfig);
+        DirectoryWriter directoryWriter = new DirectoryWriter();
+        directoryWriter.write(mappingXml, directoryConfig);
 
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleWriter moduleWriter = new ModuleWriter();

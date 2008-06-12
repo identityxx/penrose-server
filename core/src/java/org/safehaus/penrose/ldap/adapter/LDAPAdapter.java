@@ -20,16 +20,11 @@ package org.safehaus.penrose.ldap.adapter;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.ldap.source.LDAPSource;
-import org.safehaus.penrose.source.ldap.LDAPSourceSync;
 
 /**
  * @author Endi S. Dewata
  */
 public class LDAPAdapter extends Adapter {
-
-    public String getSyncClassName() {
-        return LDAPSourceSync.class.getName();
-    }
 
     public String getConnectionClassName() {
         return LDAPConnection.class.getName();

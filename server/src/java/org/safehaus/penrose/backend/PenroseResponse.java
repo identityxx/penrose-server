@@ -58,7 +58,7 @@ public class PenroseResponse implements com.identyx.javabackend.Response {
     }
 
     public int getReturnCode() {
-        return response.getReturnCode();
+        return response.waitFor();
     }
 
     public String getErrorMessage() {

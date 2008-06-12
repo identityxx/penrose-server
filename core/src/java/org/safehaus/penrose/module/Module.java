@@ -17,10 +17,11 @@
  */
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.ldap.*;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -30,16 +31,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class Module implements
-        AddListener,
-        BindListener,
-        CompareListener,
-        DeleteListener,
-        ModifyListener,
-        ModRdnListener,
-        SearchListener,
-        UnbindListener
-{
+public class Module {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean warn = log.isWarnEnabled();
@@ -66,6 +58,10 @@ public class Module implements
         return moduleConfig.getParameterNames();
     }
 
+    public boolean isEnabled() {
+        return moduleConfig.isEnabled();
+    }
+
     public void init(ModuleConfig moduleConfig, ModuleContext moduleContext) throws Exception {
 
         if (debug) log.debug("Initializing module "+moduleConfig.getName()+".");
@@ -84,52 +80,76 @@ public class Module implements
     public void destroy() throws Exception {
     }
 
-    public void beforeBind(BindEvent event) throws Exception {
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.add(session, request, response);
     }
 
-    public void afterBind(BindEvent event) throws Exception {
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.bind(session, request, response);
     }
 
-    public void beforeUnbind(UnbindEvent event) throws Exception {
+    public void compare(
+            Session session,
+            CompareRequest request,
+            CompareResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.compare(session, request, response);
     }
 
-    public void afterUnbind(UnbindEvent event) throws Exception {
+    public void delete(
+            Session session,
+            DeleteRequest request,
+            DeleteResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.delete(session, request, response);
     }
 
-    public void beforeCompare(CompareEvent event) throws Exception {
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.modify(session, request, response);
     }
 
-    public void afterCompare(CompareEvent event) throws Exception {
+    public void modrdn(
+            Session session,
+            ModRdnRequest request,
+            ModRdnResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.modrdn(session, request, response);
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
+    public void search(
+            Session session,
+            SearchRequest request,
+            SearchResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.search(session, request, response);
     }
 
-    public void afterAdd(AddEvent event) throws Exception {
-    }
-
-    public void beforeModify(ModifyEvent event) throws Exception {
-    }
-
-    public void afterModify(ModifyEvent event) throws Exception {
-    }
-
-    public void beforeModRdn(ModRdnEvent event) throws Exception {
-    }
-
-    public void afterModRdn(ModRdnEvent event) throws Exception {
-    }
-
-    public void beforeDelete(DeleteEvent event) throws Exception {
-    }
-
-    public void afterDelete(DeleteEvent event) throws Exception {
-    }
-
-    public void beforeSearch(SearchEvent event) throws Exception {
-    }
-
-    public void afterSearch(SearchEvent event) throws Exception {
+    public void unbind(
+            Session session,
+            UnbindRequest request,
+            UnbindResponse response,
+            ModuleChain chain
+    ) throws Exception {
+        chain.unbind(session, request, response);
     }
 
     public void setModuleConfig(ModuleConfig moduleConfig) {
@@ -156,8 +176,8 @@ public class Module implements
         this.moduleContext = moduleContext;
     }
 
-    public Session getSession() throws Exception {
+    public Session createAdminSession() throws Exception {
         SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
-        return sessionManager.newAdminSession();
+        return sessionManager.createAdminSession();
     }
 }

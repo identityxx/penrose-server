@@ -27,7 +27,7 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into children values ('parent2', 'child2')");
         executeUpdate("insert into children values ('parent3', 'child3')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -72,7 +72,7 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into children values ('parent2', 'child2')");
         executeUpdate("insert into children values ('parent3', 'child3')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

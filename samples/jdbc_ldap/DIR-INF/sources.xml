@@ -5,7 +5,7 @@
 
 <sources>
 
-  <source name="jdbc.users">
+  <source name="jdbc_users">
     <connection-name>MySQL</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
@@ -17,7 +17,7 @@
     </parameter>
   </source>
 
-  <source name="ldap.users">
+  <source name="ldap_users">
     <connection-name>OpenLDAP</connection-name>
     <field name="uid" primaryKey="true"/>
     <field name="cn"/>
@@ -41,7 +41,7 @@
     </parameter>
   </source>
 
-  <source name="jdbc.groups">
+  <source name="jdbc_groups">
     <connection-name>MySQL</connection-name>
     <field name="groupname" primaryKey="true"/>
     <parameter>
@@ -50,7 +50,7 @@
     </parameter>
   </source>
 
-  <source name="ldap.groups">
+  <source name="ldap_groups">
     <connection-name>OpenLDAP</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="uniqueMember"/>

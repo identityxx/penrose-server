@@ -18,11 +18,6 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.acl.ACI;
-import org.safehaus.penrose.cache.Cache;
-import org.safehaus.penrose.cache.CacheKey;
-import org.safehaus.penrose.cache.CacheManager;
-import org.safehaus.penrose.engine.Engine;
-import org.safehaus.penrose.engine.EngineTool;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -30,12 +25,15 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,60 +46,42 @@ public class Entry implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
+    public boolean info = log.isInfoEnabled();
+    public boolean warn = log.isWarnEnabled();
 
     public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
-
-    public final static String  FETCH                   = "fetch";
-    public final static boolean DEFAULT_FETCH           = false; // disabled
-
-    public final static String  SCHEMA_CHECKING         = "schemaChecking";
-    public final static boolean DEFAULT_SCHEMA_CHECKING = false; // disabled
-
-    public final static String CACHE                    = "cache";
-    public final static boolean DEFAULT_CACHE           = false; // disabled
-
-    public final static String CACHE_SIZE               = "cacheSize";
-    public final static int DEFAULT_CACHE_SIZE          = 10; // entries
-
-    public final static String CACHE_EXPIRATION         = "cacheExpiration";
-    public final static int DEFAULT_CACHE_EXPIRATION    = 10; // minutes
 
     protected EntryConfig entryConfig;
     protected EntryContext entryContext;
 
     protected Map<String,SourceRef> localSourceRefs = new LinkedHashMap<String,SourceRef>();
-    protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
+    //protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
     protected List<SourceRef> sourceRefs              = new ArrayList<SourceRef>();
     protected Map<String,SourceRef> sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
-    protected Map<String,SourceRef> primarySourceRefs = new LinkedHashMap<String,SourceRef>();
+    //protected Map<String,SourceRef> primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-    protected Entry parent;
-
-    protected Collection<Entry> children = new LinkedHashSet<Entry>();
-    protected Map<String,Collection<Entry>> childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
-
+    protected Directory directory;
     protected Partition partition;
 
-    protected boolean fetch;
-    protected boolean schemaChecking;
-
-    protected CacheManager cacheManager;
-
-    public Entry() {
-    }
+    protected SchemaManager schemaManager;
+    protected FilterEvaluator filterEvaluator;
 
     public void init(EntryConfig entryConfig, EntryContext entryContext) throws Exception {
         this.entryConfig = entryConfig;
         this.entryContext = entryContext;
 
-        Directory directory = entryContext.getDirectory();
-        DirectoryContext directoryContext = directory.getDirectoryContext();
-        partition = directoryContext.getPartition();
+        directory = entryContext.getDirectory();
+        partition = directory.getPartition();
+        schemaManager = partition.getSchemaManager();
+
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PenroseContext penroseContext = partitionContext.getPenroseContext();
+        filterEvaluator = penroseContext.getFilterEvaluator();
 
         // create source references
         
-        String primarySourceName = entryConfig.getPrimarySourceName();
+        //String primarySourceName = getPrimarySourceName();
 
         for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
 
@@ -111,11 +91,12 @@ public class Entry implements Cloneable {
             sourceRefs.add(sourceRef);
             localSourceRefs.put(alias, sourceRef);
             sourceRefsByName.put(alias, sourceRef);
-
+/*
             if (alias.equals(primarySourceName)) {
                 localPrimarySourceRefs.put(alias, sourceRef);
                 primarySourceRefs.put(alias, sourceRef);
             }
+*/
         }
 
         // inherit source referencess from the parent entries
@@ -124,46 +105,30 @@ public class Entry implements Cloneable {
 
         while (parent != null) {
 
-            String psn = parent.getPrimarySourceName();
+            //String psn = parent.getPrimarySourceName();
 
             for (SourceRef sourceRef : parent.getLocalSourceRefs()) {
                 String alias = sourceRef.getAlias();
 
                 sourceRefs.add(sourceRef);
                 sourceRefsByName.put(alias, sourceRef);
-
+/*
                 if (alias.equals(psn)) {
                     primarySourceRefs.put(alias, sourceRef);
                 }
+*/
             }
 
             parent = parent.getParent();
-        }
-
-        String s = getParameter(FETCH);
-        fetch = s == null ? DEFAULT_FETCH : Boolean.valueOf(s);
-
-        s = getParameter(SCHEMA_CHECKING);
-        schemaChecking = s == null ? DEFAULT_SCHEMA_CHECKING : Boolean.valueOf(s);
-
-        s = getParameter(CACHE);
-        boolean cacheEnabled = s == null ? DEFAULT_CACHE : Boolean.parseBoolean(s);
-
-        if (cacheEnabled) {
-            s = getParameter(CACHE_SIZE);
-            int cacheSize = s == null ? DEFAULT_CACHE_SIZE : Integer.parseInt(s);
-    
-            s = getParameter(CACHE_EXPIRATION);
-            int cacheExpiration = s == null ? DEFAULT_CACHE_EXPIRATION : Integer.parseInt(s);
-
-            cacheManager = new CacheManager(cacheSize);
-            cacheManager.setExpiration(cacheExpiration);
         }
 
         init();
     }
 
     public void init() throws Exception {
+    }
+
+    public void destroy() throws Exception {
     }
 
     public SourceRef createSourceRef(SourceMapping sourceMapping) throws Exception {
@@ -203,34 +168,22 @@ public class Entry implements Cloneable {
         return entryConfig;
     }
 
-    public String getHandlerName() {
-        return entryConfig.getHandlerName();
-    }
-
-    public EntryContext getEntryContext() {
-        return entryContext;
-    }
-
-    public void setEntryContext(EntryContext entryContext) {
-        this.entryContext = entryContext;
-    }
-
     public Directory getDirectory() {
-        return entryContext.getDirectory();
+        return directory;
     }
 
     public Partition getPartition() {
-        return entryContext.getPartition();
+        return partition;
     }
 
     public Collection<SourceRef> getLocalSourceRefs() {
         return localSourceRefs.values();
     }
-
+/*
     public Collection<SourceRef> getLocalPrimarySourceRefs() {
         return localPrimarySourceRefs.values();
     }
-
+*/
     public Collection<SourceRef> getSourceRefs() {
         return sourceRefs;
     }
@@ -246,7 +199,7 @@ public class Entry implements Cloneable {
     public SourceRef getSourceRef(int index) {
         return sourceRefs.get(index);
     }
-
+/*
     public Collection<SourceRef> getPrimarySourceRefs() {
         return primarySourceRefs.values();
     }
@@ -254,79 +207,76 @@ public class Entry implements Cloneable {
     public void setPrimarySourceRefs(Map<String, SourceRef> primarySourceRefs) {
         this.primarySourceRefs = primarySourceRefs;
     }
-
+*/
     public Collection<Entry> getChildren() {
-        return children;
-    }
-
-    public void addChildren(Collection<Entry> children) {
-        this.children.addAll(children);
-    }
-
-    public Collection<Entry> getChildren(RDN rdn) throws Exception {
-        if (rdn == null) return EMPTY_ENTRIES;
-
-        Collection<Entry> list = childrenByRdn.get(rdn.getNormalized());
-        if (list == null) return EMPTY_ENTRIES;
-
-        return new ArrayList<Entry>(list);
+        return directory.getChildren(this);
     }
 
     public void addChild(Entry child) throws Exception {
-
-        String rdn = child.getDn().getRdn().getNormalized();
-
-        children.add(child);
-        child.setParent(this);
-
-        Collection<Entry> c = childrenByRdn.get(rdn);
-        if (c == null) {
-            c = new ArrayList<Entry>();
-            childrenByRdn.put(rdn, c);
-        }
-        c.add(child);
+        directory.addChild(this, child);
     }
 
-    public void removeChild(Entry child) throws Exception {
-
-        String rdn = child.getDn().getRdn().getNormalized();
-
-        children.remove(child);
-        child.setParent(null);
-
-        Collection<Entry> c = childrenByRdn.get(rdn);
-        if (c != null) {
-            childrenByRdn.remove(rdn);
-            if (c.isEmpty()) {
-                childrenByRdn.remove(rdn);
-            }
-        }
-    }
-
-    public void setChildren(Collection<Entry> children) throws Exception {
-        if (this.children == children) return;
-        this.children.clear();
-
+    public void addChildren(Collection<Entry> children) throws Exception {
         for (Entry child : children) {
             addChild(child);
         }
     }
 
-    public void clearChildren() {
-        children.clear();
-        childrenByRdn.clear();
+    public void removeChild(Entry child) throws Exception {
+        directory.removeChild(this, child);
+    }
+
+    public void removeChildren() {
+        directory.removeChildren(this);
     }
     
     public Entry getParent() {
-        return parent;
+        return directory.getParent(this);
     }
 
     public void setParent(Entry parent) {
-        this.parent = parent;
+        directory.setParent(this, parent);
     }
 
     public String getPrimarySourceName() {
-        return entryConfig.getPrimarySourceName();
+
+        for (AttributeMapping rdnAttributeMapping : getRdnAttributeMappings()) {
+
+            String variable = rdnAttributeMapping.getVariable();
+            if (variable == null) continue;
+
+            int i = variable.indexOf('.');
+            if (i < 0) continue;
+
+            return variable.substring(0, i);
+        }
+
+        Collection<SourceMapping> sourceMappings = getSourceMappings();
+        if (!sourceMappings.isEmpty()) {
+            SourceMapping sourceMapping = sourceMappings.iterator().next();
+            return sourceMapping.getName();
+        }
+        
+        return null;
+/*
+        Entry entry = this;
+        String psn = null;
+
+        do {
+            Collection<SourceMapping> sourceMappings = entry.getSourceMappings();
+            if (sourceMappings.size() > 0) {
+                SourceMapping sourceMapping = sourceMappings.iterator().next();
+                psn = sourceMapping.getName();
+            }
+
+            entry = directory.getEntry(entry.getParentId());
+            //entry = directory.getParent(entry);
+
+        } while (entry != null);
+
+        //return entryConfig.getPrimarySourceName();
+        return psn;
+*/
     }
 
     public Collection<String> getObjectClasses() {
@@ -353,13 +303,15 @@ public class Entry implements Cloneable {
         return path;
     }
 
-    public List<Entry> getRelativePath(Entry base) {
+    public List<Entry> getRelativePath(DN baseDn) {
+
         List<Entry> path = new ArrayList<Entry>();
 
         Entry entry = this;
         do {
             path.add(0, entry);
-            if (entry == base) break;
+            // if (entry == base) break;
+            if (baseDn.getSize() == entry.getDn().getSize()) break;
             entry = entry.getParent();
         } while (entry != null);
 
@@ -398,31 +350,101 @@ public class Entry implements Cloneable {
         return entryConfig.getSourceMapping(alias);
     }
 
-    public Collection<SourceMapping> getEffectiveSourceMappings() {
-         Collection<SourceMapping> list = new ArrayList<SourceMapping>();
-         list.addAll(entryConfig.getSourceMappings());
-
-         if (parent != null) list.addAll(parent.getEffectiveSourceMappings());
-
-         return list;
-     }
-
-    public boolean isDynamic() {
-
-        boolean dynamic = entryConfig.isDynamic();
-
-        //log.debug("Mapping "+entryConfig.getDn()+" is "+(dynamic ? "dynamic" : "not dynamic"));
-        return dynamic || parent != null && parent.isDynamic();
-
-    }
-
-    public String getEngineName() {
-        return entryConfig.getEngineName();
-    }
-
-    public Session getSession() throws Exception {
+    public Session createAdminSession() throws Exception {
         SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
-        return sessionManager.newAdminSession();
+        return sessionManager.createAdminSession();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // ACL
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validatePermission(Session session, AddRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, CompareRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, DeleteRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, ModifyRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, ModRdnRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, SearchRequest request) throws Exception {
+        partition.validatePermission(session, request, this);
+    }
+
+    public void validatePermission(Session session, SearchResult result) throws Exception {
+        partition.validatePermission(session, result);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Schema
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validateSchema(AddRequest request) throws Exception {
+        partition.validateSchema(request, this);
+    }
+
+    public void validateSchema(ModifyRequest request) throws Exception {
+        partition.validateSchema(request, this);
+    }
+
+    public void validateSchema(ModRdnRequest request) throws Exception {
+        partition.validateSchema(request, this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Scope
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validateScope(SearchRequest request) throws Exception {
+
+        DN dn = request.getDn();
+        int scope = request.getScope();
+
+        if (debug) log.debug("Checking search scope "+LDAP.getScope(scope)+".");
+
+        if (scope == SearchRequest.SCOPE_ONE && !getParentDn().matches(dn)) {
+            log.debug("Entry \""+getDn()+"\" is out of scope.");
+            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Filter
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validateFilter(Filter filter) throws Exception {
+
+        if (debug) log.debug("Checking search filter "+filter+".");
+
+        if (!filterEvaluator.eval(this, filter)) {
+            if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
+            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+        }
+    }
+
+    public void validateSearchResult(SearchRequest request, SearchResult result) throws Exception {
+
+        Filter filter = request.getFilter();
+        Attributes attributes = result.getAttributes();
+
+        if (debug) log.debug("Checking search filter "+filter+".");
+
+        if (!filterEvaluator.eval(attributes, filter)) {
+            if (debug) log.debug("Entry \""+result.getDn()+"\" doesn't match search filter.");
+            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -436,81 +458,19 @@ public class Entry implements Cloneable {
     ) throws Exception {
 
         DN dn = request.getDn();
-        Attributes attributes = request.getAttributes();
-
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        if (schemaChecking) {
-            SchemaManager schemaManager = penroseContext.getSchemaManager();
-            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
-
-            for (Attribute attribute : attributes.getAll()) {
-                String attributeName = attribute.getName();
-                boolean found = false;
-
-                for (ObjectClass oc : objectClasses) {
-                    if (oc.getName().equalsIgnoreCase("extensibleObject")) {
-                        found = true;
-                        break;
-                    }
-
-                    if (oc.containsRequiredAttribute(attributeName)) {
-                        found = true;
-                        break;
-                    }
-
-                    if (oc.containsOptionalAttribute(attributeName)) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                }
-            }
-
-            for (ObjectClass oc : objectClasses) {
-                for (String attributeName : oc.getRequiredAttributes()) {
-                    if (attributes.get(attributeName) == null) {
-                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                    }
-                }
-            }
-        }
-
-        SourceValues sourceValues;
-
-        if (fetch) {
-            DN parentDn = parent.getDn();
-
-            SearchResult sr = parent.find(session, parentDn);
-
-            sourceValues = new SourceValues();
-            sourceValues.add(sr.getSourceValues());
-
-        } else {
-            sourceValues = extractSourceValues(dn, attributes);
-        }
-
-        EngineTool.propagateDown(this, sourceValues);
 
         if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("ADD", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        Engine engine = partition.getEngine();
-        engine.add(
-                session,
-                this,
-                sourceValues,
-                request,
-                response
-        );
+        validatePermission(session, request);
+        validateSchema(request);
 
-        if (cacheManager != null) cacheManager.clear();
+        throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -526,37 +486,32 @@ public class Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("BIND", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry : "+getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("DN    : "+dn, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("BIND", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        SourceValues sourceValues = new SourceValues();
+        byte[] password = request.getPassword();
 
-        if (fetch) {
-            SearchResult sr = find(dn);
-            sourceValues.add(sr.getSourceValues());
-        } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
+        SearchResult searchResult = find(dn);
+
+        Attributes attributes = searchResult.getAttributes();
+        Attribute attribute = attributes.get("userPassword");
+
+        if (attribute == null) {
+            log.debug("Attribute userPassword not found");
+            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        EngineTool.propagateDown(this, sourceValues);
-
-        if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+        Collection<Object> userPasswords = attribute.getValues();
+        for (Object userPassword : userPasswords) {
+            if (debug) log.debug("userPassword: " + userPassword);
+            if (PasswordUtil.comparePassword(password, userPassword)) return;
         }
 
-        Engine engine = partition.getEngine();
-        engine.bind(
-                session,
-                this,
-                sourceValues,
-                request,
-                response
-        );
+        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -571,31 +526,48 @@ public class Entry implements Cloneable {
 
         DN dn = request.getDn();
 
-        SourceValues sourceValues = new SourceValues();
-
-        if (fetch) {
-            SearchResult sr = find(dn);
-            sourceValues.add(sr.getSourceValues());
-
-        } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
-        }
-
-        EngineTool.propagateDown(this, sourceValues);
-
         if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("COMPARE", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        Engine engine = partition.getEngine();
-        engine.compare(
-                session,
-                this,
-                sourceValues,
-                request,
-                response
-        );
+        validatePermission(session, request);
+
+        String attributeName = request.getAttributeName();
+        Object attributeValue = request.getAttributeValue();
+
+        SearchResult searchResult = find(session, dn);
+
+        Attributes attributes = searchResult.getAttributes();
+        Attribute attribute = attributes.get(attributeName);
+        if (attribute == null) {
+            if (debug) log.debug("Attribute "+attributeName+" not found.");
+
+            response.setReturnCode(LDAP.COMPARE_FALSE);
+            return;
+        }
+
+        Collection<Object> values = attribute.getValues();
+        AttributeType attributeType = schemaManager.getAttributeType(attributeName);
+
+        String equality = attributeType == null ? null : attributeType.getEquality();
+        EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
+
+        if (debug) log.debug("Comparing values:");
+        for (Object value : values) {
+            boolean b = equalityMatchingRule.compare(value, attributeValue);
+            if (debug) log.debug(" - [" + value + "] => " + b);
+
+            if (b) {
+                response.setReturnCode(LDAP.COMPARE_TRUE);
+                return;
+            }
+        }
+
+        response.setReturnCode(LDAP.COMPARE_FALSE);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -610,32 +582,17 @@ public class Entry implements Cloneable {
 
         DN dn = request.getDn();
 
-        SourceValues sourceValues = new SourceValues();
-
-        if (fetch) {
-            SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
-        } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
-        }
-
-        EngineTool.propagateDown(this, sourceValues);
-
         if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("DELETE", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        Engine engine = partition.getEngine();
-        engine.delete(
-                session,
-                this,
-                sourceValues,
-                request,
-                response
-        );
+        validatePermission(session, request);
 
-        if (cacheManager != null) cacheManager.clear();
+        throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -661,7 +618,7 @@ public class Entry implements Cloneable {
             return false;
         }
 
-        for (Entry child : children) {
+        for (Entry child : getChildren()) {
             boolean b = child.contains(dn);
             if (b) return true;
         }
@@ -686,7 +643,7 @@ public class Entry implements Cloneable {
         }
 
         if (!dn.endsWith(entryDn)) {
-            //if (debug) log.debug("Doesn't match "+entryDn);
+            if (debug) log.debug("Doesn't match "+entryDn);
             return EMPTY_ENTRIES;
         }
 
@@ -695,7 +652,7 @@ public class Entry implements Cloneable {
         Collection<Entry> results = new ArrayList<Entry>();
 
         if (dnLength > entryDnLength) { // children has priority
-            for (Entry child : children) {
+            for (Entry child : getChildren()) {
                 Collection<Entry> list = child.findEntries(dn);
                 results.addAll(list);
             }
@@ -708,7 +665,7 @@ public class Entry implements Cloneable {
 
         return results;
     }
-
+/*
     public Collection<Entry> findEntries(DN dn, int level) throws Exception {
 
         if (debug) log.debug("Finding matching entries for "+dn+":");
@@ -731,7 +688,7 @@ public class Entry implements Cloneable {
         Collection<Entry> results = new ArrayList<Entry>();
 
         if (dnLength > entryDnLength) { // children has priority
-            for (Entry child : children) {
+            for (Entry child : getChildren()) {
                 Collection<Entry> list = child.findEntries(dn, entryDnLength);
                 results.addAll(list);
             }
@@ -744,10 +701,10 @@ public class Entry implements Cloneable {
 
         return results;
     }
-
+*/
     public SearchResult find(DN dn) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             return find(session, dn);
@@ -768,12 +725,8 @@ public class Entry implements Cloneable {
 
         SearchResponse response = new SearchResponse();
 
-        SourceValues sourceValues = new SourceValues();
-
-        searchEntry(
+        search(
                 session,
-                this,
-                sourceValues,
                 request,
                 response
         );
@@ -791,10 +744,6 @@ public class Entry implements Cloneable {
         }
 
         return response.next();
-/*
-        Engine engine = partition.getEngine();
-        return engine.find(session, this, dn);
-*/
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -809,82 +758,18 @@ public class Entry implements Cloneable {
 
         DN dn = request.getDn();
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        if (schemaChecking) {
-            SchemaManager schemaManager = penroseContext.getSchemaManager();
-            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
-
-            Collection<Modification> modifications = request.getModifications();
-            for (Modification modification : modifications) {
-                int type = modification.getType();
-                Attribute attribute = modification.getAttribute();
-                String attributeName = attribute.getName();
-
-                if (type == Modification.ADD) {
-
-                    boolean found = false;
-
-                    for (ObjectClass oc : objectClasses) {
-                        if (oc.getName().equalsIgnoreCase("extensibleObject")) {
-                            found = true;
-                            break;
-                        }
-
-                        if (oc.containsRequiredAttribute(attributeName)) {
-                            found = true;
-                            break;
-                        }
-
-                        if (oc.containsOptionalAttribute(attributeName)) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (!found) {
-                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                    }
-
-                } else if (type == Modification.DELETE && attribute.isEmpty()) {
-
-                    boolean found = false;
-
-                    for (ObjectClass oc : objectClasses) {
-                        if (oc.containsRequiredAttribute(attributeName)) {
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (found) {
-                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                    }
-                }
-            }
-        }
-
-        SourceValues sourceValues = new SourceValues();
-
-        if (fetch) {
-            SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
-        } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
-        }
-
-        EngineTool.propagateDown(this, sourceValues);
-
         if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("MODIFY", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        Engine engine = partition.getEngine();
-        engine.modify(session, this, sourceValues, request, response);
+        validatePermission(session, request);
+        validateSchema(request);
 
-        if (cacheManager != null) cacheManager.clear();
+        throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -899,76 +784,18 @@ public class Entry implements Cloneable {
 
         DN dn = request.getDn();
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        if (schemaChecking) {
-            SchemaManager schemaManager = penroseContext.getSchemaManager();
-            Collection<ObjectClass> objectClasses = schemaManager.getObjectClasses(this);
-
-            RDN newRdn = request.getNewRdn();
-            for (String attributeName : newRdn.getNames()) {
-
-                boolean found = false;
-
-                for (ObjectClass oc : objectClasses) {
-                    if (oc.getName().equalsIgnoreCase("extensibleObject")) {
-                        found = true;
-                        break;
-                    }
-
-                    if (oc.containsRequiredAttribute(attributeName)) {
-                        found = true;
-                        break;
-                    }
-
-                    if (oc.containsOptionalAttribute(attributeName)) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                }
-            }
-
-            for (String attributeName : newRdn.getNames()) {
-                for (ObjectClass oc : objectClasses) {
-                    if (oc.containsRequiredAttribute(attributeName)) {
-                        throw LDAP.createException(LDAP.OBJECT_CLASS_VIOLATION);
-                    }
-                }
-            }
-        }
-
-        SourceValues sourceValues = new SourceValues();
-
-        if (fetch) {
-            SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
-
-        } else {
-            EngineTool.extractSourceValues(this, dn, sourceValues);
-        }
-
-        EngineTool.propagateDown(this, sourceValues);
-
         if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("MODRDN", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        Engine engine = partition.getEngine();
-        engine.modrdn(
-                session,
-                this,
-                sourceValues,
-                request,
-                response
-        );
+        validatePermission(session, request);
+        validateSchema(request);
 
-        if (cacheManager != null) cacheManager.clear();
+        throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -981,188 +808,63 @@ public class Entry implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        DN dn = request.getDn();
-
-        SourceValues sourceValues = new SourceValues();
-
-        if (fetch) {
-            SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
-
-            response.add(sr);
-            return;
-
-        } else {
-           EngineTool.extractSourceValues(this, dn, sourceValues);
-        }
-
-        //EngineTool.propagateDown(partition, entry, sourceValues);
-
-        if (debug) {
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        search(session, this, sourceValues, request, response);
-
-        //response.close();
-    }
-
-    public void search(
-            Session session,
-            Entry base,
-            SourceValues sourceValues,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-
-        int scope = request.getScope();
-
-        if (scope == SearchRequest.SCOPE_BASE) {
-
-            searchEntry(session, base, sourceValues, request, response);
-
-        } else if (scope == SearchRequest.SCOPE_ONE) {
-
-            if (base == this) {
-
-                if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
-
-                for (Entry child : children) {
-                    child.search(session, base, sourceValues, request, response);
-                }
-
-            } else {
-                try {
-                    searchEntry(session, base, sourceValues, request, response);
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
-
-        } else if (scope == SearchRequest.SCOPE_SUB) {
-
-            try {
-                searchEntry(session, base, sourceValues, request, response);
-            } catch (Exception e) {
-                // ignore
-            }
-
-            if (debug) log.debug("Searching children of "+ entryConfig.getDn()+" ("+children.size()+")");
-
-            for (Entry child : children) {
-                child.search(session, base, sourceValues, request, response);
-            }
-        }
-    }
-
-    public void searchEntry(
-            final Session session,
-            final Entry base,
-            final SourceValues sourceValues,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
         final DN baseDn     = request.getDn();
         final Filter filter = request.getFilter();
         final int scope     = request.getScope();
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("SEARCH", 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Entry  : "+getDn(), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Base   : "+baseDn, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Filter : "+filter, 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("SEARCH", 80));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
+            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
+        response = createSearchResponse(session, request, response);
 
-        final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
+        try {
+            validateScope(request);
+            validatePermission(session, request);
+            validateFilter(filter);
 
-        if (!filterEvaluator.eval(this, filter)) {
-            if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
+        } catch (Exception e) {
+            response.close();
             return;
         }
 
-        if (debug) log.debug("Searching entry "+ entryConfig.getDn());
+        try {
+            generateSearchResults(session, request, response);
 
-        final Cache cache;
-
-        if (cacheManager == null) {
-            cache = null;
-
-        } else {
-            CacheKey cacheKey = new CacheKey();
-            cacheKey.setSearchRequest(request);
-            cacheKey.setEntry(this);
-
-            Cache c = cacheManager.get(cacheKey);
-
-            if (c != null) {
-                log.debug("Returning results from cache.");
-                for (SearchResult searchResult : c.getSearchResults()) {
-                    response.add(searchResult);
-                }
-                return;
-            }
-
-            cache = cacheManager.create();
-
-            int cacheSize = cacheManager.getSize();
-            cache.setSize(cacheSize);
-
-            int cacheExpiration = cacheManager.getExpiration();
-            cache.setExpiration(cacheExpiration);
-
-            cacheManager.put(cacheKey, cache);
+        } finally {
+            response.close();
         }
+    }
 
-        if (getSourceRefsCount() == 0) {
-            Interpreter interpreter = partition.newInterpreter();
-            interpreter.set(sourceValues);
-            Attributes attributes = computeAttributes(interpreter);
-            interpreter.clear();
+    public SearchResponse createSearchResponse(
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response
+    ) {
+        return new EntrySearchResponse(session, request, response, this);
+    }
 
-            if (filterEvaluator.eval(attributes, filter)) {
-                SearchResult searchResult = new SearchResult(getDn(), attributes);
-                searchResult.setEntry(this);
-                searchResult.setSourceValues(sourceValues);
-                response.add(searchResult);
-            }
+    public void generateSearchResults(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
 
-            return;
-        }
+        Interpreter interpreter = partition.newInterpreter();
 
-        SearchResponse sr = new SearchResponse() {
+        DN dn = computeDn(interpreter);
+        Attributes attributes = computeAttributes(interpreter);
 
-            public void add(SearchResult searchResult) throws Exception {
+        SearchResult result = new SearchResult(dn, attributes);
+        result.setEntry(this);
 
-                if (debug) log.debug("Checking filter "+filter);
-
-                if (!filterEvaluator.eval(searchResult, filter)) {
-                    if (debug) log.debug("Entry \""+searchResult.getDn()+"\" doesn't match search filter.");
-                    return;
-                }
-
-                response.add(searchResult);
-
-                if (cache != null) cache.add(searchResult);
-            }
-        };
-
-        Engine engine = partition.getEngine();
-        engine.search(
-                session,
-                base,
-                this,
-                sourceValues,
-                request,
-                sr
-        );
+        response.add(result);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1175,13 +877,15 @@ public class Entry implements Cloneable {
             UnbindResponse response
     ) throws Exception {
 
-        Engine engine = partition.getEngine();
-        engine.unbind(
-                session,
-                this,
-                request,
-                response
-        );
+        DN dn = session.getBindDn();
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("UNBIND", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
     }
 
     public DN computeDn(
@@ -1191,14 +895,15 @@ public class Entry implements Cloneable {
         DNBuilder db = new DNBuilder();
 
         RDN rdn = computeRdn(interpreter);
-
+/*
         if (rdn.isEmpty()) {
             log.error("RDN is empty: "+rdn);
             throw LDAP.createException(LDAP.OPERATIONS_ERROR);
         }
-
+*/
         db.set(rdn);
 
+        Entry parent = getParent();
         if (parent == null) {
             db.append(entryConfig.getParentDn());
 
@@ -1236,17 +941,18 @@ public class Entry implements Cloneable {
         for (AttributeMapping attributeMapping : entryConfig.getAttributeMappings()) {
 
             Object value = interpreter.eval(attributeMapping);
-            //log.debug("Attribute "+attributeMapping.getName()+": "+value);
+            if (debug) log.debug("Attribute "+attributeMapping.getName()+": "+value);
             if (value == null) continue;
 
             if (value instanceof Collection) {
-                attributes.addValues(attributeMapping.getName(), (Collection) value);
+                attributes.addValues(attributeMapping.getName(), (Collection<Object>) value);
             } else {
                 attributes.addValue(attributeMapping.getName(), value);
             }
         }
 
         for (String objectClass : entryConfig.getObjectClasses()) {
+            if (debug) log.debug("Object class: "+objectClass);
             attributes.addValue("objectClass", objectClass);
         }
 
@@ -1321,6 +1027,7 @@ public class Entry implements Cloneable {
 
         DN parentDn = dn.getParentDn();
 
+        Entry parent = getParent();
         if (parentDn != null && parent != null) {
             extractSourceValues(parentDn, parent, interpreter, sourceValues);
         }
@@ -1390,14 +1097,13 @@ public class Entry implements Cloneable {
 
         try {
             entry.entryConfig = (EntryConfig) entryConfig.clone();
-            entry.entryContext = entryContext;
 
             entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();
-            entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
+            //entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
             entry.sourceRefs        = new ArrayList<SourceRef>();
             entry.sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
-            entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
+            //entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
             for (SourceRef origSourceRef : sourceRefs) {
                 SourceRef sourceRef = (SourceRef)origSourceRef.clone();
@@ -1406,43 +1112,22 @@ public class Entry implements Cloneable {
 
                 entry.sourceRefs.add(sourceRef);
                 entry.sourceRefsByName.put(alias, sourceRef);
-
+/*
                 if (primarySourceRefs.containsKey(alias)) {
                     entry.primarySourceRefs.put(alias, sourceRef);
                 }
-
+*/
                 if (localSourceRefs.containsKey(alias)) {
                     entry.localSourceRefs.put(alias, sourceRef);
                 }
-
+/*
                 if (localPrimarySourceRefs.containsKey(alias)) {
                     entry.localPrimarySourceRefs.put(alias, sourceRef);
                 }
-            }
-
-            entry.parent = parent;
-
-            entry.children = new LinkedHashSet<Entry>();
-            entry.childrenByRdn = new LinkedHashMap<String,Collection<Entry>>();
-
-            for (Entry origChild : children) {
-                Entry child = (Entry)origChild.clone();
-                child.setParent(entry);
-
-                entry.children.add(child);
-
-                String rdn = child.getDn().getRdn().getNormalized();
-                Collection<Entry> c = entry.childrenByRdn.get(rdn);
-                if (c == null) {
-                    c = new ArrayList<Entry>();
-                    entry.childrenByRdn.put(rdn, c);
-                }
-                c.add(child);
+*/
             }
 
             entry.partition = partition;
-
-            entry.fetch = fetch;
 
             return entry;
 

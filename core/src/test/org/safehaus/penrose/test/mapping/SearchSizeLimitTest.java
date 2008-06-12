@@ -17,7 +17,7 @@ public class SearchSizeLimitTest extends StaticTestCase {
 
     public void testSizeLimitOne() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -63,7 +63,7 @@ public class SearchSizeLimitTest extends StaticTestCase {
 
     public void testSizeLimitTwo() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -123,7 +123,7 @@ public class SearchSizeLimitTest extends StaticTestCase {
 
     public void testSizeLimitThree() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();

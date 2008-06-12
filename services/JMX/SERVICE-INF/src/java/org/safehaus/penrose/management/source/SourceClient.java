@@ -6,6 +6,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.ClassUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.management.partition.PartitionManagerClient;
 import org.safehaus.penrose.management.partition.PartitionClient;
 import org.safehaus.penrose.management.BaseClient;
@@ -393,11 +394,11 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("SOURCE", 40)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.leftPad("ENTRIES", 10));
+        System.out.print(TextUtil.rightPad("SOURCE", 40)+" ");
+        System.out.println(TextUtil.leftPad("ENTRIES", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 40)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 40)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         for (String sourceName : partitionClient.getSourceNames()) {
 
@@ -410,8 +411,8 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
                 entries = "N/A";
             }
 
-            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(sourceName, 40)+" ");
-            System.out.println(org.safehaus.penrose.util.Formatter.leftPad(entries, 10)+" ");
+            System.out.print(TextUtil.rightPad(sourceName, 40)+" ");
+            System.out.println(TextUtil.leftPad(entries, 10)+" ");
         }
     }
 

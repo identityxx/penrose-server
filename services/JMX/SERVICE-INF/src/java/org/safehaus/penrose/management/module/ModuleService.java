@@ -1,9 +1,6 @@
 package org.safehaus.penrose.management.module;
 
-import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleConfigManager;
-import org.safehaus.penrose.module.ModuleMapping;
+import org.safehaus.penrose.module.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -48,7 +45,8 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
     }
 
     public Module getModule() {
-        return getPartition().getModule(moduleName);
+        ModuleManager moduleManager = getPartition().getModuleManager();
+        return moduleManager.getModule(moduleName);
     }
 
     public PartitionConfig getPartitionConfig() {

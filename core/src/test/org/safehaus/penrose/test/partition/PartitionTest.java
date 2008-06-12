@@ -25,11 +25,11 @@ public class PartitionTest extends TestCase {
         partitionConfig = new PartitionConfig("example");
 
         EntryConfig rootEntry = new EntryConfig("dc=Example,dc=com");
-        rootEntry.addAttributeMapping(new AttributeMapping("dc", AttributeMapping.CONSTANT, "Example", true));
+        rootEntry.addAttributeMappingsFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(rootEntry);
 
         EntryConfig usersEntry = new EntryConfig("cn=Users,dc=Example,dc=com");
-        usersEntry.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "Users", true));
+        usersEntry.addAttributeMappingsFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(usersEntry);
 
         EntryConfig users1Mapping = new EntryConfig("cn=...,cn=Users,dc=Example,dc=com");

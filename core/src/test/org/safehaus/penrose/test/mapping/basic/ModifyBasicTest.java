@@ -20,7 +20,7 @@ public class ModifyBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('group', 'olddesc')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attribute attribute = new Attribute("description");

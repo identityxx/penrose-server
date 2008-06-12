@@ -21,7 +21,7 @@ public class DeleteNestedTest extends NestedTestCase {
 
         executeUpdate("insert into children values ('group1', 'child1')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.delete("uid=child,cn=group1,"+baseDn);

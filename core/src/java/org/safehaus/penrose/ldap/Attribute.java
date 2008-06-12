@@ -209,6 +209,7 @@ public class Attribute implements Serializable, Cloneable {
 
     public void print() throws Exception {
         Logger log = LoggerFactory.getLogger(getClass());
+        boolean debug = log.isDebugEnabled();
 
         for (Object value : values) {
             String className = value.getClass().getName();
@@ -218,7 +219,7 @@ public class Attribute implements Serializable, Cloneable {
                 value = BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[]) value, 0, 10)+"...";
             }
 
-            log.debug(" - " + name + ": " + value + " (" + className + ")");
+            if (debug) log.debug(" - " + name + ": " + value + " (" + className + ")");
         }
     }
 }

@@ -89,6 +89,7 @@
               <attribute name="Build-Date" value="${TIMESTAMP}"/>
             </manifest>
         </jar>
+        <ant dir="../monitors" target="build"/>
         <ant dir="../services" target="build"/>
         <ant dir="../samples" target="build"/>
     </target>
@@ -198,6 +199,7 @@
             </filterchain>
         </copy>
         <mkdir dir="target/dist/logs"/>
+        <ant dir="../monitors" target="dist"/>
         <ant dir="../services" target="dist"/>
         <ant dir="../samples" target="dist"/>
         <mkdir dir="${project.dist}"/>
@@ -206,8 +208,8 @@
     </target>
 
     <target name="dist-src">
-        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
         <mkdir dir="${project.dist}"/>
+        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
         <zip destfile="${project.dist}/${module.name}-${product.version}-src.zip">
             <zipfileset dir="..">
                 <exclude name="server/dist/**"/>
@@ -219,7 +221,6 @@
             </zipfileset>
         </zip>
         <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
-        <mkdir dir="target"/>
         <tar destfile="${project.dist}/${module.name}-${product.version}-src.tar.gz" compression="gzip">
             <tarfileset dir=".." prefix="${module.name}-${product.version}">
                 <exclude name="server/dist/**"/>
@@ -385,6 +386,7 @@
             <fileset dir="target/dist">
                 <exclude name="conf/**/*"/>
                 <exclude name="samples/**/*"/>
+                <exclude name="monitors/**/*"/>
                 <exclude name="services/**/*"/>
                 <exclude name="lib/*"/>
                 <exclude name="server/lib/*"/>
@@ -402,6 +404,7 @@
                 <include name="server/lib/*"/>
             </fileset>
         </copy>
+        <ant dir="../monitors" target="install"/>
         <ant dir="../services" target="install"/>
         <ant dir="../samples" target="install"/>
         <chmod dir="${penrose.home}" perm="ugo+rw" includes="**/*"/>
@@ -422,6 +425,7 @@
 
     <target name="clean" depends="init">
         <delete dir="target" failonerror="false"/>
+        <ant dir="../monitors" target="clean"/>
         <ant dir="../services" target="clean"/>
         <ant dir="../samples" target="clean"/>
     </target>

@@ -21,9 +21,11 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.config.PenroseConfigWriter;
+import org.safehaus.penrose.ldap.ConnectRequest;
+import org.safehaus.penrose.logger.log4j.AppenderConfig;
+import org.safehaus.penrose.logger.log4j.Log4jConfig;
 import org.safehaus.penrose.logger.log4j.Log4jConfigReader;
 import org.safehaus.penrose.logger.log4j.LoggerConfig;
-import org.safehaus.penrose.logger.log4j.*;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
@@ -267,24 +269,9 @@ public class Penrose {
     // Sessions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public Session newSession() throws Exception {
+    public Session createSession() throws Exception {
         SessionManager sessionManager = sessionContext.getSessionManager();
-        return sessionManager.newSession();
-    }
-
-    public Session createSession(Object sessionId) throws Exception {
-        SessionManager sessionManager = sessionContext.getSessionManager();
-        return sessionManager.createSession(sessionId);
-    }
-
-    public Session getSession(String sessionId) throws Exception {
-        SessionManager sessionManager = sessionContext.getSessionManager();
-        return sessionManager.getSession(sessionId);
-    }
-
-    public Session removeSession(String sessionId) throws Exception {
-        SessionManager sessionManager = sessionContext.getSessionManager();
-        return sessionManager.removeSession(sessionId);
+        return sessionManager.createSession();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

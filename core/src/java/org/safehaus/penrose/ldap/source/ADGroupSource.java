@@ -6,7 +6,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Field;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;
 
@@ -41,9 +41,9 @@ public class ADGroupSource extends LDAPSource {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("AD Group Search "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("AD Group Search "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         LDAPClient client = connection.getClient(session);
@@ -66,7 +66,7 @@ public class ADGroupSource extends LDAPSource {
             for (int i = 0; i < filters.size(); i++) {
                 Filter f = filters.get(i);
 
-                f = FilterTool.appendAndFilter(f, sourceFilter);
+                f = FilterTool.appendAndFilter(f, filter);
 
                 searchEntries(session, request, response, f, filters, results, fp, client);
             }
@@ -138,7 +138,7 @@ public class ADGroupSource extends LDAPSource {
     public SearchResult findUser(LDAPClient client, Object sAMAccountName) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(sourceBaseDn);
+        newRequest.setDn(baseDn);
         newRequest.setFilter(new SimpleFilter(SAM_ACCOUNT_NAME, "=", sAMAccountName));
         newRequest.setSizeLimit(sourceSizeLimit);
         newRequest.setTimeLimit(sourceTimeLimit);
@@ -155,13 +155,13 @@ public class ADGroupSource extends LDAPSource {
     public SearchResult findGroup(LDAPClient client, Object cn) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(sourceBaseDn);
-        newRequest.setScope(sourceScope);
+        newRequest.setDn(baseDn);
+        newRequest.setScope(scope);
 
-        Filter filter = new SimpleFilter(CN, "=", cn);
-        filter = FilterTool.appendAndFilter(filter, sourceFilter);
+        Filter newFilter = new SimpleFilter(CN, "=", cn);
+        newFilter = FilterTool.appendAndFilter(newFilter, filter);
 
-        newRequest.setFilter(filter);
+        newRequest.setFilter(newFilter);
         newRequest.setSizeLimit(sourceSizeLimit);
         newRequest.setTimeLimit(sourceTimeLimit);
 
@@ -180,14 +180,14 @@ public class ADGroupSource extends LDAPSource {
             final SearchResponse response,
             final Filter filter,
             final List<Filter> filters,
-            final Map<String,SearchResult> results,
+            final Map<String,SearchResult> map,
             final ADGroupFilterProcessor fp,
             final LDAPClient client
     ) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(sourceBaseDn);
-        newRequest.setScope(sourceScope);
+        newRequest.setDn(baseDn);
+        newRequest.setScope(scope);
         newRequest.setFilter(filter);
         newRequest.setSizeLimit(sourceSizeLimit);
         newRequest.setTimeLimit(sourceTimeLimit);
@@ -200,19 +200,19 @@ public class ADGroupSource extends LDAPSource {
                     return;
                 }
 
-                SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+                SearchResult newSearchResult = createSearchResult(baseDn, searchResult);
                 if (newSearchResult == null) return;
 
-                DN dn = newSearchResult.getDn().append(sourceBaseDn);
+                DN dn = newSearchResult.getDn().append(baseDn);
                 String groupDn = dn.getNormalizedDn();
 
-                Collection<Object> users = searchMembers(sourceBaseDn, searchResult, results, client);
+                Collection<Object> users = searchMembers(baseDn, searchResult, map, client);
 
                 Attributes attributes = newSearchResult.getAttributes();
                 attributes.setValues(memberField.getName(), users);
 
-                if (!results.containsKey(groupDn)) {
-                    results.put(groupDn, newSearchResult);
+                if (!map.containsKey(groupDn)) {
+                    map.put(groupDn, newSearchResult);
 
                     SimpleFilter memberFilter = fp.getMemberFilter();
                     if (memberFilter != null) filters.add(new SimpleFilter(MEMBER, "=", groupDn));

@@ -14,6 +14,54 @@ public class Access {
 
     public static Logger log = LoggerFactory.getLogger(Access.class);
 
+    public static void log(Session session, ConnectRequest request) {
+
+        if (log.isWarnEnabled()) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("session=\"");
+            sb.append(session.getSessionId());
+            sb.append("\" - ");
+
+            sb.append("CONNECT");
+
+            if (request.getClientAddress() != null) {
+                sb.append(" from=\"");
+                sb.append(request.getClientAddress());
+                sb.append("\"");
+            }
+
+            if (request.getServerAddress() != null) {
+                sb.append(" to=\"");
+                sb.append(request.getServerAddress());
+                sb.append("\"");
+            }
+
+            if (request.getProtocol() != null) {
+                sb.append(" protocol=\"");
+                sb.append(request.getProtocol());
+                sb.append("\"");
+            }
+
+            log.warn(sb.toString());
+        }
+    }
+
+    public static void log(Session session, DisconnectRequest request) {
+
+        if (log.isWarnEnabled()) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("session=\"");
+            sb.append(session.getSessionId());
+            sb.append("\" - ");
+
+            sb.append("DISCONNECT");
+
+            log.warn(sb.toString());
+        }
+    }
+
     public static void log(Session session, AddRequest request) {
 
         if (log.isWarnEnabled()) {

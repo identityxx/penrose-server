@@ -5,17 +5,17 @@ package org.safehaus.penrose.ldap;
  */
 public class SearchReferenceException extends Exception {
 
-    private SearchResult reference;
+    private SearchReference reference;
 
-    public SearchReferenceException(SearchResult reference) {
+    public SearchReferenceException(SearchReference reference) {
         this.reference = reference;
     }
 
-    public SearchResult getReference() {
+    public SearchReference getReference() {
         return reference;
     }
 
-    public void setReference(SearchResult reference) {
+    public void setReference(SearchReference reference) {
         this.reference = reference;
     }
 }

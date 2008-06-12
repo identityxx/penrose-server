@@ -55,6 +55,7 @@
     </target>
     
     <target name="build" depends="compile">
+        <mkdir dir="DIR-INF/lib"/>
         <jar jarfile="DIR-INF/lib/${product.name}-lockout-module-${product.version}.jar">
             <fileset dir="DIR-INF/target/classes"/>
             <manifest>

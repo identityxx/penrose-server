@@ -7,6 +7,17 @@
 
   <module name="ChangeLogModule">
     <module-class>org.safehaus.penrose.changelog.module.ChangeLogModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>changelog</param-value>
+    </parameter>
   </module>
+
+  <module-mapping>
+    <module-name>ChangeLogModule</module-name>
+    <base-dn>dc=ChangeLog,dc=Example,dc=com</base-dn>
+    <filter>(objectClass=*)</filter>
+    <scope>SUBTREE</scope>
+  </module-mapping>
 
 </modules>

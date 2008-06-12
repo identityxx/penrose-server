@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.scheduler.JobConfig;
 import org.safehaus.penrose.util.ClassUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.management.partition.PartitionClient;
 import org.safehaus.penrose.management.partition.PartitionManagerClient;
 import org.safehaus.penrose.management.BaseClient;
@@ -76,11 +77,11 @@ public class JobClient extends BaseClient implements JobServiceMBean {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("JOB", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("JOB", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
         for (String jobName : schedulerClient.getJobNames()) {
@@ -88,8 +89,8 @@ public class JobClient extends BaseClient implements JobServiceMBean {
             //JobClient jobClient = partitionClient.getJobClient(jobName);
             String status = "OK";
 
-            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(jobName, 15)+" ");
-            System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10)+" ");
+            System.out.print(TextUtil.rightPad(jobName, 15)+" ");
+            System.out.println(TextUtil.rightPad(status, 10)+" ");
         }
     }
 

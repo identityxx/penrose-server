@@ -17,35 +17,32 @@
  */
 package org.safehaus.penrose.backend;
 
-import java.util.*;
-import java.io.File;
-
+import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.apache.log4j.xml.DOMConfigurator;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.identyx.javabackend.Connection;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseBackend implements com.identyx.javabackend.Backend {
 
-    public Logger log = LoggerFactory.getLogger(getClass());
-
     public File home;
 
     public PenroseServer penroseServer;
 
-    public Map<Object,PenroseSession> sessions = new HashMap<Object,PenroseSession>();
+    public Map<Object, PenroseConnection> sessions = Collections.synchronizedMap(new HashMap<Object, PenroseConnection>());
 
     public PenroseBackend() {
         home = new File(System.getProperty("penrose.home"));
@@ -85,21 +82,36 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return !partitionManager.findEntries(dn).isEmpty();
     }
 
-    public com.identyx.javabackend.Session getSession(Object id) throws Exception {
-        return sessions.get(id);
+    public Connection getConnection(Object connectionId) throws Exception {
+        return sessions.get(connectionId);
     }
 
-    public com.identyx.javabackend.Session createSession(Object id) throws Exception {
-        log.debug("openConnection("+id+")");
+    public com.identyx.javabackend.ConnectRequest createConnectRequest() throws Exception {
+        return new PenroseConnectRequest();
+    }
+
+    public com.identyx.javabackend.DisconnectRequest createDisconnectRequest() throws Exception {
+        return new PenroseDisconnectRequest();
+    }
+
+    public Connection connect(com.identyx.javabackend.ConnectRequest request) throws Exception {
+
         Penrose penrose = penroseServer.getPenrose();
-        PenroseSession session = new PenroseSession(penrose.newSession());
-        sessions.put(id, session);
+        PenroseConnection session = new PenroseConnection(penrose.createSession());
+
+        session.connect(request);
+
+        sessions.put(request.getConnectionId(), session);
+
         return session;
     }
 
-    public void closeSession(Object id) throws Exception {
-        log.debug("closeConnection("+id+")");
-        PenroseSession session = sessions.remove(id);
+    public void disconnect(com.identyx.javabackend.DisconnectRequest request) throws Exception {
+
+        PenroseConnection session = sessions.remove(request.getConnectionId());
+        if (session == null) return;
+
+        session.disconnect(request);
         session.close();
     }
 

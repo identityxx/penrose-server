@@ -22,7 +22,6 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.SessionContext;
-import org.safehaus.penrose.partition.Partition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -55,18 +54,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        AddRequest request = event.getRequest();
         AddResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<AddListener> listeners = new ArrayList<AddListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(addListeners);
 
         for (AddListener listener : listeners) {
@@ -90,18 +80,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        BindRequest request = event.getRequest();
         BindResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<BindListener> listeners = new ArrayList<BindListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(bindListeners);
 
         for (BindListener listener : listeners) {
@@ -125,18 +106,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        CompareRequest request = event.getRequest();
         CompareResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<CompareListener> listeners = new ArrayList<CompareListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(compareListeners);
 
         for (CompareListener listener : listeners) {
@@ -160,18 +132,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        DeleteRequest request = event.getRequest();
         DeleteResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<DeleteListener> listeners = new ArrayList<DeleteListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(deleteListeners);
 
         for (DeleteListener listener : listeners) {
@@ -195,18 +158,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        ModifyRequest request = event.getRequest();
         ModifyResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<ModifyListener> listeners = new ArrayList<ModifyListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(modifyListeners);
 
         for (ModifyListener listener : listeners) {
@@ -230,18 +184,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        ModRdnRequest request = event.getRequest();
         ModRdnResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<ModRdnListener> listeners = new ArrayList<ModRdnListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(modrdnListeners);
 
         for (ModRdnListener listener : listeners) {
@@ -265,18 +210,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        SearchRequest request = event.getRequest();
         SearchResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<SearchListener> listeners = new ArrayList<SearchListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(searchListeners);
 
         for (SearchListener listener : listeners) {
@@ -300,18 +236,9 @@ public class EventManager {
 
         if (debug) log.debug("Firing "+event+" event.");
 
-        UnbindRequest request = event.getRequest();
         UnbindResponse response = event.getResponse();
 
-        DN dn = request.getDn();
-
         Collection<UnbindListener> listeners = new ArrayList<UnbindListener>();
-
-        Partition partition = event.getPartition();
-        if (partition != null) {
-            listeners.addAll(partition.getModules(dn));
-        }
-
         listeners.addAll(unbindListeners);
 
         for (UnbindListener listener : listeners) {

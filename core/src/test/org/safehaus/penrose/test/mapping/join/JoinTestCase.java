@@ -74,7 +74,7 @@ public class JoinTestCase extends JDBCTestCase {
 
         EntryConfig ou = new EntryConfig("ou=Groups,dc=Example,dc=com");
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
+        ou.addAttributeMappingsFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig groups = new EntryConfig("cn=...,ou=Groups,dc=Example,dc=com");

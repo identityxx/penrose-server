@@ -21,8 +21,6 @@ import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.*;
 import java.io.Serializable;
@@ -32,22 +30,15 @@ import java.io.Serializable;
  */
 public class EntryConfig implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(EntryConfig.class);
-    }
+    public final static String QUERY_CACHE_SIZE                = "queryCacheSize";
+    public final static String QUERY_CACHE_EXPIRATION          = "queryCacheExpiration";
 
-    public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
+    public final static String DATA_CACHE_SIZE                 = "dataCacheSize";
+    public final static String DATA_CACHE_EXPIRATION           = "dataCacheExpiration";
 
-    public final static String QUERY_CACHE_SIZE        = "queryCacheSize";
-    public final static String QUERY_CACHE_EXPIRATION  = "queryCacheExpiration";
+    public final static String BATCH_SIZE                      = "batchSize";
 
-    public final static String DATA_CACHE_SIZE         = "dataCacheSize";
-    public final static String DATA_CACHE_EXPIRATION   = "dataCacheExpiration";
-
-    public final static String BATCH_SIZE              = "batchSize";
-
-    public final static String CACHE                   = "cache";
+    public final static String CACHE                           = "cache";
 
     public final static int    DEFAULT_QUERY_CACHE_SIZE        = 100;
     public final static int    DEFAULT_QUERY_CACHE_EXPIRATION  = 5;
@@ -59,34 +50,31 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
-    private boolean enabled = true;
-    private boolean attached = true;
+    public boolean enabled = true;
+    public boolean attached = true;
 
-    private String id;
-    private String parentId;
+    public String id;
+    public String parentId;
 
-    private DN dn;
+    public DN dn;
 
-    private String entryClass;
+    public String entryClass;
 
-    private Collection<String> objectClasses = new TreeSet<String>();
+    public Collection<String> objectClasses = new TreeSet<String>();
 
-    private String description;
+    public String description;
 
-    private boolean staticRdn = true;
+    public boolean staticRdn = true;
 
-    public Collection<AttributeMapping> attributeMappings = new ArrayList<AttributeMapping>();
-    private Map<String,Collection<AttributeMapping>> attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
-    private Collection<AttributeMapping> rdnAttributeMappings = new ArrayList<AttributeMapping>();
+    public Collection<AttributeMapping> attributeMappings                   = new LinkedHashSet<AttributeMapping>();
+    public Map<String,Collection<AttributeMapping>> attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
+    public Collection<AttributeMapping> rdnAttributeMappings                = new LinkedHashSet<AttributeMapping>();
 
-    private List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
+    public List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
     
-    private String handlerName;
-    private String engineName;
+    public Collection<ACI> acl = new ArrayList<ACI>();
 
-    private Collection<ACI> acl = new ArrayList<ACI>();
-
-    private Map<String,String> parameters = new TreeMap<String,String>();
+    public Map<String,String> parameters = new TreeMap<String,String>();
 
 	public EntryConfig() {
 	}
@@ -271,7 +259,21 @@ public class EntryConfig implements Serializable, Cloneable {
         }
     }
 
-	public void addAttributeMapping(AttributeMapping attributeMapping) {
+    public void addAttributeMappingsFromRdn() {
+        RDN rdn = dn.getRdn();
+        for (String name : rdn.getNames()) {
+            Object value = rdn.get(name);
+
+            AttributeMapping attributeMapping = new AttributeMapping(name, value, true);
+            addAttributeMapping(attributeMapping);
+        }
+    }
+
+    public void addAttributeMapping(String name, Object value) {
+        addAttributeMapping(new AttributeMapping(name, value));
+    }
+
+    public void addAttributeMapping(AttributeMapping attributeMapping) {
         String name = attributeMapping.getName().toLowerCase();
         //log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
 
@@ -279,7 +281,7 @@ public class EntryConfig implements Serializable, Cloneable {
 
         Collection<AttributeMapping> list = attributeMappingsByName.get(name);
         if (list == null) {
-            list = new ArrayList<AttributeMapping>();
+            list = new LinkedHashSet<AttributeMapping>();
             attributeMappingsByName.put(name, list);
         }
         list.add(attributeMapping);
@@ -411,8 +413,6 @@ public class EntryConfig implements Serializable, Cloneable {
         if (!equals(attributeMappings, entryConfig.attributeMappings)) return false;
 
         if (!equals(sourceMappings, entryConfig.sourceMappings)) return false;
-        if (!equals(handlerName, entryConfig.handlerName)) return false;
-        if (!equals(engineName, entryConfig.engineName)) return false;
         if (!equals(acl, entryConfig.acl)) return false;
         if (!equals(parameters, entryConfig.parameters)) return false;
 
@@ -436,9 +436,10 @@ public class EntryConfig implements Serializable, Cloneable {
             addObjectClass(objectClass);
         }
 
-        attributeMappings = new ArrayList<AttributeMapping>();
+        attributeMappings       = new LinkedHashSet<AttributeMapping>();
         attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
-        rdnAttributeMappings = new ArrayList<AttributeMapping>();
+        rdnAttributeMappings    = new LinkedHashSet<AttributeMapping>();
+
         for (AttributeMapping attributeMapping : entryConfig.attributeMappings) {
             addAttributeMapping((AttributeMapping) attributeMapping.clone());
         }
@@ -447,9 +448,6 @@ public class EntryConfig implements Serializable, Cloneable {
         for (SourceMapping sourceMapping : entryConfig.sourceMappings) {
             addSourceMapping((SourceMapping) sourceMapping.clone());
         }
-
-        handlerName = entryConfig.handlerName;
-        engineName = entryConfig.engineName;
 
         acl = new ArrayList<ACI>();
         for (ACI aci : entryConfig.acl) {
@@ -464,22 +462,6 @@ public class EntryConfig implements Serializable, Cloneable {
         EntryConfig entryConfig = (EntryConfig)super.clone();
         entryConfig.copy(this);
         return entryConfig;
-    }
-
-    public String getHandlerName() {
-        return handlerName;
-    }
-
-    public void setHandlerName(String handlerName) {
-        this.handlerName = handlerName;
-    }
-
-    public String getEngineName() {
-        return engineName;
-    }
-
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
     }
 
     public String getId() {

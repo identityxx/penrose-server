@@ -21,7 +21,7 @@ public class ModifyJoinTest extends JoinTestCase {
         executeUpdate("insert into groups values ('group1', 'olddesc1')");
         executeUpdate("insert into usergroups values ('group1', 'member1')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         Collection<Modification> modifications = new ArrayList<Modification>();

@@ -37,7 +37,6 @@ public class PenroseContext {
     protected File               home;
     protected PenroseConfig      penroseConfig;
 
-    protected ThreadManager      threadManager;
     protected SchemaManager      schemaManager;
     protected FilterEvaluator    filterEvaluator;
 
@@ -48,14 +47,6 @@ public class PenroseContext {
 
     public PenroseContext(File home) {
         this.home = home;
-    }
-
-    public ThreadManager getThreadManager() {
-        return threadManager;
-    }
-
-    public void setThreadManager(ThreadManager threadManager) {
-        this.threadManager = threadManager;
     }
 
     public SchemaManager getSchemaManager() {
@@ -97,10 +88,6 @@ public class PenroseContext {
                 this
         );
 
-        threadManager = new ThreadManager();
-        threadManager.setPenroseConfig(penroseConfig);
-        threadManager.setPenroseContext(this);
-
         schemaManager = new SchemaManager(home);
         schemaManager.setPenroseConfig(penroseConfig);
         schemaManager.setPenroseContext(this);
@@ -115,17 +102,11 @@ public class PenroseContext {
     }
 
     public void start() throws Exception {
-        threadManager.start();
     }
 
     public void stop() throws Exception {
-        threadManager.stop();
     }
 
-    public boolean isRunning() {
-        return threadManager.isRunning();
-    }
-    
     public void clear() throws Exception {
         schemaManager.clear();
     }

@@ -1,8 +1,7 @@
 package org.safehaus.penrose.samba;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.event.AddEvent;
-import org.safehaus.penrose.event.ModifyEvent;
+import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -33,8 +32,12 @@ public class SambaGroupModule extends Module {
         }
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
-        AddRequest request = event.getRequest();
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
         String dn = request.getDn().toString();
         int i = dn.indexOf("=");
@@ -89,33 +92,36 @@ public class SambaGroupModule extends Module {
         if (attributes.get("sambaGroupType") == null) {
             attributes.setValue("sambaGroupType", "2");
         }
+
+        chain.add(session, request, response);
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
-        ModifyRequest modifyRequest = event.getRequest();
-
-        DN dn = modifyRequest.getDn();
+        DN dn = request.getDn();
         RDN rdn = dn.getRdn();
         String groupname = (String)rdn.get("cn");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
-
-        Session session = event.getSession();
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(dn);
         searchRequest.setFilter("(objectClass=*)");
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse searchResponse = new SearchResponse();
 
-        session.search(searchRequest, response);
+        session.search(searchRequest, searchResponse);
 
-        SearchResult result = response.next();
+        SearchResult result = searchResponse.next();
         Attributes values = result.getAttributes();
 
-        Collection<Modification> modifications = modifyRequest.getModifications();
+        Collection<Modification> modifications = request.getModifications();
 
         if (values.get("sambaSID") == null || values.get("gidNumber") == null) {
 
@@ -168,6 +174,8 @@ public class SambaGroupModule extends Module {
             Modification modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
+
+        chain.modify(session, request, response);
     }
 
     public Map<String,String> getServerInfo() throws Exception {

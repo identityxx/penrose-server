@@ -21,8 +21,9 @@ import java.sql.*;
 import java.util.*;
 
 import org.safehaus.penrose.source.*;
-import org.safehaus.penrose.util.Formatter;
-import org.safehaus.penrose.ldap.LDAP;
+import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionListener;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -36,140 +37,41 @@ public class JDBCClient {
     public final static String URL          = "url";
     public final static String USER         = "user";
     public final static String PASSWORD     = "password";
-    public final static String QUOTE        = "quote";
 
-    public final static String CATALOG      = "catalog";
-    public final static String SCHEMA       = "schema";
-    public final static String TABLE        = "table";
-    public final static String FILTER       = "filter";
-    public final static String CREATE       = "create";
+    public JDBCConnectionFactory connectionFactory;
+    public Connection connection;
 
-    public final static String INITIAL_SIZE                         = "initialSize";
-    public final static String MAX_ACTIVE                           = "maxActive";
-    public final static String MAX_IDLE                             = "maxIdle";
-    public final static String MIN_IDLE                             = "minIdle";
-    public final static String MAX_WAIT                             = "maxWait";
-
-    public final static String VALIDATION_QUERY                     = "validationQuery";
-    public final static String TEST_ON_BORROW                       = "testOnBorrow";
-    public final static String TEST_ON_RETURN                       = "testOnReturn";
-    public final static String TEST_WHILE_IDLE                      = "testWhileIdle";
-    public final static String TIME_BETWEEN_EVICTION_RUNS_MILLIS    = "timeBetweenEvictionRunsMillis";
-    public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
-    public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
-
-    public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
-    public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
-
-    public Properties properties = new Properties();
+    public int queryTimeout;
     public String quote;
 
-    Connection connection;
-
-    public JDBCClient(Map<String,?> properties) throws Exception {
-
-        Driver driver = null;
-        String url = null;
-
-        for (String key : properties.keySet()) {
-            Object value = properties.get(key);
-
-            if (QUOTE.equals(key)) {
-                quote = (String)value;
-
-            } else if (DRIVER.equals(key)) {
-                String driverClass = (String)properties.get(DRIVER);
-                Class clazz = Class.forName(driverClass);
-                driver = (Driver)clazz.newInstance();
-
-            } else if (URL.equals(key)) {
-                url = (String)properties.get(URL);
-
-            } else {
-                this.properties.put(key, value);
-            }
-        }
-
-        if (driver == null) throw new Exception("Missing driver.");
-        if (url == null) throw new Exception("Missing URL.");
-
-        connection = driver.connect(url, this.properties);
+    public JDBCClient(Map<String,String> parameters) throws Exception {
+        this(new JDBCConnectionFactory(parameters));
     }
 
-    public JDBCClient(Driver driver, Map<String,?> properties) throws Exception {
+    public JDBCClient(JDBCConnectionFactory connectionFactory) throws Exception {
+        this.connectionFactory = connectionFactory;
 
-        String url = null;
-
-        for (String key : properties.keySet()) {
-            Object value = properties.get(key);
-
-            if (QUOTE.equals(key)) {
-                quote = (String)value;
-
-            } else if (DRIVER.equals(key)) {
-
-            } else if (URL.equals(key)) {
-                url = (String)properties.get(URL);
-
-            } else {
-                this.properties.put(key, value);
-            }
-        }
-
-        connection = driver.connect(url, this.properties);
-    }
-
-    public JDBCClient(
-            String driverClass,
-            String url,
-            String username,
-            String password
-    ) throws Exception {
-
-        Class clazz = Class.forName(driverClass);
-        Driver driver = (Driver)clazz.newInstance();
-
-        properties.put(USER, username);
-        properties.put(PASSWORD, password);
-
-        connection = driver.connect(url, this.properties);
-    }
-
-    public JDBCClient(
-            Driver driver,
-            String url,
-            String username,
-            String password
-    ) throws Exception {
-
-        properties.put(USER, username);
-        properties.put(PASSWORD, password);
-
-        connection = driver.connect(url, this.properties);
-    }
-
-    public JDBCClient(Connection connection, Map<String,?> properties) throws Exception {
-
-        this.connection = connection;
-
-        for (String key : properties.keySet()) {
-            Object value = properties.get(key);
-
-            if (QUOTE.equals(key)) {
-                quote = (String)value;
-
-            } else {
-                this.properties.put(key, value);
-            }
-        }
+        queryTimeout = connectionFactory.getQueryTimeout();
+        quote = connectionFactory.getQuote();
     }
 
     public Connection getConnection() throws Exception {
+        connect();
         return connection;
     }
 
+
+    public synchronized void connect() throws Exception {
+
+        if (connection == null || connection.isClosed()) {
+            log.debug("Creating new JDBC connection.");
+            connection = connectionFactory.createConnection();
+        }
+    }
+
     public void close() throws Exception {
-        connection.close();
+        if (connection != null) connection.close();
+        connection = null;
     }
 
     public String getTypeName(int type) throws Exception {
@@ -368,21 +270,21 @@ public class JDBCClient {
     ) throws Exception {
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            log.debug(TextUtil.displaySeparator(80));
+            Collection<String> lines = TextUtil.split(sql, 80);
             for (String line : lines) {
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine(line, 80));
+                log.debug(TextUtil.displayLine(line, 80));
             }
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
 
             if (parameters != null && !parameters.isEmpty()) {
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
+                log.debug(TextUtil.displayLine("Parameters:", 80));
                 int counter = 1;
                 for (Object value : parameters) {
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+value, 80));
+                    log.debug(TextUtil.displayLine(" - "+counter+" = "+value, 80));
                     counter++;
                 }
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(80));
             }
         }
 
@@ -391,6 +293,7 @@ public class JDBCClient {
 
         try {
             ps = connection.prepareStatement(sql);
+            ps.setQueryTimeout(queryTimeout);
 
             if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;
@@ -427,15 +330,15 @@ public class JDBCClient {
     ) throws Exception {
 
         if (debug) {
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-            Collection<String> lines = org.safehaus.penrose.util.Formatter.split(sql, 80);
+            log.debug(TextUtil.displaySeparator(80));
+            Collection<String> lines = TextUtil.split(sql, 80);
             for (String line : lines) {
-                log.debug(Formatter.displayLine(line, 80));
+                log.debug(TextUtil.displayLine(line, 80));
             }
-            log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
 
            if (parameters != null && !parameters.isEmpty()) {
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine("Parameters:", 80));
+                log.debug(TextUtil.displayLine("Parameters:", 80));
                 int counter = 1;
                 for (Object value : parameters) {
 
@@ -446,11 +349,11 @@ public class JDBCClient {
                         v = value.toString();
                     }
 
-                    log.debug(org.safehaus.penrose.util.Formatter.displayLine(" - "+counter+" = "+v, 80));
+                    log.debug(TextUtil.displayLine(" - "+counter+" = "+v, 80));
 
                     counter++;
                 }
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(80));
            }
         }
 
@@ -460,6 +363,7 @@ public class JDBCClient {
 
         try {
             ps = connection.prepareStatement(sql);
+            ps.setQueryTimeout(queryTimeout);
 
             if (parameters != null && !parameters.isEmpty()) {
                 int counter = 1;
@@ -488,287 +392,11 @@ public class JDBCClient {
     	ps.setObject(paramIndex, object);
     }
 
-    public boolean checkDatabase(String database) throws Exception {
-        try {
-            createDatabase(database);
-            dropDatabase(database);
-            return false;
-            
-        } catch (Exception e) {
-            return true;
-        }
-    }
-
-    public void createDatabase(String database) throws Exception {
-        executeUpdate("create database "+database);
-    }
-
-    public void dropDatabase(String database) throws Exception {
-        executeUpdate("drop database "+database);
-    }
-
-    public String getTableName(String catalog, String schema, String table)  {
-
-        StringBuilder sb = new StringBuilder();
-
-        if (catalog != null) {
-            if (quote != null) sb.append(quote);
-            sb.append(catalog);
-            if (quote != null) sb.append(quote);
-            sb.append(".");
-        }
-
-        if (schema != null) {
-            if (quote != null) sb.append(quote);
-            sb.append(schema);
-            if (quote != null) sb.append(quote);
-            sb.append(".");
-        }
-
-        if (quote != null) sb.append(quote);
-        sb.append(table);
-        if (quote != null) sb.append(quote);
-
-        return sb.toString();
-    }
-
-    public void createTable(SourceConfig sourceConfig) throws Exception {
-
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("create table ");
-        sb.append(getTableName(catalog, schema, table));
-        sb.append(" (");
-
-        boolean first = true;
-        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append(fieldConfig.getName());
-            sb.append(" ");
-
-            if (fieldConfig.getOriginalType() == null) {
-
-                sb.append(fieldConfig.getType());
-
-                if (fieldConfig.getLength() > 0) {
-                    sb.append("(");
-                    sb.append(fieldConfig.getLength());
-                    sb.append(")");
-                }
-
-                if (fieldConfig.isCaseSensitive()) {
-                    sb.append(" binary");
-                }
-
-                if (fieldConfig.isAutoIncrement()) {
-                    sb.append(" auto_increment");
-                }
-
-            } else {
-                sb.append(fieldConfig.getOriginalType());
-            }
-        }
-/*
-        Collection<String> indexFieldNames = sourceConfig.getIndexFieldNames();
-        for (String fieldName : indexFieldNames) {
-            sb.append(", index (");
-            sb.append(fieldName);
-            sb.append(")");
-        }
-*/
-        Collection<String> primaryKeyNames = sourceConfig.getPrimaryKeyNames();
-        if (!primaryKeyNames.isEmpty()) {
-            sb.append(", primary key (");
-
-            first = true;
-            for (String fieldName : primaryKeyNames) {
-
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
-                }
-
-                sb.append(fieldName);
-            }
-
-            sb.append(")");
-        }
-
-        sb.append(")");
-
-        String sql = sb.toString();
-
-        executeUpdate(sql);
-    }
-
-    public void renameTable(SourceConfig oldSourceConfig, SourceConfig newSourceConfig) throws Exception {
-
-        String oldCatalog = oldSourceConfig.getParameter(JDBCClient.CATALOG);
-        String oldSchema = oldSourceConfig.getParameter(JDBCClient.SCHEMA);
-        String oldTable = oldSourceConfig.getParameter(JDBCClient.TABLE);
-
-        String newCatalog = newSourceConfig.getParameter(JDBCClient.CATALOG);
-        String newSchema = newSourceConfig.getParameter(JDBCClient.SCHEMA);
-        String newTable = newSourceConfig.getParameter(JDBCClient.TABLE);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("rename table ");
-        sb.append(getTableName(oldCatalog, oldSchema, oldTable));
-        sb.append(" to ");
-        sb.append(getTableName(newCatalog, newSchema, newTable));
-
-        String sql = sb.toString();
-
-        executeUpdate(sql);
-    }
-
-    public void dropTable(SourceConfig sourceConfig) throws Exception {
-
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("drop table ");
-        sb.append(getTableName(catalog, schema, table));
-
-        String sql = sb.toString();
-
-        executeUpdate(sql);
-    }
-
-    public void cleanTable(SourceConfig sourceConfig) throws Exception {
-
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("delete from ");
-        sb.append(getTableName(catalog, schema, table));
-
-        String sql = sb.toString();
-
-        executeUpdate(sql);
-    }
-
-    public void showStatus(final SourceConfig sourceConfig) throws Exception {
-
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        final String tableName = getTableName(catalog, schema, table);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("select count(*) from ");
-        sb.append(tableName);
-
-        String sql = sb.toString();
-
-        QueryResponse response = new QueryResponse() {
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-                log.error("Table "+tableName+": "+rs.getObject(1));
-            }
-        };
-
-        executeQuery(sql, response);
-
-        sb = new StringBuilder();
-
-        sb.append("select ");
-
-        boolean first = true;
-        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
-
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-
-            sb.append("max(length(");
-            sb.append(fieldConfig.getOriginalName());
-            sb.append("))");
-        }
-
-        sb.append(" from ");
-        sb.append(tableName);
-
-        sql = sb.toString();
-
-        response = new QueryResponse() {
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-
-                int index = 1;
-                for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
-                    Object length = rs.getObject(index++);
-                    int maxLength = fieldConfig.getLength();
-                    log.error(" - Field " + fieldConfig.getName() + ": " + length + (maxLength > 0 ? "/" + maxLength : ""));
-                }
-            }
-        };
-
-        executeQuery(sql, response);
-    }
-
-    public long getCount(final SourceConfig sourceConfig) throws Exception {
-
-        String catalog = sourceConfig.getParameter(JDBCClient.CATALOG);
-        String schema = sourceConfig.getParameter(JDBCClient.SCHEMA);
-        String table = sourceConfig.getParameter(JDBCClient.TABLE);
-
-        final String tableName = getTableName(catalog, schema, table);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("select count(*) from ");
-        sb.append(tableName);
-
-        String sql = sb.toString();
-
-        QueryResponse response = new QueryResponse() {
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-                Long count = rs.getLong(1);
-                super.add(count);
-            }
-        };
-
-        executeQuery(sql, response);
-
-        if (!response.hasNext()) {
-            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
-        }
-
-        Long count = (Long)response.next();
-        log.error("Table "+tableName+": "+count);
-
-        return count;
+    public int getQueryTimeout() {
+        return queryTimeout;
     }
 
     public String getQuote() {
         return quote;
-    }
-
-    public void setQuote(String quote) {
-        this.quote = quote;
     }
 }

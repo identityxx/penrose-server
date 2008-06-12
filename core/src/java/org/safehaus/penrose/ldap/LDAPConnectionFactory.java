@@ -1,8 +1,9 @@
 package org.safehaus.penrose.ldap;
 
-import org.ietf.ldap.LDAPConnection;
 import org.ietf.ldap.LDAPException;
-import org.ietf.ldap.LDAPUrl;
+import com.novell.ldap.LDAPUrl;
+import org.safehaus.penrose.ldap.connection.LDAPSocketFactory;
+import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,51 +24,68 @@ public class LDAPConnectionFactory {
     public byte[] bindPassword;
 
     public String referral = "follow";
+    public int pageSize;
+    public int timeout;
 
-    public LDAPConnectionFactory(Map<String,?> parameters) throws Exception {
-        init();
+    LDAPSocketFactory socketFactory;
+
+    public LDAPConnectionFactory(Map<String,String> parameters) throws Exception {
         parseParameters(parameters);
+        init();
     }
 
     public LDAPConnectionFactory(String url) throws Exception {
-        init();
         parseUrl(url);
+        init();
     }
 
     public LDAPConnectionFactory(LDAPUrl url) throws Exception {
-        init();
         urls.add(url);
+        init();
     }
 
     public LDAPConnectionFactory(Collection<LDAPUrl> urls) throws Exception {
-        init();
         this.urls = urls;
+        init();
     }
 
     public void init() {
         for (String attribute : LDAPClient.DEFAULT_BINARY_ATTRIBUTES) {
             binaryAttributes.add(attribute.toLowerCase());
         }
+
+        socketFactory = new LDAPSocketFactory(urls);
+        socketFactory.setTimeout(timeout);
     }
 
-    public void parseParameters(Map<String,?> parameters) throws Exception {
+    public void parseParameters(Map<String,String> parameters) throws Exception {
 
-        String url = (String)parameters.get(Context.PROVIDER_URL);
+        String url = parameters.get(Context.PROVIDER_URL);
         parseUrl(url);
 
-        bindDn = (String)parameters.get(Context.SECURITY_PRINCIPAL);
+        bindDn = parameters.get(Context.SECURITY_PRINCIPAL);
 
-        String stringPassword = (String)parameters.get(Context.SECURITY_CREDENTIALS);
-        if (stringPassword != null) {
-            bindPassword = stringPassword.getBytes("UTF-8");
+        String s = parameters.get(Context.SECURITY_CREDENTIALS);
+        if (s != null) {
+            bindPassword = s.getBytes("UTF-8");
         }
 
-        String s = (String)parameters.get(Context.REFERRAL);
+        s = parameters.get(Context.REFERRAL);
         if (s != null) {
             referral = s;
         }
 
-        s = (String)parameters.get("java.naming.ldap.attributes.binary");
+        s = parameters.get(LDAPConnection.PAGE_SIZE);
+        if (s != null) {
+            pageSize = Integer.parseInt(s);
+        }
+
+        s = parameters.get(LDAPConnection.TIMEOUT);
+        if (s != null) {
+            timeout = Integer.parseInt(s);
+        }
+
+        s = parameters.get("java.naming.ldap.attributes.binary");
         if (s != null) {
             StringTokenizer st = new StringTokenizer(s);
             while (st.hasMoreTokens()) {
@@ -85,17 +103,17 @@ public class LDAPConnectionFactory {
         }
     }
 
-    public LDAPConnection createConnection() throws Exception {
+    public org.ietf.ldap.LDAPConnection createConnection() throws Exception {
 
         log.debug("Creating LDAP connection...");
 
-        LDAPConnection connection = new LDAPConnection();
+        org.ietf.ldap.LDAPConnection connection = new org.ietf.ldap.LDAPConnection(socketFactory);
         connect(connection);
 
         return connection;
     }
 
-    public void connect(LDAPConnection connection) throws Exception {
+    public void connect(org.ietf.ldap.LDAPConnection connection) throws Exception {
         for (LDAPUrl url : urls) {
             try {
                 connection.connect(url.getHost(), url.getPort());

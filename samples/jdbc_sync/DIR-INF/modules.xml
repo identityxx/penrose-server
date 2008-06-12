@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="users">
+    <module-class>org.safehaus.penrose.jdbc.module.JDBCSyncModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>users</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>users_cache</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>users_changelog</param-value>
+    </parameter>
+    <parameter>
+      <param-name>tracker</param-name>
+      <param-value>users_tracker</param-value>
+    </parameter>
+  </module>
+
+  <module name="groups">
+    <module-class>org.safehaus.penrose.jdbc.module.JDBCSyncModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>groups_cache</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>groups_changelog</param-value>
+    </parameter>
+    <parameter>
+      <param-name>tracker</param-name>
+      <param-value>groups_tracker</param-value>
+    </parameter>
+  </module>
+
+  <module name="usergroups">
+    <module-class>org.safehaus.penrose.jdbc.module.JDBCSyncModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>usergroups_cache</param-value>
+    </parameter>
+    <parameter>
+      <param-name>changelog</param-name>
+      <param-value>usergroups_changelog</param-value>
+    </parameter>
+    <parameter>
+      <param-name>tracker</param-name>
+      <param-value>usergroups_tracker</param-value>
+    </parameter>
+  </module>
+
+</modules>

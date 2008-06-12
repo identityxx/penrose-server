@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class SimpleInterpreter extends Interpreter {
 
-    public Map variables = new HashMap();
+    public Map<String,Object> variables = new HashMap<String,Object>();
 
     public SimpleInterpreter() {
     }
@@ -16,8 +16,8 @@ public class SimpleInterpreter extends Interpreter {
         return new ArrayList();
     }
 
-    public Collection parseVariables(String script) throws Exception {
-        return new ArrayList();
+    public Collection<String> parseVariables(String script) throws Exception {
+        return new ArrayList<String>();
     }
 
     public void set(String name, Object value) throws Exception {

@@ -8,11 +8,15 @@ import java.io.Serializable;
  */
 public class Control implements Serializable, Cloneable {
 
-    private String oid;
-    private byte[] value;
-    private boolean critical;
+    protected String oid;
+    protected byte[] value;
+    protected boolean critical;
 
     public Control() {
+    }
+
+    public Control(Control control) {
+        this(control.getOid(), control.getValue(), control.isCritical());
     }
 
     public Control(String oid, byte[] value, boolean critical) {

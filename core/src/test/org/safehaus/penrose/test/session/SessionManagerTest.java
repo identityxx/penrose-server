@@ -64,31 +64,25 @@ public class SessionManagerTest extends TestCase {
 
         SessionContext sessionContext = penrose.getSessionContext();
         SessionManager sessionManager = sessionContext.getSessionManager();
-        assertEquals(0, sessionManager.getSessions().size());
 
         Collection sessions = new ArrayList();
 
         for (int i=0; i<6; i++) {
-            Session session = penrose.newSession();
+            Session session = penrose.createSession();
             assertNotNull("Session should not be null", session);
             if (session != null) sessions.add(session);
         }
 
-        assertEquals(6, sessionManager.getSessions().size());
-
         for (int i=0; i<6; i++) {
-            Session session = penrose.newSession();
+            Session session = penrose.createSession();
             assertNull("Session should be null", session);
         }
-
-        assertEquals(6, sessionManager.getSessions().size());
 
         for (Iterator i=sessions.iterator(); i.hasNext(); ) {
             Session session = (Session)i.next();
             session.close();
         }
 
-        assertEquals(0, sessionManager.getSessions().size());
     }
 /*
     public void testMaxIdleTime() throws Exception {
@@ -104,7 +98,7 @@ public class SessionManagerTest extends TestCase {
 
         for (int i=0; i<6; i++) {
 
-            Session session = penrose.newSession();
+            Session session = penrose.createSession();
             System.out.println("Created 1 session at "+session.getCreateDate());
 
             assertNotNull("Session should not be null", session);

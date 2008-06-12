@@ -6,10 +6,7 @@ import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.jdbc.JDBCClient;
-import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connection.Connection;
@@ -41,7 +38,6 @@ public class JDBCSyncJob extends Job {
 
         log.debug("Initializing "+this.getName()+" job...");
 
-        Partition partition = jobContext.getPartition();
         SourceManager sourceManager = partition.getSourceManager();
 
          log.debug("Sources:");
@@ -81,7 +77,7 @@ public class JDBCSyncJob extends Job {
                 Source tmp = createTmpTarget(target);
                 tmpTargets.put(tmp.getName(), tmp);
 
-                log.debug(" - "+sourceName+": "+target.getParameter(JDBCClient.TABLE)+" => "+tmp.getParameter(JDBCClient.TABLE));
+                log.debug(" - "+sourceName+": "+target.getParameter(JDBCSource.TABLE)+" => "+tmp.getParameter(JDBCSource.TABLE));
             }
         }
 
@@ -111,10 +107,10 @@ public class JDBCSyncJob extends Job {
     }
 
     public Source createTmpTarget(Source target) throws Exception {
-        String tableName = target.getParameter(JDBCClient.TABLE);
+        String tableName = target.getParameter(JDBCSource.TABLE);
 
         Source tmp = (Source)target.clone();
-        tmp.setParameter(JDBCClient.TABLE, tableName+"_tmp");
+        tmp.setParameter(JDBCSource.TABLE, tableName+"_tmp");
 
         return tmp;
     }
@@ -136,17 +132,17 @@ public class JDBCSyncJob extends Job {
 
         for (SourceRef sourceRef : entry.getLocalSourceRefs()) {
             Source source = sourceRef.getSource();
-            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCClient.TABLE));
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
         }
 
         log.debug("New entry "+tmpEntry.getDn());
 
         for (SourceRef sourceRef : tmpEntry.getLocalSourceRefs()) {
             Source source = sourceRef.getSource();
-            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCClient.TABLE));
+            log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
         }
 
-        tmpEntry.clearChildren();
+        tmpEntry.removeChildren();
 
         for (Entry child : entry.getChildren()) {
             Entry tmpChild = createTmpEntry(child);
@@ -204,12 +200,19 @@ public class JDBCSyncJob extends Job {
         log.debug("============================================================================================");
         log.debug("Clearing "+targets.keySet());
 
-        for (Source target : targets.values()) {
-            try {
-                target.clear();
-            } catch (Exception e) {
-                log.error("Failed to create " + target.getName() + ": " + e.getMessage());
+        Session session = createAdminSession();
+
+        try {
+            for (Source target : targets.values()) {
+                try {
+                    target.clear(session);
+                } catch (Exception e) {
+                    log.error("Failed to create " + target.getName() + ": " + e.getMessage());
+                }
             }
+
+        } finally {
+            session.close();
         }
     }
 
@@ -272,13 +275,9 @@ public class JDBCSyncJob extends Job {
 
     public void loadSources() throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
-            Partition partition = jobContext.getPartition();
-            //PartitionContext partitionContext = partition.getPartitionContext();
-            //PenroseContext penroseContext = partitionContext.getPenroseContext();
-
             List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
 
             for (Collection<SourceRef> sourceRefs : groupsOfSources) {
@@ -331,7 +330,7 @@ public class JDBCSyncJob extends Job {
 
     public void generateChangeLogs() throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             for (Entry entry : entries.values()) {

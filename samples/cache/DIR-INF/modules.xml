@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="CacheModule">
+    <module-class>org.safehaus.penrose.cache.module.CacheModule</module-class>
+    <parameter>
+      <param-name>size</param-name>
+      <param-value>10</param-value>
+    </parameter>
+    <parameter>
+      <param-name>expiration</param-name>
+      <param-value>3</param-value>
+    </parameter>
+  </module>
+
+  <module-mapping>
+    <module-name>CacheModule</module-name>
+    <base-dn>dc=Cache,dc=Example,dc=com</base-dn>
+  </module-mapping>
+
+</modules>

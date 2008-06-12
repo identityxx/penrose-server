@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE monitor PUBLIC
+  "-//Penrose/DTD Monitor ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/monitor.dtd">
+
+<monitor enabled="true">
+
+  <monitor-class>org.safehaus.penrose.monitor.ldap.LDAPMonitor</monitor-class>
+
+  <parameter>
+    <param-name>url</param-name>
+    <param-value>ldap://localhost:10389/dc=Example,dc=com</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>interval</param-name>
+    <param-value>10</param-value>
+  </parameter>
+    
+</monitor>

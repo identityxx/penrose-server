@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 
-<!ELEMENT service (service-class, description?, parameter*)>
+<!ELEMENT service (description?, service-class, parameter*)>
 <!ATTLIST service enabled CDATA #IMPLIED>
 
 <!ELEMENT service-class (#PCDATA)>

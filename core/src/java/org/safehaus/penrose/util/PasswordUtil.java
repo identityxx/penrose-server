@@ -185,7 +185,7 @@ public class PasswordUtil {
 
         String encryptedCredential;
 
-        if ("crypt".equals(encryption)) {
+        if ("crypt".equalsIgnoreCase(encryption)) {
 
             if (storedPassword.startsWith("$1$")) {
 

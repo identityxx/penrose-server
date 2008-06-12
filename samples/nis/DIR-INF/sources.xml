@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="nis_users">
+    <connection-name>NIS</connection-name>
+    <field name="cn"/>
+    <field name="sn"/>
+    <field name="uid" primaryKey="true"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>passwd</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_hosts">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipHostNumber"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipHost</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>hosts</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_groups">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>group</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_services">
+    <connection-name>NIS</connection-name>
+    <field name="name"/>
+    <field name="cn"/>
+    <field name="ipServicePort" primaryKey="true"/>
+    <field name="ipServiceProtocol" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipService</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>services</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_rpcs">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="oncRpcNumber"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>oncRpc</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>rpc</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_netids">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="nisNetIdUser"/>
+    <field name="nisNetIdGroup"/>
+    <field name="nisNetIdHost"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>nisNetId</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>netid</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_protocols">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipProtocolNumber"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipProtocol</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>protocols.bynumber</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_aliases">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="rfc822mailMember" originalName="mail"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>nisMailAlias</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>aliases</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_netgroups">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="nisNetgroupTriple"/>
+    <field name="memberNisNetgroup"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>nisNetgroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>netgroup</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_ethers">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="macAddress"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ieee802Device</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>ethers</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_bootparams">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="bootFile"/>
+    <field name="bootParameter"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>bootableDevice</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>bootparams</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_networks">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipNetworkNumber"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipNetwork</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>networks.byname</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_automountMap">
+    <connection-name>NIS</connection-name>
+    <field name="automountMapName" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>automountMap</param-value>
+    </parameter>
+  </source>
+
+  <source name="nis_automount">
+    <connection-name>NIS</connection-name>
+    <field name="automountMapName" primaryKey="true"/>
+    <field name="automountKey" primaryKey="true"/>
+    <field name="automountInformation"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>automount</param-value>
+    </parameter>
+  </source>
+    
+</sources>

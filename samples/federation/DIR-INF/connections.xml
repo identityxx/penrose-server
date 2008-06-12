@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+
+<connections>
+<!--
+  <connection name="JDBC">
+    <adapter-name>JDBC</adapter-name>
+    <parameter>
+      <param-name>driver</param-name>
+      <param-value>${DRIVER}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>url</param-name>
+      <param-value>jdbc:mysql://${SERVER}:${PORT}/?autoReconnect=true</param-value>
+    </parameter>
+    <parameter>
+      <param-name>user</param-name>
+      <param-value>${USER}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>password</param-name>
+      <param-value>${PASSWORD}</param-value>
+    </parameter>
+  </connection>
+-->
+</connections>

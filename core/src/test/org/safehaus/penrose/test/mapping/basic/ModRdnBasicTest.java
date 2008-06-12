@@ -17,7 +17,7 @@ public class ModRdnBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('old', 'description')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.modrdn("cn=old,"+baseDn, "cn=new", true);

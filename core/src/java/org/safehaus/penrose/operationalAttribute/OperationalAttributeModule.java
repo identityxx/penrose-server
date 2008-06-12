@@ -18,7 +18,7 @@
 package org.safehaus.penrose.operationalAttribute;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.event.*;
+import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;
@@ -38,15 +38,18 @@ public class OperationalAttributeModule extends Module {
         System.out.println("#### Initializing OperationalAttributeModule.");
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        AddRequest request = event.getRequest();
         System.out.println("#### Adding "+request.getDn()+" at "+timestamp);
 
-        Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
         Attributes attributes = request.getAttributes();
@@ -62,17 +65,22 @@ public class OperationalAttributeModule extends Module {
         }
 
         attributes.setValue("modifyTimestamp", timestamp);
+
+        chain.add(session, request, response);
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        ModifyRequest request = event.getRequest();
         System.out.println("#### Modifying "+request.getDn()+" at "+timestamp);
 
-        Session session = event.getSession();
         DN bindDn = session.getBindDn();
 
         Collection<Modification> modifications = request.getModifications();
@@ -86,17 +94,24 @@ public class OperationalAttributeModule extends Module {
         Attribute modifyTimestamp = new Attribute("modifyTimestamp", timestamp);
         Modification mi = new Modification(Modification.REPLACE, modifyTimestamp);
         modifications.add(mi);
+
+        chain.modify(session, request, response);
     }
 
-    public void afterModRdn(ModRdnEvent event) throws Exception {
+    public void modrdn(
+            Session session,
+            ModRdnRequest request,
+            ModRdnResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
         Date date = new Date();
         String timestamp = OperationalAttribute.formatDate(date);
 
-        ModRdnRequest request = event.getRequest();
         System.out.println("#### Renaming "+request.getDn()+" at "+timestamp);
 
-        Session session = event.getSession();
+        chain.modrdn(session, request, response);
+
         DN bindDn = session.getBindDn();
 
         Collection<Modification> modifications = new ArrayList<Modification>();

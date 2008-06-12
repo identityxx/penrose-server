@@ -19,7 +19,7 @@ public class SearchBaseTest extends StaticTestCase {
 
     public void testSearchingBaseOnGroup() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -67,7 +67,7 @@ public class SearchBaseTest extends StaticTestCase {
 
     public void testSearchingBaseOnMember() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

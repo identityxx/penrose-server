@@ -17,7 +17,7 @@ public class DeleteJoinTest extends JoinTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into usergroups values ('group1', 'member1')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         session.delete("cn=group1,ou=Groups,dc=Example,dc=com");

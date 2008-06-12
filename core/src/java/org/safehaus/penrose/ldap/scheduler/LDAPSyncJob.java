@@ -1,30 +1,34 @@
 package org.safehaus.penrose.ldap.scheduler;
 
-import org.safehaus.penrose.scheduler.Job;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.filter.NotFilter;
-import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.jdbc.QueryResponse;
-import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.filter.AndFilter;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.NotFilter;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.jdbc.QueryResponse;
+import org.safehaus.penrose.jdbc.connection.JDBCConnection;
+import org.safehaus.penrose.jdbc.source.JDBCSource;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.util.BinaryUtil;
 
 import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.PrintWriter;
-import java.util.*;
-import java.sql.Timestamp;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 /**
  * @author Endi Sukma Dewata
@@ -34,15 +38,15 @@ public class LDAPSyncJob extends Job {
     Source source;
     Source target;
     Source changelog;
-    Source tracker;
+    JDBCSource tracker;
     Source errors;
 
     public void init() throws Exception {
-        String sourceName    = jobConfig.getParameter("source");
-        String targetName    = jobConfig.getParameter("target");
-        String changeLogName = jobConfig.getParameter("changelog");
-        String trackerName   = jobConfig.getParameter("tracker");
-        String errorsName    = jobConfig.getParameter("errors");
+        String sourceName    = getParameter("source");
+        String targetName    = getParameter("target");
+        String changeLogName = getParameter("changelog");
+        String trackerName   = getParameter("tracker");
+        String errorsName    = getParameter("errors");
 
         Partition partition = getPartition();
         SourceManager sourceManager = partition.getSourceManager();
@@ -50,7 +54,7 @@ public class LDAPSyncJob extends Job {
         source    = sourceManager.getSource(sourceName);
         target    = sourceManager.getSource(targetName);
         changelog = sourceManager.getSource(changeLogName);
-        tracker   = sourceManager.getSource(trackerName);
+        tracker   = (JDBCSource)sourceManager.getSource(trackerName);
         errors    = sourceManager.getSource(errorsName);
     }
 
@@ -60,13 +64,13 @@ public class LDAPSyncJob extends Job {
 
     public void create() throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Partition partition = getPartition();
             Directory directory = partition.getDirectory();
 
-            Entry entry = directory.getRootEntries().iterator().next();
+            Entry entry = directory.getRootEntry();
             create(session, entry);
 
             for (Entry child : entry.getChildren()) {
@@ -84,7 +88,7 @@ public class LDAPSyncJob extends Job {
 
     public void create(DN dn) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Partition partition = getPartition();
@@ -153,7 +157,7 @@ public class LDAPSyncJob extends Job {
     public void load(final DN baseDn) throws Exception {
         if (source == null) throw new Exception("Source not defined.");
 
-        final Session session = getSession();
+        final Session session = createAdminSession();
 
         try {
             SearchRequest request = new SearchRequest();
@@ -222,7 +226,7 @@ public class LDAPSyncJob extends Job {
 
     public void clear(final DN baseDn) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             final ArrayList<DN> dns = new ArrayList<DN>();
@@ -284,13 +288,13 @@ public class LDAPSyncJob extends Job {
 
     public void remove() throws Exception {
 
-        final Session session = getSession();
+        final Session session = createAdminSession();
 
         try {
             Partition partition = getPartition();
             Directory directory = partition.getDirectory();
 
-            Entry entry = directory.getRootEntries().iterator().next();
+            Entry entry = directory.getRootEntry();
 
             for (Entry child : entry.getChildren()) {
                 remove(session, child);
@@ -309,7 +313,7 @@ public class LDAPSyncJob extends Job {
 
     public void remove(DN dn) throws Exception {
 
-        final Session session = getSession();
+        final Session session = createAdminSession();
 
         try {
             Partition partition = getPartition();
@@ -435,12 +439,15 @@ public class LDAPSyncJob extends Job {
 */
     public void synchronize() throws Exception {
 
-        Session session = getSession();
+        log.debug("============================================================================================");
+        log.debug("Synchronizing cache...");
+
+        Session session = createAdminSession();
 
         try {
-            Long changeNumber = getLastChangeNumber();
+            Long lastChangeNumber = getLastChangeNumber(session);
 
-            SearchRequest request = createSearchRequest(changeNumber);
+            SearchRequest request = createSearchRequest(lastChangeNumber);
             SearchResponse response = new SearchResponse();
 
             changelog.search(session, request, response);
@@ -504,10 +511,7 @@ public class LDAPSyncJob extends Job {
         }
     }
 
-    public Long getLastChangeNumber() throws Exception {
-
-        Connection connection = tracker.getConnection();
-        JDBCConnection adapter = (JDBCConnection)connection;
+    public Long getLastChangeNumber(Session session) throws Exception {
 
         QueryResponse response = new QueryResponse() {
             public void add(Object object) throws Exception {
@@ -516,7 +520,8 @@ public class LDAPSyncJob extends Job {
             }
         };
 
-        adapter.executeQuery("select max(changeNumber) from "+adapter.getTableName(tracker), response);
+        String tableName = tracker.getTableName();
+        tracker.executeQuery(session, "select max(changeNumber) from "+tableName, response);
 
         if (!response.hasNext()) return null;
 
@@ -525,7 +530,7 @@ public class LDAPSyncJob extends Job {
 
     public void addTracker(Long changeNumber) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Attributes attributes = new Attributes();
@@ -541,7 +546,7 @@ public class LDAPSyncJob extends Job {
 
     public void removeTracker(Long changeNumber) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             RDNBuilder rb = new RDNBuilder();
@@ -766,7 +771,7 @@ public class LDAPSyncJob extends Job {
 
     public void synchronize(DN dn) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             final Collection<DN> results1 = new TreeSet<DN>();

@@ -1,12 +1,9 @@
 package org.safehaus.penrose.changelog.module;
 
-import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 
@@ -25,59 +22,69 @@ public class ChangeLogModule extends Module {
 
         SourceManager sourceManager = partition.getSourceManager();
         changelog = sourceManager.getSource(sourceName);
-
-        PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-        SessionContext sessionContext = penroseContext.getSessionContext();
-
-        EventManager eventManager = sessionContext.getEventManager();
-        eventManager.addAddListener(this);
-        eventManager.addModifyListener(this);
-        eventManager.addModRdnListener(this);
-        eventManager.addDeleteListener(this);
     }
 
-    public void afterAdd(AddEvent event) throws Exception {
-        AddRequest request = event.getRequest();
-        AddResponse response = event.getResponse();
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
+        chain.add(session, request, response);
 
         if (response.getReturnCode() != LDAP.SUCCESS) return;
 
         recordAddOperation(request);
     }
 
-    public void afterModify(ModifyEvent event) throws Exception {
-        ModifyRequest request = event.getRequest();
-        ModifyResponse response = event.getResponse();
+    public void delete(
+            Session session,
+            DeleteRequest request,
+            DeleteResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
-        if (response.getReturnCode() != LDAP.SUCCESS) return;
-
-        recordModifyOperation(request);
-    }
-
-    public void afterModRdn(ModRdnEvent event) throws Exception {
-        ModRdnRequest request = event.getRequest();
-        ModRdnResponse response = event.getResponse();
-
-        if (response.getReturnCode() != LDAP.SUCCESS) return;
-
-        recordModRdnOperation(request);
-    }
-
-    public void afterDelete(DeleteEvent event) throws Exception {
-        DeleteRequest request = event.getRequest();
-        DeleteResponse response = event.getResponse();
+        chain.delete(session, request, response);
 
         if (response.getReturnCode() != LDAP.SUCCESS) return;
 
         recordDeleteOperation(request);
     }
 
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
+        chain.modify(session, request, response);
+
+        if (response.getReturnCode() != LDAP.SUCCESS) return;
+
+        recordModifyOperation(request);
+    }
+
+    public void modrdn(
+            Session session,
+            ModRdnRequest request,
+            ModRdnResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
+        chain.modrdn(session, request, response);
+
+        if (response.getReturnCode() != LDAP.SUCCESS) return;
+
+        recordModRdnOperation(request);
+    }
+
     public void recordAddOperation(AddRequest request) throws Exception {
 
         log.debug("Recording add operation "+request.getDn());
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Attributes attrs = request.getAttributes();
@@ -100,7 +107,7 @@ public class ChangeLogModule extends Module {
 
         log.debug("Recording modify operation "+request.getDn());
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             StringBuilder sb = new StringBuilder();
@@ -137,7 +144,7 @@ public class ChangeLogModule extends Module {
 
         log.debug("Recording modrdn operation "+request.getDn());
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             DN dn = new DN();
@@ -159,7 +166,7 @@ public class ChangeLogModule extends Module {
 
         log.debug("Recording delete operation "+request.getDn());
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             DN dn = new DN();
@@ -169,6 +176,17 @@ public class ChangeLogModule extends Module {
             attributes.setValue("changeType", "delete");
 
             changelog.add(session, dn, attributes);
+
+        } finally {
+            session.close();
+        }
+    }
+
+    public void clear() throws Exception {
+        Session session = createAdminSession();
+
+        try {
+            changelog.clear(session);
 
         } finally {
             session.close();

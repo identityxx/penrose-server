@@ -7,7 +7,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -97,11 +97,11 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
 
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("PARTITION", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         for (String partitionName : partitionManagerClient.getPartitionNames()) {
             PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
@@ -113,8 +113,8 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
                 status = "STOPPED";
             }
 
-            System.out.print(Formatter.rightPad(partitionName, 15) + " ");
-            System.out.println(Formatter.rightPad(status, 10));
+            System.out.print(TextUtil.rightPad(partitionName, 15) + " ");
+            System.out.println(TextUtil.rightPad(status, 10));
         }
     }
 

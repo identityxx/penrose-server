@@ -36,6 +36,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=Outlook,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
 
     <oc>person</oc>
     <oc>organizationalPerson</oc>

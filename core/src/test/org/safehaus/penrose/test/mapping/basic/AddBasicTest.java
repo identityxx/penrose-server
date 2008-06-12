@@ -18,7 +18,7 @@ public class AddBasicTest extends BasicTestCase {
 
     public void testAddingEntry() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attributes attributes = new Attributes();
@@ -42,7 +42,7 @@ public class AddBasicTest extends BasicTestCase {
 
     public void testAddingPartialEntry() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attributes attributes = new Attributes();

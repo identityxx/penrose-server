@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="users">
+    <connection-name>MySQL</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+  </source>
+
+</sources>

@@ -20,7 +20,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchDefaultAttributes() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -69,7 +69,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchRegularAttributes() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -121,7 +121,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchOperationalAttributes() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -167,7 +167,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchSomeAttributes() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -219,7 +219,7 @@ public class SearchAttributesTest extends StaticTestCase {
 
     public void testSearchAllRootDSEAttributes() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

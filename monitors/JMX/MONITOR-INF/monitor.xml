@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE monitor PUBLIC
+  "-//Penrose/DTD Monitor ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/monitor.dtd">
+
+<monitor enabled="false">
+
+  <monitor-class>org.safehaus.penrose.monitor.management.JMXMonitor</monitor-class>
+
+  <parameter>
+    <param-name>protocol</param-name>
+    <param-value>rmi</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>host</param-name>
+    <param-value>localhost</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>port</param-name>
+    <param-value>1099</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>transportPort</param-name>
+    <param-value>40888</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>bindDn</param-name>
+    <param-value>uid=admin,ou=system</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>bindPassword</param-name>
+    <param-value>secret</param-value>
+  </parameter>
+
+  <parameter>
+    <param-name>interval</param-name>
+    <param-value>10</param-value>
+  </parameter>
+
+</monitor>

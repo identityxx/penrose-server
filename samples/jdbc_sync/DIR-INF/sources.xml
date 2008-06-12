@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="users">
+    <connection-name>Source</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source>
+
+  <source name="users_changelog">
+    <connection-name>Source</connection-name>
+    <field name="changeNumber" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+    <field name="changeTime" type="DATETIME"/>
+    <field name="changeAction"/>
+    <field name="changeUser"/>
+    <field name="username"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users_changelog</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>Source</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups_changelog">
+    <connection-name>Source</connection-name>
+    <field name="changeNumber" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+    <field name="changeTime" type="DATETIME"/>
+    <field name="changeAction"/>
+    <field name="changeUser"/>
+    <field name="groupname"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups_changelog</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups">
+    <connection-name>Source</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups_changelog">
+    <connection-name>Source</connection-name>
+    <field name="changeNumber" type="INTEGER" autoIncrement="true" primaryKey="true"/>
+    <field name="changeTime" type="DATETIME"/>
+    <field name="changeAction"/>
+    <field name="changeUser"/>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups_changelog</param-value>
+    </parameter>
+  </source>
+
+  <source name="users_cache">
+    <connection-name>Cache</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users_cache</param-value>
+    </parameter>
+  </source>
+
+  <source name="users_tracker">
+    <connection-name>Cache</connection-name>
+    <field name="changeNumber" type="INTEGER" primaryKey="true"/>
+    <field name="changeTimestamp" type="DATETIME"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users_tracker</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups_cache">
+    <connection-name>Cache</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups_cache</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups_tracker">
+    <connection-name>Cache</connection-name>
+    <field name="changeNumber" type="INTEGER" primaryKey="true"/>
+    <field name="changeTimestamp" type="DATETIME"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups_tracker</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups_cache">
+    <connection-name>Cache</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups_cache</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups_tracker">
+    <connection-name>Cache</connection-name>
+    <field name="changeNumber" type="INTEGER" primaryKey="true"/>
+    <field name="changeTimestamp" type="DATETIME"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups_tracker</param-value>
+    </parameter>
+  </source>
+
+</sources>

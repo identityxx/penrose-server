@@ -158,4 +158,4 @@ fi
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
-org.safehaus.penrose.lockout.LockoutClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.lockout.client.LockoutClient $PENROSE_ARGS "$@"

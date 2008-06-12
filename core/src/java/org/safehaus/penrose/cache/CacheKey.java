@@ -1,6 +1,6 @@
 package org.safehaus.penrose.cache;
 
-import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.SearchRequest;
 
 /**
@@ -8,29 +8,38 @@ import org.safehaus.penrose.ldap.SearchRequest;
  */
 public class CacheKey {
 
-    private SearchRequest searchRequest;
-    private Entry entry;
+    private DN bindDn;
+    private SearchRequest request;
+    private String entryId;
 
-    public SearchRequest getSearchRequest() {
-        return searchRequest;
+    public DN getBindDn() {
+        return bindDn;
     }
 
-    public void setSearchRequest(SearchRequest searchRequest) {
-        this.searchRequest = searchRequest;
+    public void setBindDn(DN bindDn) {
+        this.bindDn = bindDn;
     }
 
-    public Entry getEntry() {
-        return entry;
+    public SearchRequest getRequest() {
+        return request;
     }
 
-    public void setEntry(Entry entry) {
-        this.entry = entry;
+    public void setRequest(SearchRequest request) {
+        this.request = request;
     }
 
+    public String getEntryId() {
+        return entryId;
+    }
+
+    public void setEntryId(String entryId) {
+        this.entryId = entryId;
+    }
 
     public int hashCode() {
-        return (searchRequest == null ? 0 : searchRequest.hashCode()) +
-                (entry == null ? 0 : entry.hashCode());
+        return (bindDn == null ? 0 : bindDn.hashCode()) +
+                (request == null ? 0 : request.hashCode()) +
+                (entryId == null ? 0 : entryId.hashCode());
     }
 
     private boolean equals(Object o1, Object o2) {
@@ -45,8 +54,9 @@ public class CacheKey {
         if (object.getClass() != this.getClass()) return false;
 
         CacheKey cacheKey = (CacheKey)object;
-        if (!equals(searchRequest, cacheKey.searchRequest)) return false;
-        if (!equals(entry.getId(), cacheKey.entry.getId())) return false;
+        if (!equals(bindDn, cacheKey.bindDn)) return false;
+        if (!equals(request, cacheKey.request)) return false;
+        if (!equals(entryId, cacheKey.entryId)) return false;
 
         return true;
     }

@@ -6,72 +6,14 @@
 <mapping>
 
   <entry dn="cn=AD Schema,dc=Example,dc=com">
-    <oc>top</oc>
+    <entry-class>org.safehaus.penrose.activeDirectory.directory.ActiveDirectorySchemaEntry</entry-class>
+    <oc>subentry</oc>
     <oc>subschema</oc>
+    <oc>extensibleObject</oc>
     <at name="cn" rdn="true">
       <constant>AD Schema</constant>
     </at>
-    <at name="attributeTypes">
-      <expression>
-import org.safehaus.penrose.schema.*;
-
-if (!s.objectClass.contains("attributeSchema")) return null;
-
-AttributeType at = new AttributeType();
-at.setOid(s.attributeID);
-at.setName(s.lDAPDisplayName);
-if (s.adminDescription != void) at.setDescription(s.adminDescription);
-if (s.attributeSyntax != void) at.setSyntax(s.attributeSyntax);
-if (s.isSingleValued != void) at.setSingleValued(Boolean.valueOf(s.isSingleValued).booleanValue());
-
-return "( "+at+" )";
-      </expression>
-    </at>
-    <at name="objectClasses">
-      <expression>
-import java.util.*;
-import org.safehaus.penrose.schema.*;
-
-if (!s.objectClass.contains("classSchema")) return null;
-
-ObjectClass oc = new ObjectClass();
-oc.setOid(s.governsID);
-oc.setName(s.lDAPDisplayName);
-if (s.adminDescription != void) oc.setDescription(s.adminDescription);
-if (s.mustContain != void) {
-   if (s.mustContain instanceof Collection) {
-       oc.addRequiredAttributes(s.mustContain);
-   } else {
-       oc.addRequiredAttribute(s.mustContain);
-   }
-}
-if (s.systemMustContain != void) {
-    if (s.systemMustContain instanceof Collection) {
-        oc.addRequiredAttributes(s.systemMustContain);
-    } else {
-        oc.addRequiredAttribute(s.systemMustContain);
-    }
-}
-if (s.mayContain != void) {
-    if (s.mayContain instanceof Collection) {
-        oc.addOptionalAttributes(s.mayContain);
-    } else {
-        oc.addOptionalAttribute(s.mayContain);
-    }
-}
-if (s.systemMayContain != void) {
-    if (s.systemMayContain instanceof Collection) {
-        oc.addOptionalAttributes(s.systemMayContain);
-    } else {
-        oc.addOptionalAttribute(s.systemMayContain);
-    }
-}
-return "( "+oc+" )";
-      </expression>
-    </at>
-    <source name="s">
-      <source-name>schema</source-name>
-    </source>
+    <source name="schema"/>
     <aci>
       <permission>rs</permission>
     </aci>

@@ -135,6 +135,10 @@ public class Source implements Cloneable {
         return fields.values();
     }
 
+    public Collection<String> getFieldNames() {
+        return sourceConfig.getFieldNames();
+    }
+
     public Field getField(String fieldName) {
         return fields.get(fieldName.toLowerCase());
     }
@@ -1045,7 +1049,7 @@ public class Source implements Cloneable {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 
-    public void clear() throws Exception {
+    public void clear(Session session) throws Exception {
         throw LDAP.createException(LDAP.OPERATIONS_ERROR);
     }
 

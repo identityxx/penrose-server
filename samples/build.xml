@@ -35,10 +35,18 @@
     </target>
 
     <target name="compile" depends="init">
+        <ant dir="cache" target="compile"/>
+        <ant dir="changelog" target="compile"/>
+        <ant dir="jdbc_sync" target="compile"/>
+        <ant dir="ldap_sync" target="compile"/>
         <ant dir="lockout" target="compile"/>
     </target>
 
     <target name="build" depends="init">
+        <ant dir="cache" target="build"/>
+        <ant dir="changelog" target="build"/>
+        <ant dir="jdbc_sync" target="build"/>
+        <ant dir="ldap_sync" target="build"/>
         <ant dir="lockout" target="build"/>
     </target>
 
@@ -68,6 +76,10 @@
     </target>
 
     <target name="clean" depends="init">
+        <ant dir="cache" target="clean"/>
+        <ant dir="changelog" target="clean"/>
+        <ant dir="jdbc_sync" target="clean"/>
+        <ant dir="ldap_sync" target="clean"/>
         <ant dir="lockout" target="clean"/>
     </target>
 

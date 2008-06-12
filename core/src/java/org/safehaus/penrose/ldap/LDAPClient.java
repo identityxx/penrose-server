@@ -18,8 +18,12 @@
 package org.safehaus.penrose.ldap;
 
 import org.ietf.ldap.*;
-import org.safehaus.penrose.schema.*;
+import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.control.PagedResultsControl;
+import org.safehaus.penrose.schema.Schema;
+import org.safehaus.penrose.schema.SchemaUtil;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,19 +44,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
     public Collection<String> binaryAttributes = new HashSet<String>();
 
+    public LDAPConnectionFactory connectionFactory;
+    public LDAPConnection connection;
+
     public SearchResult rootDSE;
     public Schema schema;
-
-    public int defaultPageSize = 100;
-
-    public LDAPConnectionFactory connectionFactory;
-
-    public LDAPConnection connection;
 
     public String bindDn;
     public byte[] bindPassword;
 
     public String referral;
+    public int pageSize;
+
 
     public LDAPClient(String url) throws Exception {
         this(new LDAPConnectionFactory(url), false);
@@ -62,11 +65,11 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         this(new LDAPConnectionFactory(url), connect);
     }
 
-    public LDAPClient(Map<String,?> parameters) throws Exception {
+    public LDAPClient(Map<String,String> parameters) throws Exception {
         this(new LDAPConnectionFactory(parameters), false);
     }
 
-    public LDAPClient(Map<String,?> parameters, boolean connect) throws Exception {
+    public LDAPClient(Map<String,String> parameters, boolean connect) throws Exception {
         this(new LDAPConnectionFactory(parameters), connect);
     }
 
@@ -86,6 +89,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         bindPassword = connectionFactory.bindPassword;
 
         referral     = connectionFactory.referral;
+        pageSize     = connectionFactory.pageSize;
         
         binaryAttributes.addAll(connectionFactory.binaryAttributes);
     }
@@ -107,9 +111,28 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             connectionFactory.connect(connection);
         }
 
-        if (bindDn != null && bindPassword != null) {
-            log.debug("Binding as "+bindDn+".");
-            connection.bind(3, bindDn, bindPassword);
+        for (int i=0; i<2; i++) {
+            try {
+                if (bindDn != null && bindPassword != null) {
+                    log.debug("Binding as "+bindDn+".");
+                    connection.bind(3, bindDn, bindPassword);
+
+                } else {
+                    log.debug("Binding anonymously.");
+                    connection.bind(3, null, null);
+                }
+                break;
+                
+            } catch (Exception e) {
+                log.debug(e.getMessage(), e);
+                if (i == 0) {
+                    log.debug("Second attempt...");
+                    connectionFactory.connect(connection);
+                } else {
+                    log.debug("Failed 2 times.");
+                    throw e;
+                }
+            }
         }
 
         LDAPConstraints constraints = new LDAPConstraints();
@@ -173,18 +196,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             }
         }
 
+        Collection<Control> requestControls = request.getControls();
+        if (!requestControls.isEmpty()) {
+            log.debug("Request Controls:");
+            for (Control control : requestControls) {
+                log.debug(" - "+control.getOid());
+            }
+        }
+
         LDAPConstraints constraints = new LDAPConstraints();
         initConstraints(constraints);
 
-        Collection<LDAPControl> requestControls = convertControls(request.getControls());
-        constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
-
-        if (debug && !requestControls.isEmpty()) {
-            log.debug("Request Controls:");
-            for (LDAPControl control : requestControls) {
-                log.debug(" - "+control.getID());
-            }
-        }
+        constraints.setControls(convertControls(request.getControls()));
 
         LDAPEntry entry = new LDAPEntry(dn, attributeSet);
 
@@ -265,18 +288,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             attr.addValue(value.toString());
         }
 
+        Collection<Control> requestControls = request.getControls();
+        if (!requestControls.isEmpty()) {
+            log.debug("Request Controls:");
+            for (Control control : requestControls) {
+                log.debug(" - "+control.getOid());
+            }
+        }
+
         LDAPConstraints constraints = new LDAPConstraints();
         initConstraints(constraints);
 
-        Collection<LDAPControl> requestControls = convertControls(request.getControls());
-        constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
-
-        if (debug && !requestControls.isEmpty()) {
-            log.debug("Request Controls:");
-            for (LDAPControl control : requestControls) {
-                log.debug(" - "+control.getID());
-            }
-        }
+        constraints.setControls(convertControls(request.getControls()));
 
         LDAPConnection connection = getConnection();
 
@@ -303,18 +326,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         if (warn) log.warn("Deleting "+dn+".");
 
+        Collection<Control> requestControls = request.getControls();
+        if (!requestControls.isEmpty()) {
+            log.debug("Request Controls:");
+            for (Control control : requestControls) {
+                log.debug(" - "+control.getOid());
+            }
+        }
+
         LDAPConstraints constraints = new LDAPConstraints();
         initConstraints(constraints);
 
-        Collection<LDAPControl> requestControls = convertControls(request.getControls());
-        constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
-
-        if (debug && !requestControls.isEmpty()) {
-            log.debug("Request Controls:");
-            for (LDAPControl control : requestControls) {
-                log.debug(" - "+control.getID());
-            }
-        }
+        constraints.setControls(convertControls(request.getControls()));
 
         LDAPConnection connection = getConnection();
 
@@ -403,18 +426,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         LDAPModification modifications[] = list.toArray(new LDAPModification[list.size()]);
 
+        Collection<Control> requestControls = request.getControls();
+        if (!requestControls.isEmpty()) {
+            log.debug("Request Controls:");
+            for (Control control : requestControls) {
+                log.debug(" - "+control.getOid());
+            }
+        }
+
         LDAPConstraints constraints = new LDAPConstraints();
         initConstraints(constraints);
 
-        Collection<LDAPControl> requestControls = convertControls(request.getControls());
-        constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
-
-        if (debug && !requestControls.isEmpty()) {
-            log.debug("Request Controls:");
-            for (LDAPControl control : requestControls) {
-                log.debug(" - "+control.getID());
-            }
-        }
+        constraints.setControls(convertControls(request.getControls()));
 
         LDAPConnection connection = getConnection();
 
@@ -443,18 +466,18 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         if (warn) log.warn("Renaming "+dn+" to "+newRdn+".");
 
+        Collection<Control> requestControls = request.getControls();
+        if (!requestControls.isEmpty()) {
+            log.debug("Request Controls:");
+            for (Control control : requestControls) {
+                log.debug(" - "+control.getOid());
+            }
+        }
+
         LDAPConstraints constraints = new LDAPConstraints();
         initConstraints(constraints);
 
-        Collection<LDAPControl> requestControls = convertControls(request.getControls());
-        constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
-
-        if (debug && !requestControls.isEmpty()) {
-            log.debug("Request Controls:");
-            for (LDAPControl control : requestControls) {
-                log.debug(" - "+control.getID());
-            }
-        }
+        constraints.setControls(convertControls(request.getControls()));
 
         LDAPConnection connection = getConnection();
 
@@ -479,9 +502,9 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         try {
             if (log.isDebugEnabled()) {
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine("LDAP SEARCH", 80));
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(80));
+                log.debug(TextUtil.displayLine("LDAP SEARCH", 80));
+                log.debug(TextUtil.displaySeparator(80));
             }
 
             String baseDn = request.getDn() == null ? "" : request.getDn().toString();
@@ -504,49 +527,99 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
                 log.debug("Time Limit : "+timeLimit);
             }
 
+            Collection<Control> requestControls = new ArrayList<Control>();
+
+            PagedResultsControl pagedResultsRequestControl = null;
+            byte[] cookie = null;
+
+            log.debug("Request Controls:");
+            for (Control control : request.getControls()) {
+                log.debug(" - "+control.getOid());
+
+                if (control instanceof PagedResultsControl) {
+                    pagedResultsRequestControl = (PagedResultsControl)control;
+
+                } else if (PagedResultsControl.OID.equals(control.getOid())) {
+                    pagedResultsRequestControl = new PagedResultsControl(control);
+                    control = pagedResultsRequestControl;
+                }
+
+                requestControls.add(control);
+            }
+
+            if (pageSize > 0) {
+                if (pagedResultsRequestControl == null) {
+                    pagedResultsRequestControl = new PagedResultsControl(pageSize,  false);
+                    requestControls.add(pagedResultsRequestControl);
+
+                } else {
+                    if (pagedResultsRequestControl.getPageSize() > pageSize) pagedResultsRequestControl.setPageSize(pageSize); 
+                }
+            }
+
+            LDAPConnection connection = getConnection();
+
             LDAPSearchConstraints constraints = new LDAPSearchConstraints();
             initConstraints(constraints);
 
             constraints.setMaxResults((int)sizeLimit);
             constraints.setTimeLimit((int)timeLimit);
 
-            Collection<LDAPControl> requestControls = convertControls(request.getControls());
-            constraints.setControls(requestControls.toArray(new LDAPControl[requestControls.size()]));
+            do {
+                constraints.setControls(convertControls(requestControls));
 
-            if (debug && !requestControls.isEmpty()) {
-                log.debug("Request Controls:");
-                for (LDAPControl control : requestControls) {
-                    log.debug(" - "+control.getID());
-                }
-            }
+                LDAPSearchResults rs = connection.search(baseDn, scope, filter, attributeNames, typesOnly, constraints);
 
-            LDAPConnection connection = getConnection();
-            LDAPSearchResults rs = connection.search(baseDn, scope, filter, attributeNames, typesOnly, constraints);
+                while (rs.hasMore()) {
+                    if (response.isClosed()) return;
 
-            while (rs.hasMore()) {
-                if (response.isClosed()) return;
+                    try {
+                        LDAPEntry entry = rs.next();
+                        SearchResult result = createSearchResult(entry);
+                        response.add(result);
 
-                try {
-                    LDAPEntry entry = rs.next();
-                    SearchResult result = createSearchResult(entry);
-                    response.add(result);
+                    } catch (LDAPReferralException e) {
+                        log.debug("Referrals:");
+                        for (String ref : e.getReferrals()) {
+                            log.debug(" - "+ref);
+                        }
 
-                } catch (LDAPReferralException e) {
-                    log.debug("Referrals:");
-                    for (String ref : e.getReferrals()) {
-                        log.debug(" - "+ref);
-                    }
+                        if ("throw".equals(referral)) {
+                            SearchReference reference = createReference(e);
+                            response.add(reference);
 
-                    if ("throw".equals(referral)) {
-                        SearchResult reference = createReference(e);
-                        //response.add(reference);
-                        response.addReferral(reference);
+                        } else { // ignore
 
-                    } else { // ignore
-
+                        }
                     }
                 }
-            }
+
+                LDAPControl[] responseControls = rs.getResponseControls();
+                if (responseControls != null && responseControls.length != 0) {
+                    log.debug("Response Controls:");
+                    for (LDAPControl control : responseControls) {
+                        log.debug(" - "+control.getID());
+
+                        if (control.getID().equals(PagedResultsControl.OID)) {
+                            PagedResultsControl pagedResultsResponseControl = new PagedResultsControl(
+                                    control.getID(),
+                                    control.getValue(),
+                                    control.isCritical()
+                            );
+
+                            cookie = pagedResultsResponseControl.getCookie();
+                            pagedResultsRequestControl.setCookie(cookie);
+                            pagedResultsRequestControl.encodeValue();
+                        }
+                    }
+                }
+
+                log.debug("Cookie: "+(cookie != null));
+                if (cookie != null) {
+                    log.debug("Length: "+cookie.length);
+                }
+
+            } while (cookie != null && cookie.length > 0);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -614,29 +687,33 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return new SearchResult(dn, attributes);
     }
 
-    public SearchResult createReference(LDAPReferralException e) throws Exception {
+    public SearchReference createReference(LDAPReferralException e) throws Exception {
 
         DN dn = new DN();
 
+        Collection<String> urls = new ArrayList<String>();
+        urls.addAll(Arrays.asList(e.getReferrals()));
+/*
         Attributes attributes = new Attributes();
         attributes.addValue("objectClass", "referral");
         attributes.addValue("objectClass", "extensibleObject");
 
-        for (String ref : e.getReferrals()) {
-            attributes.addValue("ref", ref);
+        for (String url : e.getReferences()) {
+            urls.add(url);
 
             if (dn.isEmpty()) {
-                LDAPUrl url = new LDAPUrl(ref);
-                dn = new DN(url.getDN());
+                LDAPUrl ldapUrl = new LDAPUrl(url);
+                dn = new DN(ldapUrl.getDN());
                 RDN rdn = dn.getRdn();
                 for (String name : rdn.getNames()) {
                     Object value = rdn.get(name);
                     attributes.addValue(name, value);
                 }
             }
+
         }
-        
-        return new SearchResult(dn, attributes);
+*/
+        return new SearchReference(dn, urls);
     }
 
     public SearchResult getRootDSE() throws Exception {
@@ -701,7 +778,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         return schema;
     }
 
-    public Collection<LDAPControl> convertControls(Collection<org.safehaus.penrose.control.Control> controls) throws Exception {
+    public LDAPControl[] convertControls(Collection<org.safehaus.penrose.control.Control> controls) throws Exception {
         Collection<LDAPControl> list = new ArrayList<LDAPControl>();
         for (org.safehaus.penrose.control.Control control : controls) {
 
@@ -712,7 +789,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             list.add(new LDAPControl(oid, critical, value));
         }
 
-        return list;
+        return list.toArray(new LDAPControl[list.size()]);
     }
 
     public Collection<SearchResult> findChildren(String baseDn) throws Exception {
@@ -870,7 +947,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         client.rootDSE = rootDSE;
         client.schema = schema;
 
-        client.defaultPageSize = defaultPageSize;
+        client.pageSize = pageSize;
 
         try {
             if (connection != null) client.connection = (LDAPConnection)connection.clone();

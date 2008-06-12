@@ -28,7 +28,7 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -61,7 +61,7 @@ public class SearchBaseTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

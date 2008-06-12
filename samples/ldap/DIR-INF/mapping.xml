@@ -39,6 +39,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -82,6 +83,7 @@
   </entry>
 
   <entry dn="cn=...,ou=All Users,dc=LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -125,6 +127,7 @@
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>g.primaryKey.cn</variable>
@@ -165,6 +168,7 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=my-domain,dc=com";
   </entry>
 
   <entry dn="cn=...,ou=All Groups,dc=LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>g.cn</variable>

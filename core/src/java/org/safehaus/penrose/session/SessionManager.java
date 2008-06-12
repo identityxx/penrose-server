@@ -17,12 +17,10 @@
  */
 package org.safehaus.penrose.session;
 
-import java.util.*;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SessionManager implements SessionManagerMBean {
 
@@ -34,35 +32,24 @@ public class SessionManager implements SessionManagerMBean {
 
     private SessionConfig sessionConfig;
 
-    //public Map<Object,Session> sessions = new LinkedHashMap<Object,Session>();
-
     public long sessionCounter;
-    private Integer maxSessions;
-    private Integer maxIdleTime; // minutes
 
     public SessionManager() {
     }
 
     public void start() throws Exception {
-        String s = sessionConfig.getParameter(SessionConfig.MAX_SESSIONS);
-        if (s != null) maxSessions = new Integer(s);
-
-        s = sessionConfig.getParameter(SessionConfig.MAX_IDLE_TIME);
-        if (s != null) maxIdleTime = new Integer(s);
     }
 
     public void stop() throws Exception {
-        //sessions.clear();
     }
 
-    public synchronized Session newSession() throws Exception {
-
+    public synchronized Session createSession() throws Exception {
         Object sessionId = createSessionId();
         return createSession(sessionId);
     }
 
-    public synchronized Session newAdminSession() throws Exception {
-        Session session = newSession();
+    public synchronized Session createAdminSession() throws Exception {
+        Session session = createSession();
         session.setBindDn(penroseConfig.getRootDn());
         session.setRootUser(true);
         return session;
@@ -70,67 +57,24 @@ public class SessionManager implements SessionManagerMBean {
 
     public synchronized Session createSession(Object sessionId) throws Exception {
 
-/*
-        if (maxSessions != null && sessions.size() >= maxSessions) {
-            throw new Exception("Maximum number of sessions has been reached.");
-        }
-*/
-        //log.debug("Creating session "+sessionId);
-        Session session = new Session(this);
+        Session session = new Session();
         session.setSessionId(sessionId);
         session.setPenroseConfig(penroseConfig);
         session.setPenroseContext(penroseContext);
         session.setSessionContext(sessionContext);
         session.init();
 
-        //sessions.put(sessionId, session);
-
         return session;
-    }
-
-    public synchronized Session getSession(Object sessionId) {
-
-        //log.debug("Retrieving session "+sessionId);
-        //return sessions.get(sessionId);
-        return null;
-    }
-
-    public synchronized Session removeSession(Object sessionId) {
-
-        //log.debug("Removing session "+sessionId);
-        //return sessions.remove(sessionId);
-        return null;
     }
 
     public synchronized Object createSessionId() {
         Long sessionId = sessionCounter;
-        sessionCounter++;
+        if (sessionCounter == Long.MAX_VALUE) {
+            sessionCounter = 0;
+        } else {
+            sessionCounter++;
+        }
         return sessionId;
-    }
-
-    public synchronized Collection<Session> getSessions() {
-        //return sessions.values();
-        return null;
-    }
-
-    public int getNumberOfSessions() {
-        return 0; //sessions.size();
-    }
-
-    public void setMaxSessions(Integer maxSessions) {
-        this.maxSessions = maxSessions;
-    }
-
-    public Integer getMaxSessions() {
-        return maxSessions;
-    }
-
-    public Integer getMaxIdleTime() {
-        return maxIdleTime;
-    }
-
-    public void setMaxIdleTime(Integer maxIdleTime) {
-        this.maxIdleTime = maxIdleTime;
     }
 
     public SessionConfig getSessionManagerConfig() {

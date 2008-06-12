@@ -6,8 +6,8 @@ import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SourceValues;
 import org.safehaus.penrose.jdbc.SelectStatement;
-import org.safehaus.penrose.jdbc.JDBCClient;
 import org.safehaus.penrose.jdbc.JoinClause;
+import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.directory.FieldRef;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.filter.Filter;
@@ -75,15 +75,41 @@ public class SearchRequestBuilder extends RequestBuilder {
         return joinType;
     }
 
-    public Filter generateJoinOn(SourceRef sourceRef) throws Exception {
-        return generateJoinOn(sourceRef, sourceRef.getAlias());
-    }
-
-    public String generateJoinFilter(SourceRef sourceRef) throws Exception {
-        return generateJoinFilter(sourceRef, sourceRef.getAlias());
-    }
-
     public Filter generateJoinOn(SourceRef sourceRef, String alias) throws Exception {
+
+        if (debug) log.debug(" - Join on:");
+
+        Filter filter = null;
+
+        // join using fields that are mapped to another source using variable mapping
+
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+
+            String variable = fieldRef.getVariable();
+            if (variable == null) continue;
+
+            int p = variable.indexOf(".");
+            if (p < 0) continue;
+
+            String sn = variable.substring(0, p);
+            String fn = variable.substring(p + 1);
+
+            SourceRef s = sourceRefs.get(sn);
+            FieldRef f = s.getFieldRef(fn);
+
+            String lhs = alias + "." + fieldRef.getOriginalName();
+            String rhs = sn + "." + f.getOriginalName();
+
+            if (debug) log.debug("   - " + lhs + " = " + rhs);
+
+            SimpleFilter sf = new SimpleFilter(lhs, "=", rhs);
+            filter = FilterTool.appendAndFilter(filter, sf);
+        }
+
+        return filter;
+    }
+
+    public Filter generateJoinOn2(SourceRef sourceRef, String alias) throws Exception {
 
         if (debug) log.debug(" - Join on:");
 
@@ -93,7 +119,7 @@ public class SearchRequestBuilder extends RequestBuilder {
         if (sourceRef.isPrimarySourceRef()) {
 
             // join using fields that are used as RDN
-            
+
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
                 if (!fieldRef.isRdn()) continue;
 
@@ -143,14 +169,18 @@ public class SearchRequestBuilder extends RequestBuilder {
         return filter;
     }
 
+    public String generateJoinFilter(SourceRef sourceRef) throws Exception {
+        return generateJoinFilter(sourceRef, sourceRef.getAlias());
+    }
+
     public String generateJoinFilter(SourceRef sourceRef, String alias) throws Exception {
 
         if (debug) log.debug(" - Join filter:");
 
-        String table = sourceRef.getSource().getParameter(JDBCClient.TABLE);
+        String table = sourceRef.getSource().getParameter(JDBCSource.TABLE);
 
-        String sourceFilter = sourceRef.getSource().getParameter(JDBCClient.FILTER);
-        String sourceMappingFilter = sourceRef.getParameter(JDBCClient.FILTER);
+        String sourceFilter = sourceRef.getSource().getParameter(JDBCSource.FILTER);
+        String sourceMappingFilter = sourceRef.getParameter(JDBCSource.FILTER);
 
         if (sourceFilter == null && sourceMappingFilter == null) {
             return null;
@@ -204,11 +234,11 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
 
             if (sourceCounter == 0) { // join previous source
-                String where = sourceRef.getParameter(JDBCClient.FILTER);
+                String where = sourceRef.getParameter(JDBCSource.FILTER);
                 if (where != null) filters.add(where);
 
                 Source source = sourceRef.getSource();
-                where = source.getParameter(JDBCClient.FILTER);
+                where = source.getParameter(JDBCSource.FILTER);
                 if (where != null) {
                     where = where.replaceAll(source.getName()+".", alias+".");
                     filters.add(where);
@@ -216,7 +246,7 @@ public class SearchRequestBuilder extends RequestBuilder {
                 
             } else { // add filter of first source
                 String joinType = generateJoinType(sourceRef);
-                Filter joinCondition = generateJoinOn(sourceRef);
+                Filter joinCondition = generateJoinOn(sourceRef, alias);
                 String joinWhere = generateJoinFilter(sourceRef);
 
                 JoinClause joinClause = new JoinClause();
@@ -257,7 +287,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             statement.addSourceName(alias, sourceRef.getSource().getName());
 
             String joinType = generateJoinType(sourceRef);
-            Filter joinCondition = generateJoinOn(sourceRef, alias);
+            Filter joinCondition = generateJoinOn2(sourceRef, alias);
             String joinWhere = generateJoinFilter(sourceRef, alias);
 
             JoinClause joinClause = new JoinClause();

@@ -18,7 +18,7 @@ public class SearchSubtreeTest extends StaticTestCase {
 
     public void testSearchingOneLevelOnGroup() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search("cn=group,"+baseDn, "(objectClass=*)");

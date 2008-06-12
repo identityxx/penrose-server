@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="LDAP">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>${LDAP_SUFFIX}</param-value>
+    </parameter>
+  </source>
+    
+  <source name="users">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="objectGuid"/>
+    <field name="userAccountControl"/>
+    <field name="accountExpires"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>user</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=user)</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>${LDAP_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="objectGuid"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>group</param-value>
+    </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=group)</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>${LDAP_SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+</sources>

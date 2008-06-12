@@ -23,16 +23,25 @@ public class SourceManager {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     public Partition partition;
+    protected SourceConfigManager sourceConfigManager;
 
     protected Map<String,Source> sources                             = new LinkedHashMap<String,Source>();
     protected Map<String,Collection<Source>> sourcesByConnectionName = new LinkedHashMap<String,Collection<Source>>();
-    protected Map<String,SourceSync> sourceSyncs                     = new LinkedHashMap<String,SourceSync>();
-
-    protected SourceConfigManager sourceConfigManager;
 
     public SourceManager(Partition partition) {
         this.partition = partition;
-        this.sourceConfigManager = partition.getPartitionConfig().getSourceConfigManager();
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        sourceConfigManager = partitionConfig.getSourceConfigManager();
+    }
+
+    public void init() throws Exception {
+
+        for (SourceConfig sourceConfig : sourceConfigManager.getSourceConfigs()) {
+            if (!sourceConfig.isEnabled()) continue;
+
+            createSource(sourceConfig);
+        }
     }
 
     public SourceConfigManager getSourceConfigManager() {
@@ -115,23 +124,7 @@ public class SourceManager {
         return sourcesByConnectionName.get(connectionName);
     }
 
-    public void addSourceSync(SourceSync sourceSync) {
-        sourceSyncs.put(sourceSync.getName(), sourceSync);
-    }
-
-    public Collection<SourceSync> getSourceSyncs() {
-        return sourceSyncs.values();
-    }
-
-    public SourceSync getSourceSync(String name) {
-        return sourceSyncs.get(name);
-    }
-
     public void destroy() throws Exception {
-
-        for (SourceSync sourceSync : sourceSyncs.values()) {
-            sourceSync.destroy();
-        }
 
         for (Source source : sources.values()) {
             source.destroy();

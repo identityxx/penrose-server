@@ -30,7 +30,8 @@ public class Request implements Serializable, Cloneable {
 
     public void setControls(Collection<Control> controls) {
         this.controls.clear();
-        if (controls != null) this.controls.addAll(controls);
+        if (controls == null) return;
+        this.controls.addAll(controls);
     }
 
     public Collection<Control> getControls() {

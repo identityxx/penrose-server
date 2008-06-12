@@ -17,9 +17,13 @@
  */
 package org.safehaus.penrose.pipeline;
 
+import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.ietf.ldap.LDAPException;
+import org.safehaus.penrose.ldap.SearchReference;
+import org.safehaus.penrose.control.Control;
+
+import java.util.Collection;
 
 /**
  * @author Endi S. Dewata
@@ -32,12 +36,28 @@ public class Pipeline extends SearchResponse {
         this.parent = parent;
     }
 
-    public void add(SearchResult result) throws Exception {
-        parent.add(result);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Response
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void addControl(Control control) {
+        parent.addControl(control);
     }
 
-    public long getTotalCount() {
-        return parent.getTotalCount();
+    public void setControls(Collection<Control> controls) {
+        parent.setControls(controls);
+    }
+
+    public void removeControl(Control control) {
+        parent.removeControl(control);
+    }
+
+    public Collection<Control> getControls() {
+        return parent.getControls();
+    }
+
+    public void setException(LDAPException e) {
+        parent.setException(e);
     }
 
     public void setException(Exception e) {
@@ -48,8 +68,80 @@ public class Pipeline extends SearchResponse {
         return parent.getException();
     }
 
+    public void setReturnCode(int returnCode) {
+        parent.setReturnCode(returnCode);
+    }
+
+    public int getReturnCode() {
+        return parent.getReturnCode();
+    }
+
+    public String getErrorMessage() {
+        return parent.getErrorMessage();
+    }
+
+    public String getMessage() {
+        return parent.getMessage();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // SearchResponse
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void add(SearchResult result) throws Exception {
+        parent.add(result);
+    }
+
+    public boolean hasNext() throws Exception {
+        return parent.hasNext();
+    }
+    
+    public SearchResult next() throws Exception {
+        return parent.next();
+    }
+
+    public Collection<SearchResult> getAll() {
+        return parent.getAll();
+    }
+
+    public void add(SearchReference reference) throws Exception {
+        parent.add(reference);
+    }
+
+    public Collection<SearchReference> getReferences() {
+        return parent.getReferences();
+    }
+
+    public int waitFor() {
+        return parent.waitFor();
+    }
+
     public void close() throws Exception {
-        // don't close parent
+        parent.close();
+    }
+
+    public boolean isClosed() {
+        return parent.isClosed();
+    }
+
+    public long getTotalCount() {
+        return parent.getTotalCount();
+    }
+
+    public void setSizeLimit(long sizeLimit) {
+        parent.setSizeLimit(sizeLimit);
+    }
+
+    public long getSizeLimit() {
+        return parent.getSizeLimit();
+    }
+
+    public void setBufferSize(long bufferSize) {
+        parent.setBufferSize(bufferSize);
+    }
+
+    public long getBufferSize() {
+        return parent.getBufferSize();
     }
 
     public SearchResponse getParent() {

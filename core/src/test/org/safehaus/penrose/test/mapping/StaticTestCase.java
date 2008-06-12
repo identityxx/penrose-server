@@ -41,16 +41,16 @@ public class StaticTestCase extends TestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMapping(new AttributeMapping("ou", AttributeMapping.CONSTANT, "Groups", true));
+        ou.addAttributeMappingsFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig group = new EntryConfig("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
-        group.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.CONSTANT, "group", true));
-        group.addAttributeMapping(new AttributeMapping("description", AttributeMapping.CONSTANT, "description"));
-        group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member1"));
-        group.addAttributeMapping(new AttributeMapping("uniqueMember", AttributeMapping.CONSTANT, "member2"));
-        group.addAttributeMapping(new AttributeMapping("creatorsName", AttributeMapping.CONSTANT, penroseConfig.getRootDn().toString()));
+        group.addAttributeMappingsFromRdn();
+        group.addAttributeMapping("description", "description");
+        group.addAttributeMapping("uniqueMember", "member1");
+        group.addAttributeMapping("uniqueMember", "member2");
+        group.addAttributeMapping("creatorsName", penroseConfig.getRootDn().toString());
         
         partitionConfig.getDirectoryConfig().addEntryConfig(group);
 
@@ -58,8 +58,8 @@ public class StaticTestCase extends TestCase {
         member1.addObjectClass("person");
         member1.addObjectClass("organizationalPerson");
         member1.addObjectClass("inetOrgPerson");
-        member1.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member1", true));
-        member1.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
+        member1.addAttributeMappingsFromRdn();
+        member1.addAttributeMapping("memberOf", "group");
 
         partitionConfig.getDirectoryConfig().addEntryConfig(member1);
         
@@ -67,8 +67,8 @@ public class StaticTestCase extends TestCase {
         member2.addObjectClass("person");
         member2.addObjectClass("organizationalPerson");
         member2.addObjectClass("inetOrgPerson");
-        member2.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.CONSTANT, "member2", true));
-        member2.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.CONSTANT, "group"));
+        member2.addAttributeMappingsFromRdn();
+        member2.addAttributeMapping("memberOf", "group");
 
         partitionConfig.getDirectoryConfig().addEntryConfig(member2);
 

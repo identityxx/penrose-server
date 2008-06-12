@@ -29,7 +29,7 @@ public class SearchSubtreeTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search("cn=def,"+baseDn, "(objectClass=*)");
@@ -71,7 +71,7 @@ public class SearchSubtreeTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search("cn=jkl,"+baseDn, "(objectClass=*)");

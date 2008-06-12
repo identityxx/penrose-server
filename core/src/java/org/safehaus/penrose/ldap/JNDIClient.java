@@ -29,6 +29,7 @@ import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaParser;
 import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.TextUtil;
 
 import org.ietf.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -539,9 +540,9 @@ public class JNDIClient implements Cloneable {
 
         try {
             if (log.isDebugEnabled()) {
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
-                log.debug(org.safehaus.penrose.util.Formatter.displayLine("LDAP SEARCH", 80));
-                log.debug(org.safehaus.penrose.util.Formatter.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(80));
+                log.debug(TextUtil.displayLine("LDAP SEARCH", 80));
+                log.debug(TextUtil.displaySeparator(80));
             }
 
             DNBuilder db = new DNBuilder();

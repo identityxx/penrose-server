@@ -13,20 +13,12 @@ import java.util.*;
  */
 public class LDAPConnection extends Connection {
 
-    public final static String BASE_DN                             = "baseDn";
-    public final static String SCOPE                               = "scope";
-    public final static String FILTER                              = "filter";
-    public final static String OBJECT_CLASSES                      = "objectClasses";
-    public final static String SIZE_LIMIT                          = "sizeLimit";
-    public final static String TIME_LIMIT                          = "timeLimit";
-
-    public final static String PAGE_SIZE                           = "pageSize";
-    public final static int    DEFAULT_PAGE_SIZE                   = 1000;
-
-    public final static String AUTHENTICATION                      = "authentication";
-    public final static String AUTHENTICATION_DEFAULT              = "default";
-    public final static String AUTHENTICATION_FULL                 = "full";
-    public final static String AUTHENTICATION_DISABLED             = "disabled";
+    public final static String URL       = "url";
+    public final static String USER      = "user";
+    public final static String PASSWORD  = "password";
+    public final static String REFERRAL  = "referral";
+    public final static String PAGE_SIZE = "pageSize";
+    public final static String TIMEOUT   = "timeout";
 
     public final static String INITIAL_SIZE                         = "initialSize";
     public final static String MAX_ACTIVE                           = "maxActive";
@@ -42,6 +34,7 @@ public class LDAPConnection extends Connection {
     public final static String NUM_TESTS_PER_EVICTION_RUN           = "numTestsPerEvictionRun";
     public final static String MIN_EVICTABLE_IDLE_TIME_MILLIS       = "minEvictableIdleTimeMillis";
 
+    public final static String SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS  = "softMinEvictableIdleTimeMillis";
     public final static String WHEN_EXHAUSTED_ACTION                = "whenExhaustedAction";
     public final static String WHEN_EXHAUSTED_FAIL                  = "fail";
     public final static String WHEN_EXHAUSTED_BLOCK                 = "block";
@@ -50,53 +43,53 @@ public class LDAPConnection extends Connection {
     public GenericObjectPool.Config config = new GenericObjectPool.Config();
     public GenericObjectPool connectionPool;
 
-    LDAPConnectionFactory connectionFactory;
-    LDAPPoolableConnectionFactory poolableConnectionFactory;
+    public LDAPConnectionFactory connectionFactory;
+    public LDAPPoolableConnectionFactory poolableConnectionFactory;
     
     public void init() throws Exception {
 
         log.debug("Initializing connection "+getName()+".");
 
-        Properties properties = new Properties();
-        properties.putAll(getParameters());
+        Map<String,String> parameters = new HashMap<String,String>();
+        parameters.putAll(getParameters());
 
-        String s = (String)properties.remove(INITIAL_SIZE);
+        String s = parameters.remove(INITIAL_SIZE);
         int initialSize = s == null ? 0 : Integer.parseInt(s);
 
-        s = (String)properties.remove(MAX_ACTIVE);
+        s = parameters.remove(MAX_ACTIVE);
         if (s != null) config.maxActive = Integer.parseInt(s);
 
-        s = (String)properties.remove(MAX_IDLE);
+        s = parameters.remove(MAX_IDLE);
         if (s != null) config.maxIdle = Integer.parseInt(s);
 
-        s = (String)properties.remove(MAX_WAIT);
-        if (s != null) config.maxWait = Long.parseLong(s);
-
-        s = (String)properties.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
-        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
-
-        s = (String)properties.remove(MIN_IDLE);
+        s = parameters.remove(MIN_IDLE);
         if (s != null) config.minIdle = Integer.parseInt(s);
 
-        s = (String)properties.remove(NUM_TESTS_PER_EVICTION_RUN);
-        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
+        s = parameters.remove(MAX_WAIT);
+        if (s != null) config.maxWait = Long.parseLong(s);
 
-        s = (String)properties.remove(TEST_ON_BORROW);
+        s = parameters.remove(TEST_ON_BORROW);
         if (s != null) config.testOnBorrow = Boolean.valueOf(s);
 
-        s = (String)properties.remove(TEST_ON_RETURN);
+        s = parameters.remove(TEST_ON_RETURN);
         if (s != null) config.testOnReturn = Boolean.valueOf(s);
 
-        s = (String)properties.remove(TEST_WHILE_IDLE);
+        s = parameters.remove(TEST_WHILE_IDLE);
         if (s != null) config.testWhileIdle = Boolean.valueOf(s);
 
-        s = (String)properties.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
+        s = parameters.remove(MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        if (s != null) config.minEvictableIdleTimeMillis = Integer.parseInt(s);
+
+        s = parameters.remove(NUM_TESTS_PER_EVICTION_RUN);
+        if (s != null) config.numTestsPerEvictionRun = Integer.parseInt(s);
+
+        s = parameters.remove(TIME_BETWEEN_EVICTION_RUNS_MILLIS);
         if (s != null) config.timeBetweenEvictionRunsMillis = Integer.parseInt(s);
 
-        //s = (String)properties.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
+        //s = parameters.remove(SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
         //if (s != null) config.softMinEvictableIdleTimeMillis = Integer.parseInt(s);
 
-        s = (String)properties.remove(WHEN_EXHAUSTED_ACTION);
+        s = parameters.remove(WHEN_EXHAUSTED_ACTION);
         if (WHEN_EXHAUSTED_FAIL.equals(s)) {
             config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_FAIL;
 
@@ -112,14 +105,12 @@ public class LDAPConnection extends Connection {
 
         connectionPool = new GenericObjectPool(null, config);
 
-        connectionFactory = new LDAPConnectionFactory(getParameters());
-
-        poolableConnectionFactory = new LDAPPoolableConnectionFactory(
-                connectionFactory
-        );
+        connectionFactory = new LDAPConnectionFactory(parameters);
+        poolableConnectionFactory = new LDAPPoolableConnectionFactory(connectionFactory);
 
         connectionPool.setFactory(poolableConnectionFactory);
 
+        //log.debug("Initializing "+initialSize+" connections.");
         for (int i = 0; i < initialSize; i++) {
              connectionPool.addObject();
          }

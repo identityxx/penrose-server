@@ -18,7 +18,7 @@ public class AddNestedTest extends NestedTestCase {
 
     public void testAddingGroup() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attributes attributes = new Attributes();
@@ -43,7 +43,7 @@ public class AddNestedTest extends NestedTestCase {
         executeUpdate("insert into groups values ('group1', 'description')");
         executeUpdate("insert into groups values ('group2', 'description')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Attributes attributes = new Attributes();

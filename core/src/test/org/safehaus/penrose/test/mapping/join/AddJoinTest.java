@@ -16,7 +16,7 @@ public class AddJoinTest extends JoinTestCase {
 
     public void testAddingEntry() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         Attributes attributes = new Attributes();

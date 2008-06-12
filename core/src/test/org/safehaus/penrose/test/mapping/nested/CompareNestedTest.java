@@ -15,7 +15,7 @@ public class CompareNestedTest extends NestedTestCase {
         executeUpdate("insert into groups values ('group', 'description')");
         executeUpdate("insert into members values ('member', 'group', 'Member')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         boolean result = session.compare("cn=group,"+baseDn, "description", "description");

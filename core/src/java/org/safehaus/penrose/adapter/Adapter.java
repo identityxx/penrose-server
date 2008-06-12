@@ -36,7 +36,7 @@ public abstract class Adapter {
 
     public void init(AdapterConfig adapterConfig, AdapterContext adapterContext) throws Exception {
 
-        log.debug("Creating "+adapterConfig.getName()+" adapter.");
+        if (debug) log.debug("Creating "+adapterConfig.getName()+" adapter.");
 
         this.adapterConfig = adapterConfig;
         this.adapterContext = adapterContext;
@@ -56,10 +56,6 @@ public abstract class Adapter {
 
     public boolean isJoinSupported() {
         return false;
-    }
-
-    public String getSyncClassName() {
-        return SourceSync.class.getName();
     }
 
     public String getConnectionClassName() {

@@ -1,16 +1,21 @@
 package org.safehaus.penrose.ldap.source;
 
-import org.safehaus.penrose.source.*;
+import org.safehaus.penrose.adapter.FilterBuilder;
+import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
+import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.adapter.FilterBuilder;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.util.TextUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.StringTokenizer;
 
@@ -26,9 +31,6 @@ public class LDAPSource extends Source {
     public final static String SIZE_LIMIT        = "sizeLimit";
     public final static String TIME_LIMIT        = "timeLimit";
 
-    public final static String PAGE_SIZE         = "pageSize";
-    public final static int    DEFAULT_PAGE_SIZE = 1000;
-
     public final static String AUTHENTICATION          = "authentication";
     public final static String AUTHENTICATION_DEFAULT  = "default";
     public final static String AUTHENTICATION_FULL     = "full";
@@ -36,11 +38,11 @@ public class LDAPSource extends Source {
 
     LDAPConnection connection;
 
-    DN sourceBaseDn;
-    int sourceScope;
-    Filter sourceFilter;
-
+    DN baseDn;
+    int scope;
+    Filter filter;
     String objectClasses;
+
     long sourceSizeLimit;
     long sourceTimeLimit;
 
@@ -50,11 +52,11 @@ public class LDAPSource extends Source {
     public void init() throws Exception {
         connection = (LDAPConnection)getConnection();
 
-        sourceBaseDn    = new DN(getParameter(BASE_DN));
-        sourceScope     = getScope(getParameter(SCOPE));
-        sourceFilter    = FilterTool.parseFilter(getParameter(FILTER));
+        baseDn = new DN(getParameter(BASE_DN));
+        scope = getScope(getParameter(SCOPE));
+        filter = FilterTool.parseFilter(getParameter(FILTER));
 
-        objectClasses   = getParameter(OBJECT_CLASSES);
+        objectClasses = getParameter(OBJECT_CLASSES);
 
         String s = getParameter(SIZE_LIMIT);
         if (s != null && !"".equals(s)) sourceSizeLimit = Long.parseLong(s);
@@ -86,15 +88,15 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+ getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Add "+ getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(sourceBaseDn);
+        db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -116,7 +118,13 @@ public class LDAPSource extends Source {
         if (debug) log.debug("Adding entry "+dn);
 
         LDAPClient client = connection.getClient(session);
-        client.add(newRequest, response);
+
+        try {
+            client.add(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Add operation completed.");
      }
@@ -132,9 +140,9 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Bind "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Bind "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         String authentication = getParameter(AUTHENTICATION);
@@ -148,7 +156,7 @@ public class LDAPSource extends Source {
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(sourceBaseDn);
+        db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -158,7 +166,13 @@ public class LDAPSource extends Source {
         if (debug) log.debug("Binding as "+dn);
 
         LDAPClient client = connection.getClient(session);
-        client.bind(newRequest, response);
+
+        try {
+            client.bind(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Bind operation completed.");
     }
@@ -174,15 +188,15 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Compare "+ getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Compare "+ getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(sourceBaseDn);
+        db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -192,7 +206,14 @@ public class LDAPSource extends Source {
         if (debug) log.debug("Comparing entry "+dn);
 
         LDAPClient client = connection.getClient(session);
-        boolean result = client.compare(newRequest, response);
+        boolean result;
+
+        try {
+            result = client.compare(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Compare operation completed ["+result+"].");
         response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
@@ -209,15 +230,15 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+ getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Delete "+ getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(sourceBaseDn);
+        db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -227,7 +248,13 @@ public class LDAPSource extends Source {
         if (debug) log.debug("Deleting entry "+dn);
 
         LDAPClient client = connection.getClient(session);
-        client.delete(newRequest, response);
+
+        try {
+            client.delete(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Delete operation completed.");
     }
@@ -243,15 +270,15 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Modify "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Modify "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(sourceBaseDn);
+        db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -261,7 +288,13 @@ public class LDAPSource extends Source {
         if (debug) log.debug("Modifying entry "+dn);
 
         LDAPClient client = connection.getClient(session);
-        client.modify(newRequest, response);
+
+        try {
+            client.modify(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Modify operation completed.");
     }
@@ -277,25 +310,29 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ModRdn "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("ModRdn "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
-
-        db.append(sourceBaseDn);
-
-        DN dn = db.toDn();
+        db.append(baseDn);
+        DN targetDn = db.toDn();
 
         ModRdnRequest newRequest = new ModRdnRequest(request);
-        newRequest.setDn(dn);
+        newRequest.setDn(targetDn);
 
-        if (debug) log.debug("Renaming entry "+dn);
+        if (debug) log.debug("Renaming entry "+targetDn);
 
         LDAPClient client = connection.getClient(session);
-        client.modrdn(newRequest, response);
+
+        try {
+            client.modrdn(newRequest, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("ModRdn operation completed.");
     }
@@ -311,57 +348,95 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Search "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
+
+        final DN baseDn = createBaseDn(request);
+        final int scope = createScope(request);
+        final Filter filter = createFilter(request);
+
+        long sizeLimit = createSizeLimit(request);
+        long timeLimit = createTimeLimit(request);
+
+        // Create new request to ensure all attributes returned
+        SearchRequest newRequest = new SearchRequest();
+        newRequest.setDn(baseDn);
+        newRequest.setScope(scope);
+        newRequest.setFilter(filter);
+        newRequest.setSizeLimit(sizeLimit);
+        newRequest.setTimeLimit(timeLimit);
+        newRequest.setControls(request.getControls());
+
+        SearchResponse newResponse = new SearchResponse() {
+            public void add(SearchResult searchResult) throws Exception {
+
+                if (response.isClosed()) {
+                    close();
+                    return;
+                }
+
+                SearchResult newSearchResult = createSearchResult(baseDn, searchResult);
+                if (newSearchResult == null) return;
+
+                if (debug) {
+                    newSearchResult.print();
+                }
+
+                response.add(newSearchResult);
+            }
+        };
+
+        newResponse.setSizeLimit(request.getSizeLimit());
+
+        if (debug) log.debug("Searching entry "+baseDn);
 
         LDAPClient client = connection.getClient(session);
 
         try {
-            // Create new request to ensure all attributes returned
-            SearchRequest newRequest = new SearchRequest();
-            newRequest.setDn(sourceBaseDn);
-            newRequest.setScope(sourceScope);
-            newRequest.setFilter(createFilter(request));
-            newRequest.setSizeLimit(sourceSizeLimit);
-            newRequest.setTimeLimit(sourceTimeLimit);
-
-            SearchResponse newResponse = new SearchResponse() {
-                public void add(SearchResult searchResult) throws Exception {
-
-                    if (response.isClosed()) {
-                        close();
-                        return;
-                    }
-
-                    SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
-                    if (newSearchResult == null) return;
-
-                    if (debug) {
-                        newSearchResult.print();
-                    }
-
-                    response.add(newSearchResult);
-                }
-            };
-
-            newResponse.setSizeLimit(request.getSizeLimit());
-
             client.search(newRequest, newResponse);
-
-            log.debug("Search operation completed.");
 
         } finally {
             response.close();
             connection.closeClient(session);
         }
+
+        log.debug("Search operation completed.");
     }
 
-    public Filter createFilter(
-            final SearchRequest request
-    ) throws Exception {
+    public DN createBaseDn(SearchRequest request) throws Exception {
 
+        DNBuilder db = new DNBuilder();
+        db.append(request.getDn());
+        db.append(baseDn);
+        return db.toDn();
+    }
+
+    public int createScope(SearchRequest request) throws Exception {
+
+        if (scope == SearchRequest.SCOPE_BASE) {
+            return SearchRequest.SCOPE_BASE;
+
+        } else if (scope == SearchRequest.SCOPE_ONE) {
+            DN baseDn = request.getDn();
+
+            if (baseDn != null && !baseDn.isEmpty()) {
+                return SearchRequest.SCOPE_BASE;
+                
+            } else {
+                return SearchRequest.SCOPE_ONE;
+            }
+
+        } else {
+            return request.getScope();
+        }
+    }
+
+    public Filter createFilter(final SearchRequest request) throws Exception {
+
+        return FilterTool.appendAndFilter(request.getFilter(), this.filter);
+/*
         DN baseDn = request.getDn();
         int scope = request.getScope();
         Filter filter = request.getFilter();
@@ -396,9 +471,10 @@ public class LDAPSource extends Source {
             newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
-        newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
+        newFilter = FilterTool.appendAndFilter(newFilter, this.filter);
 
         return newFilter;
+*/
     }
 /*
     public Filter createFilter(
@@ -488,6 +564,18 @@ public class LDAPSource extends Source {
         return FilterTool.appendAndFilter(newFilter, sourceFilter);
     }
 */
+    public long createSizeLimit(SearchRequest request) {
+        long sizeLimit = request.getSizeLimit();
+        if (sourceSizeLimit > sizeLimit) sizeLimit = sourceSizeLimit;
+        return sizeLimit;
+    }
+
+    public long createTimeLimit(SearchRequest request) {
+        long timeLimit = request.getTimeLimit();
+        if (sourceTimeLimit > timeLimit) timeLimit = sourceTimeLimit;
+        return timeLimit;
+    }
+
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
@@ -501,8 +589,8 @@ public class LDAPSource extends Source {
         final SourceRef sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
-        DN sourceBaseDn = new DN(source.getParameter(LDAPConnection.BASE_DN));
-        String scope = source.getParameter(LDAPConnection.SCOPE);
+        DN sourceBaseDn = new DN(source.getParameter(BASE_DN));
+        String scope = source.getParameter(SCOPE);
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
@@ -589,13 +677,14 @@ public class LDAPSource extends Source {
             newAttributes = new Attributes();
 
             RDN rdn = newDn.getRdn();
+/*
             if (rdn != null) {
                 for (String name : rdn.getNames()) {
                     Object value = rdn.get(name);
                     newAttributes.addValue("primaryKey." + name, value);
                 }
             }
-
+*/
             for (Field field : getFields()) {
 
                 String fieldName = field.getName();
@@ -623,47 +712,75 @@ public class LDAPSource extends Source {
     public void create() throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Create "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Create "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
     }
 
     public void rename(Source newSource) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Rename "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Rename "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+    }
+
+    public void clear(Session session) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Clear "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        final ArrayList<DN> dns = new ArrayList<DN>();
+
+        SearchRequest request = new SearchRequest();
+
+        SearchResponse response = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                DN dn = result.getDn();
+                if (scope == SearchRequest.SCOPE_ONE && baseDn.matches(dn)) return;
+                dns.add(dn);
+            }
+        };
+
+        search(session, request, response);
+
+        for (int i=dns.size()-1; i>=0; i--) {
+            DN dn = dns.get(i);
+            delete(session, dn);
         }
     }
 
     public void drop() throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Drop "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Drop "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
     }
 
     public long getCount(Session session) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Count "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Count "+sourceConfig.getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
         SearchRequest request = new SearchRequest();
 
-        String baseDn = getParameter(LDAPConnection.BASE_DN);
+        String baseDn = getParameter(BASE_DN);
         request.setDn(baseDn);
 
-        String scope = getParameter(LDAPConnection.SCOPE);
+        String scope = getParameter(SCOPE);
         request.setScope(getScope(scope));
 
-        String filter = getParameter(LDAPConnection.FILTER);
+        String filter = getParameter(FILTER);
         request.setFilter(filter);
 
         request.setAttributes(new String[] { "dn" });
@@ -682,6 +799,12 @@ public class LDAPSource extends Source {
         }
     }
 
+    public Session createAdminSession() throws Exception {
+        Partition partition = getPartition();
+        SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
+        return sessionManager.createAdminSession();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Clone
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -693,5 +816,37 @@ public class LDAPSource extends Source {
         source.connection       = connection;
 
         return source;
+    }
+
+    public DN getBaseDn() {
+        return baseDn;
+    }
+
+    public void setBaseDn(DN baseDn) {
+        this.baseDn = baseDn;
+    }
+
+    public int getScope() {
+        return scope;
+    }
+
+    public void setScope(int scope) {
+        this.scope = scope;
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+    }
+
+    public String getObjectClasses() {
+        return objectClasses;
+    }
+
+    public void setObjectClasses(String objectClasses) {
+        this.objectClasses = objectClasses;
     }
 }

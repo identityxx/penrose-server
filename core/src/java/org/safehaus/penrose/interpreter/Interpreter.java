@@ -91,7 +91,7 @@ public abstract class Interpreter {
         }
     }
 
-    public abstract Collection parseVariables(String script) throws Exception;
+    public abstract Collection<String> parseVariables(String script) throws Exception;
 
     public abstract void set(String name, Object value) throws Exception;
 
@@ -132,23 +132,34 @@ public abstract class Interpreter {
 
     public Object eval(Field field) throws Exception {
         try {
-            if (field.getConstant() != null) {
-                return field.getConstant();
+            Object constant = field.getConstant();
+            if (constant != null) {
+                //log.debug("Constant: "+constant);
+                return constant;
+            }
 
-            } else if (field.getVariable() != null) {
-                String name = field.getVariable();
-                Object value = get(name);
-                if (value == null && name.startsWith("rdn.")) {
-                    value = get(name.substring(4));
+            String variable = field.getVariable();
+            if (variable != null) {
+                Object value = get(variable);
+                if (value == null && variable.startsWith("rdn.")) {
+                    value = get(variable.substring(4));
                 }
+                //log.debug("Variable: "+variable+" = "+value);
                 return value;
 
-            } else if (field.getExpression() != null) {
-                return eval(field.getExpression());
-
-            } else {
-                return null;
             }
+
+            Expression expression = field.getExpression();
+            if (expression != null) {
+                Object value = eval(expression);
+                //log.debug("Expression: "+expression+" = "+value);
+                return value;
+
+            }
+
+            //log.debug("Undefined field.");
+            return null;
+
         } catch (Exception e) {
             throw new Exception("Error evaluating field "+field.getName(), e);
         }

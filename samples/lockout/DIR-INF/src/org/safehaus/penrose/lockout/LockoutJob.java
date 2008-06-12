@@ -1,6 +1,8 @@
 package org.safehaus.penrose.lockout;
 
 import org.safehaus.penrose.scheduler.Job;
+import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.lockout.module.LockoutModule;
 
 /**
  * @author Endi Sukma Dewata
@@ -14,7 +16,9 @@ public class LockoutJob extends Job {
 
     public void init() throws Exception {
         String s = getParameter(MODULE);
-        module = (LockoutModule)partition.getModule(s == null ? DEFAULT_MODULE : s);
+
+        ModuleManager moduleManager = partition.getModuleManager();
+        module = (LockoutModule)moduleManager.getModule(s == null ? DEFAULT_MODULE : s);
     }
 
     public void execute() throws Exception {

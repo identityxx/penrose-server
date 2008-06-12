@@ -36,9 +36,9 @@ public interface PenroseServiceMBean extends Service {
     public void reload() throws Exception;
     public void restart() throws Exception;
 
-    public Collection getServiceNames() throws Exception;
+    public Collection<String> getServiceNames() throws Exception;
 
     public byte[] download(String filename) throws Exception;
 	public void upload(String filename, byte content[]) throws Exception;
-    public Collection listFiles(String directory) throws Exception;
+    public Collection<String> listFiles(String directory) throws Exception;
 }

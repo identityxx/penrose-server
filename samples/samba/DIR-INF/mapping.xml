@@ -43,6 +43,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=Samba,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>account</oc>
     <oc>posixAccount</oc>
     <oc>sambaSamAccount</oc>
@@ -311,6 +312,7 @@ if (method == null) {
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=Samba,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>posixGroup</oc>
     <oc>sambaGroupMapping</oc>
     <at name="cn" rdn="true">

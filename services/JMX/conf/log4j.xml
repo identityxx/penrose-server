@@ -11,7 +11,7 @@
     </layout>
   </appender>
 
-  <logger name="org.safehaus.penrose.management" additivity="false">
+  <logger name="org.safehaus.penrose" additivity="false">
     <level value="WARN"/>
     <appender-ref ref="console"/>
   </logger>

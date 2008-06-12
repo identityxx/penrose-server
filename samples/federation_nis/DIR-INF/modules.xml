@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="NISLDAPSyncModule" enabled="true">
+    <module-class>org.safehaus.penrose.nis.module.NISLDAPSyncModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>${DOMAIN}_yp</param-value>
+    </parameter>
+<!--
+    <parameter>
+      <param-name>changes</param-name>
+      <param-value>changes</param-value>
+    </parameter>
+-->
+    <parameter>
+      <param-name>errors</param-name>
+      <param-value>errors</param-value>
+    </parameter>
+  </module>
+
+</modules>

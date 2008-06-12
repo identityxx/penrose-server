@@ -17,13 +17,13 @@
  */
 package org.safehaus.penrose.example.module;
 
-import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.event.*;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleChain;
+import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.Arrays;
 
@@ -38,8 +38,13 @@ public class DemoModule extends Module implements DemoModuleMBean {
         System.out.println("#### Initializing DemoModule.");
     }
 
-    public void beforeAdd(AddEvent event) throws Exception {
-        AddRequest request = event.getRequest();
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
         System.out.println("#### Adding "+request.getDn()+":");
 
         Attributes attributes = request.getAttributes();
@@ -53,10 +58,9 @@ public class DemoModule extends Module implements DemoModuleMBean {
         // change sn attribute to upper case
         String sn = (String)attributes.getValue("sn");
         attributes.setValue("sn", sn.toUpperCase());
-    }
 
-    public void afterAdd(AddEvent event) throws Exception {
-        AddResponse response = event.getResponse();
+        chain.add(session, request, response);
+
         int rc = response.getReturnCode();
         if (rc == LDAP.SUCCESS) {
             System.out.println("#### Add succeded.");
@@ -65,14 +69,17 @@ public class DemoModule extends Module implements DemoModuleMBean {
         }
     }
 
-    public void beforeBind(BindEvent event) throws Exception {
-        BindRequest request = event.getRequest();
-        System.out.println("#### Binding as "+request.getDn()+" with password "+request.getPassword()+".");
-    }
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
-    public void afterBind(BindEvent event) throws Exception {
-        BindRequest request = event.getRequest();
-        BindResponse response = event.getResponse();
+        System.out.println("#### Binding as "+request.getDn()+" with password "+ BinaryUtil.encode(request.getPassword())+".");
+
+        chain.bind(session, request, response);
+
         int rc = response.getReturnCode();
         if (rc == LDAP.SUCCESS) {
             System.out.println("#### Bound as "+request.getDn()+".");
@@ -81,13 +88,17 @@ public class DemoModule extends Module implements DemoModuleMBean {
         }
     }
 
-    public void beforeDelete(DeleteEvent event) throws Exception {
-        DeleteRequest request = event.getRequest();
-        System.out.println("#### Deleting "+request.getDn());
-    }
+    public void delete(
+            Session session,
+            DeleteRequest request,
+            DeleteResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
-    public void afterDelete(DeleteEvent event) throws Exception {
-        DeleteResponse response = event.getResponse();
+        System.out.println("#### Deleting "+request.getDn());
+
+        chain.delete(session, request, response);
+
         int rc = response.getReturnCode();
         if (rc == LDAP.SUCCESS) {
             System.out.println("#### Delete succeded.");
@@ -96,8 +107,13 @@ public class DemoModule extends Module implements DemoModuleMBean {
         }
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
-        ModifyRequest request = event.getRequest();
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
         System.out.println("#### Modifying "+request.getDn()+":");
 
         for (Modification mi : request.getModifications()) {
@@ -122,10 +138,9 @@ public class DemoModule extends Module implements DemoModuleMBean {
                 System.out.println("   " + name + ": " + value);
             }
         }
-    }
 
-    public void afterModify(ModifyEvent event) throws Exception {
-        ModifyResponse response = event.getResponse();
+        chain.modify(session, request, response);
+
         int rc = response.getReturnCode();
         if (rc == LDAP.SUCCESS) {
             System.out.println("#### Modify succeded.");
@@ -134,8 +149,13 @@ public class DemoModule extends Module implements DemoModuleMBean {
         }
     }
 
-    public void beforeSearch(SearchEvent event) throws Exception {
-        SearchRequest request = event.getRequest();
+    public void search(
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response,
+            final ModuleChain chain
+    ) throws Exception {
+
         System.out.println("#### Searching "+request.getDn()+".");
 
         Filter filter = request.getFilter();
@@ -143,21 +163,17 @@ public class DemoModule extends Module implements DemoModuleMBean {
             throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
-        SearchResponse response = event.getResponse();
-
         // register result listener
-        response.addListener(new SearchResponseAdapter() {
-            public void postAdd(SearchResponseEvent event) {
-                SearchResult result = (SearchResult)event.getObject();
-                DN dn = result.getDn();
-                System.out.println("#### Returning "+dn+".");
+        SearchResponse sr = new Pipeline(response) {
+            public void add(SearchResult result) throws Exception {
+                System.out.println("#### Returning "+result.getDn()+".");
+                super.add(result);
             }
-        });
-    }
+        };
 
-    public void afterSearch(SearchEvent event) throws Exception {
-        SearchResponse response = event.getResponse();
-        int rc = response.getReturnCode();
+        chain.search(session, request, sr);
+
+        int rc = response.waitFor();
         if (rc == LDAP.SUCCESS) {
             System.out.println("#### Search returned "+response.getTotalCount()+" entries.");
         } else {

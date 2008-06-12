@@ -19,8 +19,6 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.mapping.Expression;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.io.Serializable;
@@ -30,66 +28,43 @@ import java.io.Serializable;
  */
 public class AttributeMapping implements Serializable, Cloneable {
 
-    static {
-        log = LoggerFactory.getLogger(AttributeMapping.class);
-    }
+    public final static String CONSTANT   = "CONSTANT";
+    public final static String VARIABLE   = "VARIABLE";
+    public final static String EXPRESSION = "EXPRESSION";
 
-    public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
-
-    public final static String CONSTANT       = "CONSTANT";
-    public final static String VARIABLE       = "VARIABLE";
-    public final static String EXPRESSION     = "EXPRESSION";
-
-    public final static String DEFAULT_TYPE   = "VARCHAR";
-    public final static int DEFAULT_LENGTH    = 50;
-    public final static int DEFAULT_PRECISION = 0;
-
-	/**
-	 * Name. This refers to AttributeType's name.
-	 */
 	private String name;
 
-	/**
-	 * Values.
-	 */
     private Object constant;
     private String variable;
     private Expression expression;
 
-    /**
-     * This attribute is used in RDN.
-     */
     private boolean rdn;
 
-    /**
-     * Encryption method used to encrypt the value
-     */
-    private String encryption;
-
-    /**
-     * Encoding method used to encode the value
-     */
-    private String encoding;
-
-    private String type   = DEFAULT_TYPE;
-    private int length    = DEFAULT_LENGTH;
-    private int precision = DEFAULT_PRECISION;
-
     public AttributeMapping() {
+    }
+
+    public AttributeMapping(String name, Object value) {
+        this.name = name;
+        this.constant = value;
+    }
+
+    public AttributeMapping(String name, Object value, boolean rdn) {
+        this.name = name;
+        this.constant = value;
+        this.rdn = rdn;
     }
 
     public AttributeMapping(String name, String type, Object value) {
         this(name, type, value, false);
     }
     
-    public AttributeMapping(String name, String valueType, Object value, boolean rdn) {
+    public AttributeMapping(String name, String type, Object value, boolean rdn) {
         this.name = name;
 
-        if (CONSTANT.equals(valueType)) {
+        if (CONSTANT.equals(type)) {
             this.constant = value;
 
-        } else if (VARIABLE.equals(valueType)) {
+        } else if (VARIABLE.equals(type)) {
             this.variable = (String)value;
 
         } else {
@@ -151,48 +126,12 @@ public class AttributeMapping implements Serializable, Cloneable {
         this.variable = variable;
     }
 
-    public String getEncryption() {
-        return encryption;
-    }
-
-    public void setEncryption(String encryption) {
-        this.encryption = encryption;
-    }
-
-    public String getEncoding() {
-        return encoding;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public int getPrecision() {
-        return precision;
-    }
-
-    public void setPrecision(int precision) {
-        this.precision = precision;
-    }
-
     public int hashCode() {
-        return name == null ? 0 : name.hashCode();
+        return (name == null ? 0 : name.hashCode()) +
+                (constant == null ? 0 : constant.hashCode()) +
+                (variable == null ? 0 : variable.hashCode()) +
+                (expression == null ? 0 : expression.hashCode()) +
+                (rdn ? 0 : 1);
     }
 
     boolean equals(Object o1, Object o2) {
@@ -218,11 +157,6 @@ public class AttributeMapping implements Serializable, Cloneable {
         if (!equals(variable, attributeMapping.variable)) return false;
         if (!equals(expression, attributeMapping.expression)) return false;
         if (rdn != attributeMapping.rdn) return false;
-        if (!equals(encryption, attributeMapping.encryption)) return false;
-        if (!equals(encoding, attributeMapping.encoding)) return false;
-        if (!equals(type, attributeMapping.type)) return false;
-        if (length != attributeMapping.length) return false;
-        if (precision != attributeMapping.precision) return false;
 
         return true;
     }
@@ -239,11 +173,6 @@ public class AttributeMapping implements Serializable, Cloneable {
         variable = attributeMapping.variable;
         expression = attributeMapping.expression == null ? null : (Expression)attributeMapping.expression.clone();
         rdn = attributeMapping.rdn;
-        encryption = attributeMapping.encryption;
-        encoding = attributeMapping.encoding;
-        type = attributeMapping.type;
-        length = attributeMapping.length;
-        precision = attributeMapping.precision;
 
         return attributeMapping;
     }

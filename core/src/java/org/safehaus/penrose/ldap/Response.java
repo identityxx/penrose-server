@@ -20,37 +20,41 @@ public class Response implements Serializable, Cloneable {
         controls.add(control);
     }
 
-    public void removeControl(Control control) {
-        controls.remove(control);
-    }
-
     public void setControls(Collection<Control> controls) {
         this.controls.clear();
         if (controls != null) this.controls.addAll(controls);
+    }
+
+    public void removeControl(Control control) {
+        controls.remove(control);
     }
 
     public Collection<Control> getControls() {
         return controls;
     }
 
-    public LDAPException getException() {
-        return exception;
+    public int waitFor() {
+        return exception.getResultCode();
     }
 
-    public void setException(LDAPException exception) {
-        this.exception = exception;
+    public void setException(LDAPException e) {
+        this.exception = e;
     }
 
     public void setException(Exception e) {
         exception = LDAP.createException(e);
     }
 
-    public int getReturnCode() {
-        return exception.getResultCode();
+    public LDAPException getException() {
+        return exception;
     }
 
     public void setReturnCode(int returnCode) {
         exception = LDAP.createException(returnCode);
+    }
+
+    public int getReturnCode() {
+        return exception.getResultCode();
     }
 
     public String getErrorMessage() {

@@ -81,8 +81,8 @@ public class Job {
         this.partition = partition;
     }
 
-    public Session getSession() throws Exception {
+    public Session createAdminSession() throws Exception {
         SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
-        return sessionManager.newAdminSession();
+        return sessionManager.createAdminSession();
     }
 }

@@ -36,6 +36,7 @@
   </entry>
 
   <entry dn="uid=...,ou=People,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -221,6 +222,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Group,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>posixGroup</oc>
     <at name="cn" rdn="true">
       <variable>g.cn</variable>
@@ -271,6 +273,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Hosts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ipHost</oc>
     <at name="cn" rdn="true">
@@ -358,6 +361,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Ethers,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ieee802Device</oc>
     <at name="cn" rdn="true">
@@ -433,6 +437,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Networks,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipNetwork</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -495,6 +500,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...+ipServiceProtocol=...,ou=Services,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipService</oc>
     <at name="cn" rdn="true">
       <variable>s.cn</variable>
@@ -548,6 +554,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Protocols,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipProtocol</oc>
     <at name="cn" rdn="true">
       <variable>p.cn</variable>
@@ -592,6 +599,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Rpc,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipProtocol</oc>
     <at name="cn" rdn="true">
       <variable>r.cn</variable>
@@ -616,7 +624,7 @@ return bytes;
       <field name="description">
         <variable>description</variable>
       </field>
-    </source>                                     b
+    </source>
     <source name="rc">
       <source-name>oncRpc_alias</source-name>
       <field name="cn">
@@ -636,6 +644,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Netgroup,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisNetgroup</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -686,6 +695,7 @@ return bytes;
   </entry>
 
   <entry dn="nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisMap</oc>
     <at name="nisMapName" rdn="true">
       <variable>am.automountMapName</variable>
@@ -705,6 +715,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisObject</oc>
     <at name="cn" rdn="true">
       <variable>a.automountKey</variable>

@@ -6,7 +6,6 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.naming.PenroseContext;
@@ -43,18 +42,9 @@ public class Demo {
         entryConfig.addObjectClass("dcObject");
         entryConfig.addObjectClass("organization");
 
-        AttributeMapping attribute = new AttributeMapping();
-        attribute.setName("dc");
-        attribute.setConstant("Example");
-        attribute.setRdn(true);
+        entryConfig.addAttributeMappingsFromRdn();
 
-        entryConfig.addAttributeMapping(attribute);
-
-        attribute = new AttributeMapping();
-        attribute.setName("o");
-        attribute.setConstant("Example");
-
-        entryConfig.addAttributeMapping(attribute);
+        entryConfig.addAttributeMapping("o", "Example");
 
         return entryConfig;
     }
@@ -66,12 +56,7 @@ public class Demo {
 
         entryConfig.addObjectClass("organizationalUnit");
 
-        AttributeMapping attribute = new AttributeMapping();
-        attribute.setName("ou");
-        attribute.setConstant("Users");
-        attribute.setRdn(true);
-
-        entryConfig.addAttributeMapping(attribute);
+        entryConfig.addAttributeMappingsFromRdn();
 
         return entryConfig;
     }
@@ -109,7 +94,7 @@ public class Demo {
 
         log.warn("Connecting to Penrose.");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind("uid=admin,ou=system", "secret");
 
         log.warn("Searching all entries.");

@@ -22,8 +22,10 @@ public class ConnectionManager {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    Partition partition;
-    ConnectionConfigManager connectionConfigManager;
+    protected Partition partition;
+    protected ConnectionConfigManager connectionConfigManager;
+
+    protected Map<String,Connection> connections = new LinkedHashMap<String,Connection>();
 
     public ConnectionManager(Partition partition) {
         this.partition = partition;
@@ -31,8 +33,6 @@ public class ConnectionManager {
         PartitionConfig partitionConfig = partition.getPartitionConfig();
         connectionConfigManager = partitionConfig.getConnectionConfigManager();
     }
-
-    protected Map<String,Connection> connections = new LinkedHashMap<String,Connection>();
 
     public void init() throws Exception {
 
@@ -45,7 +45,7 @@ public class ConnectionManager {
 
     public void destroy() throws Exception {
         for (Connection connection : connections.values()) {
-            log.debug("Stopping "+connection.getName()+" connection.");
+            if (debug) log.debug("Stopping "+connection.getName()+" connection.");
             connection.destroy();
         }
     }
@@ -75,12 +75,12 @@ public class ConnectionManager {
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
-        Adapter adapter = partition.getAdapters().getAdapter(adapterName);
+        Adapter adapter = partition.getAdapterManager().getAdapter(adapterName);
         if (adapter == null) {
             PenroseContext penroseContext = partitionContext.getPenroseContext();
             Partition defaultPartition = penroseContext.getPartitionManager().getPartition("DEFAULT");
             if (defaultPartition != null) {
-                adapter = defaultPartition.getAdapters().getAdapter(adapterName);
+                adapter = defaultPartition.getAdapterManager().getAdapter(adapterName);
             }
         }
 

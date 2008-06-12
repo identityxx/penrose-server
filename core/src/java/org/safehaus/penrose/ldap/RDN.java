@@ -254,4 +254,11 @@ public class RDN implements Serializable, Comparable {
 
         return true;
     }
+
+    public synchronized DN append(DN dn) throws Exception {
+        DNBuilder db = new DNBuilder();
+        db.append(this);
+        db.append(dn);
+        return db.toDn();
+    }
 }

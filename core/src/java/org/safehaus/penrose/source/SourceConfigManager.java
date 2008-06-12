@@ -20,11 +20,8 @@ public class SourceConfigManager implements Serializable, Cloneable {
     public static transient Logger log;
     public static boolean debug = log.isDebugEnabled();
 
-    public final static String SYNC = "sync";
-
     protected Map<String,SourceConfig> sourceConfigs                             = new LinkedHashMap<String,SourceConfig>();
     protected Map<String,Collection<SourceConfig>> sourceConfigsByConnectionName = new LinkedHashMap<String,Collection<SourceConfig>>();
-    protected Map<String,SourceSyncConfig> sourceSyncConfigs                     = new LinkedHashMap<String,SourceSyncConfig>();
 
     public void addSourceConfig(SourceConfig sourceConfig) {
 
@@ -46,40 +43,10 @@ public class SourceConfigManager implements Serializable, Cloneable {
             sourceConfigsByConnectionName.put(connectionName, list);
         }
         list.add(sourceConfig);
-
-        Collection<String> destinations = getSourceSyncNames(sourceConfig);
-        if (!destinations.isEmpty()) {
-
-            log.debug("Sync source with "+destinations+".");
-
-            SourceSyncConfig sourceSyncConfig = new SourceSyncConfig();
-            sourceSyncConfig.setName(sourceName);
-            sourceSyncConfig.setDestinations(destinations);
-            sourceSyncConfig.setSourceConfig(sourceConfig);
-            sourceSyncConfig.setParameters(sourceConfig.getParameters());
-
-            addSourceSyncConfig(sourceSyncConfig);
-        }
     }
 
     public Collection<String> getSourceNames() {
         return sourceConfigs.keySet();
-    }
-    
-    public Collection<String> getSourceSyncNames(SourceConfig sourceConfig) {
-
-        Collection<String> list = new ArrayList<String>();
-
-        String sync = sourceConfig.getParameter(SourceConfigManager.SYNC);
-        if (sync == null) return list;
-
-        StringTokenizer st = new StringTokenizer(sync, ", ");
-        while (st.hasMoreTokens()) {
-            String name = st.nextToken();
-            list.add(name);
-        }
-
-        return list;
     }
 
     public void updateSourceConfig(String sourceName, SourceConfig sourceConfig) throws Exception {
@@ -141,22 +108,6 @@ public class SourceConfigManager implements Serializable, Cloneable {
         return sourceConfigs.values();
     }
 
-    public void addSourceSyncConfig(SourceSyncConfig sourceSyncConfig) {
-        sourceSyncConfigs.put(sourceSyncConfig.getName(), sourceSyncConfig);
-    }
-
-    public SourceSyncConfig removeSourceSyncConfig(String name) {
-        return sourceSyncConfigs.remove(name);
-    }
-
-    public SourceSyncConfig getSourceSyncConfig(String name) {
-        return sourceSyncConfigs.get(name);
-    }
-
-    public Collection<SourceSyncConfig> getSourceSyncConfigs() {
-        return sourceSyncConfigs.values();
-    }
-
     public Collection<FieldMapping> getSearchableFields(SourceMapping sourceMapping) {
         SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
 
@@ -177,11 +128,6 @@ public class SourceConfigManager implements Serializable, Cloneable {
         sources.sourceConfigs = new LinkedHashMap<String,SourceConfig>();
         for (SourceConfig sourceConfig : sourceConfigs.values()) {
             sources.sourceConfigs.put(sourceConfig.getName(), (SourceConfig)sourceConfig.clone());
-        }
-
-        sources.sourceSyncConfigs = new LinkedHashMap<String,SourceSyncConfig>();
-        for (SourceSyncConfig sourceSyncConfig : sourceSyncConfigs.values()) {
-            sources.sourceSyncConfigs.put(sourceSyncConfig.getName(), (SourceSyncConfig)sourceSyncConfig.clone());
         }
 
         return sources;

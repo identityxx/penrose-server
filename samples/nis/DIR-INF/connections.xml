@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+
+<connections>
+
+  <connection name="NIS">
+    <adapter-name>NIS</adapter-name>
+    <parameter>
+      <param-name>java.naming.factory.initial</param-name>
+      <param-value>com.sun.jndi.nis.NISCtxFactory</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.provider.url</param-name>
+      <param-value>nis://localhost/example.com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>com.sun.jndi.nis.mailaliases</param-name>
+      <param-value>nonull</param-value>
+    </parameter>
+    <parameter>
+      <param-name>method</param-name>
+      <param-value>jndi</param-value>
+    </parameter>
+  </connection>
+
+</connections>

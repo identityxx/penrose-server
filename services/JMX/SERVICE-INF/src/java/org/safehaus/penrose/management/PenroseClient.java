@@ -117,7 +117,7 @@ public class PenroseClient implements PenroseServiceMBean {
             if (port != DEFAULT_RMI_PORT) url += ":"+port;
 
             url += "/penrose";
-            //String url = "service:jmx:rmi://localhost:rmiTransportProtocol/jndi:rmi://localhost:rmiProtocol/penrose";
+            //String url = "service:jmx:rmi://localhost:rmiTransportProtocol/jndi/rmi://localhost:rmiProtocol/penrose";
 
             log.debug("Connecting to Penrose Server.");
             log.debug("URL: "+url);

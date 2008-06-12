@@ -12,17 +12,12 @@ public class CacheManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private int size;
-    private int expiration;
+    private int size       = 10;
+    private int expiration = 5; // minutes
 
     private LinkedHashMap<CacheKey,Cache> caches = new LinkedHashMap<CacheKey,Cache>();
 
     public CacheManager() {
-        this(10);
-    }
-
-    public CacheManager(int size) {
-        this.size = size;
     }
 
     public int getSize() {
@@ -33,36 +28,41 @@ public class CacheManager {
         this.size = size;
     }
 
-    public synchronized Cache create() {
+    public Cache create(CacheKey key) {
         Cache cache = new Cache();
-        cache.setSize(size);
         cache.setExpiration(expiration);
+
+        put(key, cache);
 
         return cache;
     }
 
-    public synchronized void put(CacheKey key, Cache value) {
-        //log.debug("Adding cache key "+key);
-        caches.put(key, value);
-        prune();
+    public synchronized void put(CacheKey key, Cache cache) {
+        log.debug("Adding cache key "+key.getEntryId());
+        caches.put(key, cache);
+        purge();
     }
 
     public synchronized Cache get(CacheKey key) {
-        //log.debug("Getting cache key "+key);
-        Cache cache = caches.remove(key);
+        log.debug("Getting cache key "+key.getEntryId());
+        Cache cache = caches.get(key);
         if (cache == null) return null;
         if (cache.isExpired()) return null;
 
         caches.put(key, cache);
-        prune();
+
+        purge();
+
         return cache;
     }
 
-    public synchronized void prune() {
+    public synchronized void purge() {
         if (size == 0) return;
-        while (caches.size() > size && caches.size() > 0) {
+
+        int counter = caches.size() - size;
+        for (int i=0; i<counter; i++) {
             CacheKey key = caches.keySet().iterator().next();
-            //log.debug("Removing cache key "+key);
+            log.debug("Removing cache key "+key.getEntryId());
             caches.remove(key);
         }
     }

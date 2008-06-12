@@ -2,7 +2,7 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,8 +135,8 @@ public class SearchResult implements Serializable, Cloneable {
     public void print() throws Exception {
 
         Logger log = LoggerFactory.getLogger(getClass());
-        log.debug(Formatter.displaySeparator(80));
-        log.debug(Formatter.displayLine("Search Result: "+dn, 80));
+        log.debug(TextUtil.displaySeparator(80));
+        log.debug(TextUtil.displayLine("Search Result: "+dn, 80));
 
         for (Attribute attribute : attributes.getAll()) {
             String name = attribute.getName();
@@ -145,7 +145,7 @@ public class SearchResult implements Serializable, Cloneable {
                 String className = value.getClass().getName();
                 className = className.substring(className.lastIndexOf(".") + 1);
 
-                log.debug(Formatter.displayLine(" - " + name + ": " + value + " (" + className + ")", 80));
+                log.debug(TextUtil.displayLine(" - " + name + ": " + value + " (" + className + ")", 80));
             }
         }
 
@@ -162,16 +162,16 @@ public class SearchResult implements Serializable, Cloneable {
                     className = className.substring(className.lastIndexOf(".") + 1);
 
                     if (first) {
-                        log.debug(Formatter.displayLine("Source Values:", 80));
+                        log.debug(TextUtil.displayLine("Source Values:", 80));
                         first = false;
                     }
 
-                    log.debug(Formatter.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 80));
+                    log.debug(TextUtil.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 80));
                 }
             }
         }
 
-        log.debug(Formatter.displaySeparator(80));
+        log.debug(TextUtil.displaySeparator(80));
     }
 
     public Object clone() throws CloneNotSupportedException {

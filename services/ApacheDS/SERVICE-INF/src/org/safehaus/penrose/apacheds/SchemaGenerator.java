@@ -23,7 +23,7 @@ import org.apache.maven.embedder.MavenEmbedderConsoleLogger;
 import org.apache.maven.project.MavenProject;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.util.ReaderThread;
+import org.safehaus.penrose.thread.ReaderThread;
 
 import java.io.*;
 import java.util.jar.JarOutputStream;

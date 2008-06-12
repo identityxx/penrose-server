@@ -19,42 +19,54 @@ package org.safehaus.penrose.thread;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadManager {
 
-    public final static String MAX_THREADS      = "maxThreads";
-    public final static int DEFAULT_MAX_THREADS = 20;
-
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    private PenroseConfig penroseConfig;
-    private PenroseContext penroseContext;
+    public ThreadManagerConfig threadManagerConfig;
 
-    private ThreadGroup        threadGroup;
-    private ThreadPoolExecutor executorService;
+    public int corePoolSize                  = ThreadManagerConfig.DEFAULT_CORE_POOL_SIZE;
+    public int maximumPoolSize               = ThreadManagerConfig.DEFAULT_MAXIMUM_POOL_SIZE;
+    public long keepAliveTime                = ThreadManagerConfig.DEFAULT_KEEP_ALIVE_TIME;
+    
+    public TimeUnit unit                     = TimeUnit.SECONDS;
+    public BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
 
-    public ThreadManager() {
-        threadGroup = new ThreadGroup("Penrose");
+    public ThreadGroup        threadGroup;
+    public ThreadPoolExecutor executorService;
+
+    public ThreadManager(String name) {
+        threadGroup = new ThreadGroup(name);
     }
 
-    public void start() throws Exception {
-        String s = penroseConfig.getProperty(MAX_THREADS);
-        int maxThreads = s == null ? DEFAULT_MAX_THREADS : Integer.parseInt(s);
+    public void init(ThreadManagerConfig threadManagerConfig) {
+
+        log.debug("Initializing ThreadManager...");
+
+        this.threadManagerConfig = threadManagerConfig;
+
+        String s = threadManagerConfig.getParameter(ThreadManagerConfig.CORE_POOL_SIZE);
+        if (s != null) corePoolSize = Integer.parseInt(s);
+        log.debug(" - corePoolSize: "+corePoolSize);
+
+        s = threadManagerConfig.getParameter(ThreadManagerConfig.MAXIMUM_POOL_SIZE);
+        if (s != null) maximumPoolSize = Integer.parseInt(s);
+        log.debug(" - maximumPoolSize: "+maximumPoolSize);
+
+        s = threadManagerConfig.getParameter(ThreadManagerConfig.KEEP_ALIVE_TIME);
+        if (s != null) keepAliveTime = Integer.parseInt(s);
+        log.debug(" - keepAliveTime: "+keepAliveTime);
 
         executorService = new ThreadPoolExecutor(
-                maxThreads,
-                maxThreads,
-                60,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>()
+                corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                unit,
+                workQueue
         );
 
         executorService.setThreadFactory(new ThreadFactory() {
@@ -65,7 +77,7 @@ public class ThreadManager {
         });
     }
 
-    public void stop() throws Exception {
+    public void destroy() throws Exception {
         if (executorService != null) executorService.shutdown();
     }
 
@@ -77,19 +89,67 @@ public class ThreadManager {
         executorService.execute(runnable);
     }
 
-    public PenroseConfig getPenroseConfig() {
-        return penroseConfig;
+    public int getCorePoolSize() {
+        return corePoolSize;
     }
 
-    public void setPenroseConfig(PenroseConfig penroseConfig) {
-        this.penroseConfig = penroseConfig;
+    public void setCorePoolSize(int corePoolSize) {
+        this.corePoolSize = corePoolSize;
     }
 
-    public PenroseContext getPenroseContext() {
-        return penroseContext;
+    public int getMaximumPoolSize() {
+        return maximumPoolSize;
     }
 
-    public void setPenroseContext(PenroseContext penroseContext) {
-        this.penroseContext = penroseContext;
+    public void setMaximumPoolSize(int maximumPoolSize) {
+        this.maximumPoolSize = maximumPoolSize;
+    }
+
+    public long getKeepAliveTime() {
+        return keepAliveTime;
+    }
+
+    public void setKeepAliveTime(long keepAliveTime) {
+        this.keepAliveTime = keepAliveTime;
+    }
+
+    public TimeUnit getUnit() {
+        return unit;
+    }
+
+    public void setUnit(TimeUnit unit) {
+        this.unit = unit;
+    }
+
+    public BlockingQueue<Runnable> getWorkQueue() {
+        return workQueue;
+    }
+
+    public void setWorkQueue(BlockingQueue<Runnable> workQueue) {
+        this.workQueue = workQueue;
+    }
+
+    public ThreadGroup getThreadGroup() {
+        return threadGroup;
+    }
+
+    public void setThreadGroup(ThreadGroup threadGroup) {
+        this.threadGroup = threadGroup;
+    }
+
+    public ThreadPoolExecutor getExecutorService() {
+        return executorService;
+    }
+
+    public void setExecutorService(ThreadPoolExecutor executorService) {
+        this.executorService = executorService;
+    }
+
+    public ThreadManagerConfig getThreadManagerConfig() {
+        return threadManagerConfig;
+    }
+
+    public void setThreadManagerConfig(ThreadManagerConfig threadManagerConfig) {
+        this.threadManagerConfig = threadManagerConfig;
     }
 }

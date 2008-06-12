@@ -28,7 +28,7 @@ public class SearchFilterTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(
@@ -81,7 +81,7 @@ public class SearchFilterTest extends BasicTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(

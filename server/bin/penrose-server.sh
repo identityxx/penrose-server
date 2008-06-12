@@ -113,6 +113,7 @@ RUNNING=0
 if [ -f "$PENROSE_PID" ] ; then
   PID=`cat "$PENROSE_PID"`
   LINES=`ps -p $PID | wc -l`
+  LINES=`expr $LINES`
   if [ "$LINES" = "2" ]; then
     RUNNING=1
   else
@@ -128,11 +129,11 @@ if [ "$1" = "start" ] ; then
   else
     shift
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    -Dcom.sun.management.jmxremote \
     -Djava.ext.dirs="$LOCALLIBPATH%" \
     -Djava.library.path="$LOCALLIBPATH" \
     -Dpenrose.home="$PENROSE_HOME" \
-    org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" \
-    >> "$PENROSE_HOME/logs/penrose.out" 2>&1 &
+    org.safehaus.penrose.server.PenroseServer $PENROSE_ARGS "$@" 2>&1 &
 
     echo $! > "$PENROSE_PID"
   fi
@@ -162,6 +163,7 @@ else
     exit 1
   else
     exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    -Dcom.sun.management.jmxremote \
     -Djava.ext.dirs="$LOCALLIBPATH" \
     -Djava.library.path="$LOCALLIBPATH" \
     -Dpenrose.home="$PENROSE_HOME" \

@@ -27,7 +27,7 @@ public class ModifyNestedTest extends NestedTestCase {
         executeUpdate("insert into children values ('group1', 'child1')");
         executeUpdate("insert into children values ('group2', 'child2')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         Collection<Modification> modifications = new ArrayList<Modification>();

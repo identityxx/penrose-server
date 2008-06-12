@@ -14,7 +14,7 @@ public class CompareBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('test', 'correct')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         boolean result = session.compare("cn=test,"+baseDn, "description", "correct");

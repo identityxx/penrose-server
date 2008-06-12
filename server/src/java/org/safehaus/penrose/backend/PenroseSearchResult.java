@@ -1,6 +1,8 @@
 package org.safehaus.penrose.backend;
 
+import com.identyx.javabackend.Attributes;
 import com.identyx.javabackend.Control;
+import com.identyx.javabackend.DN;
 import com.identyx.javabackend.SearchResult;
 
 import java.util.ArrayList;
@@ -11,20 +13,22 @@ import java.util.Collection;
  */
 public class PenroseSearchResult implements SearchResult {
 
-    PenroseEntry entry;
+    DN dn;
+    Attributes attributes;
     Collection<Control> controls = new ArrayList<Control>();
 
-    public PenroseSearchResult(PenroseEntry entry, Collection<Control> controls) {
-        this.entry = entry;
+    public PenroseSearchResult(DN dn, Attributes attributes, Collection<Control> controls) {
+        this.dn = dn;
+        this.attributes = attributes;
         this.controls.addAll(controls);
     }
 
-    public PenroseEntry getEntry() {
-        return entry;
+    public DN getDn() throws Exception {
+        return dn;
     }
 
-    public void setEntry(PenroseEntry entry) {
-        this.entry = entry;
+    public Attributes getAttributes() throws Exception {
+        return attributes;
     }
 
     public Collection<Control> getControls() {

@@ -17,16 +17,21 @@
  */
 package org.safehaus.penrose.server;
 
-import java.util.*;
-import java.io.File;
-
-import org.apache.log4j.*;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.service.*;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.config.*;
+import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.service.ServiceConfigManager;
+import org.safehaus.penrose.service.ServiceManager;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
 
 /**
  * @author Endi S. Dewata
@@ -118,7 +123,7 @@ public class PenroseServer {
             }
         }
 
-        log.fatal("Server is ready.");
+        log.fatal("Penrose Server is ready.");
     }
 
     public void stop() throws Exception {
@@ -139,7 +144,7 @@ public class PenroseServer {
 
         penrose.stop();
 
-        log.fatal("Server has been shutdown.");
+        log.fatal("Penrose Server has been shutdown.");
     }
 
     public String getStatus() {
@@ -221,7 +226,7 @@ public class PenroseServer {
         //serviceManager.load(penroseConfig.getServiceConfigManager());
     }
 
-    public static void main( String[] args ) throws Exception {
+    public static void main(String[] args) throws Exception {
 
         try {
             Collection parameters = Arrays.asList(args);
@@ -242,32 +247,33 @@ public class PenroseServer {
                 System.exit(0);
             }
 
-            String homeDirectory = System.getProperty("penrose.home");
+            File home = new File(System.getProperty("penrose.home"));
 
-            File log4jXml = new File((homeDirectory == null ? "" : homeDirectory+File.separator)+"conf"+File.separator+"log4j.xml");
+            File log4jXml = new File(home, "conf"+File.separator+"log4j.xml");
 
-            Logger rootLogger = Logger.getRootLogger();
-            rootLogger.setLevel(Level.OFF);
-
-            Logger logger = Logger.getLogger("org.safehaus.penrose");
-
-            if (parameters.contains("-d")) {
-                logger.setLevel(Level.DEBUG);
-                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
-                BasicConfigurator.configure(appender);
-
-            } else if (parameters.contains("-v")) {
-                logger.setLevel(Level.INFO);
-                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
-                BasicConfigurator.configure(appender);
-
-            } else if (log4jXml.exists()) {
+            if (log4jXml.exists()) {
                 DOMConfigurator.configure(log4jXml.getAbsolutePath());
+            }
 
-            } else {
-                logger.setLevel(Level.WARN);
-                ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
-                BasicConfigurator.configure(appender);
+            for (Enumeration e = Logger.getRootLogger().getLoggerRepository().getCurrentLoggers(); e.hasMoreElements(); ) {
+                Logger logger = (Logger)e.nextElement();
+
+                if (parameters.contains("-d")) {
+                    if (logger.getAppender("console") != null) {
+                        logger.setLevel(Level.DEBUG);
+                        logger.removeAppender("console");
+                        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%-20C{1} [%4L] %m%n"));
+                        logger.addAppender(appender);
+                    }
+
+                } else if (parameters.contains("-v")) {
+                    if (logger.getAppender("console") != null) {
+                        logger.setLevel(Level.INFO);
+                        logger.removeAppender("console");
+                        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+                        logger.addAppender(appender);
+                    }
+                }
             }
 
             log.warn("Starting "+Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION+".");
@@ -284,21 +290,21 @@ public class PenroseServer {
             String userDir = System.getProperty("user.dir");
             log.info("Current directory: "+userDir);
 
-            log.info("Penrose home: "+homeDirectory);
+            log.info("Penrose home: "+home);
 
-            final PenroseServer server = new PenroseServer(homeDirectory);
+            final PenroseServer penroseServer = new PenroseServer(home);
 
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     try {
-                        server.stop();
+                        penroseServer.stop();
                     } catch (Exception e) {
                         errorLog.error(e.getMessage(), e);
                     }
                 }
             });
 
-            server.start();
+            penroseServer.start();
 
         } catch (Exception e) {
             String name = e.getClass().getName();

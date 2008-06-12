@@ -18,7 +18,7 @@ public class ModRdnJoinTest extends JoinTestCase {
 
         executeUpdate("insert into groups values ('old', 'description')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         session.modrdn("cn=old,ou=Groups,dc=Example,dc=com", "cn=new", true);

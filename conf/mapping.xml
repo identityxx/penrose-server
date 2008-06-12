@@ -6,7 +6,7 @@
 <mapping>
 
   <entry>
-    <oc>top</oc>
+    <entry-class>org.safehaus.penrose.directory.RootEntry</entry-class>
     <oc>extensibleObject</oc>
     <at name="vendorName">
       <constant>${vendor.name}</constant>
@@ -25,6 +25,30 @@
     </at>
     <at name="namingContexts">
       <constant>dc=Example,dc=com</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Subschema">
+    <entry-class>org.safehaus.penrose.schema.directory.SchemaEntry</entry-class>
+    <oc>subentry</oc>
+    <oc>subschema</oc>
+    <oc>extensibleObject</oc>
+    <at name="cn" rdn="true">
+      <constant>Subschema</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Monitor">
+    <entry-class>org.safehaus.penrose.monitor.directory.MonitorEntry</entry-class>
+    <oc>monitorServer</oc>
+    <at name="cn" rdn="true">
+      <constant>Monitor</constant>
     </at>
     <aci>
       <permission>rs</permission>

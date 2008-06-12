@@ -5,7 +5,7 @@
 
 <mapping>
 
-  <entry dn="dc=my-domain,dc=Example,dc=com">
+  <entry dn="dc=Proxy,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source name="LDAP">
       <source-name>LDAP</source-name>

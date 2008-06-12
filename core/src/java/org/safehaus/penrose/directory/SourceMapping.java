@@ -115,7 +115,7 @@ public class SourceMapping implements Serializable, Cloneable {
     }
     
     public String getSourceName() {
-        return sourceName;
+        return sourceName == null ? name : sourceName;
     }
 
     public void setSourceName(String sourceName) {

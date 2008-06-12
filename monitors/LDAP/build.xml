@@ -1,0 +1,123 @@
+<project name="penrose-ldap-monitor" default="build">
+
+    <description>Penrose LDAP Monitor</description>
+
+    <property file="../../build.properties"/>
+
+    <property name="prefix" value=""/>
+
+    <property name="monitor.name" value="ldap"/>
+    <property name="monitor.title" value="LDAP"/>
+    <property name="monitor.dir" value="monitors/${monitor.title}"/>
+
+    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
+
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isUnix">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <path id="lib.path">
+        <fileset dir="MONITOR-INF/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="../../lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="../../server/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="../../core/target/classes"/>
+        <pathelement location="../../server/target/classes"/>
+    </path>
+
+    <target name="build" depends="init">
+        <mkdir dir="MONITOR-INF/target/classes"/>
+        <javac
+            srcdir="MONITOR-INF/src"
+            destdir="MONITOR-INF/target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+        />
+        <jar jarfile="MONITOR-INF/lib/${product.name}-${monitor.name}-monitor-${product.version}.jar">
+            <fileset dir="MONITOR-INF/target/classes"/>
+            <manifest>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
+              <attribute name="Implementation-Title"   value="${product.title} ${monitor.title} Monitor"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
+              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Build-Date" value="${TIMESTAMP}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="dist" depends="build">
+        <copy todir="../../server/target/dist/${monitor.dir}">
+            <fileset dir=".">
+                <include name="MONITOR-INF/monitor.xml"/>
+            </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="../../server/target/dist/${monitor.dir}">
+            <fileset dir=".">
+                <exclude name="build.xml"/>
+                <exclude name="MONITOR-INF/monitor.xml"/>
+                <exclude name="MONITOR-INF/target/**"/>
+                <exclude name="MONITOR-INF/src/**"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="check-install">
+        <condition property="config.missing">
+          <not>
+            <available file="${penrose.home}/${monitor.dir}/MONITOR-INF/monitor.xml"/>
+          </not>
+        </condition>
+    </target>
+
+    <target name="install-config" if="config.missing">
+        <copy todir="${penrose.home}/${monitor.dir}">
+            <fileset dir="../../server/target/dist/${monitor.dir}">
+                <include name="MONITOR-INF/monitor.xml"/>
+            </fileset>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+    </target>
+
+    <target name="install" depends="init,check-install,install-config">
+        <copy todir="${penrose.home}/${monitor.dir}" overwrite="true">
+            <fileset dir="../../server/target/dist/${monitor.dir}">
+                <exclude name="MONITOR-INF/monitor.xml"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="clean" depends="init">
+        <delete dir="MONITOR-INF/target" failonerror="false"/>
+        <delete file="MONITOR-INF/lib/${product.name}-${monitor.name}-monitor-${product.version}.jar" failonerror="false"/>
+    </target>
+
+</project>

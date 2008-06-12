@@ -45,7 +45,9 @@ public class SchedulerService extends BaseService implements SchedulerServiceMBe
     }
 
     public SchedulerConfig getSchedulerConfig() {
-        return getPartitionConfig().getSchedulerConfig();
+        PartitionConfig partitionConfig = getPartitionConfig();
+        if (partitionConfig == null) return null;
+        return partitionConfig.getSchedulerConfig();
     }
 
     public Scheduler getScheduler() {

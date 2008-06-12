@@ -1,24 +1,24 @@
 package org.safehaus.penrose.backend;
 
+import com.identyx.javabackend.SearchReference;
 import com.identyx.javabackend.SearchReferenceException;
-import com.identyx.javabackend.SearchResult;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class PenroseSearchReferenceException extends SearchReferenceException {
 
-    private PenroseSearchResult reference;
+    private SearchReference reference;
 
-    public PenroseSearchReferenceException(PenroseSearchResult reference) {
+    public PenroseSearchReferenceException(SearchReference reference) {
         this.reference = reference;
     }
     
-    public SearchResult getReference() {
+    public SearchReference getReference() {
          return reference;
     }
 
-    public void setReference(PenroseSearchResult reference) {
+    public void setReference(SearchReference reference) {
         this.reference = reference;
     }
 }

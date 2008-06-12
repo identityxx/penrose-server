@@ -20,10 +20,6 @@
       <param-value>ONELEVEL</param-value>
     </parameter>
     <parameter>
-      <param-name>filter</param-name>
-      <param-value>(objectClass=*)</param-value>
-    </parameter>
-    <parameter>
       <param-name>objectClasses</param-name>
       <param-value>person,organizationalPerson,inetOrgPerson</param-value>
     </parameter>

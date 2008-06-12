@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE partition PUBLIC
+  "-//Penrose/DTD Partition ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/partition.dtd">
+
+<partition>
+
+  <adapter name="NIS">
+    <adapter-class>org.safehaus.penrose.nis.adapter.NISAdapter</adapter-class>
+  </adapter>
+
+</partition>

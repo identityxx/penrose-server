@@ -36,6 +36,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=JDBC Merge,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -81,6 +82,7 @@ return cn.substring(i+1);
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=JDBC Merge,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -133,6 +135,7 @@ return cn.substring(i+1);
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=JDBC Merge,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>ug.groupname</variable>

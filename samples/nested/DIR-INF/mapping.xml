@@ -36,6 +36,7 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=Nested,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>organizationalPerson</oc>
     <oc>inetOrgPerson</oc>
@@ -77,6 +78,7 @@ return cn.substring(i+1);
   </entry>
 
   <entry dn="cn=...,uid=...,ou=Users,dc=Nested,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>g.groupname</variable>
@@ -124,6 +126,7 @@ return um.substring(i+1, j);
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=Nested,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
       <variable>g.groupname</variable>
@@ -155,6 +158,7 @@ return um.substring(i+1, j);
   </entry>
 
   <entry dn="uid=...,cn=...,ou=Groups,dc=Nested,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>person</oc>
     <oc>inetOrgPerson</oc>
     <at name="uid" rdn="true">

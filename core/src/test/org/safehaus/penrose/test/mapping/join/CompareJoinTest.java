@@ -14,7 +14,7 @@ public class CompareJoinTest extends JoinTestCase {
 
         executeUpdate("insert into groups values ('test', 'correct')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         boolean result = session.compare("cn=test,ou=Groups,dc=Example,dc=com", "description", "correct");

@@ -26,7 +26,6 @@ import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.LDAP;
 
 /**
@@ -62,7 +61,7 @@ public class BuiltInEntriesTest extends TestCase {
 
     public void testSearch() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         String baseDn = "ou=system";
@@ -74,8 +73,9 @@ public class BuiltInEntriesTest extends TestCase {
                 SearchRequest.SCOPE_ONE
         );
 
+        int rc = response.waitFor();
+        assertEquals(LDAP.NO_SUCH_OBJECT, rc);
         assertEquals(0, response.getTotalCount());
-        assertEquals(LDAP.NO_SUCH_OBJECT, response.getReturnCode());
 
         session.unbind();
 

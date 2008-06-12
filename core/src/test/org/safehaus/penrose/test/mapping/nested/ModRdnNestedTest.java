@@ -25,7 +25,7 @@ public class ModRdnNestedTest extends NestedTestCase {
         executeUpdate("insert into members values ('member', 'group1', 'Member1')");
         executeUpdate("insert into members values ('member', 'group2', 'Member2')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.modrdn("uid=member,cn=group1,"+baseDn, "uid=newmember", true);

@@ -1,11 +1,11 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,27 +20,34 @@ import java.util.Map;
 public class Directory implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    boolean debug = log.isDebugEnabled();
 
-    public final static Collection<Entry> EMPTY_ENTRIES     = new ArrayList<Entry>();
+    public final static Collection<Entry> EMPTY_ENTRIES = new ArrayList<Entry>();
+
+    protected Partition partition;
 
     protected DirectoryConfig directoryConfig;
-    protected DirectoryContext directoryContext;
 
-    protected Map<String,Entry> entriesById                     = new LinkedHashMap<String,Entry>();
-    protected Map<String,Collection<Entry>> entriesByDn         = new LinkedHashMap<String,Collection<Entry>>();
-    protected Map<String,Collection<Entry>> entriesBySourceName = new LinkedHashMap<String,Collection<Entry>>();
+    protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
 
-    protected Collection<DN> suffixes       = new ArrayList<DN>();
-    protected Collection<Entry> rootEntries = new ArrayList<Entry>();
+    protected Map<String,Collection<String>> entriesByDn         = new LinkedHashMap<String,Collection<String>>();
+    protected Map<String,Collection<String>> entriesBySourceName = new LinkedHashMap<String,Collection<String>>();
 
-    public void init(DirectoryConfig directoryConfig, DirectoryContext directoryContext) throws Exception {
-        this.directoryConfig = directoryConfig;
-        this.directoryContext = directoryContext;
+    protected Collection<String> rootIds                  = new ArrayList<String>();
+    protected Map<String,String> parentById               = new LinkedHashMap<String,String>();
+    protected Map<String,Collection<String>> childrenById = new LinkedHashMap<String,Collection<String>>();
 
-        initEntries();
+    protected Collection<DN> suffixes         = new ArrayList<DN>();
+
+    public Directory(Partition partition) throws Exception {
+        this.partition = partition;
+
+        PartitionConfig partitionConfig = partition.getPartitionConfig();
+        directoryConfig = partitionConfig.getDirectoryConfig();
     }
 
-    public void initEntries() throws Exception {
+    public void init() throws Exception {
+
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
             if (!entryConfig.isEnabled()) continue;
 
@@ -48,14 +55,31 @@ public class Directory implements Cloneable {
         }
     }
 
+    public void destroy() throws Exception {
+        for (String id : rootIds) {
+            destroy(id);
+        }
+    }
+
+    public void destroy(String id) throws Exception {
+
+        Collection<String> ids = childrenById.get(id);
+
+        if (ids != null) {
+            for (String childId : ids) {
+                destroy(childId);
+            }
+        }
+
+        Entry entry = entries.get(id);
+        entry.destroy();
+    }
+
     public Entry createEntry(EntryConfig entryConfig) throws Exception {
 
         log.debug("Creating entry \""+ entryConfig.getDn()+"\".");
 
-        Partition partition = directoryContext.getPartition();
-
         EntryContext entryContext = new EntryContext();
-        entryContext.setPartition(partition);
         entryContext.setDirectory(this);
 
         PartitionContext partitionContext = partition.getPartitionContext();
@@ -78,17 +102,17 @@ public class Directory implements Cloneable {
 
         boolean debug = log.isDebugEnabled();
 
-        Entry entry = entriesById.get(id);
+        Entry entry = entries.get(id);
 
         DN dn = entry.getDn();
         if (debug) log.debug("Removing entry \""+ dn +"\".");
 
         String normalizedDn = dn.getNormalizedDn();
 
-        Collection<Entry> c = entriesByDn.get(normalizedDn);
-        if (c != null) {
-            c.remove(entry);
-            if (c.isEmpty()) {
+        Collection<String> c1 = entriesByDn.get(normalizedDn);
+        if (c1 != null) {
+            c1.remove(id);
+            if (c1.isEmpty()) {
                 entriesByDn.remove(normalizedDn);
             }
         }
@@ -97,10 +121,10 @@ public class Directory implements Cloneable {
         for (SourceRef sourceRef : sourceRefs) {
             String sourceName = sourceRef.getSource().getName();
 
-            c = entriesBySourceName.get(sourceName);
-            if (c != null) {
-                c.remove(entry);
-                if (c.isEmpty()) {
+            Collection<String> c2 = entriesBySourceName.get(sourceName);
+            if (c2 != null) {
+                c2.remove(id);
+                if (c2.isEmpty()) {
                     entriesBySourceName.remove(sourceName);
                 }
             }
@@ -109,11 +133,12 @@ public class Directory implements Cloneable {
         Entry parent = entry.getParent();
 
         if (parent != null) {
+            if (debug) log.debug("Detaching from \""+parent.getDn()+"\".");
             parent.removeChild(entry);
             return entry;
         }
 
-        rootEntries.remove(entry);
+        rootIds.remove(id);
         suffixes.remove(entry.getDn());
 
         return entry;
@@ -130,27 +155,27 @@ public class Directory implements Cloneable {
         if (debug) log.debug(" - ID: "+id);
 
         // index by id
-        entriesById.put(id, entry);
+        entries.put(id, entry);
 
         // index by dn
         String normalizedDn = dn.getNormalizedDn();
-        Collection<Entry> c = entriesByDn.get(normalizedDn);
-        if (c == null) {
-            c = new ArrayList<Entry>();
-            entriesByDn.put(normalizedDn, c);
+        Collection<String> c1 = entriesByDn.get(normalizedDn);
+        if (c1 == null) {
+            c1 = new ArrayList<String>();
+            entriesByDn.put(normalizedDn, c1);
         }
-        c.add(entry);
+        c1.add(id);
 
         // index by source
         Collection<SourceRef> sourceRefs = entry.getSourceRefs();
         for (SourceRef sourceRef : sourceRefs) {
             String sourceName = sourceRef.getSource().getName();
-            c = entriesBySourceName.get(sourceName);
-            if (c == null) {
-                c = new ArrayList<Entry>();
-                entriesBySourceName.put(sourceName, c);
+            Collection<String> c2 = entriesBySourceName.get(sourceName);
+            if (c2 == null) {
+                c2 = new ArrayList<String>();
+                entriesBySourceName.put(sourceName, c2);
             }
-            c.add(entry);
+            c2.add(id);
         }
 
         String parentId = entry.getParentId();
@@ -181,7 +206,6 @@ public class Directory implements Cloneable {
             }
 
             if (debug) log.debug(" - Local parent not found, searching external parent with dn \""+parentDn+"\"");
-            Partition partition = directoryContext.getPartition();
             PartitionContext partitionContext = partition.getPartitionContext();
             PenroseContext penroseContext = partitionContext.getPenroseContext();
 
@@ -208,25 +232,38 @@ public class Directory implements Cloneable {
         }
 
         if (debug) log.debug(" - Add suffix \""+dn+"\"");
-        rootEntries.add(entry);
+        rootIds.add(id);
         suffixes.add(entry.getDn());
     }
 
     public Entry getEntry(String id) {
-        return entriesById.get(id);
+        return entries.get(id);
     }
 
     public Collection<Entry> getEntries() {
-        return entriesById.values();
+        Collection<Entry> results = new ArrayList<Entry>();
+        results.addAll(entries.values());
+        return results;
     }
     
+    public Collection<Entry> getEntries(Collection<String> ids) {
+
+        if (ids == null) return EMPTY_ENTRIES;
+
+        Collection<Entry> results = new ArrayList<Entry>();
+        for (String id : ids) {
+            Entry entry = entries.get(id);
+            results.add(entry);
+        }
+        return results;
+    }
+
     public Collection<Entry> getEntries(DN dn) throws Exception {
+
         if (dn == null) return EMPTY_ENTRIES;
 
-        Collection<Entry> list = entriesByDn.get(dn.getNormalizedDn());
-        if (list == null) return EMPTY_ENTRIES;
-
-        return new ArrayList<Entry>(list);
+        Collection<String> ids = entriesByDn.get(dn.getNormalizedDn());
+        return getEntries(ids);
     }
 
     public Collection<Entry> findEntries(String targetDn) throws Exception {
@@ -236,12 +273,10 @@ public class Directory implements Cloneable {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
         Collection<Entry> results = new ArrayList<Entry>();
 
-        for (Entry entry : rootEntries) {
-            if (debug) log.debug("Searching under "+entry.getDn());
+        for (String id : rootIds) {
+            Entry entry = entries.get(id);
             Collection<Entry> list = entry.findEntries(dn);
             results.addAll(list);
         }
@@ -324,46 +359,94 @@ public class Directory implements Cloneable {
         this.directoryConfig = directoryConfig;
     }
 
-    public DirectoryContext getDirectoryContext() {
-        return directoryContext;
-    }
-
-    public void setDirectoryContext(DirectoryContext directoryContext) {
-        this.directoryContext = directoryContext;
-    }
-
     public Partition getPartition() {
-        return directoryContext.getPartition();
+        return partition;
+    }
+
+    public Entry getRootEntry() {
+        if (rootIds.isEmpty()) return null;
+        String id = rootIds.iterator().next();
+        return entries.get(id);
     }
 
     public Collection<Entry> getRootEntries() {
-        return rootEntries;
+        return getEntries(rootIds);
     }
 
-    public Object clone() throws CloneNotSupportedException {
-        Directory directory = (Directory)super.clone();
+    public DN getSuffix() {
+        if (suffixes.isEmpty()) return null;
+        return suffixes.iterator().next();
+    }
 
-        directory.directoryConfig = (DirectoryConfig)directoryConfig.clone();
-        directory.directoryContext = directoryContext;
+    public Collection<DN> getSuffixes() {
+        return suffixes;
+    }
 
-        directory.entriesById     = new LinkedHashMap<String,Entry>();
-        directory.entriesByDn     = new LinkedHashMap<String,Collection<Entry>>();
-        directory.entriesBySourceName = new LinkedHashMap<String,Collection<Entry>>();
+    public Entry getParent(Entry entry) {
+        return getParent(entry.getId());
+    }
+    
+    public Entry getParent(String id) {
+        String parentId = parentById.get(id);
+        return entries.get(parentId);
+    }
 
-        directory.suffixes        = new ArrayList<DN>();
-        directory.rootEntries     = new ArrayList<Entry>();
+    public void setParent(Entry entry, Entry parent) {
+        setParent(entry.getId(), parent);
+    }
 
-        try {
-            directory.initEntries();
+    public void setParent(String id, Entry parent) {
+        parentById.put(id, parent.getId());
+    }
 
-        } catch (Exception e) {
-            throw new CloneNotSupportedException(e.getMessage());
+    public Collection<Entry> getChildren(Entry parent) {
+        return getChildren(parent.getId());
+    }
+
+    public Collection<Entry> getChildren(String id) {
+        Collection<String> childIds = childrenById.get(id);
+        return getEntries(childIds);
+    }
+
+    public void addChild(Entry parent, Entry child) {
+        addChild(parent.getId(), child);
+    }
+    
+    public void addChild(String id, Entry child) {
+        Collection<String> childIds = childrenById.get(id);
+        if (childIds == null) {
+            childIds = new ArrayList<String>();
+            childrenById.put(id, childIds);
         }
+        childIds.add(child.getId());
 
-        return directory;
+        parentById.put(child.getId(), id);
+    }
+
+    public void removeChild(Entry parent, Entry child) {
+        removeChild(parent.getId(), child);
+    }
+    
+    public void removeChild(String id, Entry child) {
+        Collection<String> childIds = childrenById.get(id);
+        if (childIds == null) return;
+
+        childIds.remove(child.getId());
+        if (childIds.isEmpty()) childrenById.remove(id);
+
+        parentById.remove(child.getId());
+    }
+
+    public void removeChildren(Entry entry) {
+        removeChildren(entry.getId());
+    }
+
+    public void removeChildren(String id) {
+        childrenById.remove(id);
     }
 
     public Collection<Entry> getEntriesBySourceName(String sourceName) {
-        return entriesBySourceName.get(sourceName);
+        Collection<String> ids = entriesBySourceName.get(sourceName);
+        return getEntries(ids);
     }
 }

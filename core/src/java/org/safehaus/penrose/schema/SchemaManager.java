@@ -78,7 +78,7 @@ public class SchemaManager implements SchemaManagerMBean {
         for (File schemaFile : getSchemaFiles(schemaDir)) {
             log.debug(" - "+schemaFile);
 
-            Schema schema = reader.read(schemaFile);
+            Schema schema = loadSchema(schemaFile);
             addSchema(schema);
             builtInSchemas.put(schema.getName(), schema);
         }
@@ -87,10 +87,14 @@ public class SchemaManager implements SchemaManagerMBean {
         for (File schemaFile : getSchemaFiles(extDir)) {
             log.debug(" - "+schemaFile);
 
-            Schema schema = reader.read(schemaFile);
+            Schema schema = loadSchema(schemaFile);
             addSchema(schema);
             customSchemas.put(schema.getName(), schema);
         }
+    }
+
+    public Schema loadSchema(File schemaFile) throws Exception {
+        return reader.read(schemaFile);
     }
 
     public void addSchema(Schema schema) {
@@ -339,5 +343,10 @@ public class SchemaManager implements SchemaManagerMBean {
         }
 
         return normalizedModifications;
+    }
+
+    public boolean isOperational(String attributeName) {
+        AttributeType attributeType = getAttributeType(attributeName);
+        return attributeType != null && attributeType.isOperational();
     }
 }

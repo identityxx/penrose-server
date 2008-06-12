@@ -1,0 +1,6 @@
+dn: cn=schema
+changetype: modify
+add: objectClasses
+objectClasses: ( nisNoSync-oid NAME 'nisNoSync' DESC 'nisNoSync' SUP
+  top AUXILIARY X-ORIGIN 'user defined' )
+-

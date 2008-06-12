@@ -10,6 +10,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.util.ClassUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.management.partition.PartitionManagerClient;
 import org.safehaus.penrose.management.partition.PartitionClient;
 import org.safehaus.penrose.management.BaseClient;
@@ -96,19 +97,19 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("MODULE", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("MODULE", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         for (String moduleName : partitionClient.getModuleNames()) {
 
             //ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
             String status = "OK";
 
-            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(moduleName, 15)+" ");
-            System.out.println(org.safehaus.penrose.util.Formatter.rightPad(status, 10)+" ");
+            System.out.print(TextUtil.rightPad(moduleName, 15)+" ");
+            System.out.println(TextUtil.rightPad(status, 10)+" ");
         }
     }
 

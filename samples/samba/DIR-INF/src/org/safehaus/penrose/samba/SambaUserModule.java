@@ -1,9 +1,7 @@
 package org.safehaus.penrose.samba;
 
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.event.BindEvent;
-import org.safehaus.penrose.event.AddEvent;
-import org.safehaus.penrose.event.ModifyEvent;
+import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.*;
 import org.safehaus.penrose.ldap.*;
 import org.slf4j.LoggerFactory;
@@ -32,50 +30,12 @@ public class SambaUserModule extends Module {
         }
     }
 
-    public void afterBind(BindEvent event) throws Exception {
-
-        BindResponse response = event.getResponse();
-        int rc = response.getReturnCode();
-
-        if (rc != LDAP.SUCCESS) return;
-
-        BindRequest bindRequest = event.getRequest();
-        DN dn = bindRequest.getDn();
-        log.debug("Checking NT Password and LM Password for "+dn+".");
-
-        SearchRequest searchRequest = new SearchRequest();
-        searchRequest.setDn(dn);
-        searchRequest.setFilter("(objectClass=*)");
-        searchRequest.setScope(SearchRequest.SCOPE_BASE);
-
-        SearchResponse searchResponse = new SearchResponse();
-
-        Session session = event.getSession();
-        session.search(searchRequest, searchResponse);
-
-        SearchResult result = searchResponse.next();
-        Attributes attributes = result.getAttributes();
-
-        if (attributes.get("sambaNTPassword") == null ||
-                attributes.get("sambaLMPassword") == null) {
-
-            log.debug("Adding NT Password and LM Password.");
-
-            Collection<Modification> modifications = new ArrayList<Modification>();
-
-            Attribute attribute = new Attribute("userPassword", bindRequest.getPassword());
-            Modification modification = new Modification(Modification.REPLACE, attribute);
-            modifications.add(modification);
-
-            session.modify(dn, modifications);
-
-        } else {
-            log.debug("NT Password and LM Password already exist.");
-        }
-    }
-
-    public void beforeAdd(AddEvent event) throws Exception {
-        AddRequest request = event.getRequest();
+    public void add(
+            Session session,
+            AddRequest request,
+            AddResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
         String dn = request.getDn().toString();
         int i = dn.indexOf("=");
@@ -146,19 +106,68 @@ public class SambaUserModule extends Module {
             attributes.setValue("sambaPrimaryGroupSID", groupSID);
             attributes.setValue("sambaAcctFlags", flags);
         }
+
+        chain.add(session, request, response);
     }
 
-    public void beforeModify(ModifyEvent event) throws Exception {
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            ModuleChain chain
+    ) throws Exception {
 
-        ModifyRequest modifyRequest = event.getRequest();
+        chain.bind(session, request, response);
 
-        DN dn = modifyRequest.getDn();
+        int rc = response.getReturnCode();
+
+        if (rc != LDAP.SUCCESS) return;
+
+        DN dn = request.getDn();
+        log.debug("Checking NT Password and LM Password for "+dn+".");
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setDn(dn);
+        searchRequest.setFilter("(objectClass=*)");
+        searchRequest.setScope(SearchRequest.SCOPE_BASE);
+
+        SearchResponse searchResponse = new SearchResponse();
+
+        session.search(searchRequest, searchResponse);
+
+        SearchResult result = searchResponse.next();
+        Attributes attributes = result.getAttributes();
+
+        if (attributes.get("sambaNTPassword") == null ||
+                attributes.get("sambaLMPassword") == null) {
+
+            log.debug("Adding NT Password and LM Password.");
+
+            Collection<Modification> modifications = new ArrayList<Modification>();
+
+            Attribute attribute = new Attribute("userPassword", request.getPassword());
+            Modification modification = new Modification(Modification.REPLACE, attribute);
+            modifications.add(modification);
+
+            session.modify(dn, modifications);
+
+        } else {
+            log.debug("NT Password and LM Password already exist.");
+        }
+    }
+
+    public void modify(
+            Session session,
+            ModifyRequest request,
+            ModifyResponse response,
+            ModuleChain chain
+    ) throws Exception {
+
+        DN dn = request.getDn();
         RDN rdn = dn.getRdn();
         String username = (String)rdn.get("uid");
 
         log.debug("Checking Samba attributes before modifying \""+dn+"\".");
-
-        Session session = event.getSession();
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(dn);
@@ -228,7 +237,7 @@ public class SambaUserModule extends Module {
             log.debug(" - Group SID : "+groupSID);
             log.debug(" - Flags     : "+flags);
 
-            Collection<Modification> modifications = modifyRequest.getModifications();
+            Collection<Modification> modifications = request.getModifications();
 
             Attribute attribute = new Attribute("uidNumber", uid);
             Modification modification = new Modification(Modification.ADD, attribute);
@@ -250,6 +259,8 @@ public class SambaUserModule extends Module {
             modification = new Modification(Modification.ADD, attribute);
             modifications.add(modification);
         }
+
+        chain.modify(session, request, response);
     }
 
     public Map<String,String> getServerInfo() throws Exception {

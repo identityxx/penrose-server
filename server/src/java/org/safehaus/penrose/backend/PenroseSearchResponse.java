@@ -17,11 +17,10 @@
  */
 package org.safehaus.penrose.backend;
 
+import com.identyx.javabackend.Attributes;
+import com.identyx.javabackend.DN;
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.SearchReferenceException;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.ldap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,14 +44,29 @@ public class PenroseSearchResponse
     }
 
     public PenroseSearchResult createSearchResult(SearchResult result) {
-        PenroseEntry entry = new PenroseEntry(result.getDn(), result.getAttributes());
+
+        DN dn = new PenroseDN(result.getDn());
+        Attributes attributes = new PenroseAttributes(result.getAttributes());
 
         Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
         for (Control control : result.getControls()) {
             controls.add(new PenroseControl(control));
         }
 
-        return new PenroseSearchResult(entry, controls);
+        return new PenroseSearchResult(dn, attributes, controls);
+    }
+
+    public PenroseSearchReference createSearchReference(SearchReference result) {
+
+        DN dn = new PenroseDN(result.getDn());
+        Collection<String> urls = result.getUrls();
+
+        Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
+        for (Control control : result.getControls()) {
+            controls.add(new PenroseControl(control));
+        }
+
+        return new PenroseSearchReference(dn, urls, controls);
     }
 
     public Object next() throws Exception {
@@ -61,9 +75,23 @@ public class PenroseSearchResponse
             return createSearchResult(result);
 
         } catch (SearchReferenceException e) {
-            SearchResult reference = e.getReference();
-            throw new PenroseSearchReferenceException(createSearchResult(reference));
+            SearchReference reference = e.getReference();
+            throw new PenroseSearchReferenceException(createSearchReference(reference));
         }
+    }
+
+    public void addListener(final com.identyx.javabackend.SearchListener listener) throws Exception {
+        searchResponse.addListener(new SearchListener() {
+            public void add(SearchResult result) throws Exception {
+                listener.add(createSearchResult(result));
+            }
+            public void add(SearchReference reference) throws Exception {
+                listener.add(createSearchReference(reference));
+            }
+            public void close() throws Exception {
+                listener.close();
+            }
+        });
     }
 
     public boolean hasNext() throws Exception {

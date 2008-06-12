@@ -6,15 +6,12 @@ import org.opends.server.core.DirectoryServer;
 import org.opends.server.core.PluginConfigManager;
 import org.opends.server.api.ConfigHandler;
 import org.opends.server.types.*;
-import org.opends.server.config.ConfigEntry;
 import org.opends.server.tasks.ShutdownTaskThread;
 import org.opends.server.extensions.ConfigFileHandler;
 import org.opends.server.util.ServerConstants;
 import org.opends.messages.MessageBuilder;
 
 import java.io.File;
-import java.util.List;
-import java.util.Set;
 
 import com.identyx.javabackend.opends.JavaBackendPlugin;
 

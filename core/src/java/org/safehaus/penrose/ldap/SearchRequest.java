@@ -140,7 +140,9 @@ public class SearchRequest extends Request implements Cloneable {
 
     public int hashCode() {
         return super.hashCode() +
-                (dn == null ? 0 : dn.hashCode());
+                (dn == null ? 0 : dn.hashCode()) +
+                (filter == null ? 0 : filter.hashCode()) +
+                scope;
     }
 
     private boolean equals(Object o1, Object o2) {
@@ -154,17 +156,17 @@ public class SearchRequest extends Request implements Cloneable {
         if (object == null) return false;
         if (object.getClass() != this.getClass()) return false;
 
-        SearchRequest searchRequest = (SearchRequest)object;
-        if (!equals(dn, searchRequest.dn)) return false;
-        if (!equals(filter, searchRequest.filter)) return false;
+        SearchRequest request = (SearchRequest)object;
+        if (!equals(dn, request.dn)) return false;
+        if (!equals(filter, request.filter)) return false;
 
-        if (!equals(scope, searchRequest.scope)) return false;
-        if (!equals(dereference, searchRequest.dereference)) return false;
-        if (!equals(typesOnly, searchRequest.typesOnly)) return false;
+        if (!equals(scope, request.scope)) return false;
+        if (!equals(dereference, request.dereference)) return false;
+        if (!equals(typesOnly, request.typesOnly)) return false;
 
-        if (!equals(sizeLimit, searchRequest.sizeLimit)) return false;
-        if (!equals(timeLimit, searchRequest.timeLimit)) return false;
-        if (!equals(attributes, searchRequest.attributes)) return false;
+        if (!equals(sizeLimit, request.sizeLimit)) return false;
+        if (!equals(timeLimit, request.timeLimit)) return false;
+        if (!equals(attributes, request.attributes)) return false;
 
         return super.equals(object);
     }

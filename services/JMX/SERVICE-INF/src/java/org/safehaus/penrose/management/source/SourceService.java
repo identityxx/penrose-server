@@ -62,15 +62,15 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         return partitionManager.getPartition(partitionName);
     }
 
-    public Session getSession() throws Exception {
+    public Session createAdminSession() throws Exception {
         Partition partition = getPartition();
         SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
-        return sessionManager.newAdminSession();
+        return sessionManager.createAdminSession();
     }
 
     public Long getCount() throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -95,8 +95,15 @@ public class SourceService extends BaseService implements SourceServiceMBean {
 
         log.debug("Clearing source "+partitionName+"/"+sourceName+"...");
 
-        Source source = getSource();
-        source.clear();
+        Session session = createAdminSession();
+
+        try {
+            Source source = getSource();
+            source.clear(session);
+            
+        } finally {
+            session.close();
+        }
 
         log.debug("Source cleared.");
     }
@@ -183,7 +190,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             AddResponse response
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -244,7 +251,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             DeleteResponse response
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -276,7 +283,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             DN dn
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -338,7 +345,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             ModifyResponse response
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -411,7 +418,7 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             ModRdnResponse response
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -484,13 +491,13 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             SearchResponse response
     ) throws Exception {
 
-        Session session = getSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
             source.search(session, request, response);
 
-            int rc = response.getReturnCode();
+            int rc = response.waitFor();
             log.debug("RC: "+rc);
 
             return response;

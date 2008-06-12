@@ -1,15 +1,11 @@
 package org.safehaus.penrose.example.listener;
 
 import org.apache.log4j.*;
-import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.event.SearchListener;
-import org.safehaus.penrose.event.SearchEvent;
 import org.safehaus.penrose.session.*;
 
 /**
@@ -40,14 +36,18 @@ public class DemoListener implements SearchListener {
         Penrose penrose = penroseFactory.createPenrose("../..");
         penrose.start();
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
 
         try {
-            session.addSearchListener(this);
-
             session.bind("uid=admin,ou=system", "secret");
 
-            SearchResponse response = session.search(DemoListener.SUFFIX, "(objectClass=*)");
+            SearchRequest request = new SearchRequest();
+            request.setDn(SUFFIX);
+
+            SearchResponse response = new SearchResponse();
+            response.addListener(this);
+
+            session.search(request, response);
 
             while (response.hasNext()) {
                 SearchResult searchResult = response.next();
@@ -85,36 +85,16 @@ public class DemoListener implements SearchListener {
         return sb.toString();
     }
 
-    public void beforeSearch(SearchEvent event) throws Exception {
-        SearchRequest request = event.getRequest();
-        System.out.println("#### Searching "+request.getDn()+" with filter "+request.getFilter()+".");
-
-        if (request.getFilter().toString().equalsIgnoreCase("(ou=*)")) {
-            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
-        }
-
-        if (request.getFilter().toString().equalsIgnoreCase("(ou=secret)")) {
-            throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
-        }
-
-        SearchResponse response = event.getResponse();
-
-        response.addListener(new SearchResponseAdapter() {
-            public void postAdd(SearchResponseEvent event) {
-                SearchResult result = (SearchResult)event.getObject();
-                System.out.println("#### Returning "+result.getDn());
-            }
-        });
+    public void add(SearchResult result) throws Exception {
+        System.out.println("#### Received "+result.getDn());
     }
 
-    public void afterSearch(SearchEvent event) throws Exception {
-        SearchResponse response = event.getResponse();
-        int rc = response.getReturnCode();
-        if (rc == LDAP.SUCCESS) {
-            System.out.println("#### Search succeded.");
-        } else {
-            System.out.println("#### Search failed. RC="+rc);
-        }
+    public void add(SearchReference reference) throws Exception {
+        System.out.println("#### Received "+reference.getDn());
+    }
+
+    public void close() throws Exception {
+        System.out.println("#### Search completed.");
     }
 
     public static void main(String args[]) throws Exception {

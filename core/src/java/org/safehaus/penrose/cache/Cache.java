@@ -1,11 +1,14 @@
 package org.safehaus.penrose.cache;
 
+import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * @author Endi Sukma Dewata
@@ -14,21 +17,11 @@ public class Cache {
 
     private Date createDate = new Date();
 
-    private int size;
-    private int expiration;
+    private int expiration; // minutes
 
-    private Collection<SearchResult> searchResults = new LinkedList<SearchResult>();
+    private SearchResponse response;
 
     public Cache() {
-    }
-
-    public void add(SearchResult searchResult) throws Exception {
-        if (size != 0 && searchResults.size() >= size) return;
-        searchResults.add(searchResult);
-    }
-
-    public Iterator iterator() throws Exception {
-        return searchResults.iterator();
     }
 
     public Date getCreateDate() {
@@ -44,27 +37,28 @@ public class Cache {
                 createDate.getTime() + expiration * 60 * 1000 <= System.currentTimeMillis();
     }
 
-    public Collection<SearchResult> getSearchResults() {
-        return searchResults;
-    }
-
-    public void setSearchResults(Collection<SearchResult> searchResults) {
-        this.searchResults = searchResults;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
     public int getExpiration() {
         return expiration;
     }
 
     public void setExpiration(int expiration) {
         this.expiration = expiration;
+    }
+
+    public synchronized SearchResponse getResponse() {
+        Logger log = LoggerFactory.getLogger(getClass());
+        while (response == null) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+        return response;
+    }
+
+    public synchronized void setResponse(SearchResponse response) {
+        this.response = response;
+        notifyAll();
     }
 }

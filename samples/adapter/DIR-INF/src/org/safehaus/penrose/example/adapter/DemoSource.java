@@ -204,8 +204,6 @@ public class DemoSource extends Source {
 
         System.out.println("Searching with filter "+filter+".");
 
-        response.setSizeLimit(request.getSizeLimit());
-
         PenroseContext penroseContext = getPartition().getPartitionContext().getPenroseContext();
         FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 

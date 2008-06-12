@@ -4,8 +4,8 @@ import org.safehaus.penrose.connection.ConnectionReader;
 import org.safehaus.penrose.connection.ConnectionWriter;
 import org.safehaus.penrose.source.SourceReader;
 import org.safehaus.penrose.source.SourceWriter;
-import org.safehaus.penrose.mapping.MappingReader;
-import org.safehaus.penrose.mapping.MappingWriter;
+import org.safehaus.penrose.directory.DirectoryReader;
+import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleWriter;
 
@@ -18,7 +18,6 @@ public class DefaultPartitionConfig extends PartitionConfig {
 
     public DefaultPartitionConfig() {
         super("DEFAULT");
-        partitionClass = DefaultPartition.class.getName();
     }
 
     public void load(File partitionDir) throws Exception {
@@ -34,8 +33,8 @@ public class DefaultPartitionConfig extends PartitionConfig {
         sourceReader.read(sourcesXml, sourceConfigManager);
 
         File mappingXml = new File(conf, "mapping.xml");
-        MappingReader mappingReader = new MappingReader();
-        mappingReader.read(mappingXml, directoryConfig);
+        DirectoryReader directoryReader = new DirectoryReader();
+        directoryReader.read(mappingXml, directoryConfig);
 
         File modulesXml = new File(conf, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
@@ -55,8 +54,8 @@ public class DefaultPartitionConfig extends PartitionConfig {
         sourceWriter.write(sourcesXml, sourceConfigManager);
 
         File mappingXml = new File(conf, "mapping.xml");
-        MappingWriter mappingWriter = new MappingWriter();
-        mappingWriter.write(mappingXml, directoryConfig);
+        DirectoryWriter directoryWriter = new DirectoryWriter();
+        directoryWriter.write(mappingXml, directoryConfig);
 
         File modulesXml = new File(conf, "modules.xml");
         ModuleWriter moduleWriter = new ModuleWriter();

@@ -19,7 +19,7 @@ public class SearchJoinTest extends JoinTestCase {
 
     public void testSearchingEmptyDatabase() throws Exception {
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(
@@ -58,7 +58,7 @@ public class SearchJoinTest extends JoinTestCase {
             executeUpdate("insert into usergroups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(
@@ -97,7 +97,7 @@ public class SearchJoinTest extends JoinTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(
@@ -134,7 +134,7 @@ public class SearchJoinTest extends JoinTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(
@@ -159,7 +159,7 @@ public class SearchJoinTest extends JoinTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(
@@ -208,7 +208,7 @@ public class SearchJoinTest extends JoinTestCase {
             executeUpdate("insert into groups values (?, ?)", params);
         }
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");
 
         SearchResponse response = session.search(

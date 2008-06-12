@@ -1,0 +1,692 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapping PUBLIC
+  "-//Penrose/DTD Mapping ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mapping.dtd">
+
+<mapping>
+
+  <entry dn="${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <oc>nisDomainObject</oc>
+    <at name="ou" rdn="true">
+      <constant>${DOMAIN}</constant>
+    </at>
+    <at name="nisDomain">
+      <constant>${NIS_DOMAIN}</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>account</oc>
+    <oc>posixAccount</oc>
+    <oc>shadowAccount</oc>
+    <at name="uid" rdn="true">
+      <variable>u.uid</variable>
+    </at>
+    <at name="cn">
+      <expression>
+if (u.gecos != void &amp;&amp; u.gecos != null) {
+    return u.gecos;
+}
+
+return u.uid;
+      </expression>
+    </at>
+    <at name="uidNumber">
+      <variable>u.uidNumber</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>u.gidNumber</variable>
+    </at>
+    <at name="homeDirectory">
+      <expression>
+if (u == void || u == null || u.homeDirectory == void || u.homeDirectory == null) return "/tmp";
+return u.homeDirectory;
+      </expression>
+    </at>
+    <at name="userPassword">
+      <expression>
+if (s != void &amp;&amp; s != null
+    &amp;&amp; s.userPassword != void &amp;&amp; s.userPassword != null) {
+    return "{crypt}"+s.userPassword;
+}
+
+if (u.userPassword != void &amp;&amp; u.userPassword != null) {
+    return "{crypt}"+u.userPassword;
+}
+
+return null;
+      </expression>
+    </at>
+    <at name="loginShell">
+      <variable>u.loginShell</variable>
+    </at>
+    <at name="gecos">
+      <variable>u.gecos</variable>
+    </at>
+    <at name="description">
+      <variable>u.description</variable>
+    </at>
+    <at name="shadowLastChange">
+      <variable>s.shadowLastChange</variable>
+    </at>
+    <at name="shadowMin">
+      <variable>s.shadowMin</variable>
+    </at>
+    <at name="shadowMax">
+      <variable>s.shadowMax</variable>
+    </at>
+    <at name="shadowWarning">
+      <variable>s.shadowWarning</variable>
+    </at>
+    <at name="shadowInactive">
+      <variable>s.shadowInactive</variable>
+    </at>
+    <at name="shadowExpire">
+      <variable>s.shadowExpire</variable>
+    </at>
+    <at name="shadowFlag">
+      <variable>s.shadowFlag</variable>
+    </at>
+    <source name="u">
+      <source-name>users</source-name>
+      <field name="uid">
+        <variable>uid</variable>
+      </field>
+      <field name="uidNumber">
+        <variable>uidNumber</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="homeDirectory">
+        <variable>homeDirectory</variable>
+      </field>
+      <field name="userPassword">
+        <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="loginShell">
+        <variable>loginShell</variable>
+      </field>
+      <field name="gecos">
+        <variable>gecos</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="s">
+      <source-name>shadow</source-name>
+      <field name="uid">
+        <variable>u.uid</variable>
+      </field>
+      <field name="userPassword">
+        <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="shadowLastChange">
+        <variable>shadowLastChange</variable>
+      </field>
+      <field name="shadowMin">
+        <variable>shadowMin</variable>
+      </field>
+      <field name="shadowMax">
+        <variable>shadowMax</variable>
+      </field>
+      <field name="shadowWarning">
+        <variable>shadowWarning</variable>
+      </field>
+      <field name="shadowInactive">
+        <variable>shadowInactive</variable>
+      </field>
+      <field name="shadowExpire">
+        <variable>shadowExpire</variable>
+      </field>
+      <field name="shadowFlag">
+        <variable>shadowFlag</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>posixGroup</oc>
+    <at name="cn" rdn="true">
+      <variable>g.cn</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>g.gidNumber</variable>
+    </at>
+    <at name="memberUid">
+      <variable>g.memberUid</variable>
+    </at>
+    <source name="g">
+      <source-name>groups</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="memberUid">
+        <variable>memberUid</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Hosts,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+ipHostNumber=...,ou=Hosts,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>device</oc>
+    <oc>ipHost</oc>
+    <at name="cn" rdn="true">
+      <expression>
+import java.util.*;
+if (h.cn instanceof Collection) {
+    return h.cn.iterator().next();
+}
+return h.cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <variable>h.cn</variable>
+    </at>
+    <at name="ipHostNumber" rdn="true">
+      <variable>h.ipHostNumber</variable>
+    </at>
+    <source name="h">
+      <source-name>hosts</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>ipHostNumber</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Services,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Services</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+ipServicePort=...+ipServiceProtocol=...,ou=Services,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>ipService</oc>
+    <at name="cn" rdn="true">
+      <expression>
+import java.util.*;
+if (s.cn instanceof Collection) {
+    return s.cn.iterator().next();
+}
+return s.cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <variable>s.cn</variable>
+    </at>
+    <at name="ipServicePort" rdn="true">
+      <variable>s.ipServicePort</variable>
+    </at>
+    <at name="ipServiceProtocol" rdn="true">
+      <variable>s.ipServiceProtocol</variable>
+    </at>
+    <at name="description">
+      <variable>s.description</variable>
+    </at>
+    <source name="s">
+      <source-name>services</source-name>
+      <field name="name">
+        <expression>ipServicePort+"/"+ipServiceProtocol</expression>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipServicePort">
+        <variable>ipServicePort</variable>
+      </field>
+      <field name="ipServiceProtocol">
+        <variable>ipServiceProtocol</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=RPCs,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>RPCs</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+oncRpcNumber=...,ou=RPCs,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>oncRpc</oc>
+    <at name="cn" rdn="true">
+      <expression>
+import java.util.*;
+if (r.cn instanceof Collection) {
+    return r.cn.iterator().next();
+}
+return r.cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <variable>r.cn</variable>
+    </at>
+    <at name="oncRpcNumber" rdn="true">
+      <variable>r.oncRpcNumber</variable>
+    </at>
+    <at name="description">
+      <variable>r.description</variable>
+    </at>
+    <source name="r">
+      <source-name>rpcs</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="oncRpcNumber">
+        <variable>oncRpcNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=NetIDs,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>NetIDs</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=NetIDs,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>nisNetId</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="nisNetIdUser">
+      <variable>n.nisNetIdUser</variable>
+    </at>
+    <at name="nisNetIdGroup">
+      <variable>n.nisNetIdGroup</variable>
+    </at>
+    <at name="nisNetIdHost">
+      <variable>n.nisNetIdHost</variable>
+    </at>
+    <source name="n">
+      <source-name>netids</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="nisNetIdUser">
+        <variable>nisNetIdUser</variable>
+      </field>
+      <field name="nisNetIdHost">
+        <variable>nisNetIdHost</variable>
+      </field>
+      <field name="nisNetIdGroup">
+        <variable>nisNetIdGroup</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Protocols,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Protocols</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+ipProtocolNumber=...,ou=Protocols,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>ipProtocol</oc>
+    <at name="cn" rdn="true">
+      <expression>
+import java.util.*;
+if (p.cn instanceof Collection) {
+    return p.cn.iterator().next();
+}
+return p.cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <variable>p.cn</variable>
+    </at>
+    <at name="ipProtocolNumber" rdn="true">
+      <variable>p.ipProtocolNumber</variable>
+    </at>
+    <at name="description">
+      <variable>p.description</variable>
+    </at>
+    <source name="p">
+      <source-name>protocols</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipProtocolNumber">
+        <variable>ipProtocolNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Aliases,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Aliases</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Aliases,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>nisMailAlias</oc>
+    <at name="cn" rdn="true">
+      <variable>a.cn</variable>
+    </at>
+    <at name="rfc822mailMember">
+      <variable>a.rfc822mailMember</variable>
+    </at>
+    <at name="description">
+      <variable>a.description</variable>
+    </at>
+    <source name="a">
+      <source-name>aliases</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="rfc822mailMember">
+        <variable>rfc822mailMember</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Netgroups,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Netgroups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Netgroups,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>nisNetgroup</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="nisNetgroupTriple">
+      <variable>n.nisNetgroupTriple</variable>
+    </at>
+    <at name="memberNisNetgroup">
+      <variable>n.memberNisNetgroup</variable>
+    </at>
+    <at name="description">
+      <variable>n.description</variable>
+    </at>
+    <source name="n">
+      <source-name>netgroups</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="nisNetgroupTriple">
+        <variable>nisNetgroupTriple</variable>
+      </field>
+      <field name="memberNisNetgroup">
+        <variable>memberNisNetgroup</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Ethers,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Ethers</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Ethers,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>device</oc>
+    <oc>ieee802Device</oc>
+    <at name="cn" rdn="true">
+      <variable>e.cn</variable>
+    </at>
+    <at name="macAddress">
+      <variable>e.macAddress</variable>
+    </at>
+    <source name="e">
+      <source-name>ethers</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="macAddress">
+        <variable>macAddress</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=BootParams,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>BootParams</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=BootParams,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>device</oc>
+    <oc>bootableDevice</oc>
+    <at name="cn" rdn="true">
+      <variable>b.cn</variable>
+    </at>
+    <at name="bootFile">
+      <variable>b.bootFile</variable>
+    </at>
+    <at name="bootParameter">
+      <variable>b.bootParameter</variable>
+    </at>
+    <source name="b">
+      <source-name>bootparams</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="bootFile">
+        <variable>bootFile</variable>
+      </field>
+      <field name="bootParameter">
+        <variable>bootParameter</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Networks,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Networks</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Networks,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
+    <oc>ipNetwork</oc>
+    <at name="cn" rdn="true">
+      <expression>
+import java.util.*;
+if (n.cn instanceof Collection) {
+    return n.cn.iterator().next();
+}
+return n.cn;
+      </expression>
+    </at>
+    <at name="cn">
+      <variable>n.cn</variable>
+    </at>
+    <at name="ipNetworkNumber">
+      <variable>n.ipNetworkNumber</variable>
+    </at>
+    <source name="n">
+      <source-name>networks</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipNetworkNumber">
+        <variable>ipNetworkNumber</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Automounts,${YP_SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Automounts</constant>
+    </at>
+  </entry>
+
+  <entry dn="nisMapName=...,ou=Automounts,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountMapEntry</entry-class>
+    <oc>nisMap</oc>
+    <at name="nisMapName" rdn="true">
+      <variable>am.automountMapName</variable>
+    </at>
+    <source name="am">
+      <source-name>automountMaps</source-name>
+      <field name="automountMapName">
+        <variable>nisMapName</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="cn=...,nisMapName=...,ou=Automounts,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountEntry</entry-class>
+    <oc>nisObject</oc>
+    <at name="cn" rdn="true">
+      <variable>a.automountKey</variable>
+    </at>
+    <at name="nisMapName">
+      <variable>a.automountMapName</variable>
+    </at>
+    <at name="nisMapEntry">
+      <expression>
+if (a == void || a == null) return null;
+if (a.automountInformation == void || a.automountInformation == null) return null;
+if (!a.automountInformation.startsWith("ldap:")) return a.automountInformation;
+
+int i = a.automountInformation.indexOf(' ', 5);
+
+String name;
+String info;
+
+if (i &lt; 0) {
+    name = a.automountInformation.substring(5);
+    info = null;
+} else {
+    name = a.automountInformation.substring(5, i);
+    info = a.automountInformation.substring(i+1);
+}
+
+a.automountInformation = "ldap:nisMapName="+name+",ou=Automounts,${YP_SUFFIX}";
+if (info != null) a.automountInformation += " "+info;
+
+return a.automountInformation;
+        </expression>
+    </at>
+    <source name="a">
+      <source-name>automounts</source-name>
+      <field name="automountMapName">
+        <variable>nisMapName</variable>
+      </field>
+      <field name="automountKey">
+        <variable>cn</variable>
+      </field>
+      <field name="automountInformation">
+        <variable>nisMapEntry</variable>
+      </field>
+    </source>
+  </entry>
+
+</mapping>

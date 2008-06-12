@@ -82,8 +82,8 @@ public class PenroseService implements PenroseServiceMBean {
     public void destroy() {
     }
 
-    public Collection getServiceNames() throws Exception {
-        Collection serviceNames = new ArrayList();
+    public Collection<String> getServiceNames() throws Exception {
+        Collection<String> serviceNames = new ArrayList<String>();
         ServiceManager serviceManager = penroseServer.getServiceManager();
         serviceNames.addAll(serviceManager.getServiceNames());
         return serviceNames;

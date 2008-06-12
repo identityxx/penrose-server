@@ -131,6 +131,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         }
 
         oldEntryConfig.copy(entryConfig);
+        oldEntryConfig.setId(id);
     }
 
     public void removeEntryConfig(EntryConfig entryConfig) throws Exception {

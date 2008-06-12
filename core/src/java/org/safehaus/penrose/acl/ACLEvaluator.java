@@ -18,11 +18,13 @@
 package org.safehaus.penrose.acl;
 
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.LDAP;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -185,7 +187,7 @@ public class ACLEvaluator {
     	return checkPermission(session, entry, dn, ACI.PERMISSION_DELETE);
     }
 
-    public int checkModify(Session session, Entry entry, DN dn) throws Exception {
+    public int checkWrite(Session session, Entry entry, DN dn) throws Exception {
     	return checkPermission(session, entry, dn, ACI.PERMISSION_WRITE);
     }
 
@@ -350,6 +352,52 @@ public class ACLEvaluator {
                 }
             }
 
+        }
+    }
+
+    public void filterAttributes(
+            Session session,
+            SearchResult result
+    ) throws Exception {
+
+        if (session == null || session.isRootUser()) {
+            return;
+        }
+
+        DN dn = result.getDn();
+        Entry entry = result.getEntry();
+        Attributes attributes = result.getAttributes();
+
+        Collection<String> attributeNames = attributes.getNormalizedNames();
+
+        Set<String> grants = new HashSet<String>();
+        Set<String> denies = new HashSet<String>();
+        denies.addAll(attributeNames);
+
+        DN bindDn = session.getBindDn();
+        getReadableAttributes(bindDn, entry, dn, null, attributeNames, grants, denies);
+
+        if (debug) {
+            log.debug("Returned: "+attributeNames);
+            log.debug("Granted: "+grants);
+            log.debug("Denied: "+denies);
+        }
+
+        for (String attributeName : attributes.getNames()) {
+            String normalizedName = attributeName.toLowerCase();
+
+            if (!denies.contains(normalizedName)) {
+                //log.debug("Keep undenied attribute "+normalizedName);
+                continue;
+            }
+
+            //log.debug("Remove denied attribute "+normalizedName);
+            attributes.remove(attributeName);
+        }
+
+        if (debug) {
+            log.debug("Returning "+dn+":");
+            attributes.print();
         }
     }
 }

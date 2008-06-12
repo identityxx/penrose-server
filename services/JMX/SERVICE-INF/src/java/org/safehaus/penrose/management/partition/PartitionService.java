@@ -20,7 +20,6 @@ import org.safehaus.penrose.module.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.PartitionWriter;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
@@ -132,51 +131,79 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
     public String createEntry(EntryConfig entryConfig) throws Exception {
 
-        Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
-
-        DirectoryConfig directoryConfig = directory.getDirectoryConfig();
+        PartitionConfig partitionConfig = getPartitionConfig();
+        DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         directoryConfig.addEntryConfig(entryConfig);
 
-        Entry entry = directory.createEntry(entryConfig);
+        Partition partition = getPartition();
+        if (partition != null) {
+            try {
+                Directory directory = partition.getDirectory();
+                directory.createEntry(entryConfig);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
 
-        EntryService entryService = getEntryService(entry.getId());
+        EntryService entryService = getEntryService(entryConfig.getId());
         entryService.register();
 
-        return entry.getId();
+        return entryConfig.getId();
     }
 
     public void updateEntry(String id, EntryConfig entryConfig) throws Exception {
 
         Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
+        Collection<Entry> children = null;
 
-        Entry oldEntry = directory.removeEntry(id);
-        Collection<Entry> children = oldEntry.getChildren();
+        if (partition != null) {
+            try {
+                Directory directory = partition.getDirectory();
+                Entry oldEntry = directory.removeEntry(id);
+                children = oldEntry.getChildren();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
 
-        EntryService oldEntryService = getEntryService(oldEntry.getId());
+        EntryService oldEntryService = getEntryService(id);
         oldEntryService.unregister();
 
-        DirectoryConfig directoryConfig = directory.getDirectoryConfig();
+        PartitionConfig partitionConfig = getPartitionConfig();
+        DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         directoryConfig.updateEntryConfig(id, entryConfig);
 
-        Entry newEntry = directory.createEntry(entryConfig);
-        newEntry.addChildren(children);
+        if (partition != null) {
+            try {
+                Directory directory = partition.getDirectory();
+                Entry newEntry = directory.createEntry(entryConfig);
+                if (children != null) newEntry.addChildren(children);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
 
-        EntryService newEntryService = getEntryService(newEntry.getId());
+        EntryService newEntryService = getEntryService(entryConfig.getId());
         newEntryService.register();
     }
 
     public void removeEntry(String id) throws Exception {
 
         Partition partition = getPartition();
-        Directory directory = partition.getDirectory();
-        Entry entry = directory.removeEntry(id);
+        if (partition != null) {
+            try {
+                Directory directory = partition.getDirectory();
+                directory.removeEntry(id);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
 
-        DirectoryConfig directoryConfig = directory.getDirectoryConfig();
+        PartitionConfig partitionConfig = getPartitionConfig();
+        DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         directoryConfig.removeEntryConfig(id);
 
-        EntryService entryService = getEntryService(entry.getId());
+        EntryService entryService = getEntryService(id);
         entryService.unregister();
     }
 
@@ -223,27 +250,41 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
         connectionConfigManager.addConnectionConfig(connectionConfig);
 
+        Partition partition = getPartition();
+        if (partition != null) {
+            String connectionName = connectionConfig.getName();
+            ConnectionManager connectionManager = partition.getConnectionManager();
+            connectionManager.startConnection(connectionName);
+        }
+
         ConnectionService connectionService = getConnectionService(connectionConfig.getName());
         connectionService.register();
     }
 
     public void updateConnection(String connectionName, ConnectionConfig connectionConfig) throws Exception {
 
+        PartitionConfig partitionConfig = getPartitionConfig();
+        SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
+
+        Collection<SourceConfig> sourceConfigs = sourceConfigManager.getSourceConfigsByConnectionName(connectionName);
+        if (sourceConfigs != null && !sourceConfigs.isEmpty()) {
+            throw new Exception("Connection "+connectionName+" is in use.");
+        }
+
         Partition partition = getPartition();
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
             boolean running = connectionManager.isRunning(connectionName);
-            if (running) stopConnection(connectionName);
+            if (running) connectionManager.stopConnection(connectionName);
         }
 
-        PartitionConfig partitionConfig = getPartitionConfig();
         ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
         connectionConfigManager.updateConnectionConfig(connectionName, connectionConfig);
 
         if (partition != null) {
             ConnectionManager connectionManager = partition.getConnectionManager();
             boolean running = connectionManager.isRunning(connectionName);
-            if (running) startConnection(connectionConfig.getName());
+            if (running) connectionManager.startConnection(connectionConfig.getName());
         }
     }
 
@@ -253,7 +294,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
 
         Collection<SourceConfig> sourceConfigs = sourceConfigManager.getSourceConfigsByConnectionName(connectionName);
-        if (!sourceConfigs.isEmpty()) {
+        if (sourceConfigs != null && !sourceConfigs.isEmpty()) {
             throw new Exception("Connection "+connectionName+" is in use.");
         }
 
@@ -301,7 +342,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         SourceManager sourceManager = partition.getSourceManager();
         Source source = sourceManager.createSource(sourceConfig);
 
-        SourceConfigManager sourceConfigManager = partition.getSourceConfigManager();
+        SourceConfigManager sourceConfigManager = sourceManager.getSourceConfigManager();
         sourceConfigManager.addSourceConfig(sourceConfig);
 
         SourceService sourceService = getSourceService(source.getName());
@@ -338,7 +379,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         SourceManager sourceManager = partition.getSourceManager();
         Source source = sourceManager.removeSource(name);
 
-        SourceConfigManager sourceConfigManager = partition.getSourceConfigManager();
+        SourceConfigManager sourceConfigManager = sourceManager.getSourceConfigManager();
         sourceConfigManager.removeSourceConfig(name);
 
         SourceService sourceService = getSourceService(source.getName());
@@ -372,7 +413,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         Partition partition = getPartition();
         if (partition != null) {
-            partition.createModule(moduleConfig);
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.createModule(moduleConfig);
         }
 
         String moduleName = moduleConfig.getName();
@@ -389,7 +431,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         Partition partition = getPartition();
         if (partition != null) {
-            partition.createModule(moduleConfig);
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.createModule(moduleConfig);
         }
 
         String moduleName = moduleConfig.getName();
@@ -408,7 +451,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         Partition partition = getPartition();
 
         if (partition != null) {
-            partition.removeModule(name);
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.removeModule(name);
         }
 
         ModuleService oldModuleService = getModuleService(name);
@@ -419,7 +463,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         moduleConfigManager.updateModuleConfig(name, moduleConfig);
 
         if (partition != null) {
-            partition.createModule(moduleConfig);
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.createModule(moduleConfig);
         }
 
         ModuleService newModuleService = getModuleService(moduleConfig.getName());
@@ -431,7 +476,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         Partition partition = getPartition();
 
         if (partition != null) {
-            partition.removeModule(name);
+            ModuleManager moduleManager = partition.getModuleManager();
+            moduleManager.removeModule(name);
         }
 
         PartitionConfig partitionConfig = getPartitionConfig();
@@ -893,7 +939,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             Partition partition = getPartition();
             partition.search(session, request, response);
 
-            int rc = response.getReturnCode();
+            int rc = response.waitFor();
             log.debug("RC: "+rc);
 
             return response;
@@ -906,6 +952,6 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     public Session getSession() throws Exception {
         Partition partition = getPartition();
         SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
-        return sessionManager.newAdminSession();
+        return sessionManager.createAdminSession();
     }
 }

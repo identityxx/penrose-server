@@ -247,29 +247,21 @@ public class PartitionManager {
         return null;
     }
 
-    public Collection<Entry> findEntries(DN dn) throws Exception {
-
-        Collection<Entry> results = new ArrayList<Entry>();
-
-        for (Partition partition : partitions.values()) {
-
-            Directory directory = partition.getDirectory();
-
-            for (Entry entry : directory.getRootEntries()) {
-                Collection<Entry> list = entry.findEntries(dn);
-                results.addAll(list);
-            }
-        }
-
-        return results;
-    }
-
     public Partition getPartition(DN dn) throws Exception {
 
-        Collection<Partition> results = getPartitions(dn);
-        if (results.isEmpty()) return getPartition("DEFAULT");
+        if (debug) log.debug("Searching partition for \""+dn+"\".");
 
-        return results.iterator().next();
+        Collection<Partition> results = getPartitions(dn);
+
+        if (results.isEmpty()) {
+            if (debug) log.debug("Returning DEFAULT partition.");
+            return getPartition("DEFAULT");
+        }
+
+        Partition partition = results.iterator().next();
+        if (debug) log.debug("Returning "+partition.getName()+" partition.");
+        
+        return partition;
     }
 
     public Collection<Partition> getPartitions(DN dn) throws Exception {
@@ -279,6 +271,21 @@ public class PartitionManager {
         for (Entry entry : findEntries(dn)) {
             Partition partition = entry.getPartition();
             results.add(partition);
+        }
+
+        return results;
+    }
+
+    public Collection<Entry> findEntries(DN dn) throws Exception {
+
+        Collection<Entry> results = new ArrayList<Entry>();
+
+        for (Partition partition : partitions.values()) {
+
+            if (debug) log.debug("Searching for \""+dn+"\" in "+partition.getName()+".");
+
+            Directory directory = partition.getDirectory();
+            results.addAll(directory.findEntries(dn));
         }
 
         return results;

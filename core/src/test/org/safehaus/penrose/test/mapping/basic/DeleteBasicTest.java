@@ -16,7 +16,7 @@ public class DeleteBasicTest extends BasicTestCase {
 
         executeUpdate("insert into groups values ('test', 'test')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         session.delete("cn=test,"+baseDn);

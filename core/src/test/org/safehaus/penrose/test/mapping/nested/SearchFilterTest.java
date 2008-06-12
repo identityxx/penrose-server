@@ -27,7 +27,7 @@ public class SearchFilterTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(baseDn, "(description=desc2)");
@@ -59,7 +59,7 @@ public class SearchFilterTest extends NestedTestCase {
         executeUpdate("insert into members values ('member3', 'group2', 'Member3')");
         executeUpdate("insert into members values ('member4', 'group2', 'Member4')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchResponse response = session.search(baseDn, "(memberOf=group2)");

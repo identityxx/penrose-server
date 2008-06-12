@@ -2,7 +2,7 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
@@ -57,11 +57,11 @@ public class Client {
     }
 
     public void showServices() throws Exception {
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("SERVICE", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("SERVICE", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         ServiceManagerClient serviceManagerClient = client.getServiceManagerClient();
         
@@ -69,8 +69,8 @@ public class Client {
             ServiceClient serviceClient = serviceManagerClient.getServiceClient(serviceName);
             String status = serviceClient.getStatus();
 
-            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(serviceName, 15) + " ");
-            System.out.println(Formatter.rightPad(status, 10));
+            System.out.print(TextUtil.rightPad(serviceName, 15) + " ");
+            System.out.println(TextUtil.rightPad(status, 10));
         }
     }
 
@@ -97,19 +97,19 @@ public class Client {
     }
 
     public void showPartitions() throws Exception {
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("PARTITION", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("PARTITION", 15)+" ");
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 15)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         for (String partitionName : partitionManagerClient.getPartitionNames()) {
             PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
             String status = partitionClient.getStatus();
 
-            System.out.print(Formatter.rightPad(partitionName, 15) + " ");
-            System.out.println(Formatter.rightPad(status, 10));
+            System.out.print(TextUtil.rightPad(partitionName, 15) + " ");
+            System.out.println(TextUtil.rightPad(status, 10));
         }
     }
 

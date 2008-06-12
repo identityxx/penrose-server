@@ -6,7 +6,7 @@
 <modules>
 
   <module name="LockoutModule">
-    <module-class>org.safehaus.penrose.lockout.LockoutModule</module-class>
+    <module-class>org.safehaus.penrose.lockout.module.LockoutModule</module-class>
     <parameter>
       <param-name>limit</param-name>
       <param-value>3</param-value>
@@ -19,7 +19,7 @@
 
   <module-mapping>
     <module-name>LockoutModule</module-name>
-    <base-dn>dc=my-domain,dc=com</base-dn>
+    <base-dn>dc=Lockout,dc=Example,dc=com</base-dn>
   </module-mapping>
 
 </modules>

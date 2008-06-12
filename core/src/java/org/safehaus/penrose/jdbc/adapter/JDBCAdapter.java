@@ -20,7 +20,6 @@ package org.safehaus.penrose.jdbc.adapter;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.jdbc.connection.*;
 import org.safehaus.penrose.jdbc.source.JDBCSource;
-import org.safehaus.penrose.source.jdbc.JDBCSourceSync;
 
 /**
  * @author Endi S. Dewata
@@ -29,10 +28,6 @@ public class JDBCAdapter extends Adapter {
 
     public boolean isJoinSupported() {
         return true;
-    }
-
-    public String getSyncClassName() {
-        return JDBCSourceSync.class.getName();
     }
 
     public String getConnectionClassName() {

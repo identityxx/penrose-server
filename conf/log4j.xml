@@ -23,6 +23,15 @@
     </layout>
   </appender>
 
+  <appender name="monitor" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="logs/monitor.log"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="MaxBackupIndex" value="100"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+    </layout>
+  </appender>
+
   <appender name="debug" class="org.apache.log4j.RollingFileAppender">
     <param name="File" value="logs/debug.log"/>
     <param name="MaxFileSize" value="10MB"/>
@@ -46,11 +55,20 @@
   <logger name="org.safehaus.penrose.log.Error" additivity="false">
     <level value="WARN"/>
     <appender-ref ref="error"/>
+    <appender-ref ref="debug"/>
+    <appender-ref ref="console"/>
+  </logger>
+
+  <logger name="org.safehaus.penrose.monitor" additivity="false">
+    <level value="ERROR"/>
+    <appender-ref ref="monitor"/>
+    <appender-ref ref="console"/>
   </logger>
 
   <logger name="org.safehaus.penrose" additivity="false">
-    <level value="WARN"/>
+    <level value="ERROR"/>
     <appender-ref ref="debug"/>
+    <appender-ref ref="console"/>
   </logger>
 
   <root>

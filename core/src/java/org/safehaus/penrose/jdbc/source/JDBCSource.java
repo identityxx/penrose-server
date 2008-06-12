@@ -5,7 +5,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.directory.SourceRef;
 import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.util.Formatter;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.jdbc.*;
 import org.safehaus.penrose.jdbc.connection.*;
 import org.safehaus.penrose.interpreter.Interpreter;
@@ -26,7 +26,9 @@ public class JDBCSource extends Source {
     public final static String SCHEMA       = "schema";
     public final static String TABLE        = "table";
     public final static String FILTER       = "filter";
+
     public final static String SIZE_LIMIT   = "sizeLimit";
+    public final static String CREATE       = "create";
 
     public final static String AUTHENTICATION          = "authentication";
     public final static String AUTHENTICATION_DEFAULT  = "default";
@@ -45,7 +47,7 @@ public class JDBCSource extends Source {
 
         sourceBaseDn = getParameter(BASE_DN);
 
-        boolean create = Boolean.parseBoolean(getParameter(JDBCClient.CREATE));
+        boolean create = Boolean.parseBoolean(getParameter(CREATE));
         if (create) {
             try {
                 create();
@@ -53,32 +55,6 @@ public class JDBCSource extends Source {
                 log.error(e.getMessage());
             }
         }
-    }
-
-    public JDBCClient createClient(Session session) throws Exception {
-
-        if (debug) log.debug("Creating JDBC client.");
-        JDBCClient client = connection.getClient();
-
-        if (debug) log.debug("Storing JDBC client in session.");
-        if (session != null) session.setAttribute(getPartition().getName()+".connection."+connection.getName(), client);
-
-        return client;
-    }
-
-    public JDBCClient getClient(Session session) throws Exception {
-
-        if (session == null) return createClient(session);
-
-        if (debug) log.debug("Getting LDAP client from session.");
-        JDBCClient client = (JDBCClient)session.getAttribute(getPartition().getName()+".connection."+connection.getName());
-        if (client != null) return client;
-
-        return createClient(session);
-    }
-
-
-    public void closeClient(Session session) throws Exception {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,12 +68,12 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Add "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
         try {
             InsertStatement statement = new InsertStatement();
@@ -141,7 +117,7 @@ public class JDBCSource extends Source {
             log.debug("Add operation completed.");
 
         } finally {
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 
@@ -154,9 +130,9 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Add "+ sourceRefs, 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Add "+ sourceRefs, 80));
+            log.debug(TextUtil.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
@@ -174,17 +150,22 @@ public class JDBCSource extends Source {
 
         Collection<Statement> statements = builder.generate();
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
-        for (Statement statement : statements) {
+        try {
+            for (Statement statement : statements) {
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+                statementBuilder.setQuote(client.getQuote());
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+                String sql = statementBuilder.generate(statement);
+                Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(sql, parameters);
+                client.executeUpdate(sql, parameters);
+            }
+
+        } finally {
+            connection.closeClient(session);
         }
 
         log.debug("Add operation completed.");
@@ -228,12 +209,12 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Delete "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
         try {
             DeleteStatement statement = new DeleteStatement();
@@ -265,7 +246,7 @@ public class JDBCSource extends Source {
             log.debug("Delete operation completed.");
 
         } finally {
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 
@@ -278,9 +259,9 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Delete "+ sourceRefs, 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Delete "+ sourceRefs, 80));
+            log.debug(TextUtil.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
@@ -298,17 +279,22 @@ public class JDBCSource extends Source {
 
         Collection<Statement> statements = builder.generate();
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
-        for (Statement statement : statements) {
+        try {
+            for (Statement statement : statements) {
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+                statementBuilder.setQuote(client.getQuote());
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+                String sql = statementBuilder.generate(statement);
+                Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(sql, parameters);
+                client.executeUpdate(sql, parameters);
+            }
+
+        } finally {
+            connection.closeClient(session);
         }
 
         log.debug("Delete operation completed.");
@@ -325,12 +311,12 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Modify "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Modify "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
         try {
             UpdateStatement statement = new UpdateStatement();
@@ -384,7 +370,7 @@ public class JDBCSource extends Source {
             log.debug("Modify operation completed.");
 
         } finally {
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 
@@ -397,9 +383,9 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Modify "+ sourceRefs, 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Modify "+ sourceRefs, 80));
+            log.debug(TextUtil.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
@@ -417,17 +403,22 @@ public class JDBCSource extends Source {
 
         Collection<Statement> statements = builder.generate();
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
-        for (Statement statement : statements) {
+        try {
+            for (Statement statement : statements) {
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+                statementBuilder.setQuote(client.getQuote());
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+                String sql = statementBuilder.generate(statement);
+                Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(sql, parameters);
+                client.executeUpdate(sql, parameters);
+            }
+
+        } finally {
+            connection.closeClient(session);
         }
 
         log.debug("Modify operation completed.");
@@ -444,12 +435,12 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ModRdn "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("ModRdn "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
         try {
             UpdateStatement statement = new UpdateStatement();
@@ -488,7 +479,7 @@ public class JDBCSource extends Source {
             log.debug("ModRdn operation completed.");
 
         } finally {
-            closeClient(session);
+            connection.closeClient(session);
         }
     }
 
@@ -501,9 +492,9 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("ModRdn "+ sourceRefs, 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("ModRdn "+ sourceRefs, 80));
+            log.debug(TextUtil.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
@@ -521,17 +512,22 @@ public class JDBCSource extends Source {
 
         Collection<Statement> statements = builder.generate();
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
-        for (Statement statement : statements) {
+        try {
+            for (Statement statement : statements) {
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+                statementBuilder.setQuote(client.getQuote());
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+                String sql = statementBuilder.generate(statement);
+                Collection<Object> parameters = statementBuilder.getParameters();
 
-            client.executeUpdate(sql, parameters);
+                client.executeUpdate(sql, parameters);
+            }
+
+        } finally {
+            connection.closeClient(session);
         }
 
         log.debug("ModRdn operation completed.");
@@ -548,74 +544,74 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Search "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = getClient(session);
+        response.setSizeLimit(request.getSizeLimit());
+
+        SelectStatement statement = new SelectStatement();
+
+        SourceRef sourceRef = new SourceRef(this);
+
+        Filter filter = null;
+
+        DN dn = request.getDn();
+        if (dn != null) {
+            RDN rdn = dn.getRdn();
+            for (String name : rdn.getNames()) {
+                Object value = rdn.get(name);
+
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+        }
+
+        filter = FilterTool.appendAndFilter(filter, request.getFilter());
+
+        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+        }
+        statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
+        statement.setFilter(filter);
+
+        String where = getParameter(FILTER);
+        if (where != null) {
+            statement.setWhere(where);
+        }
+
+        for (FieldRef fieldRef : sourceRef.getPrimaryKeyFieldRefs()) {
+            statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
+        }
+
+        QueryResponse queryResponse = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+
+                if (sizeLimit > 0 && totalCount >= sizeLimit) {
+                    throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
+                }
+
+                SearchResult searchResult = createSearchResult(rs);
+                response.add(searchResult);
+
+                totalCount++;
+            }
+            public void close() throws Exception {
+                response.close();
+                super.close();
+            }
+        };
+
+        String sizeLimit = getParameter(SIZE_LIMIT);
+        if (sizeLimit != null) {
+            queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
+        }
+
+        JDBCClient client = connection.getClient(session);
 
         try {
-            response.setSizeLimit(request.getSizeLimit());
-
-            SelectStatement statement = new SelectStatement();
-
-            SourceRef sourceRef = new SourceRef(this);
-
-            Filter filter = null;
-
-            DN dn = request.getDn();
-            if (dn != null) {
-                RDN rdn = dn.getRdn();
-                for (String name : rdn.getNames()) {
-                    Object value = rdn.get(name);
-
-                    SimpleFilter sf = new SimpleFilter(name, "=", value);
-                    filter = FilterTool.appendAndFilter(filter, sf);
-                }
-            }
-
-            filter = FilterTool.appendAndFilter(filter, request.getFilter());
-
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
-            }
-            statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
-            statement.setFilter(filter);
-
-            String where = getParameter(FILTER);
-            if (where != null) {
-                statement.setWhere(where);
-            }
-
-            for (FieldRef fieldRef : sourceRef.getPrimaryKeyFieldRefs()) {
-                statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
-            }
-
-            QueryResponse queryResponse = new QueryResponse() {
-                public void add(Object object) throws Exception {
-                    ResultSet rs = (ResultSet)object;
-
-                    if (sizeLimit > 0 && totalCount >= sizeLimit) {
-                        throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
-                    }
-
-                    SearchResult searchResult = createSearchResult(rs);
-                    response.add(searchResult);
-
-                    totalCount++;
-                }
-                public void close() throws Exception {
-                    response.close();
-                    super.close();
-                }
-            };
-
-            String sizeLimit = getParameter(SIZE_LIMIT);
-            if (sizeLimit != null) {
-                queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
-            }
-
             JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
             statementBuilder.setQuote(client.getQuote());
 
@@ -624,11 +620,11 @@ public class JDBCSource extends Source {
 
             client.executeQuery(sql, parameters, queryResponse);
 
-            log.debug("Search operation completed.");
-
         } finally {
-            closeClient(session);
+            connection.closeClient(session);
         }
+
+        log.debug("Search operation completed.");
     }
 
     public SearchResult createSearchResult(
@@ -670,9 +666,9 @@ public class JDBCSource extends Source {
     ) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Search "+ sourceRefs, 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Search "+ sourceRefs, 80));
+            log.debug(TextUtil.displaySeparator(80));
 
             log.debug("Source values:");
             sourceValues.print();
@@ -737,21 +733,26 @@ public class JDBCSource extends Source {
             }
         };
 
-        String sizeLimit = getParameter(JDBCConnection.SIZE_LIMIT);
+        String sizeLimit = getParameter(SIZE_LIMIT);
 
         if (sizeLimit != null) {
             queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
         }
 
-        JDBCClient client = getClient(session);
+        JDBCClient client = connection.getClient(session);
 
-        JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-        statementBuilder.setQuote(client.getQuote());
+        try {
+            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
+            statementBuilder.setQuote(client.getQuote());
 
-        String sql = statementBuilder.generate(statement);
-        Collection<Object> parameters = statementBuilder.getParameters();
+            String sql = statementBuilder.generate(statement);
+            Collection<Object> parameters = statementBuilder.getParameters();
 
-        client.executeQuery(sql, parameters, queryResponse);
+            client.executeQuery(sql, parameters, queryResponse);
+
+        } finally {
+            connection.closeClient(session);
+        }
 
         log.debug("Search operation completed.");
     }
@@ -815,73 +816,301 @@ public class JDBCSource extends Source {
     public void create() throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Create "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Create "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = connection.getClient();
-        client.createTable(sourceConfig);
+        JDBCClient client = connection.createClient();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("create table ");
+        sb.append(connection.getTableName(sourceConfig));
+        sb.append(" (");
+
+        boolean first = true;
+        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append(fieldConfig.getName());
+            sb.append(" ");
+
+            if (fieldConfig.getOriginalType() == null) {
+
+                sb.append(fieldConfig.getType());
+
+                if (fieldConfig.getLength() > 0) {
+                    sb.append("(");
+                    sb.append(fieldConfig.getLength());
+                    sb.append(")");
+                }
+
+                if (fieldConfig.isCaseSensitive()) {
+                    sb.append(" binary");
+                }
+
+                if (fieldConfig.isAutoIncrement()) {
+                    sb.append(" auto_increment");
+                }
+
+            } else {
+                sb.append(fieldConfig.getOriginalType());
+            }
+        }
+/*
+        Collection<String> indexFieldNames = sourceConfig.getIndexFieldNames();
+        for (String fieldName : indexFieldNames) {
+            sb.append(", index (");
+            sb.append(fieldName);
+            sb.append(")");
+        }
+*/
+        Collection<String> primaryKeyNames = sourceConfig.getPrimaryKeyNames();
+        if (!primaryKeyNames.isEmpty()) {
+            sb.append(", primary key (");
+
+            first = true;
+            for (String fieldName : primaryKeyNames) {
+
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(", ");
+                }
+
+                sb.append(fieldName);
+            }
+
+            sb.append(")");
+        }
+
+        sb.append(")");
+
+        String sql = sb.toString();
+
+        client.executeUpdate(sql);
+
+        client.close();
     }
 
     public void rename(Source newSource) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Rename "+sourceConfig.getName()+" to "+newSource.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Rename "+getName()+" to "+newSource.getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = connection.getClient();
-        client.renameTable(sourceConfig, newSource.getSourceConfig());
+        SourceConfig newSourceConfig = newSource.getSourceConfig();
+
+        JDBCClient client = connection.createClient();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("rename table ");
+        sb.append(connection.getTableName(sourceConfig));
+        sb.append(" to ");
+        sb.append(connection.getTableName(newSourceConfig));
+
+        String sql = sb.toString();
+
+        client.executeUpdate(sql);
+
+        client.close();
+    }
+
+    public void clear(Session session) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Clear "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        JDBCClient client = connection.getClient(session);
+
+        try {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("delete from ");
+            sb.append(connection.getTableName(sourceConfig));
+
+            String sql = sb.toString();
+
+            client.executeUpdate(sql);
+
+        } finally {
+            connection.closeClient(session);
+        }
     }
 
     public void drop() throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Drop "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Drop "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = connection.getClient();
-        client.dropTable(sourceConfig);
-    }
+        JDBCClient client = connection.createClient();
 
-    public void clear() throws Exception {
+        StringBuilder sb = new StringBuilder();
 
-        if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Clear "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
-        }
+        sb.append("drop table ");
+        sb.append(connection.getTableName(sourceConfig));
 
-        JDBCClient client = connection.getClient();
-        client.cleanTable(sourceConfig);
+        String sql = sb.toString();
+
+        client.executeUpdate(sql);
+
+        client.close();
     }
 
     public void status() throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Status "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Status "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = connection.getClient();
-        client.showStatus(sourceConfig);
+        JDBCClient client = connection.createClient();
+
+        final String tableName = connection.getTableName(sourceConfig);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("select count(*) from ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        QueryResponse response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+                log.error("Table "+tableName+": "+rs.getObject(1));
+            }
+        };
+
+        client.executeQuery(sql, response);
+
+        sb = new StringBuilder();
+
+        sb.append("select ");
+
+        boolean first = true;
+        for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+
+            sb.append("max(length(");
+            sb.append(fieldConfig.getOriginalName());
+            sb.append("))");
+        }
+
+        sb.append(" from ");
+        sb.append(tableName);
+
+        sql = sb.toString();
+
+        response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+
+                int index = 1;
+                for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+                    Object length = rs.getObject(index++);
+                    int maxLength = fieldConfig.getLength();
+                    log.error(" - Field " + fieldConfig.getName() + ": " + length + (maxLength > 0 ? "/" + maxLength : ""));
+                }
+            }
+        };
+
+        client.executeQuery(sql, response);
+
+        client.close();
     }
 
     public long getCount(Session session) throws Exception {
 
         if (debug) {
-            log.debug(Formatter.displaySeparator(80));
-            log.debug(Formatter.displayLine("Count "+sourceConfig.getName(), 80));
-            log.debug(Formatter.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Count "+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
         }
 
-        JDBCClient client = connection.getClient();
-        return client.getCount(sourceConfig);
+        final String tableName = connection.getTableName(sourceConfig);
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("select count(*) from ");
+        sb.append(tableName);
+
+        String sql = sb.toString();
+
+        QueryResponse response = new QueryResponse() {
+            public void add(Object object) throws Exception {
+                ResultSet rs = (ResultSet)object;
+                Long count = rs.getLong(1);
+                super.add(count);
+            }
+        };
+
+        executeQuery(session, sql, response);
+
+        if (!response.hasNext()) {
+            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+        }
+
+        Long count = (Long)response.next();
+        log.error("Table "+tableName+": "+count);
+
+        return count;
+/*
+        JDBCClient client = connection.getClient(session);
+
+        try {
+            client.executeQuery(sql, response);
+
+            if (!response.hasNext()) {
+                throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+            }
+
+            Long count = (Long)response.next();
+            log.error("Table "+tableName+": "+count);
+
+            return count;
+
+        } finally {
+            connection.closeClient(session);
+        }
+*/
+    }
+
+    public String getTableName() throws Exception {
+        return connection.getTableName(sourceConfig);
+    }
+
+    public void executeQuery(Session session, String sql, QueryResponse response) throws Exception {
+
+        JDBCClient client = connection.getClient(session);
+
+        try {
+            client.executeQuery(sql, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

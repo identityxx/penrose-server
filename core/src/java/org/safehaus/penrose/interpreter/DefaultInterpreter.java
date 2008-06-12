@@ -30,14 +30,14 @@ import java.util.*;
  */
 public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpreter {
 
-    public Map variables = new HashMap();
+    public Map<String,Object> variables = new HashMap<String,Object>();
     public Interpreter interpreter;
 
     public DefaultInterpreter() {
     }
 
     public Collection parse(String script) throws Exception {
-        List tokens = new ArrayList();
+        List<Token> tokens = new ArrayList<Token>();
         try {
             Parser parser = new Parser(new StringReader(script+";"));
             //log.debug("Parsing: "+script);
@@ -69,8 +69,8 @@ public class DefaultInterpreter extends org.safehaus.penrose.interpreter.Interpr
         return tokens;
     }
 
-    public Collection parseVariables(String script) throws Exception {
-        Collection tokens = new ArrayList();
+    public Collection<String> parseVariables(String script) throws Exception {
+        Collection<String> tokens = new ArrayList<String>();
         try {
             Parser parser = new Parser(new StringReader(script+";"));
             //log.debug("Parsing: "+script);

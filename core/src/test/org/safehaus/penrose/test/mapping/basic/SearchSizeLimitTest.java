@@ -17,7 +17,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -54,7 +54,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();
@@ -105,7 +105,7 @@ public class SearchSizeLimitTest extends BasicTestCase {
         executeUpdate("insert into groups values ('group1', 'desc1')");
         executeUpdate("insert into groups values ('group2', 'desc2')");
 
-        Session session = penrose.newSession();
+        Session session = penrose.createSession();
         session.bind(penroseConfig.getRootDn(), penroseConfig.getRootPassword());
 
         SearchRequest request = new SearchRequest();

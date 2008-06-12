@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.util.ClassUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.management.partition.PartitionClient;
 import org.safehaus.penrose.management.partition.PartitionManagerClient;
 import org.safehaus.penrose.management.BaseClient;
@@ -80,19 +81,19 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        System.out.print(org.safehaus.penrose.util.Formatter.rightPad("CONNECTION", 40)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.leftPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("CONNECTION", 40)+" ");
+        System.out.println(TextUtil.leftPad("STATUS", 10));
 
-        System.out.print(org.safehaus.penrose.util.Formatter.repeat("-", 40)+" ");
-        System.out.println(org.safehaus.penrose.util.Formatter.repeat("-", 10));
+        System.out.print(TextUtil.repeat("-", 40)+" ");
+        System.out.println(TextUtil.repeat("-", 10));
 
         for (String connectionName : partitionClient.getConnectionNames()) {
 
             //ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
             String status = "OK";
 
-            System.out.print(org.safehaus.penrose.util.Formatter.rightPad(connectionName, 40)+" ");
-            System.out.println(org.safehaus.penrose.util.Formatter.leftPad(status, 10)+" ");
+            System.out.print(TextUtil.rightPad(connectionName, 40)+" ");
+            System.out.println(TextUtil.leftPad(status, 10)+" ");
         }
     }
 
