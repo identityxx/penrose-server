@@ -1,4 +1,4 @@
-package org.safehaus.penrose.client;
+package org.safehaus.penrose.nis.client;
 
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -121,7 +121,7 @@ public class NISSyncClient {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.client.NISSyncClient [OPTION]... <command> [arguments]...");
+        System.out.println("Usage: org.safehaus.penrose.nis.client.NISSyncClient [OPTION]... <command> [arguments]...");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");

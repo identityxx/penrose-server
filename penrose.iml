@@ -63,6 +63,7 @@
       <excludeFolder url="file://$MODULE_DIR$/monitors/LDAP/MONITOR-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/samples/cache/DIR-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/samples/changelog/DIR-INF/target" />
+      <excludeFolder url="file://$MODULE_DIR$/samples/federation/DIR-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/samples/jdbc_sync/DIR-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/samples/ldap_sync/DIR-INF/target" />
       <excludeFolder url="file://$MODULE_DIR$/samples/lockout/DIR-INF/target" />
