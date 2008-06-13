@@ -192,12 +192,6 @@
             <fileset dir="../core/src" includes="**/*.dtd"/>
         </copy>
         <mkdir dir="target/dist/partitions"/>
-        <copy todir="target/dist/partitions">
-            <fileset dir="../partitions"/>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
         <mkdir dir="target/dist/logs"/>
         <ant dir="../monitors" target="dist"/>
         <ant dir="../services" target="dist"/>

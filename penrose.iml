@@ -41,6 +41,7 @@
       <sourceFolder url="file://$MODULE_DIR$/samples/cache/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/changelog/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/embedded/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/federation/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/jdbc_sync/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/ldap_sync/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/listener/src" isTestSource="false" />
@@ -571,6 +572,15 @@
     <orderEntry type="module" module-name="java-backend" />
     <orderEntry type="module" module-name="opends" />
     <orderEntry type="module" module-name="openldap-jldap" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jpam-0.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
 </module>

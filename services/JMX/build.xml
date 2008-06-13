@@ -39,9 +39,6 @@
     </target>
 
     <path id="lib.path">
-        <fileset dir="SERVICE-INF/lib">
-            <include name="*.jar"/>
-        </fileset>
         <fileset dir="../../lib">
             <include name="**/*.jar"/>
         </fileset>
@@ -61,6 +58,7 @@
             debug="on"
             debuglevel="lines,vars,source"
         />
+        <mkdir dir="SERVICE-INF/lib"/>
         <jar jarfile="SERVICE-INF/lib/${product.name}-${service.name}-service-${product.version}.jar">
             <fileset dir="SERVICE-INF/target/classes"/>
             <manifest>

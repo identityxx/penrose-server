@@ -164,4 +164,4 @@ fi
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -classpath "$LOCALCLASSPATH" \
 -Dpenrose.home="$PENROSE_HOME" \
-org.safehaus.penrose.nis.tools.NISLDAPSyncTool $PENROSE_ARGS "$@"
+org.safehaus.penrose.client.NISSyncClient $PENROSE_ARGS "$@"

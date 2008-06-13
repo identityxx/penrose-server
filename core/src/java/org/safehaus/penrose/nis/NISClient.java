@@ -26,8 +26,6 @@ import java.util.*;
 
 import net.sf.jpam.Pam;
 import net.sf.jpam.PamReturnValue;
-import com.identyx.license.License;
-import com.identyx.license.LicenseManager;
 
 public abstract class NISClient {
 
@@ -36,35 +34,6 @@ public abstract class NISClient {
     public Hashtable<String,String> parameters;
 
     public NISClient() throws Exception {
-
-        LicenseManager licenseManager = LicenseManager.getInstance();
-        License license = licenseManager.getLicense("Penrose Server");
-        if (license == null) {
-            throw new Exception("Invalid license.");
-        }
-
-        boolean valid = licenseManager.isValid(license);
-        if (!valid) {
-            throw new Exception("Invalid license.");
-        }
-
-        Date today = new Date();
-        Date expiryDate = license.getExpiryDate();
-        if (!today.before(expiryDate)) {
-            throw new Exception("Expired license: "+ License.DATE_FORMAT.format(expiryDate));
-        }
-/*
-        PenroseFactory factory = PenroseProFactory.getInstance();
-
-        if (!(factory instanceof PenroseProFactory)) {
-            throw new Exception("Invalid license.");
-        }
-
-        PenroseProFactory proFactory = (PenroseProFactory)factory;
-        if (!proFactory.checkLicense()) {
-            throw new Exception("Invalid license.");
-        }
-*/
     }
 
     public void init(Map<String,String> parameters) throws Exception {
