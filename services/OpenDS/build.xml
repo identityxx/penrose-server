@@ -86,6 +86,7 @@
                 <exclude name="SERVICE-INF/src/**"/>
             </fileset>
         </copy>
+        <mkdir dir="../../server/target/dist/${service.dir}/locks"/>
     </target>
 
     <target name="check-install">
