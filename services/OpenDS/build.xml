@@ -87,6 +87,7 @@
             </fileset>
         </copy>
         <mkdir dir="../../server/target/dist/${service.dir}/locks"/>
+        <mkdir dir="../../server/target/dist/${service.dir}/logs"/>
     </target>
 
     <target name="check-install">
