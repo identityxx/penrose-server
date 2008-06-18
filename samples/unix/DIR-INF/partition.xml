@@ -5,4 +5,8 @@
 
 <partition>
 
+  <adapter name="NIS">
+    <adapter-class>org.safehaus.penrose.nis.adapter.NISAdapter</adapter-class>
+  </adapter>
+
 </partition>

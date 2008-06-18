@@ -7,8 +7,6 @@
 
   <source name="users">
     <connection-name>NIS</connection-name>
-    <field name="cn"/>
-    <field name="sn"/>
     <field name="uid" primaryKey="true"/>
     <field name="uidNumber"/>
     <field name="gidNumber"/>
@@ -23,21 +21,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/passwd</param-value>
-    </parameter>
-  </source>
-
-  <source name="hosts">
-    <connection-name>NIS</connection-name>
-    <field name="cn" primaryKey="true"/>
-    <field name="ipHostNumber"/>
-    <parameter>
-      <param-name>objectClasses</param-name>
-      <param-value>ipHost</param-value>
-    </parameter>
-    <parameter>
-      <param-name>base</param-name>
-      <param-value>/etc/hosts</param-value>
+      <param-value>passwd</param-value>
     </parameter>
   </source>
 
@@ -54,7 +38,21 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/group</param-value>
+      <param-value>group</param-value>
+    </parameter>
+  </source>
+
+  <source name="hosts">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipHostNumber"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipHost</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>hosts</param-value>
     </parameter>
   </source>
 
@@ -71,7 +69,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/services</param-value>
+      <param-value>services</param-value>
     </parameter>
   </source>
 
@@ -86,7 +84,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/rpc</param-value>
+      <param-value>rpc</param-value>
     </parameter>
   </source>
 
@@ -102,7 +100,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/netid</param-value>
+      <param-value>netid</param-value>
     </parameter>
   </source>
 
@@ -117,7 +115,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/protocols</param-value>
+      <param-value>protocols</param-value>
     </parameter>
   </source>
 
@@ -131,7 +129,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/aliases</param-value>
+      <param-value>aliases</param-value>
     </parameter>
   </source>
 
@@ -147,7 +145,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/netgroup</param-value>
+      <param-value>netgroup</param-value>
     </parameter>
   </source>
 
@@ -161,7 +159,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/ethers</param-value>
+      <param-value>ethers</param-value>
     </parameter>
   </source>
 
@@ -176,7 +174,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/bootparams</param-value>
+      <param-value>bootparams</param-value>
     </parameter>
   </source>
 
@@ -190,13 +188,15 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/networks</param-value>
+      <param-value>networks</param-value>
     </parameter>
   </source>
 
-  <source name="auto_master">
+  <source name="automounts">
+    <source-class>org.safehaus.penrose.nis.source.NISAutomountsSource</source-class>
     <connection-name>NIS</connection-name>
-    <field name="cn" primaryKey="true"/>
+    <field name="automountMapName" primaryKey="true"/>
+    <field name="automountKey" primaryKey="true"/>
     <field name="automountInformation"/>
     <field name="description"/>
     <parameter>
@@ -205,22 +205,7 @@
     </parameter>
     <parameter>
       <param-name>base</param-name>
-      <param-value>/etc/auto.master</param-value>
-    </parameter>
-  </source>
-
-  <source name="auto_home">
-    <connection-name>NIS</connection-name>
-    <field name="cn" primaryKey="true"/>
-    <field name="automountInformation"/>
-    <field name="description"/>
-    <parameter>
-      <param-name>objectClasses</param-name>
-      <param-value>automount</param-value>
-    </parameter>
-    <parameter>
-      <param-name>base</param-name>
-      <param-value>/etc/auto.home</param-value>
+      <param-value>auto.master</param-value>
     </parameter>
   </source>
 

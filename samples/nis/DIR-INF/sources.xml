@@ -25,20 +25,6 @@
     </parameter>
   </source>
 
-  <source name="hosts">
-    <connection-name>NIS</connection-name>
-    <field name="cn" primaryKey="true"/>
-    <field name="ipHostNumber"/>
-    <parameter>
-      <param-name>objectClasses</param-name>
-      <param-value>ipHost</param-value>
-    </parameter>
-    <parameter>
-      <param-name>base</param-name>
-      <param-value>hosts</param-value>
-    </parameter>
-  </source>
-
   <source name="groups">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
@@ -53,6 +39,20 @@
     <parameter>
       <param-name>base</param-name>
       <param-value>group</param-value>
+    </parameter>
+  </source>
+
+  <source name="hosts">
+    <connection-name>NIS</connection-name>
+    <field name="cn" primaryKey="true"/>
+    <field name="ipHostNumber"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>ipHost</param-value>
+    </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>hosts</param-value>
     </parameter>
   </source>
 

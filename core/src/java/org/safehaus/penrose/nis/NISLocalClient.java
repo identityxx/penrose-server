@@ -1,19 +1,21 @@
 package org.safehaus.penrose.nis;
 
+import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.util.TextUtil;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Hashtable;
 import java.util.Map;
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 public class NISLocalClient extends NISClient {
 
     public Hashtable<String,String> parameters;
+    public File dir;
 
     public NISLocalClient() throws Exception {
     }
@@ -22,6 +24,9 @@ public class NISLocalClient extends NISClient {
 
         this.parameters = new Hashtable<String,String>();
         this.parameters.putAll(parameters);
+
+        String s = parameters.get("dir");
+        if (s != null) dir = new File(s);
     }
 
     public void lookup(
@@ -43,7 +48,9 @@ public class NISLocalClient extends NISClient {
         }
 
         try {
-            BufferedReader in = new BufferedReader(new FileReader(base));
+            File file = dir == null ? new File(base) : new File(dir, base);
+
+            BufferedReader in = new BufferedReader(new FileReader(file));
             String line;
 
             if (debug) log.debug("Records:");
@@ -91,7 +98,9 @@ public class NISLocalClient extends NISClient {
         }
 
         try {
-            BufferedReader in = new BufferedReader(new FileReader(base));
+            File file = dir == null ? new File(base) : new File(dir, base);
+
+            BufferedReader in = new BufferedReader(new FileReader(file));
             String line;
 
             while ((line = in.readLine()) != null) {

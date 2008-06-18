@@ -11,6 +11,10 @@
       <param-name>method</param-name>
       <param-value>local</param-value>
     </parameter>
+    <parameter>
+      <param-name>dir</param-name>
+      <param-value>/etc</param-value>
+    </parameter>
   </connection>
 
 </connections>

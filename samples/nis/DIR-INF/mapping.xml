@@ -221,10 +221,6 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <parameter>
-      <param-name>dataCacheSize</param-name>
-      <param-value>500</param-value>
-    </parameter>
   </entry>
 
   <entry dn="ou=RPCs,dc=NIS,dc=Example,dc=com">

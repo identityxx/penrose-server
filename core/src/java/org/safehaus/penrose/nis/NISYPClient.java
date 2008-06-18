@@ -210,7 +210,8 @@ public class NISYPClient extends NISClient {
     }
 
     public DN parse(
-            String base, String type,
+            String base,
+            String type,
             String name,
             String line,
             Attributes attributes

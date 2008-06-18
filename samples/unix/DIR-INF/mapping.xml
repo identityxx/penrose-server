@@ -4,6 +4,7 @@
   "http://penrose.safehaus.org/dtd/mapping.dtd">
 
 <mapping>
+
   <entry dn="dc=Unix,dc=Example,dc=com">
     <oc>dcObject</oc>
     <oc>organization</oc>
@@ -26,21 +27,18 @@
       <permission>rs</permission>
     </aci>
   </entry>
+
   <entry dn="ou=Users,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
+
   <entry dn="uid=...,ou=Users,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>account</oc>
     <oc>posixAccount</oc>
-    <at name="cn">
-      <variable>u.cn</variable>
-    </at>
-    <at name="sn">
-      <variable>u.sn</variable>
-    </at>
     <at name="uid" rdn="true">
       <variable>u.uid</variable>
     </at>
@@ -74,12 +72,6 @@ return "{crypt}"+u.userPassword;
     </at>
     <source name="u">
       <source-name>users</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="sn">
-        <variable>cn</variable>
-      </field>
       <field name="uid">
         <variable>uid</variable>
       </field>
@@ -124,41 +116,16 @@ return bytes;
       </field>
     </source>
   </entry>
-  <entry dn="ou=Hosts,dc=Unix,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Hosts</constant>
-    </at>
-  </entry>
-  <entry dn="cn=...,ou=Hosts,dc=Unix,dc=Example,dc=com">
-    <oc>device</oc>
-    <oc>ipHost</oc>
-    <at name="cn" rdn="true">
-      <variable>h.primaryKey.cn</variable>
-    </at>
-    <at name="cn">
-      <variable>h.cn</variable>
-    </at>
-    <at name="ipHostNumber">
-      <variable>h.ipHostNumber</variable>
-    </at>
-    <source name="h">
-      <source-name>hosts</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="ipHostNumber">
-        <variable>ipHostNumber</variable>
-      </field>
-    </source>
-  </entry>
+
   <entry dn="ou=Groups,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Groups,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>posixGroup</oc>
     <oc>person</oc>
     <at name="cn" rdn="true">
@@ -183,13 +150,47 @@ return bytes;
       </field>
     </source>
   </entry>
+
+  <entry dn="ou=Hosts,dc=Unix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Hosts,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>device</oc>
+    <oc>ipHost</oc>
+    <at name="cn" rdn="true">
+      <variable>h.primaryKey.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>h.cn</variable>
+    </at>
+    <at name="ipHostNumber">
+      <variable>h.ipHostNumber</variable>
+    </at>
+    <source name="h">
+      <source-name>hosts</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>ipHostNumber</variable>
+      </field>
+    </source>
+  </entry>
+
   <entry dn="ou=Services,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Services</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Services,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipService</oc>
     <at name="cn" rdn="true">
       <variable>s.name</variable>
@@ -221,18 +222,17 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <parameter>
-      <param-name>dataCacheSize</param-name>
-      <param-value>500</param-value>
-    </parameter>
   </entry>
+
   <entry dn="ou=RPCs,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>RPCs</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=RPCs,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>oncRpc</oc>
     <at name="cn" rdn="true">
       <variable>r.primaryKey.cn</variable>
@@ -259,13 +259,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=NetIDs,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>NetIDs</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=NetIDs,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisNetId</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -295,13 +298,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Protocols,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Protocols</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Protocols,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipProtocol</oc>
     <at name="cn" rdn="true">
       <variable>p.primaryKey.cn</variable>
@@ -328,13 +334,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Aliases,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Aliases</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Aliases,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisMailAlias</oc>
     <at name="cn" rdn="true">
       <variable>a.cn</variable>
@@ -352,13 +361,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Netgroups,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Netgroups</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Netgroups,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisNetgroup</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -388,13 +400,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Ethers,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Ethers</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Ethers,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ieee802Device</oc>
     <at name="cn" rdn="true">
@@ -413,13 +428,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=BootParams,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>BootParams</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=BootParams,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>bootableDevice</oc>
     <at name="cn" rdn="true">
@@ -444,13 +462,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Networks,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Networks</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Networks,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipNetwork</oc>
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
@@ -471,13 +492,16 @@ return bytes;
       </field>
     </source>
   </entry>
+
   <entry dn="ou=Merged Hosts,dc=Unix,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Merged Hosts</constant>
     </at>
   </entry>
+
   <entry dn="cn=...,ou=Merged Hosts,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ipHost</oc>
     <oc>ieee802Device</oc>
@@ -531,76 +555,16 @@ return bytes;
       </field>
     </source>
   </entry>
-  <entry dn="ou=auto.master,dc=Unix,dc=Example,dc=com">
-    <oc>automountMap</oc>
+
+  <entry dn="ou=Automounts,dc=Unix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
+    <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
-      <constant>auto.master</constant>
+      <constant>Automounts</constant>
     </at>
-    <at name="automountMapName">
-      <constant>auto.master</constant>
-    </at>
-  </entry>
-  <entry dn="cn=...,ou=auto.master,dc=Unix,dc=Example,dc=com">
-    <oc>automount</oc>
-    <at name="cn" rdn="true">
-      <variable>a.cn</variable>
-    </at>
-    <at name="automountKey">
-      <variable>a.cn</variable>
-    </at>
-    <at name="automountInformation">
-      <variable>a.automountInformation</variable>
-    </at>
-    <at name="description">
-      <variable>a.description</variable>
-    </at>
-    <source name="a">
-      <source-name>auto_master</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="automountInformation">
-        <variable>automountInformation</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
-      </field>
+    <source>
+      <source-name>automounts</source-name>
     </source>
   </entry>
-  <entry dn="ou=auto.home,dc=Unix,dc=Example,dc=com">
-    <oc>automountMap</oc>
-    <at name="ou" rdn="true">
-      <constant>auto.home</constant>
-    </at>
-    <at name="automountMapName">
-      <constant>auto.home</constant>
-    </at>
-  </entry>
-  <entry dn="cn=...,ou=auto.home,dc=Unix,dc=Example,dc=com">
-    <oc>automount</oc>
-    <at name="cn" rdn="true">
-      <variable>a.cn</variable>
-    </at>
-    <at name="automountKey">
-      <variable>a.cn</variable>
-    </at>
-    <at name="automountInformation">
-      <variable>a.automountInformation</variable>
-    </at>
-    <at name="description">
-      <variable>a.description</variable>
-    </at>
-    <source name="a">
-      <source-name>auto_home</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="automountInformation">
-        <variable>automountInformation</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
-      </field>
-    </source>
-  </entry>
+
 </mapping>
