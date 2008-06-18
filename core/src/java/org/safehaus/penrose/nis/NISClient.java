@@ -427,9 +427,9 @@ public abstract class NISClient {
 
         String remainder = line.substring(k+1).trim();
 
-        StringTokenizer st = new StringTokenizer(remainder, ",\t ");
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
+        StringTokenizer st2 = new StringTokenizer(remainder, ",\t ");
+        while (st2.hasMoreTokens()) {
+            String token = st2.nextToken();
             if (token.startsWith("#")) break;
             attributes.addValue("nisNetIdGroup", token);
         }
