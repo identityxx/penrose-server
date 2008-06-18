@@ -34,6 +34,8 @@ public class NISAutomountsSource extends Source {
 
         } catch (Exception e) {
 
+            if (debug) log.debug("Failed accessing "+automountMapName+": "+e.getMessage());
+
             if (automountMapName.startsWith("auto.")) {
                 automountMapName = "auto_" + automountMapName.substring(5);
             }
@@ -42,7 +44,7 @@ public class NISAutomountsSource extends Source {
                 client.list(automountMapName, "automount", response);
 
             } catch (Exception ex) {
-                if (debug) log.debug("Automount map "+automountMapName+" is not stored in NIS.");
+                if (debug) log.debug("Failed accessing "+automountMapName+": "+ex.getMessage());
                 return null;
             }
         }

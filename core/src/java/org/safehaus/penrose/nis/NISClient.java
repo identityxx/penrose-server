@@ -388,10 +388,11 @@ public abstract class NISClient {
 
         RDNBuilder rb = new RDNBuilder();
 
+        StringTokenizer st = new StringTokenizer(line, "\t ");
+
         if (name == null) {
-            int i = line.indexOf(' ');
-            name = line.substring(0, i);
-            line = line.substring(i+1).trim();
+            name = st.nextToken();
+            line = line.substring(name.length()+1).trim();
         }
 
         rb.set("cn", name);
@@ -661,10 +662,11 @@ public abstract class NISClient {
 
         RDNBuilder rb = new RDNBuilder();
 
+        StringTokenizer st = new StringTokenizer(line, "\t ");
+
         if (name == null) {
-            int i = line.indexOf(' ');
-            name = line.substring(0, i);
-            line = line.substring(i+1).trim();
+            name = st.nextToken();
+            line = line.substring(name.length()+1).trim();
         }
 
         rb.set("automountKey", name);
@@ -681,10 +683,11 @@ public abstract class NISClient {
 
         RDNBuilder rb = new RDNBuilder();
 
+        StringTokenizer st = new StringTokenizer(line, "\t ");
+
         if (name == null) {
-            int i = line.indexOf(' ');
-            name = line.substring(0, i);
-            line = line.substring(i+1).trim();
+            name = st.nextToken();
+            line = line.substring(name.length()+1).trim();
         }
 
         rb.set("automountMapName", base);
@@ -715,12 +718,13 @@ public abstract class NISClient {
 
         RDNBuilder rb = new RDNBuilder();
 
+        StringTokenizer st = new StringTokenizer(line, "\t ");
+
         if (name == null) {
-            int i = line.indexOf(' ');
-            name = line.substring(0, i);
-            line = line.substring(i+1).trim();
+            name = st.nextToken();
+            line = line.substring(name.length()+1).trim();
         }
-        
+
         rb.set("cn", name);
         attributes.setValue("primaryKey.cn", name);
         attributes.setValue("cn", name);
