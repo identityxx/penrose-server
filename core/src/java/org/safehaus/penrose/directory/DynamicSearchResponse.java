@@ -67,7 +67,9 @@ public class DynamicSearchResponse extends SearchResponse {
             sv.print();
         }
 
-        entry.propagate(sv);
+        interpreter.set(sv);
+        entry.propagate(sv, interpreter);
+        interpreter.clear();
 
         if (debug) {
             log.debug("Source values:");

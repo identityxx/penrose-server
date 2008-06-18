@@ -5,10 +5,8 @@
 
 <sources>
 
-  <source name="nis_users">
+  <source name="users">
     <connection-name>NIS</connection-name>
-    <field name="cn"/>
-    <field name="sn"/>
     <field name="uid" primaryKey="true"/>
     <field name="uidNumber"/>
     <field name="gidNumber"/>
@@ -27,7 +25,7 @@
     </parameter>
   </source>
 
-  <source name="nis_hosts">
+  <source name="hosts">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="ipHostNumber"/>
@@ -41,7 +39,7 @@
     </parameter>
   </source>
 
-  <source name="nis_groups">
+  <source name="groups">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="gidNumber"/>
@@ -58,7 +56,7 @@
     </parameter>
   </source>
 
-  <source name="nis_services">
+  <source name="services">
     <connection-name>NIS</connection-name>
     <field name="name"/>
     <field name="cn"/>
@@ -75,7 +73,7 @@
     </parameter>
   </source>
 
-  <source name="nis_rpcs">
+  <source name="rpcs">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="oncRpcNumber"/>
@@ -90,7 +88,7 @@
     </parameter>
   </source>
 
-  <source name="nis_netids">
+  <source name="netids">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="nisNetIdUser"/>
@@ -106,7 +104,7 @@
     </parameter>
   </source>
 
-  <source name="nis_protocols">
+  <source name="protocols">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="ipProtocolNumber"/>
@@ -121,7 +119,7 @@
     </parameter>
   </source>
 
-  <source name="nis_aliases">
+  <source name="aliases">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="rfc822mailMember" originalName="mail"/>
@@ -135,7 +133,7 @@
     </parameter>
   </source>
 
-  <source name="nis_netgroups">
+  <source name="netgroups">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="nisNetgroupTriple"/>
@@ -151,7 +149,7 @@
     </parameter>
   </source>
 
-  <source name="nis_ethers">
+  <source name="ethers">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="macAddress"/>
@@ -165,7 +163,7 @@
     </parameter>
   </source>
 
-  <source name="nis_bootparams">
+  <source name="bootparams">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="bootFile"/>
@@ -180,7 +178,7 @@
     </parameter>
   </source>
 
-  <source name="nis_networks">
+  <source name="networks">
     <connection-name>NIS</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="ipNetworkNumber"/>
@@ -194,17 +192,8 @@
     </parameter>
   </source>
 
-  <source name="nis_automountMap">
-    <connection-name>NIS</connection-name>
-    <field name="automountMapName" primaryKey="true"/>
-    <field name="description"/>
-    <parameter>
-      <param-name>objectClasses</param-name>
-      <param-value>automountMap</param-value>
-    </parameter>
-  </source>
-
-  <source name="nis_automount">
+  <source name="automounts">
+    <source-class>org.safehaus.penrose.nis.source.NISAutomountsSource</source-class>
     <connection-name>NIS</connection-name>
     <field name="automountMapName" primaryKey="true"/>
     <field name="automountKey" primaryKey="true"/>
@@ -214,6 +203,10 @@
       <param-name>objectClasses</param-name>
       <param-value>automount</param-value>
     </parameter>
+    <parameter>
+      <param-name>base</param-name>
+      <param-value>auto.master</param-value>
+    </parameter>
   </source>
-    
+
 </sources>

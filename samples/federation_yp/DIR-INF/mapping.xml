@@ -621,14 +621,18 @@ return n.cn;
   </entry>
 
   <entry dn="ou=Automounts,${YP_SUFFIX}">
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Automounts</constant>
     </at>
+    <source>
+      <source-name>automounts</source-name>
+    </source>
   </entry>
 
   <entry dn="nisMapName=...,ou=Automounts,${YP_SUFFIX}">
-    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountMapEntry</entry-class>
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>nisMap</oc>
     <at name="nisMapName" rdn="true">
       <variable>am.automountMapName</variable>
@@ -642,7 +646,7 @@ return n.cn;
   </entry>
 
   <entry dn="cn=...,nisMapName=...,ou=Automounts,${YP_SUFFIX}">
-    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountEntry</entry-class>
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>nisObject</oc>
     <at name="cn" rdn="true">
       <variable>a.automountKey</variable>

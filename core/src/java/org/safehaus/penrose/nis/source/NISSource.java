@@ -26,12 +26,18 @@ public class NISSource extends Source {
     public final static String OBJECT_CLASSES = "objectClasses";
     public final static String PAM            = "pam";
 
-    NISConnection connection;
-    NISClient client;
+    public NISConnection connection;
+    public NISClient client;
+
+    public String base;
+    public String type;
 
     public void init() throws Exception {
         connection = (NISConnection)getConnection();
         client = connection.client;
+
+        base = getParameter(BASE);
+        type = getParameter(OBJECT_CLASSES);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,9 +106,6 @@ public class NISSource extends Source {
         };
 
         sr.setSizeLimit(request.getSizeLimit());
-
-        String base = getParameter(BASE);
-        String type = getParameter(OBJECT_CLASSES);
 
         if (baseDn != null && (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)) {
             client.lookup(base, baseDn.getRdn(), type, sr);

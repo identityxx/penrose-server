@@ -215,24 +215,13 @@
     </parameter>
   </source>
 
-  <source name="automountMaps">
-    <connection-name>NIS</connection-name>
-    <field name="automountMapName" primaryKey="true"/>
-    <parameter>
-      <param-name>objectClasses</param-name>
-      <param-value>automountMap</param-value>
-    </parameter>
-    <parameter>
-      <param-name>base</param-name>
-      <param-value>auto.master</param-value>
-    </parameter>
-  </source>
-
   <source name="automounts">
+    <source-class>org.safehaus.penrose.nis.source.NISAutomountsSource</source-class>
     <connection-name>NIS</connection-name>
     <field name="automountMapName" primaryKey="true"/>
     <field name="automountKey" primaryKey="true"/>
     <field name="automountInformation"/>
+    <field name="description"/>
     <parameter>
       <param-name>objectClasses</param-name>
       <param-value>automount</param-value>

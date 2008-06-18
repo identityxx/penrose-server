@@ -199,6 +199,10 @@ public class Entry implements Cloneable {
     public SourceRef getSourceRef(int index) {
         return sourceRefs.get(index);
     }
+
+    public SourceRef getSourceRef() {
+        return sourceRefs.get(0);
+    }
 /*
     public Collection<SourceRef> getPrimarySourceRefs() {
         return primarySourceRefs.values();
@@ -846,7 +850,7 @@ public class Entry implements Cloneable {
             final Session session,
             final SearchRequest request,
             final SearchResponse response
-    ) {
+    ) throws Exception {
         return new EntrySearchResponse(session, request, response, this);
     }
 

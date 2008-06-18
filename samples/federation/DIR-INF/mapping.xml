@@ -5,8 +5,4 @@
 
 <mapping>
 
-  <module name="FederationModule" enabled="true">
-    <module-class>org.safehaus.penrose.federation.module.FederationModule</module-class>
-  </module>
-
 </mapping>

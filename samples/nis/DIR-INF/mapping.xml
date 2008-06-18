@@ -36,14 +36,9 @@
   </entry>
 
   <entry dn="uid=...,ou=Users,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>account</oc>
     <oc>posixAccount</oc>
-    <at name="cn">
-      <variable>u.cn</variable>
-    </at>
-    <at name="sn">
-      <variable>u.sn</variable>
-    </at>
     <at name="uid" rdn="true">
       <variable>u.uid</variable>
     </at>
@@ -76,13 +71,7 @@ return "{crypt}"+u.userPassword;
       <variable>u.description</variable>
     </at>
     <source name="u">
-      <source-name>nis_users</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="sn">
-        <variable>sn</variable>
-      </field>
+      <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>
       </field>
@@ -128,36 +117,6 @@ return bytes;
     </source>
   </entry>
 
-  <entry dn="ou=Hosts,dc=NIS,dc=Example,dc=com">
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Hosts</constant>
-    </at>
-  </entry>
-
-  <entry dn="cn=...,ou=Hosts,dc=NIS,dc=Example,dc=com">
-    <oc>device</oc>
-    <oc>ipHost</oc>
-    <at name="cn" rdn="true">
-      <variable>h.primaryKey.cn</variable>
-    </at>
-    <at name="cn">
-      <variable>h.cn</variable>
-    </at>
-    <at name="ipHostNumber">
-      <variable>h.ipHostNumber</variable>
-    </at>
-    <source name="h">
-      <source-name>nis_hosts</source-name>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="ipHostNumber">
-        <variable>ipHostNumber</variable>
-      </field>
-    </source>
-  </entry>
-
   <entry dn="ou=Groups,dc=NIS,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
@@ -166,6 +125,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Groups,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>posixGroup</oc>
     <at name="cn" rdn="true">
       <variable>g.cn</variable>
@@ -177,7 +137,7 @@ return bytes;
       <variable>g.memberUid</variable>
     </at>
     <source name="g">
-      <source-name>nis_groups</source-name>
+      <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -190,6 +150,37 @@ return bytes;
     </source>
   </entry>
 
+  <entry dn="ou=Hosts,dc=NIS,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Hosts,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>device</oc>
+    <oc>ipHost</oc>
+    <at name="cn" rdn="true">
+      <variable>h.primaryKey.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>h.cn</variable>
+    </at>
+    <at name="ipHostNumber">
+      <variable>h.ipHostNumber</variable>
+    </at>
+    <source name="h">
+      <source-name>hosts</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>ipHostNumber</variable>
+      </field>
+    </source>
+  </entry>
+
   <entry dn="ou=Services,dc=NIS,dc=Example,dc=com">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
@@ -198,6 +189,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Services,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipService</oc>
     <at name="cn" rdn="true">
       <variable>s.name</variable>
@@ -215,7 +207,7 @@ return bytes;
       <variable>s.description</variable>
     </at>
     <source name="s">
-      <source-name>nis_services</source-name>
+      <source-name>services</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -243,6 +235,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=RPCs,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>oncRpc</oc>
     <at name="cn" rdn="true">
       <variable>r.primaryKey.cn</variable>
@@ -257,7 +250,7 @@ return bytes;
       <variable>r.description</variable>
     </at>
     <source name="r">
-      <source-name>nis_rpcs</source-name>
+      <source-name>rpcs</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -278,6 +271,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=NetIDs,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisNetId</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -292,7 +286,7 @@ return bytes;
       <variable>n.nisNetIdHost</variable>
     </at>
     <source name="n">
-      <source-name>nis_netids</source-name>
+      <source-name>netids</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -316,6 +310,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Protocols,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipProtocol</oc>
     <at name="cn" rdn="true">
       <variable>p.primaryKey.cn</variable>
@@ -330,7 +325,7 @@ return bytes;
       <variable>p.description</variable>
     </at>
     <source name="p">
-      <source-name>nis_protocols</source-name>
+      <source-name>protocols</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -351,6 +346,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Aliases,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisMailAlias</oc>
     <at name="cn" rdn="true">
       <variable>a.cn</variable>
@@ -359,7 +355,7 @@ return bytes;
       <variable>a.rfc822mailMember</variable>
     </at>
     <source name="a">
-      <source-name>nis_aliases</source-name>
+      <source-name>aliases</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -377,6 +373,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Netgroups,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>nisNetgroup</oc>
     <at name="cn" rdn="true">
       <variable>n.cn</variable>
@@ -391,7 +388,7 @@ return bytes;
       <variable>n.description</variable>
     </at>
     <source name="n">
-      <source-name>nis_netgroups</source-name>
+      <source-name>netgroups</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -415,6 +412,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Ethers,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ieee802Device</oc>
     <at name="cn" rdn="true">
@@ -424,7 +422,7 @@ return bytes;
       <variable>e.macAddress</variable>
     </at>
     <source name="e">
-      <source-name>nis_ethers</source-name>
+      <source-name>ethers</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -442,6 +440,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=BootParams,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>bootableDevice</oc>
     <at name="cn" rdn="true">
@@ -454,7 +453,7 @@ return bytes;
       <variable>b.bootParameter</variable>
     </at>
     <source name="b">
-      <source-name>nis_bootparams</source-name>
+      <source-name>bootparams</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -475,6 +474,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Networks,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>ipNetwork</oc>
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
@@ -486,7 +486,7 @@ return bytes;
       <variable>n.ipNetworkNumber</variable>
     </at>
     <source name="n">
-      <source-name>nis_networks</source-name>
+      <source-name>networks</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -504,6 +504,7 @@ return bytes;
   </entry>
 
   <entry dn="cn=...,ou=Merged Hosts,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>device</oc>
     <oc>ipHost</oc>
     <oc>ieee802Device</oc>
@@ -527,7 +528,7 @@ return bytes;
       <variable>b.bootParameter</variable>
     </at>
     <source name="h">
-      <source-name>nis_hosts</source-name>
+      <source-name>hosts</source-name>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -536,7 +537,7 @@ return bytes;
       </field>
     </source>
     <source name="e">
-      <source-name>nis_ethers</source-name>
+      <source-name>ethers</source-name>
       <field name="cn">
         <variable>h.cn</variable>
       </field>
@@ -545,7 +546,7 @@ return bytes;
       </field>
     </source>
     <source name="b">
-      <source-name>nis_bootparams</source-name>
+      <source-name>bootparams</source-name>
       <field name="cn">
         <variable>h.cn</variable>
       </field>
@@ -559,59 +560,13 @@ return bytes;
   </entry>
 
   <entry dn="ou=Automounts,dc=NIS,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Automounts</constant>
     </at>
-  </entry>
-
-  <entry dn="nisMapName=...,ou=Automounts,dc=NIS,dc=Example,dc=com">
-    <oc>nisMap</oc>
-    <at name="nisMapName" rdn="true">
-      <variable>am.automountMapName</variable>
-    </at>
-    <at name="description">
-      <variable>am.description</variable>
-    </at>
-    <source name="am">
-      <source-name>nis_automountMap</source-name>
-      <field name="automountMapName">
-        <variable>nisMapName</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
-      </field>
-    </source>
-  </entry>
-
-  <entry dn="cn=...,nisMapName=...,ou=Automounts,dc=NIS,dc=Example,dc=com">
-    <oc>nisObject</oc>
-    <at name="cn" rdn="true">
-      <variable>a.automountKey</variable>
-    </at>
-    <at name="nisMapEntry">
-      <variable>a.automountInformation</variable>
-    </at>
-    <at name="nisMapName">
-      <variable>am.automountMapName</variable>
-    </at>
-    <at name="description">
-       <variable>a.description</variable>
-    </at>
-    <source name="a">
-      <source-name>nis_automount</source-name>
-      <field name="automountMapName">
-        <variable>am.automountMapName</variable>
-      </field>
-      <field name="automountKey">
-        <variable>cn</variable>
-      </field>
-      <field name="automountInformation">
-        <variable>nisMapEntry</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
-      </field>
+    <source>
+      <source-name>automounts</source-name>
     </source>
   </entry>
 

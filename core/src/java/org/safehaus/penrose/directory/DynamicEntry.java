@@ -861,7 +861,9 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
-        if (debug) log.debug("Propagating source "+sourceMapping.getName()+":");
+        if (debug) log.debug("Propagating source "+sourceMapping.getName()+" in "+getDn()+":");
+
+        interpreter.set(sourceValues);
 
         Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
         for (FieldMapping fieldMapping : fieldMappings) {
@@ -873,6 +875,8 @@ public class DynamicEntry extends Entry implements Cloneable {
                     interpreter
             );
         }
+
+        interpreter.clear();
     }
 
     public void propagateField(
@@ -890,22 +894,22 @@ public class DynamicEntry extends Entry implements Cloneable {
         Attribute lattribute = lattributes.get(lfieldName);
 
         if (lattribute != null && !lattribute.isEmpty()) {
-            //if (debug) log.debug(" - "+lhs+" is already set.");
+            if (debug) log.debug(" - "+lhs+" is already set.");
             return;
         }
 
         Object value = interpreter.eval(fieldMapping);
         if (value == null) {
-            //if (debug) log.debug(" - "+lhs+" is null.");
+            if (debug) log.debug(" - "+lhs+" is null.");
             return;
         }
 
         if (debug) log.debug(" - "+lhs+": "+value);
 
         if (value instanceof Collection) {
-            lattribute.addValues((Collection)value);
+            lattributes.addValues(lfieldName, (Collection)value);
         } else {
-            lattribute.addValue(value);
+            lattributes.addValue(lfieldName, value);
         }
     }
 }
