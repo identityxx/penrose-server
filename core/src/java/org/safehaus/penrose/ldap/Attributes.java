@@ -1,9 +1,5 @@
 package org.safehaus.penrose.ldap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.util.BinaryUtil;
-
 import java.util.*;
 import java.io.Serializable;
 
@@ -32,12 +28,12 @@ public class Attributes implements Serializable, Cloneable {
     }
 
     public void setValue(String name, Object value) {
-
+/*
         if (value == null) {
             remove(name);
             return;
         }
-
+*/
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);
@@ -47,7 +43,7 @@ public class Attributes implements Serializable, Cloneable {
     }
 
     public void addValue(String name, Object value) {
-        if (value == null) return;
+        //if (value == null) return;
         Attribute attribute = attributes.get(name.toLowerCase());
         if (attribute == null) {
             attribute = new Attribute(name);

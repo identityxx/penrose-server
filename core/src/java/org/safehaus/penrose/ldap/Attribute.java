@@ -221,5 +221,9 @@ public class Attribute implements Serializable, Cloneable {
 
             if (debug) log.debug(" - " + name + ": " + value + " (" + className + ")");
         }
+
+        if (isEmpty()) {
+            if (debug) log.debug(" - " + name);
+        }
     }
 }

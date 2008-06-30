@@ -532,19 +532,22 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             PagedResultsControl pagedResultsRequestControl = null;
             byte[] cookie = null;
 
-            log.debug("Request Controls:");
-            for (Control control : request.getControls()) {
-                log.debug(" - "+control.getOid());
+            Collection<Control> controls = request.getControls();
+            if (!controls.isEmpty()) {
+                log.debug("Request Controls:");
+                for (Control control : controls) {
+                    log.debug(" - "+control.getOid());
 
-                if (control instanceof PagedResultsControl) {
-                    pagedResultsRequestControl = (PagedResultsControl)control;
+                    if (control instanceof PagedResultsControl) {
+                        pagedResultsRequestControl = (PagedResultsControl)control;
 
-                } else if (PagedResultsControl.OID.equals(control.getOid())) {
-                    pagedResultsRequestControl = new PagedResultsControl(control);
-                    control = pagedResultsRequestControl;
+                    } else if (PagedResultsControl.OID.equals(control.getOid())) {
+                        pagedResultsRequestControl = new PagedResultsControl(control);
+                        control = pagedResultsRequestControl;
+                    }
+
+                    requestControls.add(control);
                 }
-
-                requestControls.add(control);
             }
 
             if (pageSize > 0) {
@@ -611,12 +614,13 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
                             pagedResultsRequestControl.setCookie(cookie);
                             pagedResultsRequestControl.encodeValue();
                         }
+
+                        response.addControl(new Control(control.getID(), control.getValue(), control.isCritical()));
                     }
                 }
 
-                log.debug("Cookie: "+(cookie != null));
                 if (cookie != null) {
-                    log.debug("Length: "+cookie.length);
+                    log.debug("Cookie length: "+cookie.length);
                 }
 
             } while (cookie != null && cookie.length > 0);
@@ -667,21 +671,29 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         Attributes attributes = new Attributes();
 
         for (Object object : entry.getAttributeSet()) {
-            LDAPAttribute attribute = (LDAPAttribute) object;
-            String name = attribute.getName();
+            LDAPAttribute ldapAttribute = (LDAPAttribute) object;
+            String name = ldapAttribute.getName();
+
+            Attribute attribute = new Attribute(name);
 
             if (binaryAttributes.contains(name.toLowerCase())) {
-                for (byte[] value : attribute.getByteValueArray()) {
+                for (byte[] value : ldapAttribute.getByteValueArray()) {
                     if (debug) log.debug(" - " + name + ": " + BinaryUtil.encode(BinaryUtil.BIG_INTEGER, value, 0, 10)+"...");
-                    attributes.addValue(name, value);
+                    attribute.addValue(value);
                 }
 
             } else {
-                for (String value : attribute.getStringValueArray()) {
+                for (String value : ldapAttribute.getStringValueArray()) {
                     if (debug) log.debug(" - " + name + ": " + value);
-                    attributes.addValue(name, value);
+                    attribute.addValue(value);
                 }
             }
+
+            if (attribute.isEmpty()) {
+                if (debug) log.debug(" - " + name);
+            }
+            
+            attributes.add(attribute);
         }
 
         return new SearchResult(dn, attributes);

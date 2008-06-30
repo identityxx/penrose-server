@@ -118,11 +118,15 @@ public class ProxyEntry extends Entry {
 
     public DN convertDn(DN dn, DN oldSuffix, DN newSuffix) throws Exception {
 
+        if (debug) {
+            log.debug("Converting "+dn+":");
+            log.debug(" - old suffix: "+oldSuffix);
+            log.debug(" - new suffix: "+newSuffix);
+        }
+
         if (dn == null || dn.isEmpty()) return dn;
         if (oldSuffix == null || oldSuffix.isEmpty() || !dn.endsWith(oldSuffix)) return dn;
         if (newSuffix == null || newSuffix.isEmpty()) return dn;
-
-        //if (debug) log.debug("Converting "+dn);
 
         int start = dn.getSize() - oldSuffix.getSize();
 

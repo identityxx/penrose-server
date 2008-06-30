@@ -26,7 +26,6 @@ The Penrose (TM) application includes items that have been sourced from third pa
  - JUnit                      CPL                        http://svn.mindswap.org/swoop/branches/profiling/lib/junit-3.8.1/cpl-v10.html
  - JLDAP                      Novell Developer License   http://developer.novell.com/wiki/index.php/Jldap
  - Log4j                      Apache Software License    http://logging.apache.org/log4j/1.2/license.html
- - MySQL Connector/J          GPL                        http://www.mysql.com/products/connector/j/
  - OpenDS                     CDDL                       https://opends.dev.java.net/
  - PostgreSQL JDBC Driver     BSD-style License          http://jdbc.postgresql.org/license.html
  - Quartz                     Apache Software License    http://www.opensymphony.com/quartz/license.action

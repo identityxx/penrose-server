@@ -182,6 +182,14 @@ public class SourceConfig implements Serializable, SourceConfigMBean, Cloneable 
         return fieldConfigs.keySet();
     }
     
+    public Collection<String> getFieldOriginalNames() {
+        Collection<String> results = new ArrayList<String>();
+        for (FieldConfig fieldConfig : fieldConfigs.values()) {
+            results.add(fieldConfig.getOriginalName());
+        }
+        return results;
+    }
+
     public Collection<FieldConfig> getFieldConfigs() {
 		return fieldConfigs.values();
 	}

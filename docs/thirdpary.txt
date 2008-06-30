@@ -10,5 +10,3 @@ JLDAP          NDLA   http://developer.novell.com/ndk/license.htm
 JMXRI          SCSL   http://java.sun.com/products/JavaManagement/download.html
 JUnit          CPL    http://www.opensource.org/licenses/cpl.php
 Jython                http://www.jython.org/license.html
-MX4J           Apache http://mx4j.sourceforge.net/docs/ch01s06.html
-MySQL          FLOSS  http://www.mysql.com/company/legal/licensing/foss-exception.html

@@ -73,7 +73,7 @@ public class LDAPSyncClient {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.ldap.client.LDAPSyncClient [OPTION]... <command> [arguments]...");
+        System.out.println("Usage: org.safehaus.penrose.ldap.client.ADSyncClient [OPTION]... <command> [arguments]...");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");

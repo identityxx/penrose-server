@@ -139,6 +139,10 @@ public class Source implements Cloneable {
         return sourceConfig.getFieldNames();
     }
 
+    public Collection<String> getFieldOriginalNames() {
+        return sourceConfig.getFieldOriginalNames();
+    }
+
     public Field getField(String fieldName) {
         return fields.get(fieldName.toLowerCase());
     }

@@ -28,7 +28,6 @@
 	<classpathentry kind="lib" path="server/lib/maven-embedder-2.0.2-dep.jar"/>
 	<classpathentry kind="lib" path="server/lib/mx4j.jar"/>
 	<classpathentry kind="lib" path="server/lib/mx4j-tools.jar"/>
-	<classpathentry kind="lib" path="server/lib/mysql-connector-java-3.0.16-ga-bin.jar"/>
 	<classpathentry kind="lib" path="server/lib/postgresql-8.1-405.jdbc3.jar"/>
 	<classpathentry kind="lib" path="server/lib/velocity-dep-1.4.jar"/>
 	<classpathentry kind="lib" path="server/lib/wrapper.jar"/>

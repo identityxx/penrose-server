@@ -20,9 +20,10 @@ package org.safehaus.penrose.ldap;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 
-import java.util.Collection;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author Endi S. Dewata
@@ -48,7 +49,7 @@ public class SearchRequest extends Request implements Cloneable {
     protected long sizeLimit    = 0;
     protected long timeLimit    = 0; // milliseconds
 
-    protected Collection<String> attributes = new ArrayList<String>();
+    protected Collection<String> attributes = new LinkedHashSet<String>();
 
     public SearchRequest() {
     }
@@ -81,6 +82,14 @@ public class SearchRequest extends Request implements Cloneable {
         return attributes;
     }
 
+    public void addAttribute(String attribute) {
+        attributes.add(attribute);
+    }
+
+    public void removeAttribute(String attribute) {
+        attributes.remove(attribute);
+    }
+    
     public void setAttributes(Collection<String> attributes) {
         if (this.attributes == attributes) return;
         this.attributes.clear();

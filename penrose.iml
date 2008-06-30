@@ -37,6 +37,7 @@
       <sourceFolder url="file://$MODULE_DIR$/core/src/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/LDAP/MONITOR-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/ad_sync/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/adapter/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/cache/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/changelog/DIR-INF/src" isTestSource="false" />
@@ -577,6 +578,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jpam-0.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/ldapbp-1.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
