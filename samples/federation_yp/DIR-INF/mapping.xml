@@ -630,7 +630,7 @@ return n.cn;
       <source-name>automounts</source-name>
     </source>
   </entry>
-
+<!--
   <entry dn="nisMapName=...,ou=Automounts,${YP_SUFFIX}">
     <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>nisMap</oc>
@@ -692,5 +692,5 @@ return a.automountInformation;
       </field>
     </source>
   </entry>
-
+-->
 </mapping>

@@ -120,12 +120,173 @@ public class NISAutomountsEntry extends DynamicEntry {
     ) throws Exception {
 
         DN baseDn = request.getDn();
-        DN automountsDn = getDn();
+        DN entryDn = getDn();
 
-        if (baseDn.matches(automountsDn)) {
-            searchAutomounts(session, request, response);
-            return;
+        int level = baseDn.getSize() - entryDn.getSize();
+
+        if (level < -1 && entryDn.endsWith(baseDn)) {
+            searchAncestor(session, request, response);
+
+        } else if (level == -1 && entryDn.getParentDn().matches(baseDn)) {
+            searchParent(session, request, response);
+
+        } else if (level == 0 && entryDn.matches(baseDn)) {
+            searchEntry(session, request, response);
+
+        } else if (level > 0 && baseDn.endsWith(entryDn)) {
+            searchChildren(session, request, response);
         }
+    }
+
+    public void searchAncestor(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Searching ancestor");
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
+        boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
+
+        if (baseSearch || oneLevelSearch) return;
+
+        SearchResult automountsSearchResult = createAutomountsSearchResult();
+        response.add(automountsSearchResult);
+
+        Map<String,NISMap> maps = getAutomountMaps(session);
+
+        for (NISMap map : maps.values()) {
+
+            DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+            SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
+            response.add(automountMapSearchResult);
+        }
+
+        for (NISMap map : maps.values()) {
+
+            DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+            for (NISObject object : map.getObjects()) {
+
+                DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
+
+                SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
+                response.add(automountMapEntrySearchResult);
+            }
+        }
+    }
+
+    public void searchParent(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Searching parent");
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
+        boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
+
+        if (baseSearch) return;
+
+        SearchResult automountsSearchResult = createAutomountsSearchResult();
+        response.add(automountsSearchResult);
+
+        if (oneLevelSearch) return;
+
+        Map<String,NISMap> maps = getAutomountMaps(session);
+
+        for (NISMap map : maps.values()) {
+
+            DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+            SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
+            response.add(automountMapSearchResult);
+        }
+
+        for (NISMap map : maps.values()) {
+
+            DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+            for (NISObject object : map.getObjects()) {
+
+                DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
+
+                SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
+                response.add(automountMapEntrySearchResult);
+            }
+        }
+    }
+
+    public void searchEntry(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Searching entry");
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
+        boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
+        boolean subtreeSearch  = scope == SearchRequest.SCOPE_SUB;
+
+        if (baseSearch || subtreeSearch) {
+            SearchResult automountsSearchResult = createAutomountsSearchResult();
+            response.add(automountsSearchResult);
+
+            if (baseSearch) return;
+        }
+
+        Map<String,NISMap> maps = getAutomountMaps(session);
+
+        if (oneLevelSearch || subtreeSearch) {
+
+            for (NISMap map : maps.values()) {
+
+                DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+                SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
+                response.add(automountMapSearchResult);
+            }
+
+            if (oneLevelSearch) return;
+        }
+
+        for (NISMap map : maps.values()) {
+
+            DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
+
+            for (NISObject object : map.getObjects()) {
+
+                DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
+
+                SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
+                response.add(automountMapEntrySearchResult);
+            }
+        }
+    }
+
+    public void searchChildren(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Searching children");
+
+        DN baseDn = request.getDn();
+        DN automountsDn = getDn();
 
         DN automountMapDn = createAutomountMapDn(automountsDn, "...");
 
@@ -184,62 +345,13 @@ public class NISAutomountsEntry extends DynamicEntry {
         return db.toDn();
     }
 
-    public void searchAutomounts(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
-    ) throws Exception {
-
-        if (debug) log.debug("Searching automounts");
-
-        DN automountsDn = request.getDn();
-
-        int scope = request.getScope();
-
-        if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
-            SearchResult result = createAutomountsSearchResult();
-            response.add(result);
-
-            if (scope == SearchRequest.SCOPE_BASE) return;
-        }
-
-        Map<String,NISMap> maps = getAutomountMaps(session);
-
-        if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
-
-            for (NISMap map : maps.values()) {
-
-                DN automountMapDn = createAutomountMapDn(automountsDn, map.getName());
-
-                SearchResult result = createAutomountMapSearchResult(automountMapDn, map);
-                response.add(result);
-            }
-
-            if (scope == SearchRequest.SCOPE_ONE) return;
-        }
-
-        if (scope == SearchRequest.SCOPE_SUB) {
-
-            for (NISMap map : maps.values()) {
-
-                DN automountMapDn = createAutomountMapDn(automountsDn, map.getName());
-
-                for (NISObject object : map.getObjects()) {
-
-                    DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
-
-                    SearchResult result = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
-                    response.add(result);
-                }
-            }
-        }
-    }
-
     public Map<String,NISMap> getAutomountMaps(Session session) throws Exception {
 
         Map<String,NISMap> maps = new LinkedHashMap<String,NISMap>();
 
         NISMap autoMaster = automountsSource.getAutomountMap(session, base);
+        if (autoMaster == null) return maps;
+
         maps.put(autoMaster.getName(), autoMaster);
 
         for (NISObject entry : autoMaster.getObjects()) {
