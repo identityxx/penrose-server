@@ -497,7 +497,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         Attributes attributes = new Attributes();
         attributes.setValue("objectClass", "nisMap");
         attributes.setValue("nisMapName", map.getName());
-        attributes.setValue("description", map.getDescription());
+        if (map.getDescription() != null) attributes.setValue("description", map.getDescription());
 
         SearchResult result = new SearchResult(automountMapDn, attributes);
         result.setEntry(this);
@@ -553,7 +553,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         attributes.setValue("cn", name);
         attributes.setValue("nisMapEntry", value);
         attributes.setValue("nisMapName", map.getName());
-        attributes.setValue("description", object.getDescription());
+        if (object.getDescription() != null) attributes.setValue("description", object.getDescription());
 
         SearchResult result = new SearchResult(automountMapEntryDn, attributes);
         result.setEntry(this);

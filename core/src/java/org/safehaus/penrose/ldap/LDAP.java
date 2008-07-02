@@ -201,6 +201,7 @@ public class LDAP {
 
         for (String name : adds) {
             Attribute attribute = newAttributes.get(name);
+            if (attribute.isEmpty()) continue;
             modifications.add(new Modification(Modification.ADD, attribute));
         }
 
