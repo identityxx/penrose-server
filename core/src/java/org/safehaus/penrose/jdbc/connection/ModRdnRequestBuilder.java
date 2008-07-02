@@ -111,8 +111,6 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
             Object value = attributes.getValue(fieldName);
 
-            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
         }

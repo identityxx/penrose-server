@@ -784,6 +784,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         interpreter.set(sourceValues);
         interpreter.set(rdn);
+        interpreter.set("rdn", rdn);
 
         for (SourceRef sourceRef : getLocalSourceRefs()) {
 
@@ -820,8 +821,15 @@ public class DynamicEntry extends Entry implements Cloneable {
                     value = Integer.parseInt((String)value);
                 }
 
-                attributes.addValue(name, value);
-                if (debug) log.debug("     - " + name + ": " + value);
+                if (fieldMapping.isPrimaryKey()) {
+                    String n = "primaryKey."+name;
+                    attributes.addValue(n, value);
+                    if (debug) log.debug("     - " + n + ": " + value);
+
+                } else {
+                    attributes.addValue(name, value);
+                    if (debug) log.debug("     - " + name + ": " + value);
+                }
             }
         }
     }
@@ -887,14 +895,25 @@ public class DynamicEntry extends Entry implements Cloneable {
     ) throws Exception {
 
         String lsourceName = sourceMapping.getName();
-        String lfieldName = fieldMapping.getName();
+
+        String lfieldName;
+        if (fieldMapping.isPrimaryKey()) {
+            lfieldName = "primaryKey."+fieldMapping.getName();
+        } else {
+            lfieldName = fieldMapping.getName();
+        }
+
         String lhs = lsourceName + "." + lfieldName;
 
         Attributes lattributes = sourceValues.get(lsourceName);
         Attribute lattribute = lattributes.get(lfieldName);
 
         if (lattribute != null && !lattribute.isEmpty()) {
-            if (debug) log.debug(" - "+lhs+" is already set.");
+            if (debug) {
+                for (Object value : lattribute.getValues()) {
+                    log.debug(" - "+lhs+" has been set to ["+value+"].");
+                }
+            }
             return;
         }
 

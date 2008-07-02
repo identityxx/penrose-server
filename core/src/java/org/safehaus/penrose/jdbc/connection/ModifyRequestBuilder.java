@@ -146,9 +146,6 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
             Object value = attributes.getValue(fieldName);
 
-            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-            Field field = fieldRef.getField();
-
             SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
             filter = FilterTool.appendAndFilter(filter, sf);
         }
@@ -317,7 +314,6 @@ public class ModifyRequestBuilder extends RequestBuilder {
             Object value = values.get(fieldName);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-            Field field = fieldRef.getField();
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
@@ -373,9 +369,6 @@ public class ModifyRequestBuilder extends RequestBuilder {
         if (values != null) {
             for (String fieldName : values.keySet()) {
                 Object value = values.get(fieldName);
-
-                FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-                Field field = fieldRef.getField();
 
                 SimpleFilter sf = new SimpleFilter(fieldName, "=", value);
                 filter = FilterTool.appendAndFilter(filter, sf);

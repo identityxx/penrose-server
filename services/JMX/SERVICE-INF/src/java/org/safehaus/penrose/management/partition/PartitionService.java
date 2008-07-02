@@ -536,7 +536,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     public void unregister() throws Exception {
 
         PartitionConfig partitionConfig = getPartitionConfig();
-
+        if (partitionConfig == null) return;
+        
         SchedulerService schedulerService = getSchedulerService();
         if (schedulerService != null) schedulerService.unregister();
 

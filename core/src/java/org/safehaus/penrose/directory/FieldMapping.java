@@ -44,8 +44,6 @@ public class FieldMapping implements Serializable, Cloneable {
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";
 
-    public final static String DEFAULT_TYPE   = VARIABLE;
-
     public final static String ADD     = "add";
     public final static String BIND    = "bind";
     public final static String COMPARE = "compare";
@@ -55,7 +53,7 @@ public class FieldMapping implements Serializable, Cloneable {
     public final static String SEARCH  = "search";
 
     private String name;
-    private boolean rdn;
+    private boolean primaryKey;
 
     private Object constant;
     private String variable;
@@ -145,7 +143,7 @@ public class FieldMapping implements Serializable, Cloneable {
 
         FieldMapping fieldMapping = (FieldMapping)object;
         if (!equals(name, fieldMapping.name)) return false;
-        if (!equals(rdn, fieldMapping.rdn)) return false;
+        if (!equals(primaryKey, fieldMapping.primaryKey)) return false;
 
         if (constant instanceof byte[] && fieldMapping.constant instanceof byte[]) {
             if (!Arrays.equals((byte[])constant, (byte[])fieldMapping.constant)) return false;
@@ -162,7 +160,7 @@ public class FieldMapping implements Serializable, Cloneable {
 
     public void copy(FieldMapping fieldMapping) throws CloneNotSupportedException {
         name = fieldMapping.name;
-        rdn = fieldMapping.rdn;
+        primaryKey = fieldMapping.primaryKey;
 
         if (fieldMapping.constant instanceof byte[]) {
             constant = ((byte[])fieldMapping.constant).clone();
@@ -201,11 +199,11 @@ public class FieldMapping implements Serializable, Cloneable {
         }
     }
 
-    public boolean isRdn() {
-        return rdn;
+    public boolean isPrimaryKey() {
+        return primaryKey;
     }
 
-    public void setRdn(boolean rdn) {
-        this.rdn = rdn;
+    public void setPrimaryKey(boolean primaryKey) {
+        this.primaryKey = primaryKey;
     }
 }

@@ -57,7 +57,16 @@ public class FilterBuilder {
 
             for (String fieldName : attributes.getNames()) {
 
-                FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+                FieldRef fieldRef;
+
+                if (fieldName.startsWith("primaryKey.")) {
+                    fieldName = fieldName.substring(11);
+                    fieldRef = sourceRef.getPrimaryKeyFieldRef(fieldName);
+
+                } else {
+                    fieldRef = sourceRef.getFieldRef(fieldName);
+                }
+
                 if (fieldRef == null) {
                     log.error("Unknown field "+fieldName);
                     throw LDAP.createException(LDAP.OPERATIONS_ERROR);

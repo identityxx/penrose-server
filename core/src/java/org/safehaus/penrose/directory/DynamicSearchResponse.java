@@ -142,7 +142,7 @@ public class DynamicSearchResponse extends SearchResponse {
             if (debug) log.debug("Processing group " + sourceRefs);
 
             SourceRef sourceRef = sourceRefs.iterator().next();
-
+            
             String flag = sourceRef.getSearch();
             if (debug) log.debug("Flag: "+flag);
 

@@ -41,7 +41,7 @@
     <oc>posixAccount</oc>
     <oc>shadowAccount</oc>
     <at name="uid" rdn="true">
-      <variable>n.primaryKey.uid</variable>
+      <variable>n.uid</variable>
     </at>
     <at name="cn">
       <expression>
@@ -316,6 +316,9 @@ return g.shadowFlag;
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
     </at>
+    <field name="cn">
+      <variable>n.cn</variable>
+    </field>
     <at name="gidNumber">
       <expression>
 if (n != void &amp;&amp; n != null
@@ -357,6 +360,9 @@ return g.description;
     </at>
     <source name="n">
       <source-name>nis_groups</source-name>
+      <field name="cn" primaryKey="true">
+        <variable>rdn.cn</variable>
+      </field>
       <field name="cn">
         <variable>cn</variable>
       </field>
@@ -377,6 +383,9 @@ return g.description;
       <source-name>global_groups</source-name>
       <field name="seeAlso">
         <variable>n.dn</variable>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
       </field>
       <field name="gidNumber">
         <variable>gidNumber</variable>

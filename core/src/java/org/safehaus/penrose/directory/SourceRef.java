@@ -20,8 +20,8 @@ public class SourceRef implements Cloneable {
     private String alias;
     private boolean primarySourceRef;
 
-    Map<String,FieldRef> fieldRefs = new LinkedHashMap<String,FieldRef>();
-    Collection<FieldRef> primaryKeyFieldRefs = new ArrayList<FieldRef>();
+    Map<String,Collection<FieldRef>> fieldRefs = new LinkedHashMap<String,Collection<FieldRef>>();
+    Map<String,FieldRef> primaryKeyFieldRefs = new LinkedHashMap<String,FieldRef>();
 
     private String add;
     private String bind;
@@ -39,13 +39,10 @@ public class SourceRef implements Cloneable {
         //if (debug) log.debug("Source ref "+source.getName()+" "+alias+":");
 
         for (Field field : source.getFields()) {
-            String fieldName = field.getName();
-            //if (debug) log.debug(" - field "+fieldName);
+            //if (debug) log.debug(" - field "+field.getName());
 
             FieldRef fieldRef = new FieldRef(this, field);
-            fieldRefs.put(fieldName, fieldRef);
-
-            if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
+            addFieldRef(fieldRef);
         }
     }
 
@@ -68,9 +65,7 @@ public class SourceRef implements Cloneable {
             if (field == null) throw new Exception("Unknown field: " + fieldName);
 
             FieldRef fieldRef = new FieldRef(entry, this, field, fieldMapping);
-            fieldRefs.put(fieldName, fieldRef);
-
-            if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.add(fieldRef);
+            addFieldRef(fieldRef);
         }
 
         add = sourceMapping.getAdd();
@@ -83,16 +78,46 @@ public class SourceRef implements Cloneable {
         this.parameters.putAll(sourceMapping.getParameters());
     }
 
+    public void addFieldRef(FieldRef fieldRef) {
+        String fieldName = fieldRef.getName();
+        Collection<FieldRef> list = fieldRefs.get(fieldName);
+        if (list == null) {
+            list = new ArrayList<FieldRef>();
+            fieldRefs.put(fieldName, list);
+        }
+        list.add(fieldRef);
+
+        if (fieldRef.isPrimaryKey()) primaryKeyFieldRefs.put(fieldName, fieldRef);
+    }
+
     public Collection<FieldRef> getPrimaryKeyFieldRefs() {
-        return primaryKeyFieldRefs;
+        return primaryKeyFieldRefs.values();
+    }
+
+    public FieldRef getPrimaryKeyFieldRef(String fieldName) {
+        return primaryKeyFieldRefs.get(fieldName);
     }
 
     public Collection<FieldRef> getFieldRefs() {
-        return fieldRefs.values();
+        Collection<FieldRef> results = new ArrayList<FieldRef>();
+        for (Collection<FieldRef> list : fieldRefs.values()) {
+            results.addAll(list);
+        }
+        return results;
     }
 
     public FieldRef getFieldRef(String fieldName) {
-        return fieldRefs.get(fieldName);
+        Collection<FieldRef> results = getFieldRefs(fieldName);
+        if (results.isEmpty()) return null;
+        return results.iterator().next();
+    }
+
+    public Collection<FieldRef> getFieldRefs(String fieldName) {
+        Collection<FieldRef> results = new ArrayList<FieldRef>();
+        Collection<FieldRef> list = fieldRefs.get(fieldName);
+        if (list == null || list.isEmpty()) return results;
+        results.addAll(list);
+        return results;
     }
 
     public String getAlias() {
@@ -114,9 +139,8 @@ public class SourceRef implements Cloneable {
     public void setSource(Source source) {
         this.source = source;
 
-        for (FieldRef fieldRef : fieldRefs.values()) {
-            String fieldName = fieldRef.getName();
-            Field field = source.getField(fieldName);
+        for (FieldRef fieldRef : getFieldRefs()) {
+            Field field = fieldRef.getField();
             fieldRef.setField(field);
         }
     }
@@ -190,14 +214,11 @@ public class SourceRef implements Cloneable {
         sourceRef.alias = alias;
         sourceRef.primarySourceRef = primarySourceRef;
 
-        sourceRef.fieldRefs = new LinkedHashMap<String,FieldRef>();
-        sourceRef.primaryKeyFieldRefs = new ArrayList<FieldRef>();
+        sourceRef.fieldRefs = new LinkedHashMap<String,Collection<FieldRef>>();
+        sourceRef.primaryKeyFieldRefs = new LinkedHashMap<String,FieldRef>();
 
-        for (String fieldName : fieldRefs.keySet()) {
-            FieldRef fieldRef = (FieldRef)fieldRefs.get(fieldName).clone();
-            sourceRef.fieldRefs.put(fieldName, fieldRef);
-
-            if (fieldRef.isPrimaryKey()) sourceRef.primaryKeyFieldRefs.add(fieldRef);
+        for (FieldRef fieldRef : getFieldRefs()) {
+            sourceRef.addFieldRef((FieldRef)fieldRef.clone());
         }
 
         sourceRef.add = add;

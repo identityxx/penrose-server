@@ -189,7 +189,6 @@ public class AddRequestBuilder extends RequestBuilder {
             if (debug) log.debug(" - " + fieldName + ": " + value);
 
             FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
-            Field field = fieldRef.getField();
 
             statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }

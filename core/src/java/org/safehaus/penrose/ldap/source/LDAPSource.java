@@ -587,6 +587,8 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         final SourceRef sourceRef = sourceRefs.iterator().next();
+        final String alias = sourceRef.getAlias();
+
         Source source = sourceRef.getSource();
 
         DN sourceBaseDn = new DN(source.getParameter(BASE_DN));
@@ -640,11 +642,19 @@ public class LDAPSource extends Source {
         SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
 
+                DN dn = result.getDn();
+                RDN rdn = dn.getRdn();
+                Attributes attributes = result.getAttributes();
+                
                 SearchResult searchResult = new SearchResult();
-                searchResult.setDn(result.getDn());
+                searchResult.setDn(dn);
 
                 SourceValues sourceValues = new SourceValues();
-                sourceValues.set(sourceRef.getAlias(), result.getAttributes());
+
+                Attributes sv = sourceValues.get(alias);
+                sv.add(attributes);
+                sv.add("primaryKey", rdn);
+
                 searchResult.setSourceValues(sourceValues);
 
                 response.add(searchResult);
@@ -676,7 +686,7 @@ public class LDAPSource extends Source {
         } else {
             newAttributes = new Attributes();
 
-            RDN rdn = newDn.getRdn();
+            RDN rdn = dn.getRdn();
 
             if (rdn != null) {
                 for (String name : rdn.getNames()) {

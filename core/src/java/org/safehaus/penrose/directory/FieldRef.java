@@ -17,7 +17,7 @@ public class FieldRef implements Cloneable {
     private Field field;
 
     private String name;
-    private boolean rdn;
+    private boolean primaryKey;
 
     private FieldMapping fieldMapping;
 
@@ -26,6 +26,8 @@ public class FieldRef implements Cloneable {
         this.field = field;
 
         name = field.getName();
+
+        primaryKey = field.isPrimaryKey();
     }
     
     public FieldRef(Entry entry, SourceRef sourceRef, Field field, FieldMapping fieldMapping) throws Exception {
@@ -41,10 +43,10 @@ public class FieldRef implements Cloneable {
             AttributeMapping attributeMapping = entry.getAttributeMapping(variable);
             if (attributeMapping == null) throw new Exception("Unknown attribute "+variable);
 
-            rdn = attributeMapping.isRdn();
+            primaryKey = attributeMapping.isRdn();
 
         } else {
-            rdn = fieldMapping.isRdn();
+            primaryKey = fieldMapping.isPrimaryKey();
         }
     }
 
@@ -72,10 +74,6 @@ public class FieldRef implements Cloneable {
         return field.isCaseSensitive();
     }
 
-    public boolean isPrimaryKey() {
-        return field.isPrimaryKey();
-    }
-
     public String getType() {
         return field.getType();
     }
@@ -96,12 +94,12 @@ public class FieldRef implements Cloneable {
         return fieldMapping == null ? EMPTY : fieldMapping.getOperations();
     }
 
-    public boolean isRdn() {
-        return rdn;
+    public boolean isPrimaryKey() {
+        return primaryKey;
     }
 
-    public void setRdn(boolean rdn) {
-        this.rdn = rdn;
+    public void setPrimaryKey(boolean primaryKey) {
+        this.primaryKey = primaryKey;
     }
 
     public Object getConstant() {
@@ -128,7 +126,7 @@ public class FieldRef implements Cloneable {
         fieldRef.field = field;
 
         fieldRef.name = name;
-        fieldRef.rdn = rdn;
+        fieldRef.primaryKey = primaryKey;
 
         fieldRef.fieldMapping = fieldMapping;
 

@@ -121,7 +121,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             // join using fields that are used as RDN
 
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
-                if (!fieldRef.isRdn()) continue;
+                if (!fieldRef.isPrimaryKey()) continue;
 
                 String sn = sourceRef.getAlias();
                 String fn = fieldRef.getName();

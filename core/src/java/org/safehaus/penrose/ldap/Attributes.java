@@ -91,10 +91,25 @@ public class Attributes implements Serializable, Cloneable {
         attributes.remove(name.toLowerCase());
     }
 
-    public void set(Attributes attributes) {
-        if (this == attributes) return;
-        clear();
-        add(attributes);
+    public void add(RDN rdn) {
+        add(null, rdn);
+    }
+
+    public void add(String prefix, RDN rdn) {
+        if (rdn == null) return;
+        for (String name : rdn.getNames()) {
+            addValue(prefix == null ? name : prefix+"."+name, rdn.get(name));
+        }
+    }
+
+    public void set(RDN rdn) {
+        set(null, rdn);
+    }
+
+    public void set(String prefix, RDN rdn) {
+        for (String name : rdn.getNames()) {
+            setValue(prefix == null ? name : prefix+"."+name, rdn.get(name));
+        }
     }
 
     public void add(Attributes attributes) {
@@ -102,7 +117,13 @@ public class Attributes implements Serializable, Cloneable {
             add(attribute);
         }
     }
-    
+
+    public void set(Attributes attributes) {
+        if (this == attributes) return;
+        clear();
+        add(attributes);
+    }
+
     public void add(Attribute attribute) {
         String name = attribute.getName();
         String normalizedName = name.toLowerCase();
