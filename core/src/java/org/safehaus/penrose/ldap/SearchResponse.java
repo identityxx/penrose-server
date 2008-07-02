@@ -19,7 +19,6 @@ package org.safehaus.penrose.ldap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ietf.ldap.LDAPException;
 
 import java.util.*;
 
@@ -227,7 +226,6 @@ public class SearchResponse extends Response implements Cloneable {
         references.addAll(response.references);
 
         listeners = new ArrayList<SearchListener>();
-        listeners.addAll(response.listeners);
     }
 
     public Object clone() throws CloneNotSupportedException {
