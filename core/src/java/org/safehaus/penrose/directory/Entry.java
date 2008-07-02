@@ -915,7 +915,10 @@ public class Entry implements Cloneable {
             db.append(parent.computeDn(interpreter));
         }
 
-        return db.toDn();
+        DN dn = db.toDn();
+        if (debug) log.debug("DN: "+dn);
+
+        return dn;
     }
 
     public RDN computeRdn(

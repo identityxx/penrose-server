@@ -677,14 +677,14 @@ public class LDAPSource extends Source {
             newAttributes = new Attributes();
 
             RDN rdn = newDn.getRdn();
-/*
+
             if (rdn != null) {
                 for (String name : rdn.getNames()) {
                     Object value = rdn.get(name);
                     newAttributes.addValue("primaryKey." + name, value);
                 }
             }
-*/
+
             for (Field field : getFields()) {
 
                 String fieldName = field.getName();
