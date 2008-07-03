@@ -20,9 +20,6 @@
     </tstamp>
 
     <path id="lib.path">
-        <fileset dir="lib">
-            <include name="**/*.jar"/>
-        </fileset>
         <fileset dir="../common">
             <include name="lib/**/*.jar"/>
             <include name="target/${product.name}-common-${product.version}.jar"/>
@@ -30,9 +27,6 @@
     </path>
 
     <path id="main.path">
-        <fileset dir="lib">
-            <include name="**/*.jar"/>
-        </fileset>
         <fileset dir="../common">
             <include name="lib/**/*.jar"/>
             <include name="target/${product.name}-common-${product.version}.jar"/>
