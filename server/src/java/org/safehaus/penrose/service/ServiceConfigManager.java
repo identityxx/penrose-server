@@ -12,7 +12,7 @@ import java.io.File;
 /**
  * @author Endi S. Dewata
  */
-public class ServiceConfigManager implements ServiceConfigsMBean {
+public class ServiceConfigManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 

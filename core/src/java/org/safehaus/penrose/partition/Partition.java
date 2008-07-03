@@ -91,6 +91,7 @@ public class Partition implements Cloneable {
         threadManager = createThreadManager(partitionConfig.getThreadManagerConfig());
 
         aclEvaluator = new ACLEvaluator();
+        aclEvaluator.init(this);
 
         adapterManager = new AdapterManager();
         adapterManager.init(this);
@@ -415,7 +416,8 @@ public class Partition implements Cloneable {
     public void validatePermission(Session session, SearchResult result) throws Exception {
 
         DN dn = result.getDn();
-        Entry entry = result.getEntry();
+        String entryId = result.getEntryId();
+        Entry entry = directory.getEntry(entryId);
 
         int rc = aclEvaluator.checkRead(session, entry, dn);
         if (rc == LDAP.SUCCESS) return;

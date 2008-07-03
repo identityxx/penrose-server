@@ -271,7 +271,7 @@ public class MonitorEntry extends Entry {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(baseDn, attributes);
-        result.setEntry(this);
+        result.setEntryId(getId());
 
         return result;
     }

@@ -22,6 +22,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.ldap.SearchResult;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,13 @@ public class ACLEvaluator {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
+    Partition partition;
+
     public ACLEvaluator() {
+    }
+
+    public void init(Partition partition) throws Exception {
+        this.partition = partition;
     }
 
     public void addPermission(Set<String> set, String permission) {
@@ -365,7 +372,6 @@ public class ACLEvaluator {
         }
 
         DN dn = result.getDn();
-        Entry entry = result.getEntry();
         Attributes attributes = result.getAttributes();
 
         Collection<String> attributeNames = attributes.getNormalizedNames();
@@ -375,6 +381,10 @@ public class ACLEvaluator {
         denies.addAll(attributeNames);
 
         DN bindDn = session.getBindDn();
+
+        String entryId = result.getEntryId();
+        Entry entry = partition.getDirectory().getEntry(entryId);
+
         getReadableAttributes(bindDn, entry, dn, null, attributeNames, grants, denies);
 
         if (debug) {

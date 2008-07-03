@@ -21,7 +21,6 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.config.PenroseConfigWriter;
-import org.safehaus.penrose.ldap.ConnectRequest;
 import org.safehaus.penrose.logger.log4j.AppenderConfig;
 import org.safehaus.penrose.logger.log4j.Log4jConfig;
 import org.safehaus.penrose.logger.log4j.Log4jConfigReader;

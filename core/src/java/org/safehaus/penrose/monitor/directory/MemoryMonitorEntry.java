@@ -102,7 +102,7 @@ public class MemoryMonitorEntry extends Entry {
         attributes.addValue("used", used);
 
         SearchResult result = new SearchResult(entryDn, attributes);
-        result.setEntry(this);
+        result.setEntryId(getId());
 
         response.add(result);
     }

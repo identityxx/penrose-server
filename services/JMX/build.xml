@@ -39,13 +39,18 @@
     </target>
 
     <path id="lib.path">
-        <fileset dir="../../lib">
+        <fileset dir="../../common/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="../../core/lib">
             <include name="**/*.jar"/>
         </fileset>
         <fileset dir="../../server/lib">
             <include name="*.jar"/>
         </fileset>
+        <pathelement location="../../common/target/classes"/>
         <pathelement location="../../core/target/classes"/>
+        <pathelement location="../../client/target/classes"/>
         <pathelement location="../../server/target/classes"/>
     </path>
 
@@ -88,6 +93,9 @@
                 <exclude name="SERVICE-INF/src/**"/>
             </fileset>
         </copy>
+        <copy file="../../client/target/penrose-client-${product.version}.jar"
+              todir="../../server/target/dist/${service.dir}/SERVICE-INF/lib"
+        />
     </target>
 
     <target name="check-install">

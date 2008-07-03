@@ -1,0 +1,48 @@
+Installing Penrose on Windows
+-----------------------------
+
+On Windows platforms, double-click the installer program (penrose-2.0RC2.exe).
+Select an installation directory (e.g. C:\Program Files\Identyx\Penrose Server 2.0RC2).
+We will refer the installation directory as PENROSE_SERVER_HOME.
+
+Installing Penrose on Unix
+--------------------------
+
+On Linux and other Unix-like platforms, create an installation directory
+(e.g. /usr/local/penrose-2.0RC2), then unzip/untar the distribution file.
+
+  tar xzvf penrose-2.0RC2.tar.gz
+
+We will refer the installation directory as PENROSE_SERVER_HOME.
+
+Running Penrose
+---------------
+
+On Windows platforms, go to Start -> Programs -> Identyx -> Penrose Server 2.0RC2 -> Penrose Server.
+
+On other platforms, go to PENROSE_SERVER_HOME, execute:
+
+  sh bin/penrose.sh
+
+If you need to stop the server simply press Ctrl-C on the server window.
+
+Connecting to Penrose
+---------------------
+
+Use your favorite LDAP browser and enter the following settings:
+
+  Hostname      : localhost
+  Port          : 10389
+  Bind DN       : uid=admin,ou=system
+  Bind Password : secret
+  Suffix        : dc=Example,dc=com
+
+Demo Setup
+----------
+
+Make sure you have a database server running on your local machine. Create a database user called "penrose"
+with password "penrose". Create a database called "shop". Populate the database with the
+SQL script provided in PENROSE_SERVER_HOME/samples/shop/sql.
+
+Copy the files in PENROSE_SERVER_HOME/samples/shop/partition into a new directory PENROSE_SERVER_HOME/partitions/shop.
+Register the new partition in PENROSE_SERVER_HOME/conf/server.xml. Restart Penrose Server.

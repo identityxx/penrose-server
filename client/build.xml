@@ -1,0 +1,362 @@
+<?xml version="1.0"?>
+<!--
+ Copyright (c) 2000-2006, Identyx Corporation.
+ All rights reserved.
+-->
+<project name="penrose-client" default="build">
+
+    <description>Penrose Client</description>
+
+    <property file="../build.properties"/>
+
+    <property name="project.name" value="penrose-client"/>
+    <property name="project.dist" value="dist"/>
+
+    <property name="prefix" value=""/>
+    <property name="install.dir" value="${prefix}/usr/local/${project.name}-${product.version}"/>
+    <property name="docs.target" value="${project.dist}/javadoc"/>
+
+    <tstamp>
+        <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
+    </tstamp>
+
+    <path id="lib.path">
+        <fileset dir="../common/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="../common/target/classes"/>
+    </path>
+
+    <path id="main.path">
+        <fileset dir="../common/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="target/classes"/>
+        <pathelement location="../common/target/classes"/>
+    </path>
+
+    <target name="init">
+        <echo message="Operating System: ${os.name} ${os.version} (${os.arch})" />
+        <echo message="Java Version: ${java.version}" />
+        <condition property="isWindows">
+            <os family="windows"/>
+        </condition>
+        <condition property="isLinux">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isLinuxIntel">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+                <not>
+                    <os arch="amd64"/>
+                </not>
+            </and>
+        </condition>
+        <condition property="isLinuxAMD64">
+            <and>
+                <os family="unix"/>
+                <not>
+                    <os family="mac"/>
+                </not>
+                <os arch="amd64"/>
+            </and>
+        </condition>
+        <condition property="isMac">
+            <os family="mac"/>
+        </condition>
+    </target>
+
+    <target name="compile" depends="init">
+        <echo message="Compiling ${project.name}."/>
+        <mkdir dir="target/classes"/>
+        <javac
+            srcdir="src/java"
+            destdir="target/classes"
+            classpathref="lib.path"
+            debug="on"
+            debuglevel="lines,vars,source"
+            source="1.5"
+            target="1.5"
+        />
+        <copy todir="target/classes">
+            <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
+        </copy>
+    </target>
+
+    <target name="build" depends="compile">
+        <echo message="Building ${project.name}."/>
+        <jar destfile="target/${project.name}-${product.version}.jar">
+            <fileset dir="target/classes"/>
+            <manifest>
+              <attribute name="Specification-Version"  value="${product.specification}"/>
+              <attribute name="Implementation-Title"   value="${product.title}"/>
+              <attribute name="Implementation-Version" value="${product.version}"/>
+              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Built-Date"             value="${TIMESTAMP}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="docs" depends="init">
+        <mkdir dir="target/javadoc"/>
+        <javadoc packagenames="org.safehaus.penrose.*"
+            sourcepath="src/java"
+            destdir="target/javadoc"
+            classpathref="lib.path">
+        </javadoc>
+    </target>
+
+    <target name="dist" depends="build">
+
+        <mkdir dir="target/dist"/>
+
+        <copy todir="target/dist" file="../build.properties"/>
+        <copy todir="target/dist" file="../README.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="target/dist" file="../LICENSE.txt"/>
+        <copy todir="target/dist" file="../COPYING.txt"/>
+        <copy todir="target/dist" file="../INSTALL-BINARY.txt">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="target/dist" file="../THIRDPARTY.txt"/>
+
+        <copy todir="target/dist"
+            file="../images/penrose.ico">
+        </copy>
+
+        <copy todir="target/dist/bin">
+            <fileset dir="bin"/>
+        </copy>
+
+        <copy todir="target/dist/conf">
+            <fileset dir="conf"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+
+        <copy todir="target/dist/docs/javadoc" failonerror="false">
+            <fileset dir="target/javadoc"/>
+        </copy>
+
+        <copy todir="target/dist/dtd" flatten="true">
+            <fileset dir="src" includes="**/*.dtd"/>
+            <fileset dir="../core/src" includes="**/*.dtd"/>
+        </copy>
+
+        <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="../common/lib"/>
+        </copy>
+        <copy file="../common/target/penrose-common-${product.version}.jar" todir="target/dist/lib"/>
+        <copy file="target/${project.name}-${product.version}.jar" todir="target/dist/lib"/>
+        <mkdir dir="target/dist/lib/ext"/>
+
+        <mkdir dir="target/dist/logs"/>
+
+        <fixcrlf
+            srcdir="target/dist"
+            includes="**/*.sh"
+            eol="unix"
+        />
+        <chmod dir="target/dist" perm="ugo+rx" includes="**/*.sh"/>
+
+        <mkdir dir="${project.dist}"/>
+        <zip destfile="${project.dist}/${project.name}-${product.version}.zip">
+            <zipfileset dir="target/dist" prefix="${project.name}-${product.version}" filemode="755">
+                <include name="bin/*.sh"/>
+            </zipfileset>
+            <zipfileset dir="target/dist" prefix="${project.name}-${product.version}">
+                <include name="**/*"/>
+                <exclude name="bin/*.sh"/>
+            </zipfileset>
+        </zip>
+
+    </target>
+
+    <target name="dist-src" depends="init">
+        <mkdir dir="${project.dist}"/>
+        <echo message="Creating ${project.name}-${product.version}-src.zip"/>
+        <zip destfile="${project.dist}/${project.name}-${product.version}-src.zip">
+            <zipfileset dir=".">
+                <exclude name="${project.dist}/**"/>
+                <exclude name="target/**"/>
+            </zipfileset>
+        </zip>
+        <echo message="Creating ${project.name}-${product.version}-src.tar.gz"/>
+        <tar destfile="${project.dist}/${project.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${project.name}-${product.version}">
+                <exclude name="${project.dist}/**"/>
+                <exclude name="target/**"/>
+            </tarfileset>
+        </tar>
+    </target>
+
+    <target name="dist-all" depends="dist-linux,dist-win32">
+    </target>
+
+    <target name="dist-linux" depends="docs,dist" if="isLinux">
+        <echo message="Creating ${project.name}-${product.version}.tar.gz"/>
+        <mkdir dir="${project.dist}"/>
+        <tar destfile="${project.dist}/${project.name}-${product.version}.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist" prefix="${project.name}-${product.version}" mode="755">
+                <include name="bin/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="target/dist" prefix="${project.name}-${product.version}">
+                <include name="**/*"/>
+                <exclude name="bin/*.sh"/>
+            </tarfileset>
+        </tar>
+    </target>
+
+    <target name="dist-win32" depends="docs,dist" if="isWindows">
+        <echo message="Creating ${project.name}-${product.version}.exe"/>
+        <copy todir="target" file="installer/${project.name}.iss">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <mkdir dir="${project.dist}"/>
+        <exec executable="${iscc.path}">
+            <arg line="/Q target/${project.name}.iss"/>
+        </exec>
+    </target>
+
+    <target name="dist-rpm">
+        <antcall target="dist-rpm-linux-intel"/>
+        <antcall target="dist-rpm-linux-amd64"/>
+        <antcall target="dist-rpm-win32"/>
+    </target>
+
+    <target name="dist-rpm-linux-intel" depends="init" if="isLinuxIntel">
+        <antcall target="rpm">
+            <param name="rpm.prefix" value=""/>
+            <param name="rpm.home" value="/usr/src/redhat"/>
+            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.spec" value="${project.name}.spec"/>
+            <param name="rpm.arch" value="i386"/>
+            <param name="rpm.name" value="${project.name}-${product.version}-1.i386.rpm"/>
+        </antcall>
+    </target>
+
+    <target name="dist-rpm-linux-amd64" depends="init" if="isLinuxAMD64">
+        <antcall target="rpm">
+            <param name="rpm.prefix" value=""/>
+            <param name="rpm.home" value="/usr/src/redhat"/>
+            <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
+            <param name="rpm.spec" value="${project.name}.spec"/>
+            <param name="rpm.arch" value="x86_64"/>
+            <param name="rpm.name" value="${project.name}-${product.version}-1.x86_64.rpm"/>
+        </antcall>
+    </target>
+
+    <target name="dist-rpm-win32" depends="init" if="isWindows">
+        <antcall target="rpm">
+            <param name="rpm.prefix" value="${cygwin.home}"/>
+            <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
+            <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
+            <param name="rpm.spec" value="${project.name}.spec"/>
+            <param name="rpm.arch" value="i386"/>
+            <param name="rpm.name" value="${project.name}-${product.version}-1.cygwin.i386.rpm"/>
+        </antcall>
+    </target>
+
+    <target name="rpm" depends="rpm-check,rpm-build">
+    </target>
+
+    <target name="rpm-check" depends="init">
+        <echo message="Checking ${rpm.builder}"/>
+        <condition property="hasRpmBuilder">
+            <available file="${rpm.builder}"/>
+        </condition>
+    </target>
+
+    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+        <copy todir="target" file="installer/${rpm.spec}">
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <copy todir="${rpm.home}/SOURCES" overwrite="true"
+            file="${project.dist}/${project.name}-${product.version}-src.tar.gz">
+        </copy>
+        <exec executable="${rpm.builder}">
+            <arg line="-bb target/${rpm.spec}"/>
+        </exec>
+        <copy todir="${project.dist}" failonerror="false"
+            file="${rpm.home}/RPMS/${rpm.arch}/${rpm.name}">
+        </copy>
+<!--
+        <copy file="../tools/sfx-header" tofile="${project.dist}/${rpm.name}.bin" overwrite="true"/>
+        <exec executable="${rpm.prefix}/bin/sh">
+            <arg value="-c"/>
+            <arg value="echo __LICENSE__ &gt;&gt; ${project.dist}/${rpm.name}.bin"/>
+        </exec>
+        <exec executable="${rpm.prefix}/bin/sh">
+            <arg value="-c"/>
+            <arg value="cat ../LICENSE.txt &gt;&gt; ${project.dist}/${rpm.name}.bin"/>
+        </exec>
+        <exec executable="${rpm.prefix}/bin/sh">
+            <arg value="-c"/>
+            <arg value="echo __CONTENT__ &gt;&gt; ${project.dist}/${rpm.name}.bin"/>
+        </exec>
+        <exec executable="${rpm.prefix}/bin/sh">
+            <arg value="-c"/>
+            <arg value="cat ${project.dist}/${rpm.name} &gt;&gt; ${project.dist}/${rpm.name}.bin"/>
+        </exec>
+        <chmod file="${project.dist}/${rpm.name}.bin" perm="a+rx"/>
+-->        
+    </target>
+
+    <target name="pre-install">
+        <mkdir dir="${install.dir}"/>
+        <condition property="conf.missing">
+          <not>
+            <available file="${install.dir}/conf/log4j.xml"/>
+          </not>
+        </condition>
+    </target>
+
+    <target name="copy-penrose-conf" if="conf.missing">
+        <copy todir="${install.dir}">
+            <fileset dir="target/dist">
+                <include name="conf/**/*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="install" depends="init,pre-install,copy-penrose-conf">
+        <mkdir dir="${install.dir}"/>
+        <delete failonerror="false">
+            <fileset dir="${install.dir}">
+                <include name="lib/*"/>
+            </fileset>
+        </delete>
+        <copy todir="${install.dir}">
+            <fileset dir="target/dist">
+                <include name="**/*"/>
+                <exclude name="conf/**/*"/>
+            </fileset>
+        </copy>
+        <chmod dir="${install.dir}" perm="ugo+rw" includes="**/*"/>
+        <chmod dir="${install.dir}" perm="ugo+rx" includes="**/*.sh"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="dist" failonerror="false"/>
+        <delete dir="target" failonerror="false"/>
+    </target>
+
+</project>

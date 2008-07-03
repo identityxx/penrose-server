@@ -35,12 +35,18 @@
     </target>
 
     <path id="lib.path">
-        <fileset dir="../../lib">
+        <fileset dir="../../common/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="../../core/lib">
             <include name="**/*.jar"/>
         </fileset>
         <fileset dir="../../services/JMX/SERVICE-INF/lib">
             <include name="**/*.jar"/>
         </fileset>
+        <pathelement location="../../common/target/classes"/>
+        <pathelement location="../../core/target/classes"/>
+        <pathelement location="../../client/target/classes"/>
     </path>
 
     <target name="compile">

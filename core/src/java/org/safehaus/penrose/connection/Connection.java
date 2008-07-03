@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public class Connection implements ConnectionMBean {
+public class Connection {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();

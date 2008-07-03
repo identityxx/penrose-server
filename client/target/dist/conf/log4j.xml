@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE log4j:configuration
+        PUBLIC "-//Apache//DTD Log4j 1.2//EN"
+        "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false"> 
+
+  <appender name="timestamp" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+    </layout>
+  </appender>
+
+  <appender name="debug" class="org.apache.log4j.ConsoleAppender">
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%-20C{1} [%4L] %m%n"/>
+    </layout>
+  </appender> 
+
+  <logger name="org.safehaus.penrose" additivity="false">
+    <level value="WARN"/> 
+    <appender-ref ref="timestamp"/>
+  </logger> 
+
+  <root> 
+    <level value="OFF"/>
+  </root> 
+
+</log4j:configuration> 

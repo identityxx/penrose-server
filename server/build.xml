@@ -8,8 +8,6 @@
 
     <property file="../build.properties"/>
     <property name="prefix" value=""/>
-    <property name="iscc.path" value="ISCC.exe"/>
-    <property name="cygwin.home" value="c:/cygwin"/>
 
     <property name="module.name" value="${product.name}-server"/>
     <property name="project.dist" value="../dist"/>
@@ -25,13 +23,28 @@
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="../lib">
+        <fileset dir="../common/lib">
             <include name="*.jar"/>
         </fileset>
+        <fileset dir="../core/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="../common/target/classes"/>
         <pathelement location="../core/target/classes"/>
     </path>
 
     <path id="main.path">
+        <fileset dir="lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="../common/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="../core/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement location="../common/target/classes"/>
+        <pathelement location="../core/target/classes"/>
         <pathelement location="target/classes"/>
     </path>
 
@@ -61,7 +74,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling ${product.title} Server."/>
+        <echo message="Compiling ${module.name}."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -78,7 +91,7 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building ${product.title} Server."/>
+        <echo message="Building ${module.name}."/>
         <jar jarfile="target/${module.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
@@ -86,7 +99,7 @@
               <attribute name="Implementation-Title"   value="${product.title} Server"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
               <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
-              <attribute name="Build-Date" value="${TIMESTAMP}"/>
+              <attribute name="Build-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>
         <ant dir="../monitors" target="build"/>
@@ -108,7 +121,9 @@
     </target>
 
     <target name="dist" depends="build">
+
         <mkdir dir="target/dist"/>
+
         <copy todir="target/dist" file="../build.properties"/>
         <copy todir="target/dist" file="../README.txt">
             <filterchain>
@@ -123,47 +138,21 @@
             </filterchain>
         </copy>
         <copy todir="target/dist" file="../THIRDPARTY.txt"/>
+
+        <copy todir="target/dist"
+            file="../images/penrose.ico">
+        </copy>
+
         <copy todir="target/dist" file="../pom.xml">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
-        <copy todir="target/dist/etc">
-            <fileset dir="etc" includes="**/*"/>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
+
+        <copy todir="target/dist/bin">
+            <fileset dir="bin"/>
         </copy>
-<!--
-        <copy todir="target/dist/config">
-            <fileset dir="config" includes="**/*"/>
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
-        </copy>
--->
-        <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
-        <mkdir dir="target/dist/db"/>
-        <copy todir="target/dist/docs">
-            <fileset dir="../docs" includes="*.url"/>
-        </copy>
-        <copy todir="target/dist/docs/javadoc" failonerror="false">
-            <fileset dir="target/javadoc"/>
-        </copy>
-        <copy todir="target/dist/lib" includeEmptyDirs="false">
-            <fileset dir="../lib" includes="*"/>
-        </copy>
-        <mkdir dir="target/dist/lib/ext"/>
-        <mkdir dir="target/dist/logs"/>
-        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
-        </copy>
-        <mkdir dir="target/dist/server/lib/ext"/>
-        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
-            <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
-        </copy>
+
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
             <fileset dir="../conf"/>
@@ -171,34 +160,74 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <mkdir dir="target/dist/schema/ext"/>
+
+        <copy todir="target/dist/etc">
+            <fileset dir="etc" includes="**/*"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+        <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
+
+        <mkdir dir="target/dist/db"/>
+
+        <copy todir="target/dist/docs">
+            <fileset dir="../docs" includes="*.url"/>
+        </copy>
+        <copy todir="target/dist/docs/javadoc" failonerror="false">
+            <fileset dir="target/javadoc"/>
+        </copy>
+
+        <copy todir="target/dist/dtd" flatten="true">
+            <fileset dir="src" includes="**/*.dtd"/>
+            <fileset dir="../core/src" includes="**/*.dtd"/>
+        </copy>
+
+        <copy todir="target/dist/lib" includeEmptyDirs="false">
+            <fileset dir="../common/lib" includes="*"/>
+            <fileset dir="../core/lib" includes="*"/>
+        </copy>
+        <copy file="../common/target/penrose-common-${product.version}.jar" todir="target/dist/lib"/>
+        <copy file="../core/target/penrose-${product.version}.jar" todir="target/dist/lib"/>
+        <mkdir dir="target/dist/lib/ext"/>
+
+        <mkdir dir="target/dist/logs"/>
+
+        <mkdir dir="target/dist/partitions"/>
+
         <copy todir="target/dist/schema">
             <fileset dir="../schema"/>
         </copy>
-        <copy todir="target/dist"
-            file="../images/penrose.ico">
+        <mkdir dir="target/dist/schema/ext"/>
+
+        <copy todir="target/dist/server/lib" includeEmptyDirs="false">
+            <fileset dir="lib" includes="*"/>
+            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
         </copy>
-        <copy todir="target/dist/bin">
-            <fileset dir="bin"/>
-        </copy>
+        <mkdir dir="target/dist/server/lib/ext"/>
+
         <fixcrlf
             srcdir="target/dist"
             includes="**/*.sh"
             eol="unix"
         />
-        <chmod dir="target/dist/bin" perm="ugo+rx" includes="**/*.sh"/>
-        <copy todir="target/dist/dtd" flatten="true">
-            <fileset dir="src" includes="**/*.dtd"/>
-            <fileset dir="../core/src" includes="**/*.dtd"/>
-        </copy>
-        <mkdir dir="target/dist/partitions"/>
-        <mkdir dir="target/dist/logs"/>
+        <chmod dir="target/dist" perm="ugo+rx" includes="**/*.sh"/>
+
         <ant dir="../monitors" target="dist"/>
         <ant dir="../services" target="dist"/>
         <ant dir="../samples" target="dist"/>
+
         <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${module.name}-${product.version}.zip"
-            basedir="target/dist"/>
+        <zip destfile="${project.dist}/${module.name}-${product.version}.zip">
+            <zipfileset dir="target/dist" prefix="${module.name}-${product.version}" filemode="755">
+                <include name="bin/*.sh"/>
+            </zipfileset>
+            <zipfileset dir="target/dist" prefix="${module.name}-${product.version}">
+                <include name="**/*"/>
+                <exclude name="bin/*.sh"/>
+            </zipfileset>
+        </zip>
+
     </target>
 
     <target name="dist-src">
@@ -402,7 +431,7 @@
         <ant dir="../services" target="install"/>
         <ant dir="../samples" target="install"/>
         <chmod dir="${penrose.home}" perm="ugo+rw" includes="**/*"/>
-        <chmod dir="${penrose.home}/bin" perm="ugo+rx" includes="**/*.sh"/>
+        <chmod dir="${penrose.home}" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 
     <target name="uninstall" depends="init">

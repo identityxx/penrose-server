@@ -72,7 +72,7 @@ set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\services\JMX\SERVICE-INF\lib
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.nis.client.NISSyncClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" org.safehaus.penrose.management.nis.NISSyncClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 :end

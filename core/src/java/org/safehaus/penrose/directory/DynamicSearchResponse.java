@@ -106,7 +106,7 @@ public class DynamicSearchResponse extends SearchResponse {
             } else {
                 if (debug) log.debug("Returning entry " + lastDn);
                 SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-                searchResult.setEntry(lastEntry);
+                searchResult.setEntryId(lastEntry.getId());
                 searchResult.setSourceValues(lastSourceValues);
                 response.add(searchResult);
 
@@ -124,7 +124,7 @@ public class DynamicSearchResponse extends SearchResponse {
         if (lastDn != null) {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
-            searchResult.setEntry(lastEntry);
+            searchResult.setEntryId(lastEntry.getId());
             searchResult.setSourceValues(lastSourceValues);
             response.add(searchResult);
         }

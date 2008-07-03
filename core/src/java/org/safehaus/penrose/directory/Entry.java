@@ -233,7 +233,7 @@ public class Entry implements Cloneable {
     public void removeChildren() {
         directory.removeChildren(this);
     }
-    
+
     public Entry getParent() {
         return directory.getParent(this);
     }
@@ -337,7 +337,7 @@ public class Entry implements Cloneable {
     public Collection<AttributeMapping> getRdnAttributeMappings() {
         return entryConfig.getRdnAttributeMappings();
     }
-    
+
     public Collection<ACI> getACL() {
         return entryConfig.getACL();
     }
@@ -866,7 +866,7 @@ public class Entry implements Cloneable {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntry(this);
+        result.setEntryId(getId());
 
         response.add(result);
     }

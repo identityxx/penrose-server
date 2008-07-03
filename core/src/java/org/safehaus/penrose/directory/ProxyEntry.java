@@ -627,7 +627,7 @@ public class ProxyEntry extends Entry {
             SearchResponse newResponse = new Pipeline(response) {
                 public void add(SearchResult result) throws Exception {
                     SearchResult newResult = createSearchResult(interpreter, result);
-                    newResult.setEntry(ProxyEntry.this);
+                    newResult.setEntryId(getId());
                     super.add(newResult);
                 }
 

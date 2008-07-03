@@ -33,6 +33,8 @@
     <output url="file://$MODULE_DIR$/classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/client/src/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/core/src/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/src" isTestSource="false" />
@@ -58,6 +60,7 @@
       <sourceFolder url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src/test" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/client/target" />
       <excludeFolder url="file://$MODULE_DIR$/core/target" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/target" />

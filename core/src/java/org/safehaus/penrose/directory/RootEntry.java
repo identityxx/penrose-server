@@ -89,7 +89,7 @@ public class RootEntry extends Entry {
         Attributes attributes = computeAttributes(interpreter);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntry(this);
+        result.setEntryId(getId());
 
         response.add(result);
     }

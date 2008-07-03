@@ -106,7 +106,7 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
         source.search(session, newRequest, newResponse);
 
         SearchResult result = new SearchResult(dn, attributes);
-        result.setEntry(this);
+        result.setEntryId(getId());
 
         response.add(result);
     }

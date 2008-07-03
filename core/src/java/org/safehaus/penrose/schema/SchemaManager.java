@@ -36,7 +36,7 @@ import java.util.TreeMap;
 /**
  * @author Endi S. Dewata
  */
-public class SchemaManager implements SchemaManagerMBean {
+public class SchemaManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();

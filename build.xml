@@ -9,8 +9,6 @@
 
     <property file="build.properties"/>
     <property name="prefix" value=""/>
-    <property name="iscc.path" value="ISCC.exe"/>
-    <property name="cygwin.home" value="c:/cygwin"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
@@ -36,22 +34,29 @@
     </target>
 
     <target name="javacc" depends="init">
-        <ant dir="core" target="javacc"/>
+        <ant dir="common"  target="javacc"/>
+        <ant dir="core"    target="javacc"/>
     </target>
     
     <target name="compile" depends="init">
+        <ant dir="common"  target="compile"/>
         <ant dir="core"    target="compile"/>
+        <ant dir="client"  target="compile"/>
         <ant dir="server"  target="compile"/>
     </target>
 
     <target name="build" depends="init">
+        <ant dir="common"  target="build"/>
         <ant dir="core"    target="build"/>
+        <ant dir="client"  target="build"/>
         <ant dir="server"  target="build"/>
     </target>
 
     <target name="docs" depends="init">
-        <ant dir="core" target="docs"/>
-        <ant dir="server" target="docs"/>
+        <ant dir="common"  target="docs"/>
+        <ant dir="core"    target="docs"/>
+        <ant dir="client"  target="docs"/>
+        <ant dir="server"  target="docs"/>
     </target>
 
     <target name="export" depends="build">
@@ -87,44 +92,59 @@
     </target>
 
     <target name="dist" depends="init">
+        <ant dir="common"  target="dist"/>
         <ant dir="core"    target="dist"/>
+        <ant dir="client"  target="dist"/>
         <ant dir="server"  target="dist"/>
     </target>
 
     <target name="dist-src" depends="init">
+        <ant dir="common" target="dist-src"/>
         <ant dir="core"   target="dist-src"/>
+        <ant dir="client" target="dist-src"/>
         <ant dir="server" target="dist-src"/>
     </target>
 
     <target name="dist-macosx" depends="init">
+        <ant dir="common" target="dist-macosx"/>
         <ant dir="core"   target="dist-macosx"/>
+        <ant dir="client" target="dist-macosx"/>
         <ant dir="server" target="dist-macosx"/>
     </target>
 
     <target name="dist-unix" depends="init">
+        <ant dir="common" target="dist-unix"/>
         <ant dir="core"   target="dist-unix"/>
+        <ant dir="client" target="dist-unix"/>
         <ant dir="server" target="dist-unix"/>
     </target>
 
     <target name="dist-win32" depends="init">
+        <ant dir="common" target="dist-win32"/>
         <ant dir="core"   target="dist-win32"/>
+        <ant dir="client" target="dist-win32"/>
         <ant dir="server" target="dist-win32"/>
     </target>
 
     <target name="dist-rpm" depends="init">
+        <ant dir="client" target="dist-rpm"/>
         <ant dir="server" target="dist-rpm"/>
     </target>
 
     <target name="dist-all" depends="init">
+        <ant dir="common" target="dist-all"/>
         <ant dir="core"   target="dist-all"/>
+        <ant dir="client" target="dist-all"/>
         <ant dir="server" target="dist-all"/>
     </target>
 
     <target name="install" depends="init">
+        <ant dir="client" target="install"/>
         <ant dir="server" target="install"/>
     </target>
 
     <target name="uninstall" depends="init">
+        <ant dir="client" target="uninstall"/>
         <ant dir="server" target="uninstall"/>
     </target>
 
@@ -132,7 +152,9 @@
         <delete dir="dist"   failonerror="false"/>
         <delete dir="target" failonerror="false"/>
         <ant dir="server"  target="clean"/>
+        <ant dir="client"  target="clean"/>
         <ant dir="core"    target="clean"/>
+        <ant dir="common"  target="clean"/>
     </target>
 
 </project>
