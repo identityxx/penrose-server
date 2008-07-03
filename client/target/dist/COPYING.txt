@@ -1,6 +1,0 @@
-Penrose is licensed to you by Identyx Corporation.  under the
-GNU General Public License version 2, a copy of which is enclosed in the
-file LICENSE.txt.
-
-(If you cannot or do not wish to meet the requirements of the GNU GPL 2,
-contact info@identyx.com for alternative terms.)

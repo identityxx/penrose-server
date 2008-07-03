@@ -44,28 +44,9 @@
     </path>
 
     <target name="compile">
-        <mkdir dir="DIR-INF/target/classes"/>
-        <javac
-            srcdir="DIR-INF/src"
-            destdir="DIR-INF/target/classes"
-            classpathref="lib.path"
-            debug="on"
-            debuglevel="lines,vars,source"
-        />
     </target>
     
     <target name="build" depends="compile">
-        <mkdir dir="DIR-INF/lib"/>
-        <jar jarfile="DIR-INF/lib/${product.name}-federation-${product.version}.jar">
-            <fileset dir="DIR-INF/target/classes"/>
-            <manifest>
-              <attribute name="Specification-Version"  value="${product.specification}"/>
-              <attribute name="Implementation-Title"   value="${product.title} Server"/>
-              <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
-              <attribute name="Build-Date"             value="${TIMESTAMP}"/>
-            </manifest>
-        </jar>
         <fixcrlf
             srcdir="bin"
             includes="**/*.sh"
@@ -74,7 +55,6 @@
     </target>
 
     <target name="clean">
-        <delete file="DIR-INF/lib/${product.name}-federation-${product.version}.jar" failonerror="false"/>
         <delete dir="DIR-INF/target" failonerror="false"/>
     </target>
 
