@@ -249,24 +249,44 @@
     </target>
 
     <target name="dist-rpm-linux-intel" depends="init" if="isLinuxIntel">
+        <mkdir dir="target"/>
+        <exec executable="/bin/uname" output="target/arch.txt">
+            <arg line="-i"/>
+        </exec>
+        <loadfile property="arch" srcFile="target/arch.txt">
+            <filterchain>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <echo message="Arch: ${arch}"/>
         <antcall target="rpm">
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
             <param name="rpm.spec" value="${module.name}.spec"/>
-            <param name="rpm.arch" value="i386"/>
-            <param name="rpm.name" value="${module.name}-${product.version}-1.i386.rpm"/>
+            <param name="rpm.arch" value="${arch}"/>
+            <param name="rpm.name" value="${module.name}-${product.version}-1.${arch}.rpm"/>
         </antcall>
     </target>
 
     <target name="dist-rpm-linux-amd64" depends="init" if="isLinuxAMD64">
+        <mkdir dir="target"/>
+        <exec executable="/bin/uname" output="target/arch.txt">
+            <arg line="-i"/>
+        </exec>
+        <loadfile property="arch" srcFile="target/arch.txt">
+            <filterchain>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <echo message="Arch: ${arch}"/>
         <antcall target="rpm">
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
             <param name="rpm.spec" value="${module.name}.spec"/>
-            <param name="rpm.arch" value="x86_64"/>
-            <param name="rpm.name" value="${module.name}-${product.version}-1.x86_64.rpm"/>
+            <param name="rpm.arch" value="${arch}"/>
+            <param name="rpm.name" value="${module.name}-${product.version}-1.${arch}.rpm"/>
         </antcall>
     </target>
 

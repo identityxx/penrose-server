@@ -126,7 +126,7 @@
         <ant dir="server" target="dist-win32"/>
     </target>
 
-    <target name="dist-rpm" depends="init">
+    <target name="dist-rpm" depends="dist">
         <ant dir="client" target="dist-rpm"/>
         <ant dir="server" target="dist-rpm"/>
     </target>
