@@ -10,10 +10,10 @@
     <property name="prefix" value=""/>
 
     <property name="module.name" value="${product.name}-server"/>
-    <property name="project.dist" value="../dist"/>
+    <property name="project.dist" value="dist"/>
 
     <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
-    <property name="docs.target" value="${project.dist}/javadoc"/>
+    <property name="docs.target" value="dist/javadoc"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
@@ -23,28 +23,34 @@
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="../common/lib">
-            <include name="*.jar"/>
+        <fileset dir="../common">
+            <include name="lib/**/*.jar"/>
+            <include name="target/${product.name}-common-${product.version}.jar"/>
         </fileset>
-        <fileset dir="../core/lib">
-            <include name="*.jar"/>
+        <fileset dir="../core">
+            <include name="lib/**/*.jar"/>
+            <include name="target/${product.name}-${product.version}.jar"/>
         </fileset>
-        <pathelement location="../common/target/classes"/>
-        <pathelement location="../core/target/classes"/>
+        <fileset dir="../client">
+            <include name="target/${product.name}-client-${product.version}.jar"/>
+        </fileset>
     </path>
 
     <path id="main.path">
         <fileset dir="lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="../common/lib">
-            <include name="*.jar"/>
+        <fileset dir="../common">
+            <include name="lib/**/*.jar"/>
+            <include name="target/${product.name}-common-${product.version}.jar"/>
         </fileset>
-        <fileset dir="../core/lib">
-            <include name="*.jar"/>
+        <fileset dir="../core">
+            <include name="lib/**/*.jar"/>
+            <include name="target/${product.name}-${product.version}.jar"/>
         </fileset>
-        <pathelement location="../common/target/classes"/>
-        <pathelement location="../core/target/classes"/>
+        <fileset dir="../client">
+            <include name="target/${product.name}-client-${product.version}.jar"/>
+        </fileset>
         <pathelement location="target/classes"/>
     </path>
 
@@ -180,15 +186,21 @@
 
         <copy todir="target/dist/dtd" flatten="true">
             <fileset dir="src" includes="**/*.dtd"/>
-            <fileset dir="../core/src" includes="**/*.dtd"/>
         </copy>
 
         <copy todir="target/dist/lib" includeEmptyDirs="false">
             <fileset dir="../common/lib" includes="*"/>
             <fileset dir="../core/lib" includes="*"/>
         </copy>
-        <copy file="../common/target/penrose-common-${product.version}.jar" todir="target/dist/lib"/>
-        <copy file="../core/target/penrose-${product.version}.jar" todir="target/dist/lib"/>
+        <copy file="../common/target/${product.name}-common-${product.version}.jar"
+              todir="target/dist/lib"
+        />
+        <copy file="../core/target/${product.name}-${product.version}.jar"
+              todir="target/dist/lib"
+        />
+        <copy file="../client/target/${product.name}-client-${product.version}.jar"
+              todir="target/dist/lib"
+        />
         <mkdir dir="target/dist/lib/ext"/>
 
         <mkdir dir="target/dist/logs"/>
@@ -217,8 +229,8 @@
         <ant dir="../services" target="dist"/>
         <ant dir="../samples" target="dist"/>
 
-        <mkdir dir="${project.dist}"/>
-        <zip destfile="${project.dist}/${module.name}-${product.version}.zip">
+        <mkdir dir="dist"/>
+        <zip destfile="dist/${module.name}-${product.version}.zip">
             <zipfileset dir="target/dist" prefix="${module.name}-${product.version}" filemode="755">
                 <include name="bin/*.sh"/>
             </zipfileset>
@@ -227,31 +239,58 @@
                 <exclude name="bin/*.sh"/>
             </zipfileset>
         </zip>
+        <tar destfile="dist/${module.name}-${product.version}.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
+                <include name="bin/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}">
+                <include name="**/*"/>
+                <exclude name="bin/*.sh"/>
+            </tarfileset>
+        </tar>
 
     </target>
 
     <target name="dist-src">
-        <mkdir dir="${project.dist}"/>
+        <mkdir dir="dist"/>
         <echo message="Creating ${module.name}-${product.version}-src.zip"/>
-        <zip destfile="${project.dist}/${module.name}-${product.version}-src.zip">
-            <zipfileset dir="..">
-                <exclude name="server/dist/**"/>
-                <exclude name="server/target/**"/>
-                <exclude name="server/logs/**"/>
+        <zip destfile="dist/${module.name}-${product.version}-src.zip">
+            <zipfileset dir="." prefix="${module.name}-${product.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
                 <exclude name="logs/**"/>
             </zipfileset>
+            <zipfileset dir="../common/lib" prefix="${module.name}-${product.version}/lib">
+                <include name="**/*"/>
+            </zipfileset>
+            <zipfileset dir="../common/target" prefix="${module.name}-${product.version}/lib">
+                <include name="${product.name}-common-${product.version}.jar"/>
+            </zipfileset>
+            <zipfileset dir="../core/lib" prefix="${module.name}-${product.version}/lib">
+                <include name="**/*"/>
+            </zipfileset>
+            <zipfileset dir="../core/target" prefix="${module.name}-${product.version}/lib">
+                <include name="${product.name}-${product.version}.jar"/>
+            </zipfileset>
         </zip>
         <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
-        <tar destfile="${project.dist}/${module.name}-${product.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir=".." prefix="${module.name}-${product.version}">
-                <exclude name="server/dist/**"/>
-                <exclude name="server/target/**"/>
-                <exclude name="server/logs/**"/>
+        <tar destfile="dist/${module.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${module.name}-${product.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
                 <exclude name="logs/**"/>
+            </tarfileset>
+            <tarfileset dir="../common/lib" prefix="${module.name}-${product.version}/lib">
+                <include name="**/*"/>
+            </tarfileset>
+            <tarfileset dir="../common/target" prefix="${module.name}-${product.version}/lib">
+                <include name="${product.name}-common-${product.version}.jar"/>
+            </tarfileset>
+            <tarfileset dir="../core/lib" prefix="${module.name}-${product.version}/lib">
+                <include name="**/*"/>
+            </tarfileset>
+            <tarfileset dir="../core/target" prefix="${module.name}-${product.version}/lib">
+                <include name="${product.name}-${product.version}.jar"/>
             </tarfileset>
         </tar>
     </target>
@@ -265,12 +304,12 @@
             <arg line="-p server/target/${module.name}-${product.version}.dmg/${module.name}-${product.version}.pkg"/>
         </exec>
         <echo message="Creating ${module.name}-${product.version}.dmg"/>
-        <mkdir dir="${project.dist}"/>
+        <mkdir dir="dist"/>
         <exec executable="/usr/bin/hdiutil">
             <arg line="create"/>
             <arg line="-fs HFS+"/>
             <arg line="-srcdir target/${module.name}-${product.version}.dmg"/>
-            <arg line="${project.dist}/${module.name}-${product.version}.dmg"/>
+            <arg line="dist/${module.name}-${product.version}.dmg"/>
         </exec>
 <!--
         <exec executable="server/tools/pkg-dmg">
@@ -289,17 +328,6 @@
     </target>
 
     <target name="dist-unix" depends="docs,dist" if="isUnix">
-        <echo message="Creating ${module.name}-${product.version}.tar.gz"/>
-        <mkdir dir="${project.dist}"/>
-        <tar destfile="${project.dist}/${module.name}-${product.version}.tar.gz" compression="gzip">
-            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
-                <include name="bin/*.sh"/>
-            </tarfileset>
-            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}">
-                <include name="**/*"/>
-                <exclude name="bin/*.sh"/>
-            </tarfileset>
-        </tar>
     </target>
 
     <target name="dist-win32" depends="docs,dist" if="isWindows">
@@ -309,7 +337,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <mkdir dir="${project.dist}"/>
+        <mkdir dir="dist"/>
         <exec executable="${iscc.path}">
             <arg line="/Q target/${module.name}.iss"/>
         </exec>
@@ -350,7 +378,7 @@
         </condition>
     </target>
 
-    <target name="rpm-build" depends="dist-src" if="hasRpmBuilder">
+    <target name="rpm-build" depends="dist" if="hasRpmBuilder">
         <copy todir="target" file="installer/${rpm.spec}">
             <filterchain>
                 <expandproperties/>
@@ -370,18 +398,18 @@
         />
 -->
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="${project.dist}/${module.name}-${product.version}-src.tar.gz">
+            file="dist/${module.name}-${product.version}.tar.gz">
         </copy>
         <exec executable="${rpm.builder}" failonerror="true">
             <arg line="-bb target/${rpm.spec}"/>
         </exec>
-        <copy todir="${project.dist}" failonerror="false"
+        <copy todir="dist" failonerror="false"
             file="${rpm.home}/RPMS/${rpm.arch}/${rpm.name}">
         </copy>
     </target>
 
     <target name="dist-all" depends="dist-src,dist-macosx,dist-unix,dist-win32">
-        <copy todir="${project.dist}"
+        <copy todir="dist"
             file="target/${module.name}-${product.version}.jar">
         </copy>
     </target>
@@ -447,6 +475,7 @@
     </target>
 
     <target name="clean" depends="init">
+        <delete dir="dist" failonerror="false"/>
         <delete dir="target" failonerror="false"/>
         <ant dir="../monitors" target="clean"/>
         <ant dir="../services" target="clean"/>

@@ -5,7 +5,7 @@ Release: 1
 License: GPL
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: ${module.name}-${product.version}-src.tar.gz
+Source: ${module.name}-${product.version}.tar.gz
 BuildRoot: /var/tmp/${module.name}-${product.version}
 
 %description
@@ -14,17 +14,14 @@ http://penrose.safehaus.org
 
 %prep
 %setup -q
-
 %build
-ant -Dproduct.version=${product.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT docs dist
 
 %install
-ant -Dproduct.version=${product.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install
+mkdir -p $RPM_BUILD_ROOT/usr/local/${module.name}-${product.version}
+cp -R * $RPM_BUILD_ROOT/usr/local/${module.name}-${product.version}
 
 %post
-cat << EOF
-${product.title} Server ${product.version} has been installed in /usr/local/${module.name}-${product.version}.
-EOF
+echo ${product.title} Server ${product.version} has been installed in /usr/local/${module.name}-${product.version}.
 
 %clean
 rm -rf $RPM_BUILD_ROOT

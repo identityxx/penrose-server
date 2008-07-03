@@ -1,12 +1,12 @@
 Summary: Penrose Client
-Name: ${project.name}
+Name: ${module.name}
 Version: ${product.version}
 Release: 1
 License: Commercial
 Vendor: Identyx, Inc.
 Group: System Environment/Base
-Source: ${project.name}-${product.version}-src.tar.gz
-BuildRoot: /var/tmp/${project.name}-${product.version}
+Source: ${module.name}-${product.version}.tar.gz
+BuildRoot: /var/tmp/${module.name}-${product.version}
 
 %description
 Penrose is a Java-based virtual directory server. Virtual directory enables federating (aggregating) identity data from multiple heterogeneous sources like directory, databases, flat files, and web services - real-time - and makes it available to identity consumers via LDAP.
@@ -14,17 +14,14 @@ http://penrose.safehaus.org
 
 %prep
 %setup -q
-
 %build
-ant -Dproduct.version=${product.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT docs dist
 
 %install
-ant -Dproduct.version=${product.version} -Dprefix=${rpm.prefix}$RPM_BUILD_ROOT install
+mkdir -p $RPM_BUILD_ROOT/usr/local/${module.name}-${product.version}
+cp -R * $RPM_BUILD_ROOT/usr/local/${module.name}-${product.version}
 
 %post
-cat << EOF
-Penrose Client ${product.version} has been installed in /usr/local/${project.name}-${product.version}.
-EOF
+echo ${product.title} Client ${product.version} has been installed in /usr/local/${module.name}-${product.version}.
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -32,4 +29,4 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-/usr/local/${project.name}-${product.version}
+/usr/local/${module.name}-${product.version}
