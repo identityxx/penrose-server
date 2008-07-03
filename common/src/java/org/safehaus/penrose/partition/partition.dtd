@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!ELEMENT partition (
+        description?,
+        partition-class?,
+        adapter*,
+        interpreter*,
+        thread-manager?,
+        parameter*
+)>
+
+<!ATTLIST partition enabled CDATA #IMPLIED>
+<!ATTLIST partition depends CDATA #IMPLIED>
+
+<!ELEMENT partition-class (#PCDATA)>
+
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT adapter (adapter-class, description?, parameter*)>
+<!ATTLIST adapter name CDATA #REQUIRED>
+<!ELEMENT adapter-class (#PCDATA)>
+
+<!ELEMENT interpreter (interpreter-name?,interpreter-class?, description?, parameter*)>
+<!ATTLIST interpreter name CDATA #IMPLIED>
+<!ELEMENT interpreter-name (#PCDATA)>
+<!ELEMENT interpreter-class (#PCDATA)>
+
+<!ELEMENT thread-manager (description?,thread-manager-class?, parameter*)>
+<!ATTLIST thread-manager enabled CDATA #IMPLIED>
+<!ELEMENT thread-manager-class (#PCDATA)>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

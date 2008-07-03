@@ -1,0 +1,263 @@
+options {
+	LOOKAHEAD              = 10;
+	FORCE_LA_CHECK         = true;
+	SANITY_CHECK           = true;
+	DEBUG_PARSER           = false;
+	DEBUG_TOKEN_MANAGER    = false;
+	STATIC                 = false;
+}
+
+PARSER_BEGIN(FilterParser)
+
+/**
+ * Copyright (c) 2000-2006, Identyx Corporation.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+package org.safehaus.penrose.filter;
+
+import java.util.*;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
+/**
+ * LDAP Filter Parser.
+ *
+ * <pre>
+ *
+ *    See: http://www.faqs.org/rfcs/rfc2254.html
+ *
+ *         filter     = "(" filtercomp ")"
+ *         filtercomp = and / or / not / item
+ *         and        = "&" filterlist
+ *         or         = "|" filterlist
+ *         not        = "!" filter
+ *         filterlist = 1*filter
+ *         item       = simple / present / substring / extensible
+ *         simple     = attr filtertype value
+ *         filtertype = equal / approx / greater / less
+ *         equal      = "="
+ *         approx     = "~="
+ *         greater    = ">="
+ *         less       = "<="
+ *         extensible = attr [":dn"] [":" matchingrule] ":=" value
+ *                      / [":dn"] ":" matchingrule ":=" value
+ *         present    = attr "=*"
+ *         substring  = attr "=" [initial] any [final]
+ *         initial    = value
+ *         any        = "*" *(value "*")
+ *         final      = value
+ *         attr       = AttributeDescription from Section 4.1.5 of [1]
+ *         matchingrule = MatchingRuleId from Section 4.1.9 of [1]
+ *         value      = AttributeValue from Section 4.1.6 of [1]
+ *
+ *    If a value should contain any of the following characters
+ *
+ *            Character       ASCII value
+ *            ---------------------------
+ *            *               0x2a
+ *            (               0x28
+ *            )               0x29
+ *            \               0x5c
+ *            NUL             0x00
+ *
+ *    the character must be encoded as the backslash '\' character (ASCII
+ *    0x5c) followed by the two hexadecimal digits representing the ASCII
+ *    value of the encoded character. The case of the two hexadecimal
+ *    digits is not significant.
+ *
+ *    Example usage:
+ *
+ *    Reader in = ...;
+ *    FilterParser parser = new FilterParser(in);
+ *    try {
+ *      Filter filter = parser.parse();
+ *    } catch (ParseException ex) {
+ *      System.out.println(ex.getMessage());
+ *    }
+ *
+ * </pre>
+ */
+
+public class FilterParser {
+
+  public Logger log = LoggerFactory.getLogger(getClass());
+
+  Filter parsedFilter;
+  
+  public Filter getFilter() { return this.parsedFilter; }
+  
+  public Filter parse() throws ParseException {
+    parsedFilter = Filter();
+    return parsedFilter;
+  }
+  
+}
+
+PARSER_END(FilterParser)
+
+SKIP :
+{
+  "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+	< AND : "&" >
+|	< OR : "|" >
+|	< NOT : "!" >
+|	< LPAREN : "(" >
+|	< RPAREN : ")" >
+|	< ANY : "*" >
+|	< COLON : ":" >
+|	< SPACE : " " >
+}
+
+TOKEN : /* others */
+{
+	< ITEM : (~["&","|","!","(",")"]) (~["(",")"])+ >
+}
+
+Filter Filter() :
+{
+	Filter f = null, filter = null;
+	Token mr = null;
+}
+{
+	<LPAREN>
+	(
+		LOOKAHEAD(10)
+        filter = And()
+    |   filter = Or()
+    |   filter = Not()
+	|	filter = Item()
+/*
+	|	(	attr = <ATTR> <COLON> "cn" <COLON> mr = <MATCHINGRULE> <COLON>
+		|	"cn" <COLON> mr = <MATCHINGRULE> <COLON> { attr = null; }
+		)
+		<EQUAL>
+		value = <VALUE>
+		{ filter = extensible = new ExtensibleFilter(
+			attr == null ? null : attr.toString(),
+			mr.toString(),
+			value.toString()
+			);
+		}
+*/
+	)
+	<RPAREN>
+	{ return filter; }
+}
+
+Filter And() :
+{
+	AndFilter filter;
+	Filter f;
+}
+{
+    <AND>
+    ( <SPACE> )*
+    { filter = new AndFilter(); }
+    (
+        f = Filter()
+        { filter.addFilter(f); }
+        ( <SPACE> )*
+    )+
+	{ return filter; }
+}
+
+Filter Or() :
+{
+	OrFilter filter;
+	Filter f;
+}
+{
+    <OR>
+    ( <SPACE> )*
+    { filter = new OrFilter(); }
+    (
+        f = Filter()
+        { filter.addFilter(f); }
+        ( <SPACE> )*
+    )+
+	{ return filter; }
+}
+
+Filter Not() :
+{
+	Filter f;
+}
+{
+    <NOT>
+    ( <SPACE> )*
+    f = Filter()
+    ( <SPACE> )*
+	{ return new NotFilter(f); }
+}
+
+Filter Item() :
+{
+	Filter filter;
+	Token item;
+}
+{
+    item = <ITEM>
+    {
+        String expression = item.toString();
+        log.debug("Parsing filter \""+expression+"\"");
+
+        int p = expression.indexOf("=");
+        char c = expression.charAt(p-1);
+        int length = 1;
+
+        if (c == '~' || c == '>' || c == '<' || c == ':') {
+            p--;
+            length = 2;
+        }
+
+        String attr = expression.substring(0, p);
+        String type = expression.substring(p, p+length);
+        String value = expression.substring(p+length);
+        log.debug("Filter: ["+attr+"] ["+type+"] ["+value+"]");
+
+        if (!"=".equals(type)) {
+            filter = new SimpleFilter(attr, type, FilterTool.unescape(value));
+
+        } else if ("*".equals(value)) {
+            filter = new PresentFilter(attr);
+
+        } else if (value.indexOf('*') < 0) {
+            filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
+
+        } else {
+            Collection values = new ArrayList();
+            StringTokenizer st = new StringTokenizer(value, "*", true);
+            while (st.hasMoreTokens()) {
+                String token = st.nextToken();
+                if ("*".equals(token)) {
+                    values.add(SubstringFilter.STAR);
+                } else {
+                    values.add(FilterTool.unescape(token));
+                }
+            }
+            filter = new SubstringFilter(attr, values);
+        }
+        
+        log.debug("Parsed filter: ["+filter+"]");
+  	    return filter;
+	}
+}
