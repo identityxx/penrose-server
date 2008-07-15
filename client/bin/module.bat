@@ -3,10 +3,10 @@
 if "%OS%"=="Windows_NT" @setlocal
 
 rem %~dp0 is expanded pathname of the current script under NT
-set DEFAULT_PENROSE_HOME=%~dp0..\..\..
+set DEFAULT_PENROSE_CLIENT_HOME=%~dp0..\..\..
 
-if "%PENROSE_HOME%"=="" set PENROSE_HOME=%DEFAULT_PENROSE_HOME%
-set DEFAULT_PENROSE_HOME=
+if "%PENROSE_CLIENT_HOME%"=="" set PENROSE_CLIENT_HOME=%DEFAULT_PENROSE_CLIENT_HOME%
+set DEFAULT_PENROSE_CLIENT_HOME=
 
 rem Slurp the command line arguments. This loop allows for an unlimited number
 rem of arguments (up to the command line limit, anyway).
@@ -22,29 +22,29 @@ rem This label provides a place for the argument list loop to break out
 rem and for NT handling to skip to.
 
 :doneStart
-rem find PENROSE_HOME if it does not exist due to either an invalid value passed
+rem find PENROSE_CLIENT_HOME if it does not exist due to either an invalid value passed
 rem by the user or the %0 problem on Windows 9x
-if exist "%PENROSE_HOME%\README.txt" goto checkJava
+if exist "%PENROSE_CLIENT_HOME%\README.txt" goto checkJava
 
 rem check for Penrose in Program Files on system drive
 if not exist "%SystemDrive%\Program Files\Penrose" goto checkSystemDrive
-set PENROSE_HOME=%SystemDrive%\Program Files\Penrose
+set PENROSE_CLIENT_HOME=%SystemDrive%\Program Files\Penrose
 goto checkJava
 
 :checkSystemDrive
 rem check for Penrose in root directory of system drive
 if not exist %SystemDrive%\Penrose\README.txt goto checkCDrive
-set PENROSE_HOME=%SystemDrive%\Penrose
+set PENROSE_CLIENT_HOME=%SystemDrive%\Penrose
 goto checkJava
 
 :checkCDrive
 rem check for Penrose in C:\Penrose for Win9X users
 if not exist C:\Penrose\README.txt goto noPenroseHome
-set PENROSE_HOME=C:\Penrose
+set PENROSE_CLIENT_HOME=C:\Penrose
 goto checkJava
 
 :noPenroseHome
-echo PENROSE_HOME is set incorrectly or Penrose could not be located. Please set PENROSE_HOME.
+echo PENROSE_CLIENT_HOME is set incorrectly or Penrose could not be located. Please set PENROSE_CLIENT_HOME.
 goto end
 
 :checkJava
@@ -64,16 +64,16 @@ echo.
 :runPenrose
 
 set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar
-set LOCALCLASSPATH=%LOCALCLASSPATH%;%PENROSE_HOME%\services\JMX\conf
+set LOCALCLASSPATH=%LOCALCLASSPATH%;%PENROSE_CLIENT_HOME%\services\JMX\conf
 
 set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\server\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_HOME%\services\JMX\SERVICE-INF\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib\ext
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\server\lib
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\server\lib\ext
+set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\services\JMX\SERVICE-INF\lib
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_HOME%" -Dorg.safehaus.penrose.management.home="%PENROSE_HOME%\services\JMX" org.safehaus.penrose.management.Client %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_CLIENT_HOME%" -Dorg.safehaus.penrose.management.home="%PENROSE_CLIENT_HOME%\services\JMX" org.safehaus.penrose.management.module.ModuleClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 :end

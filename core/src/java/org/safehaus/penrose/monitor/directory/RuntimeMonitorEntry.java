@@ -21,6 +21,8 @@ public class RuntimeMonitorEntry extends Entry {
     public void init() throws Exception {
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
         memoryMBean = ObjectName.getInstance("java.lang:type=Memory");
+
+        super.init();
     }
 
     public SearchResponse createSearchResponse(

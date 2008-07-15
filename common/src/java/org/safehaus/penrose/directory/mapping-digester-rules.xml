@@ -99,9 +99,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
             </pattern>
 
-            <call-method-rule pattern="handler" methodname="setHandlerName" paramcount="0" />
-            <call-method-rule pattern="engine"  methodname="setEngineName"  paramcount="0" />
-
             <pattern value="aci">
 
                 <object-create-rule classname="org.safehaus.penrose.acl.ACI" />
@@ -121,6 +118,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                 <call-param-rule pattern="param-name"  paramnumber="0"/>
                 <call-param-rule pattern="param-value" paramnumber="1"/>
             </pattern>
+
+            <call-method-rule pattern="init" methodname="setInitScript" paramcount="0" />
+            <call-method-rule pattern="add" methodname="setAddScript" paramcount="0" />
+            <call-method-rule pattern="bind" methodname="setBindScript" paramcount="0" />
+            <call-method-rule pattern="compare" methodname="setCompareScript" paramcount="0" />
+            <call-method-rule pattern="delete" methodname="setDeleteScript" paramcount="0" />
+            <call-method-rule pattern="modify" methodname="setModifyScript" paramcount="0" />
+            <call-method-rule pattern="modrdn" methodname="setModrdnScript" paramcount="0" />
+            <call-method-rule pattern="search" methodname="setSearchScript" paramcount="0" />
+            <call-method-rule pattern="unbind" methodname="setUnbindScript" paramcount="0" />
+            <call-method-rule pattern="destroy" methodname="setDestroyScript" paramcount="0" />
 
             <set-next-rule methodname="addEntryConfig" />
 

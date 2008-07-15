@@ -48,6 +48,7 @@ public class ProxyEntry extends Entry {
     String authentication;
 
     public void init() throws Exception {
+
         sourceRef = localSourceRefs.values().iterator().next();
         source = (LDAPSource)sourceRef.getSource();
         connection = (LDAPConnection)source.getConnection();
@@ -114,6 +115,8 @@ public class ProxyEntry extends Entry {
         authentication = entryConfig.getParameter(AUTHENTICATON);
         if (authentication == null) authentication = source.getParameter(AUTHENTICATON);
         if (debug) log.debug("Authentication: "+authentication);
+
+        super.init();
     }
 
     public DN convertDn(DN dn, DN oldSuffix, DN newSuffix) throws Exception {
@@ -279,9 +282,7 @@ public class ProxyEntry extends Entry {
                 newRequest.setAttributeValue(newDn.toString());
             }
 
-            boolean result = client.compare(newRequest, response);
-
-            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
+            client.compare(newRequest, response);
 
         } finally {
             connection.closeClient(session);

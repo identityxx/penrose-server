@@ -76,7 +76,18 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public Map<String,String> parameters = new TreeMap<String,String>();
 
-	public EntryConfig() {
+    public String initScript;
+    public String addScript;
+    public String bindScript;
+    public String compareScript;
+    public String deleteScript;
+    public String modifyScript;
+    public String modrdnScript;
+    public String searchScript;
+    public String unbindScript;
+    public String destroyScript;
+
+    public EntryConfig() {
 	}
 
     public EntryConfig(String dn) {
@@ -416,6 +427,17 @@ public class EntryConfig implements Serializable, Cloneable {
         if (!equals(acl, entryConfig.acl)) return false;
         if (!equals(parameters, entryConfig.parameters)) return false;
 
+        if (!equals(initScript, entryConfig.initScript)) return false;
+        if (!equals(addScript, entryConfig.addScript)) return false;
+        if (!equals(bindScript, entryConfig.bindScript)) return false;
+        if (!equals(compareScript, entryConfig.compareScript)) return false;
+        if (!equals(deleteScript, entryConfig.deleteScript)) return false;
+        if (!equals(modifyScript, entryConfig.modifyScript)) return false;
+        if (!equals(modrdnScript, entryConfig.modrdnScript)) return false;
+        if (!equals(searchScript, entryConfig.searchScript)) return false;
+        if (!equals(unbindScript, entryConfig.unbindScript)) return false;
+        if (!equals(destroyScript, entryConfig.destroyScript)) return false;
+
         return true;
     }
 
@@ -456,6 +478,17 @@ public class EntryConfig implements Serializable, Cloneable {
 
         parameters = new TreeMap<String,String>();
         parameters.putAll(entryConfig.parameters);
+
+        initScript = entryConfig.initScript;
+        addScript = entryConfig.addScript;
+        bindScript = entryConfig.bindScript;
+        compareScript = entryConfig.compareScript;
+        deleteScript = entryConfig.deleteScript;
+        modifyScript = entryConfig.modifyScript;
+        modrdnScript = entryConfig.modrdnScript;
+        searchScript = entryConfig.searchScript;
+        unbindScript = entryConfig.unbindScript;
+        destroyScript = entryConfig.destroyScript;
     }
 
     public Object clone() throws CloneNotSupportedException {
@@ -506,5 +539,85 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public void setEntryClass(String entryClass) {
         this.entryClass = entryClass;
+    }
+
+    public String getInitScript() {
+        return initScript;
+    }
+
+    public void setInitScript(String initScript) {
+        this.initScript = initScript;
+    }
+
+    public String getAddScript() {
+        return addScript;
+    }
+
+    public void setAddScript(String addScript) {
+        this.addScript = addScript;
+    }
+
+    public String getBindScript() {
+        return bindScript;
+    }
+
+    public void setBindScript(String bindScript) {
+        this.bindScript = bindScript;
+    }
+
+    public String getCompareScript() {
+        return compareScript;
+    }
+
+    public void setCompareScript(String compareScript) {
+        this.compareScript = compareScript;
+    }
+
+    public String getDeleteScript() {
+        return deleteScript;
+    }
+
+    public void setDeleteScript(String deleteScript) {
+        this.deleteScript = deleteScript;
+    }
+
+    public String getModifyScript() {
+        return modifyScript;
+    }
+
+    public void setModifyScript(String modifyScript) {
+        this.modifyScript = modifyScript;
+    }
+
+    public String getModrdnScript() {
+        return modrdnScript;
+    }
+
+    public void setModrdnScript(String modrdnScript) {
+        this.modrdnScript = modrdnScript;
+    }
+
+    public String getSearchScript() {
+        return searchScript;
+    }
+
+    public void setSearchScript(String searchScript) {
+        this.searchScript = searchScript;
+    }
+
+    public String getDestroyScript() {
+        return destroyScript;
+    }
+
+    public void setDestroyScript(String destroyScript) {
+        this.destroyScript = destroyScript;
+    }
+
+    public String getUnbindScript() {
+        return unbindScript;
+    }
+
+    public void setUnbindScript(String unbindScript) {
+        this.unbindScript = unbindScript;
     }
 }

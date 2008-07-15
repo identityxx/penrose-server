@@ -1,641 +1,859 @@
 package org.safehaus.penrose.ldap.module;
 
-import org.safehaus.penrose.filter.AndFilter;
-import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.filter.NotFilter;
-import org.safehaus.penrose.filter.SimpleFilter;
-import org.safehaus.penrose.jdbc.QueryResponse;
-import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.util.BinaryUtil;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
-import java.sql.ResultSet;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class LDAPSyncModule extends Module {
 
-    LDAPSource source;
-    LDAPSource target;
-    LDAPSource changelog;
-    JDBCSource tracker;
+    Partition sourcePartition;
+    Partition targetPartition;
+
+    Source changes;
+    Source errors;
 
     public void init() throws Exception {
 
-        log.debug("Initializing "+this.getName()+" module...");
-
         SourceManager sourceManager = partition.getSourceManager();
 
-        String sourceName = getParameter("source");
-        log.debug("Source: "+sourceName);
-        source = (LDAPSource)sourceManager.getSource(sourceName);
-
-        String targetName = getParameter("target");
-        log.debug("Target: "+targetName);
-        target = (LDAPSource)sourceManager.getSource(targetName);
-
-        String changeLogName = getParameter("changelog");
-        log.debug("Change Log: "+changeLogName);
-        changelog = (LDAPSource)sourceManager.getSource(changeLogName);
-
-        String trackerName = getParameter("tracker");
-        log.debug("Tracker: "+trackerName);
-        tracker = (JDBCSource)sourceManager.getSource(trackerName);
-    }
-
-    public void load() throws Exception {
-
-        log.debug("==================================================================================");
-        log.debug("Loading cache...");
-
-        final Session session = createAdminSession();
-
-        try {
-            target.clear(session);
-            tracker.clear(session);
-
-            SearchRequest request = new SearchRequest();
-
-            SearchResponse response = new SearchResponse() {
-                public void add(SearchResult result) throws Exception {
-                    target.add(session, result.getDn(), result.getAttributes());
-                }
-            };
-
-            source.search(session, request, response);
-
-            Long lastChangeNumber = getLastChangeNumber(session);
-            if (lastChangeNumber != null) addTracker(session, lastChangeNumber);
-
-        } finally {
-            session.close();
+        String sourcePartitionName = getParameter("source");
+        log.debug("Source: "+sourcePartitionName);
+        if (sourcePartitionName == null) {
+            sourcePartition = partition;
+        } else {
+            sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
+            if (sourcePartition == null) throw new Exception("Partition "+sourcePartitionName+" not found.");
         }
+
+        String targetPartitionName = getParameter("target");
+        log.debug("Target: "+targetPartitionName);
+        if (targetPartitionName == null) {
+            targetPartition = partition;
+        } else {
+            targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+            if (targetPartition == null) throw new Exception("Partition "+targetPartitionName+" not found.");
+        }
+
+        String changesName = getParameter("changes");
+        log.debug("Errors: "+changesName);
+        changes = sourceManager.getSource(changesName);
+
+        String errorsName = getParameter("errors");
+        log.debug("Errors: "+errorsName);
+        errors = sourceManager.getSource(errorsName);
     }
 
-    public void synchronize() throws Exception {
-
-        log.debug("============================================================================================");
-        log.debug("Synchronizing cache...");
-
-        Session session = createAdminSession();
+    public boolean execute(Session session, AddRequest request) throws Exception {
 
         try {
-            Long lastTrackedNumber = getLastTrackedNumber(session);
+            AddResponse response = new AddResponse();
+            targetPartition.add(session, request, response);
 
-            SearchRequest request = createSearchRequest(lastTrackedNumber);
-            SearchResponse response = new SearchResponse();
+            if (changes != null) {
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Added "+request.getDn());
 
-            changelog.search(session, request, response);
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation succeeded:\n\n");
 
-            if (!response.hasNext()) {
-                if (debug) log.debug("There is no new changes.");
-                return;
+                sb.append(request);
+                sb.append("\n");
+
+                attrs.setValue("description", sb.toString());
+
+                changes.add(session, new DN(), attrs);
             }
 
-            do {
-                SearchResult result = response.next();
-                DN dn = result.getDn();
-                Attributes attributes = result.getAttributes();
+            return true;
 
-                if (debug) {
-                    log.debug("Processing: "+dn);
-                    attributes.print();
-                }
+        } catch (Throwable e) {
 
-                process(session, attributes);
+            if (errors == null) {
+                throw new Exception(e);
 
-                Long newChangeNumber = Long.parseLong(attributes.getValue("changeNumber").toString());
-                addTracker(session, newChangeNumber);
+            } else {
 
-            } while (response.hasNext());
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Error adding "+request.getDn());
 
-            log.debug("LDAP synchronization completed.");
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation failed:\n\n");
 
-        } finally {
-            session.close();
+                sb.append(request);
+                sb.append("\n");
+
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw, true));
+
+                sb.append("Exception:\n");
+                sb.append(sw);
+
+                attrs.setValue("description", sb.toString());
+
+                errors.add(session, new DN(), attrs);
+
+                return false;
+            }
         }
     }
 
-    public Long getLastChangeNumber(Session session) throws Exception {
+    public boolean execute(Session session, DeleteRequest request) throws Exception {
+        try {
+            DeleteResponse response = new DeleteResponse();
+            targetPartition.delete(session, request, response);
+
+            if (changes != null) {
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Deleted "+request.getDn());
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation succeeded:\n\n");
+
+                sb.append(request);
+                sb.append("\n");
+
+                attrs.setValue("description", sb.toString());
+
+                changes.add(session, new DN(), attrs);
+            }
+
+            return true;
+
+        } catch (Throwable e) {
+
+            if (errors == null) {
+                throw new Exception(e);
+
+            } else {
+
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Error deleting "+request.getDn());
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation failed:\n\n");
+
+                sb.append(request);
+                sb.append("\n");
+
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw, true));
+
+                sb.append("Exception:\n");
+                sb.append(sw);
+
+                attrs.setValue("description", sb.toString());
+
+                errors.add(session, new DN(), attrs);
+
+                return false;
+            }
+        }
+    }
+
+    public boolean execute(Session session, ModifyRequest request) throws Exception {
+
+        try {
+            ModifyResponse response = new ModifyResponse();
+            targetPartition.modify(session, request, response);
+
+            if (changes != null) {
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Modified "+request.getDn());
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation succeeded:\n\n");
+
+                sb.append(request);
+                sb.append("\n");
+
+                attrs.setValue("description", sb.toString());
+
+                changes.add(session, new DN(), attrs);
+            }
+
+            return true;
+
+        } catch (Throwable e) {
+
+            if (errors == null) {
+                throw new Exception(e);
+
+            } else {
+
+                Attributes attrs = new Attributes();
+                attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
+                attrs.setValue("title", "Error modifying "+request.getDn());
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following operation failed:\n\n");
+
+                sb.append(request);
+                sb.append("\n");
+
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw, true));
+
+                sb.append("Exception:\n");
+                sb.append(sw);
+
+                attrs.setValue("description", sb.toString());
+
+                errors.add(session, new DN(), attrs);
+
+                return false;
+            }
+        }
+    }
+
+    public boolean deleteSubtree(Session session, String baseDn) throws Exception {
+        return deleteSubtree(session, new DN(baseDn));
+    }
+
+    public boolean deleteSubtree(Session session, final DN baseDn) throws Exception {
+
+        final ArrayList<DN> dns = new ArrayList<DN>();
 
         SearchRequest request = new SearchRequest();
-        request.setAttributes(new String[] { "changeNumber" });
+        request.setDn(baseDn);
 
-        SearchResponse response = new SearchResponse();
-
-        changelog.search(session, request, response);
-        
-        Long lastChangeNumber = null;
-        while (response.hasNext()) {
-            SearchResult result = response.next();
-            Attributes attributes = result.getAttributes();
-            lastChangeNumber = Long.parseLong(attributes.getValue("changeNumber").toString());
-        }
-
-        return lastChangeNumber;
-    }
-
-    public Long getLastTrackedNumber(Session session) throws Exception {
-
-        QueryResponse response = new QueryResponse() {
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-                super.add(rs.getLong(1));
+        SearchResponse response = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                DN dn = result.getDn();
+                log.debug("Found "+dn);
+                if (dn.equals(baseDn)) return;
+                dns.add(dn);
+            }
+            public void close() throws Exception {
+                super.close();
+                long count = dns.size();
+                log.debug("Found "+count+" entries.");
             }
         };
 
-        String tableName = tracker.getTableName();
-        tracker.executeQuery(session, "select max(changeNumber) from "+tableName, response);
+        targetPartition.search(session, request, response);
 
-        if (!response.hasNext()) return null;
+        log.debug("Waiting for operation to complete.");
+        int rc = response.waitFor();
+        log.debug("RC: "+rc);
 
-        return (Long)response.next();
-    }
+        boolean b = true;
+        for (int i=dns.size()-1; i>=0; i--) {
+            DN dn = dns.get(i);
 
-    public void addTracker(Session session, Number changeNumber) throws Exception {
+            //partition.delete(dn);
 
-        Attributes attributes = new Attributes();
-        attributes.setValue("changeNumber", changeNumber);
-        attributes.setValue("changeTimestamp", new Timestamp(System.currentTimeMillis()));
-
-        tracker.add(session, new DN(), attributes);
-    }
-
-    public SearchRequest createSearchRequest(Number changeNumber) throws Exception {
-
-        Filter changeLogFilter = null;
-
-        if (changeNumber != null) {
-
-            SimpleFilter sf1 = new SimpleFilter("changeNumber", ">=", changeNumber);
-            SimpleFilter sf2 = new SimpleFilter("changeNumber", "=", changeNumber);
-
-            AndFilter af = new AndFilter();
-            af.addFilter(sf1);
-            af.addFilter(new NotFilter(sf2));
-
-            changeLogFilter = af;
+            DeleteRequest deleteRequest = new DeleteRequest();
+            deleteRequest.setDn(dn);
+            if (!execute(session, deleteRequest)) b = false;
         }
+
+        return b;
+    }
+
+    public List<DN> getDns(Session session, String baseDn) throws Exception {
+        return getDns(session, new DN(baseDn));
+    }
+
+    public List<DN> getDns(Session session, final DN baseDn) throws Exception {
+
+        //if (warn) log.warn("Getting DNs in subtree "+baseDn+".");
+
+        final ArrayList<DN> dns = new ArrayList<DN>();
 
         SearchRequest request = new SearchRequest();
-        request.setFilter(changeLogFilter);
+        request.setDn(baseDn);
 
-        return request;
+        SearchResponse response = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                DN dn = result.getDn();
+                //log.debug("Found "+dn);
+                dns.add(dn);
+
+                totalCount++;
+
+                //if (warn) {
+                //    if (totalCount % 100 == 0) log.warn("Found "+totalCount+" entries.");
+                //}
+            }
+        };
+
+        targetPartition.search(session, request, response);
+
+        //log.debug("Waiting for operation to complete.");
+        int rc = response.waitFor();
+        //log.debug("RC: "+rc);
+
+        //if (warn) log.warn("Found "+response.getTotalCount()+" entries.");
+
+        return dns;
     }
 
-    public void process(Session session, Attributes attributes) throws Exception {
+    public void createBase() throws Exception {
 
-        DN targetDn = new DN((String)attributes.getValue("targetDN"));
-        if (debug) log.debug("Entry: "+targetDn);
+        Session adminSession = createAdminSession();
 
-        DN baseDn = source.getBaseDn();
-        int scope = source.getScope();
+        try {
+            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
-        if (scope == SearchRequest.SCOPE_BASE) {
-            if (!baseDn.matches(targetDn)) {
-                if (debug) log.debug("Entry is not "+baseDn+".");
-                return;
-            }
+            log.debug("##################################################################################################");
+            log.debug("Creating "+targetSuffix);
 
-        } else if (scope == SearchRequest.SCOPE_ONE) {
-            DN parentDn = targetDn.getParentDn();
-            if (debug) log.debug("Parent: "+parentDn+".");
-            if (!baseDn.matches(parentDn)) {
-                if (debug) log.debug("Entry is not a child of "+baseDn+".");
-                return;
-            }
-
-        } else { // if (scope == SourceRequest.SCOPE_SUB) {
-            if (!targetDn.endsWith(baseDn)) {
-                if (debug) log.debug("Entry is not under "+baseDn+".");
-                return;
-            }
-        }
-        
-        String changeType = (String)attributes.getValue("changeType");
-
-        if ("add".equalsIgnoreCase(changeType)) {
-
-            if (debug) log.debug("Adding "+targetDn);
-
-            String changes = (String)attributes.getValue("changes");
-            Attributes newAttributes = createAttributes(changes);
-
-            if (debug) newAttributes.print();
+            SearchResult result = sourcePartition.find(adminSession, sourceSuffix);
+            Attributes attributes = result.getAttributes();
 
             AddRequest request = new AddRequest();
-            request.setDn(targetDn.getPrefix(baseDn));
-            request.setAttributes(newAttributes);
+            request.setDn(targetSuffix);
+            request.setAttributes(attributes);
 
             AddResponse response = new AddResponse();
 
-            target.add(session, request, response);
+            targetPartition.add(adminSession, request, response);
 
-        } else if ("modify".equalsIgnoreCase(changeType)) {
+        } finally {
+            adminSession.close();
+        }
+    }
 
-            if (debug) log.debug("Modifying "+targetDn);
+    public void removeBase() throws Exception {
 
-            String changes = (String)attributes.getValue("changes");
-            Collection<Modification> modifications = createModifications(changes);
+        Session adminSession = createAdminSession();
 
-            ModifyRequest request = new ModifyRequest();
-            request.setDn(targetDn.getPrefix(baseDn));
-            request.setModifications(modifications);
+        try {
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
-            ModifyResponse response = new ModifyResponse();
-
-            target.modify(session, request, response);
-
-        } else if ("modrdn".equalsIgnoreCase(changeType)) {
-
-            if (debug) log.debug("Renaming "+targetDn);
-
-            String newRdn = (String)attributes.getValue("newRDN");
-            boolean deleteOldRdn = Boolean.parseBoolean((String)attributes.getValue("deleteOldRDN"));
-
-            ModRdnRequest request = new ModRdnRequest();
-            request.setDn(targetDn.getPrefix(baseDn));
-            request.setNewRdn(newRdn);
-            request.setDeleteOldRdn(deleteOldRdn);
-
-            ModRdnResponse response = new ModRdnResponse();
-
-            target.modrdn(session, request, response);
-
-        } else if ("delete".equalsIgnoreCase(changeType)) {
-
-            if (debug) log.debug("Deleting "+targetDn);
+            log.debug("##################################################################################################");
+            log.debug("Creating "+targetSuffix);
 
             DeleteRequest request = new DeleteRequest();
-            request.setDn(targetDn.getPrefix(baseDn));
+            request.setDn(targetSuffix);
 
             DeleteResponse response = new DeleteResponse();
 
-            target.delete(session, request, response);
+            targetPartition.delete(adminSession, request, response);
+
+        } finally {
+            adminSession.close();
         }
     }
 
-    public Attributes createAttributes(String changes) throws Exception {
-        Attributes attributes = new Attributes();
-
-        BufferedReader in = new BufferedReader(new StringReader(changes));
-
-        SchemaManager schemaManager = partition.getSchemaManager();
-
-        String attributeName = null;
-        boolean binary = false;
-        StringBuilder sb = new StringBuilder();
-
-        String line;
-        while ((line = in.readLine()) != null) {
-
-            if (debug) log.debug("Parsing ["+line+"]");
-
-            if (line.startsWith(" ")) {
-                sb.append(line.substring(1));
-                continue;
-            }
-
-            if (attributeName != null) {
-                String s = sb.toString().trim();
-                Object value = binary ? BinaryUtil.decode(BinaryUtil.BIG_INTEGER, s) : s;
-
-                boolean operational = schemaManager.isOperational(attributeName);
-                if (!operational) attributes.addValue(attributeName, value);
-                sb = new StringBuilder();
-            }
-
-            int i = line.indexOf(":");
-            attributeName = line.substring(0, i);
-
-            i++;
-            if (line.charAt(i) == ':') {
-                binary = true;
-                i++;
-
-            } else {
-                binary = false;
-            }
-
-            sb.append(line.substring(i));
-        }
-
-        if (attributeName != null) {
-            String s = sb.toString().trim();
-            Object value = binary ? BinaryUtil.decode(BinaryUtil.BIG_INTEGER, s) : s;
-
-            boolean operational = schemaManager.isOperational(attributeName);
-            if (!operational) attributes.addValue(attributeName, value);
-        }
-
-        return attributes;
+    public void create(String targetDn) throws Exception {
+        create(new DN(targetDn));
     }
 
-    public Collection<Modification> createModifications(String changes) throws Exception {
-        Collection<Modification> modifications = new ArrayList<Modification>();
+    public void create(DN targetDn) throws Exception {
 
-        BufferedReader in = new BufferedReader(new StringReader(changes));
-
-        SchemaManager schemaManager = partition.getSchemaManager();
-
-        int operation = 0;
-        String attributeName;
-        boolean binary = false;
-        StringBuilder sb = null;
-        Attribute attribute = null;
-
-        String line;
-        while ((line = in.readLine()) != null) {
-
-            if (debug) log.debug("Parsing ["+line+"]");
-
-            line = line.trim();
-            if (line.length() == 0) continue;
-
-            if (line.startsWith(" ") && sb != null) {
-                sb.append(line.substring(1));
-                continue;
-            }
-
-            if (line.equals("-") && attribute != null && sb != null) {
-                String s = sb.toString().trim();
-                Object value = binary ? BinaryUtil.decode(BinaryUtil.BIG_INTEGER, s) : s;
-
-                attribute.addValue(value);
-
-                boolean operational = schemaManager.isOperational(attribute.getName());
-                if (!operational) {
-                    Modification modification = new Modification(operation, attribute);
-                    modifications.add(modification);
-                }
-
-                operation = 0;
-                sb = null;
-                continue;
-            }
-
-            int i = line.indexOf(":");
-
-            if (operation == 0) {
-                operation = LDAP.getModificationOperation(line.substring(0, i));
-                attributeName = line.substring(i+1).trim();
-
-                attribute = new Attribute(attributeName);
-                continue;
-            }
-
-            if (sb != null) {
-                String s = sb.toString().trim();
-                Object value = binary ? BinaryUtil.decode(BinaryUtil.BIG_INTEGER, s) : s;
-
-                attribute.addValue(value);
-            }
-
-            i++;
-
-            if (line.charAt(i) == ':') {
-                binary = true;
-                i++;
-
-            } else {
-                binary = false;
-            }
-
-            sb = new StringBuilder();
-            sb.append(line.substring(i));
-        }
-
-        return modifications;
-    }
-
-    public void update() throws Exception {
-
-        log.debug("============================================================================================");
-        log.debug("Updating cache...");
-
-        Session session = createAdminSession();
+        Session adminSession = createAdminSession();
 
         try {
-            final Collection<DN> results1 = new TreeSet<DN>();
-            final Collection<DN> results2 = new TreeSet<DN>();
+            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
-            SearchRequest request1 = new SearchRequest();
-            request1.setAttributes(new String[] { "dn" });
+            log.debug("##################################################################################################");
+            log.debug("Creating "+targetDn);
 
-            SearchResponse response1 = new SearchResponse() {
+            DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
+
+            SearchRequest request = new SearchRequest();
+            request.setDn(sourceDn);
+
+            SearchResponse response = new SearchResponse();
+            sourcePartition.search(adminSession, request, response);
+
+            SearchResult result = response.next();
+            Attributes attributes = result.getAttributes();
+
+            AddRequest addRequest = new AddRequest();
+            addRequest.setDn(targetDn);
+            addRequest.setAttributes(attributes);
+
+            AddResponse addResponse = new AddResponse();
+
+            targetPartition.add(adminSession, addRequest, addResponse);
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public void load(String targetDn) throws Exception {
+        load(new DN(targetDn));
+    }
+
+    public void load(final DN targetDn) throws Exception {
+
+        final Session adminSession = createAdminSession();
+
+        try {
+            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+
+            log.debug("##################################################################################################");
+            log.debug("Loading "+targetDn);
+
+            final DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
+            final int sourceDnSize = sourceDn.getSize();
+
+            SearchRequest request = new SearchRequest();
+            request.setDn(sourceDn);
+
+            SearchResponse response = new SearchResponse() {
                 public void add(SearchResult result) throws Exception {
-                    results1.add(result.getDn());
-                }
-            };
 
-            target.search(session, request1, response1);
+                    DN dn = result.getDn();
+                    if (sourceDn.equals(dn)) return;
 
-            SearchRequest request2 = new SearchRequest();
-            request2.setAttributes(new String[] { "dn" });
+                    int dnSize = dn.getSize();
+                    DN newDn = dn.getPrefix(dnSize - sourceDnSize).append(targetDn);
 
-            SearchResponse response2 = new SearchResponse() {
-                public void add(SearchResult result) throws Exception {
-                    results2.add(result.getDn());
-                }
-            };
-
-            source.search(session, request2, response2);
-
-            log.debug("Target:");
-            for (DN d : results2) {
-                log.debug(" - "+d);
-            }
-
-            log.debug("Source:");
-            for (DN d : results1) {
-                log.debug(" - "+d);
-            }
-
-            Iterator<DN> i1 = results1.iterator();
-            Iterator<DN> i2 = results2.iterator();
-
-            boolean b1 = i1.hasNext();
-            boolean b2 = i2.hasNext();
-
-            DN dn1 = b1 ? i1.next() : null;
-            DN dn2 = b2 ? i2.next() : null;
-
-            while (b1 && b2) {
-
-                int c = dn1.compareTo(dn2);
-
-                if (debug) log.debug("Comparing ["+dn1+"] with ["+dn2+"] => "+c);
-
-                if (c < 0) { // delete old entry
-                    DeleteRequest request = new DeleteRequest();
-                    request.setDn(dn1);
-
-                    DeleteResponse response = new DeleteResponse();
-                    target.delete(session, request, response);
-
-                    b1 = i1.hasNext();
-                    if (b1) dn1 = i1.next();
-
-                } else if (c > 0) { // add new entry
-                    SearchResult result2 = source.find(session, dn2);
+                    Attributes attributes = result.getAttributes();
 
                     AddRequest request = new AddRequest();
-                    request.setDn(dn2);
-                    request.setAttributes(result2.getAttributes());
+                    request.setDn(newDn);
+                    request.setAttributes(attributes);
 
-                    AddResponse response = new AddResponse();
-                    target.add(session, request, response);
+                    execute(adminSession, request);
+                }
+            };
 
-                    b2 = i2.hasNext();
-                    if (b2) dn2 = i2.next();
+            sourcePartition.search(adminSession, request, response);
 
-                } else {
-                    SearchResult result1 = target.find(session, dn1);
-                    SearchResult result2 = source.find(session, dn2);
+            log.debug("Waiting for operation to complete.");
+            int rc = response.waitFor();
+            log.debug("RC: "+rc);
 
-                    Collection<Modification> modifications = createModifications(
-                            result1.getAttributes(),
-                            result2.getAttributes()
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public void clear(String targetDn) throws Exception {
+        clear(new DN(targetDn));
+    }
+
+    public void clear(DN targetDn) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            log.debug("##################################################################################################");
+            log.debug("Clearing "+targetDn);
+
+            deleteSubtree(adminSession, targetDn);
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public void remove(String targetDn) throws Exception {
+        remove(new DN(targetDn));
+    }
+
+    public void remove(DN targetDn) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            log.debug("##################################################################################################");
+            log.debug("Removing "+targetDn);
+
+            deleteSubtree(adminSession, targetDn);
+
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(targetDn);
+
+            DeleteResponse response = new DeleteResponse();
+
+            targetPartition.delete(adminSession, request, response);
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public long getCount(String targetDn) throws Exception {
+        return getCount(new DN(targetDn));
+    }
+
+    public long getCount(DN targetDn) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(targetDn);
+            request.setAttributes(new String[] { "dn" });
+            request.setTypesOnly(true);
+
+            SearchResponse response = new SearchResponse();
+
+            targetPartition.search(adminSession, request, response);
+
+            log.debug("Waiting for operation to complete.");
+            int rc = response.waitFor();
+            log.debug("RC: "+rc);
+
+            if (rc != LDAP.SUCCESS) throw response.getException();
+
+            return response.getTotalCount()-1;
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public boolean synchronize() throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+
+            SearchRequest request = new SearchRequest();
+            request.setDn(targetSuffix);
+            request.setAttributes(new String[] { "dn" });
+            request.setScope(SearchRequest.SCOPE_ONE);
+
+            SearchResponse response = new SearchResponse();
+
+            targetPartition.search(adminSession, request, response);
+
+            boolean b = true;
+            for (SearchResult result : response.getAll()) {
+                if (!synchronize(adminSession, result.getDn())) b = false;
+            }
+
+            return b;
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public boolean synchronize(String targetDn) throws Exception {
+        return synchronize(new DN(targetDn));
+    }
+
+    public boolean synchronize(final DN targetDn) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            return synchronize(adminSession, targetDn);
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public boolean synchronize(final Session session, final DN targetDn) throws Exception {
+
+        final DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
+        final DN targetSuffix = targetPartition.getDirectory().getSuffix();
+
+        log.debug("##################################################################################################");
+        log.warn("Synchronizing "+targetDn);
+
+        final DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
+
+        final Collection<String> dns = new LinkedHashSet<String>();
+
+        SearchRequest request1 = new SearchRequest();
+        request1.setDn(targetDn);
+        request1.setAttributes(new String[] { "dn" });
+
+        if (warn) log.warn("Searching existing entries: "+targetDn);
+
+        SearchResponse response1 = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+
+                DN dn = result.getDn();
+                if (dn.equals(targetDn)) return;
+
+                totalCount++;
+
+                String normalizedDn = dn.getNormalizedDn();
+                //if (warn) log.warn(" - "+normalizedDn);
+
+                dns.add(normalizedDn);
+
+                if (warn) {
+                    if (totalCount % 100 == 0) log.warn("Found "+totalCount+" entries.");
+                }
+            }
+        };
+
+        targetPartition.search(session, request1, response1);
+
+        int rc1 = response1.waitFor();
+        if (warn) log.warn("Search completed. RC="+rc1+".");
+
+        if (warn) log.warn("Found "+response1.getTotalCount()+" entries.");
+
+        final long[] counters = new long[] { 0, 0, 0 };
+        final boolean[] success = new boolean[] { true };
+
+        SearchRequest request2 = new SearchRequest();
+        request2.setDn(sourceDn);
+
+        if (warn) log.warn("Searching new entries: "+sourceDn);
+
+        SearchResponse response2 = new SearchResponse() {
+            public void add(SearchResult result2) throws Exception {
+
+                DN dn2 = result2.getDn();
+                if (dn2.equals(sourceDn)) return;
+
+                totalCount++;
+
+                DN dn1 = dn2.getPrefix(sourceSuffix).append(targetSuffix);
+                String normalizedDn = dn1.getNormalizedDn();
+
+                if (dns.contains(normalizedDn)) {
+
+                    SearchResult result1 = targetPartition.find(session, dn1);
+
+                    Attributes attributes1 = result1.getAttributes();
+                    Attributes attributes2 = result2.getAttributes();
+
+                    Collection<Modification> modifications = LDAP.createModifications(
+                            attributes1,
+                            attributes2
                     );
 
-                    if (!modifications.isEmpty()) { // modify entry
+                    if (modifications.isEmpty()) {
+                        //if (warn) log.warn("No changes, skipping "+normalizedDn+".");
+
+                    } else { // modify entry
+
+                        //if (warn) log.warn("Modifying "+normalizedDn+".");
+
                         ModifyRequest request = new ModifyRequest();
                         request.setDn(dn1);
                         request.setModifications(modifications);
+                        if (!execute(session, request)) success[0] = false;
 
-                        ModifyResponse response = new ModifyResponse();
-                        target.modify(session, request, response);
+                        counters[1]++;
                     }
 
-                    b1 = i1.hasNext();
-                    if (b1) dn1 = i1.next();
+                    dns.remove(normalizedDn);
 
-                    b2 = i2.hasNext();
-                    if (b2) dn2 = i2.next();
+                } else { // add entry
+
+                    //if (warn) log.warn("Adding "+normalizedDn+".");
+
+                    AddRequest request = new AddRequest();
+                    request.setDn(dn1);
+                    request.setAttributes(result2.getAttributes());
+                    if (!execute(session, request)) success[0] = false;
+
+                    counters[0]++;
+                }
+
+                if (warn) {
+                    if (totalCount % 100 == 0) log.warn("Processed "+totalCount+" entries.");
                 }
             }
+        };
 
-            while (b1) { // delete old entries
+        sourcePartition.search(session, request2, response2);
+
+        int rc2 = response2.waitFor();
+        if (warn) log.warn("Search completed. RC="+rc2+".");
+
+        for (String normalizedDn : dns) { // deleting entry
+
+            List<DN> list = getDns(session, normalizedDn);
+
+            //DeleteRequest request = new DeleteRequest();
+            //request.setDn(normalizedDn);
+            //if (!execute(request)) success[0] = false;
+
+            for (int i=list.size()-1; i>=0; i--) {
+                DN dn = list.get(i);
+
+                //if (warn) log.warn("Deleting "+dn+".");
+
+                DeleteRequest deleteRequest = new DeleteRequest();
+                deleteRequest.setDn(dn);
+                if (!execute(session, deleteRequest)) success[0] = false;
+
+                counters[2]++;
+            }
+        }
+
+        if (warn) {
+            log.warn("Processed "+response2.getTotalCount()+" entries.");
+            log.warn("Added "+counters[0]+" entries.");
+            log.warn("Modified "+counters[1]+" entries.");
+            log.warn("Deleted "+counters[2]+" entries.");
+        }
+
+        return success[0];
+    }
+
+/*
+    public boolean synchronize(final DN targetDn) throws Exception {
+
+        Partition sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
+
+        final DN sourceSuffix = sourcePartition.getDirectory().getRootEntries().iterator().next().getDn();
+        final DN targetSuffix = partition.getDirectory().getRootEntries().iterator().next().getDn();
+
+        log.debug("##################################################################################################");
+        log.debug("Synchronizing "+targetDn);
+
+        final DN sourceDn = targetDn.getPrefix(targetSuffix).append(sourceSuffix);
+
+        final Collection<DN> dns1 = new TreeSet<DN>();
+        final Map<DN,DN> dns2 = new TreeMap<DN,DN>();
+
+        SearchRequest request1 = new SearchRequest();
+        request1.setDn(targetDn);
+        request1.setAttributes(new String[] { "dn" });
+
+        SearchResponse response1 = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                DN dn = result.getDn();
+                if (dn.equals(targetDn)) return;
+                dns1.add(dn);
+            }
+        };
+
+        partition.search(request1, response1);
+
+        SearchRequest request2 = new SearchRequest();
+        request2.setDn(sourceDn);
+        request2.setAttributes(new String[] { "dn" });
+
+        SearchResponse response2 = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                DN dn = result.getDn();
+                if (dn.equals(sourceDn)) return;
+                DN newDn = dn.getPrefix(sourceSuffix).append(targetSuffix);
+                dns2.put(newDn, dn);
+            }
+        };
+
+        sourcePartition.search(request2, response2);
+
+        log.debug("Waiting for operation to complete.");
+        int rc1 = response1.getReturnCode();
+        log.debug("RC: "+rc1);
+
+        log.debug("Waiting for operation to complete.");
+        int rc2 = response2.getReturnCode();
+        log.debug("RC: "+rc2);
+
+        Iterator<DN> i1 = dns1.iterator();
+        Iterator<DN> i2 = dns2.keySet().iterator();
+
+        boolean b1 = i1.hasNext();
+        boolean b2 = i2.hasNext();
+
+        DN dn1 = b1 ? i1.next() : null;
+        DN dn2 = b2 ? i2.next() : null;
+
+        boolean success = true;
+
+        while (b1 && b2) {
+
+            if (debug) log.debug("Comparing ["+dn1+"] with ["+dn2+"]");
+
+            int c = dn1.compareTo(dn2);
+
+            if (c < 0) { // delete old entry
                 DeleteRequest request = new DeleteRequest();
                 request.setDn(dn1);
-
-                DeleteResponse response = new DeleteResponse();
-                target.delete(session, request, response);
+                if (!execute(request)) success = false;
 
                 b1 = i1.hasNext();
                 if (b1) dn1 = i1.next();
-            }
 
-            while (b2) { // add new entries
-                SearchResult result2 = source.find(session, dn2);
+            } else if (c > 0) { // add new entry
+
+                DN origDn = dns2.get(dn2);
+                SearchResult result = sourcePartition.find(origDn);
 
                 AddRequest request = new AddRequest();
                 request.setDn(dn2);
-                request.setAttributes(result2.getAttributes());
+                request.setAttributes(result.getAttributes());
+                if (!execute(request)) success = false;
 
-                AddResponse response = new AddResponse();
-                target.add(session, request, response);
+                b2 = i2.hasNext();
+                if (b2) dn2 = i2.next();
+
+            } else {
+
+                SearchResult result1 = partition.find(dn1);
+
+                DN origDn = dns2.get(dn2);
+                SearchResult result2 = sourcePartition.find(origDn);
+
+                Collection<Modification> modifications = createModifications(
+                        result1.getAttributes(),
+                        result2.getAttributes()
+                );
+
+                if (!modifications.isEmpty()) { // modify entry
+                    ModifyRequest request = new ModifyRequest();
+                    request.setDn(dn1);
+                    request.setModifications(modifications);
+                    if (!execute(request)) success = false;
+                }
+
+                b1 = i1.hasNext();
+                if (b1) dn1 = i1.next();
 
                 b2 = i2.hasNext();
                 if (b2) dn2 = i2.next();
             }
-
-        } finally {
-            session.close();
         }
+
+        while (b1) { // delete old entries
+            DeleteRequest request = new DeleteRequest();
+            request.setDn(dn1);
+            if (!execute(request)) success = false;
+
+            b1 = i1.hasNext();
+            if (b1) dn1 = i1.next();
+        }
+
+        while (b2) { // add new entries
+
+            DN origDn = dns2.get(dn2);
+            SearchResult result = sourcePartition.find(origDn);
+
+            AddRequest request = new AddRequest();
+            request.setDn(dn2);
+            request.setAttributes(result.getAttributes());
+            if (!execute(request)) success = false;
+
+            b2 = i2.hasNext();
+            if (b2) dn2 = i2.next();
+        }
+
+        return success;
     }
-
-    public Collection<Modification> createModifications(
-            Attributes attributes1,
-            Attributes attributes2
-    ) throws Exception {
-
-        Collection<Modification> modifications = new ArrayList<Modification>();
-
-        Collection<String> oldAttributes = new ArrayList<String>();
-        oldAttributes.addAll(attributes1.getNormalizedNames());
-        oldAttributes.removeAll(attributes2.getNormalizedNames());
-
-        for (String name : oldAttributes) {
-            Attribute oldAttribute = attributes1.get(name);
-            modifications.add(new Modification(Modification.DELETE, oldAttribute));
-        }
-
-        Collection<String> newAttributes = new ArrayList<String>();
-        newAttributes.addAll(attributes2.getNormalizedNames());
-        newAttributes.removeAll(attributes1.getNormalizedNames());
-
-        for (String name : newAttributes) {
-            Attribute newAttribute = attributes2.get(name);
-            modifications.add(new Modification(Modification.ADD, newAttribute));
-        }
-
-        for (Attribute attribute1 : attributes1.getAll()) {
-            Attribute attribute2 = attributes2.get(attribute1.getName());
-            if (attribute2 == null) continue;
-
-            Collection<Modification> mods = createModifications(
-                    attribute1,
-                    attribute2
-            );
-
-            if (mods.isEmpty()) continue;
-
-            modifications.addAll(mods);
-        }
-
-        return modifications;
-    }
-
-    public Collection<Modification> createModifications(
-            Attribute attribute1,
-            Attribute attribute2
-    ) throws Exception {
-        Collection<Modification> modifications = new ArrayList<Modification>();
-
-        Attribute oldAttribute = (Attribute)attribute1.clone();
-        oldAttribute.removeValues(attribute2.getValues());
-
-        if (!oldAttribute.isEmpty()) {
-            modifications.add(new Modification(Modification.DELETE, oldAttribute));
-        }
-
-        Attribute newAttribute = (Attribute)attribute2.clone();
-        newAttribute.removeValues(attribute1.getValues());
-
-        if (!newAttribute.isEmpty()) {
-            modifications.add(new Modification(Modification.ADD, newAttribute));
-        }
-
-        return modifications;
-    }
-
-    public void clear() throws Exception {
-
-        log.debug("==================================================================================");
-        log.debug("Clearing cache...");
-
-        Session session = createAdminSession();
-
-        try {
-            target.clear(session);
-            tracker.clear(session);
-
-        } finally {
-            session.close();
-        }
-    }
+*/
 }

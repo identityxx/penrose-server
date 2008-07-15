@@ -14,7 +14,7 @@
       <permission>rws</permission>
     </aci>
     <aci>
-      <target>ATTRIBUTES</target>                                   
+      <target>ATTRIBUTES</target>
       <attributes>userPassword</attributes>
       <action>deny</action>
       <permission>rs</permission>

@@ -17,14 +17,15 @@
  */
 package org.safehaus.penrose.ldap;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.naming.directory.*;
 import javax.naming.*;
-import java.util.Collection;
+import javax.naming.directory.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.TreeSet;
 
 /**
  * @author Endi S. Dewata
@@ -184,31 +185,37 @@ public class LDAP {
         Collection<Modification> modifications = new ArrayList<Modification>();
 
         Collection<String> oldNames = oldAttributes.getNormalizedNames();
-        Collection<String> newNames = newAttributes.getNormalizedNames();
+        //log.info("Old attributes: "+oldNames);
 
-        Collection<String> deletes = new ArrayList<String>();
+        Collection<String> newNames = newAttributes.getNormalizedNames();
+        //log.info("New attributes: "+newNames);
+
+        Collection<String> deletes = new TreeSet<String>();
         deletes.addAll(oldNames);
         deletes.removeAll(newNames);
 
+        //log.info("Deleting "+deletes+" attributes.");
         for (String name : deletes) {
             Attribute attribute = oldAttributes.get(name);
             modifications.add(new Modification(Modification.DELETE, attribute));
         }
 
-        Collection<String> adds = new ArrayList<String>();
+        Collection<String> adds = new TreeSet<String>();
         adds.addAll(newNames);
         adds.removeAll(oldNames);
 
+        //log.info("Adding "+adds+" attributes.");
         for (String name : adds) {
             Attribute attribute = newAttributes.get(name);
             if (attribute.isEmpty()) continue;
             modifications.add(new Modification(Modification.ADD, attribute));
         }
 
-        Collection<String> modifies = new ArrayList<String>();
+        Collection<String> modifies = new TreeSet<String>();
         modifies.addAll(oldNames);
         modifies.retainAll(newNames);
 
+        //log.info("Modifying "+modifies+" attributes.");
         for (String name : modifies) {
             Attribute oldAttribute = oldAttributes.get(name);
             Attribute newAttribute = newAttributes.get(name);

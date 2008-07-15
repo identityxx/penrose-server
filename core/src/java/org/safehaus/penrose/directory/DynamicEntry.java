@@ -44,6 +44,8 @@ public class DynamicEntry extends Entry implements Cloneable {
     public void init() throws Exception {
         String s = getParameter(FETCH);
         fetch = s == null ? DEFAULT_FETCH : Boolean.valueOf(s);
+
+        super.init();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -678,6 +680,15 @@ public class DynamicEntry extends Entry implements Cloneable {
     public Collection<DN> computeDns(Interpreter interpreter) throws Exception {
 
         Collection<DN> dns = new ArrayList<DN>();
+
+        AttributeMapping dnMapping = entryConfig.getAttributeMapping("dn");
+        if (dnMapping != null) {
+            String dnValue = (String)interpreter.eval(dnMapping);
+            if (debug) log.debug("DN mapping: "+dnValue);
+            dns.add(new DN(dnValue));
+            return dns;
+        }
+
         Collection<DN> parentDns = new ArrayList<DN>();
 
         Entry parent = getParent();
@@ -911,7 +922,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         if (lattribute != null && !lattribute.isEmpty()) {
             if (debug) {
                 for (Object value : lattribute.getValues()) {
-                    log.debug(" - "+lhs+" has been set to ["+value+"].");
+                    //log.debug(" - "+lhs+" has been set to ["+value+"].");
                 }
             }
             return;
@@ -919,7 +930,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         Object value = interpreter.eval(fieldMapping);
         if (value == null) {
-            if (debug) log.debug(" - "+lhs+" is null.");
+            //if (debug) log.debug(" - "+lhs+" is null.");
             return;
         }
 

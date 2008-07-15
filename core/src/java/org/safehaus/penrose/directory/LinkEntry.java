@@ -26,6 +26,8 @@ public class LinkEntry extends Entry {
         partitionName = getParameter(PARTITION);
         entryDn       = getParameter(ENTRY_DN);
         entryId       = getParameter(ENTRY_ID);
+
+        super.init();
     }
 
     public Entry getLink() throws Exception {

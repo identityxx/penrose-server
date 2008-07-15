@@ -175,6 +175,7 @@ public class SearchFilterBuilder {
             String sourceName = sourceRef.getAlias();
 
             String alias = createTableAlias(sourceName);
+            if (alias == null) continue;
 
             Filter f = null;
             for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
@@ -309,6 +310,8 @@ public class SearchFilterBuilder {
 
     public String createTableAlias(String sourceName) {
         SourceRef sourceRef = sourceRefs.get(sourceName);
+        if (sourceRef == null) return null;
+        
         if (sourceRef.isPrimarySourceRef()) return sourceName;
         //if (isPrimarySource(sourceName)) return sourceName;
 

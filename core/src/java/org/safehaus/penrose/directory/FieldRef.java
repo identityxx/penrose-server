@@ -37,16 +37,21 @@ public class FieldRef implements Cloneable {
 
         name = fieldMapping.getName();
 
+        if (fieldMapping.isPrimaryKey()) {
+            primaryKey = fieldMapping.isPrimaryKey();
+            return;
+        }
+
         String variable = fieldMapping.getVariable();
 
         if (variable != null && variable.indexOf('.') < 0) {
+
             AttributeMapping attributeMapping = entry.getAttributeMapping(variable);
-            if (attributeMapping == null) throw new Exception("Unknown attribute "+variable);
 
-            primaryKey = attributeMapping.isRdn();
-
-        } else {
-            primaryKey = fieldMapping.isPrimaryKey();
+            if (attributeMapping != null) {
+                primaryKey = attributeMapping.isRdn();
+                return;
+            }
         }
     }
 

@@ -17,20 +17,20 @@
  */
 package org.safehaus.penrose.interpreter;
 
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.directory.FieldMapping;
 import org.safehaus.penrose.directory.FieldRef;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.source.Field;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 
 /**

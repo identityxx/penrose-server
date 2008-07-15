@@ -1,4 +1,4 @@
-package org.safehaus.penrose.ldap.source;
+package org.safehaus.penrose.ldif.source;
 
 import org.safehaus.penrose.adapter.FilterBuilder;
 import org.safehaus.penrose.directory.FieldRef;
@@ -7,7 +7,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.connection.LDAPConnection;
+import org.safehaus.penrose.ldif.LDIFClient;
+import org.safehaus.penrose.ldif.connection.LDIFConnection;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
@@ -22,21 +23,14 @@ import java.util.StringTokenizer;
 /**
  * @author Endi S. Dewata
  */
-public class LDAPSource extends Source {
+public class LDIFSource extends Source {
 
     public final static String BASE_DN           = "baseDn";
     public final static String SCOPE             = "scope";
     public final static String FILTER            = "filter";
     public final static String OBJECT_CLASSES    = "objectClasses";
-    public final static String SIZE_LIMIT        = "sizeLimit";
-    public final static String TIME_LIMIT        = "timeLimit";
 
-    public final static String AUTHENTICATION          = "authentication";
-    public final static String AUTHENTICATION_DEFAULT  = "default";
-    public final static String AUTHENTICATION_FULL     = "full";
-    public final static String AUTHENTICATION_DISABLED = "disabled";
-
-    LDAPConnection connection;
+    LDIFConnection connection;
 
     DN baseDn;
     int scope;
@@ -46,23 +40,17 @@ public class LDAPSource extends Source {
     long sourceSizeLimit;
     long sourceTimeLimit;
 
-    public LDAPSource() {
+    public LDIFSource() {
     }
 
     public void init() throws Exception {
-        connection = (LDAPConnection)getConnection();
+        connection = (LDIFConnection)getConnection();
 
         baseDn = new DN(getParameter(BASE_DN));
         scope = getScope(getParameter(SCOPE));
         filter = FilterTool.parseFilter(getParameter(FILTER));
 
         objectClasses = getParameter(OBJECT_CLASSES);
-
-        String s = getParameter(SIZE_LIMIT);
-        if (s != null && !"".equals(s)) sourceSizeLimit = Long.parseLong(s);
-
-        s = getParameter(TIME_LIMIT);
-        if (s != null && !"".equals(s)) sourceTimeLimit = Long.parseLong(s);
     }
 
     public int getScope(String scope) {
@@ -117,7 +105,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Adding entry "+dn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.add(newRequest, response);
@@ -145,14 +133,6 @@ public class LDAPSource extends Source {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        String authentication = getParameter(AUTHENTICATION);
-        //if (debug) log.debug("Authentication: "+authentication);
-
-        if (AUTHENTICATION_DISABLED.equals(authentication)) {
-            if (debug) log.debug("Pass-Through Authentication is disabled.");
-            throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-        }
-
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
@@ -165,7 +145,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Binding as "+dn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.bind(newRequest, response);
@@ -205,7 +185,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Comparing entry "+dn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.compare(newRequest, response);
@@ -245,7 +225,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Deleting entry "+dn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.delete(newRequest, response);
@@ -285,7 +265,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Modifying entry "+dn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.modify(newRequest, response);
@@ -323,7 +303,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Renaming entry "+targetDn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.modrdn(newRequest, response);
@@ -390,7 +370,7 @@ public class LDAPSource extends Source {
 
         if (debug) log.debug("Searching entry "+baseDn);
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.search(newRequest, newResponse);
@@ -421,7 +401,7 @@ public class LDAPSource extends Source {
 
             if (baseDn != null && !baseDn.isEmpty()) {
                 return SearchRequest.SCOPE_BASE;
-                
+
             } else {
                 return SearchRequest.SCOPE_ONE;
             }
@@ -455,7 +435,7 @@ public class LDAPSource extends Source {
             }
         }
 
-        // extract attribute values 
+        // extract attribute values
         LDAPSourceFilterProcessor fp = new LDAPSourceFilterProcessor(this);
         fp.process(filter);
 
@@ -643,7 +623,7 @@ public class LDAPSource extends Source {
                 DN dn = result.getDn();
                 RDN rdn = dn.getRdn();
                 Attributes attributes = result.getAttributes();
-                
+
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(dn);
 
@@ -796,7 +776,7 @@ public class LDAPSource extends Source {
 
         SearchResponse response = new SearchResponse();
 
-        LDAPClient client = connection.getClient(session);
+        LDIFClient client = connection.getClient(session);
 
         try {
             client.search(request, response);
@@ -819,7 +799,7 @@ public class LDAPSource extends Source {
 
     public Object clone() throws CloneNotSupportedException {
 
-        LDAPSource source = (LDAPSource)super.clone();
+        LDIFSource source = (LDIFSource)super.clone();
 
         source.connection       = connection;
 

@@ -16,7 +16,7 @@ import java.io.PrintWriter;
 /**
  * @author Endi Sukma Dewata
  */
-public class NISDBSyncModule extends Module implements NISDBSyncModuleMBean {
+public class NISDBSyncModule extends Module {
 
     String sourcePartitionName;
 

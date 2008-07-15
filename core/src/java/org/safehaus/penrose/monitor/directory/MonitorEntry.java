@@ -61,6 +61,8 @@ public class MonitorEntry extends Entry {
         runtimeEntry.init(runtimeEntryConfig, entryContext);
 
         children.add(runtimeEntry);
+
+        super.init();
     }
 
     public boolean contains(DN dn) throws Exception {

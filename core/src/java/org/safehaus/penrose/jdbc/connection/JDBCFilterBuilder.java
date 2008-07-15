@@ -142,6 +142,13 @@ public class JDBCFilterBuilder {
 
             } else {
                 rhs = "?";
+		// GHH 20080707 - if the field isn't wrapped in a cast, and
+		// do know that we will need to have the value lowercased,
+		// do the lowercasing ourselves
+        	if (allowCaseSensitive && lField.isText() && !lField.isCaseSensitive()) {
+			value = value.toLowerCase();
+		}
+		// end GHH 20080707
             }
 
             parameters.add(value);
@@ -153,9 +160,17 @@ public class JDBCFilterBuilder {
         if (allowCaseSensitive && lField.isText() && !lField.isCaseSensitive()) {
             sb.append("lower(");
             sb.append(lhs);
-            sb.append(") like lower(");
-            sb.append(rhs);
-            sb.append(")");
+	    // GHH 20080707 - if the rhs is just ? then we have already
+	    // lowercased the value
+            sb.append(") like ");
+	    if (rhs.equals("?")) {
+		sb.append(rhs);
+	    } else {
+                sb.append("lower(");
+                sb.append(rhs);
+                sb.append(")");
+	    }
+	    // end GHH 20080707
 
         } else {
             sb.append(lhs);
@@ -238,6 +253,20 @@ public class JDBCFilterBuilder {
 
             } else {
                 rhs = "?";
+		// GHH 20080707 - if the field isn't wrapped in a cast, and
+		// do know that we will need to have the value lowercased,
+		// do the lowercasing ourselves
+        	if (allowCaseSensitive && lField.isText() && !lField.isCaseSensitive()) {
+			// the assumption here is that one of these two cases
+			// for value type is sufficient for any possible
+			// "text" value
+			if (value instanceof byte[]) {
+				value = (new String((byte[])value)).toLowerCase().getBytes();
+			} else {
+				value = value.toString().toLowerCase();
+			}
+		}
+		// end GHH 20080707
             }
 
             parameters.add(value);
@@ -274,9 +303,16 @@ public class JDBCFilterBuilder {
             sb.append(lhs);
             sb.append(") ");
             sb.append(operator);
-            sb.append(" lower(");
-            sb.append(rhs);
-            sb.append(")");
+	    // GHH 20080707 - if the rhs is just ? then we have already
+	    // lowercased the value
+	    if (rhs.equals("?")) {
+		sb.append(rhs);
+	    } else {
+                sb.append(" lower(");
+                sb.append(rhs);
+                sb.append(")");
+	    }
+	    // end GHH 20080707
 
         } else {
             sb.append(lhs);

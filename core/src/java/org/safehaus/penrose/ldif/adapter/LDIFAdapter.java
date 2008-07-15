@@ -15,34 +15,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose.filter;
+package org.safehaus.penrose.ldif.adapter;
 
-import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.adapter.Adapter;
+import org.safehaus.penrose.ldif.connection.LDIFConnection;
+import org.safehaus.penrose.ldif.source.LDIFSource;
 
-import java.io.Serializable;
-import java.util.Collection;
+/**
+ * @author Endi S. Dewata
+ */
+public class LDIFAdapter extends Adapter {
 
-public abstract class Filter implements Serializable, Cloneable {
-
-    ContainerFilter parent;
-
-    public boolean eval(Attributes attributes) throws Exception {
-        return true;
+    public String getConnectionClassName() {
+        return LDIFConnection.class.getName();
     }
 
-    public String toString(Collection<Object> args) {
-        return toString();
+    public String getSourceClassName() throws Exception {
+        return LDIFSource.class.getName();
     }
 
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-
-    public ContainerFilter getParent() {
-        return parent;
-    }
-
-    public void setParent(ContainerFilter parent) {
-        this.parent = parent;
-    }
 }

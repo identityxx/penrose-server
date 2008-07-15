@@ -163,6 +163,16 @@ public class Attributes implements Serializable, Cloneable {
         return attributes.remove(name.toLowerCase());
     }
 
+    public void remove(Attribute attribute) {
+        String name = attribute.getName();
+        String normalizedName = name.toLowerCase();
+
+        Attribute attr = attributes.get(normalizedName);
+        if (attr == null) return;
+
+        attr.removeValues(attribute.getValues());
+    }
+
     public void remove(Collection<String> list) throws Exception {
         for (String attributeName : list) {
             remove(attributeName);

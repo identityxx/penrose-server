@@ -636,15 +636,23 @@ public class JDBCSource extends Source {
 
         int column = 1;
 
+        log.debug("Fields:");
         for (Field field : getFields()) {
 
             Object value = rs.getObject(column++);
             if (value == null) continue;
 
             String fieldName = field.getName();
+
             attributes.addValue(fieldName, value);
 
-            if (field.isPrimaryKey()) rb.set(fieldName, value);
+            if (field.isPrimaryKey()) {
+                rb.set(fieldName, value);
+                if (debug) log.debug(" - "+fieldName+": "+value);
+
+            } else {
+                if (debug) log.debug(" - "+fieldName+": "+value+" (pk)");
+            }
         }
 
         DNBuilder db = new DNBuilder();
@@ -770,6 +778,7 @@ public class JDBCSource extends Source {
 
         int column = 1;
 
+        //log.debug("Fields:");
         for (SourceRef sourceRef : sourceRefs) {
             String alias = sourceRef.getAlias();
             //boolean primarySource = primarySourceRefs.contains(sourceRef);
@@ -783,13 +792,15 @@ public class JDBCSource extends Source {
                 String fieldName = fieldRef.getName();
                 String name = alias + "." + fieldName;
 
-                //if (primarySource && fieldRef.isPrimaryKey()) {
                 if (sourceRef.isPrimarySourceRef() && fieldRef.isPrimaryKey()) {
                     if (value == null) return null;
                     rb.set(name, value);
+                    //if (debug) log.debug(" - "+name+": "+value+" (pk)");
+                } else {
+                    if (value == null) continue;
+                    //if (debug) log.debug(" - "+name+": "+value);
                 }
 
-                if (value == null) continue;
                 fields.addValue(fieldName, value);
             }
 

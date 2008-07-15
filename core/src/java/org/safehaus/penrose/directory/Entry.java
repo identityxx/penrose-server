@@ -126,9 +126,25 @@ public class Entry implements Cloneable {
     }
 
     public void init() throws Exception {
+
+        String initScript = entryConfig.getInitScript();
+
+        if (initScript != null) {
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set("entry", this);
+            interpreter.eval(initScript);
+        }
     }
 
     public void destroy() throws Exception {
+
+        String destroyScript = entryConfig.getDestroyScript();
+
+        if (destroyScript != null) {
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set("entry", this);
+            interpreter.eval(destroyScript);
+        }
     }
 
     public SourceRef createSourceRef(SourceMapping sourceMapping) throws Exception {
@@ -471,10 +487,16 @@ public class Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        validatePermission(session, request);
-        validateSchema(request);
+        String addScript = entryConfig.getAddScript();
 
-        throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+        if (addScript != null) {
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set("entry", this);
+            interpreter.set("session", session);
+            interpreter.set("request", request);
+            interpreter.set("response", response);
+            interpreter.eval(addScript);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -947,19 +969,22 @@ public class Entry implements Cloneable {
 
         for (AttributeMapping attributeMapping : entryConfig.getAttributeMappings()) {
 
+            String name = attributeMapping.getName();
+            if ("dn".equals(name)) continue;
+
             Object value = interpreter.eval(attributeMapping);
-            if (debug) log.debug("Attribute "+attributeMapping.getName()+": "+value);
-            if (value == null) continue;
+            //if (debug) log.debug("Attribute "+name+": "+value);
+            if (value == null || value.toString().trim().equals("")) continue;
 
             if (value instanceof Collection) {
-                attributes.addValues(attributeMapping.getName(), (Collection<Object>) value);
+                attributes.addValues(name, (Collection<Object>) value);
             } else {
-                attributes.addValue(attributeMapping.getName(), value);
+                attributes.addValue(name, value);
             }
         }
 
         for (String objectClass : entryConfig.getObjectClasses()) {
-            if (debug) log.debug("Object class: "+objectClass);
+            //if (debug) log.debug("Object class: "+objectClass);
             attributes.addValue("objectClass", objectClass);
         }
 

@@ -154,6 +154,8 @@ public class SearchRequestBuilder extends RequestBuilder {
                 String fn = variable.substring(p + 1);
 
                 SourceRef s = sourceRefs.get(sn);
+                if (s == null) continue;
+                
                 FieldRef f = s.getFieldRef(fn);
 
                 String lhs = alias + "." + fieldRef.getOriginalName();
@@ -288,6 +290,8 @@ public class SearchRequestBuilder extends RequestBuilder {
 
             String joinType = generateJoinType(sourceRef);
             Filter joinCondition = generateJoinOn2(sourceRef, alias);
+            if (joinCondition == null) continue;
+            
             String joinWhere = generateJoinFilter(sourceRef, alias);
 
             JoinClause joinClause = new JoinClause();

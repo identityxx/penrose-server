@@ -260,7 +260,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     // Compare
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public synchronized boolean compare(
+    public synchronized void compare(
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
@@ -304,7 +304,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
-            return connection.compare(dn, attr, constraints);
+            boolean result = connection.compare(dn, attr, constraints);
+            response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

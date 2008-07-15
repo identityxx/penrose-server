@@ -1,5 +1,6 @@
 package org.safehaus.penrose.directory;
 
+import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
@@ -61,21 +62,21 @@ public class DynamicSearchResponse extends SearchResponse {
 
         SourceValues sv = (SourceValues)sourceValues.clone();
         sv.set(result.getSourceValues());
-
+/*
         if (debug) {
             log.debug("Source values:");
             sv.print();
         }
-
+*/
         interpreter.set(sv);
         entry.propagate(sv, interpreter);
         interpreter.clear();
-
+/*
         if (debug) {
             log.debug("Source values:");
             sv.print();
         }
-
+*/
         boolean complete = searchSecondarySources(sv);
 
         if (!complete) return;
@@ -150,6 +151,9 @@ public class DynamicSearchResponse extends SearchResponse {
                 continue;
             }
 
+            SearchRequest newRequest = (SearchRequest)request.clone();
+            newRequest.setFilter((Filter)null);
+
             SearchResponse sr = new SearchResponse();
 
             //Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
@@ -164,7 +168,7 @@ public class DynamicSearchResponse extends SearchResponse {
                         localSourceRefs,
                         sourceRefs,
                         sv,
-                        request,
+                        newRequest,
                         sr
                 );
                 

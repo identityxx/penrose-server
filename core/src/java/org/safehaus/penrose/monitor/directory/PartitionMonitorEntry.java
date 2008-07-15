@@ -13,9 +13,6 @@ import org.safehaus.penrose.partition.Partition;
  */
 public class PartitionMonitorEntry extends Entry {
 
-    public void init() throws Exception {
-    }
-
     public SearchResponse createSearchResponse(
             final Session session,
             final SearchRequest request,

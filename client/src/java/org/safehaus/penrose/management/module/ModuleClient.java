@@ -347,7 +347,7 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
     public static void processInvokeCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
         iterator.next(); // method
         String methodName = iterator.next();
-        iterator.next(); // in
+        iterator.next(); // on
 
         String target = iterator.next();
         if ("module".equals(target)) {

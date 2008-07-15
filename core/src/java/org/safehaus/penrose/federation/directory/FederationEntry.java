@@ -24,10 +24,12 @@ public class FederationEntry extends DynamicEntry {
     private boolean checkAccountLockout;
     private boolean checkAccountExpires;
 
-    public void init() {
+    public void init() throws Exception {
         checkAccountDisabled = Boolean.parseBoolean(getParameter("checkAccountDisabled"));
         checkAccountLockout = Boolean.parseBoolean(getParameter("checkAccountLockout"));
         checkAccountExpires = Boolean.parseBoolean(getParameter("checkAccountExpires"));
+
+        super.init();
     }
 
     public void bind(

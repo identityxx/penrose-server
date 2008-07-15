@@ -75,7 +75,6 @@
     </parameter>
   </source>
 
-
   <source name="groups_cache">
     <connection-name>Cache</connection-name>
     <field name="cn" primaryKey="true"/>

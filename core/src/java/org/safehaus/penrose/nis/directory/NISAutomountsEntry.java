@@ -26,6 +26,8 @@ public class NISAutomountsEntry extends DynamicEntry {
         SourceRef sourceRef = getSourceRef();
         automountsSource = (NISAutomountsSource)sourceRef.getSource();
         base = automountsSource.getParameter(NISAutomountsSource.BASE);
+
+        super.init();
     }
 
 

@@ -2,13 +2,23 @@
 
 <!ELEMENT mapping (entry*)>
 
-<!ELEMENT entry (description?,entry-class?,oc*,at*,source*,link?,handler?,engine?,aci*,parameter*)>
+<!ELEMENT entry (description?,entry-class?,oc*,at*,source*,link?,handler?,engine?,aci*,parameter*,init?,add?,bind?,compare?,delete?,modify?,modrdn?,search?,unbind?,destroy?)>
 <!ATTLIST entry dn CDATA "">
 <!ATTLIST entry enabled CDATA #IMPLIED>
 <!ATTLIST entry attached CDATA #IMPLIED>
 <!ATTLIST entry id CDATA #IMPLIED>
 <!ATTLIST entry parentId CDATA #IMPLIED>
 <!ELEMENT entry-class (#PCDATA)>
+<!ELEMENT init (#PCDATA)>
+<!ELEMENT add (#PCDATA)>
+<!ELEMENT bind (#PCDATA)>
+<!ELEMENT compare (#PCDATA)>
+<!ELEMENT delete (#PCDATA)>
+<!ELEMENT modify (#PCDATA)>
+<!ELEMENT modrdn (#PCDATA)>
+<!ELEMENT search (#PCDATA)>
+<!ELEMENT unbind (#PCDATA)>
+<!ELEMENT destroy (#PCDATA)>
 
 <!ELEMENT description (#PCDATA)>
 
@@ -34,7 +44,7 @@
 
 <!ELEMENT field (binary|constant|variable|expression)>
 <!ATTLIST field name CDATA #REQUIRED>
-<!ATTLIST field rdn (true|first|false) "false">
+<!ATTLIST field primaryKey (true|first|false) "false">
 
 <!ELEMENT binary (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>
