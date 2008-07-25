@@ -110,6 +110,7 @@
         <copy todir="target/classes">
             <fileset dir="src/java" includes="**/*.properties,**/*.xml,**/*.dtd"/>
         </copy>
+<!--
         <mkdir dir="target/tests"/>
         <javac
             srcdir="src/test"
@@ -126,6 +127,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
+-->
     </target>
 
     <target name="test" depends="singletest,alltest">
