@@ -42,9 +42,9 @@ public class Demo {
         entryConfig.addObjectClass("dcObject");
         entryConfig.addObjectClass("organization");
 
-        entryConfig.addAttributeMappingsFromRdn();
+        entryConfig.addAttributesFromRdn();
 
-        entryConfig.addAttributeMapping("o", "Example");
+        entryConfig.addAttributeConfig("o", "Example");
 
         return entryConfig;
     }
@@ -56,7 +56,7 @@ public class Demo {
 
         entryConfig.addObjectClass("organizationalUnit");
 
-        entryConfig.addAttributeMappingsFromRdn();
+        entryConfig.addAttributesFromRdn();
 
         return entryConfig;
     }

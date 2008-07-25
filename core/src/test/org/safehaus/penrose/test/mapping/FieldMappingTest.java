@@ -1,7 +1,7 @@
 package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.EntryFieldConfig;
 
 /**
  * @author Endi S. Dewata
@@ -9,21 +9,21 @@ import org.safehaus.penrose.directory.FieldMapping;
 public class FieldMappingTest extends TestCase {
 
     public void testClone() throws Exception {
-        FieldMapping f1 = new FieldMapping();
+        EntryFieldConfig f1 = new EntryFieldConfig();
         f1.setName("name");
         f1.setConstant("constant");
 
-        FieldMapping f2 = (FieldMapping)f1.clone();
+        EntryFieldConfig f2 = (EntryFieldConfig)f1.clone();
         assertEquals(f1.getName(), f2.getName());
         assertEquals(f1.getConstant(), f2.getConstant());
     }
 
     public void testEquals() {
-        FieldMapping f1 = new FieldMapping();
+        EntryFieldConfig f1 = new EntryFieldConfig();
         f1.setName("name");
         f1.setConstant("constant");
 
-        FieldMapping f2 = new FieldMapping();
+        EntryFieldConfig f2 = new EntryFieldConfig();
         f2.setName("name");
         f2.setConstant("constant");
 

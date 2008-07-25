@@ -46,7 +46,7 @@ public class TransformSearchResponse extends SearchResponse {
         result.setDn(db.toDn());
         
         Attributes attributes = result.getAttributes();
-        SourceValues sourceValues = result.getSourceValues();
+        SourceAttributes sourceValues = result.getSourceAttributes();
 
         for (String sourceName : sourceValues.getNames()) {
             Attributes attrs = sourceValues.get(sourceName);

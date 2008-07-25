@@ -539,7 +539,7 @@ public class LDAPSyncModule extends Module {
             targetPartition.search(adminSession, request, response);
 
             boolean b = true;
-            for (SearchResult result : response.getAll()) {
+            for (SearchResult result : response.getResults()) {
                 if (!synchronize(adminSession, result.getDn())) b = false;
             }
 

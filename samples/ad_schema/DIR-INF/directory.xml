@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="cn=AD Schema,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.activeDirectory.directory.ActiveDirectorySchemaEntry</entry-class>
+    <oc>subentry</oc>
+    <oc>subschema</oc>
+    <oc>extensibleObject</oc>
+    <at name="cn" rdn="true">
+      <constant>AD Schema</constant>
+    </at>
+    <source name="schema"/>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+</directory>

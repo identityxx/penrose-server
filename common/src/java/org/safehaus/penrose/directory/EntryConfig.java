@@ -19,36 +19,18 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.acl.ACI;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.DNBuilder;
+import org.safehaus.penrose.ldap.RDN;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
 import java.io.Serializable;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
 public class EntryConfig implements Serializable, Cloneable {
-
-    public final static String QUERY_CACHE_SIZE                = "queryCacheSize";
-    public final static String QUERY_CACHE_EXPIRATION          = "queryCacheExpiration";
-
-    public final static String DATA_CACHE_SIZE                 = "dataCacheSize";
-    public final static String DATA_CACHE_EXPIRATION           = "dataCacheExpiration";
-
-    public final static String BATCH_SIZE                      = "batchSize";
-
-    public final static String CACHE                           = "cache";
-
-    public final static int    DEFAULT_QUERY_CACHE_SIZE        = 100;
-    public final static int    DEFAULT_QUERY_CACHE_EXPIRATION  = 5;
-
-    public final static int    DEFAULT_DATA_CACHE_SIZE         = 100;
-    public final static int    DEFAULT_DATA_CACHE_EXPIRATION   = 5;
-
-    public final static int    DEFAULT_BATCH_SIZE              = 20;
-
-    public final static String DEFAULT_CACHE                   = "DEFAULT";
 
     public boolean enabled = true;
     public boolean attached = true;
@@ -66,12 +48,14 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public boolean staticRdn = true;
 
-    public Collection<AttributeMapping> attributeMappings                   = new LinkedHashSet<AttributeMapping>();
-    public Map<String,Collection<AttributeMapping>> attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
-    public Collection<AttributeMapping> rdnAttributeMappings                = new LinkedHashSet<AttributeMapping>();
+    public String mappingName;
 
-    public List<SourceMapping> sourceMappings = new ArrayList<SourceMapping>();
-    
+    public Collection<EntryAttributeConfig> attributeConfigs = new LinkedHashSet<EntryAttributeConfig>();
+    public Map<String,Collection<EntryAttributeConfig>> attributeConfigsByName = new TreeMap<String,Collection<EntryAttributeConfig>>();
+    public Collection<EntryAttributeConfig> rdnAttributeConfigs = new LinkedHashSet<EntryAttributeConfig>();
+
+    public List<EntrySourceConfig> sourceConfigs = new ArrayList<EntrySourceConfig>();
+
     public Collection<ACI> acl = new ArrayList<ACI>();
 
     public Map<String,String> parameters = new TreeMap<String,String>();
@@ -86,6 +70,8 @@ public class EntryConfig implements Serializable, Cloneable {
     public String searchScript;
     public String unbindScript;
     public String destroyScript;
+
+    public Map<String,EntrySearchConfig> searchConfigs = new LinkedHashMap<String,EntrySearchConfig>();
 
     public EntryConfig() {
 	}
@@ -127,22 +113,22 @@ public class EntryConfig implements Serializable, Cloneable {
     }
 
     public boolean isDynamic() {
-        for (AttributeMapping attributeMapping : attributeMappings) {
-            if (attributeMapping.getConstant() == null) return true;
+        for (EntryAttributeConfig entryAttributeConfig : attributeConfigs) {
+            if (entryAttributeConfig.getConstant() == null) return true;
         }
 
         return false;
     }
     
-    public Collection<AttributeMapping> getRdnAttributeMappings() {
-        return rdnAttributeMappings;
+    public Collection<EntryAttributeConfig> getRdnAttributeConfigs() {
+        return rdnAttributeConfigs;
     }
 
-    public Collection getNonRdnAttributeMappings() {
-        Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
-        for (AttributeMapping attributeMapping : attributeMappings) {
-            if (attributeMapping.isRdn()) continue;
-            results.add(attributeMapping);
+    public Collection getNonRdnAttributeConfigs() {
+        Collection<EntryAttributeConfig> results = new ArrayList<EntryAttributeConfig>();
+        for (EntryAttributeConfig attributeConfig : attributeConfigs) {
+            if (attributeConfig.isRdn()) continue;
+            results.add(attributeConfig);
         }
         return results;
     }
@@ -183,18 +169,18 @@ public class EntryConfig implements Serializable, Cloneable {
         this.attached = attached;
     }
 
-    public Collection<AttributeMapping> getAttributeMappings() {
-        return attributeMappings;
+    public Collection<EntryAttributeConfig> getAttributeConfigs() {
+        return attributeConfigs;
     }
 
-    public void removeAttributeMappings() {
-        attributeMappings.clear();
-        attributeMappingsByName.clear();
-        rdnAttributeMappings.clear();
+    public void removeAttributeConfigs() {
+        attributeConfigs.clear();
+        attributeConfigsByName.clear();
+        rdnAttributeConfigs.clear();
     }
 
-    public Collection<SourceMapping> getSourceMappings() {
-        return sourceMappings;
+    public Collection<EntrySourceConfig> getSourceConfigs() {
+        return sourceConfigs;
     }
 
     public Collection<String> getObjectClasses() {
@@ -224,106 +210,106 @@ public class EntryConfig implements Serializable, Cloneable {
         objectClasses.clear();
     }
 
-    public void addSourceMapping(SourceMapping sourceMapping) {
-        sourceMappings.add(sourceMapping);
+    public void addSourceConfig(EntrySourceConfig entrySourceConfig) {
+        sourceConfigs.add(entrySourceConfig);
     }
 
-    public int getSourceMappingIndex(SourceMapping sourceMapping) {
-        return sourceMappings.indexOf(sourceMapping);
+    public int getSourceConfigIndex(EntrySourceConfig entrySourceConfig) {
+        return sourceConfigs.indexOf(entrySourceConfig);
     }
 
-    public void setSourceIndex(SourceMapping sourceMapping, int index) {
-        sourceMappings.remove(sourceMapping);
-        sourceMappings.add(index, sourceMapping);
+    public void setSourceIndex(EntrySourceConfig sourceConfig, int index) {
+        sourceConfigs.remove(sourceConfig);
+        sourceConfigs.add(index, sourceConfig);
     }
 
-    public void removeSourceMappings() {
-        sourceMappings.clear();
+    public void removeSourceConfigs() {
+        sourceConfigs.clear();
     }
 
-    public SourceMapping getSourceMapping(String name) {
-        for (SourceMapping sourceMapping : sourceMappings) {
-            if (sourceMapping.getName().equals(name)) return sourceMapping;
+    public EntrySourceConfig getSourceConfig(String name) {
+        for (EntrySourceConfig sourceConfig : sourceConfigs) {
+            if (sourceConfig.getName().equals(name)) return sourceConfig;
         }
         return null;
     }
 
-    public SourceMapping getSourceMapping(int index) {
+    public EntrySourceConfig getSourceConfig(int index) {
         try {
-            return sourceMappings.get(index);
+            return sourceConfigs.get(index);
         } catch (Exception e) {
             return null;
         }
     }
 
-    public SourceMapping removeSourceMapping(String name) {
-        SourceMapping sourceMapping = getSourceMapping(name);
-        if (sourceMapping != null) {
-            sourceMappings.remove(sourceMapping);
+    public EntrySourceConfig removeSourceConfig(String name) {
+        EntrySourceConfig sourceConfig = getSourceConfig(name);
+        if (sourceConfig != null) {
+            sourceConfigs.remove(sourceConfig);
         }
-        return sourceMapping;
+        return sourceConfig;
     }
 
-    public void addAttributeMappings(Collection<AttributeMapping> attributeMappings) {
-        for (AttributeMapping attributeMapping : attributeMappings) {
-            addAttributeMapping(attributeMapping);
+    public void addAttributeConfigs(Collection<EntryAttributeConfig> entryAttributeConfigs) {
+        for (EntryAttributeConfig attributeConfig : entryAttributeConfigs) {
+            addAttributeConfig(attributeConfig);
         }
     }
 
-    public void addAttributeMappingsFromRdn() {
+    public void addAttributesFromRdn() {
         RDN rdn = dn.getRdn();
         for (String name : rdn.getNames()) {
             Object value = rdn.get(name);
 
-            AttributeMapping attributeMapping = new AttributeMapping(name, value, true);
-            addAttributeMapping(attributeMapping);
+            EntryAttributeConfig attributeConfig = new EntryAttributeConfig(name, value, true);
+            addAttributeConfig(attributeConfig);
         }
     }
 
-    public void addAttributeMapping(String name, Object value) {
-        addAttributeMapping(new AttributeMapping(name, value));
+    public void addAttributeConfig(String name, Object value) {
+        addAttributeConfig(new EntryAttributeConfig(name, value));
     }
 
-    public void addAttributeMapping(AttributeMapping attributeMapping) {
-        String name = attributeMapping.getName().toLowerCase();
-        //log.debug("Adding attribute "+name+" ("+attributeMapping.isRdn()+")");
+    public void addAttributeConfig(EntryAttributeConfig attributeConfig) {
+        String name = attributeConfig.getName().toLowerCase();
+        //log.debug("Adding attribute "+name+" ("+attributeConfig.isRdn()+")");
 
-        attributeMappings.add(attributeMapping);
+        attributeConfigs.add(attributeConfig);
 
-        Collection<AttributeMapping> list = attributeMappingsByName.get(name);
+        Collection<EntryAttributeConfig> list = attributeConfigsByName.get(name);
         if (list == null) {
-            list = new LinkedHashSet<AttributeMapping>();
-            attributeMappingsByName.put(name, list);
+            list = new LinkedHashSet<EntryAttributeConfig>();
+            attributeConfigsByName.put(name, list);
         }
-        list.add(attributeMapping);
+        list.add(attributeConfig);
 
-        if (attributeMapping.isRdn()) {
-            rdnAttributeMappings.add(attributeMapping);
+        if (attributeConfig.isRdn()) {
+            rdnAttributeConfigs.add(attributeConfig);
         }
 
-        staticRdn &= attributeMapping.getConstant() != null;
+        staticRdn &= attributeConfig.getConstant() != null;
     }
 
-    public AttributeMapping getAttributeMapping(String name) {
-        Collection<AttributeMapping> list = attributeMappingsByName.get(name.toLowerCase());
+    public EntryAttributeConfig getAttributeConfig(String name) {
+        Collection<EntryAttributeConfig> list = attributeConfigsByName.get(name.toLowerCase());
         if (list == null) return null;
 
         Iterator i = list.iterator();
         if (!i.hasNext()) return null;
 
-        return (AttributeMapping)i.next();
+        return (EntryAttributeConfig)i.next();
     }
 
-    public Collection<AttributeMapping> getAttributeMappings(String name) {
-        return attributeMappingsByName.get(name.toLowerCase());
+    public Collection<EntryAttributeConfig> getAttributeConfigs(String name) {
+        return attributeConfigsByName.get(name.toLowerCase());
     }
 
-    public Collection<AttributeMapping> getAttributeMappings(Collection<String> names) {
-        if (names == null) return attributeMappings;
+    public Collection<EntryAttributeConfig> getAttributeConfigs(Collection<String> names) {
+        if (names == null) return attributeConfigs;
 
-        Collection<AttributeMapping> results = new ArrayList<AttributeMapping>();
+        Collection<EntryAttributeConfig> results = new ArrayList<EntryAttributeConfig>();
         for (String name : names) {
-            Collection<AttributeMapping> list = attributeMappingsByName.get(name.toLowerCase());
+            Collection<EntryAttributeConfig> list = attributeConfigsByName.get(name.toLowerCase());
             if (list == null) continue;
             results.addAll(list);
         }
@@ -331,26 +317,28 @@ public class EntryConfig implements Serializable, Cloneable {
         return results;
     }
 
-    public void removeAttributeMappings(String name) {
-        Collection<AttributeMapping> list = attributeMappingsByName.remove(name.toLowerCase());
-        for (AttributeMapping attributeMapping : list) {
-            attributeMappings.remove(attributeMapping);
-            rdnAttributeMappings.remove(attributeMapping);
+    public void removeAttributeConfigs(String name) {
+        String key = name.toLowerCase();
+        Collection<EntryAttributeConfig> list = attributeConfigsByName.remove(key);
+        for (EntryAttributeConfig attributeConfig : list) {
+            attributeConfigs.remove(attributeConfig);
+            rdnAttributeConfigs.remove(attributeConfig);
         }
+        if (list.isEmpty()) attributeConfigsByName.remove(key);
     }
 
-    public void removeAttributeMapping(AttributeMapping attributeMapping) {
+    public void removeAttributeConfig(EntryAttributeConfig attributeConfig) {
 
-        attributeMappings.remove(attributeMapping);
-        rdnAttributeMappings.remove(attributeMapping);
+        String key = attributeConfig.getName().toLowerCase();
 
-        String key = attributeMapping.getName().toLowerCase();
+        attributeConfigs.remove(attributeConfig);
+        rdnAttributeConfigs.remove(attributeConfig);
 
-        Collection<AttributeMapping> list = attributeMappingsByName.get(key);
+        Collection<EntryAttributeConfig> list = attributeConfigsByName.get(key);
         if (list == null) return;
 
-        list.remove(attributeMapping);
-        if (list.isEmpty()) attributeMappingsByName.remove(key);
+        list.remove(attributeConfig);
+        if (list.isEmpty()) attributeConfigsByName.remove(key);
     }
 
     public String getDescription() {
@@ -359,6 +347,14 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getMappingName() {
+        return mappingName;
+    }
+
+    public void setMappingName(String mappingName) {
+        this.mappingName = mappingName;
     }
 
     public void addACI(ACI aci) {
@@ -419,11 +415,12 @@ public class EntryConfig implements Serializable, Cloneable {
 
         if (!equals(entryClass, entryConfig.entryClass)) return false;
         if (!equals(description, entryConfig.description)) return false;
+        if (!equals(mappingName, entryConfig.mappingName)) return false;
 
         if (!equals(objectClasses, entryConfig.objectClasses)) return false;
-        if (!equals(attributeMappings, entryConfig.attributeMappings)) return false;
+        if (!equals(attributeConfigs, entryConfig.attributeConfigs)) return false;
 
-        if (!equals(sourceMappings, entryConfig.sourceMappings)) return false;
+        if (!equals(sourceConfigs, entryConfig.sourceConfigs)) return false;
         if (!equals(acl, entryConfig.acl)) return false;
         if (!equals(parameters, entryConfig.parameters)) return false;
 
@@ -437,6 +434,8 @@ public class EntryConfig implements Serializable, Cloneable {
         if (!equals(searchScript, entryConfig.searchScript)) return false;
         if (!equals(unbindScript, entryConfig.unbindScript)) return false;
         if (!equals(destroyScript, entryConfig.destroyScript)) return false;
+
+        if (!equals(searchConfigs, entryConfig.searchConfigs)) return false;
 
         return true;
     }
@@ -452,23 +451,24 @@ public class EntryConfig implements Serializable, Cloneable {
 
         entryClass = entryConfig.entryClass;
         description = entryConfig.description;
+        mappingName = entryConfig.mappingName;
 
         objectClasses = new TreeSet<String>();
         for (String objectClass : entryConfig.objectClasses) {
             addObjectClass(objectClass);
         }
 
-        attributeMappings       = new LinkedHashSet<AttributeMapping>();
-        attributeMappingsByName = new TreeMap<String,Collection<AttributeMapping>>();
-        rdnAttributeMappings    = new LinkedHashSet<AttributeMapping>();
+        attributeConfigs = new LinkedHashSet<EntryAttributeConfig>();
+        attributeConfigsByName = new TreeMap<String,Collection<EntryAttributeConfig>>();
+        rdnAttributeConfigs = new LinkedHashSet<EntryAttributeConfig>();
 
-        for (AttributeMapping attributeMapping : entryConfig.attributeMappings) {
-            addAttributeMapping((AttributeMapping) attributeMapping.clone());
+        for (EntryAttributeConfig attributeConfig : entryConfig.attributeConfigs) {
+            addAttributeConfig((EntryAttributeConfig) attributeConfig.clone());
         }
 
-        sourceMappings = new ArrayList<SourceMapping>();
-        for (SourceMapping sourceMapping : entryConfig.sourceMappings) {
-            addSourceMapping((SourceMapping) sourceMapping.clone());
+        sourceConfigs = new ArrayList<EntrySourceConfig>();
+        for (EntrySourceConfig sourceConfig : entryConfig.sourceConfigs) {
+            addSourceConfig((EntrySourceConfig) sourceConfig.clone());
         }
 
         acl = new ArrayList<ACI>();
@@ -489,6 +489,11 @@ public class EntryConfig implements Serializable, Cloneable {
         searchScript = entryConfig.searchScript;
         unbindScript = entryConfig.unbindScript;
         destroyScript = entryConfig.destroyScript;
+
+        searchConfigs = new LinkedHashMap<String,EntrySearchConfig>();
+        for (EntrySearchConfig searchConfig : entryConfig.searchConfigs.values()) {
+            addSearchConfig((EntrySearchConfig) searchConfig.clone());
+        }
     }
 
     public Object clone() throws CloneNotSupportedException {
@@ -514,9 +519,9 @@ public class EntryConfig implements Serializable, Cloneable {
     }
 
     public String getPrimarySourceName() {
-        if (sourceMappings.size() == 0) return null;
-        SourceMapping sourceMapping = sourceMappings.get(0);
-        return sourceMapping.getName();
+        if (sourceConfigs.size() == 0) return null;
+        EntrySourceConfig sourceConfig = sourceConfigs.get(0);
+        return sourceConfig.getName();
 /*
         for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
 
@@ -619,5 +624,28 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public void setUnbindScript(String unbindScript) {
         this.unbindScript = unbindScript;
+    }
+
+    public void addSearchConfig(EntrySearchConfig searchConfig) {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        String name = searchConfig.getName();
+        if (name == null) {
+            int counter = 0;
+            name = "search"+counter;
+            while (searchConfigs.containsKey(name)) {
+                counter++;
+                name = "search"+counter;
+            }
+            searchConfig.setName(name);
+        }
+
+        log.debug("Adding search config "+name+".");
+        searchConfigs.put(name, searchConfig);
+    }
+
+    public Collection<EntrySearchConfig> getSearchConfigs() {
+        return searchConfigs.values();
     }
 }

@@ -1,7 +1,5 @@
 package org.safehaus.penrose.jdbc;
 
-import org.safehaus.penrose.source.Source;
-
 import java.util.Collection;
 import java.util.ArrayList;
 
@@ -10,15 +8,16 @@ import java.util.ArrayList;
  */
 public class InsertStatement extends Statement {
 
-    protected String sourceName;
+    protected StatementSource source = new StatementSource();
     protected Collection<Assignment> assignments = new ArrayList<Assignment>();
 
-    public String getSourceName() {
-        return sourceName;
+    public StatementSource getSource() {
+        return source;
     }
 
-    public void setSourceName(String sourceName) {
-        this.sourceName = sourceName;
+    public void setSource(String partitionName, String sourceName) {
+        source.setPartitionName(partitionName);
+        source.setSourceName(sourceName);
     }
 
     public Collection<Assignment> getAssignments() {

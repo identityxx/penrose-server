@@ -25,6 +25,7 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.interpreter.DefaultInterpreter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.mapping.MappingManager;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.module.ModuleManager;
@@ -64,6 +65,7 @@ public class Partition implements Cloneable {
     protected AdapterManager       adapterManager;
     protected ConnectionManager    connectionManager;
     protected SourceManager        sourceManager;
+    protected MappingManager       mappingManager;
     protected Directory            directory;
     protected ModuleManager        moduleManager;
 
@@ -102,6 +104,9 @@ public class Partition implements Cloneable {
         sourceManager = new SourceManager(this);
         sourceManager.init();
 
+        mappingManager = new MappingManager(this);
+        mappingManager.init();
+
         directory = new Directory(this);
         directory.init();
 
@@ -124,6 +129,7 @@ public class Partition implements Cloneable {
 
         moduleManager.destroy();
         directory.destroy();
+        mappingManager.destroy();
         sourceManager.destroy();
         connectionManager.destroy();
 
@@ -184,6 +190,10 @@ public class Partition implements Cloneable {
 
     public SourceManager getSourceManager() {
         return sourceManager;
+    }
+
+    public MappingManager getMappingManager() {
+        return mappingManager;
     }
 
     public Directory getDirectory() {
@@ -931,7 +941,7 @@ public class Partition implements Cloneable {
                     try {
                         searchEntry(session, request, response, entry);
 
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error(e.getMessage(), e);
                         response.setException(LDAP.createException(e));
 

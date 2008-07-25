@@ -100,8 +100,8 @@ public class Pipeline extends SearchResponse {
         return parent.next();
     }
 
-    public Collection<SearchResult> getAll() {
-        return parent.getAll();
+    public Collection<SearchResult> getResults() {
+        return parent.getResults();
     }
 
     public void add(SearchReference reference) throws Exception {

@@ -1,7 +1,7 @@
 package org.safehaus.penrose.source;
 
-import org.safehaus.penrose.directory.SourceMapping;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.EntrySourceConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,23 +100,23 @@ public class SourceConfigManager implements Serializable, Cloneable {
         return sourceConfigsByConnectionName.get(connectionName);
     }
 
-    public SourceConfig getSourceConfig(SourceMapping sourceMapping) {
-        return getSourceConfig(sourceMapping.getSourceName());
+    public SourceConfig getSourceConfig(EntrySourceConfig entrySourceConfig) {
+        return getSourceConfig(entrySourceConfig.getSourceName());
     }
 
     public Collection<SourceConfig> getSourceConfigs() {
         return sourceConfigs.values();
     }
 
-    public Collection<FieldMapping> getSearchableFields(SourceMapping sourceMapping) {
-        SourceConfig sourceConfig = getSourceConfig(sourceMapping.getSourceName());
+    public Collection<EntryFieldConfig> getSearchableFields(EntrySourceConfig entrySourceConfig) {
+        SourceConfig sourceConfig = getSourceConfig(entrySourceConfig.getSourceName());
 
-        Collection<FieldMapping> results = new ArrayList<FieldMapping>();
-        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
-            FieldConfig fieldConfig = sourceConfig.getFieldConfig(fieldMapping.getName());
+        Collection<EntryFieldConfig> results = new ArrayList<EntryFieldConfig>();
+        for (EntryFieldConfig entryFieldConfig : entrySourceConfig.getFieldConfigs()) {
+            FieldConfig fieldConfig = sourceConfig.getFieldConfig(entryFieldConfig.getName());
             if (fieldConfig == null) continue;
             if (!fieldConfig.isSearchable()) continue;
-            results.add(fieldMapping);
+            results.add(entryFieldConfig);
         }
 
         return results;

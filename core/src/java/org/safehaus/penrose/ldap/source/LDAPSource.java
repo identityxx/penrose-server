@@ -1,14 +1,13 @@
 package org.safehaus.penrose.ldap.source;
 
 import org.safehaus.penrose.adapter.FilterBuilder;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.connection.LDAPConnection;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Field;
@@ -89,14 +88,14 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Add "+ getName(), 80));
+            log.debug(TextUtil.displayLine("Add "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(baseDn);
+        //db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -141,7 +140,7 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Bind "+getName(), 80));
+            log.debug(TextUtil.displayLine("Bind "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
@@ -156,7 +155,7 @@ public class LDAPSource extends Source {
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(baseDn);
+        //db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -189,14 +188,14 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Compare "+ getName(), 80));
+            log.debug(TextUtil.displayLine("Compare "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(baseDn);
+        //db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -229,14 +228,14 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Delete "+ getName(), 80));
+            log.debug(TextUtil.displayLine("Delete "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(baseDn);
+        //db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -269,14 +268,14 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Modify "+getName(), 80));
+            log.debug(TextUtil.displayLine("Modify "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
 
-        db.append(baseDn);
+        //db.append(baseDn);
 
         DN dn = db.toDn();
 
@@ -309,13 +308,13 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ModRdn "+getName(), 80));
+            log.debug(TextUtil.displayLine("ModRdn "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
-        db.append(baseDn);
+        //db.append(baseDn);
         DN targetDn = db.toDn();
 
         ModRdnRequest newRequest = new ModRdnRequest(request);
@@ -347,7 +346,7 @@ public class LDAPSource extends Source {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+getName(), 80));
+            log.debug(TextUtil.displayLine("Search "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
@@ -405,10 +404,17 @@ public class LDAPSource extends Source {
 
     public DN createBaseDn(SearchRequest request) throws Exception {
 
+        if (request.getDn() == null) {
+            return baseDn;
+        } else {
+            return request.getDn();
+        }
+/*
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
-        db.append(baseDn);
+        //db.append(baseDn);
         return db.toDn();
+*/
     }
 
     public int createScope(SearchRequest request) throws Exception {
@@ -577,14 +583,14 @@ public class LDAPSource extends Source {
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
-            final Collection<SourceRef> localSourceRefs,
-            final Collection<SourceRef> sourceRefs,
-            final SourceValues sourceValues,
+            final Collection<EntrySource> localSourceRefs,
+            final Collection<EntrySource> sourceRefs,
+            final SourceAttributes sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
-        final SourceRef sourceRef = sourceRefs.iterator().next();
+        final EntrySource sourceRef = sourceRefs.iterator().next();
         final String alias = sourceRef.getAlias();
 
         Source source = sourceRef.getSource();
@@ -594,13 +600,13 @@ public class LDAPSource extends Source {
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
-        FieldRef fieldRef = sourceRef.getFieldRef("dn");
+        EntryField fieldRef = sourceRef.getField("dn");
 
         if (fieldRef == null) {
-            Interpreter interpreter = getPartition().newInterpreter();
+            Interpreter interpreter = partition.newInterpreter();
 
             FilterBuilder filterBuilder = new FilterBuilder(
-                    getPartition(),
+                    partition,
                     sourceRefs,
                     sourceValues,
                     interpreter
@@ -620,7 +626,7 @@ public class LDAPSource extends Source {
             }
 
         } else {
-            Interpreter interpreter = getPartition().newInterpreter();
+            Interpreter interpreter = partition.newInterpreter();
             interpreter.set(sourceValues);
 
             if (debug) log.debug("Reference: "+fieldRef.getVariable());
@@ -647,13 +653,13 @@ public class LDAPSource extends Source {
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(dn);
 
-                SourceValues sourceValues = new SourceValues();
+                SourceAttributes sourceValues = new SourceAttributes();
 
                 Attributes sv = sourceValues.get(alias);
                 sv.add(attributes);
                 sv.add("primaryKey", rdn);
 
-                searchResult.setSourceValues(sourceValues);
+                searchResult.setSourceAttributes(sourceValues);
 
                 response.add(searchResult);
             }
@@ -672,8 +678,8 @@ public class LDAPSource extends Source {
     ) throws Exception {
 
         DN dn = sr.getDn();
-        DN newDn = dn.getPrefix(baseDn);
-        if (debug) log.debug("Creating search result ["+newDn+"]");
+        //dn = dn.getPrefix(baseDn);
+        if (debug) log.debug("Creating search result ["+dn+"]");
 
         Attributes attributes = sr.getAttributes();
         Attributes newAttributes;
@@ -710,7 +716,7 @@ public class LDAPSource extends Source {
             }
         }
 
-        return new SearchResult(newDn, newAttributes);
+        return new SearchResult(dn, newAttributes);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -808,7 +814,6 @@ public class LDAPSource extends Source {
     }
 
     public Session createAdminSession() throws Exception {
-        Partition partition = getPartition();
         SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
         return sessionManager.createAdminSession();
     }

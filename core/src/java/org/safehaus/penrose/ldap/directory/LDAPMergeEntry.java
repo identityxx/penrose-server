@@ -1,7 +1,7 @@
 package org.safehaus.penrose.ldap.directory;
 
 import org.safehaus.penrose.directory.DynamicEntry;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
@@ -43,7 +43,7 @@ public class LDAPMergeEntry extends DynamicEntry {
         }
 
         SearchResult sr = find(bindDn);
-        SourceValues sourceValues = sr.getSourceValues();
+        SourceAttributes sourceValues = sr.getSourceAttributes();
 
         if (debug) {
             log.debug("Source values:");
@@ -51,9 +51,9 @@ public class LDAPMergeEntry extends DynamicEntry {
         }
 
         String dn = null;
-        SourceRef sourceRef = null;
+        EntrySource sourceRef = null;
 
-        for (SourceRef s : getSourceRefs()) {
+        for (EntrySource s : getSources()) {
 
             final String alias = s.getAlias();
             log.debug("Searching source "+alias+"...");
@@ -113,27 +113,25 @@ public class LDAPMergeEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response
@@ -154,7 +152,7 @@ public class LDAPMergeEntry extends DynamicEntry {
             newRequest.setScope(SearchRequest.SCOPE_SUB);
         }
 
-        for (SourceRef sourceRef : getSourceRefs()) {
+        for (EntrySource sourceRef : getSources()) {
 
             final String alias = sourceRef.getAlias();
             log.debug("Searching source "+alias+":");
@@ -162,7 +160,7 @@ public class LDAPMergeEntry extends DynamicEntry {
             SearchResponse newResponse = new Pipeline(response) {
                 public void add(SearchResult result) throws Exception {
 
-                    SourceValues sv = new SourceValues();
+                    SourceAttributes sv = new SourceAttributes();
                     sv.set(alias, result.getAttributes());
 
                     interpreter.set(sv);
@@ -175,7 +173,7 @@ public class LDAPMergeEntry extends DynamicEntry {
                     SearchResult newResult = (SearchResult)result.clone();
                     newResult.setDn(newDn);
                     newResult.setAttributes(newAttributes);
-                    newResult.setSourceValues(sv);
+                    newResult.setSourceAttributes(sv);
                     newResult.setEntryId(getId());
 
                     log.debug("New entry:");

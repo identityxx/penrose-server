@@ -5,7 +5,6 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.Logger;
@@ -41,16 +40,16 @@ public class StaticTestCase extends TestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMappingsFromRdn();
+        ou.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig group = new EntryConfig("cn=group,"+baseDn);
         group.addObjectClass("groupOfUniqueNames");
-        group.addAttributeMappingsFromRdn();
-        group.addAttributeMapping("description", "description");
-        group.addAttributeMapping("uniqueMember", "member1");
-        group.addAttributeMapping("uniqueMember", "member2");
-        group.addAttributeMapping("creatorsName", penroseConfig.getRootDn().toString());
+        group.addAttributesFromRdn();
+        group.addAttributeConfig("description", "description");
+        group.addAttributeConfig("uniqueMember", "member1");
+        group.addAttributeConfig("uniqueMember", "member2");
+        group.addAttributeConfig("creatorsName", penroseConfig.getRootDn().toString());
         
         partitionConfig.getDirectoryConfig().addEntryConfig(group);
 
@@ -58,8 +57,8 @@ public class StaticTestCase extends TestCase {
         member1.addObjectClass("person");
         member1.addObjectClass("organizationalPerson");
         member1.addObjectClass("inetOrgPerson");
-        member1.addAttributeMappingsFromRdn();
-        member1.addAttributeMapping("memberOf", "group");
+        member1.addAttributesFromRdn();
+        member1.addAttributeConfig("memberOf", "group");
 
         partitionConfig.getDirectoryConfig().addEntryConfig(member1);
         
@@ -67,8 +66,8 @@ public class StaticTestCase extends TestCase {
         member2.addObjectClass("person");
         member2.addObjectClass("organizationalPerson");
         member2.addObjectClass("inetOrgPerson");
-        member2.addAttributeMappingsFromRdn();
-        member2.addAttributeMapping("memberOf", "group");
+        member2.addAttributesFromRdn();
+        member2.addAttributeConfig("memberOf", "group");
 
         partitionConfig.getDirectoryConfig().addEntryConfig(member2);
 

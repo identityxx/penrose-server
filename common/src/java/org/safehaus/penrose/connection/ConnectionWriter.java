@@ -44,6 +44,7 @@ public class ConnectionWriter {
     }
 
     public Element createElement(ConnectionConfigManager connectionConfigManager) {
+
         Element element = new DefaultElement("connections");
 
         for (ConnectionConfig connectionConfig : connectionConfigManager.getConnectionConfigs()) {
@@ -68,7 +69,6 @@ public class ConnectionWriter {
         adapterName.add(new DefaultText(connectionConfig.getAdapterName()));
         element.add(adapterName);
 
-        // parameters
         for (String name : connectionConfig.getParameterNames()) {
             String value = connectionConfig.getParameter(name);
 

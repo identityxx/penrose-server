@@ -5,9 +5,9 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -78,20 +78,20 @@ public class NestedTestCase extends JDBCTestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMappingsFromRdn();
+        ou.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig groups = new EntryConfig("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
-        groups.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "g.groupname", true));
-        groups.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "g.description"));
+        groups.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "g.groupname", true));
+        groups.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "g.description"));
 
-        SourceMapping groupsMapping = new SourceMapping();
+        EntrySourceConfig groupsMapping = new EntrySourceConfig();
         groupsMapping.setName("g");
         groupsMapping.setSourceName("groups");
-        groupsMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "cn"));
-        groupsMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
-        groups.addSourceMapping(groupsMapping);
+        groupsMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "cn"));
+        groupsMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
+        groups.addSourceConfig(groupsMapping);
 
         partitionConfig.getDirectoryConfig().addEntryConfig(groups);
 
@@ -99,17 +99,17 @@ public class NestedTestCase extends JDBCTestCase {
         members.addObjectClass("person");
         members.addObjectClass("organizationalPerson");
         members.addObjectClass("inetOrgPerson");
-        members.addAttributeMapping(new AttributeMapping("uid", AttributeMapping.VARIABLE, "m.username", true));
-        members.addAttributeMapping(new AttributeMapping("memberOf", AttributeMapping.VARIABLE, "m.groupname"));
-        members.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "m.name"));
+        members.addAttributeConfig(new EntryAttributeConfig("uid", EntryAttributeConfig.VARIABLE, "m.username", true));
+        members.addAttributeConfig(new EntryAttributeConfig("memberOf", EntryAttributeConfig.VARIABLE, "m.groupname"));
+        members.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "m.name"));
 
-        SourceMapping membersMapping = new SourceMapping();
+        EntrySourceConfig membersMapping = new EntrySourceConfig();
         membersMapping.setName("m");
         membersMapping.setSourceName("members");
-        membersMapping.addFieldMapping(new FieldMapping("username", FieldMapping.VARIABLE, "uid"));
-        membersMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "g.groupname"));
-        membersMapping.addFieldMapping(new FieldMapping("name", FieldMapping.VARIABLE, "cn"));
-        members.addSourceMapping(membersMapping);
+        membersMapping.addFieldConfig(new EntryFieldConfig("username", EntryFieldConfig.VARIABLE, "uid"));
+        membersMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "g.groupname"));
+        membersMapping.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.VARIABLE, "cn"));
+        members.addSourceConfig(membersMapping);
 
         partitionConfig.getDirectoryConfig().addEntryConfig(members);
 

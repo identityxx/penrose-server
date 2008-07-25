@@ -4,7 +4,7 @@
   "http://penrose.safehaus.org/dtd/connections.dtd">
 
 <connections>
-
+<!--
   <connection name="LDAP">
     <adapter-name>LDAP</adapter-name>
     <parameter>
@@ -22,6 +22,10 @@
     <parameter>
       <param-name>java.naming.security.credentials</param-name>
       <param-value>${LDAP_PASSWORD}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>java.naming.ldap.attributes.binary</param-name>
+      <param-value>seeAlsoObjectGUID</param-value>
     </parameter>
     <parameter>
       <param-name>maxActive</param-name>
@@ -52,7 +56,7 @@
       <param-value>grow</param-value>
     </parameter>
   </connection>
-
+-->
   <connection name="Database">
     <adapter-name>JDBC</adapter-name>
     <parameter>

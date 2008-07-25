@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="${SUFFIX}" attached="false">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <source>
+      <source-name>LDAP</source-name>
+    </source>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+</directory>

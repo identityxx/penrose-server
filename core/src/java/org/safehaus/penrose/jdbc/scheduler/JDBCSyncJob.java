@@ -3,7 +3,7 @@ package org.safehaus.penrose.jdbc.scheduler;
 import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.jdbc.source.JDBCSource;
@@ -118,7 +118,7 @@ public class JDBCSyncJob extends Job {
     public Entry createTmpEntry(Entry entry) throws Exception {
         Entry tmpEntry = (Entry)entry.clone();
 
-        for (SourceRef sourceRef : tmpEntry.getLocalSourceRefs()) {
+        for (EntrySource sourceRef : tmpEntry.getLocalSources()) {
             Source source = sourceRef.getSource();
             String name = source.getName();
 
@@ -130,14 +130,14 @@ public class JDBCSyncJob extends Job {
 
         log.debug("Old entry "+entry.getDn());
 
-        for (SourceRef sourceRef : entry.getLocalSourceRefs()) {
+        for (EntrySource sourceRef : entry.getLocalSources()) {
             Source source = sourceRef.getSource();
             log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
         }
 
         log.debug("New entry "+tmpEntry.getDn());
 
-        for (SourceRef sourceRef : tmpEntry.getLocalSourceRefs()) {
+        for (EntrySource sourceRef : tmpEntry.getLocalSources()) {
             Source source = sourceRef.getSource();
             log.debug(" - "+sourceRef.getAlias()+": "+source.getParameter(JDBCSource.TABLE));
         }
@@ -243,16 +243,16 @@ public class JDBCSyncJob extends Job {
         }
     }
 
-    public List<Collection<SourceRef>> getGroupsOfSources(Collection<Source> sources) throws Exception {
+    public List<Collection<EntrySource>> getGroupsOfSources(Collection<Source> sources) throws Exception {
 
-        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+        List<Collection<EntrySource>> results = new ArrayList<Collection<EntrySource>>();
 
-        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Collection<EntrySource> list = new ArrayList<EntrySource>();
         Connection lastConnection = null;
 
         for (Source source : sources) {
 
-            SourceRef sourceRef = new SourceRef(source);
+            EntrySource sourceRef = new EntrySource(source);
 
             Connection connection = source.getConnection();
 
@@ -261,7 +261,7 @@ public class JDBCSyncJob extends Job {
 
             } else if (lastConnection != connection || !connection.isJoinSupported()) {
                 results.add(list);
-                list = new ArrayList<SourceRef>();
+                list = new ArrayList<EntrySource>();
                 lastConnection = connection;
             }
 
@@ -278,17 +278,17 @@ public class JDBCSyncJob extends Job {
         Session session = createAdminSession();
 
         try {
-            List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(sources.values());
+            List<Collection<EntrySource>> groupsOfSources = getGroupsOfSources(sources.values());
 
-            for (Collection<SourceRef> sourceRefs : groupsOfSources) {
+            for (Collection<EntrySource> sourceRefs : groupsOfSources) {
                 try {
 
-                    SourceRef sourceRef = sourceRefs.iterator().next();
+                    EntrySource sourceRef = sourceRefs.iterator().next();
 
                     //Collection<SourceRef> primarySourceRefs = new ArrayList<SourceRef>();
                     //primarySourceRefs.add(sourceRef);
 
-                    Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+                    Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
                     localSourceRefs.addAll(sourceRefs);
 
                     SearchRequest request = new SearchRequest();
@@ -304,7 +304,7 @@ public class JDBCSyncJob extends Job {
                             response
                     );
 
-                    SourceValues sourceValues = new SourceValues();
+                    SourceAttributes sourceValues = new SourceAttributes();
 
                     Source source = sourceRef.getSource();
 

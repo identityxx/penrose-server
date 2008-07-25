@@ -5,9 +5,9 @@ import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -77,20 +77,20 @@ public class NestedTestCase extends JDBCTestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMappingsFromRdn();
+        ou.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig groups = new EntryConfig("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
-        groups.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "p.parentname", true));
-        groups.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "p.description"));
+        groups.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "p.parentname", true));
+        groups.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "p.description"));
 
-        SourceMapping groupsMapping = new SourceMapping();
+        EntrySourceConfig groupsMapping = new EntrySourceConfig();
         groupsMapping.setName("p");
         groupsMapping.setSourceName("parents");
-        groupsMapping.addFieldMapping(new FieldMapping("parentname", FieldMapping.VARIABLE, "cn"));
-        groupsMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
-        groups.addSourceMapping(groupsMapping);
+        groupsMapping.addFieldConfig(new EntryFieldConfig("parentname", EntryFieldConfig.VARIABLE, "cn"));
+        groupsMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
+        groups.addSourceConfig(groupsMapping);
 
         partitionConfig.getDirectoryConfig().addEntryConfig(groups);
 
@@ -98,15 +98,15 @@ public class NestedTestCase extends JDBCTestCase {
         members.addObjectClass("person");
         members.addObjectClass("organizationalPerson");
         members.addObjectClass("inetOrgPerson");
-        members.addAttributeMappingsFromRdn();
-        members.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "c.description"));
+        members.addAttributesFromRdn();
+        members.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "c.description"));
 
-        SourceMapping membersMapping = new SourceMapping();
+        EntrySourceConfig membersMapping = new EntrySourceConfig();
         membersMapping.setName("c");
         membersMapping.setSourceName("children");
-        membersMapping.addFieldMapping(new FieldMapping("parentname", FieldMapping.VARIABLE, "p.parentname"));
-        membersMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
-        members.addSourceMapping(membersMapping);
+        membersMapping.addFieldConfig(new EntryFieldConfig("parentname", EntryFieldConfig.VARIABLE, "p.parentname"));
+        membersMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
+        members.addSourceConfig(membersMapping);
 
         partitionConfig.getDirectoryConfig().addEntryConfig(members);
 

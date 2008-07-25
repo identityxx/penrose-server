@@ -362,7 +362,7 @@ public class LDAP {
         return LDAPException.resultCodeToString(rc);
     }
 
-    public static LDAPException createException(Exception e) {
+    public static LDAPException createException(Throwable e) {
         if (e instanceof LDAPException) return (LDAPException)e;
 
         int rc = getReturnCode(e);
@@ -373,7 +373,7 @@ public class LDAP {
         return createException(rc, getMessage(rc), null);
     }
 
-    public static LDAPException createException(int rc, Exception e) {
+    public static LDAPException createException(int rc, Throwable e) {
         return createException(rc, e.getMessage(), e);
     }
 
@@ -381,7 +381,7 @@ public class LDAP {
         return createException(rc, message, null);
     }
 
-    public static LDAPException createException(int rc, String message, Exception exception) {
+    public static LDAPException createException(int rc, String message, Throwable exception) {
         return new LDAPException(getMessage(rc), rc, message, exception);
     }
 }

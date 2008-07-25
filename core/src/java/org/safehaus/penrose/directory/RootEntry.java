@@ -57,27 +57,25 @@ public class RootEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
+        try {
+            validateSearchRequest(session, request, response);
+
+        } catch (Exception e) {
+            response.close();
+            return;
+        }
+
         response = createSearchResponse(session, request, response);
 
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
-            
-        } catch (Exception e) {
-            response.close();
-            throw e;
-        }
-
-        try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response

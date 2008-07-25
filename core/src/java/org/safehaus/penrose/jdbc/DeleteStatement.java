@@ -7,15 +7,16 @@ import org.safehaus.penrose.filter.Filter;
  */
 public class DeleteStatement extends Statement {
 
-    protected String sourceName;
+    protected StatementSource source = new StatementSource();
     protected Filter filter;
 
-    public String getSourceName() {
-        return sourceName;
+    public StatementSource getSource() {
+        return source;
     }
 
-    public void setSourceName(String sourceName) {
-        this.sourceName = sourceName;
+    public void setSource(String partitionName, String sourceName) {
+        source.setPartitionName(partitionName);
+        source.setSourceName(sourceName);
     }
 
     public Filter getFilter() {

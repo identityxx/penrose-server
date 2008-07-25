@@ -43,6 +43,7 @@ public class SourceWriter {
     }
 
     public Element createElement(SourceConfigManager sources) throws Exception {
+
         Element element = new DefaultElement("sources");
 
         for (SourceConfig sourceConfig : sources.getSourceConfigs()) {
@@ -59,16 +60,23 @@ public class SourceWriter {
         Element element = new DefaultElement("source");
         element.addAttribute("name", sourceConfig.getName());
 
+        if (sourceConfig.getSourceClass() != null) {
+            Element sourceClassElement = new DefaultElement("source-class");
+            sourceClassElement.add(new DefaultText(sourceConfig.getSourceClass()));
+            element.add(sourceClassElement);
+        }
+
         if (sourceConfig.getDescription() != null) {
             Element descriptionElement = new DefaultElement("description");
             descriptionElement.add(new DefaultText(sourceConfig.getDescription()));
             element.add(descriptionElement);
         }
 
-        if (sourceConfig.getSourceClass() != null) {
-            Element sourceClassElement = new DefaultElement("source-class");
-            sourceClassElement.add(new DefaultText(sourceConfig.getSourceClass()));
-            element.add(sourceClassElement);
+        String partitionName = sourceConfig.getPartitionName();
+        if (partitionName != null) {
+            Element sourceName = new DefaultElement("partition-name");
+            sourceName.add(new DefaultText(partitionName));
+            element.add(sourceName);
         }
 
         Element connectionNameElement = new DefaultElement("connection-name");
@@ -105,6 +113,7 @@ public class SourceWriter {
     }
 
     public Element createElement(IndexConfig indexConfig) throws Exception {
+
         log.debug(" - Index "+indexConfig.getName()+":");
 
         Element indexElement = new DefaultElement("index");
@@ -120,7 +129,9 @@ public class SourceWriter {
     }
 
     public Element createElement(FieldConfig fieldConfig) throws Exception {
+
         log.debug(" - Field "+fieldConfig.getName()+":");
+
         Element element = new DefaultElement("field");
         element.addAttribute("name", fieldConfig.getName());
 
@@ -216,11 +227,13 @@ public class SourceWriter {
     }
 
     public Element createElement(Expression expression) {
+
         Element element = new DefaultElement("expression");
         if (expression.getForeach() != null) element.add(new DefaultAttribute("foreach", expression.getForeach()));
         if (expression.getVar() != null) element.add(new DefaultAttribute("var", expression.getVar()));
 
         element.setText(expression.getScript());
+
         return element;
     }
 }

@@ -3,8 +3,8 @@ package org.safehaus.penrose.jdbc.source;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.jdbc.*;
 import org.safehaus.penrose.jdbc.connection.*;
@@ -77,7 +77,7 @@ public class JDBCSource extends Source {
 
         try {
             InsertStatement statement = new InsertStatement();
-            statement.setSourceName(getName());
+            statement.setSource(partition.getName(), getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -123,8 +123,8 @@ public class JDBCSource extends Source {
 
     public void add(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
@@ -138,7 +138,7 @@ public class JDBCSource extends Source {
             sourceValues.print();
         }
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
 
         AddRequestBuilder builder = new AddRequestBuilder(
                 sourceRefs,
@@ -219,7 +219,7 @@ public class JDBCSource extends Source {
         try {
             DeleteStatement statement = new DeleteStatement();
 
-            statement.setSourceName(getName());
+            statement.setSource(partition.getName(), getName());
 
             Filter filter = null;
 
@@ -252,8 +252,8 @@ public class JDBCSource extends Source {
 
     public void delete(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
@@ -267,7 +267,7 @@ public class JDBCSource extends Source {
             sourceValues.print();
         }
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
 
         DeleteRequestBuilder builder = new DeleteRequestBuilder(
                 sourceRefs,
@@ -321,7 +321,7 @@ public class JDBCSource extends Source {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            statement.setSourceName(getName());
+            statement.setSource(partition.getName(), getName());
 
             RDN rdn = request.getDn().getRdn();
 
@@ -376,8 +376,8 @@ public class JDBCSource extends Source {
 
     public void modify(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
@@ -391,7 +391,7 @@ public class JDBCSource extends Source {
             sourceValues.print();
         }
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
 
         ModifyRequestBuilder builder = new ModifyRequestBuilder(
                 sourceRefs,
@@ -445,7 +445,7 @@ public class JDBCSource extends Source {
         try {
             UpdateStatement statement = new UpdateStatement();
 
-            statement.setSourceName(getName());
+            statement.setSource(partition.getName(), getName());
 
             RDN newRdn = request.getNewRdn();
             for (String name : newRdn.getNames()) {
@@ -485,8 +485,8 @@ public class JDBCSource extends Source {
 
     public void modrdn(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
@@ -500,7 +500,7 @@ public class JDBCSource extends Source {
             sourceValues.print();
         }
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
 
         ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
                 sourceRefs,
@@ -553,7 +553,7 @@ public class JDBCSource extends Source {
 
         SelectStatement statement = new SelectStatement();
 
-        SourceRef sourceRef = new SourceRef(this);
+        EntrySource sourceRef = new EntrySource(this);
 
         Filter filter = null;
 
@@ -570,10 +570,10 @@ public class JDBCSource extends Source {
 
         filter = FilterTool.appendAndFilter(filter, request.getFilter());
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
         }
-        statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getName());
+        statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
         statement.setFilter(filter);
 
         String where = getParameter(FILTER);
@@ -581,7 +581,7 @@ public class JDBCSource extends Source {
             statement.setWhere(where);
         }
 
-        for (FieldRef fieldRef : sourceRef.getPrimaryKeyFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getPrimaryKeyFields()) {
             statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
         }
 
@@ -666,9 +666,9 @@ public class JDBCSource extends Source {
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
-            final Collection<SourceRef> localSourceRefs,
-            final Collection<SourceRef> sourceRefs,
-            final SourceValues sourceValues,
+            final Collection<EntrySource> localSourceRefs,
+            final Collection<EntrySource> sourceRefs,
+            final SourceAttributes sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
@@ -682,14 +682,10 @@ public class JDBCSource extends Source {
             sourceValues.print();
         }
 
-        //Interpreter interpreter = partition.newInterpreter();
-
         response.setSizeLimit(request.getSizeLimit());
 
         SearchRequestBuilder builder = new SearchRequestBuilder(
-                //interpreter,
-                getPartition(),
-                //primarySourceRefs,
+                partition,
                 localSourceRefs,
                 sourceRefs,
                 sourceValues,
@@ -767,25 +763,25 @@ public class JDBCSource extends Source {
 
     public SearchResult createSearchResult(
             //Collection<SourceRef> primarySourceRefs,
-            Collection<SourceRef> sourceRefs,
+            Collection<EntrySource> sourceRefs,
             ResultSet rs
     ) throws Exception {
 
         SearchResult searchResult = new SearchResult();
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
         RDNBuilder rb = new RDNBuilder();
 
         int column = 1;
 
         //log.debug("Fields:");
-        for (SourceRef sourceRef : sourceRefs) {
+        for (EntrySource sourceRef : sourceRefs) {
             String alias = sourceRef.getAlias();
             //boolean primarySource = primarySourceRefs.contains(sourceRef);
 
             Attributes fields = new Attributes();
 
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
 
                 Object value = rs.getObject(column++);
 
@@ -807,15 +803,15 @@ public class JDBCSource extends Source {
             sourceValues.set(alias, fields);
         }
 
-        searchResult.setSourceValues(sourceValues);
+        searchResult.setSourceAttributes(sourceValues);
         searchResult.setDn(new DN(rb.toRdn()));
 
         return searchResult;
     }
 
     public void mergeSearchResult(SearchResult source, SearchResult destination) {
-        SourceValues sourceValues = source.getSourceValues();
-        SourceValues destinationValues = destination.getSourceValues();
+        SourceAttributes sourceValues = source.getSourceAttributes();
+        SourceAttributes destinationValues = destination.getSourceAttributes();
 
         destinationValues.add(sourceValues);
     }

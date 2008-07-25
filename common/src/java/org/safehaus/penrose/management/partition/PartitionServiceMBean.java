@@ -4,6 +4,7 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.mapping.MappingConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
@@ -39,6 +40,11 @@ public interface PartitionServiceMBean {
     public void createSource(SourceConfig sourceConfig) throws Exception;
     public void updateSource(String name, SourceConfig sourceConfig) throws Exception;
     public void removeSource(String name) throws Exception;
+
+    public Collection<String> getMappingNames() throws Exception;
+    public void createMapping(MappingConfig mappingConfig) throws Exception;
+    public void updateMapping(String name, MappingConfig connectionConfig) throws Exception;
+    public void removeMapping(String name) throws Exception;
 
     public Collection<String> getModuleNames() throws Exception;
     public void createModule(ModuleConfig moduleConfig) throws Exception;

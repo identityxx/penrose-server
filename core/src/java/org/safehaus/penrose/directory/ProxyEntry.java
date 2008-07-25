@@ -33,7 +33,7 @@ public class ProxyEntry extends Entry {
     public final static String AUTHENTICATON_FULL     = "full";
     public final static String AUTHENTICATON_DISABLED = "disabled";
 
-    SourceRef sourceRef;
+    EntrySource sourceRef;
     LDAPSource source;
     LDAPConnection connection;
 
@@ -49,7 +49,7 @@ public class ProxyEntry extends Entry {
 
     public void init() throws Exception {
 
-        sourceRef = localSourceRefs.values().iterator().next();
+        sourceRef = localSources.values().iterator().next();
         source = (LDAPSource)sourceRef.getSource();
         connection = (LDAPConnection)source.getConnection();
 
@@ -527,20 +527,18 @@ public class ProxyEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
@@ -555,7 +553,7 @@ public class ProxyEntry extends Entry {
         return response;
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response
@@ -653,7 +651,7 @@ public class ProxyEntry extends Entry {
         DN dn = result.getDn();
         Attributes attributes = result.getAttributes();
 
-        SourceValues sv = result.getSourceValues();
+        SourceAttributes sv = result.getSourceAttributes();
         sv.set(sourceRef.getAlias(), attributes);
         
         if (debug) {
@@ -665,6 +663,15 @@ public class ProxyEntry extends Entry {
 
         DN newDn = convertDn(dn, proxyBaseDn, getDn());
         if (debug) log.debug("Entry "+newDn);
+
+        Attributes newAttributes = computeAttributes(interpreter, attributes);
+
+        interpreter.clear();
+
+        return new SearchResult(newDn, newAttributes);
+    }
+
+    public Attributes computeAttributes(Interpreter interpreter, Attributes attributes) throws Exception {
 
         Attributes newAttributes = (Attributes)attributes.clone();
 
@@ -683,10 +690,12 @@ public class ProxyEntry extends Entry {
             attribute.setValues(newValues);
         }
 
-        for (AttributeMapping attributeMapping : getAttributeMappings()) {
-            String attributeName = attributeMapping.getName();
+        for (EntryAttributeConfig attributeConfig : getAttributeConfigs()) {
+
+            String attributeName = attributeConfig.getName();
             if (debug) log.debug("Transforming attribute "+attributeName+":");
-            Object object = interpreter.eval(attributeMapping);
+
+            Object object = interpreter.eval(attributeConfig);
 
             if (object == null) {
                 if (debug) log.debug("Attribute "+attributeName+" removed.");
@@ -697,17 +706,15 @@ public class ProxyEntry extends Entry {
                 for (Object value : values) {
                     if (debug) log.debug(" - "+value);
                 }
-                newAttributes.setValues(attributeMapping.getName(), values);
+                newAttributes.setValues(attributeConfig.getName(), values);
 
             } else {
                 if (debug) log.debug(" - "+object);
-                newAttributes.setValue(attributeMapping.getName(), object);
+                newAttributes.setValue(attributeConfig.getName(), object);
             }
         }
 
-        interpreter.clear();
-
-        return new SearchResult(newDn, newAttributes);
+        return newAttributes;
     }
 
     public SearchReference createSearchReference(SearchReference reference) throws Exception {

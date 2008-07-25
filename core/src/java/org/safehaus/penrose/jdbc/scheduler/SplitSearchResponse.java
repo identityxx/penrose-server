@@ -35,12 +35,12 @@ public class SplitSearchResponse extends SearchResponse {
     }
 
     public void add(SearchResult result) throws Exception {
-        SourceValues sourceValues = result.getSourceValues();
+        SourceAttributes sourceValues = result.getSourceAttributes();
 
         interpreter.set(sourceValues);
 
         for (Source target : targets) {
-            SourceValues sv = new SourceValues();
+            SourceAttributes sv = new SourceAttributes();
             Attributes attributes = new Attributes();
             Attributes primaryAttributes = new Attributes();
 

@@ -5,4 +5,28 @@
 
 <modules>
 
+  <module name="LinkingModule" enabled="true">
+    <module-class>org.safehaus.penrose.federation.module.LinkingModule</module-class>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>global</param-value>
+    </parameter>
+    <parameter>
+      <param-name>sourceAttribute</param-name>
+      <param-value>${linkingLocalAttribute}</param-value>
+    </parameter>
+    <parameter>
+    <param-name>targetAttribute</param-name>
+      <param-value>${linkingGlobalAttribute}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>mapping</param-name>
+      <param-value>${importMappingName}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>mappingPrefix</param-name>
+      <param-value>${importMappingPrefix}</param-value>
+    </parameter>
+  </module>
+
 </modules>

@@ -37,9 +37,9 @@ public class DirectoryWriter {
         writer.startDocument();
 
         writer.startDTD(
-                "mapping",
-                "-//Penrose/DTD Mapping "+getClass().getPackage().getSpecificationVersion()+"//EN",
-                "http://penrose.safehaus.org/dtd/mapping.dtd"
+                "directory",
+                "-//Penrose/DTD Directory "+getClass().getPackage().getSpecificationVersion()+"//EN",
+                "http://penrose.safehaus.org/dtd/directory.dtd"
         );
 
         writer.write(createElement(directoryConfig));
@@ -47,56 +47,23 @@ public class DirectoryWriter {
     }
 
     public Element createElement(DirectoryConfig directoryConfig) throws Exception {
-        Element mappingElement = new DefaultElement("mapping");
+        Element directoryElement = new DefaultElement("directory");
 
         for (EntryConfig entryConfig : directoryConfig.getRootEntryConfigs()) {
-            createElement(directoryConfig, entryConfig, mappingElement);
+            createElement(directoryConfig, entryConfig, directoryElement);
         }
 
-        return mappingElement;
-    }
-
-    public Element createElement(FieldMapping fieldMapping) throws Exception {
-        Element element = new DefaultElement("field");
-        element.add(new DefaultAttribute("name", fieldMapping.getName()));
-
-        if (!fieldMapping.getOperations().isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (String operation : fieldMapping.getOperations()) {
-                if (sb.length() > 0) sb.append(",");
-                sb.append(operation);
-            }
-        }
-
-        if (fieldMapping.getConstant() != null) {
-            Object value = fieldMapping.getConstant();
-            if (value instanceof byte[]) {
-                Element e = element.addElement("binary");
-                e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
-            } else {
-                Element e = element.addElement("constant");
-                e.addText((String)value);
-            }
-
-        } else if (fieldMapping.getVariable() != null) {
-            Element scriptElement = new DefaultElement("variable");
-            scriptElement.setText(fieldMapping.getVariable());
-            element.add(scriptElement);
-
-        } else if (fieldMapping.getExpression() != null) {
-            element.add(createElement(fieldMapping.getExpression()));
-
-        } else {
-            return null;
-        }
-
-        return element;
+        return directoryElement;
     }
 
     public Element createElement(DirectoryConfig directoryConfig, EntryConfig entryConfig, Element configElement) throws Exception {
 
         Element element = new DefaultElement("entry");
-        element.add(new DefaultAttribute("dn", entryConfig.getDn().toString()));
+
+        if (!entryConfig.getDn().isEmpty()) {
+            element.add(new DefaultAttribute("dn", entryConfig.getDn().toString()));
+        }
+
         if (!entryConfig.isEnabled()) element.add(new DefaultAttribute("enabled", "false"));
         if (!entryConfig.isAttached()) element.add(new DefaultAttribute("attached", "false"));
         configElement.add(element);
@@ -107,14 +74,26 @@ public class DirectoryWriter {
             element.add(entryClassElement);
         }
 
+        if (entryConfig.getDescription() != null) {
+            Element descriptionElement = new DefaultElement("description");
+            descriptionElement.setText(entryConfig.getDescription());
+            element.add(descriptionElement);
+        }
+
+        if (entryConfig.getMappingName() != null) {
+            Element mappingNameElement = new DefaultElement("mapping-name");
+            mappingNameElement.setText(entryConfig.getMappingName());
+            element.add(mappingNameElement);
+        }
+
         for (String objectClass : entryConfig.getObjectClasses()) {
             Element objectClassElement = new DefaultElement("oc");
             objectClassElement.setText(objectClass);
             element.add(objectClassElement);
         }
 
-        Collection<AttributeMapping> attributes = entryConfig.getAttributeMappings();
-        for (AttributeMapping attribute : attributes) {
+        Collection<EntryAttributeConfig> attributes = entryConfig.getAttributeConfigs();
+        for (EntryAttributeConfig attribute : attributes) {
 
             Element child = createElement(attribute);
             if (child == null) continue;
@@ -122,8 +101,8 @@ public class DirectoryWriter {
             element.add(child);
         }
 
-        for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
-            element.add(createElement(sourceMapping));
+        for (EntrySourceConfig sourceConfig : entryConfig.getSourceConfigs()) {
+            element.add(createElement(sourceConfig));
         }
 
         for (ACI aci : entryConfig.getACL()) {
@@ -154,13 +133,13 @@ public class DirectoryWriter {
         return element;
     }
 
-    public Element createElement(AttributeMapping attributeMapping) throws Exception {
+    public Element createElement(EntryAttributeConfig attributeConfig) throws Exception {
         Element element = new DefaultElement("at");
-        element.add(new DefaultAttribute("name", attributeMapping.getName()));
-        if (attributeMapping.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
+        element.add(new DefaultAttribute("name", attributeConfig.getName()));
+        if (attributeConfig.isRdn()) element.add(new DefaultAttribute("rdn", "true"));
 
-        if (attributeMapping.getConstant() != null) {
-            Object value = attributeMapping.getConstant();
+        if (attributeConfig.getConstant() != null) {
+            Object value = attributeConfig.getConstant();
             if (value instanceof byte[]) {
                 Element e = element.addElement("binary");
                 e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
@@ -169,13 +148,13 @@ public class DirectoryWriter {
                 e.addText((String)value);
             }
 
-        } else if (attributeMapping.getVariable() != null) {
+        } else if (attributeConfig.getVariable() != null) {
             Element scriptElement = new DefaultElement("variable");
-            scriptElement.setText(attributeMapping.getVariable());
+            scriptElement.setText(attributeConfig.getVariable());
             element.add(scriptElement);
 
-        } else if (attributeMapping.getExpression() != null) {
-            element.add(createElement(attributeMapping.getExpression()));
+        } else if (attributeConfig.getExpression() != null) {
+            element.add(createElement(attributeConfig.getExpression()));
 
         } else {
             return null;
@@ -193,52 +172,65 @@ public class DirectoryWriter {
         return element;
     }
 
-    public Element createElement(SourceMapping sourceMapping) throws Exception {
+    public Element createElement(EntrySourceConfig sourceConfig) throws Exception {
         Element element = new DefaultElement("source");
 
-        element.add(new DefaultAttribute("name", sourceMapping.getName()));
-        if (sourceMapping.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
+        element.add(new DefaultAttribute("name", sourceConfig.getName()));
+        if (sourceConfig.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
 
-        if (sourceMapping.getSearch() != null) {
-            element.add(new DefaultAttribute("search", sourceMapping.getSearch()));
+        if (sourceConfig.getSearch() != null) {
+            element.add(new DefaultAttribute("search", sourceConfig.getSearch()));
         }
 
-        if (sourceMapping.getBind() != null) {
-            element.add(new DefaultAttribute("bind", sourceMapping.getBind()));
+        if (sourceConfig.getBind() != null) {
+            element.add(new DefaultAttribute("bind", sourceConfig.getBind()));
         }
 
-        if (sourceMapping.getAdd() != null) {
-            element.add(new DefaultAttribute("add", sourceMapping.getAdd()));
+        if (sourceConfig.getAdd() != null) {
+            element.add(new DefaultAttribute("add", sourceConfig.getAdd()));
         }
 
-        if (sourceMapping.getDelete() != null) {
-            element.add(new DefaultAttribute("delete", sourceMapping.getDelete()));
+        if (sourceConfig.getDelete() != null) {
+            element.add(new DefaultAttribute("delete", sourceConfig.getDelete()));
         }
 
-        if (sourceMapping.getModify() != null) {
-            element.add(new DefaultAttribute("modify", sourceMapping.getModify()));
+        if (sourceConfig.getModify() != null) {
+            element.add(new DefaultAttribute("modify", sourceConfig.getModify()));
         }
 
-        if (sourceMapping.getModrdn() != null) {
-            element.add(new DefaultAttribute("modrdn", sourceMapping.getModrdn()));
+        if (sourceConfig.getModrdn() != null) {
+            element.add(new DefaultAttribute("modrdn", sourceConfig.getModrdn()));
+        }
+
+        String partitionName = sourceConfig.getPartitionName();
+        if (partitionName != null) {
+            Element sourceName = new DefaultElement("partition-name");
+            sourceName.add(new DefaultText(partitionName));
+            element.add(sourceName);
         }
 
         Element sourceName = new DefaultElement("source-name");
-        sourceName.add(new DefaultText(sourceMapping.getSourceName()));
+        sourceName.add(new DefaultText(sourceConfig.getSourceName()));
         element.add(sourceName);
 
-        // fields
-        for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
+        if (sourceConfig.getMappingName() != null) {
+            Element mappingNameElement = new DefaultElement("mapping-name");
+            mappingNameElement.setText(sourceConfig.getMappingName());
+            element.add(mappingNameElement);
+        }
 
-            Element child = createElement(fieldMapping);
+        // fields
+        for (EntryFieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+
+            Element child = createElement(fieldConfig);
             if (child == null) continue;
 
             element.add(child);
         }
 
         // parameters
-        for (String name : sourceMapping.getParameterNames()) {
-            String value = sourceMapping.getParameter(name);
+        for (String name : sourceConfig.getParameterNames()) {
+            String value = sourceConfig.getParameter(name);
             if ("".equals(value)) continue;
 
             Element parameterElement = new DefaultElement("parameter");
@@ -413,6 +405,43 @@ public class DirectoryWriter {
         Element usageElement = new DefaultElement("usage");
         usageElement.add(new DefaultText(at.getUsage()));
         element.add(usageElement);
+
+        return element;
+    }
+
+    public Element createElement(EntryFieldConfig fieldConfig) throws Exception {
+        Element element = new DefaultElement("field");
+        element.add(new DefaultAttribute("name", fieldConfig.getName()));
+
+        if (!fieldConfig.getOperations().isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String operation : fieldConfig.getOperations()) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(operation);
+            }
+        }
+
+        if (fieldConfig.getConstant() != null) {
+            Object value = fieldConfig.getConstant();
+            if (value instanceof byte[]) {
+                Element e = element.addElement("binary");
+                e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
+            } else {
+                Element e = element.addElement("constant");
+                e.addText((String)value);
+            }
+
+        } else if (fieldConfig.getVariable() != null) {
+            Element scriptElement = new DefaultElement("variable");
+            scriptElement.setText(fieldConfig.getVariable());
+            element.add(scriptElement);
+
+        } else if (fieldConfig.getExpression() != null) {
+            element.add(createElement(fieldConfig.getExpression()));
+
+        } else {
+            return null;
+        }
 
         return element;
     }

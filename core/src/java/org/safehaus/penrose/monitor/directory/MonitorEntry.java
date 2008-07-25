@@ -33,7 +33,7 @@ public class MonitorEntry extends Entry {
 
         EntryConfig partitionsEntryConfig = new EntryConfig(partitionsDn);
         partitionsEntryConfig.addObjectClass("monitoredObject");
-        partitionsEntryConfig.addAttributeMappingsFromRdn();
+        partitionsEntryConfig.addAttributesFromRdn();
 
         PartitionsMonitorEntry partitionsEntry = new PartitionsMonitorEntry();
         partitionsEntry.init(partitionsEntryConfig, entryContext);
@@ -44,7 +44,7 @@ public class MonitorEntry extends Entry {
 
         EntryConfig memoryEntryConfig = new EntryConfig(memoryDn);
         memoryEntryConfig.addObjectClass("monitoredObject");
-        memoryEntryConfig.addAttributeMappingsFromRdn();
+        memoryEntryConfig.addAttributesFromRdn();
 
         MemoryMonitorEntry memoryEntry = new MemoryMonitorEntry();
         memoryEntry.init(memoryEntryConfig, entryContext);
@@ -55,7 +55,7 @@ public class MonitorEntry extends Entry {
 
         EntryConfig runtimeEntryConfig = new EntryConfig(runtimeDn);
         runtimeEntryConfig.addObjectClass("monitoredObject");
-        runtimeEntryConfig.addAttributeMappingsFromRdn();
+        runtimeEntryConfig.addAttributesFromRdn();
 
         RuntimeMonitorEntry runtimeEntry = new RuntimeMonitorEntry();
         runtimeEntry.init(runtimeEntryConfig, entryContext);
@@ -133,27 +133,25 @@ public class MonitorEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response

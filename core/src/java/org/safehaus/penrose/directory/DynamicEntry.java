@@ -73,7 +73,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         Attributes attributes = request.getAttributes();
 
-        SourceValues sourceValues;
+        SourceAttributes sourceValues;
 
         if (fetch) {
             Entry parent = getParent();
@@ -81,8 +81,8 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             SearchResult sr = parent.find(session, parentDn);
 
-            sourceValues = new SourceValues();
-            sourceValues.add(sr.getSourceValues());
+            sourceValues = new SourceAttributes();
+            sourceValues.add(sr.getSourceAttributes());
 
         } else {
             sourceValues = extractSourceValues(dn, attributes);
@@ -95,20 +95,20 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> sourceRefs = iterator.next();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
+        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
+        Collection<EntrySource> sourceRefs = iterator.next();
 
-        Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
 
-        for (SourceRef sourceRef : sourceRefs) {
-            if (SourceMapping.IGNORE.equals(sourceRef.getAdd())) continue;
-            if (entryConfig.getSourceMapping(sourceRef.getAlias()) == null) continue;
+        for (EntrySource sourceRef : sourceRefs) {
+            if (EntrySourceConfig.IGNORE.equals(sourceRef.getAdd())) continue;
+            if (entryConfig.getSourceConfig(sourceRef.getAlias()) == null) continue;
 
             localSourceRefs.add(sourceRef);
         }
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.add(
@@ -134,17 +134,17 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("BIND", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC BIND", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult sr = find(dn);
-            sourceValues.add(sr.getSourceValues());
+            sourceValues.add(sr.getSourceAttributes());
         } else {
             extractSourceValues(dn, sourceValues);
         }
@@ -156,20 +156,20 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
 
         boolean success = true;
         boolean found = false;
 
-        for (Collection<SourceRef> sourceRefs : groupsOfSources) {
+        for (Collection<EntrySource> sourceRefs : groupsOfSources) {
 
-            SourceRef sourceRef = sourceRefs.iterator().next();
+            EntrySource sourceRef = sourceRefs.iterator().next();
             Source source = sourceRef.getSource();
 
             String flag = sourceRef.getBind();
             if (debug) log.debug("Flag: "+flag);
 
-            if (SourceMapping.IGNORE.equals(flag)) {
+            if (EntrySourceConfig.IGNORE.equals(flag)) {
                 continue;
             }
 
@@ -184,7 +184,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                         response
                 );
 
-                if (flag == null || SourceMapping.SUFFICIENT.equals(flag)) {
+                if (flag == null || EntrySourceConfig.SUFFICIENT.equals(flag)) {
                     if (debug) log.debug("Bind is sufficient.");
                     return;
                 }
@@ -193,7 +193,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
                 log.error(e.getMessage());
 
-                if (SourceMapping.REQUISITE.equals(flag)) {
+                if (EntrySourceConfig.REQUISITE.equals(flag)) {
                     if (debug) log.debug("Bind is requisite.");
                     throw e;
 
@@ -223,7 +223,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("COMPARE", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC COMPARE", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
@@ -231,11 +231,11 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         validatePermission(session, request);
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult sr = find(dn);
-            sourceValues.add(sr.getSourceValues());
+            sourceValues.add(sr.getSourceAttributes());
 
         } else {
             extractSourceValues(dn, sourceValues);
@@ -248,11 +248,11 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> sourceRefs = iterator.next();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
+        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
+        Collection<EntrySource> sourceRefs = iterator.next();
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.compare(
@@ -281,7 +281,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DELETE", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC DELETE", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
@@ -289,11 +289,11 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         validatePermission(session, request);
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
+            sourceValues.add(sr.getSourceAttributes());
         } else {
             extractSourceValues(dn, sourceValues);
         }
@@ -305,19 +305,19 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> sourceRefs = iterator.next();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
+        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
+        Collection<EntrySource> sourceRefs = iterator.next();
 
-        Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
 
-        for (SourceRef sourceRef : sourceRefs) {
-            if (entryConfig.getSourceMapping(sourceRef.getAlias()) != null) {
+        for (EntrySource sourceRef : sourceRefs) {
+            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.delete(
@@ -343,7 +343,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MODIFY", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC MODIFY", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
@@ -352,11 +352,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         validatePermission(session, request);
         validateSchema(request);
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
+            sourceValues.add(sr.getSourceAttributes());
         } else {
             extractSourceValues(dn, sourceValues);
         }
@@ -368,19 +368,19 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> sourceRefs = iterator.next();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
+        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
+        Collection<EntrySource> sourceRefs = iterator.next();
 
-        Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
 
-        for (SourceRef sourceRef : sourceRefs) {
-            if (entryConfig.getSourceMapping(sourceRef.getAlias()) != null) {
+        for (EntrySource sourceRef : sourceRefs) {
+            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.modify(
@@ -406,7 +406,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("MODRDN", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC MODRDN", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
@@ -415,11 +415,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         validatePermission(session, request);
         validateSchema(request);
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult sr = find(session, dn);
-            sourceValues.add(sr.getSourceValues());
+            sourceValues.add(sr.getSourceAttributes());
 
         } else {
             extractSourceValues(dn, sourceValues);
@@ -432,19 +432,19 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<SourceRef>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<SourceRef>> iterator = groupsOfSources.iterator();
-        Collection<SourceRef> sourceRefs = iterator.next();
+        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
+        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
+        Collection<EntrySource> sourceRefs = iterator.next();
 
-        Collection<SourceRef> localSourceRefs = new ArrayList<SourceRef>();
+        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
 
-        for (SourceRef sourceRef : sourceRefs) {
-            if (entryConfig.getSourceMapping(sourceRef.getAlias()) != null) {
+        for (EntrySource sourceRef : sourceRefs) {
+            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
                 localSourceRefs.add(sourceRef);
             }
         }
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.modrdn(
@@ -472,7 +472,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("SEARCH", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC SEARCH", 80));
             log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
             log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
             log.debug(TextUtil.displayLine("Filter : "+filter, 80));
@@ -480,27 +480,25 @@ public class DynamicEntry extends Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response
@@ -508,11 +506,11 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         DN baseDn = request.getDn();
         
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
         if (fetch) {
             SearchResult result = find(session, baseDn);
-            sourceValues.add(result.getSourceValues());
+            sourceValues.add(result.getSourceAttributes());
 
             response.add(result);
             return;
@@ -528,18 +526,18 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         Interpreter interpreter = partition.newInterpreter();
 
-        List<Collection<SourceRef>> groupsOfSources = getGroupsOfSources(
+        List<Collection<EntrySource>> groupsOfSources = getGroupsOfSources(
                 request
         );
 
-        Collection<SourceRef> sourceRefs = groupsOfSources.get(0);
+        Collection<EntrySource> sourceRefs = groupsOfSources.get(0);
 
         SearchRequest sourceRequest = (SearchRequest)request.clone();
         if (!getDn().matches(baseDn)) sourceRequest.setDn((DN)null);
 
-        DynamicSearchResponse response2 = new DynamicSearchResponse(
-                session,
+        DynamicSearchResponse newResponse = new DynamicSearchResponse(
                 this,
+                session,
                 groupsOfSources,
                 sourceValues,
                 interpreter,
@@ -547,9 +545,9 @@ public class DynamicEntry extends Entry implements Cloneable {
                 response
         );
 
-        Collection<SourceRef> localSourceRefs = getLocalSourceRefs();
+        Collection<EntrySource> localSourceRefs = getLocalSources();
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         source.search(
@@ -559,7 +557,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 sourceRefs,
                 sourceValues,
                 sourceRequest,
-                response2
+                newResponse
         );
 
     }
@@ -578,7 +576,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("UNBIND", 80));
+            log.debug(TextUtil.displayLine("DYNAMIC UNBIND", 80));
             log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
             log.debug(TextUtil.displayLine("DN    : "+dn, 80));
             log.debug(TextUtil.displaySeparator(80));
@@ -586,9 +584,9 @@ public class DynamicEntry extends Entry implements Cloneable {
 
     }
 
-    public Collection<SourceMapping> getEffectiveSourceMappings() {
-        Collection<SourceMapping> list = new ArrayList<SourceMapping>();
-        list.addAll(entryConfig.getSourceMappings());
+    public Collection<EntrySourceConfig> getEffectiveSourceMappings() {
+        Collection<EntrySourceConfig> list = new ArrayList<EntrySourceConfig>();
+        list.addAll(entryConfig.getSourceConfigs());
 
         Entry parent = getParent();
         if (parent == null) {
@@ -605,16 +603,16 @@ public class DynamicEntry extends Entry implements Cloneable {
         return list;
     }
 
-    public List<Collection<SourceRef>> getGroupsOfSources() throws Exception {
+    public List<Collection<EntrySource>> getGroupsOfSources() throws Exception {
 
-        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+        List<Collection<EntrySource>> results = new ArrayList<Collection<EntrySource>>();
 
-        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Collection<EntrySource> list = new ArrayList<EntrySource>();
         Connection lastConnection = null;
 
         for (Entry e : getPath()) {
 
-            for (SourceRef sourceRef : e.getLocalSourceRefs()) {
+            for (EntrySource sourceRef : e.getLocalSources()) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -624,7 +622,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
                 } else if (lastConnection != connection || !connection.isJoinSupported()) {
                     results.add(list);
-                    list = new ArrayList<SourceRef>();
+                    list = new ArrayList<EntrySource>();
                     lastConnection = connection;
                 }
 
@@ -637,7 +635,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         return results;
     }
 
-    public List<Collection<SourceRef>> getGroupsOfSources(
+    public List<Collection<EntrySource>> getGroupsOfSources(
             SearchRequest request
     ) throws Exception {
 
@@ -647,14 +645,14 @@ public class DynamicEntry extends Entry implements Cloneable {
             return getGroupsOfSources();
         }
 
-        List<Collection<SourceRef>> results = new ArrayList<Collection<SourceRef>>();
+        List<Collection<EntrySource>> results = new ArrayList<Collection<EntrySource>>();
 
-        Collection<SourceRef> list = new ArrayList<SourceRef>();
+        Collection<EntrySource> list = new ArrayList<EntrySource>();
         Connection lastConnection = null;
 
         for (Entry e : getRelativePath(baseDn)) {
 
-            for (SourceRef sourceRef : e.getLocalSourceRefs()) {
+            for (EntrySource sourceRef : e.getLocalSources()) {
 
                 Source source = sourceRef.getSource();
                 Connection connection = source.getConnection();
@@ -664,7 +662,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
                 } else if (lastConnection != connection || !connection.isJoinSupported()) {
                     results.add(list);
-                    list = new ArrayList<SourceRef>();
+                    list = new ArrayList<EntrySource>();
                     lastConnection = connection;
                 }
 
@@ -681,7 +679,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         Collection<DN> dns = new ArrayList<DN>();
 
-        AttributeMapping dnMapping = entryConfig.getAttributeMapping("dn");
+        EntryAttributeConfig dnMapping = entryConfig.getAttributeConfig("dn");
         if (dnMapping != null) {
             String dnValue = (String)interpreter.eval(dnMapping);
             if (debug) log.debug("DN mapping: "+dnValue);
@@ -741,8 +739,8 @@ public class DynamicEntry extends Entry implements Cloneable {
         //log.debug("Computing RDNs:");
         Attributes attributes = new Attributes();
 
-        Collection<AttributeMapping> rdnAttributes = getRdnAttributeMappings();
-        for (AttributeMapping attributeMapping : rdnAttributes) {
+        Collection<EntryAttributeConfig> rdnAttributes = getRdnAttributeMappings();
+        for (EntryAttributeConfig attributeMapping : rdnAttributes) {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(attributeMapping);
@@ -756,7 +754,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
     public void extractSourceValues(
             DN baseDn,
-            SourceValues sourceValues
+            SourceAttributes sourceValues
     ) throws Exception {
 
         if (debug) log.debug("Extracting DN: "+baseDn);
@@ -764,7 +762,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         Interpreter interpreter = partition.newInterpreter();
 
         Entry base = this;
-        while (base.getDn().getSize() > baseDn.getSize()) base = base.getParent();
+        
+        while (base.getDn().getSize() > baseDn.getSize()) {
+            base = base.getParent();
+            if (base == null) return;
+        }
 
         for (Entry entry : base.getPath()) {
 
@@ -790,14 +792,14 @@ public class DynamicEntry extends Entry implements Cloneable {
     public void extractSourceValues(
             RDN rdn,
             Interpreter interpreter,
-            SourceValues sourceValues
+            SourceAttributes sourceValues
     ) throws Exception {
 
         interpreter.set(sourceValues);
         interpreter.set(rdn);
         interpreter.set("rdn", rdn);
 
-        for (SourceRef sourceRef : getLocalSourceRefs()) {
+        for (EntrySource sourceRef : getLocalSources()) {
 
             if (debug) log.debug("   - Source: "+sourceRef.getAlias()+" ("+sourceRef.getSource().getName()+")");
 
@@ -812,19 +814,19 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void extractSourceValues(
-            SourceRef sourceRef,
+            EntrySource sourceRef,
             Interpreter interpreter,
-            SourceValues sourceValues
+            SourceAttributes sourceValues
     ) throws Exception {
 
-        SourceMapping sourceMapping = getSourceMapping(sourceRef.getAlias());
+        EntrySourceConfig sourceMapping = getSourceMapping(sourceRef.getAlias());
 
         Attributes attributes = sourceValues.get(sourceMapping.getName());
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             String name = fieldRef.getName();
 
-            for (FieldMapping fieldMapping : sourceMapping.getFieldMappings(name)) {
+            for (EntryFieldConfig fieldMapping : sourceMapping.getFieldConfigs(name)) {
                 Object value = interpreter.eval(fieldMapping);
                 if (value == null) continue;
 
@@ -846,7 +848,7 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void propagate(
-            SourceValues sourceValues
+            SourceAttributes sourceValues
     ) throws Exception {
 
         Interpreter interpreter = partition.newInterpreter();
@@ -855,7 +857,7 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void propagate(
-            SourceValues sourceValues,
+            SourceAttributes sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
@@ -867,16 +869,16 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             DynamicEntry dynamicEntry = (DynamicEntry)entry;
             
-            Collection<SourceMapping> sourceMappings = dynamicEntry.getSourceMappings();
-            for (SourceMapping sourceMapping : sourceMappings) {
+            Collection<EntrySourceConfig> sourceMappings = dynamicEntry.getSourceMappings();
+            for (EntrySourceConfig sourceMapping : sourceMappings) {
                 dynamicEntry.propagateSource(sourceMapping, sourceValues, interpreter);
             }
         }
     }
 
     public void propagateSource(
-            SourceMapping sourceMapping,
-            SourceValues sourceValues,
+            EntrySourceConfig sourceMapping,
+            SourceAttributes sourceValues,
             Interpreter interpreter
     ) throws Exception {
 
@@ -884,8 +886,8 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         interpreter.set(sourceValues);
 
-        Collection<FieldMapping> fieldMappings = sourceMapping.getFieldMappings();
-        for (FieldMapping fieldMapping : fieldMappings) {
+        Collection<EntryFieldConfig> fieldMappings = sourceMapping.getFieldConfigs();
+        for (EntryFieldConfig fieldMapping : fieldMappings) {
 
             propagateField(
                     sourceMapping,
@@ -899,9 +901,9 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void propagateField(
-            SourceMapping sourceMapping,
-            FieldMapping fieldMapping,
-            SourceValues sourceValues,
+            EntrySourceConfig sourceMapping,
+            EntryFieldConfig fieldMapping,
+            SourceAttributes sourceValues,
             Interpreter interpreter
     ) throws Exception {
 

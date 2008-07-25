@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="dc=JDBC-LDAP,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>JDBC-LDAP</constant>
+    </at>
+    <at name="o">
+      <constant>JDBC-LDAP</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=JDBC-LDAP,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,dc=JDBC-LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="uid" rdn="true">
+      <variable>ju.username</variable>
+    </at>
+    <at name="cn">
+      <variable>lu.cn</variable>
+    </at>
+    <at name="sn">
+      <variable>lu.sn</variable>
+    </at>
+    <at name="userPassword">
+      <variable>ju.password</variable>
+    </at>
+    <source name="ju">
+      <source-name>jdbc_users</source-name>
+      <field name="username">
+        <variable>uid</variable>
+      </field>
+      <field name="password">
+        <variable>userPassword</variable>
+      </field>
+    </source>
+    <source name="lu">
+      <source-name>ldap_users</source-name>
+      <field name="uid">
+        <variable>ju.username</variable>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="sn">
+        <variable>sn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=JDBC-LDAP,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,dc=JDBC-LDAP,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>groupOfUniqueNames</oc>
+    <at name="cn" rdn="true">
+      <variable>jg.groupname</variable>
+    </at>
+    <at name="uniqueMember">
+      <expression foreach="lg.uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=JDBC-LDAP,dc=Example,dc=com";
+      </expression>
+    </at>
+    <source name="jg">
+      <source-name>jdbc_groups</source-name>
+      <field name="groupname">
+        <variable>cn</variable>
+      </field>
+    </source>
+    <source name="lg">
+      <source-name>ldap_groups</source-name>
+      <field name="cn">
+        <variable>jg.groupname</variable>
+      </field>
+      <field name="uniqueMember">
+        <expression foreach="uniqueMember" var="um">
+int i=um.indexOf("=");
+int j=um.indexOf(",");
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+        </expression>
+      </field>
+    </source>
+  </entry>
+
+</directory>

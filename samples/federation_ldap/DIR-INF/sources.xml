@@ -9,14 +9,32 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${LDAP_SUFFIX}</param-value>
+      <param-value>${SUFFIX}</param-value>
     </parameter>
   </source>
     
   <source name="users">
     <connection-name>LDAP</connection-name>
     <field name="dn" primaryKey="true"/>
-    <field name="objectGuid"/>
+    <field name="sn"/>
+    <field name="givenName"/>
+    <field name="sAMAccountName"/>
+    <field name="name"/>
+    <field name="physicalDeliveryOfficeName"/>
+    <field name="telephoneNumber"/>
+    <field name="organizationalUnit"/>
+    <field name="department"/>
+    <field name="c"/>
+    <field name="facsimileTelephoneNumber"/>
+    <field name="mail"/>
+    <field name="displayName"/>
+    <field name="otherTelephone"/>
+    <field name="objectGUID"/>
+    <field name="extensionAttribute1"/>
+    <field name="extensionAttribute2"/>
+    <field name="countryCode"/>
+    <field name="mailNickname"/>
+    <field name="info"/>
     <field name="userAccountControl"/>
     <field name="accountExpires"/>
     <parameter>
@@ -29,7 +47,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${LDAP_SUFFIX}</param-value>
+      <param-value>${SUFFIX}</param-value>
     </parameter>
   </source>
 
@@ -47,7 +65,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${LDAP_SUFFIX}</param-value>
+      <param-value>${SUFFIX}</param-value>
     </parameter>
   </source>
 

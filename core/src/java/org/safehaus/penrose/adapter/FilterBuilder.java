@@ -1,19 +1,22 @@
 package org.safehaus.penrose.adapter;
 
+import org.safehaus.penrose.directory.EntryFieldConfig;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.Attribute;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.LDAP;
+import org.safehaus.penrose.ldap.SourceAttributes;
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.partition.Partition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.mapping.*;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.Attribute;
-import org.safehaus.penrose.ldap.LDAP;
-import org.safehaus.penrose.directory.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Endi S. Dewata
@@ -25,7 +28,7 @@ public class FilterBuilder {
 
     Partition partition;
 
-    Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>();
+    Map<String, EntrySource> sources = new LinkedHashMap<String, EntrySource>();
 
     Interpreter interpreter;
 
@@ -33,47 +36,47 @@ public class FilterBuilder {
 
     public FilterBuilder(
             Partition partition,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sources,
+            SourceAttributes sourceAttributes,
             Interpreter interpreter
     ) throws Exception {
 
         this.partition = partition;
 
-        for (SourceRef sourceRef : sourceRefs) {
-            this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
+        for (EntrySource source : sources) {
+            this.sources.put(source.getAlias(), source);
         }
 
         this.interpreter = interpreter;
 
         if (debug) log.debug("Creating filters:");
 
-        for (String sourceName : sourceValues.getNames()) {
+        for (String sourceName : sourceAttributes.getNames()) {
 
-            SourceRef sourceRef = this.sourceRefs.get(sourceName);
-            if (sourceRef == null) continue;
+            EntrySource source = this.sources.get(sourceName);
+            if (source == null) continue;
 
-            Attributes attributes = sourceValues.get(sourceName);
+            Attributes attributes = sourceAttributes.get(sourceName);
 
             for (String fieldName : attributes.getNames()) {
 
-                FieldRef fieldRef;
+                EntryField field;
 
                 if (fieldName.startsWith("primaryKey.")) {
                     fieldName = fieldName.substring(11);
-                    fieldRef = sourceRef.getPrimaryKeyFieldRef(fieldName);
+                    field = source.getPrimaryKeyField(fieldName);
 
                 } else {
-                    fieldRef = sourceRef.getFieldRef(fieldName);
+                    field = source.getField(fieldName);
                 }
 
-                if (fieldRef == null) {
+                if (field == null) {
                     log.error("Unknown field "+fieldName);
                     throw LDAP.createException(LDAP.OPERATIONS_ERROR);
                 }
 
-                Collection<String> operations = fieldRef.getOperations();
-                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
 
                 Attribute attribute = attributes.get(fieldName);
 
@@ -157,12 +160,12 @@ public class FilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (SourceRef sourceRef : sourceRefs.values()) {
+        for (EntrySource sourceRef : sources.values()) {
 
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
 
                 Collection<String> operations = fieldRef.getOperations();
-                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
 
                 String fieldName = fieldRef.getName();
 
@@ -193,14 +196,14 @@ public class FilterBuilder {
 
         Filter f = null;
 
-        for (SourceRef sourceRef : sourceRefs.values()) {
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntrySource sourceRef : sources.values()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
 
                 String variable = fieldRef.getVariable();
                 if (variable == null || !attributeName.equals(variable)) continue;
 
                 Collection<String> operations = fieldRef.getOperations();
-                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
 
                 SubstringFilter sf = new SubstringFilter(fieldRef.getName(), substrings);
                 if (debug) log.debug(" - Filter "+sf);
@@ -224,12 +227,12 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (SourceRef sourceRef : sourceRefs.values()) {
+        for (EntrySource sourceRef : sources.values()) {
 
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
 
                 Collection<String> operations = fieldRef.getOperations();
-                if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
 
                 String fieldName = fieldRef.getName();
 

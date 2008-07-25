@@ -1,10 +1,14 @@
 package org.safehaus.penrose.directory;
 
+import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.SourceAttributes;
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.mapping.Mapping;
+import org.safehaus.penrose.mapping.MappingFieldConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.filter.*;
-import org.safehaus.penrose.mapping.Expression;
 
 import java.util.Collection;
 
@@ -17,7 +21,19 @@ public class FilterBuilder {
     public boolean debug = log.isDebugEnabled();
 
     Entry entry;
+    SourceAttributes sourceAttributes;
     Interpreter interpreter;
+
+    public FilterBuilder(
+            Entry entry,
+            SourceAttributes sourceAttributes,
+            Interpreter interpreter
+    ) throws Exception {
+
+        this.entry = entry;
+        this.sourceAttributes = sourceAttributes;
+        this.interpreter = interpreter;
+    }
 
     public FilterBuilder(
             Entry entry,
@@ -30,63 +46,63 @@ public class FilterBuilder {
 
     public Filter convert(
             Filter filter,
-            SourceRef sourceRef
+            EntrySource source
     ) throws Exception {
 
         if (filter instanceof NotFilter) {
-            return convert((NotFilter)filter, sourceRef);
+            return convert((NotFilter)filter, source);
 
         } else if (filter instanceof AndFilter) {
-            return convert((AndFilter)filter, sourceRef);
+            return convert((AndFilter)filter, source);
 
         } else if (filter instanceof OrFilter) {
-            return convert((OrFilter)filter, sourceRef);
+            return convert((OrFilter)filter, source);
 
         } else if (filter instanceof SimpleFilter) {
-            return convert((SimpleFilter)filter, sourceRef);
+            return convert((SimpleFilter)filter, source);
 
         } else if (filter instanceof SubstringFilter) {
-            return convert((SubstringFilter)filter, sourceRef);
+            return convert((SubstringFilter)filter, source);
 
         } else if (filter instanceof PresentFilter) {
-            return convert((PresentFilter)filter, sourceRef);
+            return convert((PresentFilter)filter, source);
         }
 
         return null;
     }
 
-    public Filter convert(NotFilter filter, SourceRef sourceRef) throws Exception {
-        Filter newFilter = convert(filter.getFilter(), sourceRef);
+    public Filter convert(NotFilter filter, EntrySource source) throws Exception {
+        Filter newFilter = convert(filter.getFilter(), source);
         return new NotFilter(newFilter);
     }
 
-    public Filter convert(AndFilter filter, SourceRef sourceRef) throws Exception {
+    public Filter convert(AndFilter filter, EntrySource source) throws Exception {
 
         Filter newFilter = null;
 
         Collection<Filter> filters = filter.getFilters();
         for (Filter f : filters) {
-            Filter nf = convert(f, sourceRef);
+            Filter nf = convert(f, source);
             newFilter = FilterTool.appendAndFilter(newFilter, nf);
         }
 
         return newFilter;
     }
 
-    public Filter convert(OrFilter filter, SourceRef sourceRef) throws Exception {
+    public Filter convert(OrFilter filter, EntrySource source) throws Exception {
 
         Filter newFilter = null;
 
         Collection<Filter> filters = filter.getFilters();
         for (Filter f : filters) {
-            Filter nf = convert(f, sourceRef);
+            Filter nf = convert(f, source);
             newFilter = FilterTool.appendOrFilter(newFilter, nf);
         }
 
         return newFilter;
     }
 
-    public Filter convert(SimpleFilter filter, SourceRef sourceRef) throws Exception {
+    public Filter convert(SimpleFilter filter, EntrySource source) throws Exception {
 
         if (debug) log.debug("Converting filter "+filter);
 
@@ -94,27 +110,45 @@ public class FilterBuilder {
         String operator = filter.getOperator();
         Object attributeValue = filter.getValue();
 
+        interpreter.set(sourceAttributes);
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        String mappingName = source.getMappingName();
+        if (mappingName != null) {
+            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
 
-            Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+            Attributes output = new Attributes();
+            mapping.map(interpreter, output);
 
-            String fieldName = fieldRef.getName();
+            for (String name : output.getNames()) {
+                Object value = output.getValue(name);
+                SimpleFilter f = new SimpleFilter(name, operator, value);
+                if (debug) log.debug(" - Filter " + f);
 
-            Object value = interpreter.eval(fieldRef);
-            if (value == null) {
-                //if (debug) log.debug("Field "+fieldName+" is null.");
-                continue;
+                newFilter = FilterTool.appendAndFilter(newFilter, f);
             }
 
-            SimpleFilter f = new SimpleFilter(fieldName, operator, value.toString());
-            if (debug) log.debug(" - Filter " + f);
+        } else {
+            for (EntryField field : source.getFields()) {
 
-            newFilter = FilterTool.appendAndFilter(newFilter, f);
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
+
+                String fieldName = field.getName();
+
+                Object value = interpreter.eval(field);
+                if (value == null) {
+                    //if (debug) log.debug("Field "+fieldName+" is null.");
+                    continue;
+                }
+
+                SimpleFilter f = new SimpleFilter(fieldName, operator, value.toString());
+                if (debug) log.debug(" - Filter " + f);
+
+                newFilter = FilterTool.appendAndFilter(newFilter, f);
+            }
         }
 
         interpreter.clear();
@@ -122,7 +156,7 @@ public class FilterBuilder {
         return newFilter;
     }
 
-    public Filter convert(SubstringFilter filter, SourceRef sourceRef) throws Exception {
+    public Filter convert(SubstringFilter filter, EntrySource source) throws Exception {
 
         if (debug) log.debug("Converting filter "+filter);
 
@@ -131,24 +165,42 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        String mappingName = source.getMappingName();
+        if (mappingName != null) {
+            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
 
-            String variable = fieldRef.getVariable();
-            if (variable == null || !attributeName.equals(variable)) continue;
+            for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs()) {
 
-            Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+                String variable = fieldConfig.getVariable();
+                if (variable == null || !attributeName.equals(variable)) continue;
 
-            SubstringFilter sf = new SubstringFilter(fieldRef.getName(), substrings);
-            if (debug) log.debug(" - Filter "+sf);
+                SubstringFilter sf = new SubstringFilter(fieldConfig.getName(), substrings);
+                if (debug) log.debug(" - Filter "+sf);
 
-            newFilter = FilterTool.appendAndFilter(newFilter, sf);
+                newFilter = FilterTool.appendAndFilter(newFilter, sf);
+            }
+
+        } else {
+            
+            for (EntryField field : source.getFields()) {
+
+                String variable = field.getVariable();
+                if (variable == null || !attributeName.equals(variable)) continue;
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
+
+                SubstringFilter sf = new SubstringFilter(field.getName(), substrings);
+                if (debug) log.debug(" - Filter "+sf);
+
+                newFilter = FilterTool.appendAndFilter(newFilter, sf);
+            }
         }
 
         return newFilter;
     }
 
-    public Filter convert(PresentFilter filter, SourceRef sourceRef) throws Exception {
+    public Filter convert(PresentFilter filter, EntrySource source) throws Exception {
 
         if (debug) log.debug("Converting filter "+filter);
 
@@ -158,35 +210,69 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        String mappingName = source.getMappingName();
+        if (mappingName != null) {
+            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
 
-            Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.SEARCH)) continue;
+            for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs()) {
 
-            String fieldName = fieldRef.getName();
+                String fieldName = fieldConfig.getName();
 
-            String variable = fieldRef.getVariable();
-            if (variable == null) {
-                Expression expression = fieldRef.getExpression();
-                if (expression != null) {
-                    variable = expression.getForeach();
+                String variable = fieldConfig.getVariable();
+                if (variable == null) {
+                    Expression expression = fieldConfig.getExpression();
+                    if (expression != null) {
+                        variable = expression.getForeach();
+                    }
                 }
+
+                if (variable == null) {
+                    //if (debug) log.debug("Attribute "+attributeName+" can't be converted.");
+                    continue;
+                }
+
+                if (!attributeName.equalsIgnoreCase(variable)) {
+                    //if (debug) log.debug("Attribute "+attributeName+" doesn't match "+variable);
+                    continue;
+                }
+
+                PresentFilter f = new PresentFilter(fieldName);
+                if (debug) log.debug(" - Filter " + f);
+
+                newFilter = FilterTool.appendAndFilter(newFilter, f);
             }
 
-            if (variable == null) {
-                //if (debug) log.debug("Attribute "+attributeName+" can't be converted.");
-                continue;
+        } else {
+            for (EntryField field : source.getFields()) {
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.SEARCH)) continue;
+
+                String fieldName = field.getName();
+
+                String variable = field.getVariable();
+                if (variable == null) {
+                    Expression expression = field.getExpression();
+                    if (expression != null) {
+                        variable = expression.getForeach();
+                    }
+                }
+
+                if (variable == null) {
+                    //if (debug) log.debug("Attribute "+attributeName+" can't be converted.");
+                    continue;
+                }
+
+                if (!attributeName.equalsIgnoreCase(variable)) {
+                    //if (debug) log.debug("Attribute "+attributeName+" doesn't match "+variable);
+                    continue;
+                }
+
+                PresentFilter f = new PresentFilter(fieldName);
+                if (debug) log.debug(" - Filter " + f);
+
+                newFilter = FilterTool.appendAndFilter(newFilter, f);
             }
-
-            if (!attributeName.equalsIgnoreCase(variable)) {
-                //if (debug) log.debug("Attribute "+attributeName+" doesn't match "+variable);
-                continue;
-            }
-
-            PresentFilter f = new PresentFilter(fieldName);
-            if (debug) log.debug(" - Filter " + f);
-
-            newFilter = FilterTool.appendAndFilter(newFilter, f);
         }
 
         return newFilter;

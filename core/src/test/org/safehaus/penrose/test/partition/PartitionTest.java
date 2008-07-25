@@ -4,7 +4,7 @@ import junit.framework.TestCase;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
 import org.apache.log4j.Logger;
 
 import java.util.Collection;
@@ -25,19 +25,19 @@ public class PartitionTest extends TestCase {
         partitionConfig = new PartitionConfig("example");
 
         EntryConfig rootEntry = new EntryConfig("dc=Example,dc=com");
-        rootEntry.addAttributeMappingsFromRdn();
+        rootEntry.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(rootEntry);
 
         EntryConfig usersEntry = new EntryConfig("cn=Users,dc=Example,dc=com");
-        usersEntry.addAttributeMappingsFromRdn();
+        usersEntry.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(usersEntry);
 
         EntryConfig users1Mapping = new EntryConfig("cn=...,cn=Users,dc=Example,dc=com");
-        users1Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "users.cn", true));
+        users1Mapping.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "users.cn", true));
         partitionConfig.getDirectoryConfig().addEntryConfig(users1Mapping);
 
         EntryConfig users2Mapping = new EntryConfig("cn=...,cn=Users,dc=Example,dc=com");
-        users2Mapping.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "groups.cn", true));
+        users2Mapping.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "groups.cn", true));
         partitionConfig.getDirectoryConfig().addEntryConfig(users2Mapping);
     }
 

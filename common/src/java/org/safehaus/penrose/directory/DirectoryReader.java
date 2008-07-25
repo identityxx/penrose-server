@@ -27,8 +27,8 @@ public class DirectoryReader implements EntityResolver {
 
         ClassLoader cl = getClass().getClassLoader();
 
-        dtdUrl = cl.getResource("org/safehaus/penrose/directory/mapping.dtd");
-        digesterUrl = cl.getResource("org/safehaus/penrose/directory/mapping-digester-rules.xml");
+        dtdUrl = cl.getResource("org/safehaus/penrose/directory/directory.dtd");
+        digesterUrl = cl.getResource("org/safehaus/penrose/directory/directory-digester-rules.xml");
 
         digester = DigesterLoader.createDigester(digesterUrl);
         digester.setEntityResolver(this);

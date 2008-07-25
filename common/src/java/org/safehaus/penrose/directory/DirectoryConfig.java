@@ -30,6 +30,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
     private Collection<DN> suffixes = new ArrayList<DN>();
     private Collection<EntryConfig> rootEntryConfigs = new ArrayList<EntryConfig>();
 
+    public DirectoryConfig() {
+    }
+
     public void addEntryConfig(EntryConfig entryConfig) throws Exception {
 
         DN dn = entryConfig.getDn();
@@ -38,10 +41,10 @@ public class DirectoryConfig implements Serializable, Cloneable {
         String id = entryConfig.getId();
         if (id == null) {
             int counter = 0;
-            id = ""+counter;
+            id = "entry"+counter;
             while (entryConfigsById.containsKey(id)) {
                 counter++;
-                id = ""+counter;
+                id = "entry"+counter;
             }
             entryConfig.setId(id);
         }
@@ -60,9 +63,9 @@ public class DirectoryConfig implements Serializable, Cloneable {
         c.add(entryConfig);
 
         // index by source
-        Collection<SourceMapping> sourceMappings = entryConfig.getSourceMappings();
-        for (SourceMapping sourceMapping : sourceMappings) {
-            String sourceName = sourceMapping.getSourceName();
+        Collection<EntrySourceConfig> sourceConfigs = entryConfig.getSourceConfigs();
+        for (EntrySourceConfig sourceConfig : sourceConfigs) {
+            String sourceName = sourceConfig.getSourceName();
             c = entryConfigsBySource.get(sourceName);
             if (c == null) {
                 c = new ArrayList<EntryConfig>();
@@ -367,24 +370,24 @@ public class DirectoryConfig implements Serializable, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        DirectoryConfig mappings = (DirectoryConfig)super.clone();
+        DirectoryConfig directoryConfig = (DirectoryConfig)super.clone();
 
-        mappings.entryConfigsById = new LinkedHashMap<String, EntryConfig>();
-        mappings.entryConfigsByDn = new LinkedHashMap<String,Collection<EntryConfig>>();
-        mappings.entryConfigsBySource = new LinkedHashMap<String,Collection<EntryConfig>>();
-        mappings.entryConfigsByParentId = new LinkedHashMap<String,Collection<EntryConfig>>();
+        directoryConfig.entryConfigsById = new LinkedHashMap<String, EntryConfig>();
+        directoryConfig.entryConfigsByDn = new LinkedHashMap<String,Collection<EntryConfig>>();
+        directoryConfig.entryConfigsBySource = new LinkedHashMap<String,Collection<EntryConfig>>();
+        directoryConfig.entryConfigsByParentId = new LinkedHashMap<String,Collection<EntryConfig>>();
 
-        mappings.suffixes = new ArrayList<DN>();
-        mappings.rootEntryConfigs = new ArrayList<EntryConfig>();
+        directoryConfig.suffixes = new ArrayList<DN>();
+        directoryConfig.rootEntryConfigs = new ArrayList<EntryConfig>();
 
         for (EntryConfig entryConfig : getEntryConfigs()) {
             try {
-                mappings.addEntryConfig((EntryConfig) entryConfig.clone());
+                directoryConfig.addEntryConfig((EntryConfig) entryConfig.clone());
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
 
-        return mappings;
+        return directoryConfig;
     }
 }

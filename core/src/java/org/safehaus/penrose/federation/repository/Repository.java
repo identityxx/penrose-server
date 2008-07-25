@@ -41,9 +41,17 @@ public class Repository implements Serializable, Cloneable {
     }
 
     public void setParameter(String name, String value) {
-        parameters.put(name, value);
+        if (value == null) {
+            parameters.remove(name);
+        } else {
+            parameters.put(name, value);
+        }
     }
     
+    public Object removeParameter(String name) {
+        return parameters.remove(name);
+    }
+
     public Collection<String> getParameterNames() {
         return parameters.keySet();
     }

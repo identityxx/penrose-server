@@ -22,6 +22,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionContext;
@@ -54,11 +55,11 @@ public class Entry implements Cloneable {
     protected EntryConfig entryConfig;
     protected EntryContext entryContext;
 
-    protected Map<String,SourceRef> localSourceRefs = new LinkedHashMap<String,SourceRef>();
+    protected Map<String, EntrySource> localSources = new LinkedHashMap<String, EntrySource>();
     //protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-    protected List<SourceRef> sourceRefs              = new ArrayList<SourceRef>();
-    protected Map<String,SourceRef> sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
+    protected List<EntrySource> sources = new ArrayList<EntrySource>();
+    protected Map<String, EntrySource> sourcesByAlias = new LinkedHashMap<String, EntrySource>();
     //protected Map<String,SourceRef> primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
     protected Directory directory;
@@ -83,18 +84,17 @@ public class Entry implements Cloneable {
         
         //String primarySourceName = getPrimarySourceName();
 
-        for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
+        for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
 
-            SourceRef sourceRef = createSourceRef(sourceMapping);
-            String alias = sourceRef.getAlias();
+            EntrySource entrySource = createSource(sourceMapping);
+            String alias = entrySource.getAlias();
 
-            sourceRefs.add(sourceRef);
-            localSourceRefs.put(alias, sourceRef);
-            sourceRefsByName.put(alias, sourceRef);
+            addSource(entrySource);
+            localSources.put(alias, entrySource);
 /*
             if (alias.equals(primarySourceName)) {
-                localPrimarySourceRefs.put(alias, sourceRef);
-                primarySourceRefs.put(alias, sourceRef);
+                localPrimarySourceRefs.put(alias, entrySource);
+                primarySourceRefs.put(alias, entrySource);
             }
 */
         }
@@ -107,14 +107,13 @@ public class Entry implements Cloneable {
 
             //String psn = parent.getPrimarySourceName();
 
-            for (SourceRef sourceRef : parent.getLocalSourceRefs()) {
-                String alias = sourceRef.getAlias();
+            for (EntrySource entrySource : parent.getLocalSources()) {
+                String alias = entrySource.getAlias();
 
-                sourceRefs.add(sourceRef);
-                sourceRefsByName.put(alias, sourceRef);
+                addSource(entrySource);
 /*
                 if (alias.equals(psn)) {
-                    primarySourceRefs.put(alias, sourceRef);
+                    primarySourceRefs.put(alias, entrySource);
                 }
 */
             }
@@ -147,17 +146,28 @@ public class Entry implements Cloneable {
         }
     }
 
-    public SourceRef createSourceRef(SourceMapping sourceMapping) throws Exception {
+    public EntrySource createSource(EntrySourceConfig sourceConfig) throws Exception {
 
-        log.debug("Initializing source reference "+sourceMapping.getName()+".");
+        String partitionName = sourceConfig.getPartitionName();
+        String sourceName = sourceConfig.getSourceName();
 
-        Partition partition = getPartition();
+        log.debug("Initializing source reference "+sourceConfig.getName()+": "+partitionName+"."+sourceName);
 
-        SourceManager sourceManager = partition.getSourceManager();
-        Source source = sourceManager.getSource(sourceMapping.getSourceName());
-        if (source == null) throw new Exception("Unknown source "+sourceMapping.getSourceName()+".");
+        Partition sourcePartition;
 
-        return new SourceRef(this, source, sourceMapping);
+        if (partitionName == null) {
+            sourcePartition = partition;
+
+        } else {
+            sourcePartition = partition.getPartitionContext().getPartition(partitionName);
+            if (sourcePartition == null) throw new Exception("Unknown partition "+partitionName+".");
+        }
+
+        SourceManager sourceManager = sourcePartition.getSourceManager();
+        Source source = sourceManager.getSource(sourceName);
+        if (source == null) throw new Exception("Unknown source "+sourceName+".");
+
+        return new EntrySource(this, sourceConfig, source);
     }
 
     public String getId() {
@@ -192,32 +202,36 @@ public class Entry implements Cloneable {
         return partition;
     }
 
-    public Collection<SourceRef> getLocalSourceRefs() {
-        return localSourceRefs.values();
+    public Collection<String> getLocalSourceNames() {
+        return localSources.keySet();
+    }
+
+    public Collection<EntrySource> getLocalSources() {
+        return localSources.values();
     }
 /*
     public Collection<SourceRef> getLocalPrimarySourceRefs() {
         return localPrimarySourceRefs.values();
     }
 */
-    public Collection<SourceRef> getSourceRefs() {
-        return sourceRefs;
+    public Collection<EntrySource> getSources() {
+        return sources;
     }
 
-    public int getSourceRefsCount() {
-        return sourceRefs.size();
+    public int getSourceCount() {
+        return sources.size();
     }
 
-    public SourceRef getSourceRef(String name) {
-        return sourceRefsByName.get(name);
+    public EntrySource getSource(String name) {
+        return sourcesByAlias.get(name);
     }
 
-    public SourceRef getSourceRef(int index) {
-        return sourceRefs.get(index);
+    public EntrySource getSource(int index) {
+        return sources.get(index);
     }
 
-    public SourceRef getSourceRef() {
-        return sourceRefs.get(0);
+    public EntrySource getSource() {
+        return sources.get(0);
     }
 /*
     public Collection<SourceRef> getPrimarySourceRefs() {
@@ -260,7 +274,7 @@ public class Entry implements Cloneable {
 
     public String getPrimarySourceName() {
 
-        for (AttributeMapping rdnAttributeMapping : getRdnAttributeMappings()) {
+        for (EntryAttributeConfig rdnAttributeMapping : getRdnAttributeMappings()) {
 
             String variable = rdnAttributeMapping.getVariable();
             if (variable == null) continue;
@@ -271,9 +285,9 @@ public class Entry implements Cloneable {
             return variable.substring(0, i);
         }
 
-        Collection<SourceMapping> sourceMappings = getSourceMappings();
+        Collection<EntrySourceConfig> sourceMappings = getSourceMappings();
         if (!sourceMappings.isEmpty()) {
-            SourceMapping sourceMapping = sourceMappings.iterator().next();
+            EntrySourceConfig sourceMapping = sourceMappings.iterator().next();
             return sourceMapping.getName();
         }
         
@@ -342,32 +356,32 @@ public class Entry implements Cloneable {
         return entryConfig.containsObjectClass(objectClass);
     }
 
-    public Collection<AttributeMapping> getAttributeMappings() {
-        return entryConfig.getAttributeMappings();
+    public Collection<EntryAttributeConfig> getAttributeConfigs() {
+        return entryConfig.getAttributeConfigs();
     }
 
-    public AttributeMapping getAttributeMapping(String attributeName) {
-        return entryConfig.getAttributeMapping(attributeName);
+    public EntryAttributeConfig getAttributeMapping(String attributeName) {
+        return entryConfig.getAttributeConfig(attributeName);
     }
 
-    public Collection<AttributeMapping> getRdnAttributeMappings() {
-        return entryConfig.getRdnAttributeMappings();
+    public Collection<EntryAttributeConfig> getRdnAttributeMappings() {
+        return entryConfig.getRdnAttributeConfigs();
     }
 
     public Collection<ACI> getACL() {
         return entryConfig.getACL();
     }
 
-    public Collection<SourceMapping> getSourceMappings() {
-        return entryConfig.getSourceMappings();
+    public Collection<EntrySourceConfig> getSourceMappings() {
+        return entryConfig.getSourceConfigs();
     }
 
-    public SourceMapping getSourceMapping(int index) {
-        return entryConfig.getSourceMapping(index);
+    public EntrySourceConfig getSourceMapping(int index) {
+        return entryConfig.getSourceConfig(index);
     }
     
-    public SourceMapping getSourceMapping(String alias) {
-        return entryConfig.getSourceMapping(alias);
+    public EntrySourceConfig getSourceMapping(String alias) {
+        return entryConfig.getSourceConfig(alias);
     }
 
     public Session createAdminSession() throws Exception {
@@ -834,9 +848,9 @@ public class Entry implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        DN baseDn     = request.getDn();
+        Filter filter = request.getFilter();
+        int scope     = request.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -848,24 +862,53 @@ public class Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set("session", session);
+            interpreter.set("request", request);
+            interpreter.set("response", response);
+            interpreter.set("entry", this);
+
+            for (EntrySearchConfig searchConfig : entryConfig.getSearchConfigs()) {
+                Filter searchFilter = searchConfig.getFilter();
+                if (debug) log.debug("Checking "+searchFilter+" with "+filter+".");
+
+                if (!searchFilter.matches(filter)) continue;
+
+                if (debug) log.debug("Executing search script with filter "+searchFilter+".");
+                interpreter.eval(searchConfig.getScript());
+
+                return;
+            }
+
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
+    }
+
+    public void validateSearchRequest(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        validateScope(request);
+        validatePermission(session, request);
+
+        Filter filter = request.getFilter();
+        validateFilter(filter);
     }
 
     public SearchResponse createSearchResponse(
@@ -876,7 +919,7 @@ public class Entry implements Cloneable {
         return new EntrySearchResponse(session, request, response, this);
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response
@@ -914,6 +957,29 @@ public class Entry implements Cloneable {
         }
     }
 
+    public SearchResult createSearchResult(SourceAttributes sourceAttributes) throws Exception {
+        
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceAttributes);
+
+        DN dn = computeDn(interpreter);
+        Attributes attributes = computeAttributes(interpreter);
+
+        SearchResult result = new SearchResult(dn, attributes);
+        result.setEntryId(entryConfig.getId());
+        result.setSourceAttributes(sourceAttributes);
+
+        return result;
+    }
+
+    public DN createDn(SourceAttributes sourceAttributes) throws Exception {
+
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceAttributes);
+
+        return computeDn(interpreter);
+    }
+
     public DN computeDn(
             Interpreter interpreter
     ) throws Exception {
@@ -921,12 +987,6 @@ public class Entry implements Cloneable {
         DNBuilder db = new DNBuilder();
 
         RDN rdn = computeRdn(interpreter);
-/*
-        if (rdn.isEmpty()) {
-            log.error("RDN is empty: "+rdn);
-            throw LDAP.createException(LDAP.OPERATIONS_ERROR);
-        }
-*/
         db.set(rdn);
 
         Entry parent = getParent();
@@ -949,7 +1009,7 @@ public class Entry implements Cloneable {
 
         RDNBuilder rb = new RDNBuilder();
 
-        for (AttributeMapping attributeMapping : entryConfig.getRdnAttributeMappings()) {
+        for (EntryAttributeConfig attributeMapping : entryConfig.getRdnAttributeConfigs()) {
             String name = attributeMapping.getName();
 
             Object value = interpreter.eval(attributeMapping);
@@ -967,12 +1027,19 @@ public class Entry implements Cloneable {
 
         Attributes attributes = new Attributes();
 
-        for (AttributeMapping attributeMapping : entryConfig.getAttributeMappings()) {
+        String mappingName = entryConfig.getMappingName();
+        if (mappingName != null) {
+            Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+            mapping.map(interpreter, attributes);
+            return attributes;
+        }
 
-            String name = attributeMapping.getName();
+        for (EntryAttributeConfig attributeConfig : getAttributeConfigs()) {
+
+            String name = attributeConfig.getName();
             if ("dn".equals(name)) continue;
 
-            Object value = interpreter.eval(attributeMapping);
+            Object value = interpreter.eval(attributeConfig);
             //if (debug) log.debug("Attribute "+name+": "+value);
             if (value == null || value.toString().trim().equals("")) continue;
 
@@ -991,46 +1058,31 @@ public class Entry implements Cloneable {
         return attributes;
     }
 
-    public SourceValues extractSourceValues(DN dn) throws Exception {
+    public void extractSourceAttributes(DN dn, Interpreter interpreter, SourceAttributes output) throws Exception {
 
-        if (debug) log.debug("Extracting dn "+dn+":");
-
-        Interpreter interpreter = partition.newInterpreter();
-        SourceValues sourceValues = new SourceValues();
-
-        extractSourceValues(
-                dn,
-                this,
-                interpreter,
-                sourceValues
-        );
-
-        return sourceValues;
-    }
-
-    public void extractSourceValues(
-            DN dn,
-            Entry entry,
-            Interpreter interpreter,
-            SourceValues sourceValues
-    ) throws Exception {
+        Entry parent = getParent();
+        if (getDn().getSize() > dn.getSize()) {
+            if (parent == null) return;
+            parent.extractSourceAttributes(dn, interpreter, output);
+            return;
+        }
 
         DN parentDn = dn.getParentDn();
-        Entry parent = entry.getParent();
-
         if (parentDn != null && parent != null) {
-            extractSourceValues(parentDn, parent, interpreter, sourceValues);
+            parent.extractSourceAttributes(parentDn, interpreter, output);
         }
 
         RDN rdn = dn.getRdn();
         interpreter.set(rdn);
 
-        entry.computeSources(interpreter, sourceValues);
+        if (debug) log.debug(" - "+rdn+" => "+getDn());
+
+        computeSourceAttributes(interpreter, output);
 
         interpreter.clear();
     }
 
-    public SourceValues extractSourceValues(
+    public SourceAttributes extractSourceValues(
             DN dn,
             Attributes attributes
     ) throws Exception {
@@ -1038,9 +1090,9 @@ public class Entry implements Cloneable {
         if (debug) log.debug("Extracting entry "+dn+":");
 
         Interpreter interpreter = partition.newInterpreter();
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
 
-        extractSourceValues(
+        extractSourceAttributes(
                 dn,
                 attributes,
                 interpreter,
@@ -1050,18 +1102,18 @@ public class Entry implements Cloneable {
         return sourceValues;
     }
 
-    public void extractSourceValues(
+    public void extractSourceAttributes(
             DN dn,
             Attributes attributes,
             Interpreter interpreter,
-            SourceValues sourceValues
+            SourceAttributes sourceAttributes
     ) throws Exception {
 
         DN parentDn = dn.getParentDn();
 
         Entry parent = getParent();
         if (parentDn != null && parent != null) {
-            extractSourceValues(parentDn, parent, interpreter, sourceValues);
+            parent.extractSourceAttributes(parentDn, interpreter, sourceAttributes);
         }
 
         RDN rdn = dn.getRdn();
@@ -1069,35 +1121,42 @@ public class Entry implements Cloneable {
         interpreter.set("rdn", rdn);
         interpreter.set(attributes);
 
-        computeSources(interpreter, sourceValues);
+        computeSourceAttributes(interpreter, sourceAttributes);
 
         interpreter.clear();
     }
 
-    public void computeSources(
+    public void computeSourceAttributes(
             Interpreter interpreter,
-            SourceValues sourceValues
+            SourceAttributes sourceAttributes
     ) throws Exception {
 
-        for (SourceRef sourceRef : localSourceRefs.values()) {
+        for (EntrySource entrySource : getLocalSources()) {
 
-            if (debug) log.debug("Extracting source "+sourceRef.getAlias()+":");
+            if (debug) log.debug("Extracting source "+entrySource.getAlias()+":");
 
-            Attributes attributes = sourceValues.get(sourceRef.getAlias());
+            Attributes attributes = sourceAttributes.get(entrySource.getAlias());
 
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            String mappingName = entrySource.getMappingName();
+            if (mappingName != null) {
+                Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+                mapping.map(interpreter, attributes);
+                
+            } else {
+                for (EntryField field : entrySource.getFields()) {
 
-                Object value = interpreter.eval(fieldRef);
-                if (value == null) continue;
+                    Object value = interpreter.eval(field);
+                    if (value == null) continue;
 
-                if ("INTEGER".equals(fieldRef.getType()) && value instanceof String) {
-                    value = Integer.parseInt((String)value);
+                    if ("INTEGER".equals(field.getType()) && value instanceof String) {
+                        value = Integer.parseInt((String)value);
+                    }
+
+                    attributes.addValue(field.getName(), value);
+
+                    String fieldName = entrySource.getAlias() + "." + field.getName();
+                    if (debug) log.debug(" - " + fieldName + ": " + value);
                 }
-
-                attributes.addValue(fieldRef.getName(), value);
-
-                String fieldName = sourceRef.getAlias() + "." + fieldRef.getName();
-                if (debug) log.debug(" - " + fieldName + ": " + value);
             }
         }
     }
@@ -1130,31 +1189,30 @@ public class Entry implements Cloneable {
         try {
             entry.entryConfig = (EntryConfig) entryConfig.clone();
 
-            entry.localSourceRefs = new LinkedHashMap<String,SourceRef>();
+            entry.localSources = new LinkedHashMap<String, EntrySource>();
             //entry.localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-            entry.sourceRefs        = new ArrayList<SourceRef>();
-            entry.sourceRefsByName  = new LinkedHashMap<String,SourceRef>();
+            entry.sources = new ArrayList<EntrySource>();
+            entry.sourcesByAlias = new LinkedHashMap<String, EntrySource>();
             //entry.primarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
-            for (SourceRef origSourceRef : sourceRefs) {
-                SourceRef sourceRef = (SourceRef)origSourceRef.clone();
+            for (EntrySource origEntrySource : sources) {
+                EntrySource entrySource = (EntrySource)origEntrySource.clone();
 
-                String alias = sourceRef.getAlias();
+                String alias = entrySource.getAlias();
 
-                entry.sourceRefs.add(sourceRef);
-                entry.sourceRefsByName.put(alias, sourceRef);
+                entry.addSource(entrySource);
 /*
                 if (primarySourceRefs.containsKey(alias)) {
-                    entry.primarySourceRefs.put(alias, sourceRef);
+                    entry.primarySourceRefs.put(alias, entrySource);
                 }
 */
-                if (localSourceRefs.containsKey(alias)) {
-                    entry.localSourceRefs.put(alias, sourceRef);
+                if (localSources.containsKey(alias)) {
+                    entry.localSources.put(alias, entrySource);
                 }
 /*
                 if (localPrimarySourceRefs.containsKey(alias)) {
-                    entry.localPrimarySourceRefs.put(alias, sourceRef);
+                    entry.localPrimarySourceRefs.put(alias, entrySource);
                 }
 */
             }
@@ -1166,5 +1224,10 @@ public class Entry implements Cloneable {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    public void addSource(EntrySource entrySource) {
+        sources.add(entrySource);
+        sourcesByAlias.put(entrySource.getAlias(), entrySource);
     }
 }

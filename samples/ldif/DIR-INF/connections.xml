@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE connections PUBLIC
+  "-//Penrose/DTD Connections ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/connections.dtd">
+
+<connections>
+
+  <connection name="LDIF">
+    <adapter-name>LDIF</adapter-name>
+    <parameter>
+      <param-name>file</param-name>
+      <param-value>partitions/ldif/ldif/init.ldif</param-value>
+    </parameter>
+  </connection>
+
+</connections>

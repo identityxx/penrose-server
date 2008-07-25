@@ -105,4 +105,14 @@ public class NotFilter extends Filter implements ContainerFilter {
 
         return newFilter;
     }
+
+    public boolean matches(Filter filter) throws Exception {
+        if (filter == null) return false;
+        if (filter == this) return true;
+        if (filter.getClass() != getClass()) return false;
+
+        NotFilter f = (NotFilter)filter;
+
+        return this.filter.matches(f);
+    }
 }

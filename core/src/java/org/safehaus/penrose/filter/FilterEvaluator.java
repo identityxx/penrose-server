@@ -1,6 +1,6 @@
 package org.safehaus.penrose.filter;
 
-import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
@@ -203,7 +203,7 @@ public class FilterEvaluator {
             return entry.containsObjectClass(attributeValue.toString());
         }
 
-        AttributeMapping attributeMapping = entry.getAttributeMapping(attributeName);
+        EntryAttributeConfig attributeMapping = entry.getAttributeMapping(attributeName);
         if (attributeMapping == null) return false;
 
         Object value = attributeMapping.getConstant();
@@ -249,7 +249,7 @@ public class FilterEvaluator {
         String attributeName = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();
 
-        AttributeMapping attributeMapping = entry.getAttributeMapping(attributeName);
+        EntryAttributeConfig attributeMapping = entry.getAttributeMapping(attributeName);
         if (attributeMapping == null) return false;
 
         Object value = attributeMapping.getConstant();

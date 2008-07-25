@@ -19,6 +19,7 @@ package org.safehaus.penrose.filter;
 
 import java.util.*;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -125,7 +126,10 @@ public class FilterTool {
     public static String escape(Object value) {
         StringBuilder sb = new StringBuilder();
 
-        if (value instanceof byte[]) {
+        if (value == null) {
+            // empty string
+            
+        } else if (value instanceof byte[]) {
             for (byte b : (byte[])value) {
                 int i = 0xff & b;
                 String hex = Integer.toHexString(i);
@@ -138,7 +142,7 @@ public class FilterTool {
             byte[] bytes;
             try {
                 bytes = value.toString().getBytes("UTF-8");
-            } catch (Exception e) {
+            } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
 

@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="dc=Posix,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Posix</constant>
+    </at>
+    <at name="o">
+      <constant>Posix</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=People,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>People</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=People,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <oc>posixAccount</oc>
+    <oc>shadowAccount</oc>
+    <at name="cn">
+      <variable>u.cn</variable>
+    </at>
+    <at name="sn">
+      <expression>
+if (u == void || u == null) return null;
+if (u.cn == void || u.cn == null) return null;
+int i = u.cn.lastIndexOf(" ");
+if (i &lt; 0) return u.cn;
+return u.cn.substring(i+1);
+      </expression>
+    </at>
+    <at name="uid" rdn="true">
+      <variable>u.uid</variable>
+    </at>
+    <at name="uidNumber">
+      <variable>u.uidNumber</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>u.gidNumber</variable>
+    </at>
+    <at name="homeDirectory">
+      <variable>u.homeDirectory</variable>
+    </at>
+    <at name="userPassword">
+      <expression>
+import org.safehaus.penrose.util.*;
+
+if (u != void &amp;&amp; u != null
+    &amp;&amp; u.userPassword != void &amp;&amp; u.userPassword != null) {
+        return "{crypt}"+u.userPassword;
+}
+
+if (s != void &amp;&amp; s != null
+    &amp;&amp; s.userPassword != void &amp;&amp; s.userPassword != null) {
+    return "{crypt}"+s.userPassword;
+}
+
+return null;
+      </expression>
+    </at>
+    <at name="loginShell">
+      <variable>u.loginShell</variable>
+    </at>
+    <at name="gecos">
+      <variable>u.gecos</variable>
+    </at>
+    <at name="description">
+      <variable>u.description</variable>
+    </at>
+    <at name="shadowLastChange">
+      <variable>s.shadowLastChange</variable>
+    </at>
+    <at name="shadowMin">
+      <variable>s.shadowMin</variable>
+    </at>
+    <at name="shadowMax">
+      <variable>s.shadowMax</variable>
+    </at>
+    <at name="shadowWarning">
+      <variable>s.shadowWarning</variable>
+    </at>
+    <at name="shadowInactive">
+      <variable>s.shadowInactive</variable>
+    </at>
+    <at name="shadowExpire">
+      <variable>s.shadowExpire</variable>
+    </at>
+    <at name="shadowFlag">
+      <variable>s.shadowFlag</variable>
+    </at>
+    <source name="u">
+      <source-name>posixAccount</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="uid">
+        <variable>uid</variable>
+      </field>
+      <field name="uidNumber">
+        <variable>uidNumber</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="homeDirectory">
+        <variable>homeDirectory</variable>
+      </field>
+      <field name="userPassword">
+        <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="loginShell">
+        <variable>loginShell</variable>
+      </field>
+      <field name="gecos">
+        <variable>gecos</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="s">
+      <source-name>shadowAccount</source-name>
+      <field name="uid">
+        <variable>u.uid</variable>
+      </field>
+      <field name="userPassword">
+          <expression>
+import org.safehaus.penrose.util.*;
+
+if (userPassword == void || userPassword == null) return;
+
+String method = PasswordUtil.getEncryptionMethod(userPassword);
+
+if (method == null) {
+    return PasswordUtil.encrypt("crypt", userPassword);
+
+} else if ("crypt".equals(method)) {
+    return PasswordUtil.getEncryptedPassword(userPassword);
+
+} else {
+    throw new Exception("Unsupported encryption: "+method);
+}
+
+return bytes;
+        </expression>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="shadowLastChange">
+        <variable>shadowLastChange</variable>
+      </field>
+      <field name="shadowMin">
+        <variable>shadowMin</variable>
+      </field>
+      <field name="shadowMax">
+        <variable>shadowMax</variable>
+      </field>
+      <field name="shadowWarning">
+        <variable>shadowWarning</variable>
+      </field>
+      <field name="shadowInactive">
+        <variable>shadowInactive</variable>
+      </field>
+      <field name="shadowExpire">
+        <variable>shadowExpire</variable>
+      </field>
+      <field name="shadowFlag">
+        <variable>shadowFlag</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Group,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Group,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>posixGroup</oc>
+    <at name="cn" rdn="true">
+      <variable>g.cn</variable>
+    </at>
+    <at name="gidNumber">
+      <variable>g.gidNumber</variable>
+    </at>
+    <at name="userPassword">
+      <variable>g.userPassword</variable>
+    </at>
+    <at name="memberUid">
+      <variable>ug.memberUid</variable>
+    </at>
+    <at name="description">
+      <variable>g.description</variable>
+    </at>
+    <source name="g">
+      <source-name>posixGroup</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="userPassword">
+        <variable>userPassword</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="ug">
+      <source-name>posixGroup_memberUid</source-name>
+      <field name="cn">
+        <variable>g.cn</variable>
+      </field>
+      <field name="memberUid">
+        <variable>memberUid</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Hosts,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Hosts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>device</oc>
+    <oc>ipHost</oc>
+    <at name="cn" rdn="true">
+      <variable>d.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>hc.alias</variable>
+    </at>
+    <at name="serialNumber">
+      <variable>d.serialNumber</variable>
+    </at>
+    <at name="seeAlso">
+      <variable>d.seeAlso</variable>
+    </at>
+    <at name="owner">
+      <variable>d.owner</variable>
+    </at>
+    <at name="ou">
+      <variable>d.ou</variable>
+    </at>
+    <at name="o">
+      <variable>d.o</variable>
+    </at>
+    <at name="l">
+      <variable>d.l</variable>
+    </at>
+    <at name="description">
+      <variable>d.description</variable>
+    </at>
+    <at name="ipHostNumber">
+      <variable>h.ipHostNumber</variable>
+    </at>
+    <source name="d">
+      <source-name>device</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="serialNumber">
+        <variable>serialNumber</variable>
+      </field>
+      <field name="seeAlso">
+        <variable>seeAlso</variable>
+      </field>
+      <field name="owner">
+        <variable>owner</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="o">
+        <variable>o</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="h">
+      <source-name>ipHost</source-name>
+      <field name="cn">
+        <variable>d.cn</variable>
+      </field>
+      <field name="ipHostNumber">
+        <variable>ipHostNumber</variable>
+      </field>
+    </source>
+    <source name="hc">
+      <source-name>ipHost_alias</source-name>
+      <field name="cn">
+        <variable>h.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Ethers,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Ethers</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Ethers,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>device</oc>
+    <oc>ieee802Device</oc>
+    <at name="cn" rdn="true">
+      <variable>d.cn</variable>
+    </at>
+    <at name="serialNumber">
+      <variable>d.serialNumber</variable>
+    </at>
+    <at name="seeAlso">
+      <variable>d.seeAlso</variable>
+    </at>
+    <at name="owner">
+      <variable>d.owner</variable>
+    </at>
+    <at name="ou">
+      <variable>d.ou</variable>
+    </at>
+    <at name="o">
+      <variable>d.o</variable>
+    </at>
+    <at name="l">
+      <variable>d.l</variable>
+    </at>
+    <at name="description">
+      <variable>d.description</variable>
+    </at>
+    <at name="macAddress">
+      <variable>e.macAddress</variable>
+    </at>
+    <source name="d">
+      <source-name>device</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="serialNumber">
+        <variable>serialNumber</variable>
+      </field>
+      <field name="seeAlso">
+        <variable>seeAlso</variable>
+      </field>
+      <field name="owner">
+        <variable>owner</variable>
+      </field>
+      <field name="ou">
+        <variable>ou</variable>
+      </field>
+      <field name="o">
+        <variable>o</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="e">
+      <source-name>ieee802Device</source-name>
+      <field name="cn">
+        <variable>d.cn</variable>
+      </field>
+      <field name="macAddress">
+        <variable>macAddress</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Networks,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Networks</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Networks,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>ipNetwork</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>nc.alias</variable>
+    </at>
+    <at name="ipNetworkNumber">
+      <variable>n.ipNetworkNumber</variable>
+    </at>
+    <at name="ipNetmaskNumber">
+      <variable>n.ipNetmaskNumber</variable>
+    </at>
+    <at name="l">
+      <variable>n.l</variable>
+    </at>
+    <at name="description">
+      <variable>n.description</variable>
+    </at>
+    <at name="manager">
+      <variable>n.manager</variable>
+    </at>
+    <source name="n">
+      <source-name>ipNetwork</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipNetworkNumber">
+        <variable>ipNetworkNumber</variable>
+      </field>
+      <field name="ipNetmaskNumber">
+        <variable>ipNetmaskNumber</variable>
+      </field>
+      <field name="l">
+        <variable>l</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+      <field name="manager">
+        <variable>manager</variable>
+      </field>
+    </source>
+    <source name="nc">
+      <source-name>ipNetwork_alias</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Services,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Services</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...+ipServiceProtocol=...,ou=Services,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>ipService</oc>
+    <at name="cn" rdn="true">
+      <variable>s.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>sc.alias</variable>
+    </at>
+    <at name="ipServicePort">
+      <variable>s.ipServicePort</variable>
+    </at>
+    <at name="ipServiceProtocol" rdn="true">
+      <variable>s.ipServiceProtocol</variable>
+    </at>
+    <at name="description">
+      <variable>s.description</variable>
+    </at>
+    <source name="s">
+      <source-name>ipService</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipServicePort">
+        <variable>ipServicePort</variable>
+      </field>
+      <field name="ipServiceProtocol">
+        <variable>ipServiceProtocol</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="sc">
+      <source-name>ipService_alias</source-name>
+      <field name="cn">
+        <variable>s.cn</variable>
+      </field>
+      <field name="ipServiceProtocol">
+        <variable>s.ipServiceProtocol</variable>
+      </field>
+      <field name="alias">
+      <variable>cn</variable>
+    </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Protocols,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Protocols</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Protocols,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>ipProtocol</oc>
+    <at name="cn" rdn="true">
+      <variable>p.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>pc.alias</variable>
+    </at>
+    <at name="ipProtocolNumber">
+      <variable>p.ipProtocolNumber</variable>
+    </at>
+    <at name="description">
+      <variable>p.description</variable>
+    </at>
+    <source name="p">
+      <source-name>ipProtocol</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="ipProtocolNumber">
+        <variable>ipProtocolNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="pc">
+      <source-name>ipProtocol_alias</source-name>
+      <field name="cn">
+        <variable>p.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Rpc,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Rpc</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Rpc,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>ipProtocol</oc>
+    <at name="cn" rdn="true">
+      <variable>r.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>rc.alias</variable>
+    </at>
+    <at name="oncRpcNumber">
+      <variable>r.oncRpcNumber</variable>
+    </at>
+    <at name="description">
+      <variable>r.description</variable>
+    </at>
+    <source name="r">
+      <source-name>oncRpc</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="oncRpcNumber">
+        <variable>oncRpcNumber</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="rc">
+      <source-name>oncRpc_alias</source-name>
+      <field name="cn">
+        <variable>r.cn</variable>
+      </field>
+      <field name="alias">
+        <variable>cn</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Netgroup,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Netgroups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Netgroup,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>nisNetgroup</oc>
+    <at name="cn" rdn="true">
+      <variable>n.cn</variable>
+    </at>
+    <at name="nisNetgroupTriple">
+      <variable>nn.nisNetgroupTriple</variable>
+    </at>
+    <at name="memberNisNetgroup">
+      <variable>nm.memberNisNetgroup</variable>
+    </at>
+    <at name="description">
+      <variable>n.description</variable>
+    </at>
+    <source name="n">
+      <source-name>nisNetgroup</source-name>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="nn">
+      <source-name>nisNetgroup_nisNetgroupTriple</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="nisNetgroupTriple">
+        <variable>nisNetgroupTriple</variable>
+      </field>
+    </source>
+    <source name="nm">
+      <source-name>nisNetgroup_memberNisNetgroup</source-name>
+      <field name="cn">
+        <variable>n.cn</variable>
+      </field>
+      <field name="memberNisNetgroup">
+        <variable>memberNisNetgroup</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Automounts</constant>
+    </at>
+  </entry>
+
+  <entry dn="nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>nisMap</oc>
+    <at name="nisMapName" rdn="true">
+      <variable>am.automountMapName</variable>
+    </at>
+    <at name="description">
+      <variable>am.description</variable>
+    </at>
+    <source name="am">
+      <source-name>automountMap</source-name>
+      <field name="automountMapName">
+        <variable>nisMapName</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="cn=...,nisMapName=...,ou=Automounts,dc=Posix,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <oc>nisObject</oc>
+    <at name="cn" rdn="true">
+      <variable>a.automountKey</variable>
+    </at>
+    <at name="nisMapEntry">
+      <variable>a.automountInformation</variable>
+    </at>
+    <at name="nisMapName">
+      <variable>am.automountMapName</variable>
+    </at>
+    <at name="description">
+       <variable>a.description</variable>
+    </at>
+    <source name="a">
+      <source-name>automount</source-name>
+      <field name="automountMapName">
+        <variable>am.automountMapName</variable>
+      </field>
+      <field name="automountKey">
+        <variable>cn</variable>
+      </field>
+      <field name="automountInformation">
+        <variable>nisMapEntry</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+  </entry>
+
+</directory>

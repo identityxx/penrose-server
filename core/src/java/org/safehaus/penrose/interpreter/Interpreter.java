@@ -17,14 +17,15 @@
  */
 package org.safehaus.penrose.interpreter;
 
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
+import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.mapping.MappingFieldConfig;
 import org.safehaus.penrose.source.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,7 @@ public abstract class Interpreter {
         }
     }
 
-    public void set(SourceValues sv) throws Exception {
+    public void set(SourceAttributes sv) throws Exception {
         for (String sourceName : sv.getNames()) {
             Attributes attributes = sv.get(sourceName);
 
@@ -101,7 +102,7 @@ public abstract class Interpreter {
 
     public abstract void clear() throws Exception;
 
-    public Object eval(AttributeMapping attributeMapping) throws Exception {
+    public Object eval(EntryAttributeConfig attributeMapping) throws Exception {
         try {
             Object constant = attributeMapping.getConstant();
             if (constant != null) {
@@ -165,7 +166,7 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(FieldRef fieldRef) throws Exception {
+    public Object eval(EntryField fieldRef) throws Exception {
         try {
             if (fieldRef.getConstant() != null) {
                 return fieldRef.getConstant();
@@ -189,7 +190,7 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(FieldMapping fieldMapping) throws Exception {
+    public Object eval(EntryFieldConfig fieldMapping) throws Exception {
         try {
             if (fieldMapping.getConstant() != null) {
                 return fieldMapping.getConstant();
@@ -201,6 +202,26 @@ public abstract class Interpreter {
                     value = get(name.substring(4));
                 }
                 return value;
+
+            } else if (fieldMapping.getExpression() != null) {
+                return eval(fieldMapping.getExpression());
+
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            throw new Exception("Error evaluating field "+fieldMapping.getName(), e);
+        }
+    }
+
+    public Object eval(MappingFieldConfig fieldMapping) throws Exception {
+        try {
+            if (fieldMapping.getConstant() != null) {
+                return fieldMapping.getConstant();
+
+            } else if (fieldMapping.getVariable() != null) {
+                String name = fieldMapping.getVariable();
+                return get(name);
 
             } else if (fieldMapping.getExpression() != null) {
                 return eval(fieldMapping.getExpression());

@@ -4,7 +4,7 @@ import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.connection.ConnectionManager;
 import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.slf4j.Logger;
@@ -54,11 +54,24 @@ public class SourceManager {
 
         if (log.isDebugEnabled()) log.debug("Creating source "+sourceConfig.getName()+".");
 
-        ConnectionManager connectionManager = partition.getConnectionManager();
-        Connection connection = connectionManager.getConnection(sourceConfig.getConnectionName());
-        if (connection == null) throw new Exception("Unknown connection "+sourceConfig.getConnectionName()+".");
+        String partitionName = sourceConfig.getPartitionName();
+        String connectionName = sourceConfig.getConnectionName();
 
-        Source source = connection.createSource(sourceConfig);
+        Partition connectionPartition;
+
+        if (partitionName == null) {
+            connectionPartition = partition;
+
+        } else {
+            connectionPartition = partition.getPartitionContext().getPartition(partitionName);
+            if (connectionPartition == null) throw new Exception("Unknown partition "+partitionName+".");
+        }
+
+        ConnectionManager connectionManager = connectionPartition.getConnectionManager();
+        Connection connection = connectionManager.getConnection(connectionName);
+        if (connection == null) throw new Exception("Unknown connection "+connectionName+".");
+
+        Source source = connection.createSource(partition, sourceConfig);
         addSource(source);
 
         return source;
@@ -87,7 +100,7 @@ public class SourceManager {
         DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
 
-            for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
+            for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
                 if (!sourceMapping.getSourceName().equals(name)) continue;
                 sourceMapping.setSourceName(sourceConfig.getName());
             }

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="${SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <oc>nisDomainObject</oc>
+    <at name="ou" rdn="true">
+      <constant>${DOMAIN}</constant>
+    </at>
+    <at name="nisDomain">
+      <constant>${NIS_DOMAIN}</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,${SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
+    <mapping-name>nss</mapping-name>
+    <at name="uid" rdn="true">
+      <variable>n.uid</variable>
+    </at>
+    <source name="n">
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>users</source-name>
+      <mapping-name>nss_to_nis</mapping-name>
+    </source>
+    <source name="g">
+      <partition-name>global</partition-name>
+      <source-name>users</source-name>
+      <mapping-name>nss_to_global</mapping-name>
+      <field name="seeAlso">
+        <variable>n.dn</variable>
+      </field>
+    </source>
+    <source name="a" bind="ignore">
+      <partition-name>ad</partition-name>
+      <source-name>users</source-name>
+      <mapping-name>nss_to_ad</mapping-name>
+      <field name="objectGuid">
+        <variable>g.seeAlsoObjectGuid</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,${SUFFIX}">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
+    <oc>posixGroup</oc>
+    <at name="cn" rdn="true">
+      <variable>n.primaryKey.cn</variable>
+    </at>
+    <at name="cn">
+      <variable>n.cn</variable>
+    </at>
+    <at name="gidNumber">
+      <expression>
+if (n != void &amp;&amp; n != null
+    &amp;&amp; n.gidNumber != void &amp;&amp; n.gidNumber != null
+    &amp;&amp; !n.gidNumber.equals("0")) {
+    return n.gidNumber;
+}
+return g.gidNumber;
+      </expression>
+    </at>
+    <at name="userPassword">
+      <expression>
+if (g != void &amp;&amp; g != null
+    &amp;&amp; g.userPassword != void &amp;&amp; g.userPassword != null
+    &amp;&amp; !g.userPassword.equals("NULL")) {
+    return g.userPassword;
+}
+return n.userPassword;
+      </expression>
+    </at>
+    <at name="memberUid">
+      <expression>
+if (n != void &amp;&amp; n != null
+    &amp;&amp; (n.memberUid == void || n.memberUid == null || !n.memberUid.equals("NULL"))) {
+    return n.memberUid;
+}
+return g.memberUid;
+      </expression>
+    </at>
+    <at name="description">
+      <expression>
+if (n != void &amp;&amp; n != null
+    &amp;&amp; n.description != void &amp;&amp; n.description != null
+    &amp;&amp; !n.description.equals("NULL")) {
+    return n.description;
+}
+return g.description;
+      </expression>
+    </at>
+    <source name="n">
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>groups</source-name>
+      <field name="cn" primaryKey="true">
+        <variable>rdn.cn</variable>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="userPassword">
+        <variable>userPassword</variable>
+      </field>
+      <field name="memberUid">
+        <variable>memberUid</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="g">
+      <partition-name>global</partition-name>
+      <source-name>groups</source-name>
+      <field name="seeAlso">
+        <variable>n.dn</variable>
+      </field>
+      <field name="cn">
+        <variable>cn</variable>
+      </field>
+      <field name="gidNumber">
+        <variable>gidNumber</variable>
+      </field>
+      <field name="userPassword">
+        <variable>userPassword</variable>
+      </field>
+      <field name="memberUid">
+        <variable>memberUid</variable>
+      </field>
+      <field name="description">
+        <variable>description</variable>
+      </field>
+    </source>
+    <source name="a" search="ignore" bind="ignore">
+      <partition-name>ad</partition-name>
+      <source-name>groups</source-name>
+      <field name="objectGuid">
+        <variable>g.seeAlsoObjectGuid</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Hosts,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Hosts</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>hosts</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Services,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Services</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>services</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=RPCs,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>RPCs</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>rpcs</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=NetIDs,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>NetIDs</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>netids</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Protocols,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Protocols</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>protocols</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Aliases,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Aliases</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>aliases</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Netgroups,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Netgroups</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>netgroups</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Ethers,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Ethers</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>ethers</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=BootParams,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>BootParams</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>bootparams</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Networks,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Networks</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>networks</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Automounts,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Automounts</constant>
+    </at>
+    <at name="nisMapEntry">
+      <expression foreach="a.nisMapEntry" var="nisMapEntry">
+import org.safehaus.penrose.ldap.*;
+
+if (!nisMapEntry.startsWith("ldap:")) return nisMapEntry;
+
+int i = nisMapEntry.indexOf(' ', 5);
+
+String name;
+String info;
+
+if (i &lt; 0) {
+    name = nisMapEntry.substring(5);
+    info = null;
+} else {
+    name = nisMapEntry.substring(5, i);
+    info = nisMapEntry.substring(i+1);
+}
+
+DN dn = new DN(name);
+DN newDn = dn.getPrefix("${NIS_SUFFIX}").append("${SUFFIX}");
+
+return "ldap:"+newDn+(info == null ? "" : " "+info);
+      </expression>
+    </at>
+    <source name="a">
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>automounts</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Profile,${SUFFIX}">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Profile</constant>
+    </at>
+    <source>
+      <partition-name>${DOMAIN}_nis</partition-name>
+      <source-name>profile</source-name>
+    </source>
+  </entry>
+
+</directory>

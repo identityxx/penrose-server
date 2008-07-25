@@ -7,11 +7,11 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.adapter.FilterBuilder;
 import org.slf4j.Logger;
@@ -29,6 +29,8 @@ public class Source implements Cloneable {
 
     protected SourceConfig sourceConfig;
     protected SourceContext sourceContext;
+
+    protected Partition partition;
 
     protected Map<String,Field> fields = new LinkedHashMap<String,Field>();
     protected Map<String,Field> fieldsByOriginalName = new LinkedHashMap<String,Field>();
@@ -49,6 +51,8 @@ public class Source implements Cloneable {
             Field field = new Field(this, fieldConfig);
             addField(field);
         }
+
+        partition = sourceContext.getPartition();
 
         init();
     }
@@ -209,15 +213,15 @@ public class Source implements Cloneable {
 
     public void add(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             AddRequest request,
             AddResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -240,10 +244,10 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.ADD)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.ADD)) continue;
 
             Field field = fieldRef.getField();
 
@@ -323,15 +327,15 @@ public class Source implements Cloneable {
 
     public void bind(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -344,11 +348,11 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.BIND)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.BIND)) continue;
 
             Field field = fieldRef.getField();
 
@@ -397,15 +401,15 @@ public class Source implements Cloneable {
 
     public void compare(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -419,11 +423,11 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.DELETE)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.DELETE)) continue;
 
             Field field = fieldRef.getField();
 
@@ -450,10 +454,10 @@ public class Source implements Cloneable {
         interpreter.clear();
         interpreter.set(request.getAttributeName(), request.getAttributeValue());
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.COMPARE)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.COMPARE)) continue;
 
             Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
@@ -531,15 +535,15 @@ public class Source implements Cloneable {
 
     public void delete(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -553,11 +557,11 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.DELETE)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.DELETE)) continue;
 
             Field field = fieldRef.getField();
 
@@ -656,15 +660,15 @@ public class Source implements Cloneable {
 
     public void modify(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -678,11 +682,11 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
             Field field = fieldRef.getField();
 
@@ -735,10 +739,10 @@ public class Source implements Cloneable {
             switch (type) {
                 case Modification.ADD:
                 case Modification.REPLACE:
-                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                    for (EntryField fieldRef : sourceRef.getFields()) {
 
                         Collection<String> operations = fieldRef.getOperations();
-                        if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
+                        if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
                         String fieldName = fieldRef.getName();
                         if (fieldRef.isPrimaryKey()) continue;
@@ -762,10 +766,10 @@ public class Source implements Cloneable {
                     break;
 
                 case Modification.DELETE:
-                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                    for (EntryField fieldRef : sourceRef.getFields()) {
 
                         Collection<String> operations = fieldRef.getOperations();
-                        if (!operations.isEmpty() && !operations.contains(FieldMapping.MODIFY)) continue;
+                        if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
 
                         String fieldName = fieldRef.getName();
 
@@ -858,15 +862,15 @@ public class Source implements Cloneable {
 
     public void modrdn(
             Session session,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
 
-        SourceRef sourceRef = sourceRefs.iterator().next();
+        EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sourceValues);
 
         RDN rdn = request.getDn().getRdn();
@@ -880,11 +884,11 @@ public class Source implements Cloneable {
         RDNBuilder rb = new RDNBuilder();
 
         if (debug) log.debug("Target values:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Collection<String> operations = fieldRef.getOperations();
-            if (!operations.isEmpty() && !operations.contains(FieldMapping.MODRDN)) continue;
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODRDN)) continue;
 
             Field field = fieldRef.getField();
 
@@ -917,7 +921,7 @@ public class Source implements Cloneable {
 
         rb.clear();
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             if (!fieldRef.isPrimaryKey()) continue;
 
             Object value = interpreter.eval(fieldRef);
@@ -989,19 +993,19 @@ public class Source implements Cloneable {
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
-            final Collection<SourceRef> localSourceRefs,
-            final Collection<SourceRef> sourceRefs,
-            final SourceValues sourceValues,
+            final Collection<EntrySource> localSourceRefs,
+            final Collection<EntrySource> sourceRefs,
+            final SourceAttributes sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
-        final SourceRef sourceRef = sourceRefs.iterator().next();
+        final EntrySource sourceRef = sourceRefs.iterator().next();
 
-        Interpreter interpreter = getPartition().newInterpreter();
+        Interpreter interpreter = partition.newInterpreter();
 
         FilterBuilder filterBuilder = new FilterBuilder(
-                getPartition(),
+                partition,
                 sourceRefs,
                 sourceValues,
                 interpreter
@@ -1023,9 +1027,9 @@ public class Source implements Cloneable {
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(result.getDn());
 
-                SourceValues sourceValues = new SourceValues();
+                SourceAttributes sourceValues = new SourceAttributes();
                 sourceValues.set(sourceRef.getAlias(), result.getAttributes());
-                searchResult.setSourceValues(sourceValues);
+                searchResult.setSourceAttributes(sourceValues);
 
                 response.add(searchResult);
             }

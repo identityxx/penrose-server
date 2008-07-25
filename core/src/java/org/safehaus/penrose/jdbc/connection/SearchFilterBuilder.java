@@ -20,8 +20,8 @@ package org.safehaus.penrose.jdbc.connection;
 import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.interpreter.Interpreter;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.ldap.SourceAttributes;
+import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.partition.Partition;
@@ -41,35 +41,29 @@ public class SearchFilterBuilder {
 
     Partition partition;
 
-    Map<String,SourceRef> primarySourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
-    Map<String,SourceRef> localSourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
-    Map<String,SourceRef> sourceRefs = new LinkedHashMap<String,SourceRef>(); // need to maintain order
+    Map<String, EntrySource> primarySourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
+    Map<String, EntrySource> localSourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
+    Map<String, EntrySource> sourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
 
     Interpreter interpreter;
 
-    Map<String,SourceRef> sourceAliases = new LinkedHashMap<String,SourceRef>(); // need to maintain order
+    Map<String, EntrySource> sourceAliases = new LinkedHashMap<String, EntrySource>(); // need to maintain order
     Filter sourceFilter;
 
     public SearchFilterBuilder(
-            //Interpreter interpreter,
             Partition partition,
-            //Collection<SourceRef> primarySourceRefs,
-            Collection<SourceRef> localSourceRefs,
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues
+            Collection<EntrySource> localSourceRefs,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues
     ) throws Exception {
 
         this.partition = partition;
-/*
-        for (SourceRef sourceRef : primarySourceRefs) {
-            this.primarySourceRefs.put(sourceRef.getAlias(), sourceRef);
-        }
-*/
-        for (SourceRef sourceRef : localSourceRefs) {
+
+        for (EntrySource sourceRef : localSourceRefs) {
             this.localSourceRefs.put(sourceRef.getAlias(), sourceRef);
         }
 
-        for (SourceRef sourceRef : sourceRefs) {
+        for (EntrySource sourceRef : sourceRefs) {
             this.sourceRefs.put(sourceRef.getAlias(), sourceRef);
         }
 
@@ -97,7 +91,6 @@ public class SearchFilterBuilder {
 
                 sourceFilter = FilterTool.appendAndFilter(sourceFilter, of);
             }
-
         }
     }
 
@@ -171,14 +164,14 @@ public class SearchFilterBuilder {
         interpreter.set(attributeName, attributeValue);
 
         Filter newFilter = null;
-        for (SourceRef sourceRef : localSourceRefs.values()) {
+        for (EntrySource sourceRef : localSourceRefs.values()) {
             String sourceName = sourceRef.getAlias();
 
             String alias = createTableAlias(sourceName);
             if (alias == null) continue;
 
             Filter f = null;
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
                 String fieldName = fieldRef.getName();
 
                 Object value = interpreter.eval(fieldRef);
@@ -213,8 +206,8 @@ public class SearchFilterBuilder {
 
         Filter f = null;
 
-        for (SourceRef sourceRef : localSourceRefs.values()) {
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntrySource sourceRef : localSourceRefs.values()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
 
                 String variable = fieldRef.getVariable();
                 if (variable == null || !attributeName.equals(variable)) continue;
@@ -257,12 +250,12 @@ public class SearchFilterBuilder {
 
         Filter newFilter = null;
 
-        for (SourceRef sourceRef : localSourceRefs.values()) {
+        for (EntrySource sourceRef : localSourceRefs.values()) {
 
             String sourceName = sourceRef.getAlias();
             String alias = createTableAlias(sourceName);
 
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
                 String fieldName = fieldRef.getName();
 
                 String variable = fieldRef.getVariable();
@@ -309,7 +302,7 @@ public class SearchFilterBuilder {
 */
 
     public String createTableAlias(String sourceName) {
-        SourceRef sourceRef = sourceRefs.get(sourceName);
+        EntrySource sourceRef = sourceRefs.get(sourceName);
         if (sourceRef == null) return null;
         
         if (sourceRef.isPrimarySourceRef()) return sourceName;
@@ -327,7 +320,7 @@ public class SearchFilterBuilder {
     }
 
     public void setTableAlias(String sourceName, String alias) {
-        SourceRef sourceRef = sourceRefs.get(sourceName);
+        EntrySource sourceRef = sourceRefs.get(sourceName);
         if (sourceRef.isPrimarySourceRef()) return;
         //if (isPrimarySource(sourceName)) return;
 
@@ -335,11 +328,11 @@ public class SearchFilterBuilder {
         sourceAliases.put(alias, sourceRef);
     }
 
-    public Map<String,SourceRef> getSourceAliases() {
+    public Map<String, EntrySource> getSourceAliases() {
         return sourceAliases;
     }
 
-    public void setSourceAliases(Map<String, SourceRef> sourceAliases) {
+    public void setSourceAliases(Map<String, EntrySource> sourceAliases) {
         this.sourceAliases = sourceAliases;
     }
 }

@@ -11,17 +11,21 @@ import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.management.BaseClient;
+import org.safehaus.penrose.management.Client;
+import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.management.connection.ConnectionClient;
+import org.safehaus.penrose.management.directory.EntryClient;
+import org.safehaus.penrose.management.mapping.MappingClient;
+import org.safehaus.penrose.management.module.ModuleClient;
+import org.safehaus.penrose.management.scheduler.SchedulerClient;
+import org.safehaus.penrose.management.source.SourceClient;
+import org.safehaus.penrose.mapping.MappingConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.management.*;
-import org.safehaus.penrose.management.module.ModuleClient;
-import org.safehaus.penrose.management.scheduler.SchedulerClient;
-import org.safehaus.penrose.management.directory.EntryClient;
-import org.safehaus.penrose.management.source.SourceClient;
-import org.safehaus.penrose.management.connection.ConnectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +147,42 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
         invoke(
                 "removeSource",
                 new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Mappings
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getMappingNames() throws Exception {
+        return (Collection<String>)getAttribute("MappingNames");
+    }
+
+    public MappingClient getMappingClient(String mappingName) throws Exception {
+        return new MappingClient(client, name, mappingName);
+    }
+
+    public void createMapping(MappingConfig mappingConfig) throws Exception {
+        invoke(
+                "createMapping",
+                new Object[] { mappingConfig },
+                new String[] { MappingConfig.class.getName() }
+        );
+    }
+
+    public void updateMapping(String mappingName, MappingConfig mappingConfig) throws Exception {
+        invoke(
+                "updateMapping",
+                new Object[] { mappingName, mappingConfig },
+                new String[] { String.class.getName(), MappingConfig.class.getName() }
+        );
+    }
+
+    public void removeMapping(String mappingName) throws Exception {
+        invoke(
+                "removeMapping",
+                new Object[] { mappingName },
                 new String[] { String.class.getName() }
         );
     }

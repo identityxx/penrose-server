@@ -11,7 +11,7 @@ public class SelectStatement extends Statement {
 
     protected Collection<String> columnNames = new ArrayList<String>();
 
-    protected Map<String,String> sourceNames = new LinkedHashMap<String,String>(); // maintain source order
+    protected Map<String,StatementSource> sources = new LinkedHashMap<String,StatementSource>(); // maintain source order
     protected Collection<JoinClause> joinClauses = new ArrayList<JoinClause>();
 
     protected Filter filter;
@@ -35,15 +35,21 @@ public class SelectStatement extends Statement {
     }
 
     public Collection<String> getSourceAliases() {
-        return sourceNames.keySet();
+        return sources.keySet();
     }
 
-    public String getSourceName(String alias) {
-        return sourceNames.get(alias);
+    public StatementSource getSource(String alias) {
+        return sources.get(alias);
     }
 
-    public void addSourceName(String alias, String sourceName) {
-        sourceNames.put(alias, sourceName);
+    public void addSourceName(String alias, String partitionName, String sourceName) {
+
+        StatementSource source = new StatementSource();
+        source.setAlias(alias);
+        source.setPartitionName(partitionName);
+        source.setSourceName(sourceName);
+
+        sources.put(alias, source);
     }
 
     public void addJoin(JoinClause joinClause) {

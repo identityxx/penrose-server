@@ -17,7 +17,7 @@ public class SearchResult implements Serializable, Cloneable {
     private Attributes attributes;
     private String entryId;
 
-    private SourceValues sourceValues = new SourceValues();
+    private SourceAttributes sourceAttributes = new SourceAttributes();
 
     private Collection<Control> controls;
 
@@ -92,6 +92,14 @@ public class SearchResult implements Serializable, Cloneable {
         this.attributes = attributes;
     }
 
+    public Attribute getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public Collection<String> getAttributeNames() {
+        return attributes.getNames();
+    }
+    
     public Collection<Control> getControls() {
         return controls;
     }
@@ -115,19 +123,12 @@ public class SearchResult implements Serializable, Cloneable {
         this.entryId = entryId;
     }
 
-    public SourceValues getSourceValues() {
-        return sourceValues;
+    public SourceAttributes getSourceAttributes() {
+        return sourceAttributes;
     }
     
-    /**
-     * Set the source values of this search result.
-     *
-     * This object will take the ownership of the parameters.
-     *
-     * @param sourceValues Source values
-     */
-    public void setSourceValues(SourceValues sourceValues) {
-        this.sourceValues = sourceValues;
+    public void setSourceAttributes(SourceAttributes sourceAttributes) throws Exception {
+        this.sourceAttributes.set(sourceAttributes);
     }
 
     public void print() throws Exception {
@@ -149,8 +150,8 @@ public class SearchResult implements Serializable, Cloneable {
 
         boolean first = true;
 
-        for (String sourceName : sourceValues.getNames()) {
-            Attributes attrs = sourceValues.get(sourceName);
+        for (String sourceName : sourceAttributes.getNames()) {
+            Attributes attrs = sourceAttributes.get(sourceName);
 
             for (Attribute attribute : attrs.getAll()) {
                 String fieldName = sourceName + "." + attribute.getName();
@@ -178,7 +179,7 @@ public class SearchResult implements Serializable, Cloneable {
         sr.entryId = entryId;
         sr.dn = dn;
         sr.attributes = (Attributes)attributes.clone();
-        sr.sourceValues = (SourceValues)sourceValues.clone();
+        sr.sourceAttributes = (SourceAttributes) sourceAttributes.clone();
 
         sr.controls = new ArrayList<Control>();
         for (Control control : controls) {

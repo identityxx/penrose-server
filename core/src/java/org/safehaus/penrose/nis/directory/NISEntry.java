@@ -1,9 +1,9 @@
 package org.safehaus.penrose.nis.directory;
 
 import org.safehaus.penrose.directory.DynamicEntry;
-import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.directory.FilterBuilder;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -45,27 +45,25 @@ public class NISEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             final Session session,
             final SearchRequest request,
             final SearchResponse response
@@ -76,21 +74,21 @@ public class NISEntry extends DynamicEntry {
         if (debug) log.debug("Searching entry "+ entryConfig.getDn());
 
         final Interpreter interpreter = partition.newInterpreter();
-        final SourceRef primarySourceRef = getSourceRef(0);
+        final EntrySource primarySourceRef = getSource(0);
 
         SearchRequest newRequest = createSearchRequest(session, request, interpreter);
 
         SearchResponse newResponse = new Pipeline(response) {
             public void add(SearchResult primaryResult) throws Exception {
 
-                SourceValues sv = new SourceValues();
+                SourceAttributes sv = new SourceAttributes();
                 sv.set(primarySourceRef.getAlias(), primaryResult.getAttributes());
 
                 interpreter.set(sv);
 
-                for (int i=1; i<getSourceRefsCount(); i++) {
+                for (int i=1; i< getSourceCount(); i++) {
                     try {
-                        SourceRef sourceRef = getSourceRef(i);
+                        EntrySource sourceRef = getSource(i);
 
                         SearchResult secondaryResult = find(session, sourceRef, interpreter);
                         if (secondaryResult == null) continue;
@@ -133,7 +131,7 @@ public class NISEntry extends DynamicEntry {
         Filter filter = request.getFilter();
         int scope = request.getScope();
 
-        final SourceRef primarySourceRef = getSourceRef(0);
+        final EntrySource primarySourceRef = getSource(0);
 
         DN primaryBaseDn = null;
         Filter primaryFilter = null;
@@ -144,7 +142,7 @@ public class NISEntry extends DynamicEntry {
             if (primaryBaseDn == null) {
                 interpreter.set(baseDn.getRdn());
 
-                for (FieldRef fieldRef : primarySourceRef.getFieldRefs()) {
+                for (EntryField fieldRef : primarySourceRef.getFields()) {
 
                     Object value = interpreter.eval(fieldRef);
                     if (value == null) continue;
@@ -170,7 +168,7 @@ public class NISEntry extends DynamicEntry {
 
     public DN createPrimaryBaseDn(
             Session session,
-            SourceRef primarySourceRef,
+            EntrySource primarySourceRef,
             DN baseDn,
             Interpreter interpreter
     ) throws Exception {
@@ -180,7 +178,7 @@ public class NISEntry extends DynamicEntry {
 
             RDNBuilder rb = new RDNBuilder();
 
-            for (FieldRef fieldRef : primarySourceRef.getPrimaryKeyFieldRefs()) {
+            for (EntryField fieldRef : primarySourceRef.getPrimaryKeyFields()) {
 
                 Object value = interpreter.eval(fieldRef);
                 if (value == null) return null;
@@ -198,7 +196,7 @@ public class NISEntry extends DynamicEntry {
 
     public Filter createPrimaryFilter(
             Session session,
-            SourceRef primarySourceRef,
+            EntrySource primarySourceRef,
             Filter filter,
             Interpreter interpreter
     ) throws Exception {
@@ -206,9 +204,9 @@ public class NISEntry extends DynamicEntry {
         FilterBuilder filterBuilder = new FilterBuilder(this, interpreter);
         Filter primaryFilter = filterBuilder.convert(filter, primarySourceRef);
 
-        for (int i=getSourceRefsCount()-1; i>0; i--) {
+        for (int i= getSourceCount()-1; i>0; i--) {
             try {
-                SourceRef sourceRef = getSourceRef(i);
+                EntrySource sourceRef = getSource(i);
 
                 Filter sourceFilter = filterBuilder.convert(filter, sourceRef);
                 if (sourceFilter == null) continue;
@@ -222,7 +220,7 @@ public class NISEntry extends DynamicEntry {
                 Source source = sourceRef.getSource();
                 source.search(session, newRequest, newResponse);
 
-                Filter newFilter = createFilter(primarySourceRef, sourceRef, newResponse.getAll());
+                Filter newFilter = createFilter(primarySourceRef, sourceRef, newResponse.getResults());
                 primaryFilter = FilterTool.appendOrFilter(newFilter, primaryFilter);
 
             } catch (Exception e) {
@@ -234,8 +232,8 @@ public class NISEntry extends DynamicEntry {
     }
 
     public Filter createFilter(
-            SourceRef primarySourceRef,
-            SourceRef sourceRef,
+            EntrySource primarySourceRef,
+            EntrySource sourceRef,
             Collection<SearchResult> results
     ) throws Exception {
 
@@ -247,7 +245,7 @@ public class NISEntry extends DynamicEntry {
             Attributes attributes = result.getAttributes();
 
             Filter af = null;
-            for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+            for (EntryField fieldRef : sourceRef.getFields()) {
                 String variable = fieldRef.getVariable();
                 if (variable == null) continue;
                 if (!variable.startsWith(primaryAlias+".")) continue;
@@ -268,7 +266,7 @@ public class NISEntry extends DynamicEntry {
 
     public SearchResult find(
             final Session session,
-            final SourceRef sourceRef,
+            final EntrySource sourceRef,
             final Interpreter interpreter
     ) throws Exception {
 
@@ -276,7 +274,7 @@ public class NISEntry extends DynamicEntry {
 
         RDNBuilder rb = new RDNBuilder();
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
 
             Object value = interpreter.eval(fieldRef);
             if (value == null) continue;

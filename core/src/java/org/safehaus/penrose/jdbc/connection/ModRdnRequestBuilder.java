@@ -1,7 +1,7 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -22,17 +22,17 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
     Collection sources;
 
-    SourceValues sourceValues;
+    SourceAttributes sourceValues;
     Interpreter interpreter;
 
     ModRdnRequest request;
     ModRdnResponse response;
 
-    SourceValues newSourceValues = new SourceValues();
+    SourceAttributes newSourceValues = new SourceAttributes();
 
     public ModRdnRequestBuilder(
             Collection sources,
-            SourceValues sourceValues,
+            SourceAttributes sourceValues,
             Interpreter interpreter,
             ModRdnRequest request,
             ModRdnResponse response
@@ -40,7 +40,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         this.sources = sources;
         this.sourceValues = sourceValues;
-        newSourceValues = (SourceValues)sourceValues.clone();
+        newSourceValues = (SourceAttributes)sourceValues.clone();
 
         this.interpreter = interpreter;
 
@@ -52,7 +52,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         int sourceCounter = 0;
         for (Iterator i= sources.iterator(); i.hasNext(); sourceCounter++) {
-            SourceRef sourceRef = (SourceRef)i.next();
+            EntrySource sourceRef = (EntrySource)i.next();
 
             if (sourceCounter == 0) {
                 generatePrimaryRequest(sourceRef);
@@ -65,7 +65,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
     }
 
     public void generatePrimaryRequest(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String alias = sourceRef.getAlias();
@@ -73,7 +73,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         interpreter.set(sourceValues);
 
@@ -86,7 +86,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         Attributes attributes = newSourceValues.get(alias);
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -123,7 +123,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
     }
 
     public void generateSecondaryRequests(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -131,7 +131,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         interpreter.set(newSourceValues);
 
@@ -142,7 +142,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             interpreter.set(attributeName, attributeValue);
         }
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -155,7 +155,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
 
         Filter filter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 

@@ -1,10 +1,10 @@
 package org.safehaus.penrose.test.mapping;
 
 import junit.framework.TestCase;
-import org.safehaus.penrose.directory.SourceMapping;
-import org.safehaus.penrose.directory.FieldMapping;
+import org.safehaus.penrose.directory.EntrySourceConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
 
 /**
  * @author Endi Sukma Dewata
@@ -18,17 +18,17 @@ public class EntryConfigTest extends TestCase {
         e1.addObjectClass("objectClass");
         e1.setDescription("description");
 
-        AttributeMapping am = new AttributeMapping();
+        EntryAttributeConfig am = new EntryAttributeConfig();
         am.setName("name");
         am.setConstant("constant");
         am.setRdn(true);
-        e1.addAttributeMapping(am);
+        e1.addAttributeConfig(am);
 
-        SourceMapping sm = new SourceMapping();
+        EntrySourceConfig sm = new EntrySourceConfig();
         sm.setName("name");
         sm.setSourceName("sourceName");
-        sm.addFieldMapping(new FieldMapping("name", FieldMapping.CONSTANT, "value"));
-        e1.addSourceMapping(sm);
+        sm.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.CONSTANT, "value"));
+        e1.addSourceConfig(sm);
 
         EntryConfig e2 = (EntryConfig)e1.clone();
         assertEquals(e1.getId(), e2.getId());
@@ -39,10 +39,10 @@ public class EntryConfigTest extends TestCase {
         assertFalse(e2.getObjectClasses().isEmpty());
         assertEquals(e1.getObjectClasses(), e2.getObjectClasses());
 
-        assertFalse(e2.getAttributeMappings().isEmpty());
-        assertEquals(e1.getAttributeMappings(), e2.getAttributeMappings());
+        assertFalse(e2.getAttributeConfigs().isEmpty());
+        assertEquals(e1.getAttributeConfigs(), e2.getAttributeConfigs());
 
-        assertFalse(e2.getSourceMappings().isEmpty());
-        assertEquals(e1.getSourceMappings(), e2.getSourceMappings());
+        assertFalse(e2.getSourceConfigs().isEmpty());
+        assertEquals(e1.getSourceConfigs(), e2.getSourceConfigs());
     }
 }

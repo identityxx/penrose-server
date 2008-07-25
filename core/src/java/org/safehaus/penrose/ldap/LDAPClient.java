@@ -520,7 +520,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             boolean typesOnly = request.isTypesOnly();
 
             if (debug) {
-                log.debug("Base       : "+baseDn+".");
+                log.debug("Base       : "+baseDn);
                 log.debug("Scope      : "+LDAP.getScope(scope));
                 log.debug("Filter     : "+filter);
                 log.debug("Attributes : "+attributes);

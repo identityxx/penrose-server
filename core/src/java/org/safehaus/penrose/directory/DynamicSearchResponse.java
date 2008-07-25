@@ -24,8 +24,8 @@ public class DynamicSearchResponse extends SearchResponse {
     Partition partition;
 
     DynamicEntry entry;
-    List<Collection<SourceRef>> groupsOfSources;
-    SourceValues sourceValues;
+    List<Collection<EntrySource>> groupsOfSources;
+    SourceAttributes sourceAttributes;
     Interpreter interpreter;
 
     SearchRequest request;
@@ -34,13 +34,13 @@ public class DynamicSearchResponse extends SearchResponse {
     DN lastDn;
     Attributes lastAttributes;
     Entry lastEntry;
-    SourceValues lastSourceValues;
+    SourceAttributes lastSourceValues;
 
     public DynamicSearchResponse(
-            Session session,
             DynamicEntry entry,
-            List<Collection<SourceRef>> groupsOfSources,
-            SourceValues sourceValues,
+            Session session,
+            List<Collection<EntrySource>> groupsOfSources,
+            SourceAttributes sourceValues,
             Interpreter interpreter,
             SearchRequest request,
             SearchResponse response
@@ -51,7 +51,7 @@ public class DynamicSearchResponse extends SearchResponse {
         this.partition = entry.getPartition();
 
         this.groupsOfSources = groupsOfSources;
-        this.sourceValues = sourceValues;
+        this.sourceAttributes = sourceValues;
         this.interpreter = interpreter;
 
         this.request = request;
@@ -60,8 +60,8 @@ public class DynamicSearchResponse extends SearchResponse {
 
     public void add(SearchResult result) throws Exception {
 
-        SourceValues sv = (SourceValues)sourceValues.clone();
-        sv.set(result.getSourceValues());
+        SourceAttributes sv = (SourceAttributes) sourceAttributes.clone();
+        sv.set(result.getSourceAttributes());
 /*
         if (debug) {
             log.debug("Source values:");
@@ -108,7 +108,7 @@ public class DynamicSearchResponse extends SearchResponse {
                 if (debug) log.debug("Returning entry " + lastDn);
                 SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
                 searchResult.setEntryId(lastEntry.getId());
-                searchResult.setSourceValues(lastSourceValues);
+                searchResult.setSourceAttributes(lastSourceValues);
                 response.add(searchResult);
 
                 if (debug) log.debug("Generating entry "+dn);
@@ -126,7 +126,7 @@ public class DynamicSearchResponse extends SearchResponse {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult(lastDn, lastAttributes);
             searchResult.setEntryId(lastEntry.getId());
-            searchResult.setSourceValues(lastSourceValues);
+            searchResult.setSourceAttributes(lastSourceValues);
             response.add(searchResult);
         }
 
@@ -134,20 +134,20 @@ public class DynamicSearchResponse extends SearchResponse {
     }
 
     public boolean searchSecondarySources(
-            SourceValues sv
+            SourceAttributes sv
     ) throws Exception {
         if (groupsOfSources.size() <= 1) return true;
 
         for (int i=1; i<groupsOfSources.size(); i++) {
-            Collection<SourceRef> sourceRefs = groupsOfSources.get(i);
+            Collection<EntrySource> sourceRefs = groupsOfSources.get(i);
             if (debug) log.debug("Processing group " + sourceRefs);
 
-            SourceRef sourceRef = sourceRefs.iterator().next();
+            EntrySource sourceRef = sourceRefs.iterator().next();
             
             String flag = sourceRef.getSearch();
             if (debug) log.debug("Flag: "+flag);
 
-            if (SourceMapping.IGNORE.equals(flag)) {
+            if (EntrySourceConfig.IGNORE.equals(flag)) {
                 continue;
             }
 
@@ -157,7 +157,7 @@ public class DynamicSearchResponse extends SearchResponse {
             SearchResponse sr = new SearchResponse();
 
             //Collection<SourceRef> primarySourceRefs = entry.getPrimarySourceRefs();
-            Collection<SourceRef> localSourceRefs = entry.getLocalSourceRefs();
+            Collection<EntrySource> localSourceRefs = entry.getLocalSources();
 
             Source source = sourceRef.getSource();
 
@@ -176,14 +176,14 @@ public class DynamicSearchResponse extends SearchResponse {
                 log.error(e.getMessage(), e);
             }
 
-            if (SourceMapping.REQUIRED.equals(flag) && !sr.hasNext()) {
+            if (EntrySourceConfig.REQUIRED.equals(flag) && !sr.hasNext()) {
                 log.debug("Required entries not found.");
                 return false;
             }
 
             while (sr.hasNext()) {
                 SearchResult result = sr.next();
-                sv.add(result.getSourceValues());
+                sv.add(result.getSourceAttributes());
             }
 
             interpreter.set(sv);

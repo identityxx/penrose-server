@@ -1,19 +1,18 @@
 package org.safehaus.penrose.federation.directory;
 
 import org.safehaus.penrose.directory.*;
-import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
-import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
+import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.source.LDAPSource;
+import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.util.BinaryUtil;
+import org.safehaus.penrose.util.TextUtil;
 
-import java.util.Date;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
@@ -32,28 +31,40 @@ public class FederationEntry extends DynamicEntry {
         super.init();
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void bind(
             Session session,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        DN nssDn = request.getDn();
+        DN dn = request.getDn();
 
-        SearchResult sr = find(nssDn);
-        SourceValues sv = sr.getSourceValues();
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("BIND", 80));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        SearchResult sr = find(dn);
+        SourceAttributes sv = sr.getSourceAttributes();
 
         Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sv);
 
         log.debug("Checking Active Directory link.");
 
-        SourceRef adSourceRef = getSourceRef("a");
+        EntrySource adSourceRef = getSource("a");
         Source adSource = adSourceRef.getSource();
 
         Filter filter = null;
 
-        for (FieldRef adFieldRef : adSourceRef.getFieldRefs()) {
+        for (EntryField adFieldRef : adSourceRef.getFields()) {
 
             Object value = interpreter.eval(adFieldRef);
             if (value instanceof byte[]) {
@@ -110,7 +121,7 @@ public class FederationEntry extends DynamicEntry {
             }
 */
             String bind = adSourceRef.getBind();
-            if (!SourceMapping.IGNORE.equals(bind)) {
+            if (!EntrySourceConfig.IGNORE.equals(bind)) {
                 log.debug("Binding to Active Directory account.");
 
                 BindRequest newRequest = (BindRequest)request.clone();
@@ -119,7 +130,7 @@ public class FederationEntry extends DynamicEntry {
                 adSource.bind(session, newRequest, response);
             }
 
-            if (SourceMapping.SUFFICIENT.equals(bind)) {
+            if (EntrySourceConfig.SUFFICIENT.equals(bind)) {
                 return;
             }
         }
@@ -129,7 +140,7 @@ public class FederationEntry extends DynamicEntry {
         if (userPassword != null) {
             log.debug("Binding to Global Repository.");
 
-            SourceRef sourceRef = getSourceRef("g");
+            EntrySource sourceRef = getSource("g");
             Source source = sourceRef.getSource();
 
             DN globalDn = new DN((String)interpreter.get("g.dn"));
@@ -143,7 +154,7 @@ public class FederationEntry extends DynamicEntry {
             return;
         }
 
-        SourceRef sourceRef = getSourceRef("n");
+        EntrySource sourceRef = getSource("n");
         Source source = sourceRef.getSource();
 
         DN nisDn = new DN((String)interpreter.get("n.dn"));
@@ -155,6 +166,246 @@ public class FederationEntry extends DynamicEntry {
         newRequest.setDn(nisDn.getPrefix(nisBaseDn));
 
         source.bind(session, newRequest, response);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Search
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void validateFilter(Filter filter) throws Exception {
+        // ignore
+    }
+
+    public Filter createFilter(Attributes attributes) throws Exception {
+
+        Filter filter = null;
+
+        for (Attribute attribute : attributes.getAll()) {
+            String name = attribute.getName();
+            for (Object value : attribute.getValues()) {
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+        }
+
+        return filter;
+    }
+
+    public void executeSearch(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        //super.executeSearch(session, request, response);
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        boolean baseSearch = (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)
+                && getDn().matches(baseDn);
+
+        Filter filter = request.getFilter();
+
+        SourceAttributes sourceAttributes = new SourceAttributes();
+        Interpreter interpreter = partition.newInterpreter();
+
+        log.debug("Extracting source attributes from DN:");
+        extractSourceAttributes(baseDn, interpreter, sourceAttributes);
+
+        if (debug) {
+            log.debug("Source attributes:");
+            sourceAttributes.print();
+        }
+
+        EntrySource n = getSource("n");
+        EntrySource g = getSource("g");
+        EntrySource a = getSource("a");
+
+        Collection<DN> dns = new LinkedHashSet<DN>();
+
+        FilterBuilder filterBuilder = new FilterBuilder(this, sourceAttributes, interpreter);
+
+        Filter nFilter = filterBuilder.convert(filter, n);
+        nFilter = FilterTool.appendAndFilter(nFilter, createFilter(sourceAttributes.get("n")));
+
+        Filter gFilter = filterBuilder.convert(filter, g);
+        gFilter = FilterTool.appendAndFilter(gFilter, createFilter(sourceAttributes.get("g")));
+
+        Filter aFilter = filterBuilder.convert(filter, a);
+        aFilter = FilterTool.appendAndFilter(aFilter, createFilter(sourceAttributes.get("a")));
+
+        if (!baseSearch) { // prevent infinite loop
+
+            if (aFilter != null) {
+                if (debug) {
+                    log.debug("################################################################");
+                    log.debug("Search source a with filter "+aFilter);
+                }
+                SourceAttributes sa = new SourceAttributes();
+
+                SearchResponse aResponse = a.search(session, aFilter);
+
+                while (aResponse.hasNext()) {
+
+                    SearchResult aResult = aResponse.next();
+                    sa.set("a", aResult);
+
+                    Object objectGUID = sa.getValue("a", "objectGUID");
+
+                    SearchResponse gResponse = g.search(
+                        session,
+                        new SimpleFilter("seeAlsoObjectGUID", "=", objectGUID)
+                    );
+
+                    while (gResponse.hasNext()) {
+
+                        SearchResult gResult = gResponse.next();
+                        sa.set("g", gResult);
+
+                        Collection<Object> seeAlsoValues = sa.getValues("g", "seeAlso");
+
+                        for (Object seeAlso : seeAlsoValues) {
+
+                            try {
+                                SearchResult nResult = n.find(session, (String)seeAlso);
+                                sa.set("n", nResult);
+
+                                DN dn = createDn(sa);
+                                if (debug) log.debug("Found "+dn);
+
+                                dns.add(dn);
+
+                            } catch (Exception e) {
+                                // ignore
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (gFilter != null) {
+                if (debug) {
+                    log.debug("################################################################");
+                    log.debug("Search source g with filter "+gFilter);
+                }
+                SourceAttributes sa = new SourceAttributes();
+
+                SearchResponse gResponse = g.search(session, gFilter);
+
+                while (gResponse.hasNext()) {
+
+                    SearchResult gResult = gResponse.next();
+                    sa.set("g", gResult);
+
+                    Collection<Object> seeAlsoValues = sa.getValues("g", "seeAlso");
+
+                    for (Object seeAlso : seeAlsoValues) {
+
+                        try {
+                            SearchResult nResult = n.find(session, (String)seeAlso);
+                            sa.set("n", nResult);
+
+                            DN dn = createDn(sa);
+                            if (debug) log.debug("Found "+dn);
+
+                            dns.add(dn);
+
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+
+            if (nFilter != null) {
+                if (debug) {
+                    log.debug("################################################################");
+                    log.debug("Search source n with filter "+nFilter);
+                }
+                SourceAttributes sa = new SourceAttributes();
+
+                SearchResponse nResponse = n.search(session, nFilter);
+
+                while (nResponse.hasNext()) {
+                    SearchResult nResult = nResponse.next();
+                    sa.set("n", nResult);
+
+                    DN dn = createDn(sa);
+                    if (debug) log.debug("Found "+dn);
+
+                    dns.add(dn);
+                }
+            }
+
+            if (nFilter != null || gFilter != null || aFilter != null) {
+                log.debug("################################################################");
+                for (DN dn : dns) {
+                    if (debug) log.debug("Returning "+dn);
+                    SearchResult result = find(session, dn);
+                    response.add(result);
+                }
+                log.debug("################################################################");
+                return;
+            }
+        }
+
+        SourceAttributes sa = new SourceAttributes();
+
+        SearchResponse nResponse = n.search(session, nFilter);
+
+        while (nResponse.hasNext()) {
+
+            SearchResult nResult = nResponse.next();
+            sa.set("n", nResult);
+
+            Object dn = sa.getValue("n", "dn");
+
+            SearchResponse gResponse = g.search(
+                session,
+                new SimpleFilter("seeAlso", "=", dn)
+            );
+
+            if (!gResponse.hasNext()) {
+                response.add(createSearchResult(sa));
+                continue;
+            }
+
+            do {
+                SearchResult gResult = gResponse.next();
+                sa.set("g", gResult);
+
+                Object seeAlsoObjectGUID = sa.getValue("g", "seeAlsoObjectGUID");
+
+                if (seeAlsoObjectGUID == null) {
+                    response.add(createSearchResult(sa));
+                    continue;
+                }
+
+                SearchResponse aResponse = a.search(
+                        session,
+                        new SimpleFilter("objectGUID", "=", seeAlsoObjectGUID)
+                );
+
+                if (!aResponse.hasNext()) {
+                    response.add(createSearchResult(sa));
+                    continue;
+                }
+
+                do {
+                    SearchResult aResult = aResponse.next();
+                    sa.set("a", aResult);
+
+                    response.add(createSearchResult(sa));
+
+                } while (aResponse.hasNext());
+
+                sa.remove("a");
+
+            } while (gResponse.hasNext());
+
+            sa.remove("g");
+        }
     }
 
     public Date toDate(long accountExpires) {

@@ -5,6 +5,7 @@ import org.safehaus.penrose.util.ClassUtil;
 
 import javax.management.*;
 import javax.security.auth.Subject;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.Principal;
@@ -127,57 +128,101 @@ public abstract class BaseService implements DynamicMBean {
     public abstract Object getObject();
 
     public Object getAttribute(String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
+        if (debug) log.debug("Getting attribute "+name+" from "+getObjectName());
+
         try {
             Class[] paramClass = new Class[0];
 
-            Method method = getMethod(this, "get"+name, paramClass);
-            if (method == null) method = getMethod(this, "is"+name, paramClass);
+            Class clazz = getClass();
 
-            if (method != null) {
+            try {
+                Method method = clazz.getMethod("get"+name, paramClass);
                 return method.invoke(this);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
+            }
+
+            try {
+                Method method = clazz.getMethod("is"+name, paramClass);
+                return method.invoke(this);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
             Object object = getObject();
-            method = getMethod(object, "get"+name, paramClass);
-            if (method == null) method = getMethod(object, "is"+name, paramClass);
+            Class objectClass = object.getClass();
 
-            if (method != null) {
+            try {
+                Method method = objectClass.getMethod("get"+name, paramClass);
                 return method.invoke(object);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
+            }
+
+            try {
+                Method method = objectClass.getMethod("is"+name, paramClass);
+                return method.invoke(object);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
             throw new AttributeNotFoundException();
 
-        } catch (Exception e) {
-            throw new MBeanException(e);
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e);
+
+        } catch (InvocationTargetException e) {
+            Exception cause = (Exception)e.getCause();
+            log.error(cause.getMessage(), cause);
+            throw new MBeanException(cause);
         }
     }
 
     public void setAttribute(Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
-        try {
-            String name = attribute.getName();
-            Object value = attribute.getValue();
+        String name = attribute.getName();
+        Object value = attribute.getValue();
+        if (debug) log.debug("Setting attribute "+name+" in "+getObjectName()+": "+value);
 
+        try {
             Class[] paramClass = new Class[] { value.getClass() };
 
-            Method method = getMethod(this, "set"+name, paramClass);
+            Class clazz = getClass();
 
-            if (method != null) {
+            try {
+                Method method = clazz.getMethod("set"+name, paramClass);
                 method.invoke(this, value);
                 return;
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
             Object object = getObject();
-            method = getMethod(object, "set"+name, paramClass);
+            Class objectClass = object.getClass();
 
-            if (method != null) {
+            try {
+                Method method = objectClass.getMethod("set"+name, paramClass);
                 method.invoke(object, value);
                 return;
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
             throw new AttributeNotFoundException();
 
-        } catch (Exception e) {
-            throw new MBeanException(e);
+
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e);
+
+        } catch (InvocationTargetException e) {
+            Exception cause = (Exception)e.getCause();
+            log.error(cause.getMessage(), cause);
+            throw new MBeanException(cause);
         }
     }
 
@@ -211,45 +256,52 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public Object invoke(String operation, Object[] paramValues, String[] paramTypes) throws MBeanException, ReflectionException {
-        try {
-            String signature = ClassUtil.getSignature(operation, paramTypes);
-            if (debug) log.debug("Invoking method "+signature);
+        String signature = ClassUtil.getSignature(operation, paramTypes);
+        if (debug) log.debug("Invoking method "+signature);
 
+        try {
             Class[] paramClass = new Class[paramTypes.length];
             for (int i = 0; i<paramTypes.length; i++) {
                 String paramType = paramTypes[i];
                 paramClass[i] = Class.forName(paramType);
             }
 
-            Method method = getMethod(this, operation, paramClass);
+            Class clazz = getClass();
 
-            if (method != null) {
+            try {
+                Method method = clazz.getMethod(operation, paramClass);
                 return method.invoke(this, paramValues);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
             Object object = getObject();
-            method = getMethod(object, operation, paramClass);
+            Class objectClass = object.getClass();
 
-            if (method != null) {
+            try {
+                Method method = objectClass.getMethod(operation, paramClass);
                 return method.invoke(object, paramValues);
+
+            } catch (NoSuchMethodException e) {
+                // ignore
             }
 
-            throw new ReflectionException(new NullPointerException(), "Method "+signature+" not found.");
+            throw new NoSuchMethodException();
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new MBeanException(e);
-        }
-    }
+        } catch (ClassNotFoundException e) {
+            throw new ReflectionException(e);
 
-    public Method getMethod(Object object, String operation, Class[] paramClass) throws Exception {
-        try {
-            Class clazz = object.getClass();
-            return clazz.getMethod(operation, paramClass);
-            
         } catch (NoSuchMethodException e) {
-            log.error(e.getMessage());
-            return null;
+            throw new ReflectionException(e);
+
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e);
+
+        } catch (InvocationTargetException e) {
+            Exception cause = (Exception)e.getCause();
+            log.error(cause.getMessage(), cause);
+            throw new MBeanException(cause);
         }
     }
 

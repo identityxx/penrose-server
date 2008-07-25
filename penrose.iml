@@ -60,6 +60,7 @@
       <sourceFolder url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/client/target" />
+      <excludeFolder url="file://$MODULE_DIR$/common/target" />
       <excludeFolder url="file://$MODULE_DIR$/core/target" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/target" />

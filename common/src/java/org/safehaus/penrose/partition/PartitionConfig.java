@@ -25,6 +25,9 @@ import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.directory.DirectoryReader;
 import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.interpreter.InterpreterConfig;
+import org.safehaus.penrose.mapping.MappingConfigManager;
+import org.safehaus.penrose.mapping.MappingReader;
+import org.safehaus.penrose.mapping.MappingWriter;
 import org.safehaus.penrose.module.ModuleConfigManager;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleWriter;
@@ -59,6 +62,7 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     protected ConnectionConfigManager connectionConfigManager  = new ConnectionConfigManager();
     protected SourceConfigManager     sourceConfigManager      = new SourceConfigManager();
+    protected MappingConfigManager    mappingConfigManager     = new MappingConfigManager();
     protected DirectoryConfig         directoryConfig          = new DirectoryConfig();
     protected ModuleConfigManager     moduleConfigManager      = new ModuleConfigManager();
 
@@ -191,6 +195,7 @@ public class PartitionConfig implements Serializable, Cloneable {
 
         partitionConfig.connectionConfigManager = (ConnectionConfigManager) connectionConfigManager.clone();
         partitionConfig.sourceConfigManager = (SourceConfigManager) sourceConfigManager.clone();
+        partitionConfig.mappingConfigManager = (MappingConfigManager) mappingConfigManager.clone();
         partitionConfig.directoryConfig = (DirectoryConfig) directoryConfig.clone();
         partitionConfig.moduleConfigManager = (ModuleConfigManager) moduleConfigManager.clone();
 
@@ -209,6 +214,10 @@ public class PartitionConfig implements Serializable, Cloneable {
 
     public SourceConfigManager getSourceConfigManager() {
         return sourceConfigManager;
+    }
+
+    public MappingConfigManager getMappingConfigManager() {
+        return mappingConfigManager;
     }
 
     public DirectoryConfig getDirectoryConfig() {
@@ -316,9 +325,13 @@ public class PartitionConfig implements Serializable, Cloneable {
         SourceReader sourceReader = new SourceReader();
         sourceReader.read(sourcesXml, sourceConfigManager);
 
-        File mappingXml = new File(baseDir, "mapping.xml");
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingReader mappingReader = new MappingReader();
+        mappingReader.read(mappingsXml, mappingConfigManager);
+
+        File directoryXml = new File(baseDir, "directory.xml");
         DirectoryReader directoryReader = new DirectoryReader();
-        directoryReader.read(mappingXml, directoryConfig);
+        directoryReader.read(directoryXml, directoryConfig);
 
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
@@ -340,9 +353,13 @@ public class PartitionConfig implements Serializable, Cloneable {
         SourceWriter sourceWriter = new SourceWriter();
         sourceWriter.write(sourcesXml, sourceConfigManager);
 
-        File mappingXml = new File(baseDir, "mapping.xml");
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingWriter mappingWriter = new MappingWriter();
+        mappingWriter.write(mappingsXml, mappingConfigManager);
+
+        File directoryXml = new File(baseDir, "directory.xml");
         DirectoryWriter directoryWriter = new DirectoryWriter();
-        directoryWriter.write(mappingXml, directoryConfig);
+        directoryWriter.write(directoryXml, directoryConfig);
 
         File modulesXml = new File(baseDir, "modules.xml");
         ModuleWriter moduleWriter = new ModuleWriter();

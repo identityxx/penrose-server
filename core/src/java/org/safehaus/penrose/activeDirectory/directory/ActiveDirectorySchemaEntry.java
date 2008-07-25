@@ -1,6 +1,6 @@
 package org.safehaus.penrose.activeDirectory.directory;
 
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
@@ -50,27 +50,25 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response
@@ -81,8 +79,8 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
         DN dn = computeDn(interpreter);
         final Attributes attributes = computeAttributes(interpreter);
 
-        Collection<SourceRef> localSourceRefs = getLocalSourceRefs();
-        SourceRef sourceRef = localSourceRefs.iterator().next();
+        Collection<EntrySource> localSourceRefs = getLocalSources();
+        EntrySource sourceRef = localSourceRefs.iterator().next();
         Source source = sourceRef.getSource();
 
         SearchRequest newRequest = new SearchRequest();

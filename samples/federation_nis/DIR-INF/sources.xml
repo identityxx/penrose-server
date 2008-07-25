@@ -6,10 +6,176 @@
 <sources>
 
   <source name="LDAP">
+    <partition-name>global</partition-name>
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${LDAP_SUFFIX}</param-value>
+      <param-value>${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="users">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="uid"/>
+    <field name="cn"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>account,posixAccount,shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,${SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,${SUFFIX}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="hosts">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Hosts,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="services">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Services,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="rpcs">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=RPCs,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="netids">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=NetIDs,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="protocols">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Protocols,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="aliases">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Aliases,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="netgroups">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Netgroups,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="ethers">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Ethers,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="bootparams">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=BootParams,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="networks">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Networks,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="automounts">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Automounts,${SUFFIX}</param-value>
+    </parameter>
+  </source>
+
+  <source name="profile">
+    <partition-name>global</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Profile,${SUFFIX}</param-value>
     </parameter>
   </source>
 <!--

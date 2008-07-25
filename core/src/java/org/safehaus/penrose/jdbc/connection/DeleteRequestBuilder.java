@@ -1,7 +1,7 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -11,7 +11,7 @@ import org.safehaus.penrose.jdbc.Statement;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.DeleteRequest;
 import org.safehaus.penrose.ldap.DeleteResponse;
-import org.safehaus.penrose.ldap.SourceValues;
+import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.source.Field;
 
 import java.util.Collection;
@@ -21,17 +21,17 @@ import java.util.Collection;
  */
 public class DeleteRequestBuilder extends RequestBuilder {
 
-    Collection<SourceRef> sourceRefs;
+    Collection<EntrySource> sourceRefs;
 
-    SourceValues sourceValues;
+    SourceAttributes sourceValues;
     Interpreter interpreter;
 
     DeleteRequest request;
     DeleteResponse response;
 
     public DeleteRequestBuilder(
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             Interpreter interpreter,
             DeleteRequest request,
             DeleteResponse response
@@ -49,7 +49,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
     public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
-        for (SourceRef sourceRef : sourceRefs) {
+        for (EntrySource sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
@@ -64,7 +64,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
     }
 
     public void generatePrimaryRequest(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -72,7 +72,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         Filter filter = null;
 
@@ -92,7 +92,7 @@ public class DeleteRequestBuilder extends RequestBuilder {
     }
 
     public void generateSecondaryRequests(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -100,11 +100,11 @@ public class DeleteRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         Filter filter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 

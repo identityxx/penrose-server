@@ -24,9 +24,9 @@ import java.io.Serializable;
  */
 public class Expression implements Serializable, Cloneable {
 
-    private String foreach;
-    private String var;
-    private String script;
+    protected String foreach;
+    protected String var;
+    protected String script;
 
     public Expression() {
     }

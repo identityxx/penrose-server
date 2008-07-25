@@ -5,7 +5,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.session.Session;
 
@@ -93,7 +93,7 @@ public class NISDBSyncModule extends Module {
     }
 
     public void create(Entry entry) throws Exception {
-        for (SourceRef sourceRef : entry.getSourceRefs()) {
+        for (EntrySource sourceRef : entry.getSources()) {
             Source source = sourceRef.getSource();
             source.create();
         }
@@ -170,7 +170,7 @@ public class NISDBSyncModule extends Module {
         Session session = createAdminSession();
 
         try {
-            for (SourceRef sourceRef : entry.getSourceRefs()) {
+            for (EntrySource sourceRef : entry.getSources()) {
                 Source source = sourceRef.getSource();
                 source.clear(session);
             }
@@ -198,7 +198,7 @@ public class NISDBSyncModule extends Module {
     }
 
     public void remove(Entry entry) throws Exception {
-        for (SourceRef sourceRef : entry.getSourceRefs()) {
+        for (EntrySource sourceRef : entry.getSources()) {
             Source source = sourceRef.getSource();
             source.drop();
         }
@@ -217,7 +217,7 @@ public class NISDBSyncModule extends Module {
         Entry entry = directory.findEntries(targetDn).iterator().next();
 
         Entry child = entry.getChildren().iterator().next();
-        SourceRef sourceRef = child.getSourceRefs().iterator().next();
+        EntrySource sourceRef = child.getSources().iterator().next();
         Source source = sourceRef.getSource();
 
         return 0; // source.getCount();

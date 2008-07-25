@@ -45,7 +45,7 @@ public class NISSyncSearchResponse extends SearchResponse {
             log.debug("Loading "+dn);
         }
 
-        SourceValues sourceValues = new SourceValues();
+        SourceAttributes sourceValues = new SourceAttributes();
         Attributes attrs = sourceValues.get(source.getName());
         for (Attribute attribute : attributes.getAll()) {
             attrs.setValues(attribute.getName(), attribute.getValues());

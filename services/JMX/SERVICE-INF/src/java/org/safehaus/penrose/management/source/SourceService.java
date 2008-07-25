@@ -1,8 +1,11 @@
 package org.safehaus.penrose.management.source;
 
 import org.safehaus.penrose.connection.ConnectionConfig;
+import org.safehaus.penrose.connection.ConnectionConfigManager;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.management.BaseService;
+import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -10,8 +13,6 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.management.BaseService;
-import org.safehaus.penrose.management.PenroseJMXService;
 
 import java.util.Collection;
 
@@ -119,8 +120,18 @@ public class SourceService extends BaseService implements SourceServiceMBean {
     }
 
     public String getAdapterName() throws Exception {
+
         SourceConfig sourceConfig = getSourceConfig();
-        ConnectionConfig connectionConfig = getPartitionConfig().getConnectionConfigManager().getConnectionConfig(sourceConfig.getConnectionName());
+
+        String partitionName = sourceConfig.getPartitionName();
+        String connectionName = sourceConfig.getConnectionName();
+
+        Partition partition = getPartition();
+        if (partitionName != null) partition = partition.getPartitionContext().getPartition(partitionName);
+
+        ConnectionConfigManager connectionConfigManager = partition.getPartitionConfig().getConnectionConfigManager();
+
+        ConnectionConfig connectionConfig = connectionConfigManager.getConnectionConfig(connectionName);
         return connectionConfig.getAdapterName();
     }
 

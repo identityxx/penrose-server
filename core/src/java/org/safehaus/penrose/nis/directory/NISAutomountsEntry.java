@@ -2,7 +2,7 @@ package org.safehaus.penrose.nis.directory;
 
 import org.safehaus.penrose.directory.DynamicEntry;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
@@ -23,7 +23,7 @@ public class NISAutomountsEntry extends DynamicEntry {
     String base;
 
     public void init() throws Exception {
-        SourceRef sourceRef = getSourceRef();
+        EntrySource sourceRef = getSource();
         automountsSource = (NISAutomountsSource)sourceRef.getSource();
         base = automountsSource.getParameter(NISAutomountsSource.BASE);
 
@@ -87,20 +87,18 @@ public class NISAutomountsEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        response = createSearchResponse(session, request, response);
-
         try {
-            validateScope(request);
-            validatePermission(session, request);
-            validateFilter(filter);
+            validateSearchRequest(session, request, response);
 
         } catch (Exception e) {
             response.close();
             return;
         }
 
+        response = createSearchResponse(session, request, response);
+
         try {
-            generateSearchResults(session, request, response);
+            executeSearch(session, request, response);
 
         } finally {
             response.close();
@@ -115,7 +113,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         // ignore
     }
 
-    public void generateSearchResults(
+    public void executeSearch(
             Session session,
             SearchRequest request,
             SearchResponse response

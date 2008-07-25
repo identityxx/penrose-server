@@ -29,9 +29,8 @@ public class NISLDAPSyncModule extends Module {
 
         SourceManager sourceManager = partition.getSourceManager();
 
-        String sourcePartitionName = getParameter("source");
+        sourcePartitionName = getParameter("source");
         log.debug("Source: "+sourcePartitionName);
-        this.sourcePartitionName = sourcePartitionName;
 
         String changesName = getParameter("changes");
         log.debug("Errors: "+changesName);
@@ -539,7 +538,7 @@ public class NISLDAPSyncModule extends Module {
             partition.search(adminSession, request, response);
 
             boolean b = true;
-            for (SearchResult result : response.getAll()) {
+            for (SearchResult result : response.getResults()) {
                 if (!synchronize(adminSession, result.getDn())) b = false;
             }
 

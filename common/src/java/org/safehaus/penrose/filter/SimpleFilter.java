@@ -117,4 +117,26 @@ public class SimpleFilter extends ItemFilter {
 
         return filter;
     }
+
+    public boolean matches(Filter filter) throws Exception {
+        if (filter == null) return false;
+        if (filter == this) return true;
+        if (filter.getClass() != getClass()) return false;
+
+        SimpleFilter f = (SimpleFilter)filter;
+
+        String name1 = attribute.toLowerCase();
+        String name2 = f.attribute.toLowerCase();
+
+        if (!"...".equals(name1) && !"...".equals(name2) && !name1.equals(name2)) return false;
+
+        if (!operator.equals(f.operator)) return false;
+
+        String value1 = value.toString().toLowerCase();
+        String value2 = f.value.toString().toLowerCase();
+
+        if (!"...".equals(value1) && !"...".equals(value2) && !value1.equals(value2)) return false;
+
+        return true;
+    }
 }

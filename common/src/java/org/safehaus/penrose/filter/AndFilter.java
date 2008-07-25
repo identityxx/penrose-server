@@ -19,6 +19,7 @@ package org.safehaus.penrose.filter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public class AndFilter extends Filter implements ContainerFilter {
@@ -27,6 +28,11 @@ public class AndFilter extends Filter implements ContainerFilter {
 
 	public AndFilter() {
 	}
+
+    public AndFilter(Filter filter1, Filter filter2) {
+        addFilter(filter1);
+        addFilter(filter2);
+    }
 
 	public Collection<Filter> getFilters() {
 		return filters;
@@ -104,9 +110,9 @@ public class AndFilter extends Filter implements ContainerFilter {
     }
 
     public boolean equals(Object object) {
-        if (this == object) return true;
         if (object == null) return false;
-        if (object.getClass() != this.getClass()) return false;
+        if (object == this) return true;
+        if (object.getClass() != getClass()) return false;
 
         AndFilter andFilter = (AndFilter)object;
         if (!equals(filters, andFilter.filters)) return false;
@@ -142,5 +148,24 @@ public class AndFilter extends Filter implements ContainerFilter {
         }
 
         return newAndFilter;
+    }
+
+    public boolean matches(Filter filter) throws Exception {
+        if (filter == null) return false;
+        if (filter == this) return true;
+        if (filter.getClass() != getClass()) return false;
+
+        AndFilter f = (AndFilter)filter;
+
+        if (filters.size() != f.filters.size()) return false;
+
+        for (int i=0; i<filters.size(); i++) {
+            Filter f1 = filters.get(i);
+            Filter f2 = f.filters.get(i);
+
+            if (!f1.matches(f2)) return false;
+        }
+
+        return true;
     }
 }

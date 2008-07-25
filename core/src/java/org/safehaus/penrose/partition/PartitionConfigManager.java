@@ -19,7 +19,7 @@ package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.source.SourceConfig;
@@ -50,7 +50,7 @@ public class PartitionConfigManager implements Serializable {
         partitionConfigs.clear();
     }
 
-    public PartitionConfig getPartitionConfig(SourceMapping sourceMapping) throws Exception {
+    public PartitionConfig getPartitionConfig(EntrySourceConfig sourceMapping) throws Exception {
 
         if (sourceMapping == null) return null;
 

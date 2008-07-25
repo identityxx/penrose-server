@@ -19,7 +19,7 @@ CONFIGURATION
 Edit DIR-INF/connections.xml and set the connection parameters to the LDAP server and the database server.
 
 The default naming space used in this example is dc=my-domain,dc=com. If you want to use a different naming
-space, change it in DIR-INF/mapping.xml and DIR-INF/modules.xml.
+space, change it in DIR-INF/directory.xml and DIR-INF/modules.xml.
 
 By default the module will count up to 3 consecutive bind failures before locking out the account. To change
 the limit, edit DIR-INF/modules.xml and set the limit parameter.

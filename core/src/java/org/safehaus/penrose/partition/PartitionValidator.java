@@ -17,26 +17,26 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.mapping.*;
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.schema.ObjectClass;
-import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.config.PenroseConfig;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleConfigManager;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.connection.ConnectionConfigManager;
 import org.safehaus.penrose.directory.*;
-import org.slf4j.LoggerFactory;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.mapping.Expression;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleConfigManager;
+import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.SchemaManager;
+import org.safehaus.penrose.source.FieldConfig;
+import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.SourceConfigManager;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.TreeSet;
 
 /**
@@ -201,7 +201,7 @@ public class PartitionValidator {
         //log.debug("Validating entry "+entryConfig"'s attributes");
         SchemaManager schemaManager = penroseContext.getSchemaManager();
 
-        for (AttributeMapping attributeMapping : entryConfig.getAttributeMappings()) {
+        for (EntryAttributeConfig attributeMapping : entryConfig.getAttributeConfigs()) {
 
             String name = attributeMapping.getName();
             if (name == null || "".equals(name)) {
@@ -228,7 +228,7 @@ public class PartitionValidator {
                 String sourceAlias = variable.substring(0, j);
                 String fieldName = variable.substring(j + 1);
 
-                SourceMapping sourceMapping = entryConfig.getSourceMapping(sourceAlias);
+                EntrySourceConfig sourceMapping = entryConfig.getSourceConfig(sourceAlias);
                 if (sourceMapping == null) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Unknown source mapping: " + sourceAlias, entryConfig.getDn(), entryConfig));
                     continue;
@@ -247,7 +247,7 @@ public class PartitionValidator {
             }
         }
 
-        if (!entryConfig.getAttributeMappings().isEmpty() && entryConfig.getRdnAttributeMappings().isEmpty()) {
+        if (!entryConfig.getAttributeConfigs().isEmpty() && entryConfig.getRdnAttributeConfigs().isEmpty()) {
             results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing rdn attribute(s).", entryConfig.getDn(), entryConfig));
         }
 
@@ -257,7 +257,7 @@ public class PartitionValidator {
             Collection<String> requiredAttributes = objectClass.getRequiredAttributes();
             for (String atName : requiredAttributes) {
 
-                Collection attributeMappings = entryConfig.getAttributeMappings(atName);
+                Collection attributeMappings = entryConfig.getAttributeConfigs(atName);
                 if (attributeMappings == null || attributeMappings.isEmpty()) {
                     results.add(new PartitionValidationResult(PartitionValidationResult.WARNING, "Attribute " + atName + " is required by " + objectClass.getName() + " object class.", entryConfig.getDn(), entryConfig));
                 }
@@ -270,7 +270,7 @@ public class PartitionValidator {
     public Collection<PartitionValidationResult> validateSourceMappings(PartitionConfig partitionConfig, DirectoryConfig mappings, EntryConfig entryConfig) {
         Collection<PartitionValidationResult> results = new ArrayList<PartitionValidationResult>();
 
-        for (SourceMapping sourceMapping : entryConfig.getSourceMappings()) {
+        for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
             //log.debug("Validating entry "+entryConfig"'s sourceMapping "+sourceMapping.getName());
 
             String alias = sourceMapping.getName();
@@ -291,7 +291,7 @@ public class PartitionValidator {
 
             }
 
-            for (FieldMapping fieldMapping : sourceMapping.getFieldMappings()) {
+            for (EntryFieldConfig fieldMapping : sourceMapping.getFieldConfigs()) {
                 //log.debug("Validating entry "+entryConfig"'s fieldMapping "+source.getName()+"."+fieldMapping.getName());
 
                 String fieldName = fieldMapping.getName();

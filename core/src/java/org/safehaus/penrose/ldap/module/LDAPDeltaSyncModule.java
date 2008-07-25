@@ -12,7 +12,6 @@ import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -545,7 +544,7 @@ public class LDAPDeltaSyncModule extends Module {
             targetPartition.search(adminSession, request, response);
 
             boolean b = true;
-            for (SearchResult result : response.getAll()) {
+            for (SearchResult result : response.getResults()) {
                 if (!synchronize(adminSession, result.getDn())) b = false;
             }
 

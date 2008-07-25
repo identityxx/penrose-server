@@ -1,15 +1,14 @@
 package org.safehaus.penrose.ldif.source;
 
 import org.safehaus.penrose.adapter.FilterBuilder;
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldif.LDIFClient;
 import org.safehaus.penrose.ldif.connection.LDIFConnection;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Field;
@@ -557,14 +556,14 @@ public class LDIFSource extends Source {
     public void search(
             final Session session,
             //final Collection<SourceRef> primarySourceRefs,
-            final Collection<SourceRef> localSourceRefs,
-            final Collection<SourceRef> sourceRefs,
-            final SourceValues sourceValues,
+            final Collection<EntrySource> localSourceRefs,
+            final Collection<EntrySource> sourceRefs,
+            final SourceAttributes sourceValues,
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
 
-        final SourceRef sourceRef = sourceRefs.iterator().next();
+        final EntrySource sourceRef = sourceRefs.iterator().next();
         final String alias = sourceRef.getAlias();
 
         Source source = sourceRef.getSource();
@@ -574,13 +573,13 @@ public class LDIFSource extends Source {
 
         SearchRequest newRequest = (SearchRequest)request.clone();
 
-        FieldRef fieldRef = sourceRef.getFieldRef("dn");
+        EntryField fieldRef = sourceRef.getField("dn");
 
         if (fieldRef == null) {
-            Interpreter interpreter = getPartition().newInterpreter();
+            Interpreter interpreter = partition.newInterpreter();
 
             FilterBuilder filterBuilder = new FilterBuilder(
-                    getPartition(),
+                    partition,
                     sourceRefs,
                     sourceValues,
                     interpreter
@@ -600,7 +599,7 @@ public class LDIFSource extends Source {
             }
 
         } else {
-            Interpreter interpreter = getPartition().newInterpreter();
+            Interpreter interpreter = partition.newInterpreter();
             interpreter.set(sourceValues);
 
             if (debug) log.debug("Reference: "+fieldRef.getVariable());
@@ -627,13 +626,13 @@ public class LDIFSource extends Source {
                 SearchResult searchResult = new SearchResult();
                 searchResult.setDn(dn);
 
-                SourceValues sourceValues = new SourceValues();
+                SourceAttributes sourceValues = new SourceAttributes();
 
                 Attributes sv = sourceValues.get(alias);
                 sv.add(attributes);
                 sv.add("primaryKey", rdn);
 
-                searchResult.setSourceValues(sourceValues);
+                searchResult.setSourceAttributes(sourceValues);
 
                 response.add(searchResult);
             }
@@ -788,7 +787,6 @@ public class LDIFSource extends Source {
     }
 
     public Session createAdminSession() throws Exception {
-        Partition partition = getPartition();
         SessionManager sessionManager = partition.getPartitionContext().getSessionManager();
         return sessionManager.createAdminSession();
     }

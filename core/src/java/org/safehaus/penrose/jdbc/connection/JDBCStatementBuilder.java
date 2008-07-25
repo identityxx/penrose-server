@@ -84,12 +84,8 @@ public class JDBCStatementBuilder {
 
         String alias = (String)i.next();
 
-        String sourceName = statement.getSourceName(alias);
-        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
-        //SourceRef sourceRef = statement.getSourceRef(alias);
-        //Source source = sourceRef.getSource();
-
-        String table = getTableName(sourceConfig);
+        StatementSource source = statement.getSource(alias);
+        String table = getTableName(source);
 
         sb.append(table);
 
@@ -99,12 +95,8 @@ public class JDBCStatementBuilder {
         while (i.hasNext() && j.hasNext()) {
             alias = (String)i.next();
 
-            sourceName = statement.getSourceName(alias);
-            sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
-            //sourceRef = statement.getSourceRef(alias);
-            //source = sourceRef.getSource();
-
-            table = getTableName(sourceConfig);
+            source = statement.getSource(alias);
+            table = getTableName(source);
 
             JoinClause joinClause = (JoinClause)j.next();
             String joinType = joinClause.getType();
@@ -132,9 +124,8 @@ public class JDBCStatementBuilder {
             filterBuilder.setAllowCaseSensitive(false);
 
             for (String cn : statement.getSourceAliases()) {
-                sourceName = statement.getSourceName(cn);
-                //SourceRef sr = statement.getSourceRef(cn);
-                filterBuilder.addSourceName(cn, sourceName);
+                source = statement.getSource(cn);
+                filterBuilder.addSource(cn, source);
             }
 
             filterBuilder.generate(joinCondition);
@@ -155,9 +146,8 @@ public class JDBCStatementBuilder {
         filterBuilder.setQuote(quote);
 
         for (String cn : statement.getSourceAliases()) {
-            sourceName = statement.getSourceName(cn);
-            //sourceRef = statement.getSourceRef(cn);
-            filterBuilder.addSourceName(cn, sourceName);
+            source = statement.getSource(cn);
+            filterBuilder.addSource(cn, source);
         }
 
         filterBuilder.generate(filter);
@@ -225,11 +215,8 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("insert into ");
 
-        String sourceName = statement.getSourceName();
-
-        PartitionConfig partitionConfig = partition.getPartitionConfig();
-        SourceConfig sourceConfig = partitionConfig.getSourceConfigManager().getSourceConfig(sourceName);
-        String table = getTableName(sourceConfig);
+        StatementSource source = statement.getSource();
+        String table = getTableName(source);
 
         sb.append(table);
 
@@ -272,9 +259,8 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("update ");
 
-        String sourceName = statement.getSourceName();
-        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
-        String table = getTableName(sourceConfig);
+        StatementSource source = statement.getSource();
+        String table = getTableName(source);
 
         sb.append(table);
 
@@ -304,7 +290,7 @@ public class JDBCStatementBuilder {
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
         filterBuilder.setQuote(quote);
         filterBuilder.setAppendSourceAlias(false);
-        filterBuilder.addSourceName("s", sourceName);
+        filterBuilder.addSource("s", source);
 
         filterBuilder.generate(filter);
 
@@ -326,9 +312,8 @@ public class JDBCStatementBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("delete from ");
 
-        String sourceName = statement.getSourceName();
-        SourceConfig sourceConfig = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
-        String table = getTableName(sourceConfig);
+        StatementSource source = statement.getSource();
+        String table = getTableName(source);
 
         sb.append(table);
 
@@ -337,7 +322,7 @@ public class JDBCStatementBuilder {
         JDBCFilterBuilder filterBuilder = new JDBCFilterBuilder(partition);
         filterBuilder.setQuote(quote);
         filterBuilder.setAppendSourceAlias(false);
-        filterBuilder.addSourceName("s", sourceName);
+        filterBuilder.addSource("s", source);
 
         filterBuilder.generate(filter);
 
@@ -352,7 +337,11 @@ public class JDBCStatementBuilder {
         return sb.toString();
     }
 
-    public String getTableName(SourceConfig sourceConfig) {
+    public String getTableName(StatementSource source) {
+
+        Partition sourcePartition = partition.getPartitionContext().getPartition(source.getPartitionName());
+        PartitionConfig partitionConfig = sourcePartition.getPartitionConfig();
+        SourceConfig sourceConfig = partitionConfig.getSourceConfigManager().getSourceConfig(source.getSourceName());
 
         StringBuilder sb = new StringBuilder();
 

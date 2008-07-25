@@ -4,7 +4,7 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.SourceConfig;
@@ -211,7 +211,7 @@ public class PartitionManager {
         return partitionConfigManager.getPartitionConfig(name);
     }
     
-    public Partition getPartition(SourceMapping sourceMapping) throws Exception {
+    public Partition getPartition(EntrySourceConfig sourceMapping) throws Exception {
 
         if (sourceMapping == null) return null;
 

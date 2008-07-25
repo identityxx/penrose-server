@@ -204,7 +204,7 @@ public class DemoSource extends Source {
 
         System.out.println("Searching with filter "+filter+".");
 
-        PenroseContext penroseContext = getPartition().getPartitionContext().getPenroseContext();
+        PenroseContext penroseContext = partition.getPartitionContext().getPenroseContext();
         FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();
 
         for (RDN rdn : entries.keySet()) {

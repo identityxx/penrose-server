@@ -69,23 +69,24 @@ public class SourceConfig implements Serializable, Cloneable {
 
     public final static String DEFAULT_CACHE                   = "DEFAULT";
 
-    private boolean enabled = true;
+    public boolean enabled = true;
 
-	private String name;
-    private String description;
-    private String sourceClass;
+	public String name;
+    public String description;
+    public String sourceClass;
 
-    private String connectionName;
+    public String partitionName;
+    public String connectionName;
 
-    private Map<String,String> parameters = new HashMap<String,String>();
+    public Map<String,String> parameters = new HashMap<String,String>();
 
-    private Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
-    private Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
+    public Map<String,FieldConfig> fieldConfigs = new LinkedHashMap<String,FieldConfig>();
+    public Map<String,FieldConfig> fieldConfigsByOriginalName = new LinkedHashMap<String,FieldConfig>();
 
-    private Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();
-    private Collection<FieldConfig> nonPkFieldConfigs = new ArrayList<FieldConfig>();
+    public Collection<FieldConfig> pkFieldConfigs = new ArrayList<FieldConfig>();
+    public Collection<FieldConfig> nonPkFieldConfigs = new ArrayList<FieldConfig>();
 
-    private Map<String,IndexConfig> indexConfigs = new LinkedHashMap<String,IndexConfig>();
+    public Map<String,IndexConfig> indexConfigs = new LinkedHashMap<String,IndexConfig>();
 
     public SourceConfig() {
 	}
@@ -95,6 +96,12 @@ public class SourceConfig implements Serializable, Cloneable {
         this.connectionName = connectionName;
     }
     
+    public SourceConfig(String name, String partitionName, String connectionName) {
+        this.name = name;
+        this.partitionName = partitionName; 
+        this.connectionName = connectionName;
+    }
+
 	public String getName() {
 		return name;
 	}
@@ -250,6 +257,14 @@ public class SourceConfig implements Serializable, Cloneable {
         return parameters.keySet();
     }
 
+    public String getPartitionName() {
+        return partitionName;
+    }
+
+    public void setPartitionName(String partitionName) {
+        this.partitionName = partitionName;
+    }
+
     public String getConnectionName() {
         return connectionName;
     }
@@ -312,6 +327,7 @@ public class SourceConfig implements Serializable, Cloneable {
         if (!equals(description, sourceConfig.description)) return false;
         if (!equals(sourceClass, sourceConfig.sourceClass)) return false;
 
+        if (!equals(partitionName, sourceConfig.partitionName)) return false;
         if (!equals(connectionName, sourceConfig.connectionName)) return false;
 
         if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
@@ -329,6 +345,7 @@ public class SourceConfig implements Serializable, Cloneable {
         description = sourceConfig.description;
         sourceClass = sourceConfig.sourceClass;
 
+        partitionName = sourceConfig.partitionName;
         connectionName = sourceConfig.connectionName;
 
         fieldConfigs               = new LinkedHashMap<String,FieldConfig>();

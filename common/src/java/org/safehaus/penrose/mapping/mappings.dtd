@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<!ELEMENT mappings (mapping*)>
+
+<!ELEMENT mapping (mapping-class?, description?, pre?, post?, field*, parameter*)>
+<!ATTLIST mapping name CDATA #REQUIRED>
+<!ELEMENT mapping-class (#PCDATA)>
+
+<!ELEMENT pre (#PCDATA)>
+<!ELEMENT post (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT field (condition?,(binary|constant|variable|expression))>
+<!ATTLIST field name CDATA #REQUIRED>
+<!ATTLIST field required (true|false) "true">
+
+<!ELEMENT condition (#PCDATA)>
+<!ELEMENT binary (#PCDATA)>
+<!ELEMENT constant (#PCDATA)>
+<!ELEMENT variable (#PCDATA)>
+<!ELEMENT expression (#PCDATA)>
+<!ATTLIST expression foreach CDATA #IMPLIED>
+<!ATTLIST expression var CDATA #IMPLIED>
+
+<!ELEMENT parameter (param-name, param-value)>
+<!ELEMENT param-name (#PCDATA)>
+<!ELEMENT param-value (#PCDATA)>

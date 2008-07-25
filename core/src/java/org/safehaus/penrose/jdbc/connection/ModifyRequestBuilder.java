@@ -1,9 +1,9 @@
 package org.safehaus.penrose.jdbc.connection;
 
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.SourceValues;
-import org.safehaus.penrose.directory.SourceRef;
-import org.safehaus.penrose.directory.FieldRef;
+import org.safehaus.penrose.ldap.SourceAttributes;
+import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.*;
@@ -19,17 +19,17 @@ import java.util.*;
  */
 public class ModifyRequestBuilder extends RequestBuilder {
 
-    Collection<SourceRef> sourceRefs;
+    Collection<EntrySource> sourceRefs;
 
-    SourceValues sourceValues;
+    SourceAttributes sourceValues;
     Interpreter interpreter;
 
     ModifyRequest request;
     ModifyResponse response;
 
     public ModifyRequestBuilder(
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             Interpreter interpreter,
             ModifyRequest request,
             ModifyResponse response
@@ -47,7 +47,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
-        for (SourceRef sourceRef : sourceRefs) {
+        for (EntrySource sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
@@ -62,7 +62,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     }
 
     public void generatePrimaryRequest(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -70,7 +70,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         UpdateStatement statement = new UpdateStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         Collection<Modification> modifications = request.getModifications();
         for (Modification modification : modifications) {
@@ -103,7 +103,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
             switch (type) {
                 case Modification.ADD:
                 case Modification.REPLACE:
-                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                    for (EntryField fieldRef : sourceRef.getFields()) {
                         Field field = fieldRef.getField();
 
                         Object value = interpreter.eval(fieldRef);
@@ -117,7 +117,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
                     break;
 
                 case Modification.DELETE:
-                    for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                    for (EntryField fieldRef : sourceRef.getFields()) {
                         Field field = fieldRef.getField();
 
                         String variable = fieldRef.getVariable();
@@ -156,7 +156,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     }
 
     public void generateSecondaryRequests(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -186,7 +186,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
             }
 
             if (attributeValues.isEmpty()) {
-                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                for (EntryField fieldRef : sourceRef.getFields()) {
 
                     String variable = fieldRef.getVariable();
                     if (variable != null) {
@@ -225,7 +225,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
                 Map<String,Object> values = new HashMap<String,Object>();
 
-                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                for (EntryField fieldRef : sourceRef.getFields()) {
 
                     String variable = fieldRef.getVariable();
                     if (variable != null) {
@@ -277,7 +277,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
     }
 
     public void generateInsertStatement(
-            SourceRef sourceRef,
+            EntrySource sourceRef,
             Map<String,Object> values
     ) throws Exception {
 
@@ -286,9 +286,9 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
 
             String variable = fieldRef.getVariable();
@@ -313,7 +313,7 @@ public class ModifyRequestBuilder extends RequestBuilder {
         for (String fieldName : values.keySet()) {
             Object value = values.get(fieldName);
 
-            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+            EntryField fieldRef = sourceRef.getField(fieldName);
 
             if (debug) log.debug(" - Field: " + fieldName + ": " + value);
             statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
@@ -323,13 +323,13 @@ public class ModifyRequestBuilder extends RequestBuilder {
     }
 
     public void generateDeleteStatement(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
         generateDeleteStatement(sourceRef, null);
     }
 
     public void generateDeleteStatement(
-            SourceRef sourceRef,
+            EntrySource sourceRef,
             Map<String,Object> values
     ) throws Exception {
 
@@ -338,11 +338,11 @@ public class ModifyRequestBuilder extends RequestBuilder {
 
         DeleteStatement statement = new DeleteStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         Filter filter = null;
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
 
             String variable = fieldRef.getVariable();

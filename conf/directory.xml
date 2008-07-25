@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry>
+    <entry-class>org.safehaus.penrose.directory.RootEntry</entry-class>
+    <oc>extensibleObject</oc>
+    <at name="vendorName">
+      <constant>${vendor.name}</constant>
+    </at>
+    <at name="vendorVersion">
+      <constant>${product.title} Server ${product.version}</constant>
+    </at>
+    <at name="supportedLDAPVersion">
+      <constant>3</constant>
+    </at>
+    <at name="subschemaSubentry">
+      <constant>cn=Subschema</constant>
+    </at>
+    <at name="changelog">
+      <constant>cn=changelog</constant>
+    </at>
+    <at name="namingContexts">
+      <constant>dc=Example,dc=com</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Subschema">
+    <entry-class>org.safehaus.penrose.schema.directory.SchemaEntry</entry-class>
+    <oc>subentry</oc>
+    <oc>subschema</oc>
+    <oc>extensibleObject</oc>
+    <at name="cn" rdn="true">
+      <constant>Subschema</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Monitor">
+    <entry-class>org.safehaus.penrose.monitor.directory.MonitorEntry</entry-class>
+    <oc>monitorServer</oc>
+    <at name="cn" rdn="true">
+      <constant>Monitor</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Example</constant>
+    </at>
+    <at name="o">
+      <constant>Example</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="cn=Manager,dc=Example,dc=com">
+    <oc>person</oc>
+    <oc>organizationalPerson</oc>
+    <oc>inetOrgPerson</oc>
+    <at name="cn" rdn="true">
+      <constant>Manager</constant>
+    </at>
+    <at name="sn">
+      <constant>Manager</constant>
+    </at>
+    <at name="userPassword">
+      <constant>secret</constant>
+    </at>
+  </entry>
+
+  <entry dn="ou=Users,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="ou=Groups,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+</directory>

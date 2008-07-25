@@ -1,6 +1,7 @@
 package org.safehaus.penrose.jdbc.connection;
 
 import org.safehaus.penrose.filter.*;
+import org.safehaus.penrose.jdbc.StatementSource;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -20,7 +21,7 @@ public class JDBCFilterBuilder {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    protected Map<String,String> sourceNames = new LinkedHashMap<String,String>(); // need to maintain order
+    protected Map<String,StatementSource> sources = new LinkedHashMap<String,StatementSource>(); // need to maintain order
 
     Partition partition;
     private String sql;
@@ -83,7 +84,7 @@ public class JDBCFilterBuilder {
 
         int i = name.indexOf('.');
         if (i < 0) {
-            lsourceAlias = sourceNames.keySet().iterator().next();
+            lsourceAlias = sources.keySet().iterator().next();
             lfieldName = name;
         } else {
             lsourceAlias = name.substring(0, i);
@@ -95,8 +96,12 @@ public class JDBCFilterBuilder {
             sb1.append(".");
         }
 
-        String lsourceName = sourceNames.get(lsourceAlias);
-        SourceConfig ls = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
+        StatementSource lsource = sources.get(lsourceAlias);
+        String lpartitionName = lsource.getPartitionName();
+        String lsourceName = lsource.getSourceName();
+
+        Partition lpartition = getPartition(lpartitionName);
+        SourceConfig ls = lpartition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
         //SourceRef lsourceRef = sourceRefs.get(lsourceName);
         //Source ls = lsourceRef.getSource();
 
@@ -179,6 +184,10 @@ public class JDBCFilterBuilder {
         }
     }
 
+    public Partition getPartition(String name) {
+        return partition.getPartitionContext().getPartition(name);
+    }
+
     public void generate(
             SimpleFilter filter,
             StringBuilder sb
@@ -206,7 +215,7 @@ public class JDBCFilterBuilder {
 
         int i = name.indexOf('.');
         if (i < 0) {
-            lsourceAlias = sourceNames.keySet().iterator().next();
+            lsourceAlias = sources.keySet().iterator().next();
             lfieldName = name;
         } else {
             lsourceAlias = name.substring(0, i);
@@ -218,8 +227,12 @@ public class JDBCFilterBuilder {
             sb1.append(".");
         }
 
-        String lsourceName = sourceNames.get(lsourceAlias);
-        SourceConfig ls = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
+        StatementSource lsource = sources.get(lsourceAlias);
+        String lpartitionName = lsource.getPartitionName();
+        String lsourceName = lsource.getSourceName();
+
+        Partition lpartition = getPartition(lpartitionName);
+        SourceConfig ls = lpartition.getPartitionConfig().getSourceConfigManager().getSourceConfig(lsourceName);
         //SourceRef lsourceRef = sourceRefs.get(lsourceAlias);
         //Source ls = lsourceRef.getSource();
 
@@ -278,8 +291,12 @@ public class JDBCFilterBuilder {
             String rsourceAlias = rhs.substring(0, j);
             String rfieldName = rhs.substring(j+1);
 
-            String rsourceName = sourceNames.get(rsourceAlias);
-            SourceConfig rs = partition.getPartitionConfig().getSourceConfigManager().getSourceConfig(rsourceName);
+            StatementSource rsource = sources.get(rsourceAlias);
+            String rpartitionName = rsource.getPartitionName();
+            String rsourceName = rsource.getSourceName();
+
+            Partition rpartition = getPartition(rpartitionName);
+            SourceConfig rs = rpartition.getPartitionConfig().getSourceConfigManager().getSourceConfig(rsourceName);
             //SourceRef rsourceRef = sourceRefs.get(rsourceAlias);
             //Source rs = rsourceRef.getSource();
 
@@ -412,11 +429,17 @@ public class JDBCFilterBuilder {
     }
 
     public Collection<String> getSourceAliases() {
-        return sourceNames.keySet();
+        return sources.keySet();
     }
 
-    public void addSourceName(String alias, String sourceName) {
-        sourceNames.put(alias, sourceName);
+    public void addSource(String alias, StatementSource source) {
+
+        StatementSource newSource = new StatementSource();
+        newSource.setAlias(alias);
+        newSource.setPartitionName(source.getPartitionName());
+        newSource.setSourceName(source.getSourceName());
+
+        sources.put(alias, newSource);
     }
 
     public Collection<Object> getParameters() {

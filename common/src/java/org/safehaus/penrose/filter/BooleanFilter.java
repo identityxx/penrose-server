@@ -77,4 +77,12 @@ public class BooleanFilter extends Filter {
 
         return filter;
     }
+
+    public boolean matches(Filter filter) throws Exception {
+        if (filter == null) return false;
+        if (filter == this) return true;
+        if (filter.getClass() != getClass()) return false;
+
+        return true;
+    }
 }

@@ -16,7 +16,7 @@ public class MergeSearchResponse extends SearchResponse {
     SearchResponse response;
 
     DN lastDn;
-    SourceValues lastSourceValues;
+    SourceAttributes lastSourceValues;
 
     public MergeSearchResponse(
             SearchResponse response
@@ -32,7 +32,7 @@ public class MergeSearchResponse extends SearchResponse {
             log.debug("Synchronizing "+dn);
         }
 
-        SourceValues sv = result.getSourceValues();
+        SourceAttributes sv = result.getSourceAttributes();
 
         if (lastDn == null) {
             if (debug) log.debug("Generating entry "+dn);
@@ -47,7 +47,7 @@ public class MergeSearchResponse extends SearchResponse {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult();
             searchResult.setDn(lastDn);
-            searchResult.setSourceValues(lastSourceValues);
+            searchResult.setSourceAttributes(lastSourceValues);
             response.add(searchResult);
 
             if (debug) log.debug("Generating entry "+dn);
@@ -62,7 +62,7 @@ public class MergeSearchResponse extends SearchResponse {
             if (debug) log.debug("Returning entry " + lastDn);
             SearchResult searchResult = new SearchResult();
             searchResult.setDn(lastDn);
-            searchResult.setSourceValues(lastSourceValues);
+            searchResult.setSourceAttributes(lastSourceValues);
             response.add(searchResult);
         }
 

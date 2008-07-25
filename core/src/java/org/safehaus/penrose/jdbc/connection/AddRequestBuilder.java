@@ -1,7 +1,7 @@
 package org.safehaus.penrose.jdbc.connection;
 
-import org.safehaus.penrose.directory.FieldRef;
-import org.safehaus.penrose.directory.SourceRef;
+import org.safehaus.penrose.directory.EntryField;
+import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.jdbc.Assignment;
 import org.safehaus.penrose.jdbc.InsertStatement;
@@ -18,17 +18,17 @@ import java.util.Map;
  */
 public class AddRequestBuilder extends RequestBuilder {
 
-    Collection<SourceRef> sourceRefs;
+    Collection<EntrySource> sourceRefs;
 
-    SourceValues sourceValues;
+    SourceAttributes sourceValues;
     Interpreter interpreter;
 
     AddRequest request;
     AddResponse response;
 
     public AddRequestBuilder(
-            Collection<SourceRef> sourceRefs,
-            SourceValues sourceValues,
+            Collection<EntrySource> sourceRefs,
+            SourceAttributes sourceValues,
             Interpreter interpreter,
             AddRequest request,
             AddResponse response
@@ -46,7 +46,7 @@ public class AddRequestBuilder extends RequestBuilder {
     public Collection<Statement> generate() throws Exception {
 
         boolean first = true;
-        for (SourceRef sourceRef : sourceRefs) {
+        for (EntrySource sourceRef : sourceRefs) {
 
             if (first) {
                 generatePrimaryRequest(sourceRef);
@@ -61,7 +61,7 @@ public class AddRequestBuilder extends RequestBuilder {
     }
 
     public void generatePrimaryRequest(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -69,7 +69,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         interpreter.set(sourceValues);
 
@@ -82,7 +82,7 @@ public class AddRequestBuilder extends RequestBuilder {
             interpreter.set(attributeName, attributeValue);
         }
 
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -99,7 +99,7 @@ public class AddRequestBuilder extends RequestBuilder {
     }
 
     public void generateSecondaryRequests(
-            SourceRef sourceRef
+            EntrySource sourceRef
     ) throws Exception {
 
         String sourceName = sourceRef.getAlias();
@@ -117,7 +117,7 @@ public class AddRequestBuilder extends RequestBuilder {
 
                 Map<String,Object> values = new HashMap<String,Object>();
 
-                for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+                for (EntryField fieldRef : sourceRef.getFields()) {
 
                     String variable = fieldRef.getVariable();
                     if (variable != null) {
@@ -145,7 +145,7 @@ public class AddRequestBuilder extends RequestBuilder {
     }
 
     public void generateInsertStatement(
-            SourceRef sourceRef,
+            EntrySource sourceRef,
             Map<String,Object> values
     ) throws Exception {
 
@@ -155,10 +155,10 @@ public class AddRequestBuilder extends RequestBuilder {
 
         InsertStatement statement = new InsertStatement();
 
-        statement.setSourceName(sourceRef.getSource().getName());
+        statement.setSource(sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
         if (debug) log.debug("Fields:");
-        for (FieldRef fieldRef : sourceRef.getFieldRefs()) {
+        for (EntryField fieldRef : sourceRef.getFields()) {
             Field field = fieldRef.getField();
             String fieldName = field.getName();
 
@@ -188,7 +188,7 @@ public class AddRequestBuilder extends RequestBuilder {
             Object value = values.get(fieldName);
             if (debug) log.debug(" - " + fieldName + ": " + value);
 
-            FieldRef fieldRef = sourceRef.getFieldRef(fieldName);
+            EntryField fieldRef = sourceRef.getField(fieldName);
 
             statement.addAssignment(new Assignment(fieldRef.getOriginalName(), value));
         }

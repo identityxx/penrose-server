@@ -8,6 +8,8 @@ import org.safehaus.penrose.directory.DirectoryReader;
 import org.safehaus.penrose.directory.DirectoryWriter;
 import org.safehaus.penrose.module.ModuleReader;
 import org.safehaus.penrose.module.ModuleWriter;
+import org.safehaus.penrose.mapping.MappingReader;
+import org.safehaus.penrose.mapping.MappingWriter;
 
 import java.io.File;
 
@@ -22,42 +24,50 @@ public class DefaultPartitionConfig extends PartitionConfig {
 
     public void load(File partitionDir) throws Exception {
 
-        File conf = new File(partitionDir, "conf");
+        File baseDir = new File(partitionDir, "conf");
 
-        File connectionsXml = new File(conf, "connections.xml");
+        File connectionsXml = new File(baseDir, "connections.xml");
         ConnectionReader connectionReader = new ConnectionReader();
         connectionReader.read(connectionsXml, connectionConfigManager);
 
-        File sourcesXml = new File(conf, "sources.xml");
+        File sourcesXml = new File(baseDir, "sources.xml");
         SourceReader sourceReader = new SourceReader();
         sourceReader.read(sourcesXml, sourceConfigManager);
 
-        File mappingXml = new File(conf, "mapping.xml");
-        DirectoryReader directoryReader = new DirectoryReader();
-        directoryReader.read(mappingXml, directoryConfig);
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingReader mappingReader = new MappingReader();
+        mappingReader.read(mappingsXml, mappingConfigManager);
 
-        File modulesXml = new File(conf, "modules.xml");
+        File directoryXml = new File(baseDir, "directory.xml");
+        DirectoryReader directoryReader = new DirectoryReader();
+        directoryReader.read(directoryXml, directoryConfig);
+
+        File modulesXml = new File(baseDir, "modules.xml");
         ModuleReader moduleReader = new ModuleReader();
         moduleReader.read(modulesXml, moduleConfigManager);
     }
 
     public void store(File partitionDir) throws Exception {
 
-        File conf = new File(partitionDir, "conf");
+        File baseDir = new File(partitionDir, "conf");
 
-        File connectionsXml = new File(conf, "connections.xml");
+        File connectionsXml = new File(baseDir, "connections.xml");
         ConnectionWriter connectionWriter = new ConnectionWriter();
         connectionWriter.write(connectionsXml, connectionConfigManager);
 
-        File sourcesXml = new File(conf, "sources.xml");
+        File sourcesXml = new File(baseDir, "sources.xml");
         SourceWriter sourceWriter = new SourceWriter();
         sourceWriter.write(sourcesXml, sourceConfigManager);
 
-        File mappingXml = new File(conf, "mapping.xml");
-        DirectoryWriter directoryWriter = new DirectoryWriter();
-        directoryWriter.write(mappingXml, directoryConfig);
+        File mappingsXml = new File(baseDir, "mappings.xml");
+        MappingWriter mappingWriter = new MappingWriter();
+        mappingWriter.write(mappingsXml, mappingConfigManager);
 
-        File modulesXml = new File(conf, "modules.xml");
+        File directoryXml = new File(baseDir, "directory.xml");
+        DirectoryWriter directoryWriter = new DirectoryWriter();
+        directoryWriter.write(directoryXml, directoryConfig);
+
+        File modulesXml = new File(baseDir, "modules.xml");
         ModuleWriter moduleWriter = new ModuleWriter();
         moduleWriter.write(modulesXml, moduleConfigManager);
     }

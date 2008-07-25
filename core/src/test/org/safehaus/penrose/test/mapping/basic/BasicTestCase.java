@@ -4,9 +4,9 @@ import org.safehaus.penrose.test.jdbc.JDBCTestCase;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.AttributeMapping;
-import org.safehaus.penrose.directory.FieldMapping;
-import org.safehaus.penrose.directory.SourceMapping;
+import org.safehaus.penrose.directory.EntryAttributeConfig;
+import org.safehaus.penrose.directory.EntryFieldConfig;
+import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
@@ -68,20 +68,20 @@ public class BasicTestCase extends JDBCTestCase {
 
         EntryConfig ou = new EntryConfig(baseDn);
         ou.addObjectClass("organizationalUnit");
-        ou.addAttributeMappingsFromRdn();
+        ou.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(ou);
 
         EntryConfig groups = new EntryConfig("cn=...,"+baseDn);
         groups.addObjectClass("groupOfUniqueNames");
-        groups.addAttributeMapping(new AttributeMapping("cn", AttributeMapping.VARIABLE, "g.groupname", true));
-        groups.addAttributeMapping(new AttributeMapping("description", AttributeMapping.VARIABLE, "g.description"));
+        groups.addAttributeConfig(new EntryAttributeConfig("cn", EntryAttributeConfig.VARIABLE, "g.groupname", true));
+        groups.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "g.description"));
 
-        SourceMapping sourceMapping = new SourceMapping();
+        EntrySourceConfig sourceMapping = new EntrySourceConfig();
         sourceMapping.setName("g");
         sourceMapping.setSourceName("groups");
-        sourceMapping.addFieldMapping(new FieldMapping("groupname", FieldMapping.VARIABLE, "cn"));
-        sourceMapping.addFieldMapping(new FieldMapping("description", FieldMapping.VARIABLE, "description"));
-        groups.addSourceMapping(sourceMapping);
+        sourceMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "cn"));
+        sourceMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
+        groups.addSourceConfig(sourceMapping);
 
         partitionConfig.getDirectoryConfig().addEntryConfig(groups);
 

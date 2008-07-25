@@ -100,7 +100,7 @@ public class Connection {
         return connectionConfig.getParameters();
     }
 
-    public Collection getParameterNames() {
+    public Collection<String> getParameterNames() {
         return connectionConfig.getParameterNames();
     }
 
@@ -119,6 +119,10 @@ public class Connection {
     public Source createSource(SourceConfig sourceConfig) throws Exception {
 
         Partition partition = connectionContext.getPartition();
+        return createSource(partition, sourceConfig);
+    }
+
+    public Source createSource(Partition partition, SourceConfig sourceConfig) throws Exception {
 
         SourceContext sourceContext = new SourceContext();
         sourceContext.setPartition(partition);

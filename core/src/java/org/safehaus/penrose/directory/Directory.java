@@ -3,16 +3,13 @@ package org.safehaus.penrose.directory;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
@@ -35,7 +32,7 @@ public class Directory implements Cloneable {
 
     protected Collection<String> rootIds                  = new ArrayList<String>();
     protected Map<String,String> parentById               = new LinkedHashMap<String,String>();
-    protected Map<String,Collection<String>> childrenById = new LinkedHashMap<String,Collection<String>>();
+    protected Map<String,Collection<Entry>> childrenById  = new LinkedHashMap<String,Collection<Entry>>();
 
     protected Collection<DN> suffixes         = new ArrayList<DN>();
 
@@ -63,11 +60,13 @@ public class Directory implements Cloneable {
 
     public void destroy(String id) throws Exception {
 
-        Collection<String> ids = childrenById.get(id);
-
-        if (ids != null) {
-            for (String childId : ids) {
-                destroy(childId);
+        Collection<Entry> children = childrenById.get(id);
+        //log.debug("Destroying entry "+id+"'s children: "+children);
+        
+        if (children != null) {
+            for (Entry child : children) {
+                if (child.getPartition() != partition) continue;
+                destroy(child.getId());
             }
         }
 
@@ -117,8 +116,8 @@ public class Directory implements Cloneable {
             }
         }
 
-        Collection<SourceRef> sourceRefs = entry.getSourceRefs();
-        for (SourceRef sourceRef : sourceRefs) {
+        Collection<EntrySource> sourceRefs = entry.getSources();
+        for (EntrySource sourceRef : sourceRefs) {
             String sourceName = sourceRef.getSource().getName();
 
             Collection<String> c2 = entriesBySourceName.get(sourceName);
@@ -167,8 +166,8 @@ public class Directory implements Cloneable {
         c1.add(id);
 
         // index by source
-        Collection<SourceRef> sourceRefs = entry.getSourceRefs();
-        for (SourceRef sourceRef : sourceRefs) {
+        Collection<EntrySource> sourceRefs = entry.getSources();
+        for (EntrySource sourceRef : sourceRefs) {
             String sourceName = sourceRef.getSource().getName();
             Collection<String> c2 = entriesBySourceName.get(sourceName);
             if (c2 == null) {
@@ -404,8 +403,10 @@ public class Directory implements Cloneable {
     }
 
     public Collection<Entry> getChildren(String id) {
-        Collection<String> childIds = childrenById.get(id);
-        return getEntries(childIds);
+        Collection<Entry> result = new ArrayList<Entry>();
+        Collection<Entry> children = childrenById.get(id);
+        if (children != null) result.addAll(children);
+        return result;
     }
 
     public void addChild(Entry parent, Entry child) {
@@ -413,12 +414,13 @@ public class Directory implements Cloneable {
     }
     
     public void addChild(String id, Entry child) {
-        Collection<String> childIds = childrenById.get(id);
-        if (childIds == null) {
-            childIds = new ArrayList<String>();
-            childrenById.put(id, childIds);
+        log.debug("Adding child to entry "+id+": "+child.getId());
+        Collection<Entry> children = childrenById.get(id);
+        if (children == null) {
+            children = new LinkedHashSet<Entry>();
+            childrenById.put(id, children);
         }
-        childIds.add(child.getId());
+        children.add(child);
 
         parentById.put(child.getId(), id);
     }
@@ -428,11 +430,11 @@ public class Directory implements Cloneable {
     }
     
     public void removeChild(String id, Entry child) {
-        Collection<String> childIds = childrenById.get(id);
-        if (childIds == null) return;
+        Collection<Entry> children = childrenById.get(id);
+        if (children == null) return;
 
-        childIds.remove(child.getId());
-        if (childIds.isEmpty()) childrenById.remove(id);
+        children.remove(child);
+        if (children.isEmpty()) childrenById.remove(id);
 
         parentById.remove(child.getId());
     }
@@ -441,8 +443,8 @@ public class Directory implements Cloneable {
         removeChildren(entry.getId());
     }
 
-    public void removeChildren(String id) {
-        childrenById.remove(id);
+    public Collection<Entry> removeChildren(String id) {
+        return childrenById.remove(id);
     }
 
     public Collection<Entry> getEntriesBySourceName(String sourceName) {

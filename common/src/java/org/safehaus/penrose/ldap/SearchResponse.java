@@ -124,7 +124,7 @@ public class SearchResponse extends Response implements Cloneable {
         return null;
     }
 
-    public synchronized Collection<SearchResult> getAll() {
+    public synchronized Collection<SearchResult> getResults() {
         Logger log = LoggerFactory.getLogger(getClass());
         while (!closed) {
             try {

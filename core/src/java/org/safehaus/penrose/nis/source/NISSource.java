@@ -89,7 +89,7 @@ public class NISSource extends Source {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        PartitionContext partitionContext = getPartition().getPartitionContext();
+        PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
 
         final FilterEvaluator filterEvaluator = penroseContext.getFilterEvaluator();

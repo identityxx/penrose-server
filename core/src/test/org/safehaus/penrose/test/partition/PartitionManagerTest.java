@@ -78,7 +78,7 @@ public class PartitionManagerTest extends TestCase {
         EntryConfig entryConfig = new EntryConfig();
         entryConfig.setDn("ou=Test,dc=Example,dc=com");
         entryConfig.addObjectClass("organizationalUnit");
-        entryConfig.addAttributeMappingsFromRdn();
+        entryConfig.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(entryConfig);
 
         PartitionFactory partitionFactory = new PartitionFactory();

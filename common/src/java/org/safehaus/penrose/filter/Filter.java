@@ -45,4 +45,12 @@ public abstract class Filter implements Serializable, Cloneable {
     public void setParent(ContainerFilter parent) {
         this.parent = parent;
     }
+
+    public boolean matches(Filter filter) throws Exception {
+        if (filter == null) return false;
+        if (filter == this) return true;
+        if (filter.getClass() != getClass()) return false;
+
+        return true;
+    }
 }

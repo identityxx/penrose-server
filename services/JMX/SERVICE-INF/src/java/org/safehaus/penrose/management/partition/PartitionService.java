@@ -13,10 +13,17 @@ import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.management.connection.ConnectionService;
 import org.safehaus.penrose.management.directory.EntryService;
+import org.safehaus.penrose.management.mapping.MappingService;
 import org.safehaus.penrose.management.module.ModuleService;
 import org.safehaus.penrose.management.scheduler.SchedulerService;
 import org.safehaus.penrose.management.source.SourceService;
-import org.safehaus.penrose.module.*;
+import org.safehaus.penrose.mapping.MappingConfig;
+import org.safehaus.penrose.mapping.MappingConfigManager;
+import org.safehaus.penrose.mapping.MappingManager;
+import org.safehaus.penrose.module.ModuleConfig;
+import org.safehaus.penrose.module.ModuleConfigManager;
+import org.safehaus.penrose.module.ModuleManager;
+import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -27,9 +34,9 @@ import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
 import org.safehaus.penrose.source.SourceManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.File;
 
 /**
  * @author Endi Sukma Dewata
@@ -74,7 +81,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     public String getStatus() {
         return getPartition() == null ? "STOPPED" : "RUNNING";
     }
-    
+
     public void store() throws Exception {
         File baseDir;
 
@@ -334,7 +341,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         return sourceService;
     }
-    
+
     public void createSource(SourceConfig sourceConfig) throws Exception {
 
         Partition partition = getPartition();
@@ -384,6 +391,86 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         SourceService sourceService = getSourceService(source.getName());
         sourceService.unregister();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Mappings
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getMappingNames() throws Exception {
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+
+        Collection<String> list = new ArrayList<String>();
+        list.addAll(mappingConfigManager.getMappingNames());
+
+        return list;
+    }
+
+    public MappingService getMappingService(String mappingName) throws Exception {
+
+        MappingService mappingService = new MappingService(jmxService, partitionManager, partitionName, mappingName);
+        mappingService.init();
+
+        return mappingService;
+    }
+
+    public void startMapping(String mappingName) throws Exception {
+
+        Partition partition = getPartition();
+        if (partition == null) return;
+
+        MappingManager mappingManager = partition.getMappingManager();
+        mappingManager.startMapping(mappingName);
+    }
+
+    public void stopMapping(String mappingName) throws Exception {
+
+        Partition partition = getPartition();
+        if (partition == null) return;
+
+        MappingManager mappingManager = partition.getMappingManager();
+        boolean running = mappingManager.isRunning(mappingName);
+        if (running) mappingManager.stopMapping(mappingName);
+    }
+
+    public void createMapping(MappingConfig mappingConfig) throws Exception {
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+        mappingConfigManager.addMappingConfig(mappingConfig);
+
+        String mappingName = mappingConfig.getName();
+        startMapping(mappingName);
+
+        MappingService mappingService = getMappingService(mappingName);
+        mappingService.register();
+    }
+
+    public void updateMapping(String mappingName, MappingConfig mappingConfig) throws Exception {
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+
+        stopMapping(mappingName);
+
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+        mappingConfigManager.updateMappingConfig(mappingName, mappingConfig);
+
+        startMapping(mappingName);
+    }
+
+    public void removeMapping(String mappingName) throws Exception {
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+
+        MappingService mappingService = getMappingService(mappingName);
+        mappingService.unregister();
+
+        stopMapping(mappingName);
+
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+        mappingConfigManager.removeMappingConfig(mappingName);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -517,6 +604,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             sourceService.register();
         }
 
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+        for (String mappingName : mappingConfigManager.getMappingNames()) {
+            MappingService mappingService = getMappingService(mappingName);
+            mappingService.register();
+        }
+
         DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
         for (String entryId : directoryConfig.getEntryIds()) {
             EntryService entryService = getEntryService(entryId);
@@ -537,7 +630,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         PartitionConfig partitionConfig = getPartitionConfig();
         if (partitionConfig == null) return;
-        
+
         SchedulerService schedulerService = getSchedulerService();
         if (schedulerService != null) schedulerService.unregister();
 
@@ -551,6 +644,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         for (String entryId : directoryConfig.getEntryIds()) {
             EntryService entryService = getEntryService(entryId);
             entryService.unregister();
+        }
+
+        MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
+        for (String mappingName : mappingConfigManager.getMappingNames()) {
+            MappingService mappingService = getMappingService(mappingName);
+            mappingService.unregister();
         }
 
         SourceConfigManager sourceConfigManager = partitionConfig.getSourceConfigManager();
