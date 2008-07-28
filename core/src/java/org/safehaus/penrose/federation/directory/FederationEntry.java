@@ -222,6 +222,9 @@ public class FederationEntry extends DynamicEntry {
         EntrySource g = getSource("g");
         EntrySource a = getSource("a");
 
+        String aSearch = a.getSearch();
+        String gSearch = g.getSearch();
+
         Collection<DN> dns = new LinkedHashSet<DN>();
 
         FilterBuilder filterBuilder = new FilterBuilder(this, sourceAttributes, interpreter);
@@ -244,19 +247,63 @@ public class FederationEntry extends DynamicEntry {
                 }
                 SourceAttributes sa = new SourceAttributes();
 
-                SearchResponse aResponse = a.search(session, aFilter);
+                try {
+                    SearchResponse aResponse = a.search(session, aFilter);
 
-                while (aResponse.hasNext()) {
+                    while (aResponse.hasNext()) {
 
-                    SearchResult aResult = aResponse.next();
-                    sa.set("a", aResult);
+                        SearchResult aResult = aResponse.next();
+                        sa.set("a", aResult);
 
-                    Object objectGUID = sa.getValue("a", "objectGUID");
+                        Object objectGUID = sa.getValue("a", "objectGUID");
 
-                    SearchResponse gResponse = g.search(
-                        session,
-                        new SimpleFilter("seeAlsoObjectGUID", "=", objectGUID)
-                    );
+                        try {
+                            SearchResponse gResponse = g.search(
+                                session,
+                                new SimpleFilter("seeAlsoObjectGUID", "=", objectGUID)
+                            );
+
+                            while (gResponse.hasNext()) {
+
+                                SearchResult gResult = gResponse.next();
+                                sa.set("g", gResult);
+
+                                Collection<Object> seeAlsoValues = sa.getValues("g", "seeAlso");
+
+                                for (Object seeAlso : seeAlsoValues) {
+
+                                    try {
+                                        SearchResult nResult = n.find(session, (String)seeAlso);
+                                        sa.set("n", nResult);
+
+                                        DN dn = createDn(sa);
+                                        if (debug) log.debug("Found "+dn);
+
+                                        dns.add(dn);
+
+                                    } catch (Exception e) {
+                                        // ignore
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+
+            if (gFilter != null) {
+                if (debug) {
+                    log.debug("################################################################");
+                    log.debug("Search source g with filter "+gFilter);
+                }
+                SourceAttributes sa = new SourceAttributes();
+
+                try {
+                    SearchResponse gResponse = g.search(session, gFilter);
 
                     while (gResponse.hasNext()) {
 
@@ -281,40 +328,8 @@ public class FederationEntry extends DynamicEntry {
                             }
                         }
                     }
-                }
-            }
-
-            if (gFilter != null) {
-                if (debug) {
-                    log.debug("################################################################");
-                    log.debug("Search source g with filter "+gFilter);
-                }
-                SourceAttributes sa = new SourceAttributes();
-
-                SearchResponse gResponse = g.search(session, gFilter);
-
-                while (gResponse.hasNext()) {
-
-                    SearchResult gResult = gResponse.next();
-                    sa.set("g", gResult);
-
-                    Collection<Object> seeAlsoValues = sa.getValues("g", "seeAlso");
-
-                    for (Object seeAlso : seeAlsoValues) {
-
-                        try {
-                            SearchResult nResult = n.find(session, (String)seeAlso);
-                            sa.set("n", nResult);
-
-                            DN dn = createDn(sa);
-                            if (debug) log.debug("Found "+dn);
-
-                            dns.add(dn);
-
-                        } catch (Exception e) {
-                            // ignore
-                        }
-                    }
+                } catch (Exception e) {
+                    // ignore
                 }
             }
 
@@ -325,16 +340,20 @@ public class FederationEntry extends DynamicEntry {
                 }
                 SourceAttributes sa = new SourceAttributes();
 
-                SearchResponse nResponse = n.search(session, nFilter);
+                try {
+                    SearchResponse nResponse = n.search(session, nFilter);
 
-                while (nResponse.hasNext()) {
-                    SearchResult nResult = nResponse.next();
-                    sa.set("n", nResult);
+                    while (nResponse.hasNext()) {
+                        SearchResult nResult = nResponse.next();
+                        sa.set("n", nResult);
 
-                    DN dn = createDn(sa);
-                    if (debug) log.debug("Found "+dn);
+                        DN dn = createDn(sa);
+                        if (debug) log.debug("Found "+dn);
 
-                    dns.add(dn);
+                        dns.add(dn);
+                    }
+                } catch (Exception e) {
+                    // ignore
                 }
             }
 
@@ -359,15 +378,38 @@ public class FederationEntry extends DynamicEntry {
             SearchResult nResult = nResponse.next();
             sa.set("n", nResult);
 
+            if (EntrySourceConfig.IGNORE.equals(gSearch)) {
+                if (debug) log.debug("Source g is ignored.");
+                response.add(createSearchResult(sa));
+                continue;
+            }
+
             Object dn = sa.getValue("n", "dn");
 
-            SearchResponse gResponse = g.search(
-                session,
-                new SimpleFilter("seeAlso", "=", dn)
-            );
+            SearchResponse gResponse;
+            try {
+                gResponse = g.search(
+                    session,
+                    new SimpleFilter("seeAlso", "=", dn)
+                );
+
+            } catch (Exception e) {
+                if (EntrySourceConfig.REQUIRED.equals(gSearch)) {
+                    if (debug) log.debug("Source g is required.");
+                } else {
+                    if (debug) log.debug("Source g is optional.");
+                    response.add(createSearchResult(sa));
+                }
+                continue;
+            }
 
             if (!gResponse.hasNext()) {
-                response.add(createSearchResult(sa));
+                if (EntrySourceConfig.REQUIRED.equals(gSearch)) {
+                    if (debug) log.debug("Source g is required.");
+                } else {
+                    if (debug) log.debug("Source g is optional.");
+                    response.add(createSearchResult(sa));
+                }
                 continue;
             }
 
@@ -375,20 +417,48 @@ public class FederationEntry extends DynamicEntry {
                 SearchResult gResult = gResponse.next();
                 sa.set("g", gResult);
 
-                Object seeAlsoObjectGUID = sa.getValue("g", "seeAlsoObjectGUID");
-
-                if (seeAlsoObjectGUID == null) {
+                if (EntrySourceConfig.IGNORE.equals(aSearch)) {
+                    if (debug) log.debug("Source a is ignored.");
                     response.add(createSearchResult(sa));
                     continue;
                 }
 
-                SearchResponse aResponse = a.search(
-                        session,
-                        new SimpleFilter("objectGUID", "=", seeAlsoObjectGUID)
-                );
+                Object seeAlsoObjectGUID = sa.getValue("g", "seeAlsoObjectGUID");
+
+                if (seeAlsoObjectGUID == null) {
+                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
+                        if (debug) log.debug("Source a is required.");
+                    } else {
+                        if (debug) log.debug("Source a is optional.");
+                        response.add(createSearchResult(sa));
+                    }
+                    continue;
+                }
+
+                SearchResponse aResponse;
+                try {
+                    aResponse = a.search(
+                            session,
+                            new SimpleFilter("objectGUID", "=", seeAlsoObjectGUID)
+                    );
+
+                } catch (Exception e) {
+                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
+                        if (debug) log.debug("Source a is required.");
+                    } else {
+                        if (debug) log.debug("Source a is optional.");
+                        response.add(createSearchResult(sa));
+                    }
+                    continue;
+                }
 
                 if (!aResponse.hasNext()) {
-                    response.add(createSearchResult(sa));
+                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
+                        if (debug) log.debug("Source a is required.");
+                    } else {
+                        if (debug) log.debug("Source a is optional.");
+                        response.add(createSearchResult(sa));
+                    }
                     continue;
                 }
 

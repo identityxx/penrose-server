@@ -37,19 +37,19 @@
 
   <entry dn="uid=...,ou=Users,${SUFFIX}">
     <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
-    <mapping-name>nss</mapping-name>
+    <mapping-name>nss_users</mapping-name>
     <at name="uid" rdn="true">
       <variable>n.uid</variable>
     </at>
     <source name="n">
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>users</source-name>
-      <mapping-name>nss_to_nis</mapping-name>
+      <mapping-name>nss_users_to_nis_users</mapping-name>
     </source>
     <source name="g">
       <partition-name>global</partition-name>
       <source-name>users</source-name>
-      <mapping-name>nss_to_global</mapping-name>
+      <mapping-name>nss_users_to_global_users</mapping-name>
       <field name="seeAlso">
         <variable>n.dn</variable>
       </field>
@@ -57,7 +57,7 @@
     <source name="a" bind="ignore">
       <partition-name>ad</partition-name>
       <source-name>users</source-name>
-      <mapping-name>nss_to_ad</mapping-name>
+      <mapping-name>nss_users_to_ad_users</mapping-name>
       <field name="objectGuid">
         <variable>g.seeAlsoObjectGuid</variable>
       </field>
@@ -73,99 +73,30 @@
 
   <entry dn="cn=...,ou=Groups,${SUFFIX}">
     <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
-    <oc>posixGroup</oc>
+    <mapping-name>nss_groups</mapping-name>
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
-    </at>
-    <at name="cn">
-      <variable>n.cn</variable>
-    </at>
-    <at name="gidNumber">
-      <expression>
-if (n != void &amp;&amp; n != null
-    &amp;&amp; n.gidNumber != void &amp;&amp; n.gidNumber != null
-    &amp;&amp; !n.gidNumber.equals("0")) {
-    return n.gidNumber;
-}
-return g.gidNumber;
-      </expression>
-    </at>
-    <at name="userPassword">
-      <expression>
-if (g != void &amp;&amp; g != null
-    &amp;&amp; g.userPassword != void &amp;&amp; g.userPassword != null
-    &amp;&amp; !g.userPassword.equals("NULL")) {
-    return g.userPassword;
-}
-return n.userPassword;
-      </expression>
-    </at>
-    <at name="memberUid">
-      <expression>
-if (n != void &amp;&amp; n != null
-    &amp;&amp; (n.memberUid == void || n.memberUid == null || !n.memberUid.equals("NULL"))) {
-    return n.memberUid;
-}
-return g.memberUid;
-      </expression>
-    </at>
-    <at name="description">
-      <expression>
-if (n != void &amp;&amp; n != null
-    &amp;&amp; n.description != void &amp;&amp; n.description != null
-    &amp;&amp; !n.description.equals("NULL")) {
-    return n.description;
-}
-return g.description;
-      </expression>
     </at>
     <source name="n">
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>groups</source-name>
+      <mapping-name>nss_groups_to_nis_groups</mapping-name>
       <field name="cn" primaryKey="true">
         <variable>rdn.cn</variable>
-      </field>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="gidNumber">
-        <variable>gidNumber</variable>
-      </field>
-      <field name="userPassword">
-        <variable>userPassword</variable>
-      </field>
-      <field name="memberUid">
-        <variable>memberUid</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
       </field>
     </source>
     <source name="g">
       <partition-name>global</partition-name>
       <source-name>groups</source-name>
+      <mapping-name>nss_groups_to_global_groups</mapping-name>
       <field name="seeAlso">
         <variable>n.dn</variable>
       </field>
-      <field name="cn">
-        <variable>cn</variable>
-      </field>
-      <field name="gidNumber">
-        <variable>gidNumber</variable>
-      </field>
-      <field name="userPassword">
-        <variable>userPassword</variable>
-      </field>
-      <field name="memberUid">
-        <variable>memberUid</variable>
-      </field>
-      <field name="description">
-        <variable>description</variable>
-      </field>
     </source>
-    <source name="a" search="ignore" bind="ignore">
+    <source name="a" bind="ignore">
       <partition-name>ad</partition-name>
       <source-name>groups</source-name>
+      <mapping-name>nss_groups_to_ad_groups</mapping-name>
       <field name="objectGuid">
         <variable>g.seeAlsoObjectGuid</variable>
       </field>

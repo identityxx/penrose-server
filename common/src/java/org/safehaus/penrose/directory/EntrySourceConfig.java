@@ -39,6 +39,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
     public final static String REQUISITE  = "requisite";
     public final static String SUFFICIENT = "sufficient";
     public final static String IGNORE     = "ignore";
+    public final static String OPTIONAL   = "optional";
 
     public final static String FILTER     = "filter";
 
