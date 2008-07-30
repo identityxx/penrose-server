@@ -144,10 +144,9 @@ public class FederationEntry extends DynamicEntry {
             Source source = sourceRef.getSource();
 
             DN globalDn = new DN((String)interpreter.get("g.dn"));
-            DN globalBaseDn = new DN(source.getParameter(LDAPSource.BASE_DN));
 
             BindRequest newRequest = (BindRequest)request.clone();
-            newRequest.setDn(globalDn.getPrefix(globalBaseDn));
+            newRequest.setDn(globalDn);
 
             source.bind(session, newRequest, response);
 
@@ -158,12 +157,11 @@ public class FederationEntry extends DynamicEntry {
         Source source = sourceRef.getSource();
 
         DN nisDn = new DN((String)interpreter.get("n.dn"));
-        DN nisBaseDn = new DN(source.getParameter(LDAPSource.BASE_DN));
 
         log.debug("Binding to NIS Repository.");
 
         BindRequest newRequest = (BindRequest)request.clone();
-        newRequest.setDn(nisDn.getPrefix(nisBaseDn));
+        newRequest.setDn(nisDn);
 
         source.bind(session, newRequest, response);
     }

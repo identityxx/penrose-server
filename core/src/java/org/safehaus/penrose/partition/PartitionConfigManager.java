@@ -152,38 +152,44 @@ public class PartitionConfigManager implements Serializable {
 
         log.debug("Computing load order.");
         
-        Map<String,Collection<String>> dependents = new LinkedHashMap<String,Collection<String>>();
-
-        for (String partitionName : partitionConfigs.keySet()) {
-            dependents.put(partitionName, new LinkedHashSet<String>());
-        }
-
-        for (String partitionName : partitionConfigs.keySet()) {
-            PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
-
-            for (String depend : partitionConfig.getDepends()) {
-                Collection<String> list = dependents.get(depend);
-                if (list == null) {
-                    log.error("Partition not found: "+depend);
-                    throw LDAP.createException(LDAP.OPERATIONS_ERROR);
-                }
-                list.add(partitionName);
-            }
-        }
-
         Collection<String> results = new LinkedHashSet<String>();
-        results.add("DEFAULT");
 
-        Collection<String> visited = new LinkedHashSet<String>();
-        results.add("DEFAULT");
+        try {
+            Map<String,Collection<String>> dependents = new LinkedHashMap<String,Collection<String>>();
 
-        for (String partitionName : partitionConfigs.keySet()) {
-            PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
+            for (String partitionName : partitionConfigs.keySet()) {
+                dependents.put(partitionName, new LinkedHashSet<String>());
+            }
 
-            Collection<String> list = dependents.get(partitionName);
-            if (!list.isEmpty()) continue;
+            for (String partitionName : partitionConfigs.keySet()) {
+                PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
 
-            getLoadOrder(partitionConfig, results, visited);
+                for (String depend : partitionConfig.getDepends()) {
+                    Collection<String> list = dependents.get(depend);
+                    if (list == null) {
+                        log.error("Partition not found: "+depend);
+                        throw LDAP.createException(LDAP.OPERATIONS_ERROR);
+                    }
+                    list.add(partitionName);
+                }
+            }
+    
+            results.add("DEFAULT");
+
+            Collection<String> visited = new LinkedHashSet<String>();
+            results.add("DEFAULT");
+
+            for (String partitionName : partitionConfigs.keySet()) {
+                PartitionConfig partitionConfig = partitionConfigs.get(partitionName);
+
+                Collection<String> list = dependents.get(partitionName);
+                if (!list.isEmpty()) continue;
+
+                getLoadOrder(partitionConfig, results, visited);
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
 
         return results;
