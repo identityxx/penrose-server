@@ -84,14 +84,14 @@ public class JoinTestCase extends JDBCTestCase {
         groups.addAttributeConfig(new EntryAttributeConfig("uniqueMember", EntryAttributeConfig.VARIABLE, "ug.username"));
 
         EntrySourceConfig groupsMapping = new EntrySourceConfig();
-        groupsMapping.setName("g");
+        groupsMapping.setAlias("g");
         groupsMapping.setSourceName("groups");
         groupsMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "cn"));
         groupsMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
         groups.addSourceConfig(groupsMapping);
 
         EntrySourceConfig usergroupsMapping = new EntrySourceConfig();
-        usergroupsMapping.setName("ug");
+        usergroupsMapping.setAlias("ug");
         usergroupsMapping.setSourceName("usergroups");
         usergroupsMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "g.groupname"));
         usergroupsMapping.addFieldConfig(new EntryFieldConfig("username", EntryFieldConfig.VARIABLE, "uniqueMember"));

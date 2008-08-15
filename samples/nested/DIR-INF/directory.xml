@@ -52,7 +52,7 @@ return u.firstName+" "+u.lastName;
     <at name="sn">
       <variable>u.lastName</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <variable>uid</variable>
@@ -88,7 +88,7 @@ return cn.substring(i+1);
 return "uid="+username+",ou=Users,dc=Nested,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="ug">
+    <source alias="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
         <variable>cn</variable>
@@ -97,13 +97,13 @@ return "uid="+username+",ou=Users,dc=Nested,dc=Example,dc=com";
         <variable>u.username</variable>
       </field>
     </source>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>ug.groupname</variable>
       </field>
     </source>
-    <source name="ug2">
+    <source alias="ug2">
       <source-name>usergroups</source-name>
       <field name="groupname">
         <variable>g.groupname</variable>
@@ -136,13 +136,13 @@ return um.substring(i+1, j);
 return "uid="+username+",ou=Users,dc=Nested,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
     </source>
-    <source name="ug">
+    <source alias="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
         <variable>g.groupname</variable>
@@ -173,7 +173,7 @@ return u.firstName+" "+u.lastName;
     <at name="sn">
       <variable>u.lastName</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <variable>ug.username</variable>

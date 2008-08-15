@@ -13,6 +13,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.source.SourceClient;
 
 import java.util.Collection;
 

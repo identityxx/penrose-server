@@ -1,9 +1,6 @@
 package org.safehaus.penrose.management.service;
 
-import org.safehaus.penrose.service.ServiceConfig;
-import org.safehaus.penrose.service.ServiceConfigManager;
-import org.safehaus.penrose.service.ServiceManager;
-import org.safehaus.penrose.service.ServiceWriter;
+import org.safehaus.penrose.service.*;
 import org.safehaus.penrose.util.FileUtil;
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;

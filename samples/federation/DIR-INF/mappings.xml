@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mappings PUBLIC
+  "-//Penrose/DTD Mappings ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mappings.dtd">
+
+<mappings>
+
+  <mapping name="users">
+    <pre>
+if (n == void || n == null) return;
+if (n.gecos == void || n.gecos == null) return;
+if (n.cn == void || n.cn == null) n.cn = n.gecos;
+    </pre>
+    <field name="objectClass">
+      <constant>posixAccount</constant>
+    </field>
+    <field name="objectClass">
+      <constant>shadowAccount</constant>
+    </field>
+    <field name="uid">
+      <variable>n.uid</variable>
+    </field>
+    <field name="userPassword" required="false">
+      <condition>!n.userPassword.equals("NULL")</condition>
+      <variable>n.userPassword</variable>
+    </field>
+    <field name="userPassword" required="false">
+      <condition>!g.userPassword.equals("NULL")</condition>
+      <variable>g.userPassword</variable>
+    </field>
+    <field name="gecos" required="false">
+      <condition>!n.gecos.equals("NULL")</condition>
+      <variable>n.gecos</variable>
+    </field>
+    <field name="gecos" required="false">
+      <condition>!g.gecos.equals("NULL")</condition>
+      <variable>g.gecos</variable>
+    </field>
+    <field name="uidNumber" required="false">
+      <condition>!n.uidNumber.equals("0")</condition>
+      <variable>n.uidNumber</variable>
+    </field>
+    <field name="uidNumber" required="false">
+      <condition>!g.uidNumber.equals("0")</condition>
+      <variable>g.uidNumber</variable>
+    </field>
+    <field name="loginShell" required="false">
+      <condition>!n.loginShell.equals("NULL")</condition>
+      <variable>n.loginShell</variable>
+    </field>
+    <field name="loginShell" required="false">
+      <condition>!g.loginShell.equals("NULL")</condition>
+      <variable>g.loginShell</variable>
+    </field>
+    <field name="homeDirectory" required="false">
+      <condition>!n.homeDirectory.equals("NULL")</condition>
+      <variable>n.homeDirectory</variable>
+    </field>
+    <field name="homeDirectory" required="false">
+      <condition>!g.homeDirectory.equals("NULL")</condition>
+      <variable>g.homeDirectory</variable>
+    </field>
+    <field name="gidNumber" required="false">
+      <condition>!n.gidNumber.equals("0")</condition>
+      <variable>n.gidNumber</variable>
+    </field>
+    <field name="gidNumber" required="false">
+      <condition>!g.gidNumber.equals("0")</condition>
+      <variable>g.gidNumber</variable>
+    </field>
+    <field name="cn" required="false">
+      <condition>!n.cn.equals("NULL")</condition>
+      <variable>n.cn</variable>
+    </field>
+    <field name="cn" required="false">
+      <condition>!g.cn.equals("NULL")</condition>
+      <variable>g.cn</variable>
+    </field>
+    <field name="description">
+     <condition>!n.description.equals("NULL")</condition>
+      <variable>n.description</variable>
+    </field>
+    <field name="description">
+     <condition>!g.description.equals("NULL")</condition>
+      <variable>g.description</variable>
+    </field>
+    <field name="shadowLastChange">
+      <variable>n.shadowLastChange</variable>
+    </field>
+    <field name="shadowMin">
+      <variable>n.shadowMin</variable>
+    </field>
+    <field name="shadowMax">
+      <variable>n.shadowMax</variable>
+    </field>
+    <field name="shadowWarning">
+      <variable>n.shadowWarning</variable>
+    </field>
+    <field name="shadowInactive">
+      <variable>n.shadowInactive</variable>
+    </field>
+    <field name="shadowExpire">
+      <variable>n.shadowExpire</variable>
+    </field>
+    <field name="shadowFlag">
+      <variable>n.shadowFlag</variable>
+    </field>
+  </mapping>
+
+  <mapping name="users_to_nis_users">
+    <field name="uid">
+      <variable>uid</variable>
+    </field>
+    <field name="gecos">
+      <variable>gecos</variable>
+    </field>
+    <field name="uidNumber">
+      <variable>uidNumber</variable>
+    </field>
+    <field name="loginShell">
+      <variable>loginShell</variable>
+    </field>
+    <field name="homeDirectory">
+      <variable>homeDirectory</variable>
+    </field>
+    <field name="gidNumber">
+      <variable>gidNumber</variable>
+    </field>
+    <field name="cn">
+      <variable>cn</variable>
+    </field>
+    <field name="description">
+      <variable>description</variable>
+    </field>
+    <field name="shadowLastChange">
+      <variable>shadowLastChange</variable>
+    </field>
+    <field name="shadowMin">
+      <variable>shadowMin</variable>
+    </field>
+    <field name="shadowMax">
+      <variable>shadowMax</variable>
+    </field>
+    <field name="shadowWarning">
+      <variable>shadowWarning</variable>
+    </field>
+    <field name="shadowInactive">
+      <variable>shadowInactive</variable>
+    </field>
+    <field name="shadowExpire">
+      <variable>shadowExpire</variable>
+    </field>
+    <field name="shadowFlag">
+      <variable>shadowFlag</variable>
+    </field>
+  </mapping>
+
+  <mapping name="users_to_global_users">
+    <field name="gecos">
+      <variable>gecos</variable>
+    </field>
+    <field name="uidNumber">
+      <variable>uidNumber</variable>
+    </field>
+    <field name="loginShell">
+      <variable>loginShell</variable>
+    </field>
+    <field name="homeDirectory">
+      <variable>homeDirectory</variable>
+    </field>
+    <field name="gidNumber">
+      <variable>gidNumber</variable>
+    </field>
+    <field name="cn">
+      <variable>cn</variable>
+    </field>
+    <field name="description">
+      <variable>description</variable>
+    </field>
+  </mapping>
+
+</mappings>

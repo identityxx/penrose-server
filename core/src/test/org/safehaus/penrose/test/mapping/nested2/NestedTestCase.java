@@ -86,7 +86,7 @@ public class NestedTestCase extends JDBCTestCase {
         groups.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "p.description"));
 
         EntrySourceConfig groupsMapping = new EntrySourceConfig();
-        groupsMapping.setName("p");
+        groupsMapping.setAlias("p");
         groupsMapping.setSourceName("parents");
         groupsMapping.addFieldConfig(new EntryFieldConfig("parentname", EntryFieldConfig.VARIABLE, "cn"));
         groupsMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));
@@ -102,7 +102,7 @@ public class NestedTestCase extends JDBCTestCase {
         members.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "c.description"));
 
         EntrySourceConfig membersMapping = new EntrySourceConfig();
-        membersMapping.setName("c");
+        membersMapping.setAlias("c");
         membersMapping.setSourceName("children");
         membersMapping.addFieldConfig(new EntryFieldConfig("parentname", EntryFieldConfig.VARIABLE, "p.parentname"));
         membersMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));

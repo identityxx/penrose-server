@@ -46,7 +46,7 @@ public class EntryField implements Cloneable {
 
         if (variable != null && variable.indexOf('.') < 0) {
 
-            EntryAttributeConfig attributeMapping = entry.getAttributeMapping(variable);
+            EntryAttributeConfig attributeMapping = entry.getAttributeConfig(variable);
 
             if (attributeMapping != null) {
                 primaryKey = attributeMapping.isRdn();

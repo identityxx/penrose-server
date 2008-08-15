@@ -44,14 +44,52 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
 
     public Logger log = Logger.getLogger(getClass());
 
-    private PenroseJMXService jmxService;
-    private PenroseServer penroseServer;
+    protected PenroseJMXService jmxService;
+    protected PenroseServer penroseServer;
+
+    protected SchemaManagerService schemaManagerService;
+    protected PartitionManagerService partitionManagerService;
+    protected ServiceManagerService serviceManagerService;
 
     public PenroseService(PenroseJMXService jmxService, PenroseServer penroseServer) throws Exception {
         super(PenroseServiceMBean.class);
         
         this.jmxService = jmxService;
         this.penroseServer = penroseServer;
+    }
+
+    public void init() throws Exception {
+
+        jmxService.register(getObjectName(), this);
+
+        Penrose penrose = penroseServer.getPenrose();
+
+        SchemaManager schemaManager = penrose.getSchemaManager();
+
+        schemaManagerService = new SchemaManagerService(jmxService, schemaManager);
+        schemaManagerService.init();
+        schemaManagerService.register();
+
+        PartitionManager partitionManager = penrose.getPartitionManager();
+
+        partitionManagerService = new PartitionManagerService(jmxService, partitionManager);
+        partitionManagerService.init();
+        partitionManagerService.register();
+
+        ServiceManager serviceManager = penroseServer.getServiceManager();
+
+        serviceManagerService = new ServiceManagerService(jmxService, serviceManager);
+        serviceManagerService.init();
+        serviceManagerService.register();
+    }
+
+    public void destroy() throws Exception {
+
+        serviceManagerService.unregister();
+        partitionManagerService.unregister();
+        schemaManagerService.unregister();
+
+        jmxService.unregister(getObjectName());
     }
 
     public PenroseService(String home) throws Exception {
@@ -163,14 +201,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     ////////////////////////////////////////////////////////////////////////////////
 
     public SchemaManagerService getSchemaManagerService() throws Exception {
-
-        Penrose penrose = penroseServer.getPenrose();
-        SchemaManager schemaManager = penrose.getSchemaManager();
-
-        SchemaManagerService service = new SchemaManagerService(jmxService, schemaManager);
-        service.init();
-
-        return service;
+        return schemaManagerService;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -178,14 +209,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     ////////////////////////////////////////////////////////////////////////////////
 
     public PartitionManagerService getPartitionManagerService() throws Exception {
-
-        Penrose penrose = penroseServer.getPenrose();
-        PartitionManager partitionManager = penrose.getPartitionManager();
-
-        PartitionManagerService service = new PartitionManagerService(jmxService, partitionManager);
-        service.init();
-
-        return service;
+        return partitionManagerService;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -193,13 +217,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     ////////////////////////////////////////////////////////////////////////////////
 
     public ServiceManagerService getServiceManagerService() throws Exception {
-
-        ServiceManager serviceManager = penroseServer.getServiceManager();
-
-        ServiceManagerService service = new ServiceManagerService(jmxService, serviceManager);
-        service.init();
-
-        return service;
+        return serviceManagerService;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -329,32 +347,5 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
 
     public void setJmxService(PenroseJMXService jmxService) {
         this.jmxService = jmxService;
-    }
-
-    public void register() throws Exception {
-        jmxService.register(getObjectName(), this);
-
-        SchemaManagerService schemaManagerService = getSchemaManagerService();
-        schemaManagerService.register();
-
-        PartitionManagerService partitionManagerService = getPartitionManagerService();
-        partitionManagerService.register();
-
-        ServiceManagerService serviceManagerService = getServiceManagerService();
-        serviceManagerService.register();
-    }
-
-    public void unregister() throws Exception {
-
-        ServiceManagerService serviceManagerService = getServiceManagerService();
-        serviceManagerService.unregister();
-
-        PartitionManagerService partitionManagerService = getPartitionManagerService();
-        partitionManagerService.unregister();
-
-        SchemaManagerService schemaManagerService = getSchemaManagerService();
-        schemaManagerService.unregister();
-
-        jmxService.unregister(getObjectName());
     }
 }

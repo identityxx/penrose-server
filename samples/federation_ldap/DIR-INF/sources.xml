@@ -9,7 +9,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${SUFFIX}</param-value>
+      <param-value>${LDAP_SUFFIX}</param-value>
     </parameter>
   </source>
     
@@ -47,7 +47,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${SUFFIX}</param-value>
+      <param-value>${LDAP_SUFFIX}</param-value>
     </parameter>
   </source>
 
@@ -65,7 +65,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${SUFFIX}</param-value>
+      <param-value>${LDAP_SUFFIX}</param-value>
     </parameter>
   </source>
 

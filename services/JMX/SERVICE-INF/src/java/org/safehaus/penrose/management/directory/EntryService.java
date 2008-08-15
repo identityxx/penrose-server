@@ -3,6 +3,7 @@ package org.safehaus.penrose.management.directory;
 import org.safehaus.penrose.directory.DirectoryConfig;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
+import org.safehaus.penrose.directory.EntryClient;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;

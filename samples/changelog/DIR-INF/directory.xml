@@ -55,7 +55,7 @@ return u.firstName+" "+u.lastName;
     <at name="userPassword">
       <variable>u.password</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <variable>uid</variable>
@@ -101,13 +101,13 @@ return cn.substring(i+1);
 return "uid="+username+",ou=Users,dc=JDBC,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
     </source>
-    <source name="ug">
+    <source alias="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
         <variable>g.groupname</variable>
@@ -161,7 +161,7 @@ return um.substring(i+1, j);
     <at name="newSuperior">
       <variable>cl.newSuperior</variable>
     </at>
-    <source name="cl">
+    <source alias="cl">
       <source-name>changelog</source-name>
       <field name="changeNumber">
         <variable>changeNumber</variable>

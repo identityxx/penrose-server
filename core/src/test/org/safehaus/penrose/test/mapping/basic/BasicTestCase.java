@@ -77,7 +77,7 @@ public class BasicTestCase extends JDBCTestCase {
         groups.addAttributeConfig(new EntryAttributeConfig("description", EntryAttributeConfig.VARIABLE, "g.description"));
 
         EntrySourceConfig sourceMapping = new EntrySourceConfig();
-        sourceMapping.setName("g");
+        sourceMapping.setAlias("g");
         sourceMapping.setSourceName("groups");
         sourceMapping.addFieldConfig(new EntryFieldConfig("groupname", EntryFieldConfig.VARIABLE, "cn"));
         sourceMapping.addFieldConfig(new EntryFieldConfig("description", EntryFieldConfig.VARIABLE, "description"));

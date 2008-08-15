@@ -739,7 +739,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         //log.debug("Computing RDNs:");
         Attributes attributes = new Attributes();
 
-        Collection<EntryAttributeConfig> rdnAttributes = getRdnAttributeMappings();
+        Collection<EntryAttributeConfig> rdnAttributes = getRdnAttributeConfigs();
         for (EntryAttributeConfig attributeMapping : rdnAttributes) {
             String name = attributeMapping.getName();
 
@@ -821,7 +821,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         EntrySourceConfig sourceMapping = getSourceMapping(sourceRef.getAlias());
 
-        Attributes attributes = sourceValues.get(sourceMapping.getName());
+        Attributes attributes = sourceValues.get(sourceMapping.getAlias());
 
         for (EntryField fieldRef : sourceRef.getFields()) {
             String name = fieldRef.getName();
@@ -882,7 +882,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
-        if (debug) log.debug("Propagating source "+sourceMapping.getName()+" in "+getDn()+":");
+        if (debug) log.debug("Propagating source "+sourceMapping.getAlias()+" in "+getDn()+":");
 
         interpreter.set(sourceValues);
 
@@ -907,7 +907,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             Interpreter interpreter
     ) throws Exception {
 
-        String lsourceName = sourceMapping.getName();
+        String lsourceName = sourceMapping.getAlias();
 
         String lfieldName;
         if (fieldMapping.isPrimaryKey()) {

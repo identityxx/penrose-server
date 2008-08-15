@@ -1,4 +1,0 @@
-attributetype ( 1.2.840.113556.1.4.2 NAME 'seeAlsoObjectGUID'
-	DESC 'Object GUID of related object'
-	EQUALITY octetStringMatch
-	SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )

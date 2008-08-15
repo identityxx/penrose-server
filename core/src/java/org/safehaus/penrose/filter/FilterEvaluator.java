@@ -203,7 +203,7 @@ public class FilterEvaluator {
             return entry.containsObjectClass(attributeValue.toString());
         }
 
-        EntryAttributeConfig attributeMapping = entry.getAttributeMapping(attributeName);
+        EntryAttributeConfig attributeMapping = entry.getAttributeConfig(attributeName);
         if (attributeMapping == null) return false;
 
         Object value = attributeMapping.getConstant();
@@ -242,14 +242,14 @@ public class FilterEvaluator {
 
         if (attributeName.equalsIgnoreCase("objectclass")) return true;
 
-        return entry.getAttributeMapping(attributeName) != null;
+        return entry.getAttributeConfig(attributeName) != null;
     }
 
     public boolean eval(Entry entry, SubstringFilter filter) throws Exception {
         String attributeName = filter.getAttribute();
         Collection<Object> substrings = filter.getSubstrings();
 
-        EntryAttributeConfig attributeMapping = entry.getAttributeMapping(attributeName);
+        EntryAttributeConfig attributeMapping = entry.getAttributeConfig(attributeName);
         if (attributeMapping == null) return false;
 
         Object value = attributeMapping.getConstant();

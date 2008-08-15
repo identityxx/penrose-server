@@ -70,7 +70,7 @@ return "{crypt}"+u.userPassword;
     <at name="description">
       <variable>u.description</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -136,7 +136,7 @@ return bytes;
     <at name="memberUid">
       <variable>g.memberUid</variable>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -170,7 +170,7 @@ return bytes;
     <at name="ipHostNumber">
       <variable>h.ipHostNumber</variable>
     </at>
-    <source name="h">
+    <source alias="h">
       <source-name>hosts</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -206,7 +206,7 @@ return bytes;
     <at name="description">
       <variable>s.description</variable>
     </at>
-    <source name="s">
+    <source alias="s">
       <source-name>services</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -245,7 +245,7 @@ return bytes;
     <at name="description">
       <variable>r.description</variable>
     </at>
-    <source name="r">
+    <source alias="r">
       <source-name>rpcs</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -281,7 +281,7 @@ return bytes;
     <at name="nisNetIdHost">
       <variable>n.nisNetIdHost</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>netids</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -320,7 +320,7 @@ return bytes;
     <at name="description">
       <variable>p.description</variable>
     </at>
-    <source name="p">
+    <source alias="p">
       <source-name>protocols</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -350,7 +350,7 @@ return bytes;
     <at name="rfc822mailMember">
       <variable>a.rfc822mailMember</variable>
     </at>
-    <source name="a">
+    <source alias="a">
       <source-name>aliases</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -383,7 +383,7 @@ return bytes;
     <at name="description">
       <variable>n.description</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>netgroups</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -417,7 +417,7 @@ return bytes;
     <at name="macAddress">
       <variable>e.macAddress</variable>
     </at>
-    <source name="e">
+    <source alias="e">
       <source-name>ethers</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -448,7 +448,7 @@ return bytes;
     <at name="bootParameter">
       <variable>b.bootParameter</variable>
     </at>
-    <source name="b">
+    <source alias="b">
       <source-name>bootparams</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -481,7 +481,7 @@ return bytes;
     <at name="ipNetworkNumber">
       <variable>n.ipNetworkNumber</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>networks</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -523,7 +523,7 @@ return bytes;
     <at name="bootParameter">
       <variable>b.bootParameter</variable>
     </at>
-    <source name="h">
+    <source alias="h">
       <source-name>hosts</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -532,7 +532,7 @@ return bytes;
         <variable>ipHostNumber</variable>
       </field>
     </source>
-    <source name="e">
+    <source alias="e">
       <source-name>ethers</source-name>
       <field name="cn">
         <variable>h.cn</variable>
@@ -541,7 +541,7 @@ return bytes;
         <variable>macAddress</variable>
       </field>
     </source>
-    <source name="b">
+    <source alias="b">
       <source-name>bootparams</source-name>
       <field name="cn">
         <variable>h.cn</variable>

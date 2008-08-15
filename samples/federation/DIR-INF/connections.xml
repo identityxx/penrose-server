@@ -4,25 +4,21 @@
   "http://penrose.safehaus.org/dtd/connections.dtd">
 
 <connections>
-<!--
-  <connection name="JDBC">
-    <adapter-name>JDBC</adapter-name>
+
+  <connection name="LDAP">
+    <adapter-name>LDAP</adapter-name>
     <parameter>
-      <param-name>driver</param-name>
-      <param-value>${DRIVER}</param-value>
+      <param-name>java.naming.provider.url</param-name>
+      <param-value>ldap://localhost/</param-value>
     </parameter>
     <parameter>
-      <param-name>url</param-name>
-      <param-value>jdbc:mysql://${SERVER}:${PORT}/?autoReconnect=true</param-value>
+      <param-name>java.naming.security.principal</param-name>
+      <param-value>cn=Manager,dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
-      <param-name>user</param-name>
-      <param-value>${USER}</param-value>
-    </parameter>
-    <parameter>
-      <param-name>password</param-name>
-      <param-value>${PASSWORD}</param-value>
+      <param-name>java.naming.security.credentials</param-name>
+      <param-value>secret</param-value>
     </parameter>
   </connection>
--->
+
 </connections>

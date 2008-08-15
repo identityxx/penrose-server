@@ -45,8 +45,7 @@ public class PartitionFactory {
         PartitionContext partitionContext = new PartitionContext();
 
         if (partitionConfig instanceof DefaultPartitionConfig) {
-            File home = penroseContext.getHome();
-            partitionContext.setPath(home == null ? null : new File(home, "conf"));
+            partitionContext.setPath(null);
         } else {
             partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
         }

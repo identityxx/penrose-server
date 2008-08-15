@@ -11,7 +11,7 @@ public class SourceMappingTest extends TestCase {
 
     public void testClone() throws Exception {
         EntrySourceConfig s1 = new EntrySourceConfig();
-        s1.setName("name");
+        s1.setAlias("name");
         s1.setSourceName("sourceName");
         s1.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.CONSTANT, "value"));
         s1.setParameter("name", "value");
@@ -24,7 +24,7 @@ public class SourceMappingTest extends TestCase {
         s1.setSearch(EntrySourceConfig.REQUIRED);
 
         EntrySourceConfig s2 = (EntrySourceConfig)s1.clone();
-        assertEquals(s1.getName(), s2.getName());
+        assertEquals(s1.getAlias(), s2.getAlias());
         assertEquals(s1.getSourceName(), s2.getSourceName());
         assertEquals(s1.isReadOnly(), s2.isReadOnly());
         assertEquals(s1.getAdd(), s2.getAdd());
@@ -45,7 +45,7 @@ public class SourceMappingTest extends TestCase {
 
     public void testEquals() {
         EntrySourceConfig s1 = new EntrySourceConfig();
-        s1.setName("name");
+        s1.setAlias("name");
         s1.setSourceName("sourceName");
         s1.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.CONSTANT, "value"));
         s1.setParameter("name", "value");
@@ -58,7 +58,7 @@ public class SourceMappingTest extends TestCase {
         s1.setSearch(EntrySourceConfig.REQUIRED);
 
         EntrySourceConfig s2 = new EntrySourceConfig();
-        s2.setName("name");
+        s2.setAlias("name");
         s2.setSourceName("sourceName");
         s2.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.CONSTANT, "value"));
         s2.setParameter("name", "value");

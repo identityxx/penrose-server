@@ -104,4 +104,4 @@ exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
 -Dpenrose.home="$PENROSE_AGENT_HOME" \
-org.safehaus.penrose.management.nis.NISSyncClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.nis.NISSyncClient $PENROSE_ARGS "$@"

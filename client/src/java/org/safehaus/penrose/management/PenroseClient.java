@@ -20,9 +20,9 @@ package org.safehaus.penrose.management;
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.management.partition.PartitionManagerClient;
-import org.safehaus.penrose.management.schema.SchemaManagerClient;
-import org.safehaus.penrose.management.service.ServiceManagerClient;
+import org.safehaus.penrose.partition.PartitionManagerClient;
+import org.safehaus.penrose.schema.SchemaManagerClient;
+import org.safehaus.penrose.service.ServiceManagerClient;
 import org.safehaus.penrose.user.UserConfig;
 
 import javax.management.Attribute;

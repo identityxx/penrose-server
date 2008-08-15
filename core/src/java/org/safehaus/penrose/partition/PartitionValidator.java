@@ -273,7 +273,7 @@ public class PartitionValidator {
         for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
             //log.debug("Validating entry "+entryConfig"'s sourceMapping "+sourceMapping.getName());
 
-            String alias = sourceMapping.getName();
+            String alias = sourceMapping.getAlias();
             if (alias == null || "".equals(alias)) {
                 results.add(new PartitionValidationResult(PartitionValidationResult.ERROR, "Missing source alias.", entryConfig.getDn(), entryConfig));
                 continue;

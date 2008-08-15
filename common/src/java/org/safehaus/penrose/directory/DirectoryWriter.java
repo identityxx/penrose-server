@@ -175,7 +175,8 @@ public class DirectoryWriter {
     public Element createElement(EntrySourceConfig sourceConfig) throws Exception {
         Element element = new DefaultElement("source");
 
-        element.add(new DefaultAttribute("name", sourceConfig.getName()));
+        element.add(new DefaultAttribute("alias", sourceConfig.getAlias()));
+        
         if (sourceConfig.isReadOnly()) element.add(new DefaultAttribute("readOnly", "true"));
 
         if (sourceConfig.getSearch() != null) {

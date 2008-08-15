@@ -55,7 +55,7 @@
     <at name="userPassword">
       <variable>u.userPassword</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -99,7 +99,7 @@
     <at name="userPassword">
       <variable>u.userPassword</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -142,7 +142,7 @@ int j=um.indexOf(",");
 return "uid="+um.substring(i+1, j)+",ou=Users,dc=LDAP,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -180,7 +180,7 @@ int j=um.indexOf(",");
 return "uid="+um.substring(i+1, j)+",ou=Users,dc=LDAP,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>

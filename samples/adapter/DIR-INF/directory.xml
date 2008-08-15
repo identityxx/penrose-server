@@ -52,7 +52,7 @@
     <at name="userPassword">
       <variable>u.userPassword</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>

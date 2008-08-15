@@ -6,9 +6,9 @@ import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.module.ModuleClient;
-import org.safehaus.penrose.management.partition.PartitionClient;
-import org.safehaus.penrose.management.partition.PartitionManagerClient;
+import org.safehaus.penrose.module.ModuleClient;
+import org.safehaus.penrose.partition.PartitionClient;
+import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.lockout.Lock;
 
 import java.io.File;

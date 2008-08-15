@@ -151,7 +151,7 @@ public class Entry implements Cloneable {
         String partitionName = sourceConfig.getPartitionName();
         String sourceName = sourceConfig.getSourceName();
 
-        log.debug("Initializing source reference "+sourceConfig.getName()+": "+partitionName+"."+sourceName);
+        log.debug("Initializing source reference "+sourceConfig.getAlias()+": "+partitionName+"."+sourceName);
 
         Partition sourcePartition;
 
@@ -274,7 +274,7 @@ public class Entry implements Cloneable {
 
     public String getPrimarySourceName() {
 
-        for (EntryAttributeConfig rdnAttributeMapping : getRdnAttributeMappings()) {
+        for (EntryAttributeConfig rdnAttributeMapping : getRdnAttributeConfigs()) {
 
             String variable = rdnAttributeMapping.getVariable();
             if (variable == null) continue;
@@ -288,7 +288,7 @@ public class Entry implements Cloneable {
         Collection<EntrySourceConfig> sourceMappings = getSourceMappings();
         if (!sourceMappings.isEmpty()) {
             EntrySourceConfig sourceMapping = sourceMappings.iterator().next();
-            return sourceMapping.getName();
+            return sourceMapping.getAlias();
         }
         
         return null;
@@ -360,11 +360,11 @@ public class Entry implements Cloneable {
         return entryConfig.getAttributeConfigs();
     }
 
-    public EntryAttributeConfig getAttributeMapping(String attributeName) {
+    public EntryAttributeConfig getAttributeConfig(String attributeName) {
         return entryConfig.getAttributeConfig(attributeName);
     }
 
-    public Collection<EntryAttributeConfig> getRdnAttributeMappings() {
+    public Collection<EntryAttributeConfig> getRdnAttributeConfigs() {
         return entryConfig.getRdnAttributeConfigs();
     }
 

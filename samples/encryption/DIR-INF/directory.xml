@@ -63,7 +63,7 @@ byte[] bytes = BinaryUtil.decode("BigInteger", u.encPassword);
 return "{SHA-512}"+BinaryUtil.encode("Base64", bytes);
       </expression>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <variable>uid</variable>
@@ -127,13 +127,13 @@ return BinaryUtil.encode("BigInteger", bytes);
 return "uid="+username+",ou=Users,dc=Encryption,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
     </source>
-    <source name="ug">
+    <source alias="ug">
       <source-name>usergroups</source-name>
       <field name="groupname">
         <variable>g.groupname</variable>

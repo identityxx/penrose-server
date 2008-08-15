@@ -2,10 +2,7 @@ package org.safehaus.penrose.management.schema;
 
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
-import org.safehaus.penrose.schema.Schema;
-import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.ObjectClass;
+import org.safehaus.penrose.schema.*;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -113,7 +113,7 @@ return null;
     <at name="shadowFlag">
       <variable>s.shadowFlag</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>posixAccount</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -161,7 +161,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="s">
+    <source alias="s">
       <source-name>shadowAccount</source-name>
       <field name="uid">
         <variable>u.uid</variable>
@@ -239,7 +239,7 @@ return bytes;
     <at name="description">
       <variable>g.description</variable>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>posixGroup</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -254,7 +254,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="ug">
+    <source alias="ug">
       <source-name>posixGroup_memberUid</source-name>
       <field name="cn">
         <variable>g.cn</variable>
@@ -306,7 +306,7 @@ return bytes;
     <at name="ipHostNumber">
       <variable>h.ipHostNumber</variable>
     </at>
-    <source name="d">
+    <source alias="d">
       <source-name>device</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -333,7 +333,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="h">
+    <source alias="h">
       <source-name>ipHost</source-name>
       <field name="cn">
         <variable>d.cn</variable>
@@ -342,7 +342,7 @@ return bytes;
         <variable>ipHostNumber</variable>
       </field>
     </source>
-    <source name="hc">
+    <source alias="hc">
       <source-name>ipHost_alias</source-name>
       <field name="cn">
         <variable>h.cn</variable>
@@ -391,7 +391,7 @@ return bytes;
     <at name="macAddress">
       <variable>e.macAddress</variable>
     </at>
-    <source name="d">
+    <source alias="d">
       <source-name>device</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -418,7 +418,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="e">
+    <source alias="e">
       <source-name>ieee802Device</source-name>
       <field name="cn">
         <variable>d.cn</variable>
@@ -460,7 +460,7 @@ return bytes;
     <at name="manager">
       <variable>n.manager</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>ipNetwork</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -481,7 +481,7 @@ return bytes;
         <variable>manager</variable>
       </field>
     </source>
-    <source name="nc">
+    <source alias="nc">
       <source-name>ipNetwork_alias</source-name>
       <field name="cn">
         <variable>n.cn</variable>
@@ -517,7 +517,7 @@ return bytes;
     <at name="description">
       <variable>s.description</variable>
     </at>
-    <source name="s">
+    <source alias="s">
       <source-name>ipService</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -532,7 +532,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="sc">
+    <source alias="sc">
       <source-name>ipService_alias</source-name>
       <field name="cn">
         <variable>s.cn</variable>
@@ -568,7 +568,7 @@ return bytes;
     <at name="description">
       <variable>p.description</variable>
     </at>
-    <source name="p">
+    <source alias="p">
       <source-name>ipProtocol</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -580,7 +580,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="pc">
+    <source alias="pc">
       <source-name>ipProtocol_alias</source-name>
       <field name="cn">
         <variable>p.cn</variable>
@@ -613,7 +613,7 @@ return bytes;
     <at name="description">
       <variable>r.description</variable>
     </at>
-    <source name="r">
+    <source alias="r">
       <source-name>oncRpc</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -625,7 +625,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="rc">
+    <source alias="rc">
       <source-name>oncRpc_alias</source-name>
       <field name="cn">
         <variable>r.cn</variable>
@@ -658,7 +658,7 @@ return bytes;
     <at name="description">
       <variable>n.description</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>nisNetgroup</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -667,7 +667,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="nn">
+    <source alias="nn">
       <source-name>nisNetgroup_nisNetgroupTriple</source-name>
       <field name="cn">
         <variable>n.cn</variable>
@@ -676,7 +676,7 @@ return bytes;
         <variable>nisNetgroupTriple</variable>
       </field>
     </source>
-    <source name="nm">
+    <source alias="nm">
       <source-name>nisNetgroup_memberNisNetgroup</source-name>
       <field name="cn">
         <variable>n.cn</variable>
@@ -703,7 +703,7 @@ return bytes;
     <at name="description">
       <variable>am.description</variable>
     </at>
-    <source name="am">
+    <source alias="am">
       <source-name>automountMap</source-name>
       <field name="automountMapName">
         <variable>nisMapName</variable>
@@ -729,7 +729,7 @@ return bytes;
     <at name="description">
        <variable>a.description</variable>
     </at>
-    <source name="a">
+    <source alias="a">
       <source-name>automount</source-name>
       <field name="automountMapName">
         <variable>am.automountMapName</variable>

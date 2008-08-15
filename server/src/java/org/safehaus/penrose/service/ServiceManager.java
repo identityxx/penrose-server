@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * @author Endi S. Dewata
  */
-public class ServiceManager implements ServicesMBean {
+public class ServiceManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 

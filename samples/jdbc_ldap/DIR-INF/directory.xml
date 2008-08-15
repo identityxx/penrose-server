@@ -52,7 +52,7 @@
     <at name="userPassword">
       <variable>ju.password</variable>
     </at>
-    <source name="ju">
+    <source alias="ju">
       <source-name>jdbc_users</source-name>
       <field name="username">
         <variable>uid</variable>
@@ -61,7 +61,7 @@
         <variable>userPassword</variable>
       </field>
     </source>
-    <source name="lu">
+    <source alias="lu">
       <source-name>ldap_users</source-name>
       <field name="uid">
         <variable>ju.username</variable>
@@ -95,13 +95,13 @@ int j=um.indexOf(",");
 return "uid="+um.substring(i+1, j)+",ou=Users,dc=JDBC-LDAP,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="jg">
+    <source alias="jg">
       <source-name>jdbc_groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
     </source>
-    <source name="lg">
+    <source alias="lg">
       <source-name>ldap_groups</source-name>
       <field name="cn">
         <variable>jg.groupname</variable>

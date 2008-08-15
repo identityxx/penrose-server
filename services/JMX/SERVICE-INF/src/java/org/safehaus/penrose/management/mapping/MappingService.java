@@ -5,6 +5,7 @@ import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingConfig;
 import org.safehaus.penrose.mapping.MappingManager;
+import org.safehaus.penrose.mapping.MappingClient;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;

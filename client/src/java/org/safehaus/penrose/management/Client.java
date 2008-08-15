@@ -5,13 +5,13 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.service.ServiceConfig;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.management.partition.PartitionManagerClient;
-import org.safehaus.penrose.management.partition.PartitionClient;
-import org.safehaus.penrose.management.service.ServiceClient;
-import org.safehaus.penrose.management.service.ServiceManagerClient;
+import org.safehaus.penrose.partition.PartitionClient;
+import org.safehaus.penrose.service.ServiceClient;
+import org.safehaus.penrose.service.ServiceManagerClient;
 
 import java.util.*;
 import java.io.File;

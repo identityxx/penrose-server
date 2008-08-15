@@ -6,6 +6,7 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.scheduler.Job;
 import org.safehaus.penrose.scheduler.Scheduler;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
+import org.safehaus.penrose.scheduler.SchedulerClient;
 import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.slf4j.Logger;

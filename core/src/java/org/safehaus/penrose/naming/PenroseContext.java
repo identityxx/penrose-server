@@ -7,7 +7,6 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionValidator;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.SessionContext;
-import org.safehaus.penrose.thread.ThreadManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

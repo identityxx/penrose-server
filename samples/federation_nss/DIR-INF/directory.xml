@@ -37,29 +37,21 @@
 
   <entry dn="uid=...,ou=Users,${SUFFIX}">
     <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
-    <mapping-name>nss_users</mapping-name>
+    <mapping-name>users</mapping-name>
     <at name="uid" rdn="true">
       <variable>n.uid</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>users</source-name>
-      <mapping-name>nss_users_to_nis_users</mapping-name>
+      <mapping-name>users_to_nis_users</mapping-name>
     </source>
-    <source name="g">
+    <source alias="g">
       <partition-name>global</partition-name>
       <source-name>users</source-name>
-      <mapping-name>nss_users_to_global_users</mapping-name>
+      <mapping-name>users_to_global_users</mapping-name>
       <field name="seeAlso">
         <variable>n.dn</variable>
-      </field>
-    </source>
-    <source name="a" bind="ignore">
-      <partition-name>ad</partition-name>
-      <source-name>users</source-name>
-      <mapping-name>nss_users_to_ad_users</mapping-name>
-      <field name="objectGuid">
-        <variable>g.seeAlsoObjectGuid</variable>
       </field>
     </source>
   </entry>
@@ -77,28 +69,20 @@
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>groups</source-name>
-      <mapping-name>nss_groups_to_nis_groups</mapping-name>
+      <mapping-name>groups_to_nis_groups</mapping-name>
       <field name="cn" primaryKey="true">
         <variable>rdn.cn</variable>
       </field>
     </source>
-    <source name="g">
+    <source alias="g">
       <partition-name>global</partition-name>
       <source-name>groups</source-name>
-      <mapping-name>nss_groups_to_global_groups</mapping-name>
+      <mapping-name>groups_to_global_groups</mapping-name>
       <field name="seeAlso">
         <variable>n.dn</variable>
-      </field>
-    </source>
-    <source name="a" bind="ignore">
-      <partition-name>ad</partition-name>
-      <source-name>groups</source-name>
-      <mapping-name>nss_groups_to_ad_groups</mapping-name>
-      <field name="objectGuid">
-        <variable>g.seeAlsoObjectGuid</variable>
       </field>
     </source>
   </entry>
@@ -254,21 +238,9 @@ DN newDn = dn.getPrefix("${NIS_SUFFIX}").append("${SUFFIX}");
 return "ldap:"+newDn+(info == null ? "" : " "+info);
       </expression>
     </at>
-    <source name="a">
+    <source alias="a">
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>automounts</source-name>
-    </source>
-  </entry>
-
-  <entry dn="ou=Profile,${SUFFIX}">
-    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Profile</constant>
-    </at>
-    <source>
-      <partition-name>${DOMAIN}_nis</partition-name>
-      <source-name>profile</source-name>
     </source>
   </entry>
 

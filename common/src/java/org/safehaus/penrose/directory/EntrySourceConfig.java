@@ -17,9 +17,6 @@
  */
 package org.safehaus.penrose.directory;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
 import java.util.*;
 import java.io.Serializable;
 
@@ -27,13 +24,6 @@ import java.io.Serializable;
  * @author Endi S. Dewata
  */
 public class EntrySourceConfig implements Serializable, Cloneable {
-
-    static {
-        log = LoggerFactory.getLogger(EntrySourceConfig.class);
-    }
-
-    public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String REQUIRED   = "required";
     public final static String REQUISITE  = "requisite";
@@ -43,7 +33,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
 
     public final static String FILTER     = "filter";
 
-	public String name = "DEFAULT";
+	public String alias = "DEFAULT";
 
     public String partitionName;
     public String sourceName;
@@ -67,23 +57,23 @@ public class EntrySourceConfig implements Serializable, Cloneable {
 	public EntrySourceConfig() {
 	}
 
-    public EntrySourceConfig(String name, String sourceName) {
-        this.name = name;
+    public EntrySourceConfig(String alias, String sourceName) {
+        this.alias = alias;
         this.sourceName = sourceName;
     }
 
-    public EntrySourceConfig(String name, String partitionName, String sourceName) {
-        this.name = name;
+    public EntrySourceConfig(String alias, String partitionName, String sourceName) {
+        this.alias = alias;
         this.partitionName = partitionName;
         this.sourceName = sourceName;
     }
 
-	public String getName() {
-		return name;
+	public String getAlias() {
+		return alias;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setAlias(String alias) {
+		this.alias = alias;
 	}
 
     public Collection<EntryFieldConfig> getFieldConfigs(String name) {
@@ -133,7 +123,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
     }
 
     public String getSourceName() {
-        return sourceName == null ? name : sourceName;
+        return sourceName == null ? alias : sourceName;
     }
 
     public void setSourceName(String sourceName) {
@@ -181,7 +171,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
     }
 
     public int hashCode() {
-        return (name == null ? 0 : name.hashCode()) +
+        return (alias == null ? 0 : alias.hashCode()) +
                 (partitionName == null ? 0 : partitionName.hashCode()) +
                 (sourceName == null ? 0 : sourceName.hashCode());
     }
@@ -198,7 +188,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         EntrySourceConfig sourceConfig = (EntrySourceConfig)object;
-        if (!equals(name, sourceConfig.name)) return false;
+        if (!equals(alias, sourceConfig.alias)) return false;
         if (!equals(partitionName, sourceConfig.partitionName)) return false;
         if (!equals(sourceName, sourceConfig.sourceName)) return false;
         if (!equals(mappingName, sourceConfig.mappingName)) return false;
@@ -216,7 +206,7 @@ public class EntrySourceConfig implements Serializable, Cloneable {
     }
 
     public void copy(EntrySourceConfig sourceConfig) throws CloneNotSupportedException {
-        name = sourceConfig.name;
+        alias = sourceConfig.alias;
         partitionName = sourceConfig.partitionName;
         sourceName = sourceConfig.sourceName;
         mappingName = sourceConfig.mappingName;

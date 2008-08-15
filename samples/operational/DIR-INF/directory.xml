@@ -79,7 +79,7 @@ if (u.modifyTimestamp == void || u.modifyTimestamp == null) return null;
 return OperationalAttribute.formatDate(u.modifyTimestamp);
       </expression>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <variable>uid</variable>

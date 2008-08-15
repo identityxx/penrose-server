@@ -20,33 +20,21 @@ import java.util.List;
  */
 public class LDAPSyncModule extends Module {
 
-    Partition sourcePartition;
-    Partition targetPartition;
+    protected String sourcePartitionName;
+    protected String targetPartitionName;
 
-    Source changes;
-    Source errors;
+    protected Source changes;
+    protected Source errors;
 
     public void init() throws Exception {
 
         SourceManager sourceManager = partition.getSourceManager();
 
-        String sourcePartitionName = getParameter("source");
+        sourcePartitionName = getParameter("source");
         log.debug("Source: "+sourcePartitionName);
-        if (sourcePartitionName == null) {
-            sourcePartition = partition;
-        } else {
-            sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
-            if (sourcePartition == null) throw new Exception("Partition "+sourcePartitionName+" not found.");
-        }
 
-        String targetPartitionName = getParameter("target");
+        targetPartitionName = getParameter("target");
         log.debug("Target: "+targetPartitionName);
-        if (targetPartitionName == null) {
-            targetPartition = partition;
-        } else {
-            targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-            if (targetPartition == null) throw new Exception("Partition "+targetPartitionName+" not found.");
-        }
 
         String changesName = getParameter("changes");
         log.debug("Errors: "+changesName);
@@ -61,6 +49,8 @@ public class LDAPSyncModule extends Module {
 
         try {
             AddResponse response = new AddResponse();
+
+            Partition targetPartition = getTargetPartition();
             targetPartition.add(session, request, response);
 
             if (changes != null) {
@@ -116,6 +106,8 @@ public class LDAPSyncModule extends Module {
     public boolean execute(Session session, DeleteRequest request) throws Exception {
         try {
             DeleteResponse response = new DeleteResponse();
+
+            Partition targetPartition = getTargetPartition();
             targetPartition.delete(session, request, response);
 
             if (changes != null) {
@@ -172,6 +164,8 @@ public class LDAPSyncModule extends Module {
 
         try {
             ModifyResponse response = new ModifyResponse();
+
+            Partition targetPartition = getTargetPartition();
             targetPartition.modify(session, request, response);
 
             if (changes != null) {
@@ -230,6 +224,8 @@ public class LDAPSyncModule extends Module {
 
     public boolean deleteSubtree(Session session, final DN baseDn) throws Exception {
 
+        Partition targetPartition = getTargetPartition();
+
         final ArrayList<DN> dns = new ArrayList<DN>();
 
         SearchRequest request = new SearchRequest();
@@ -269,6 +265,10 @@ public class LDAPSyncModule extends Module {
         return b;
     }
 
+    public boolean checkSearchResult(SearchResult result) throws Exception {
+        return true;
+    }
+
     public List<DN> getDns(Session session, String baseDn) throws Exception {
         return getDns(session, new DN(baseDn));
     }
@@ -276,6 +276,8 @@ public class LDAPSyncModule extends Module {
     public List<DN> getDns(Session session, final DN baseDn) throws Exception {
 
         //if (warn) log.warn("Getting DNs in subtree "+baseDn+".");
+
+        Partition targetPartition = getTargetPartition();
 
         final ArrayList<DN> dns = new ArrayList<DN>();
 
@@ -285,7 +287,11 @@ public class LDAPSyncModule extends Module {
         SearchResponse response = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
                 DN dn = result.getDn();
+
                 //log.debug("Found "+dn);
+
+                if (!checkSearchResult(result)) return;
+
                 dns.add(dn);
 
                 totalCount++;
@@ -312,6 +318,9 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition sourcePartition = getSourcePartition();
+            Partition targetPartition = getTargetPartition();
+
             DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
@@ -339,6 +348,8 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition targetPartition = getTargetPartition();
+
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
             log.debug("##################################################################################################");
@@ -365,6 +376,9 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition sourcePartition = getSourcePartition();
+            Partition targetPartition = getTargetPartition();
+
             DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
@@ -404,6 +418,9 @@ public class LDAPSyncModule extends Module {
         final Session adminSession = createAdminSession();
 
         try {
+            Partition sourcePartition = getSourcePartition();
+            Partition targetPartition = getTargetPartition();
+
             DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
@@ -474,6 +491,8 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition targetPartition = getTargetPartition();
+
             log.debug("##################################################################################################");
             log.debug("Removing "+targetDn);
 
@@ -500,6 +519,8 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition targetPartition = getTargetPartition();
+
             SearchRequest request = new SearchRequest();
             request.setDn(targetDn);
             request.setAttributes(new String[] { "dn" });
@@ -527,6 +548,8 @@ public class LDAPSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
+            Partition targetPartition = getTargetPartition();
+
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
             SearchRequest request = new SearchRequest();
@@ -566,7 +589,21 @@ public class LDAPSyncModule extends Module {
         }
     }
 
+    public Collection<Modification> createModifications(
+            Attributes attributes1,
+            Attributes attributes2
+    ) throws Exception {
+
+        return LDAP.createModifications(
+                attributes1,
+                attributes2
+        );
+    }
+
     public boolean synchronize(final Session session, final DN targetDn) throws Exception {
+
+        final Partition sourcePartition = getSourcePartition();
+        final Partition targetPartition = getTargetPartition();
 
         final DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
         final DN targetSuffix = targetPartition.getDirectory().getSuffix();
@@ -634,9 +671,11 @@ public class LDAPSyncModule extends Module {
                     SearchResult result1 = targetPartition.find(session, dn1);
 
                     Attributes attributes1 = result1.getAttributes();
+                    if (!checkSearchResult(result1)) return;
+
                     Attributes attributes2 = result2.getAttributes();
 
-                    Collection<Modification> modifications = LDAP.createModifications(
+                    Collection<Modification> modifications = createModifications(
                             attributes1,
                             attributes2
                     );
@@ -703,10 +742,10 @@ public class LDAPSyncModule extends Module {
         }
 
         if (warn) {
-            log.warn("Processed "+response2.getTotalCount()+" entries.");
-            log.warn("Added "+counters[0]+" entries.");
-            log.warn("Modified "+counters[1]+" entries.");
-            log.warn("Deleted "+counters[2]+" entries.");
+            log.warn("Processed "+response2.getTotalCount()+" entries:");
+            log.warn(" - added   : "+counters[0]);
+            log.warn(" - modified: "+counters[1]);
+            log.warn(" - deleted : "+counters[2]);
         }
 
         return success[0];
@@ -715,10 +754,11 @@ public class LDAPSyncModule extends Module {
 /*
     public boolean synchronize(final DN targetDn) throws Exception {
 
-        Partition sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
+        final Partition sourcePartition = getSourcePartition();
+        final Partition targetPartition = getTargetPartition();
 
-        final DN sourceSuffix = sourcePartition.getDirectory().getRootEntries().iterator().next().getDn();
-        final DN targetSuffix = partition.getDirectory().getRootEntries().iterator().next().getDn();
+        final DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
+        final DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
         log.debug("##################################################################################################");
         log.debug("Synchronizing "+targetDn);
@@ -740,7 +780,7 @@ public class LDAPSyncModule extends Module {
             }
         };
 
-        partition.search(request1, response1);
+        targetPartition.search(request1, response1);
 
         SearchRequest request2 = new SearchRequest();
         request2.setDn(sourceDn);
@@ -856,4 +896,32 @@ public class LDAPSyncModule extends Module {
         return success;
     }
 */
+
+    public Partition getSourcePartition() throws Exception {
+        if (sourcePartitionName == null) return partition;
+
+        Partition sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
+        if (sourcePartition == null) throw new Exception("Partition "+sourcePartitionName+" not found.");
+
+        return sourcePartition;
+    }
+
+    public Partition getTargetPartition() throws Exception {
+        if (targetPartitionName == null) return partition;
+
+        Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+        if (targetPartition == null) throw new Exception("Partition "+targetPartitionName+" not found.");
+
+        return targetPartition;
+    }
+
+    public DN getSourceSuffix() throws Exception {
+        Partition sourcePartition = getSourcePartition();
+        return sourcePartition.getDirectory().getSuffix();
+    }
+
+    public DN getTargetSuffix() throws Exception {
+        Partition targetPartition = getTargetPartition();
+        return targetPartition.getDirectory().getSuffix();
+    }
 }

@@ -168,7 +168,7 @@ return "uid="+report+",ou=Users,dc=Outlook,dc=Example,dc=com";
       </expression>
     </at>
 
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="username">
         <expression>
@@ -298,7 +298,7 @@ return BinaryUtil.encode("BigInteger", bytes);
       </field>
     </source>
 
-    <source name="m">
+    <source alias="m">
       <source-name>relationships</source-name>
       <field name="manager">
         <expression>
@@ -313,7 +313,7 @@ return manager.substring(i+1, j);
       </field>
     </source>
 
-    <source name="r">
+    <source alias="r">
       <source-name>relationships</source-name>
       <field name="manager">
         <variable>u.username</variable>

@@ -46,8 +46,6 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public String description;
 
-    public boolean staticRdn = true;
-
     public String mappingName;
 
     public Collection<EntryAttributeConfig> attributeConfigs = new LinkedHashSet<EntryAttributeConfig>();
@@ -106,10 +104,6 @@ public class EntryConfig implements Serializable, Cloneable {
     
     public DN getParentDn() {
         return dn.getParentDn();
-    }
-
-    public boolean isStaticRdn() {
-        return staticRdn;
     }
 
     public boolean isDynamic() {
@@ -229,7 +223,7 @@ public class EntryConfig implements Serializable, Cloneable {
 
     public EntrySourceConfig getSourceConfig(String name) {
         for (EntrySourceConfig sourceConfig : sourceConfigs) {
-            if (sourceConfig.getName().equals(name)) return sourceConfig;
+            if (sourceConfig.getAlias().equals(name)) return sourceConfig;
         }
         return null;
     }
@@ -286,8 +280,6 @@ public class EntryConfig implements Serializable, Cloneable {
         if (attributeConfig.isRdn()) {
             rdnAttributeConfigs.add(attributeConfig);
         }
-
-        staticRdn &= attributeConfig.getConstant() != null;
     }
 
     public EntryAttributeConfig getAttributeConfig(String name) {
@@ -521,7 +513,7 @@ public class EntryConfig implements Serializable, Cloneable {
     public String getPrimarySourceName() {
         if (sourceConfigs.size() == 0) return null;
         EntrySourceConfig sourceConfig = sourceConfigs.get(0);
-        return sourceConfig.getName();
+        return sourceConfig.getAlias();
 /*
         for (AttributeMapping rdnAttributeMapping : rdnAttributeMappings) {
 

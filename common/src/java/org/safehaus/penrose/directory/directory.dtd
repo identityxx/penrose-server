@@ -36,6 +36,7 @@
 <!ATTLIST at operational (true|false) "false">
 
 <!ELEMENT source (partition-name?,source-name?,mapping-name?,field*,parameter*)>
+<!ATTLIST source alias CDATA #IMPLIED>
 <!ATTLIST source name CDATA #IMPLIED>
 <!ATTLIST source readOnly CDATA #IMPLIED>
 <!ATTLIST source engine CDATA #IMPLIED>

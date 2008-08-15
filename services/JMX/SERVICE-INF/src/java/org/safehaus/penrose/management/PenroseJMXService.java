@@ -66,7 +66,7 @@ public class PenroseJMXService extends Service {
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
         
         penroseService = new PenroseService(this, serviceContext.getPenroseServer());
-        penroseService.register();
+        penroseService.init();
 
         if (rmiPort > 0) {
 
@@ -101,7 +101,7 @@ public class PenroseJMXService extends Service {
             connectorServer.stop();
         }
 
-        penroseService.unregister();
+        penroseService.destroy();
 
         log.warn("JMX Service has been shutdown.");
     }
@@ -141,11 +141,11 @@ public class PenroseJMXService extends Service {
         this.rmiTransportPort = rmiTransportPort;
     }
 
-    public MBeanServer getMbeanServer() {
+    public MBeanServer getMBeanServer() {
         return mbeanServer;
     }
 
-    public void setMbeanServer(MBeanServer mbeanServer) {
+    public void setMBeanServer(MBeanServer mbeanServer) {
         this.mbeanServer = mbeanServer;
     }
 

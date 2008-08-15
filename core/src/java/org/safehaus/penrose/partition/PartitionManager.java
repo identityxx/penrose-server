@@ -1,5 +1,6 @@
 package org.safehaus.penrose.partition;
 
+import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.Directory;
@@ -7,8 +8,9 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
+import org.safehaus.penrose.partition.event.PartitionEvent;
+import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.source.SourceConfig;
-import org.safehaus.penrose.adapter.AdapterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,8 @@ public class PartitionManager {
 
     Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
     PartitionConfigManager partitionConfigManager = new PartitionConfigManager();
+
+    Collection<PartitionListener> listeners = new LinkedHashSet<PartitionListener>();
 
     public PartitionManager(File home, PenroseConfig penroseConfig, PenroseContext penroseContext) {
         this.home           = home;
@@ -76,7 +80,8 @@ public class PartitionManager {
             }
         }
 
-        for (String partitionName : partitionConfigManager.getLoadOrder()) {
+        for (String partitionName : partitionConfigManager.getPartitionNames()) {
+
             try {
                 startPartition(partitionName);
 
@@ -121,48 +126,59 @@ public class PartitionManager {
 
     public void startPartition(String name) throws Exception {
 
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("Starting partition "+name+".");
-
-        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
-
-        if (!partitionConfig.isEnabled()) {
-            if (debug) log.debug("Partition "+name+" disabled.");
+        Partition partition = partitions.get(name);
+        if (partition != null) {
+            log.info("Partition "+name+" already started.");
             return;
         }
 
-/*
-        Collection<PartitionValidationResult> results = partitionValidator.validate(partitionConfig);
-
-        for (PartitionValidationResult result : results) {
-            if (result.getType().equals(PartitionValidationResult.ERROR)) {
-                errorLog.error("ERROR: " + result.getMessage() + " [" + result.getSource() + "]");
-            } else {
-                errorLog.warn("WARNING: " + result.getMessage() + " [" + result.getSource() + "]");
-            }
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
+        if (partitionConfig == null) {
+            log.error("Can't start partition "+name+": Partition not found.");
+            return;
         }
-*/
+
+        if (!partitionConfig.isEnabled()) {
+            log.info("Partition "+name+" disabled.");
+            return;
+        }
+
+        for (String depend : partitionConfig.getDepends()) {
+            if (partitionConfigManager.getPartitionConfig(depend) == null) {
+                log.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
+                return;
+            }
+            startPartition(depend);
+        }
+
+        log.debug("----------------------------------------------------------------------------------");
+        log.debug("Starting partition "+name+".");
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPartitionsDir(partitionsDir);
         partitionFactory.setPenroseConfig(penroseConfig);
         partitionFactory.setPenroseContext(penroseContext);
 
-        Partition partition = partitionFactory.createPartition(partitionConfig);
+        partition = partitionFactory.createPartition(partitionConfig);
 
         partitions.put(name, partition);
+
+        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partition);
+        for (PartitionListener listener : listeners) {
+            listener.partitionStarted(event);
+        }
 
         log.debug("Partition "+name+" started.");
     }
 
     public void stopPartitions() throws Exception {
 
-        List<String> stopOrder = new ArrayList<String>();
-        for (String partitionName : partitionConfigManager.getLoadOrder()) {
-            stopOrder.add(0, partitionName);
+        List<String> list = new ArrayList<String>();
+        for (String partitionName : partitions.keySet()) {
+            list.add(0, partitionName);
         }
 
-        for (String partitionName : stopOrder) {
+        for (String partitionName : list) {
             try {
                 stopPartition(partitionName);
                 unloadPartition(partitionName);
@@ -188,6 +204,11 @@ public class PartitionManager {
         partition.destroy();
 
         partitions.remove(name);
+
+        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STOPPED, partition);
+        for (PartitionListener listener : listeners) {
+            listener.partitionStopped(event);
+        }
 
         log.debug("Partition "+name+" stopped.");
     }
@@ -379,5 +400,13 @@ public class PartitionManager {
 
     public void setConfDir(File confDir) {
         this.confDir = confDir;
+    }
+
+    public void addListener(PartitionListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(PartitionListener listener) {
+        listeners.remove(listener);
     }
 }

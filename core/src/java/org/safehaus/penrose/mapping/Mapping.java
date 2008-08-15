@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,8 +50,12 @@ public class Mapping {
     public Collection<String> getFieldNames() {
         return mappingConfig.getFieldNames();
     }
-    
-    public Collection<MappingFieldConfig> getFieldConfigs() {
+
+    public List<MappingFieldConfig> getFieldConfigs(String name) {
+        return mappingConfig.getFieldConfigs(name);
+    }
+
+    public List<MappingFieldConfig> getFieldConfigs() {
         return mappingConfig.getFieldConfigs();
     }
 

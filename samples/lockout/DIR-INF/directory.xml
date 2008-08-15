@@ -15,7 +15,7 @@
     <at name="o">
       <constant>Lockout</constant>
     </at>
-    <source name="LDAP">
+    <source alias="LDAP">
       <source-name>LDAP</source-name>
     </source>
     <aci subject="self">
@@ -53,7 +53,7 @@
 return org.safehaus.penrose.lockout.Lock.DATE_FORMAT.format(l.timestamp);
       </expression>
     </at>
-    <source name="l">
+    <source alias="l">
       <source-name>locks</source-name>
       <field name="account">
         <variable>account</variable>

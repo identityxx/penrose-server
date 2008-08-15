@@ -9,92 +9,36 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${SUFFIX}</param-value>
+      <param-value>${LDAP_SUFFIX}</param-value>
     </parameter>
   </source>
 
   <source name="users">
     <connection-name>LDAP</connection-name>
     <field name="dn" primaryKey="true"/>
-
-    <!-- person -->
-    <field name="sn"/>
-    <field name="cn"/>
-    <field name="userPassword"/>
-    <field name="telephoneNumber"/>
-    <field name="seeAlso"/>
-    <field name="description"/>
-
-    <!-- organizationalPerson -->
-    <field name="title"/>
-    <field name="x121Address"/>
-    <field name="registeredAddress"/>
-    <field name="destinationIndicator"/>
-    <field name="preferredDeliveryMethod"/>
-    <field name="telexNumber"/>
-    <field name="teletexTerminalIdentifier"/>
-    <field name="internationaliSDNNumber"/>
-    <field name="facsimileTelephoneNumber"/>
-    <field name="street"/>
-    <field name="postOfficeBox"/>
-    <field name="postalCode"/>
-    <field name="postalAddress"/>
-    <field name="physicalDeliveryOfficeName"/>
-    <field name="ou"/>
-    <field name="st"/>
-    <field name="l"/>
-
-    <!-- inetOrgPerson -->
-    <field name="audio"/>
-    <field name="businessCategory"/>
-    <field name="carLicense"/>
-    <field name="departmentNumber"/>
-    <field name="displayName"/>
-    <field name="employeeNumber"/>
-    <field name="employeeType"/>
-    <field name="givenName"/>
-    <field name="homePhone"/>
-    <field name="homePostalAddress"/>
-    <field name="initials"/>
-    <field name="jpegPhoto"/>
-    <field name="labeledURI"/>
-    <field name="mail"/>
-    <field name="manager"/>
-    <field name="mobile"/>
-    <field name="o"/>
-    <field name="pager"/>
-    <field name="photo"/>
-    <field name="roomNumber"/>
-    <field name="secretary"/>
     <field name="uid"/>
-    <field name="userCertificate"/>
-    <field name="x500uniqueIdentifier"/>
-    <field name="preferredLanguage"/>
-    <field name="userSMIMECertificate"/>
-    <field name="userPKCS12"/>
-
-    <!-- adiPerson -->
-    <field name="givenName"/>
-    <field name="adiNTUid"/>
-    <field name="gecos"/>
+    <field name="cn"/>
     <field name="uidNumber"/>
-    <field name="loginShell"/>
-    <field name="homeDirectory"/>
     <field name="gidNumber"/>
-    <field name="department"/>
-    <field name="c"/>
-    <field name="adiOtherTelephone"/>
-    <field name="seeAlsoObjectGUID"/>
-    <field name="countryCode"/>
-    <field name="mailNickname"/>
-    <field name="info"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
     <parameter>
       <param-name>objectClasses</param-name>
-      <param-value>person,organizationalPerson,inetOrgPerson,adiPerson</param-value>
+      <param-value>account,posixAccount,shadowAccount</param-value>
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Users,${SUFFIX}</param-value>
+      <param-value>ou=Users,${LDAP_SUFFIX}</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>
@@ -110,15 +54,13 @@
     <field name="userPassword"/>
     <field name="memberUid"/>
     <field name="description"/>
-    <field name="seeAlso"/>
-    <field name="seeAlsoObjectGUID"/>
     <parameter>
       <param-name>objectClasses</param-name>
       <param-value>posixGroup</param-value>
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Groups,${SUFFIX}</param-value>
+      <param-value>ou=Groups,${LDAP_SUFFIX}</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>

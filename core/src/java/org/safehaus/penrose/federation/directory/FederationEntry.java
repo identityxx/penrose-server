@@ -6,10 +6,10 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.source.LDAPSource;
+import org.safehaus.penrose.mapping.Mapping;
+import org.safehaus.penrose.mapping.MappingFieldConfig;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;
@@ -18,18 +18,6 @@ import java.util.*;
  * @author Endi Sukma Dewata
  */
 public class FederationEntry extends DynamicEntry {
-
-    private boolean checkAccountDisabled;
-    private boolean checkAccountLockout;
-    private boolean checkAccountExpires;
-
-    public void init() throws Exception {
-        checkAccountDisabled = Boolean.parseBoolean(getParameter("checkAccountDisabled"));
-        checkAccountLockout = Boolean.parseBoolean(getParameter("checkAccountLockout"));
-        checkAccountExpires = Boolean.parseBoolean(getParameter("checkAccountExpires"));
-
-        super.init();
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bind
@@ -56,84 +44,6 @@ public class FederationEntry extends DynamicEntry {
 
         Interpreter interpreter = partition.newInterpreter();
         interpreter.set(sv);
-
-        log.debug("Checking Active Directory link.");
-
-        EntrySource adSourceRef = getSource("a");
-        Source adSource = adSourceRef.getSource();
-
-        Filter filter = null;
-
-        for (EntryField adFieldRef : adSourceRef.getFields()) {
-
-            Object value = interpreter.eval(adFieldRef);
-            if (value instanceof byte[]) {
-                log.debug(adFieldRef.getName()+": "+BinaryUtil.encode(BinaryUtil.BIG_INTEGER, (byte[])value));
-            } else {
-                log.debug(adFieldRef.getName()+": "+value);
-            }
-            if (value == null) continue;
-
-            SimpleFilter sf = new SimpleFilter("objectGUID", "=", value);
-            filter = FilterTool.appendAndFilter(filter, sf);
-        }
-
-        if (filter != null) {
-
-            log.debug("Searching Active Directory account.");
-
-            SearchRequest adRequest = new SearchRequest();
-            adRequest.setFilter(filter);
-
-            SearchResponse adResponse = new SearchResponse();
-
-            adSource.search(session, adRequest, adResponse);
-
-            SearchResult adResult = adResponse.next();
-            Attributes adAttributes = adResult.getAttributes();
-
-            log.debug("Checking Active Directory account.");
-
-            long userAccountControl = Long.parseLong((String)adAttributes.getValue("userAccountControl"));
-            log.debug("userAccountControl: "+userAccountControl);
-
-            if (checkAccountDisabled && (userAccountControl & 0x0002) > 0) {
-                log.debug("Account is disabled.");
-                throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-            }
-/*
-            if (checkAccountLockout && (userAccountControl & 0x0010) > 0) {
-                log.debug("Account is locked out.");
-                throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-            }
-
-            if (checkAccountExpires) {
-                long accountExpires = Long.parseLong((String)adAttributes.getValue("accountExpires"));
-                log.debug("accountExpires: "+accountExpires);
-
-                if (accountExpires != 0 && accountExpires != 0x7FFFFFFFFFFFFFFFL) {
-                    Date d = toDate(accountExpires);
-                    if (d.getTime() < System.currentTimeMillis()) {
-                        log.debug("Account has expired at "+d+".");
-                        throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-                    }
-                }
-            }
-*/
-            String bind = adSourceRef.getBind();
-            if (!EntrySourceConfig.IGNORE.equals(bind)) {
-                log.debug("Binding to Active Directory account.");
-
-                BindRequest newRequest = (BindRequest)request.clone();
-                newRequest.setDn(adResult.getDn());
-
-                adSource.bind(session, newRequest, response);
-            }
-
-            if (EntrySourceConfig.SUFFICIENT.equals(bind)) {
-                return;
-            }
-        }
 
         Object userPassword = interpreter.get("g.userPassword");
 
@@ -205,6 +115,30 @@ public class FederationEntry extends DynamicEntry {
 
         Filter filter = request.getFilter();
 
+        Collection<String> attributeNames = request.getAttributes();
+        Collection<String> requestedSources = new HashSet<String>();
+
+        String mappingName = entryConfig.getMappingName();
+        if (mappingName != null) {
+
+            Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+
+            for (String attributeName : attributeNames) {
+                for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs(attributeName)) {
+                    String variable = fieldConfig.getVariable();
+                    if (variable == null) continue;
+
+                    int i = variable.indexOf('.');
+                    if (i < 0) continue;
+
+                    String sourceName = variable.substring(0, i);
+                    requestedSources.add(sourceName);
+                }
+            }
+
+            if (debug) log.debug("Requested sources: "+requestedSources);
+        }
+
         SourceAttributes sourceAttributes = new SourceAttributes();
         Interpreter interpreter = partition.newInterpreter();
 
@@ -218,9 +152,7 @@ public class FederationEntry extends DynamicEntry {
 
         EntrySource n = getSource("n");
         EntrySource g = getSource("g");
-        EntrySource a = getSource("a");
 
-        String aSearch = a.getSearch();
         String gSearch = g.getSearch();
 
         Collection<DN> dns = new LinkedHashSet<DN>();
@@ -233,65 +165,7 @@ public class FederationEntry extends DynamicEntry {
         Filter gFilter = filterBuilder.convert(filter, g);
         gFilter = FilterTool.appendAndFilter(gFilter, createFilter(sourceAttributes.get("g")));
 
-        Filter aFilter = filterBuilder.convert(filter, a);
-        aFilter = FilterTool.appendAndFilter(aFilter, createFilter(sourceAttributes.get("a")));
-
         if (!baseSearch) { // prevent infinite loop
-
-            if (aFilter != null) {
-                if (debug) {
-                    log.debug("################################################################");
-                    log.debug("Search source a with filter "+aFilter);
-                }
-                SourceAttributes sa = new SourceAttributes();
-
-                try {
-                    SearchResponse aResponse = a.search(session, aFilter);
-
-                    while (aResponse.hasNext()) {
-
-                        SearchResult aResult = aResponse.next();
-                        sa.set("a", aResult);
-
-                        Object objectGUID = sa.getValue("a", "objectGUID");
-
-                        try {
-                            SearchResponse gResponse = g.search(
-                                session,
-                                new SimpleFilter("seeAlsoObjectGUID", "=", objectGUID)
-                            );
-
-                            while (gResponse.hasNext()) {
-
-                                SearchResult gResult = gResponse.next();
-                                sa.set("g", gResult);
-
-                                Collection<Object> seeAlsoValues = sa.getValues("g", "seeAlso");
-
-                                for (Object seeAlso : seeAlsoValues) {
-
-                                    try {
-                                        SearchResult nResult = n.find(session, (String)seeAlso);
-                                        sa.set("n", nResult);
-
-                                        DN dn = createDn(sa);
-                                        if (debug) log.debug("Found "+dn);
-
-                                        dns.add(dn);
-
-                                    } catch (Exception e) {
-                                        // ignore
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            // ignore
-                        }
-                    }
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
 
             if (gFilter != null) {
                 if (debug) {
@@ -355,7 +229,7 @@ public class FederationEntry extends DynamicEntry {
                 }
             }
 
-            if (nFilter != null || gFilter != null || aFilter != null) {
+            if (nFilter != null || gFilter != null) {
                 log.debug("################################################################");
                 for (DN dn : dns) {
                     if (debug) log.debug("Returning "+dn);
@@ -415,60 +289,7 @@ public class FederationEntry extends DynamicEntry {
                 SearchResult gResult = gResponse.next();
                 sa.set("g", gResult);
 
-                if (EntrySourceConfig.IGNORE.equals(aSearch)) {
-                    if (debug) log.debug("Source a is ignored.");
-                    response.add(createSearchResult(sa));
-                    continue;
-                }
-
-                Object seeAlsoObjectGUID = sa.getValue("g", "seeAlsoObjectGUID");
-
-                if (seeAlsoObjectGUID == null) {
-                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
-                        if (debug) log.debug("Source a is required.");
-                    } else {
-                        if (debug) log.debug("Source a is optional.");
-                        response.add(createSearchResult(sa));
-                    }
-                    continue;
-                }
-
-                SearchResponse aResponse;
-                try {
-                    aResponse = a.search(
-                            session,
-                            new SimpleFilter("objectGUID", "=", seeAlsoObjectGUID)
-                    );
-
-                } catch (Exception e) {
-                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
-                        if (debug) log.debug("Source a is required.");
-                    } else {
-                        if (debug) log.debug("Source a is optional.");
-                        response.add(createSearchResult(sa));
-                    }
-                    continue;
-                }
-
-                if (!aResponse.hasNext()) {
-                    if (EntrySourceConfig.REQUIRED.equals(aSearch)) {
-                        if (debug) log.debug("Source a is required.");
-                    } else {
-                        if (debug) log.debug("Source a is optional.");
-                        response.add(createSearchResult(sa));
-                    }
-                    continue;
-                }
-
-                do {
-                    SearchResult aResult = aResponse.next();
-                    sa.set("a", aResult);
-
-                    response.add(createSearchResult(sa));
-
-                } while (aResponse.hasNext());
-
-                sa.remove("a");
+                response.add(createSearchResult(sa));
 
             } while (gResponse.hasNext());
 
@@ -483,29 +304,5 @@ public class FederationEntry extends DynamicEntry {
         calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
         accountExpires = accountExpires / 10000 + calendar.getTime().getTime();
         return new Date(accountExpires);
-    }
-
-    public boolean isCheckAccountExpires() {
-        return checkAccountExpires;
-    }
-
-    public void setCheckAccountExpires(boolean checkAccountExpires) {
-        this.checkAccountExpires = checkAccountExpires;
-    }
-
-    public boolean isCheckAccountLockout() {
-        return checkAccountLockout;
-    }
-
-    public void setCheckAccountLockout(boolean checkAccountLockout) {
-        this.checkAccountLockout = checkAccountLockout;
-    }
-
-    public boolean isCheckAccountDisabled() {
-        return checkAccountDisabled;
-    }
-
-    public void setCheckAccountDisabled(boolean checkAccountDisabled) {
-        this.checkAccountDisabled = checkAccountDisabled;
     }
 }

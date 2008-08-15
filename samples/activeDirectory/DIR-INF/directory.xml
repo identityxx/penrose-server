@@ -49,7 +49,7 @@
     <at name="sn">
       <variable>u.sn</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -97,7 +97,7 @@ int j=m.indexOf(",");
 return "uid="+m.substring(i+1, j)+",ou=Users,dc=Active Directory,dc=Example,dc=com";
       </expression>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>

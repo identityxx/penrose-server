@@ -54,7 +54,7 @@
     <at name="givenName">
       <variable>u2.givenName</variable>
     </at>
-    <source name="u1">
+    <source alias="u1">
       <source-name>users1</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -69,7 +69,7 @@
         <variable>givenName</variable>
       </field>
     </source>
-    <source name="u2">
+    <source alias="u2">
       <source-name>users2</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -102,7 +102,7 @@
     <at name="memberUid">
       <variable>g1.memberUid</variable>
     </at>
-    <source name="g1">
+    <source alias="g1">
       <source-name>groups1</source-name>
       <field name="cn">
         <variable>cn</variable>

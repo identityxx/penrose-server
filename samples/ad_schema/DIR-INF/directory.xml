@@ -13,7 +13,7 @@
     <at name="cn" rdn="true">
       <constant>AD Schema</constant>
     </at>
-    <source name="schema"/>
+    <source alias="schema"/>
     <aci>
       <permission>rs</permission>
     </aci>

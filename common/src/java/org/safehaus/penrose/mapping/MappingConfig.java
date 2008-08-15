@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class MappingConfig implements Serializable, Cloneable {
 
+    public final static List<MappingFieldConfig> EMPTY = new LinkedList<MappingFieldConfig>();
+
     private boolean enabled = true;
 
     protected String name;
@@ -50,7 +52,7 @@ public class MappingConfig implements Serializable, Cloneable {
         return fieldConfigsByName.keySet();
     }
     
-    public Collection<MappingFieldConfig> getFieldConfigs() {
+    public List<MappingFieldConfig> getFieldConfigs() {
         return fieldConfigs;
     }
 
@@ -96,28 +98,30 @@ public class MappingConfig implements Serializable, Cloneable {
         }
     }
 
-    public int getMappingFieldConfigIndex(MappingFieldConfig mappingFieldConfig) {
-        return fieldConfigs.indexOf(mappingFieldConfig);
+    public int getFieldConfigIndex(MappingFieldConfig fieldConfig) {
+        return fieldConfigs.indexOf(fieldConfig);
     }
     
-    public Collection<MappingFieldConfig> getMappingFieldConfigs(String name) {
-        return fieldConfigsByName.get(name);
+    public List<MappingFieldConfig> getFieldConfigs(String name) {
+        List<MappingFieldConfig> list = fieldConfigsByName.get(name);
+        if (list == null) return EMPTY;
+        return list;
     }
 
-    public Collection<MappingFieldConfig> removeMappingFieldConfigs(String name) {
+    public List<MappingFieldConfig> removeFieldConfigs(String name) {
          return fieldConfigsByName.remove(name);
     }
 
-    public void removeMappingFieldConfig(MappingFieldConfig mappingFieldConfig) {
+    public void removeFieldConfig(MappingFieldConfig fieldConfig) {
 
-        String name = mappingFieldConfig.getName();
+        String name = fieldConfig.getName();
 
-        fieldConfigs.remove(mappingFieldConfig);
+        fieldConfigs.remove(fieldConfig);
 
         Collection<MappingFieldConfig> list = fieldConfigsByName.get(name);
         if (list == null) return;
 
-        list.remove(mappingFieldConfig);
+        list.remove(fieldConfig);
         if (list.isEmpty()) fieldConfigsByName.remove(name);
     }
 

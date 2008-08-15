@@ -56,7 +56,7 @@ public class EntrySource implements Cloneable {
         this.entry = entry;
         this.source = source;
         this.sourceConfig = sourceConfig;
-        this.alias = sourceConfig.getName();
+        this.alias = sourceConfig.getAlias();
 
         String primarySourceName = entry.getPrimarySourceName();
         this.primarySourceRef = alias.equals(primarySourceName);

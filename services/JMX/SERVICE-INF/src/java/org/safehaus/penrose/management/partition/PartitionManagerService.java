@@ -4,7 +4,9 @@ import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.PartitionWriter;
+import org.safehaus.penrose.partition.PartitionManagerClient;
+import org.safehaus.penrose.partition.event.PartitionEvent;
+import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.util.FileUtil;
 
 import java.io.File;
@@ -14,7 +16,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class PartitionManagerService extends BaseService implements PartitionManagerServiceMBean {
+public class PartitionManagerService extends BaseService implements PartitionManagerServiceMBean, PartitionListener {
 
     PartitionManager partitionManager;
 
@@ -23,6 +25,8 @@ public class PartitionManagerService extends BaseService implements PartitionMan
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
+
+        partitionManager.addListener(this);
     }
 
     public Object getObject() {
@@ -61,15 +65,9 @@ public class PartitionManagerService extends BaseService implements PartitionMan
 
         partitionManager.addPartitionConfig(partitionConfig);
         partitionManager.startPartition(partitionName);
-
-        PartitionService partitionService = getPartitionService(partitionName);
-        partitionService.register();
     }
 
     public void updatePartition(String name, PartitionConfig partitionConfig) throws Exception {
-
-        PartitionService oldService = getPartitionService(name);
-        oldService.unregister();
 
         partitionManager.stopPartition(name);
         partitionManager.unloadPartition(name);
@@ -83,18 +81,12 @@ public class PartitionManagerService extends BaseService implements PartitionMan
 
         partitionManager.addPartitionConfig(partitionConfig);
         partitionManager.startPartition(partitionConfig.getName());
-
-        PartitionService newService = getPartitionService(partitionConfig.getName());
-        newService.register();
     }
 
     public void removePartition(String name) throws Exception {
 
         File partitionsDir = partitionManager.getPartitionsDir();
         File partitionDir = new File(partitionsDir, name);
-
-        PartitionService partitionService = getPartitionService(name);
-        partitionService.unregister();
 
         partitionManager.stopPartition(name);
         partitionManager.unloadPartition(name);
@@ -132,5 +124,21 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         defaultPartitionService.unregister();
 
         super.unregister();
+    }
+
+    public void partitionStarted(PartitionEvent event) throws Exception {
+
+        String partitionName = event.getPartition().getName();
+
+        PartitionService partitionService = getPartitionService(partitionName);
+        partitionService.register();
+    }
+
+    public void partitionStopped(PartitionEvent event) throws Exception {
+
+        String partitionName = event.getPartition().getName();
+
+        PartitionService partitionService = getPartitionService(partitionName);
+        partitionService.unregister();
     }
 }

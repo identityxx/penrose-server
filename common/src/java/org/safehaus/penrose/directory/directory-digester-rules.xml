@@ -65,7 +65,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <pattern value="source">
 
                 <object-create-rule classname="org.safehaus.penrose.directory.EntrySourceConfig" />
-                <set-properties-rule />
+                <set-properties-rule>
+                    <alias attr-name="name" prop-name="alias" />
+                </set-properties-rule>
+
                 <call-method-rule pattern="partition-name" methodname="setPartitionName" paramcount="0" />
                 <call-method-rule pattern="source-name"    methodname="setSourceName" paramcount="0" />
                 <call-method-rule pattern="mapping-name"   methodname="setMappingName" paramcount="0" />

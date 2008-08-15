@@ -27,6 +27,7 @@ import org.safehaus.penrose.module.ModuleMapping;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;

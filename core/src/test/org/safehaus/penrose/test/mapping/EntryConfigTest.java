@@ -25,7 +25,7 @@ public class EntryConfigTest extends TestCase {
         e1.addAttributeConfig(am);
 
         EntrySourceConfig sm = new EntrySourceConfig();
-        sm.setName("name");
+        sm.setAlias("name");
         sm.setSourceName("sourceName");
         sm.addFieldConfig(new EntryFieldConfig("name", EntryFieldConfig.CONSTANT, "value"));
         e1.addSourceConfig(sm);

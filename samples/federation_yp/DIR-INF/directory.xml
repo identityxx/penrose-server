@@ -108,7 +108,7 @@ return null;
     <at name="shadowFlag">
       <variable>s.shadowFlag</variable>
     </at>
-    <source name="u">
+    <source alias="u">
       <source-name>users</source-name>
       <field name="uid">
         <variable>uid</variable>
@@ -153,7 +153,7 @@ return bytes;
         <variable>description</variable>
       </field>
     </source>
-    <source name="s">
+    <source alias="s">
       <source-name>shadow</source-name>
       <field name="uid">
         <variable>u.uid</variable>
@@ -225,7 +225,7 @@ return bytes;
     <at name="memberUid">
       <variable>g.memberUid</variable>
     </at>
-    <source name="g">
+    <source alias="g">
       <source-name>groups</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -265,7 +265,7 @@ return h.cn;
     <at name="ipHostNumber" rdn="true">
       <variable>h.ipHostNumber</variable>
     </at>
-    <source name="h">
+    <source alias="h">
       <source-name>hosts</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -307,7 +307,7 @@ return s.cn;
     <at name="description">
       <variable>s.description</variable>
     </at>
-    <source name="s">
+    <source alias="s">
       <source-name>services</source-name>
       <field name="name">
         <expression>ipServicePort+"/"+ipServiceProtocol</expression>
@@ -355,7 +355,7 @@ return r.cn;
     <at name="description">
       <variable>r.description</variable>
     </at>
-    <source name="r">
+    <source alias="r">
       <source-name>rpcs</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -391,7 +391,7 @@ return r.cn;
     <at name="nisNetIdHost">
       <variable>n.nisNetIdHost</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>netids</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -436,7 +436,7 @@ return p.cn;
     <at name="description">
       <variable>p.description</variable>
     </at>
-    <source name="p">
+    <source alias="p">
       <source-name>protocols</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -469,7 +469,7 @@ return p.cn;
     <at name="description">
       <variable>a.description</variable>
     </at>
-    <source name="a">
+    <source alias="a">
       <source-name>aliases</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -505,7 +505,7 @@ return p.cn;
     <at name="description">
       <variable>n.description</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>netgroups</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -539,7 +539,7 @@ return p.cn;
     <at name="macAddress">
       <variable>e.macAddress</variable>
     </at>
-    <source name="e">
+    <source alias="e">
       <source-name>ethers</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -570,7 +570,7 @@ return p.cn;
     <at name="bootParameter">
       <variable>b.bootParameter</variable>
     </at>
-    <source name="b">
+    <source alias="b">
       <source-name>bootparams</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -609,7 +609,7 @@ return n.cn;
     <at name="ipNetworkNumber">
       <variable>n.ipNetworkNumber</variable>
     </at>
-    <source name="n">
+    <source alias="n">
       <source-name>networks</source-name>
       <field name="cn">
         <variable>cn</variable>
@@ -637,7 +637,7 @@ return n.cn;
     <at name="nisMapName" rdn="true">
       <variable>am.automountMapName</variable>
     </at>
-    <source name="am">
+    <source alias="am">
       <source-name>automountMaps</source-name>
       <field name="automountMapName">
         <variable>nisMapName</variable>
@@ -679,7 +679,7 @@ if (info != null) a.automountInformation += " "+info;
 return a.automountInformation;
         </expression>
     </at>
-    <source name="a">
+    <source alias="a">
       <source-name>automounts</source-name>
       <field name="automountMapName">
         <variable>nisMapName</variable>

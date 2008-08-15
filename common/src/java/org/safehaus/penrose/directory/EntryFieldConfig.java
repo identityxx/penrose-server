@@ -19,8 +19,6 @@ package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.util.BinaryUtil;
 import org.safehaus.penrose.mapping.Expression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,13 +30,6 @@ import java.io.Serializable;
  * @author Endi S. Dewata
  */
 public class EntryFieldConfig implements Serializable, Cloneable {
-
-    static {
-        log = LoggerFactory.getLogger(EntryFieldConfig.class);
-    }
-
-    public static transient Logger log;
-    public static boolean debug = log.isDebugEnabled();
 
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
