@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class FederationConfig implements Serializable, Cloneable {
 
-    protected Map<String, Repository> repositories = new TreeMap<String, Repository>();
+    protected Map<String, Repository> repositories = new LinkedHashMap<String, Repository>();
 
     public FederationConfig() {
     }
@@ -81,6 +81,19 @@ public class FederationConfig implements Serializable, Cloneable {
 
     public Repository removeRepository(String name) {
         return repositories.remove(name);
+    }
+
+    public Collection<Repository> getRepositories(String type) {
+
+        Collection<Repository> list = new TreeSet<Repository>();
+
+        for (Repository repository : repositories.values()) {
+            if (type.equals(repository.getType())) {
+                list.add(repository);
+            }
+        }
+
+        return list;
     }
 
     public void addRepository(Repository repository) {

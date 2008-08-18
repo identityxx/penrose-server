@@ -8,6 +8,7 @@ import java.util.Collection;
 public interface FederationMBean {
 
     public Collection<String> getRepositoryNames() throws Exception;
+    public Collection<Repository> getRepositories(String name) throws Exception;
     public Repository getRepository(String name) throws Exception;
 
     public void createPartitions(String name) throws Exception;

@@ -265,7 +265,7 @@ public class FieldConfig implements Serializable, Comparable, Cloneable {
         type          = fieldConfig.type;
         originalType  = fieldConfig.originalType;
         castType      = fieldConfig.castType;
-        length       = fieldConfig.length;
+        length        = fieldConfig.length;
         precision     = fieldConfig.precision;
 
         if (fieldConfig.constant instanceof byte[]) {

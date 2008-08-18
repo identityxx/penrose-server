@@ -426,16 +426,7 @@ public class FederationModule extends Module implements FederationMBean {
     }
 
     public Collection<Repository> getRepositories(String type) {
-
-        Collection<Repository> list = new ArrayList<Repository>();
-
-        for (Repository repository : federationConfig.getRepositories()) {
-            if (type.equals(repository.getType())) {
-                list.add(repository);
-            }
-        }
-
-        return list;
+        return federationConfig.getRepositories(type);
     }
 
     public Repository getRepository(String name) throws Exception {
