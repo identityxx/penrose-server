@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * @author Endi Sukma Dewata
  */
-public class Repository implements Serializable, Cloneable {
+public class Repository implements Serializable, Comparable, Cloneable {
 
     public final static String LINKING_LOCAL_ATTRIBUTE  = "linkingLocalAttribute";
     public final static String LINKING_GLOBAL_ATTRIBUTE = "linkingGlobalAttribute";
@@ -127,5 +127,14 @@ public class Repository implements Serializable, Cloneable {
         }
 
         return repository;
+    }
+
+    public int compareTo(Object object) {
+        if (this == object) return 0;
+        if (object == null) return 0;
+        if (!(object instanceof Repository)) return 0;
+
+        Repository repository = (Repository)object;
+        return name.compareTo(repository.name);
     }
 }
