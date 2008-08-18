@@ -175,14 +175,6 @@ public class FederationClient implements FederationMBean {
         );
     }
 
-    public void synchronize(String name, Collection<String> parameters) throws Exception {
-        moduleClient.invoke(
-                "synchronize",
-                new Object[] { name, parameters },
-                new String[] { String.class.getName(), Collection.class.getName() }
-        );
-    }
-
     public void execute(Collection<String> commands) throws Exception {
 
         Iterator<String> iterator = commands.iterator();
@@ -209,33 +201,77 @@ public class FederationClient implements FederationMBean {
             }
 
         } else if ("install".equals(command)) {
+            System.out.println("Installing Federation module...");
             install();
-            System.out.println("Federation module has been installed.");
+            System.out.println("Done.");
 
         } else if ("uninstall".equals(command)) {
+            System.out.println("Uninstalling Federation module...");
             uninstall();
-            System.out.println("Federation module has been uninstalled.");
+            System.out.println("Done.");
 
         } else if ("createPartitions".equals(command)) {
-            String repository = iterator.next();
-            createPartitions(repository);
 
-        } else if ("removePartitions".equals(command)) {
-            String repository = iterator.next();
-            removePartitions(repository);
+            Collection<String> repositoryNames;
+            if (iterator.hasNext()) {
+                repositoryNames = getRepositoryNames();
 
-        } else if ("synchronize".equals(command)) {
-            String name = iterator.next();
-            System.out.println("Synchronizing "+name+"...");
-
-            Collection<String> parameters = new ArrayList<String>();
-            while (iterator.hasNext()) {
-                String parameter = iterator.next();
-                parameters.add(parameter);
+            } else {
+                repositoryNames = new ArrayList<String>();
+                while (iterator.hasNext()) {
+                    String repository = iterator.next();
+                    repositoryNames.add(repository);
+                }
             }
 
-            synchronize(name, parameters);
-            System.out.println("Synchronization completed.");
+            for (String repository : repositoryNames) {
+                System.out.println("Creating partitions for "+repository+"...");
+                createPartitions(repository);
+            }
+
+            System.out.println("Done.");
+
+        } else if ("removePartitions".equals(command)) {
+
+            Collection<String> repositoryNames;
+            if (iterator.hasNext()) {
+                repositoryNames = getRepositoryNames();
+
+            } else {
+                repositoryNames = new ArrayList<String>();
+                while (iterator.hasNext()) {
+                    String repository = iterator.next();
+                    repositoryNames.add(repository);
+                }
+            }
+
+            for (String repository : repositoryNames) {
+                System.out.println("Removing partitions for "+repository+"...");
+                removePartitions(repository);
+            }
+
+            System.out.println("Done.");
+
+        } else if ("synchronize".equals(command)) {
+
+            Collection<String> repositoryNames;
+            if (iterator.hasNext()) {
+                repositoryNames = getRepositoryNames();
+
+            } else {
+                repositoryNames = new ArrayList<String>();
+                while (iterator.hasNext()) {
+                    String repository = iterator.next();
+                    repositoryNames.add(repository);
+                }
+            }
+
+            for (String repository : repositoryNames) {
+                System.out.println("Synchronizing "+repository+"...");
+                synchronize(repository);
+            }
+
+            System.out.println("Done.");
 
         } else {
             throw new Exception("Unknown command: "+command);
@@ -259,9 +295,9 @@ public class FederationClient implements FederationMBean {
         System.out.println("  install                                   Install Federation module on the server.");
         System.out.println("  uninstall                                 Uninstall Federation module from the server.");
         System.out.println("  status                                    Display Federation status.");
-        System.out.println("  createPartitions <repository>             Create partitions for this repository");
-        System.out.println("  createRemove <repository>                 Remove partitions for this repository");
-        System.out.println("  synchronize <repository> [parameters...]  Synchronize repository.");
+        System.out.println("  createPartitions [repository...]          Create partitions for this repository");
+        System.out.println("  createRemove [repository...]              Remove partitions for this repository");
+        System.out.println("  synchronize [repository...]               Synchronize this repository.");
     }
 
     public static void main(String args[]) throws Exception {

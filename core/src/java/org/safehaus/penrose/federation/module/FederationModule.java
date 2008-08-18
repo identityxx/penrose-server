@@ -531,10 +531,6 @@ public class FederationModule extends Module implements FederationMBean {
     }
 
     public void synchronize(String name) throws Exception {
-        synchronize(name, null);
-    }
-
-    public void synchronize(String name, Collection<String> parameters) throws Exception {
         Repository repository = federationConfig.getRepository(name);
         if (repository == null) return;
 
@@ -547,14 +543,25 @@ public class FederationModule extends Module implements FederationMBean {
             Partition nisPartition = partition.getPartitionContext().getPartition(name+"_"+NIS);
 
             NISLDAPSyncModule module = (NISLDAPSyncModule)nisPartition.getModuleManager().getModule("NISLDAPSyncModule");
+            module.synchronize();
+        }
+    }
 
-            if (parameters == null || parameters.isEmpty()) {
-                module.synchronize();
+    public void synchronizeNISMaps(String name, Collection<String> maps) throws Exception {
 
-            } else {
-                for (String map : parameters) {
-                    module.synchronizeMap(map);
-                }
+        Repository repository = federationConfig.getRepository(name);
+        if (repository == null) return;
+
+        Partition nisPartition = partition.getPartitionContext().getPartition(name+"_"+NIS);
+
+        NISLDAPSyncModule module = (NISLDAPSyncModule)nisPartition.getModuleManager().getModule("NISLDAPSyncModule");
+
+        if (maps == null || maps.isEmpty()) {
+            module.synchronize();
+
+        } else {
+            for (String map : maps) {
+                module.synchronizeMap(map);
             }
         }
     }

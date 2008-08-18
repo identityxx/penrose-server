@@ -95,11 +95,7 @@ public class ConnectionManager {
         connectionContext.setAdapter(adapter);
         connectionContext.setClassLoader(cl);
 
-        String connectionClass = adapter.getConnectionClassName();
-        Class clazz = cl.loadClass(connectionClass);
-        Connection connection = (Connection)clazz.newInstance();
-
-        connection.init(connectionConfig, connectionContext);
+        Connection connection = adapter.createConnection(connectionConfig, connectionContext);
 
         addConnection(connection);
 

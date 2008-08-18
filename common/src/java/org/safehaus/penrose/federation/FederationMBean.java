@@ -14,5 +14,4 @@ public interface FederationMBean {
     public void removePartitions(String name) throws Exception;
     
     public void synchronize(String name) throws Exception;
-    public void synchronize(String name, Collection<String> parameters) throws Exception;
 }
