@@ -71,6 +71,8 @@ public class PartitionManager {
         
         loadDefaultPartition();
 
+        startPartition("DEFAULT");
+
         for (String partitionName : getAvailablePartitionNames()) {
             try {
                 loadPartition(partitionName);
@@ -81,7 +83,8 @@ public class PartitionManager {
         }
 
         for (String partitionName : partitionConfigManager.getPartitionNames()) {
-
+            if ("DEFAULT".equals(partitionName)) continue;
+            
             try {
                 startPartition(partitionName);
 

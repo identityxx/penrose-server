@@ -46,6 +46,22 @@ public class NISFederationClient {
         );
     }
 
+    public void startYPPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "startYPPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopYPPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "stopYPPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
     public void removeYPPartition(String name) throws Exception {
         moduleClient.invoke(
                 "removeYPPartition",
@@ -57,6 +73,22 @@ public class NISFederationClient {
     public void createNISPartition(String name) throws Exception {
         moduleClient.invoke(
                 "createNISPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void startNISPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "startNISPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopNISPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "stopNISPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
@@ -78,6 +110,22 @@ public class NISFederationClient {
         );
     }
 
+    public void startNSSPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "startNSSPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopNSSPartition(String name) throws Exception {
+        moduleClient.invoke(
+                "stopNSSPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
     public void removeNSSPartition(String name) throws Exception {
         moduleClient.invoke(
                 "removeNSSPartition",
@@ -93,13 +141,16 @@ public class NISFederationClient {
 
     public void updateRepository(NISDomain repository) throws Exception {
 
-        federation.removePartitions(repository.getName());
+        String name = repository.getName();
+        federation.stopPartitions(name);
+        federation.removePartitions(name);
 
-        federation.removeRepository(repository.getName());
+        federation.removeRepository(name);
         federation.addRepository(repository);
         federation.storeFederationConfig();
 
-        federation.createPartitions(repository.getName());
+        federation.createPartitions(name);
+        federation.startPartitions(name);
     }
 
     public void removeRepository(String name) throws Exception {
@@ -141,9 +192,11 @@ public class NISFederationClient {
 
     public void createPartitions(String name) throws Exception {
         federation.createPartitions(name);
+        federation.startPartitions(name);
     }
 
     public void removePartitions(String name) throws Exception {
+        federation.stopPartitions(name);
         federation.removePartitions(name);
     }
 

@@ -43,13 +43,17 @@ public class LDAPFederationClient {
 
     public void updateRepository(LDAPRepository repository) throws Exception {
 
-        federation.removePartitions(repository.getName());
+        String name = repository.getName();
 
-        federation.removeRepository(repository.getName());
+        federation.stopPartitions(name);
+        federation.removePartitions(name);
+
+        federation.removeRepository(name);
         federation.addRepository(repository);
         federation.storeFederationConfig();
 
-        federation.createPartitions(repository.getName());
+        federation.createPartitions(name);
+        federation.startPartitions(name);
     }
 
     public void removeRepository(String name) throws Exception {
@@ -59,9 +63,11 @@ public class LDAPFederationClient {
 
     public void createPartitions(String name) throws Exception {
         federation.createPartitions(name);
+        federation.startPartitions(name);
     }
 
     public void removePartitions(String name) throws Exception {
+        federation.stopPartitions(name);
         federation.removePartitions(name);
     }
 }

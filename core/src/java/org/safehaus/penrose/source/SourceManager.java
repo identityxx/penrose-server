@@ -117,7 +117,14 @@ public class SourceManager {
     }
 
     public Source getSource(String name) {
-        return sources.get(name);
+        Source source = sources.get(name);
+        if (source != null) return source;
+
+        if (partition.getName().equals("DEFAULT")) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+
+        SourceManager sourceManager = defaultPartition.getSourceManager();
+        return sourceManager.getSource(name);
     }
 
     public Source removeSource(String name) {

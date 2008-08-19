@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -64,6 +65,13 @@ public class AdapterManager {
     }
 
     public Adapter getAdapter(String name) {
-        return adapters.get(name);
+        Adapter adapter = adapters.get(name);
+        if (adapter != null) return adapter;
+
+        if (partition.getName().equals("DEFAULT")) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+
+        AdapterManager adapterManager = defaultPartition.getAdapterManager();
+        return adapterManager.getAdapter(name);
     }
 }

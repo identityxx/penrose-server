@@ -159,6 +159,14 @@ public class FederationClient implements FederationMBean {
         );
     }
 
+    public void startPartitions() throws Exception {
+        moduleClient.invoke(
+                "createPartitions",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
     public void createPartitions(String name) throws Exception {
         moduleClient.invoke(
                 "createPartitions",
@@ -167,11 +175,35 @@ public class FederationClient implements FederationMBean {
         );
     }
 
+    public void startPartitions(String name) throws Exception {
+        moduleClient.invoke(
+                "startPartitions",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
+    public void stopPartitions() throws Exception {
+        moduleClient.invoke(
+                "removePartitions",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
     public void removePartitions() throws Exception {
         moduleClient.invoke(
                 "removePartitions",
                 new Object[] { },
                 new String[] { }
+        );
+    }
+
+    public void stopPartitions(String name) throws Exception {
+        moduleClient.invoke(
+                "stopPartitions",
+                new Object[] { name },
+                new String[] { String.class.getName() }
         );
     }
 
@@ -243,6 +275,7 @@ public class FederationClient implements FederationMBean {
             for (String repository : repositoryNames) {
                 System.out.println("Creating partitions for "+repository+"...");
                 createPartitions(repository);
+                startPartitions(repository);
             }
 
             System.out.println("Done.");
@@ -263,6 +296,7 @@ public class FederationClient implements FederationMBean {
 
             for (String repository : repositoryNames) {
                 System.out.println("Removing partitions for "+repository+"...");
+                stopPartitions(repository);
                 removePartitions(repository);
             }
 

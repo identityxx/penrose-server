@@ -14,6 +14,12 @@ public interface FederationMBean {
     public void createPartitions() throws Exception;
     public void createPartitions(String name) throws Exception;
     
+    public void startPartitions() throws Exception;
+    public void startPartitions(String name) throws Exception;
+
+    public void stopPartitions() throws Exception;
+    public void stopPartitions(String name) throws Exception;
+
     public void removePartitions() throws Exception;
     public void removePartitions(String name) throws Exception;
     

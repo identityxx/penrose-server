@@ -76,17 +76,7 @@ public class ConnectionManager {
         if (adapterName == null) throw new Exception("Missing adapter name.");
 
         Adapter adapter = partition.getAdapterManager().getAdapter(adapterName);
-        if (adapter == null) {
-            PenroseContext penroseContext = partitionContext.getPenroseContext();
-            Partition defaultPartition = penroseContext.getPartitionManager().getPartition("DEFAULT");
-            if (defaultPartition != null) {
-                adapter = defaultPartition.getAdapterManager().getAdapter(adapterName);
-            }
-        }
-
-        if (adapter == null) {
-            throw new Exception("Unknown adapter "+adapterName+".");
-        }
+        if (adapter == null) throw new Exception("Unknown adapter "+adapterName+".");
 
         ClassLoader cl = partitionContext.getClassLoader();
 

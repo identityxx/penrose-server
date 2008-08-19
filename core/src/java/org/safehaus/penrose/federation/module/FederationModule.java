@@ -61,7 +61,9 @@ public class FederationModule extends Module implements FederationMBean {
 
         File home = partition.getPartitionContext().getPenroseContext().getHome();
         samplesDir = new File(home, "samples");
-        partitionsDir = new File(home, "partitions");
+
+        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
+        partitionsDir = partitionManager.getPartitionsDir();
 
         if (create) {
             createPartitions();
@@ -116,6 +118,11 @@ public class FederationModule extends Module implements FederationMBean {
         String partitionName = GLOBAL;
         File partitionDir = new File(partitionsDir, partitionName);
 
+        if (partitionDir.exists()) {
+            log.debug("Partition "+partitionName+" already exists.");
+            return;
+        }
+
         String templateName = repository.getParameter(TEMPLATE);
         File templateDir;
         if (templateName == null) {
@@ -152,6 +159,19 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
+    }
+
+    public void startGlobalPartition() throws Exception {
+        startPartition(GLOBAL);
+    }
+
+    public void startLDAPPartitions(String name) throws Exception {
+        startPartition(name);
+    }
+
+    public void startPartition(String partitionName) throws Exception {
+
+        File partitionDir = new File(partitionsDir, partitionName);
 
         PartitionConfig partitionConfig = new PartitionConfig(partitionName);
         partitionConfig.load(partitionDir);
@@ -159,6 +179,10 @@ public class FederationModule extends Module implements FederationMBean {
         PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
         partitionManager.addPartitionConfig(partitionConfig);
         partitionManager.startPartition(partitionName);
+    }
+
+    public void stopGlobalPartition() throws Exception {
+        stopPartition(GLOBAL);
     }
 
     public void removeGlobalPartition() throws Exception {
@@ -171,6 +195,11 @@ public class FederationModule extends Module implements FederationMBean {
 
         String partitionName = repository.getName();
         File partitionDir = new File(partitionsDir, partitionName);
+
+        if (partitionDir.exists()) {
+            log.debug("Partition "+partitionName+" already exists.");
+            return;
+        }
 
         String templateName = repository.getParameter(TEMPLATE);
         File templateDir;
@@ -213,13 +242,10 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
+    }
 
-        PartitionConfig partitionConfig = new PartitionConfig(partitionName);
-        partitionConfig.load(partitionDir);
-
-        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
-        partitionManager.addPartitionConfig(partitionConfig);
-        partitionManager.startPartition(partitionName);
+    public void stopLDAPPartitions(String partitionName) throws Exception {
+        stopPartition(partitionName);
     }
 
     public void removeLDAPPartitions(String partitionName) throws Exception {
@@ -230,6 +256,18 @@ public class FederationModule extends Module implements FederationMBean {
         createYPPartition(name);
         createNISPartition(name);
         createNSSPartition(name);
+    }
+
+    public void startNISPartitions(String name) throws Exception {
+        startYPPartition(name);
+        startNISPartition(name);
+        startNSSPartition(name);
+    }
+
+    public void stopNISPartitions(String domainName) throws Exception {
+        stopNSSPartition(domainName);
+        stopNISPartition(domainName);
+        stopYPPartition(domainName);
     }
 
     public void removeNISPartitions(String domainName) throws Exception {
@@ -246,6 +284,11 @@ public class FederationModule extends Module implements FederationMBean {
 
         String partitionName = name+"_"+YP;
         File partitionDir = new File(partitionsDir, partitionName);
+
+        if (partitionDir.exists()) {
+            log.debug("Partition "+partitionName+" already exists.");
+            return;
+        }
 
         String templateName = domain.getParameter(NISDomain.YP_TEMPLATE);
         File templateDir;
@@ -283,17 +326,18 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
-
-        PartitionConfig partitionConfig = new PartitionConfig(partitionName);
-        partitionConfig.load(partitionDir);
-
-        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
-        partitionManager.addPartitionConfig(partitionConfig);
-        partitionManager.startPartition(partitionName);
     }
 
-    public void removeYPPartition(String domainName) throws Exception {
-        removePartition(domainName+"_"+YP);
+    public void startYPPartition(String name) throws Exception {
+        startPartition(name+"_"+YP);
+    }
+
+    public void stopYPPartition(String name) throws Exception {
+        stopPartition(name+"_"+YP);
+    }
+
+    public void removeYPPartition(String name) throws Exception {
+        removePartition(name+"_"+YP);
     }
 
     public void createNISPartition(String name) throws Exception {
@@ -304,6 +348,11 @@ public class FederationModule extends Module implements FederationMBean {
 
         String partitionName = name+"_"+NIS;
         File partitionDir = new File(partitionsDir, partitionName);
+
+        if (partitionDir.exists()) {
+            log.debug("Partition "+partitionName+" already exists.");
+            return;
+        }
 
         String templateName = domain.getParameter(NISDomain.NIS_TEMPLATE);
         File templateDir;
@@ -345,13 +394,14 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
+    }
 
-        PartitionConfig partitionConfig = new PartitionConfig(partitionName);
-        partitionConfig.load(partitionDir);
+    public void startNISPartition(String name) throws Exception {
+        startPartition(name+"_"+NIS);
+    }
 
-        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
-        partitionManager.addPartitionConfig(partitionConfig);
-        partitionManager.startPartition(partitionName);
+    public void stopNISPartition(String name) throws Exception {
+        stopPartition(name+"_"+NIS);
     }
 
     public void removeNISPartition(String name) throws Exception {
@@ -366,6 +416,11 @@ public class FederationModule extends Module implements FederationMBean {
 
         String partitionName = name+"_"+NSS;
         File partitionDir = new File(partitionsDir, partitionName);
+
+        if (partitionDir.exists()) {
+            log.debug("Partition "+partitionName+" already exists.");
+            return;
+        }
 
         String templateName = domain.getParameter(NISDomain.NSS_TEMPLATE);
         File templateDir;
@@ -403,30 +458,33 @@ public class FederationModule extends Module implements FederationMBean {
         filterChain.addExpandProperties(expandProperties);
 
         copy.execute();
-
-        PartitionConfig partitionConfig = new PartitionConfig(partitionName);
-        partitionConfig.load(partitionDir);
-
-        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
-        partitionManager.addPartitionConfig(partitionConfig);
-        partitionManager.startPartition(partitionName);
     }
 
-    public void removeNSSPartition(String domainName) throws Exception {
-        removePartition(domainName+"_"+NSS);
+    public void startNSSPartition(String name) throws Exception {
+        startPartition(name+"_"+NSS);
     }
 
-    public void removePartition(String partitionName) throws Exception {
+    public void stopNSSPartition(String name) throws Exception {
+        stopPartition(name+"_"+NSS);
+    }
+    
+    public void removeNSSPartition(String name) throws Exception {
+        removePartition(name+"_"+NSS);
+    }
+
+    public void stopPartition(String partitionName) throws Exception {
 
         log.debug("Removing partition "+partitionName+".");
 
         PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
 
-        File partitionsDir = partitionManager.getPartitionsDir();
-        File partitionDir = new File(partitionsDir, partitionName);
-
         partitionManager.stopPartition(partitionName);
         partitionManager.unloadPartition(partitionName);
+    }
+
+    public void removePartition(String partitionName) {
+
+        File partitionDir = new File(partitionsDir, partitionName);
 
         FileUtil.delete(partitionDir);
     }
@@ -460,6 +518,7 @@ public class FederationModule extends Module implements FederationMBean {
         log.debug("Updating global repository.");
 
         if (getRepository(GLOBAL) != null) {
+            stopGlobalPartition();
             removeGlobalPartition();
         }
 
@@ -468,6 +527,7 @@ public class FederationModule extends Module implements FederationMBean {
         store();
 
         createGlobalPartition();
+        startGlobalPartition();
     }
 
     public void createDatabase(NISDomain domain, PartitionConfig nisPartitionConfig) throws Exception {
@@ -511,6 +571,18 @@ public class FederationModule extends Module implements FederationMBean {
         }
     }
 
+    public void startPartitions() throws Exception {
+        for (String name : getRepositoryNames()) {
+            startPartitions(name);
+        }
+    }
+
+    public void stopPartitions() throws Exception {
+        for (String name : getRepositoryNames()) {
+            stopPartitions(name);
+        }
+    }
+
     public void removePartitions() throws Exception {
         for (String name : getRepositoryNames()) {
             removePartitions(name);
@@ -529,6 +601,36 @@ public class FederationModule extends Module implements FederationMBean {
 
         } else if ("NIS".equals(repository.getType())) {
             createNISPartitions(name);
+        }
+    }
+
+    public void startPartitions(String name) throws Exception {
+        Repository repository = federationConfig.getRepository(name);
+        if (repository == null) return;
+
+        if ("GLOBAL".equals(repository.getType())) {
+            startGlobalPartition();
+
+        } else if ("LDAP".equals(repository.getType())) {
+            startLDAPPartitions(name);
+
+        } else if ("NIS".equals(repository.getType())) {
+            startNISPartitions(name);
+        }
+    }
+
+    public void stopPartitions(String name) throws Exception {
+        Repository repository = federationConfig.getRepository(name);
+        if (repository == null) return;
+
+        if ("GLOBAL".equals(repository.getType())) {
+            stopGlobalPartition();
+
+        } else if ("LDAP".equals(repository.getType())) {
+            stopLDAPPartitions(name);
+
+        } else if ("NIS".equals(repository.getType())) {
+            stopNISPartitions(name);
         }
     }
 
