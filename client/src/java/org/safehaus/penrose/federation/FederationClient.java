@@ -214,14 +214,14 @@ public class FederationClient implements FederationMBean {
 
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
-                repositoryNames = getRepositoryNames();
-
-            } else {
                 repositoryNames = new ArrayList<String>();
                 while (iterator.hasNext()) {
                     String repository = iterator.next();
                     repositoryNames.add(repository);
                 }
+
+            } else {
+                repositoryNames = getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
@@ -235,14 +235,14 @@ public class FederationClient implements FederationMBean {
 
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
-                repositoryNames = getRepositoryNames();
-
-            } else {
                 repositoryNames = new ArrayList<String>();
                 while (iterator.hasNext()) {
                     String repository = iterator.next();
                     repositoryNames.add(repository);
                 }
+
+            } else {
+                repositoryNames = getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
@@ -256,14 +256,14 @@ public class FederationClient implements FederationMBean {
 
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
-                repositoryNames = getRepositoryNames();
-
-            } else {
                 repositoryNames = new ArrayList<String>();
                 while (iterator.hasNext()) {
                     String repository = iterator.next();
                     repositoryNames.add(repository);
                 }
+
+            } else {
+                repositoryNames = getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
@@ -296,7 +296,7 @@ public class FederationClient implements FederationMBean {
         System.out.println("  uninstall                                 Uninstall Federation module from the server.");
         System.out.println("  status                                    Display Federation status.");
         System.out.println("  createPartitions [repository...]          Create partitions for this repository");
-        System.out.println("  createRemove [repository...]              Remove partitions for this repository");
+        System.out.println("  removePartitions [repository...]          Remove partitions for this repository");
         System.out.println("  synchronize [repository...]               Synchronize this repository.");
     }
 
