@@ -15,7 +15,6 @@ import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.FileUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -44,24 +43,39 @@ public class FederationModule extends Module implements FederationMBean {
     FederationReader reader = new FederationReader();
     FederationWriter writer = new FederationWriter();
 
+    String config = "federation.xml";
+    boolean create = true;
+
     File samplesDir;
     File partitionsDir;
 
     public void init() throws Exception {
+
+        String s = getParameter("config");
+        if (s != null) config = s;
+
+        s = getParameter("create");
+        if (s != null) create = Boolean.parseBoolean(s);
+
         load();
 
         File home = partition.getPartitionContext().getPenroseContext().getHome();
         samplesDir = new File(home, "samples");
         partitionsDir = new File(home, "partitions");
+
+        if (create) {
+            createPartitions();
+        }
     }
 
     public void load() throws Exception {
 
         File path = partition.getPartitionContext().getPath();
+
         File dir = path == null ?
                 new File(partition.getPartitionContext().getPenroseContext().getHome(), "conf") :
                 path;
-        File file = new File(dir, "federation.xml");
+        File file = new File(dir, config);
 
         if (file.exists()) {
             log.debug("Loading "+file);
@@ -489,6 +503,18 @@ public class FederationModule extends Module implements FederationMBean {
         JDBCConnection connection = (JDBCConnection)federationPartition.getConnectionManager().getConnection(JDBC);
 
         connection.dropDatabase(domain.getName());
+    }
+
+    public void createPartitions() throws Exception {
+        for (String name : getRepositoryNames()) {
+            createPartitions(name);
+        }
+    }
+
+    public void removePartitions() throws Exception {
+        for (String name : getRepositoryNames()) {
+            removePartitions(name);
+        }
     }
 
     public void createPartitions(String name) throws Exception {
