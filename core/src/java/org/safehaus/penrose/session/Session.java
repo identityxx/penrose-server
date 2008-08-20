@@ -765,7 +765,7 @@ public class Session {
     ) throws LDAPException {
         try {
             Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Search "+request.getDn()+".");
+            if (warn) log.warn("Session "+sessionId+": Search "+request.getDn()+" with filter "+request.getFilter()+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
