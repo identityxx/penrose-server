@@ -312,7 +312,7 @@ public class ProxyEntry extends Entry {
         if (dn == null) return EMPTY_ENTRIES;
 
         DN entryDn        = getDn();
-        if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
+        //if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
         int entryDnLength = entryDn.getSize();
         int dnLength      = dn.getSize();
@@ -328,7 +328,7 @@ public class ProxyEntry extends Entry {
             return EMPTY_ENTRIES;
         }
 
-        if (debug) log.debug("Searching children of \""+entryDn+"\".");
+        //if (debug) log.debug("Searching children of \""+entryDn+"\".");
 
         Collection<Entry> results = new ArrayList<Entry>();
 
@@ -342,7 +342,7 @@ public class ProxyEntry extends Entry {
 
         results.add(this);
 
-        if (debug) log.debug("Found entry \""+entryDn+"\".");
+        //if (debug) log.debug("Found entry \""+entryDn+"\".");
 
         return results;
     }
