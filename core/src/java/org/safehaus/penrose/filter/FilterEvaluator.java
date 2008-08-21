@@ -5,7 +5,6 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.ldap.Attribute;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
@@ -24,7 +23,7 @@ public class FilterEvaluator {
     public Logger log = LoggerFactory.getLogger(getClass());
     boolean debug = log.isDebugEnabled();
 
-    private SchemaManager schemaManager;
+    public SchemaManager schemaManager;
 
     public FilterEvaluator() throws Exception {
     }

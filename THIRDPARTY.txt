@@ -24,7 +24,7 @@ The Penrose (TM) application includes items that have been sourced from third pa
  - JDBM                       BSD-style License          http://jdbm.sourceforge.net/
  - JBoss                      LGPL                       http://labs.jboss.com/jbossas/downloads/
  - JUnit                      CPL                        http://svn.mindswap.org/swoop/branches/profiling/lib/junit-3.8.1/cpl-v10.html
- - JLDAP                      Novell Developer License   http://developer.novell.com/wiki/index.php/Jldap
+ - JLDAP                      OpenLDAP Public License    http://www.openldap.org/software/release/license.html
  - Log4j                      Apache Software License    http://logging.apache.org/log4j/1.2/license.html
  - OpenDS                     CDDL                       https://opends.dev.java.net/
  - PostgreSQL JDBC Driver     BSD-style License          http://jdbc.postgresql.org/license.html
