@@ -57,11 +57,12 @@ public class EntrySearchResponse extends Pipeline {
 
         try {
             entry.validatePermission(session, result);
-            entry.validateSearchResult(request, result);
 
         } catch (Exception e) {
             return;
         }
+
+        if (!entry.validateSearchResult(request, result)) return;
 
         aclEvaluator.filterAttributes(session, result);
         filterAttributes(result);

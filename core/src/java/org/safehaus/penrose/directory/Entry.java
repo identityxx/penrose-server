@@ -468,17 +468,20 @@ public class Entry implements Cloneable {
         }
     }
 
-    public void validateSearchResult(SearchRequest request, SearchResult result) throws Exception {
+    public boolean validateSearchResult(SearchRequest request, SearchResult result) throws Exception {
 
         Filter filter = request.getFilter();
         Attributes attributes = result.getAttributes();
 
         if (debug) log.debug("Checking search filter "+filter+".");
 
-        if (!filterEvaluator.eval(attributes, filter)) {
-            if (debug) log.debug("Entry \""+result.getDn()+"\" doesn't match search filter.");
-            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+        boolean b = filterEvaluator.eval(attributes, filter);
+
+        if (debug) {
+            if (!b) log.debug("Entry \""+result.getDn()+"\" doesn't match search filter.");
         }
+
+        return b;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

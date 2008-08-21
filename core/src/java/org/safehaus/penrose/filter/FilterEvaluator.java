@@ -22,19 +22,15 @@ import java.util.Collection;
 public class FilterEvaluator {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    boolean debug = log.isDebugEnabled();
 
     private SchemaManager schemaManager;
 
     public FilterEvaluator() throws Exception {
     }
 
-    public boolean eval(SearchResult result, Filter filter) throws Exception {
-        return eval(result.getAttributes(), filter);
-    }
-    
     public boolean eval(Attributes attributes, Filter filter) throws Exception {
 
-        //log.debug("Checking filter "+filter);
         boolean result = false;
 
         if (filter == null) {
@@ -105,7 +101,10 @@ public class FilterEvaluator {
         Object attributeValue = filter.getValue();
 
         Attribute attribute = attributes.get(attributeName);
-        if (attribute == null) return false;
+        if (attribute == null) {
+            log.debug("Attribute "+attributeName+" is null.");
+            return false;
+        }
 
         Collection<Object> set = attribute.getValues();
         AttributeType attributeType = schemaManager.getAttributeType(attributeName);
