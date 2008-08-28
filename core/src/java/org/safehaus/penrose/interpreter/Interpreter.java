@@ -25,7 +25,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.RDN;
 import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.mapping.Expression;
-import org.safehaus.penrose.mapping.MappingFieldConfig;
+import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.source.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,23 +214,23 @@ public abstract class Interpreter {
         }
     }
 
-    public Object eval(MappingFieldConfig fieldMapping) throws Exception {
+    public Object eval(MappingRule rule) throws Exception {
         try {
-            if (fieldMapping.getConstant() != null) {
-                return fieldMapping.getConstant();
+            if (rule.getConstant() != null) {
+                return rule.getConstant();
 
-            } else if (fieldMapping.getVariable() != null) {
-                String name = fieldMapping.getVariable();
+            } else if (rule.getVariable() != null) {
+                String name = rule.getVariable();
                 return get(name);
 
-            } else if (fieldMapping.getExpression() != null) {
-                return eval(fieldMapping.getExpression());
+            } else if (rule.getExpression() != null) {
+                return eval(rule.getExpression());
 
             } else {
                 return null;
             }
         } catch (Exception e) {
-            throw new Exception("Error evaluating field "+fieldMapping.getName(), e);
+            throw new Exception("Error evaluating field "+rule.getName(), e);
         }
     }
 

@@ -5,10 +5,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
@@ -18,8 +15,13 @@ public class Mapping {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
+    public final static List<MappingRule> EMPTY = new LinkedList<MappingRule>();
+
     private MappingConfig mappingConfig;
     private MappingContext mappingContext;
+
+    protected List<MappingRule> rules = new LinkedList<MappingRule>();
+    protected Map<String,List<MappingRule>> rulesByName = new TreeMap<String,List<MappingRule>>();
 
     public Mapping() {
     }
@@ -38,6 +40,11 @@ public class Mapping {
         this.mappingConfig = mappingConfig;
         this.mappingContext = mappingContext;
 
+        for (MappingRuleConfig ruleConfig : mappingConfig.getRuleConfigs()) {
+            MappingRule rule = new MappingRule(ruleConfig);
+            addRule(rule);
+        }
+
         init();
     }
 
@@ -47,16 +54,85 @@ public class Mapping {
     public void destroy() throws Exception {
     }
 
-    public Collection<String> getFieldNames() {
-        return mappingConfig.getFieldNames();
+    public Collection<String> getRuleNames() {
+        Collection<String> list = new ArrayList<String>();
+        for (MappingRule rule : rules) {
+            list.add(rule.getName());
+        }
+        return list;
     }
 
-    public List<MappingFieldConfig> getFieldConfigs(String name) {
-        return mappingConfig.getFieldConfigs(name);
+    public List<MappingRule> getRules() {
+        return rules;
     }
 
-    public List<MappingFieldConfig> getFieldConfigs() {
-        return mappingConfig.getFieldConfigs();
+    public void removeRules() {
+        rules.clear();
+        rulesByName.clear();
+    }
+
+    public void addRule(MappingRule rule) {
+
+        String name = rule.getName().toLowerCase();
+
+        rules.add(rule);
+
+        List<MappingRule> list = rulesByName.get(name);
+        if (list == null) {
+            list = new LinkedList<MappingRule>();
+            rulesByName.put(name, list);
+        }
+        list.add(rule);
+    }
+
+    public void addRule(int index, MappingRule rule) {
+
+        String name = rule.getName().toLowerCase();
+
+        rules.add(index, rule);
+
+        List<MappingRule> list = rulesByName.get(name);
+        if (list == null) {
+            list = new LinkedList<MappingRule>();
+            rulesByName.put(name, list);
+        }
+
+        if (list.isEmpty()) {
+            list.add(rule);
+        } else {
+            for (MappingRule fc : list) {
+                int i = rules.indexOf(fc);
+                if (i < index) continue;
+                list.add(i, rule);
+            }
+        }
+    }
+
+    public int getRuleIndex(MappingRule rule) {
+        return rules.indexOf(rule);
+    }
+
+    public List<MappingRule> getRules(String name) {
+        List<MappingRule> list = rulesByName.get(name.toLowerCase());
+        if (list == null) return EMPTY;
+        return list;
+    }
+
+    public List<MappingRule> removeRules(String name) {
+         return rulesByName.remove(name.toLowerCase());
+    }
+
+    public void removeRule(MappingRule rule) {
+
+        String name = rule.getName().toLowerCase();
+
+        rules.remove(rule);
+
+        Collection<MappingRule> list = rulesByName.get(name);
+        if (list == null) return;
+
+        list.remove(rule);
+        if (list.isEmpty()) rulesByName.remove(name);
     }
 
     public Attributes map(String prefix, Attributes input) throws Exception {
@@ -81,10 +157,10 @@ public class Mapping {
             interpreter.eval(preMapping);
         }
 
-        for (MappingFieldConfig fieldConfig : mappingConfig.getFieldConfigs()) {
-            String name = fieldConfig.getName();
+        for (MappingRule rule : getRules()) {
+            String name = rule.getName();
 
-            boolean required = fieldConfig.isRequired();
+            boolean required = rule.isRequired();
             if (!required) {
                 Object value = interpreter.get(name);
                 if (value != null) {
@@ -93,7 +169,7 @@ public class Mapping {
                 }
             }
 
-            String variable = fieldConfig.getVariable();
+            String variable = rule.getVariable();
             if (variable != null) {
                 Object variableValue = interpreter.get(variable);
                 if (variableValue == null) {
@@ -101,7 +177,7 @@ public class Mapping {
                     continue;
                 }
             }
-            String condition = fieldConfig.getCondition();
+            String condition = rule.getCondition();
             if (condition != null) {
                 Object conditionValue = interpreter.eval(condition);
                 if (!(conditionValue instanceof Boolean && (Boolean) conditionValue)) {
@@ -113,7 +189,7 @@ public class Mapping {
                 }
             }
 
-            Object newValue = interpreter.eval(fieldConfig);
+            Object newValue = interpreter.eval(rule);
             if (newValue == null) {
                 if (debug) log.debug(" - Skipping "+name+": value is null");
                 continue;
@@ -164,7 +240,7 @@ public class Mapping {
 
         //if (debug) log.debug(" - Storing mapping results");
 
-        for (String name : mappingConfig.getFieldNames()) {
+        for (String name : getRuleNames()) {
             Object value = interpreter.get(name);
             //if (debug) log.debug("   - "+name+": "+value);
             if (value == null) continue;

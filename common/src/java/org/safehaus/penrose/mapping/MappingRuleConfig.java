@@ -27,10 +27,10 @@ import java.io.Serializable;
 /**
  * @author Endi S. Dewata
  */
-public class MappingFieldConfig implements Serializable, Cloneable {
+public class MappingRuleConfig implements Serializable, Cloneable {
 
     static {
-        log = LoggerFactory.getLogger(MappingFieldConfig.class);
+        log = LoggerFactory.getLogger(MappingRuleConfig.class);
     }
 
     public static transient Logger log;
@@ -49,14 +49,14 @@ public class MappingFieldConfig implements Serializable, Cloneable {
     protected String variable;
 	protected Expression expression;
 
-    public MappingFieldConfig() {
+    public MappingRuleConfig() {
     }
 
-    public MappingFieldConfig(String name) {
+    public MappingRuleConfig(String name) {
         this.name = name;
     }
 
-    public MappingFieldConfig(String name, String type, String value) {
+    public MappingRuleConfig(String name, String type, String value) {
         this.name = name;
 
         if (CONSTANT.equals(type)) {
@@ -139,44 +139,44 @@ public class MappingFieldConfig implements Serializable, Cloneable {
         if (object == null) return false;
         if (object.getClass() != this.getClass()) return false;
 
-        MappingFieldConfig fieldConfig = (MappingFieldConfig)object;
-        if (!equals(name, fieldConfig.name)) return false;
+        MappingRuleConfig ruleConfig = (MappingRuleConfig)object;
+        if (!equals(name, ruleConfig.name)) return false;
 
-        if (!equals(required, fieldConfig.required)) return false;
-        if (!equals(condition, fieldConfig.condition)) return false;
+        if (!equals(required, ruleConfig.required)) return false;
+        if (!equals(condition, ruleConfig.condition)) return false;
 
-        if (constant instanceof byte[] && fieldConfig.constant instanceof byte[]) {
-            if (!Arrays.equals((byte[])constant, (byte[])fieldConfig.constant)) return false;
+        if (constant instanceof byte[] && ruleConfig.constant instanceof byte[]) {
+            if (!Arrays.equals((byte[])constant, (byte[]) ruleConfig.constant)) return false;
         } else {
-            if (!equals(constant, fieldConfig.constant)) return false;
+            if (!equals(constant, ruleConfig.constant)) return false;
         }
 
-        if (!equals(variable, fieldConfig.variable)) return false;
-        if (!equals(expression, fieldConfig.expression)) return false;
+        if (!equals(variable, ruleConfig.variable)) return false;
+        if (!equals(expression, ruleConfig.expression)) return false;
 
         return true;
     }
 
-    public void copy(MappingFieldConfig fieldConfig) throws CloneNotSupportedException {
-        name = fieldConfig.name;
+    public void copy(MappingRuleConfig ruleConfig) throws CloneNotSupportedException {
+        name = ruleConfig.name;
 
-        required = fieldConfig.required;
-        condition = fieldConfig.condition;
+        required = ruleConfig.required;
+        condition = ruleConfig.condition;
 
-        if (fieldConfig.constant instanceof byte[]) {
-            constant = ((byte[])fieldConfig.constant).clone();
+        if (ruleConfig.constant instanceof byte[]) {
+            constant = ((byte[]) ruleConfig.constant).clone();
         } else {
-            constant = fieldConfig.constant;
+            constant = ruleConfig.constant;
         }
 
-        variable = fieldConfig.variable;
-        expression = fieldConfig.expression == null ? null : (Expression)fieldConfig.expression.clone();
+        variable = ruleConfig.variable;
+        expression = ruleConfig.expression == null ? null : (Expression) ruleConfig.expression.clone();
     }
 
     public Object clone() throws CloneNotSupportedException {
-        MappingFieldConfig fieldConfig = (MappingFieldConfig)super.clone();
-        fieldConfig.copy(this);
-        return fieldConfig;
+        MappingRuleConfig ruleConfig = (MappingRuleConfig)super.clone();
+        ruleConfig.copy(this);
+        return ruleConfig;
     }
 
     public String getCondition() {

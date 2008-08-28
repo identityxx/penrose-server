@@ -38,9 +38,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
             <call-method-rule pattern="pre"  methodname="setPreScript" paramcount="0" />
             <call-method-rule pattern="post" methodname="setPostScript" paramcount="0" />
 
-            <pattern value="field">
+            <pattern value="rule">
 
-                <object-create-rule classname="org.safehaus.penrose.mapping.MappingFieldConfig" />
+                <object-create-rule classname="org.safehaus.penrose.mapping.MappingRuleConfig" />
                 <set-properties-rule />
 
                 <call-method-rule pattern="condition" methodname="setCondition" paramcount="0" />
@@ -57,7 +57,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
                     <set-next-rule methodname="setExpression" />
                 </pattern>
 
-                <set-next-rule methodname="addFieldConfig" />
+                <set-next-rule methodname="addRuleConfig" />
 
             </pattern>
 

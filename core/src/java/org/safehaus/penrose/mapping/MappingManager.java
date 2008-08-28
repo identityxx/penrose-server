@@ -101,15 +101,17 @@ public class MappingManager {
         mappingConfigManager.removeMappingConfig(name);
     }
 
-    public Mapping getMapping(String name) {
-        Mapping mapping = mappings.get(name);
+    public Mapping getMapping(String mappingName) {
+        if (mappingName == null) return null;
+
+        Mapping mapping = mappings.get(mappingName);
         if (mapping != null) return mapping;
 
         if (partition.getName().equals("DEFAULT")) return null;
         Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
 
         MappingManager mappingManager = defaultPartition.getMappingManager();
-        return mappingManager.getMapping(name);
+        return mappingManager.getMapping(mappingName);
     }
 
     public MappingConfigManager getMappingConfigs() {

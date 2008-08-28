@@ -80,7 +80,7 @@ public class MappingWriter {
             element.add(postScriptElement);
         }
 
-        for (MappingFieldConfig fieldMapping : mappingConfig.getFieldConfigs()) {
+        for (MappingRuleConfig fieldMapping : mappingConfig.getRuleConfigs()) {
             Element fieldElement = createElement(fieldMapping);
             element.add(fieldElement);
         }
@@ -104,22 +104,22 @@ public class MappingWriter {
         return element;
     }
 
-    public Element createElement(MappingFieldConfig fieldConfig) throws Exception {
+    public Element createElement(MappingRuleConfig ruleConfig) throws Exception {
         
         Element element = new DefaultElement("field");
-        element.add(new DefaultAttribute("name", fieldConfig.getName()));
+        element.add(new DefaultAttribute("name", ruleConfig.getName()));
 
-        if (!fieldConfig.isRequired()) {
+        if (!ruleConfig.isRequired()) {
             element.add(new DefaultAttribute("required", "false"));
         }
 
-        if (fieldConfig.getCondition() != null) {
+        if (ruleConfig.getCondition() != null) {
             Element e = element.addElement("condition");
-            e.addText(fieldConfig.getCondition());
+            e.addText(ruleConfig.getCondition());
         }
 
-        if (fieldConfig.getConstant() != null) {
-            Object value = fieldConfig.getConstant();
+        if (ruleConfig.getConstant() != null) {
+            Object value = ruleConfig.getConstant();
             if (value instanceof byte[]) {
                 Element e = element.addElement("binary");
                 e.addText(BinaryUtil.encode(BinaryUtil.BASE64, (byte[])value));
@@ -128,12 +128,12 @@ public class MappingWriter {
                 e.addText((String)value);
             }
 
-        } else if (fieldConfig.getVariable() != null) {
+        } else if (ruleConfig.getVariable() != null) {
             Element e = element.addElement("variable");
-            e.addText(fieldConfig.getVariable());
+            e.addText(ruleConfig.getVariable());
 
-        } else if (fieldConfig.getExpression() != null) {
-            element.add(createElement(fieldConfig.getExpression()));
+        } else if (ruleConfig.getExpression() != null) {
+            element.add(createElement(ruleConfig.getExpression()));
 
         } else {
             return null;

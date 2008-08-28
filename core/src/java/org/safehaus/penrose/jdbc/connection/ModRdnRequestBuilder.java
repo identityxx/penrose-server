@@ -11,6 +11,7 @@ import org.safehaus.penrose.jdbc.Statement;
 import org.safehaus.penrose.jdbc.UpdateStatement;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.Field;
+import org.safehaus.penrose.source.FieldConfig;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -93,7 +94,7 @@ public class ModRdnRequestBuilder extends RequestBuilder {
             Object value = interpreter.eval(fieldRef);
             if (value == null) continue;
 
-            if ("INTEGER".equals(field.getType()) && value instanceof String) {
+            if (FieldConfig.TYPE_INTEGER.equals(field.getType()) && value instanceof String) {
                 value = Integer.parseInt((String)value);
             }
 

@@ -830,7 +830,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 Object value = interpreter.eval(fieldMapping);
                 if (value == null) continue;
 
-                if ("INTEGER".equals(fieldRef.getType()) && value instanceof String) {
+                if (FieldConfig.TYPE_INTEGER.equals(fieldRef.getType()) && value instanceof String) {
                     value = Integer.parseInt((String)value);
                 }
 

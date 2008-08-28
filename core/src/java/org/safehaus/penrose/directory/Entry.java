@@ -33,6 +33,7 @@ import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.source.FieldConfig;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
@@ -67,6 +68,7 @@ public class Entry implements Cloneable {
 
     protected SchemaManager schemaManager;
     protected FilterEvaluator filterEvaluator;
+    protected EntryFilterEvaluator entryFilterEvaluator;
 
     public void init(EntryConfig entryConfig, EntryContext entryContext) throws Exception {
         this.entryConfig = entryConfig;
@@ -79,6 +81,8 @@ public class Entry implements Cloneable {
         PartitionContext partitionContext = partition.getPartitionContext();
         PenroseContext penroseContext = partitionContext.getPenroseContext();
         filterEvaluator = penroseContext.getFilterEvaluator();
+
+        entryFilterEvaluator = new EntryFilterEvaluator(this);
 
         // create source references
         
@@ -200,6 +204,13 @@ public class Entry implements Cloneable {
 
     public Partition getPartition() {
         return partition;
+    }
+
+    public Mapping getMapping() {
+        String mappingName = entryConfig.getMappingName();
+        if (mappingName == null) return null;
+        
+        return partition.getMappingManager().getMapping(mappingName);
     }
 
     public Collection<String> getLocalSourceNames() {
@@ -437,6 +448,10 @@ public class Entry implements Cloneable {
         partition.validateSchema(request, this);
     }
 
+    public AttributeType getAttributeType(String attributeName) throws Exception {
+        return schemaManager.getAttributeType(attributeName);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -462,7 +477,7 @@ public class Entry implements Cloneable {
 
         if (debug) log.debug("Checking search filter "+filter+".");
 
-        if (!filterEvaluator.eval(this, filter)) {
+        if (!entryFilterEvaluator.eval(filter)) {
             if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
             throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
         }
@@ -1030,9 +1045,8 @@ public class Entry implements Cloneable {
 
         Attributes attributes = new Attributes();
 
-        String mappingName = entryConfig.getMappingName();
-        if (mappingName != null) {
-            Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+        Mapping mapping = getMapping();
+        if (mapping != null) {
             mapping.map(interpreter, attributes);
             return attributes;
         }
@@ -1151,7 +1165,7 @@ public class Entry implements Cloneable {
                     Object value = interpreter.eval(field);
                     if (value == null) continue;
 
-                    if ("INTEGER".equals(field.getType()) && value instanceof String) {
+                    if (FieldConfig.TYPE_INTEGER.equals(field.getType()) && value instanceof String) {
                         value = Integer.parseInt((String)value);
                     }
 

@@ -7,7 +7,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.mapping.Mapping;
-import org.safehaus.penrose.mapping.MappingFieldConfig;
+import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
@@ -118,14 +118,12 @@ public class FederationEntry extends DynamicEntry {
         Collection<String> attributeNames = request.getAttributes();
         Collection<String> requestedSources = new HashSet<String>();
 
-        String mappingName = entryConfig.getMappingName();
-        if (mappingName != null) {
-
-            Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+        Mapping mapping = getMapping();
+        if (mapping != null) {
 
             for (String attributeName : attributeNames) {
-                for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs(attributeName)) {
-                    String variable = fieldConfig.getVariable();
+                for (MappingRule rule : mapping.getRules(attributeName)) {
+                    String variable = rule.getVariable();
                     if (variable == null) continue;
 
                     int i = variable.indexOf('.');

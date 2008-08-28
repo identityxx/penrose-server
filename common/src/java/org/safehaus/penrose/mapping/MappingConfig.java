@@ -25,7 +25,7 @@ import java.io.Serializable;
  */
 public class MappingConfig implements Serializable, Cloneable {
 
-    public final static List<MappingFieldConfig> EMPTY = new LinkedList<MappingFieldConfig>();
+    public final static List<MappingRuleConfig> EMPTY = new LinkedList<MappingRuleConfig>();
 
     private boolean enabled = true;
 
@@ -36,8 +36,8 @@ public class MappingConfig implements Serializable, Cloneable {
     protected String preScript;
     protected String postScript;
 
-    protected List<MappingFieldConfig> fieldConfigs = new LinkedList<MappingFieldConfig>();
-    protected Map<String,List<MappingFieldConfig>> fieldConfigsByName = new TreeMap<String,List<MappingFieldConfig>>();
+    protected List<MappingRuleConfig> ruleConfigs = new LinkedList<MappingRuleConfig>();
+    protected Map<String,List<MappingRuleConfig>> ruleConfigsByName = new TreeMap<String,List<MappingRuleConfig>>();
 
     protected Map<String,String> parameters = new TreeMap<String,String>();
 
@@ -48,81 +48,85 @@ public class MappingConfig implements Serializable, Cloneable {
         this.name = name;
     }
 
-    public Collection<String> getFieldNames() {
-        return fieldConfigsByName.keySet();
+    public Collection<String> getRuleNames() {
+        Collection<String> list = new ArrayList<String>();
+        for (MappingRuleConfig ruleConfig : ruleConfigs) {
+            list.add(ruleConfig.getName());
+        }
+        return list;
     }
     
-    public List<MappingFieldConfig> getFieldConfigs() {
-        return fieldConfigs;
+    public List<MappingRuleConfig> getRuleConfigs() {
+        return ruleConfigs;
     }
 
-    public void removeFieldConfigs() {
-        fieldConfigs.clear();
-        fieldConfigsByName.clear();
+    public void removeRuleConfigs() {
+        ruleConfigs.clear();
+        ruleConfigsByName.clear();
     }
 
-    public void addFieldConfig(MappingFieldConfig mappingFieldConfig) {
+    public void addRuleConfig(MappingRuleConfig mappingRuleConfig) {
 
-        String name = mappingFieldConfig.getName();
+        String name = mappingRuleConfig.getName().toLowerCase();
 
-        fieldConfigs.add(mappingFieldConfig);
+        ruleConfigs.add(mappingRuleConfig);
 
-        List<MappingFieldConfig> list = fieldConfigsByName.get(name);
+        List<MappingRuleConfig> list = ruleConfigsByName.get(name);
         if (list == null) {
-            list = new LinkedList<MappingFieldConfig>();
-            fieldConfigsByName.put(name, list);
+            list = new LinkedList<MappingRuleConfig>();
+            ruleConfigsByName.put(name, list);
         }
-        list.add(mappingFieldConfig);
+        list.add(mappingRuleConfig);
     }
 
-    public void addFieldConfig(int index, MappingFieldConfig mappingFieldConfig) {
+    public void addRuleConfig(int index, MappingRuleConfig mappingRuleConfig) {
 
-        String name = mappingFieldConfig.getName();
+        String name = mappingRuleConfig.getName().toLowerCase();
 
-        fieldConfigs.add(index, mappingFieldConfig);
+        ruleConfigs.add(index, mappingRuleConfig);
 
-        List<MappingFieldConfig> list = fieldConfigsByName.get(name);
+        List<MappingRuleConfig> list = ruleConfigsByName.get(name);
         if (list == null) {
-            list = new LinkedList<MappingFieldConfig>();
-            fieldConfigsByName.put(name, list);
+            list = new LinkedList<MappingRuleConfig>();
+            ruleConfigsByName.put(name, list);
         }
 
         if (list.isEmpty()) {
-            list.add(mappingFieldConfig);
+            list.add(mappingRuleConfig);
         } else {
-            for (MappingFieldConfig fc : list) {
-                int i = fieldConfigs.indexOf(fc);
+            for (MappingRuleConfig fc : list) {
+                int i = ruleConfigs.indexOf(fc);
                 if (i < index) continue;
-                list.add(i, mappingFieldConfig);
+                list.add(i, mappingRuleConfig);
             }
         }
     }
 
-    public int getFieldConfigIndex(MappingFieldConfig fieldConfig) {
-        return fieldConfigs.indexOf(fieldConfig);
+    public int getRuleConfigIndex(MappingRuleConfig ruleConfig) {
+        return ruleConfigs.indexOf(ruleConfig);
     }
     
-    public List<MappingFieldConfig> getFieldConfigs(String name) {
-        List<MappingFieldConfig> list = fieldConfigsByName.get(name);
+    public List<MappingRuleConfig> getRuleConfigs(String name) {
+        List<MappingRuleConfig> list = ruleConfigsByName.get(name.toLowerCase());
         if (list == null) return EMPTY;
         return list;
     }
 
-    public List<MappingFieldConfig> removeFieldConfigs(String name) {
-         return fieldConfigsByName.remove(name);
+    public List<MappingRuleConfig> removeRuleConfigs(String name) {
+         return ruleConfigsByName.remove(name.toLowerCase());
     }
 
-    public void removeFieldConfig(MappingFieldConfig fieldConfig) {
+    public void removeRuleConfig(MappingRuleConfig ruleConfig) {
 
-        String name = fieldConfig.getName();
+        String name = ruleConfig.getName().toLowerCase();
 
-        fieldConfigs.remove(fieldConfig);
+        ruleConfigs.remove(ruleConfig);
 
-        Collection<MappingFieldConfig> list = fieldConfigsByName.get(name);
+        Collection<MappingRuleConfig> list = ruleConfigsByName.get(name);
         if (list == null) return;
 
-        list.remove(fieldConfig);
-        if (list.isEmpty()) fieldConfigsByName.remove(name);
+        list.remove(ruleConfig);
+        if (list.isEmpty()) ruleConfigsByName.remove(name);
     }
 
     public String getDescription() {
@@ -179,7 +183,7 @@ public class MappingConfig implements Serializable, Cloneable {
         if (!equals(preScript, mappingConfig.preScript)) return false;
         if (!equals(postScript, mappingConfig.postScript)) return false;
 
-        if (!equals(fieldConfigs, mappingConfig.fieldConfigs)) return false;
+        if (!equals(ruleConfigs, mappingConfig.ruleConfigs)) return false;
 
         if (!equals(parameters, mappingConfig.parameters)) return false;
 
@@ -197,11 +201,11 @@ public class MappingConfig implements Serializable, Cloneable {
         preScript = mappingConfig.preScript;
         postScript = mappingConfig.postScript;
 
-        fieldConfigs = new LinkedList<MappingFieldConfig>();
-        fieldConfigsByName = new TreeMap<String,List<MappingFieldConfig>>();
+        ruleConfigs = new LinkedList<MappingRuleConfig>();
+        ruleConfigsByName = new TreeMap<String,List<MappingRuleConfig>>();
 
-        for (MappingFieldConfig fieldMapping : mappingConfig.fieldConfigs) {
-            addFieldConfig((MappingFieldConfig)fieldMapping.clone());
+        for (MappingRuleConfig fieldMapping : mappingConfig.ruleConfigs) {
+            addRuleConfig((MappingRuleConfig)fieldMapping.clone());
         }
 
         parameters = new TreeMap<String,String>();

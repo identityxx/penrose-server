@@ -6,7 +6,7 @@ import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.mapping.Expression;
 import org.safehaus.penrose.mapping.Mapping;
-import org.safehaus.penrose.mapping.MappingFieldConfig;
+import org.safehaus.penrose.mapping.MappingRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,12 +169,12 @@ public class FilterBuilder {
         if (mappingName != null) {
             Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
 
-            for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs()) {
+            for (MappingRule rule : mapping.getRules()) {
 
-                String variable = fieldConfig.getVariable();
+                String variable = rule.getVariable();
                 if (variable == null || !attributeName.equals(variable)) continue;
 
-                SubstringFilter sf = new SubstringFilter(fieldConfig.getName(), substrings);
+                SubstringFilter sf = new SubstringFilter(rule.getName(), substrings);
                 if (debug) log.debug(" - Filter "+sf);
 
                 newFilter = FilterTool.appendAndFilter(newFilter, sf);
@@ -214,13 +214,13 @@ public class FilterBuilder {
         if (mappingName != null) {
             Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
 
-            for (MappingFieldConfig fieldConfig : mapping.getFieldConfigs()) {
+            for (MappingRule rule : mapping.getRules()) {
 
-                String fieldName = fieldConfig.getName();
+                String fieldName = rule.getName();
 
-                String variable = fieldConfig.getVariable();
+                String variable = rule.getVariable();
                 if (variable == null) {
-                    Expression expression = fieldConfig.getExpression();
+                    Expression expression = rule.getExpression();
                     if (expression != null) {
                         variable = expression.getForeach();
                     }

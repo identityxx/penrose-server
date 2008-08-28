@@ -29,7 +29,7 @@ public class SourceConfigManager implements Serializable, Cloneable {
 /*
         if (debug) {
             log.debug("Adding source "+sourceName+":");
-            for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+            for (FieldConfig fieldConfig : sourceConfig.getRuleConfigs()) {
                 log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType());
             }
         }
