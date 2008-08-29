@@ -575,10 +575,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
                 LDAPSearchResults rs = connection.search(baseDn, scope, filter, attributeNames, typesOnly, constraints);
 
                 while (rs.hasMore()) {
-                    if (response.isClosed()) return;
+                    if (response.isClosed()) {
+                        if (debug) log.debug("Search response has been closed.");
+                        return;
+                    }
 
                     try {
                         LDAPEntry entry = rs.next();
+                        if (debug) log.debug("Entry: ["+entry.getDN()+"]");
+
                         SearchResult result = createSearchResult(entry);
                         response.add(result);
 
@@ -666,8 +671,6 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     ) throws Exception {
 
         String dn = entry.getDN();
-
-        if (debug) log.debug("SearchResult: ["+dn+"]");
 
         Attributes attributes = new Attributes();
 

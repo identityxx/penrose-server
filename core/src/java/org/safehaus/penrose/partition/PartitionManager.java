@@ -306,7 +306,7 @@ public class PartitionManager {
 
         for (Partition partition : partitions.values()) {
 
-            if (debug) log.debug("Searching for \""+dn+"\" in "+partition.getName()+".");
+            //if (debug) log.debug("Searching for \""+dn+"\" in "+partition.getName()+".");
 
             Directory directory = partition.getDirectory();
             results.addAll(directory.findEntries(dn));
