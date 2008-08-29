@@ -7,7 +7,6 @@ import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.ldap.connection.LDAPConnection;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
@@ -33,9 +32,8 @@ public class ProxyEntry extends Entry {
     public final static String AUTHENTICATON_FULL     = "full";
     public final static String AUTHENTICATON_DISABLED = "disabled";
 
-    EntrySource sourceRef;
+    EntrySource entrySource;
     LDAPSource source;
-    LDAPConnection connection;
 
     DN proxyBaseDn;
     Filter proxyFilter;
@@ -49,9 +47,8 @@ public class ProxyEntry extends Entry {
 
     public void init() throws Exception {
 
-        sourceRef = localSources.values().iterator().next();
-        source = (LDAPSource)sourceRef.getSource();
-        connection = (LDAPConnection)source.getConnection();
+        entrySource = localSources.values().iterator().next();
+        source = (LDAPSource) entrySource.getSource();
 
         String s = entryConfig.getParameter(BASE_DN);
         if (s == null) s = source.getParameter(BASE_DN);
@@ -186,30 +183,23 @@ public class ProxyEntry extends Entry {
 
         validatePermission(session, request);
 
-        LDAPClient client = connection.getClient(session);
+        AddRequest newRequest = (AddRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            AddRequest newRequest = (AddRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
+        for (Attribute attribute : newRequest.getAttributes().getAll()) {
+            if (!attributeNames.contains(attribute.getName().toLowerCase())) continue;
 
-            for (Attribute attribute : newRequest.getAttributes().getAll()) {
-                if (!attributeNames.contains(attribute.getName().toLowerCase())) continue;
-
-                Collection<Object> values = new ArrayList<Object>();
-                for (Object value : attribute.getValues()) {
-                    DN newDn = new DN(value.toString());
-                    newDn = convertDn(newDn, getDn(), proxyBaseDn);
-                    values.add(newDn.toString());
-                }
-
-                attribute.setValues(values);
+            Collection<Object> values = new ArrayList<Object>();
+            for (Object value : attribute.getValues()) {
+                DN newDn = new DN(value.toString());
+                newDn = convertDn(newDn, getDn(), proxyBaseDn);
+                values.add(newDn.toString());
             }
 
-            client.add(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
+            attribute.setValues(values);
         }
+
+        source.add(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,17 +219,10 @@ public class ProxyEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        LDAPClient client = connection.getClient(session);
+        BindRequest newRequest = (BindRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            BindRequest newRequest = (BindRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
-
-            client.bind(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
-        }
+        source.bind(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,29 +247,22 @@ public class ProxyEntry extends Entry {
 
         validatePermission(session, request);
 
-        LDAPClient client = connection.getClient(session);
+        CompareRequest newRequest = (CompareRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            CompareRequest newRequest = (CompareRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
-
-            if (attributeNames.contains(newRequest.getAttributeName().toLowerCase())) {
-                Object value = newRequest.getAttributeValue();
-                DN newDn;
-                if (value instanceof byte[]) {
-                    newDn = new DN(new String((byte[])value));
-                } else {
-                    newDn = new DN(value.toString());
-                }
-                newDn = convertDn(newDn, getDn(), proxyBaseDn);
-                newRequest.setAttributeValue(newDn.toString());
+        if (attributeNames.contains(newRequest.getAttributeName().toLowerCase())) {
+            Object value = newRequest.getAttributeValue();
+            DN newDn;
+            if (value instanceof byte[]) {
+                newDn = new DN(new String((byte[])value));
+            } else {
+                newDn = new DN(value.toString());
             }
-
-            client.compare(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
+            newDn = convertDn(newDn, getDn(), proxyBaseDn);
+            newRequest.setAttributeValue(newDn.toString());
         }
+
+        source.compare(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,17 +382,10 @@ public class ProxyEntry extends Entry {
 
         validatePermission(session, request);
 
-        LDAPClient client = connection.getClient(session);
+        DeleteRequest newRequest = (DeleteRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            DeleteRequest newRequest = (DeleteRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
-
-            client.delete(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
-        }
+        source.delete(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -441,31 +410,24 @@ public class ProxyEntry extends Entry {
 
         validatePermission(session, request);
 
-        LDAPClient client = connection.getClient(session);
+        ModifyRequest newRequest = (ModifyRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            ModifyRequest newRequest = (ModifyRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
+        for (Modification modification : newRequest.getModifications()) {
+            Attribute attribute = modification.getAttribute();
+            if (!attributeNames.contains(attribute.getName().toLowerCase())) continue;
 
-            for (Modification modification : newRequest.getModifications()) {
-                Attribute attribute = modification.getAttribute();
-                if (!attributeNames.contains(attribute.getName().toLowerCase())) continue;
-
-                Collection<Object> values = new ArrayList<Object>();
-                for (Object value : attribute.getValues()) {
-                    DN newDn = new DN(value.toString());
-                    newDn = convertDn(newDn, getDn(), proxyBaseDn);
-                    values.add(newDn.toString());
-                }
-                
-                attribute.setValues(values);
+            Collection<Object> values = new ArrayList<Object>();
+            for (Object value : attribute.getValues()) {
+                DN newDn = new DN(value.toString());
+                newDn = convertDn(newDn, getDn(), proxyBaseDn);
+                values.add(newDn.toString());
             }
 
-            client.modify(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
+            attribute.setValues(values);
         }
+
+        source.modify(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -490,17 +452,10 @@ public class ProxyEntry extends Entry {
 
         validatePermission(session, request);
 
-        LDAPClient client = connection.getClient(session);
+        ModRdnRequest newRequest = (ModRdnRequest)request.clone();
+        newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
 
-        try {
-            ModRdnRequest newRequest = (ModRdnRequest)request.clone();
-            newRequest.setDn(convertDn(newRequest.getDn(), getDn(), proxyBaseDn));
-
-            client.modrdn(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
-        }
+        source.modrdn(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -562,8 +517,6 @@ public class ProxyEntry extends Entry {
         final DN baseDn     = request.getDn();
         final Filter filter = request.getFilter();
         final int scope     = request.getScope();
-
-        LDAPClient client = connection.getClient(session);
 
         boolean subset = baseDn.endsWith(getDn());
 
@@ -636,13 +589,10 @@ public class ProxyEntry extends Entry {
                 }
             };
 
-            client.search(newRequest, newResponse);
+            source.search(session, newRequest, newResponse);
 
         } catch (Exception e) {
             if (subset) throw e;
-
-        } finally {
-            connection.closeClient(session);
         }
     }
 
@@ -652,7 +602,7 @@ public class ProxyEntry extends Entry {
         Attributes attributes = result.getAttributes();
 
         SourceAttributes sv = result.getSourceAttributes();
-        sv.set(sourceRef.getAlias(), attributes);
+        sv.set(entrySource.getAlias(), attributes);
         
         if (debug) {
             log.debug("Source values:");
@@ -755,15 +705,8 @@ public class ProxyEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        LDAPClient client = connection.getClient(session);
+        UnbindRequest newRequest = (UnbindRequest)request.clone();
 
-        try {
-            UnbindRequest newRequest = (UnbindRequest)request.clone();
-
-            client.unbind(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
-        }
+        source.unbind(session, newRequest, response);
     }
 }

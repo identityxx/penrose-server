@@ -1,2 +1,2 @@
-dn: cn=test,ou=Groups,dc=my-domain,dc=Example,dc=com
+dn: cn=test,ou=Groups,dc=Proxy,dc=Example,dc=com
 description: test

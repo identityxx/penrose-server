@@ -13,6 +13,7 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.control.Control;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -315,12 +316,12 @@ public class LDAPSource extends Source {
         DNBuilder db = new DNBuilder();
         db.append(request.getDn());
         //db.append(baseDn);
-        DN targetDn = db.toDn();
+        DN dn = db.toDn();
 
         ModRdnRequest newRequest = new ModRdnRequest(request);
-        newRequest.setDn(targetDn);
+        newRequest.setDn(dn);
 
-        if (debug) log.debug("Renaming entry "+targetDn);
+        if (debug) log.debug("Renaming entry "+dn);
 
         LDAPClient client = connection.getClient(session);
 
@@ -357,6 +358,9 @@ public class LDAPSource extends Source {
         long sizeLimit = createSizeLimit(request);
         long timeLimit = createTimeLimit(request);
 
+        Collection<String> attributes = createAttributes(request);
+        Collection<Control> controls = createControls(request);
+
         // Create new request to ensure all attributes returned
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(baseDn);
@@ -364,7 +368,8 @@ public class LDAPSource extends Source {
         newRequest.setFilter(filter);
         newRequest.setSizeLimit(sizeLimit);
         newRequest.setTimeLimit(timeLimit);
-        newRequest.setControls(request.getControls());
+        newRequest.setAttributes(attributes);
+        newRequest.setControls(controls);
 
         SearchResponse newResponse = new SearchResponse() {
             public void add(SearchResult searchResult) throws Exception {
@@ -400,6 +405,46 @@ public class LDAPSource extends Source {
         }
 
         log.debug("Search operation completed.");
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Unbind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void unbind(
+            Session session,
+            UnbindRequest request,
+            UnbindResponse response
+    ) throws Exception {
+
+        if (debug) {
+            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displayLine("Unbind "+partition.getName()+"."+getName(), 80));
+            log.debug(TextUtil.displaySeparator(80));
+        }
+
+        DNBuilder db = new DNBuilder();
+        db.append(request.getDn());
+
+        //db.append(baseDn);
+
+        DN dn = db.toDn();
+
+        UnbindRequest newRequest = (UnbindRequest)request.clone();
+        newRequest.setDn(dn);
+
+        if (debug) log.debug("Binding as "+dn);
+
+        LDAPClient client = connection.getClient(session);
+
+        try {
+            client.unbind(request, response);
+
+        } finally {
+            connection.closeClient(session);
+        }
+
+        log.debug("Bind operation completed.");
     }
 
     public DN createBaseDn(SearchRequest request) throws Exception {
@@ -578,6 +623,21 @@ public class LDAPSource extends Source {
         long timeLimit = request.getTimeLimit();
         if (sourceTimeLimit > timeLimit) timeLimit = sourceTimeLimit;
         return timeLimit;
+    }
+
+    public Collection<String> createAttributes(SearchRequest request) {
+        Collection<String> attributes = new ArrayList<String>();
+        attributes.addAll(getFieldNames());
+
+        if (attributes.isEmpty()) {
+            attributes.addAll(request.getAttributes());
+        }
+
+        return attributes;
+    }
+
+    public Collection<Control> createControls(SearchRequest request) {
+        return request.getControls();
     }
 
     public void search(

@@ -931,8 +931,10 @@ public class Partition implements Cloneable {
             final Collection<Entry> entries
     ) throws Exception {
 
-        if (debug) log.debug("Searching "+entries.size()+" entries in parallel.");
-        
+        if (threadManager != null) {
+            if (debug) log.debug("Searching "+entries.size()+" entries in parallel.");
+        }
+
         for (final Entry entry : entries) {
             if (debug) log.debug("Searching \""+entry.getDn()+"\".");
 

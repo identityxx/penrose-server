@@ -1,4 +1,4 @@
-dn: cn=test,ou=Groups,dc=my-domain,dc=Example,dc=com
+dn: cn=test,ou=Groups,dc=Proxy,dc=Example,dc=com
 objectClass: groupOfUniqueNames
 cn: test
-uniqueMember: uid=test,ou=Users,dc=my-domain,dc=Example,dc=com
+uniqueMember: uid=test,ou=Users,dc=Proxy,dc=Example,dc=com
