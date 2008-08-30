@@ -802,7 +802,11 @@ public class Session {
                 }
                 public void close() throws Exception {
                     if (debug) log.debug("Closing search response.");
-                    super.close();
+                    if (super.isClosed()) {
+                        if (debug) log.debug("Search response is already closed.");
+                    } else {
+                        super.close();
+                    }
 
                     Access.log(session, response);
                 }

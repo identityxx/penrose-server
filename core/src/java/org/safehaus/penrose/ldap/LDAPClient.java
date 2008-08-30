@@ -175,7 +175,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         LDAPAttributeSet attributeSet = convertAttributes(attributes);
 
-        if (warn) log.warn("Adding "+dn+".");
+        if (warn) log.warn("Adding entry "+dn+".");
 
         if (debug) {
             log.debug("Attributes:");
@@ -221,6 +221,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Add operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,6 +256,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Bind operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +273,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         String name = request.getAttributeName();
         Object value = request.getAttributeValue();
 
-        if (warn) log.warn("Comparing "+dn+".");
+        if (warn) log.warn("Comparing entry "+dn+".");
 
         if (debug) {
             if (binaryAttributes.contains(name.toLowerCase())) {
@@ -312,6 +316,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Compare operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,7 +331,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         String dn = request.getDn().toString();
 
-        if (warn) log.warn("Deleting "+dn+".");
+        if (warn) log.warn("Deleting entry "+dn+".");
 
         Collection<Control> requestControls = request.getControls();
         if (!requestControls.isEmpty()) {
@@ -350,6 +356,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Delete operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -385,7 +393,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
     ) throws Exception {
 
         String dn = request.getDn().toString();
-        if (warn) log.warn("Modifying "+dn+".");
+        if (warn) log.warn("Modifying entry "+dn+".");
 
         Collection<LDAPModification> list = new ArrayList<LDAPModification>();
 
@@ -450,6 +458,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Modify operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -465,7 +475,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         String newRdn = request.getNewRdn().toString();
         boolean deleteOldRdn = request.getDeleteOldRdn();
 
-        if (warn) log.warn("Renaming "+dn+" to "+newRdn+".");
+        if (warn) log.warn("Renaming entry "+dn+" to "+newRdn+".");
 
         Collection<Control> requestControls = request.getControls();
         if (!requestControls.isEmpty()) {
@@ -490,6 +500,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Rename operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -639,6 +651,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         } finally {
             response.close();
         }
+
+        log.debug("Search operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -650,6 +664,10 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             UnbindResponse response
     ) throws Exception {
 
+        DN dn = request.getDn();
+        
+        if (debug) log.debug("Unbinding as "+dn);
+
         LDAPConnection connection = getConnection();
 
         try {
@@ -660,6 +678,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setException(e);
             throw e;
         }
+
+        log.debug("Unbind operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

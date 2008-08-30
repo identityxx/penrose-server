@@ -15,7 +15,7 @@ public class SelectStatement extends Statement {
     protected Collection<JoinClause> joinClauses = new ArrayList<JoinClause>();
 
     protected Filter filter;
-    private String where;
+    private String whereClause;
 
     protected Collection<String> orders = new ArrayList<String>();
 
@@ -42,7 +42,7 @@ public class SelectStatement extends Statement {
         return sources.get(alias);
     }
 
-    public void addSourceName(String alias, String partitionName, String sourceName) {
+    public void addSource(String alias, String partitionName, String sourceName) {
 
         StatementSource source = new StatementSource();
         source.setAlias(alias);
@@ -87,11 +87,11 @@ public class SelectStatement extends Statement {
         this.orders.addAll(orders);
     }
 
-    public String getWhere() {
-        return where;
+    public String getWhereClause() {
+        return whereClause;
     }
 
-    public void setWhere(String where) {
-        this.where = where;
+    public void setWhereClause(String whereClause) {
+        this.whereClause = whereClause;
     }
 }

@@ -916,7 +916,7 @@ public class Partition implements Cloneable {
 
         if (debug) log.debug("Searching children of "+entry.getDn()+".");
 
-        ParallelSearchResponse newResponse = new ParallelSearchResponse(response, children.size());
+        ParallelSearchResponse newResponse = new ParallelSearchResponse(sr, children.size());
         searchEntries(session, request, newResponse, children);
 
         if (debug) log.debug("Waiting for children of "+entry.getDn()+".");
@@ -931,7 +931,9 @@ public class Partition implements Cloneable {
             final Collection<Entry> entries
     ) throws Exception {
 
-        if (threadManager != null) {
+        if (threadManager == null) {
+            if (debug) log.debug("Searching "+entries.size()+" entries sequentially.");
+        } else {
             if (debug) log.debug("Searching "+entries.size()+" entries in parallel.");
         }
 

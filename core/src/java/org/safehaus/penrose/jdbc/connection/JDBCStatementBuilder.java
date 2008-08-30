@@ -153,11 +153,11 @@ public class JDBCStatementBuilder {
         filterBuilder.generate(filter);
         String sql = filterBuilder.getSql();
 
-        if (statement.getWhere() != null) {
+        if (statement.getWhereClause() != null) {
             if (sql.length() > 0) {
-                sql = "("+sql+") and ("+statement.getWhere()+")";
+                sql = "("+sql+") and ("+statement.getWhereClause()+")";
             } else {
-                sql = statement.getWhere();
+                sql = statement.getWhereClause();
             }
         }
 
@@ -179,14 +179,19 @@ public class JDBCStatementBuilder {
             }
 
             int p = columnName.indexOf('.');
-            String sn = columnName.substring(0, p);
-            String fn = columnName.substring(p+1);
 
-            sb.append(sn);
-            sb.append('.');
+            if (p >= 0) {
+                String sn = columnName.substring(0, p);
+                String fn = columnName.substring(p+1);
+
+                sb.append(sn);
+                sb.append('.');
+
+                columnName = fn;
+            }
 
             if (quote != null) sb.append(quote);
-            sb.append(fn);
+            sb.append(columnName);
             if (quote != null) sb.append(quote);
         }
 

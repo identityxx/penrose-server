@@ -196,12 +196,12 @@ public class ADGroupSource extends LDAPSource {
             public void add(SearchResult searchResult) throws Exception {
 
                 if (response.isClosed()) {
+                    if (debug) log.debug("Search response has been closed.");
                     close();
                     return;
                 }
 
                 SearchResult newSearchResult = createSearchResult(baseDn, searchResult);
-                if (newSearchResult == null) return;
 
                 DN dn = newSearchResult.getDn().append(baseDn);
                 String groupDn = dn.getNormalizedDn();

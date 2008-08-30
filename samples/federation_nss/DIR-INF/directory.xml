@@ -89,10 +89,6 @@
 
   <entry dn="ou=Hosts,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Hosts</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>hosts</source-name>
@@ -101,10 +97,6 @@
 
   <entry dn="ou=Services,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Services</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>services</source-name>
@@ -113,10 +105,6 @@
 
   <entry dn="ou=RPCs,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>RPCs</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>rpcs</source-name>
@@ -125,10 +113,6 @@
 
   <entry dn="ou=NetIDs,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>NetIDs</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>netids</source-name>
@@ -137,10 +121,6 @@
 
   <entry dn="ou=Protocols,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Protocols</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>protocols</source-name>
@@ -149,10 +129,6 @@
 
   <entry dn="ou=Aliases,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Aliases</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>aliases</source-name>
@@ -161,10 +137,6 @@
 
   <entry dn="ou=Netgroups,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Netgroups</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>netgroups</source-name>
@@ -173,10 +145,6 @@
 
   <entry dn="ou=Ethers,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Ethers</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>ethers</source-name>
@@ -185,10 +153,6 @@
 
   <entry dn="ou=BootParams,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>BootParams</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>bootparams</source-name>
@@ -197,10 +161,6 @@
 
   <entry dn="ou=Networks,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Networks</constant>
-    </at>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
       <source-name>networks</source-name>
@@ -209,10 +169,6 @@
 
   <entry dn="ou=Automounts,${SUFFIX}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <oc>organizationalUnit</oc>
-    <at name="ou" rdn="true">
-      <constant>Automounts</constant>
-    </at>
     <at name="nisMapEntry">
       <expression foreach="a.nisMapEntry" var="nisMapEntry">
 import org.safehaus.penrose.ldap.*;

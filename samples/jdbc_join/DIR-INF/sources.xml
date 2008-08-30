@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="users">
+    <connection-name>MySQL</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+
+  <source name="usergroups">
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups</param-value>
+    </parameter>
+  </source>
+
+  <source name="joinedUsers">
+    <source-class>org.safehaus.penrose.jdbc.source.JDBCJoinSource</source-class>
+    <connection-name>MySQL</connection-name>
+    <field name="username" primaryKey="true">
+      <variable>u.username</variable>
+    </field>
+    <field name="firstName">
+      <variable>u.firstName</variable>
+    </field>
+    <field name="lastName">
+      <variable>u.lastName</variable>
+    </field>
+    <field name="password">
+      <variable>u.password</variable>
+    </field>
+    <field name="groupname" primaryKey="true">
+      <variable>ug.groupname</variable>
+    </field>
+    <parameter>
+      <param-name>sources</param-name>
+      <param-value>users u,usergroups ug</param-value>
+    </parameter>
+    <parameter>
+      <param-name>joinTypes</param-name>
+      <param-value>left join</param-value>
+    </parameter>
+    <parameter>
+      <param-name>joinConditions</param-name>
+      <param-value>u.username = ug.username</param-value>
+    </parameter>
+  </source>
+
+  <source name="joinedGroups">
+    <source-class>org.safehaus.penrose.jdbc.source.JDBCJoinSource</source-class>
+    <connection-name>MySQL</connection-name>
+    <field name="groupname" primaryKey="true">
+      <variable>g.groupname</variable>
+    </field>
+    <field name="description">
+      <variable>g.description</variable>
+    </field>
+    <field name="username" primaryKey="true">
+      <variable>ug.username</variable>
+    </field>
+    <parameter>
+      <param-name>sources</param-name>
+      <param-value>groups g,usergroups ug</param-value>
+    </parameter>
+    <parameter>
+      <param-name>joinTypes</param-name>
+      <param-value>left join</param-value>
+    </parameter>
+    <parameter>
+      <param-name>joinConditions</param-name>
+      <param-value>g.groupname = ug.groupname</param-value>
+    </parameter>
+  </source>
+
+</sources>

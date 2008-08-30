@@ -3,12 +3,9 @@ package org.safehaus.penrose.jdbc.source;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.directory.EntrySource;
-import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.jdbc.*;
 import org.safehaus.penrose.jdbc.connection.*;
-import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
@@ -19,135 +16,118 @@ import java.sql.ResultSet;
 /**
  * @author Endi S. Dewata
  */
-public class JDBCSource extends Source {
+public class JDBCJoinSource extends Source {
 
-    public final static String BASE_DN      = "baseDn";
-    public final static String CATALOG      = "catalog";
-    public final static String SCHEMA       = "schema";
-    public final static String TABLE        = "table";
-    public final static String FILTER       = "filter";
+    public final static String SOURCES         = "sources";
 
-    public final static String SIZE_LIMIT   = "sizeLimit";
-    public final static String CREATE       = "create";
+    public final static String JOIN_TYPES      = "joinTypes";
+    public final static String JOIN_CONDITIONS = "joinConditions";
 
-    public final static String AUTHENTICATION          = "authentication";
-    public final static String AUTHENTICATION_DEFAULT  = "default";
-    public final static String AUTHENTICATION_FULL     = "full";
-    public final static String AUTHENTICATION_DISABLED = "disabled";
-
-    public final static String ADD          = "add";
-    public final static String BIND         = "bind";
-    public final static String COMPARE      = "compare";
-    public final static String DELETE       = "delete";
-    public final static String MODIFY       = "modify";
-    public final static String MODRDN       = "modrdn";
-    public final static String SEARCH       = "search";
-    public final static String UNBIND       = "unbind";
+    public final static String SIZE_LIMIT      = "sizeLimit";
 
     JDBCConnection connection;
 
-    String table;
-    String filter;
+    List<JDBCSource> sources = new ArrayList<JDBCSource>();
+    Map<String,JDBCSource> sourcesByAlias = new LinkedHashMap<String,JDBCSource>();
 
-    String sourceBaseDn;
+    String primarySourceAlias;
+    List<String> secondarySourceAliases = new ArrayList<String>();
 
-    Map<String,Map<Collection<String>,SQLOperation>> operations = new LinkedHashMap<String,Map<Collection<String>,SQLOperation>>();
+    Map<String,String> joinTypes      = new LinkedHashMap<String,String>();
+    Map<String,String> joinConditions = new LinkedHashMap<String,String>();
 
-    public JDBCSource() {
+    public JDBCJoinSource() {
     }
 
     public void init() throws Exception {
         connection = (JDBCConnection)getConnection();
 
-        table = getParameter(TABLE);
-        filter = getParameter(FILTER);
-        
-        sourceBaseDn = getParameter(BASE_DN);
+        SourceManager sourceManager = getSourceContext().getPartition().getSourceManager();
 
-        for (String name : getParameterNames()) {
-            int i = name.indexOf('(');
-            if (i < 0) continue;
+        String s = getParameter(SOURCES);
+        String[] list = s.split(",");
 
-            if (debug) log.debug("Operation "+name+":");
+        for (int i = 0; i<list.length; i++) {
+            String sourceAndAlias = list[i];
 
-            String action = name.substring(0, i);
-            String params = name.substring(i+1, name.length()-1);
+            if (debug) log.debug("Source "+sourceAndAlias+":");
 
-            Collection<String> parameters = new LinkedHashSet<String>();
-            for (String param : params.split(",")) {
-                parameters.add(param.trim());
+            String[] s3 = sourceAndAlias.split(" ");
+            String sourceName = s3[0];
+            String alias = s3[1];
+
+            JDBCSource source = (JDBCSource)sourceManager.getSource(sourceName);
+            sources.add(source);
+            sourcesByAlias.put(alias, source);
+
+            if (i == 0) {
+                primarySourceAlias = alias;
+            } else {
+                secondarySourceAliases.add(alias);
             }
-
-            String statement = getParameter(name);
-
-            if (debug) {
-                log.debug(" - action    : "+ action);
-                log.debug(" - parameters: "+parameters);
-                log.debug(" - statement : "+statement);
-            }
-
-            SQLOperation stmt = new SQLOperation();
-            stmt.setAction(action);
-            stmt.setParameters(parameters);
-            stmt.setStatement(statement);
-
-            Map<Collection<String>,SQLOperation> stmts = operations.get(action);
-            if (stmts == null) {
-                stmts = new LinkedHashMap<Collection<String>,SQLOperation>();
-                operations.put(action, stmts);
-            }
-
-            stmts.put(parameters, stmt);
         }
 
-        boolean create = Boolean.parseBoolean(getParameter(CREATE));
-        if (create) {
-            try {
-                create();
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
+        s = getParameter(JOIN_TYPES);
+        list = s.split(",");
+
+        for (int i = 0; i<list.length; i++) {
+            String joinType = list[i];
+            String alias = secondarySourceAliases.get(i);
+            joinTypes.put(alias, joinType);
+        }
+
+        s = getParameter(JOIN_CONDITIONS);
+        list = s.split(",");
+
+        for (int i = 0; i<list.length; i++) {
+            String joinCondition = list[i];
+            String alias = secondarySourceAliases.get(i);
+            joinConditions.put(alias, joinCondition);
         }
     }
 
-    public String getTable() {
-        return table;
+    public Collection<JDBCSource> getSources() {
+        return sources;
     }
 
-    public String getFilter() {
-        return filter;
+    public Collection<String> getSourceAliases() {
+        return sourcesByAlias.keySet();
     }
 
-    public SQLOperation getOperation(String operation, Collection<String> parameterNames) {
-
-        Map<Collection<String>,SQLOperation> stmts = operations.get(operation);
-        if (stmts == null) return null;
-
-        if (LinkedHashSet.class.equals(parameterNames.getClass())) {
-            Collection<String> set = new LinkedHashSet<String>();
-            set.addAll(parameterNames);
-            parameterNames = set;
-        }
-
-        for (Collection<String> key : stmts.keySet()) {
-            if (!parameterNames.containsAll(key)) continue;
-
-            return stmts.get(key);
-        }
-
-        return null;
+    public JDBCSource getSource(String alias) {
+        return sourcesByAlias.get(alias);
     }
 
-    public Collection<Object> getParameters(SQLOperation stmt, Map<String,Object> values) {
+    public JDBCSource getPrimarySource() {
+        return sourcesByAlias.get(primarySourceAlias);
+    }
 
-        Collection<Object> parameters = new ArrayList<Object>();
+    public boolean isPrimarySourceAlias(String alias) {
+        return primarySourceAlias.equals(alias);
+    }
 
-        for (String name : stmt.getParameters()) {
-            Object value = values.get(name);
-            parameters.add(value);
+    public String getPrimarySourceAlias() {
+        return primarySourceAlias;
+    }
+
+    public Collection<JDBCSource> getSecondarySources() {
+        Collection<JDBCSource> list = new ArrayList<JDBCSource>();
+        for (String alias : secondarySourceAliases) {
+            list.add(sourcesByAlias.get(alias));
         }
+        return list;
+    }
 
-        return parameters;
+    public Collection<String> getSecondarySourceAliases() {
+        return secondarySourceAliases;
+    }
+
+    public String getJoinType(String alias) {
+        return joinTypes.get(alias);
+    }
+
+    public String getJoinCondition(String alias) {
+        return joinConditions.get(alias);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,92 +149,33 @@ public class JDBCSource extends Source {
         JDBCClient client = connection.getClient(session);
 
         try {
-            InsertStatement statement = new InsertStatement();
-            statement.setSource(partition.getName(), getName());
-
             RDN rdn = request.getDn().getRdn();
-
-            if (rdn != null) {
-                for (String name : rdn.getNames()) {
-
-                    Object value = rdn.get(name);
-
-                    Field field = getField(name);
-                    if (field == null) throw new Exception("Unknown field: " + name);
-
-                    statement.addAssignment(new Assignment(field.getOriginalName(), value));
-                }
-            }
-
             Attributes attributes = request.getAttributes();
 
-            for (String name : attributes.getNames()) {
-                if (rdn != null && rdn.contains(name)) continue;
+            Map<String,Object> values = new LinkedHashMap<String,Object>();
 
-                Object value = attributes.getValue(name); // get first value
+            for (Field field : getFields()) {
+                String name = field.getName();
 
-                Field field = getField(name);
-                if (field == null) throw new Exception("Unknown field: " + name);
+                Object value = rdn.get(name);
+                if (value == null) value = attributes.getValue(name);
+                if (value == null) continue;
 
-                statement.addAssignment(new Assignment(field.getOriginalName(), value));
+                values.put(name, value);
             }
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+            Collection<String> parameterNames = values.keySet();
+            if (debug) log.debug("Parameters: "+parameterNames);
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+            for (JDBCSource source : sources) {
+                if (debug) log.debug("Adding into table "+source.getName()+".");
 
-            client.executeUpdate(sql, parameters);
+                SQLOperation operation = source.getOperation(JDBCSource.ADD, parameterNames);
+                if (operation == null) continue;
 
-            log.debug("Add operation completed.");
+                Collection<Object> parameters = source.getParameters(operation, values);
 
-        } finally {
-            connection.closeClient(session);
-        }
-    }
-
-    public void add(
-            Session session,
-            Collection<EntrySource> sourceRefs,
-            SourceAttributes sourceValues,
-            AddRequest request,
-            AddResponse response
-    ) throws Exception {
-
-        if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Add "+ sourceRefs, 80));
-            log.debug(TextUtil.displaySeparator(80));
-
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        Interpreter interpreter = partition.newInterpreter();
-
-        AddRequestBuilder builder = new AddRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                interpreter,
-                request,
-                response
-        );
-
-        Collection<Statement> statements = builder.generate();
-
-        JDBCClient client = connection.getClient(session);
-
-        try {
-            for (Statement statement : statements) {
-
-                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-                statementBuilder.setQuote(client.getQuote());
-
-                String sql = statementBuilder.generate(statement);
-                Collection<Object> parameters = statementBuilder.getParameters();
-
-                client.executeUpdate(sql, parameters);
+                client.executeUpdate(operation.getStatement(), parameters);
             }
 
         } finally {
@@ -310,87 +231,40 @@ public class JDBCSource extends Source {
         JDBCClient client = connection.getClient(session);
 
         try {
-            DeleteStatement statement = new DeleteStatement();
-
-            statement.setSource(partition.getName(), getName());
-
-            Filter filter = null;
-
             RDN rdn = request.getDn().getRdn();
-            if (rdn != null) {
-                for (String name : rdn.getNames()) {
-                    Object value = rdn.get(name);
 
-                    SimpleFilter sf = new SimpleFilter(name, "=", value);
-                    filter = FilterTool.appendAndFilter(filter, sf);
-                }
+            Map<String,Object> values = new LinkedHashMap<String,Object>();
+
+            for (Field field : getFields()) {
+                String name = field.getName();
+
+                Object value = rdn.get(name);
+                if (value == null) continue;
+
+                values.put(name, value);
             }
 
-            statement.setFilter(filter);
+            Collection<String> parameterNames = values.keySet();
+            if (debug) log.debug("Parameters: "+parameterNames);
 
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
+            for (int i = sources.size()-1; i>=0; i--) {
 
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
+                JDBCSource source = sources.get(i);
+                if (debug) log.debug("Deleting from "+source.getName()+".");
 
-            client.executeUpdate(sql, parameters);
+                SQLOperation operation = source.getOperation(JDBCSource.DELETE, parameterNames);
+                if (operation == null) continue;
+
+                Collection<Object> parameters = source.getParameters(operation, values);
+
+                client.executeUpdate(operation.getStatement(), parameters);
+            }
 
             log.debug("Delete operation completed.");
 
         } finally {
             connection.closeClient(session);
         }
-    }
-
-    public void delete(
-            Session session,
-            Collection<EntrySource> sourceRefs,
-            SourceAttributes sourceValues,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws Exception {
-
-        if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Delete "+ sourceRefs, 80));
-            log.debug(TextUtil.displaySeparator(80));
-
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        Interpreter interpreter = partition.newInterpreter();
-
-        DeleteRequestBuilder builder = new DeleteRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                interpreter,
-                request,
-                response
-        );
-
-        Collection<Statement> statements = builder.generate();
-
-        JDBCClient client = connection.getClient(session);
-
-        try {
-            for (Statement statement : statements) {
-
-                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-                statementBuilder.setQuote(client.getQuote());
-
-                String sql = statementBuilder.generate(statement);
-                Collection<Object> parameters = statementBuilder.getParameters();
-
-                client.executeUpdate(sql, parameters);
-            }
-
-        } finally {
-            connection.closeClient(session);
-        }
-
-        log.debug("Delete operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,56 +341,6 @@ public class JDBCSource extends Source {
         }
     }
 
-    public void modify(
-            Session session,
-            Collection<EntrySource> sourceRefs,
-            SourceAttributes sourceValues,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws Exception {
-
-        if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Modify "+ sourceRefs, 80));
-            log.debug(TextUtil.displaySeparator(80));
-
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        Interpreter interpreter = partition.newInterpreter();
-
-        ModifyRequestBuilder builder = new ModifyRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                interpreter,
-                request,
-                response
-        );
-
-        Collection<Statement> statements = builder.generate();
-
-        JDBCClient client = connection.getClient(session);
-
-        try {
-            for (Statement statement : statements) {
-
-                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-                statementBuilder.setQuote(client.getQuote());
-
-                String sql = statementBuilder.generate(statement);
-                Collection<Object> parameters = statementBuilder.getParameters();
-
-                client.executeUpdate(sql, parameters);
-            }
-
-        } finally {
-            connection.closeClient(session);
-        }
-
-        log.debug("Modify operation completed.");
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // ModRdn
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -576,56 +400,6 @@ public class JDBCSource extends Source {
         }
     }
 
-    public void modrdn(
-            Session session,
-            Collection<EntrySource> sourceRefs,
-            SourceAttributes sourceValues,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws Exception {
-
-        if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ModRdn "+ sourceRefs, 80));
-            log.debug(TextUtil.displaySeparator(80));
-
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        Interpreter interpreter = partition.newInterpreter();
-
-        ModRdnRequestBuilder builder = new ModRdnRequestBuilder(
-                sourceRefs,
-                sourceValues,
-                interpreter,
-                request,
-                response
-        );
-
-        Collection<Statement> statements = builder.generate();
-
-        JDBCClient client = connection.getClient(session);
-
-        try {
-            for (Statement statement : statements) {
-
-                JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-                statementBuilder.setQuote(client.getQuote());
-
-                String sql = statementBuilder.generate(statement);
-                Collection<Object> parameters = statementBuilder.getParameters();
-
-                client.executeUpdate(sql, parameters);
-            }
-
-        } finally {
-            connection.closeClient(session);
-        }
-
-        log.debug("ModRdn operation completed.");
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,41 +418,18 @@ public class JDBCSource extends Source {
 
         response.setSizeLimit(request.getSizeLimit());
 
-        SelectStatement statement = new SelectStatement();
+        NewSearchRequestBuilder builder = new NewSearchRequestBuilder(
+                this,
+                request,
+                response
+        );
 
-        EntrySource sourceRef = new EntrySource(this);
-
-        Filter filter = null;
-
-        DN dn = request.getDn();
-        if (dn != null) {
-            RDN rdn = dn.getRdn();
-            for (String name : rdn.getNames()) {
-                Object value = rdn.get(name);
-
-                SimpleFilter sf = new SimpleFilter(name, "=", value);
-                filter = FilterTool.appendAndFilter(filter, sf);
-            }
-        }
-
-        filter = FilterTool.appendAndFilter(filter, request.getFilter());
-
-        for (EntryField fieldRef : sourceRef.getFields()) {
-            statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
-        }
-        statement.addSource(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
-        statement.setFilter(filter);
-
-        String where = getParameter(FILTER);
-        if (where != null) {
-            statement.setWhereClause(where);
-        }
-
-        for (EntryField fieldRef : sourceRef.getPrimaryKeyFields()) {
-            statement.addOrder(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
-        }
+        SelectStatement statement = builder.generate();
 
         QueryResponse queryResponse = new QueryResponse() {
+
+            SearchResult lastResult;
+
             public void add(Object object) throws Exception {
                 ResultSet rs = (ResultSet)object;
 
@@ -687,11 +438,29 @@ public class JDBCSource extends Source {
                 }
 
                 SearchResult searchResult = createSearchResult(rs);
-                response.add(searchResult);
+                if (searchResult == null) return;
+
+                if (lastResult == null) {
+                    lastResult = searchResult;
+
+                } else if (searchResult.getDn().equals(lastResult.getDn())) {
+                    mergeSearchResult(searchResult, lastResult);
+
+                } else {
+                    response.add(lastResult);
+                    lastResult = searchResult;
+                }
 
                 totalCount++;
+
+                if (debug) {
+                    searchResult.print();
+                }
             }
             public void close() throws Exception {
+                if (lastResult != null) {
+                    response.add(lastResult);
+                }
                 response.close();
                 super.close();
             }
@@ -750,156 +519,10 @@ public class JDBCSource extends Source {
 
         DNBuilder db = new DNBuilder();
         db.append(rb.toRdn());
-        db.append(sourceBaseDn);
+        //db.append(sourceBaseDn);
         DN dn = db.toDn();
 
         return new SearchResult(dn, attributes);
-    }
-
-    public void search(
-            final Session session,
-            //final Collection<SourceRef> primarySourceRefs,
-            final Collection<EntrySource> localSourceRefs,
-            final Collection<EntrySource> sourceRefs,
-            final SourceAttributes sourceValues,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
-        if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("Search "+ sourceRefs, 80));
-            log.debug(TextUtil.displaySeparator(80));
-
-            log.debug("Source values:");
-            sourceValues.print();
-        }
-
-        response.setSizeLimit(request.getSizeLimit());
-
-        SearchRequestBuilder builder = new SearchRequestBuilder(
-                partition,
-                localSourceRefs,
-                sourceRefs,
-                sourceValues,
-                request,
-                response
-        );
-
-        SelectStatement statement = builder.generate();
-
-        QueryResponse queryResponse = new QueryResponse() {
-
-            SearchResult lastResult;
-
-            public void add(Object object) throws Exception {
-                ResultSet rs = (ResultSet)object;
-
-                if (sizeLimit > 0 && totalCount >= sizeLimit) {
-                    throw LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
-                }
-
-                //SearchResult searchResult = createSearchResult(primarySourceRefs, sourceRefs, rs);
-                SearchResult searchResult = createSearchResult(sourceRefs, rs);
-                if (searchResult == null) return;
-
-                if (lastResult == null) {
-                    lastResult = searchResult;
-
-                } else if (searchResult.getDn().equals(lastResult.getDn())) {
-                    mergeSearchResult(searchResult, lastResult);
-
-                } else {
-                    response.add(lastResult);
-                    lastResult = searchResult;
-                }
-
-                totalCount++;
-
-                if (debug) {
-                    searchResult.print();
-                }
-            }
-
-            public void close() throws Exception {
-                if (lastResult != null) {
-                    response.add(lastResult);
-                }
-                response.close();
-                super.close();
-            }
-        };
-
-        String sizeLimit = getParameter(SIZE_LIMIT);
-
-        if (sizeLimit != null) {
-            queryResponse.setSizeLimit(Long.parseLong(sizeLimit));
-        }
-
-        JDBCClient client = connection.getClient(session);
-
-        try {
-            JDBCStatementBuilder statementBuilder = new JDBCStatementBuilder(sourceContext.getPartition());
-            statementBuilder.setQuote(client.getQuote());
-
-            String sql = statementBuilder.generate(statement);
-            Collection<Object> parameters = statementBuilder.getParameters();
-
-            client.executeQuery(sql, parameters, queryResponse);
-
-        } finally {
-            connection.closeClient(session);
-        }
-
-        log.debug("Search operation completed.");
-    }
-
-    public SearchResult createSearchResult(
-            //Collection<SourceRef> primarySourceRefs,
-            Collection<EntrySource> sourceRefs,
-            ResultSet rs
-    ) throws Exception {
-
-        SearchResult searchResult = new SearchResult();
-
-        SourceAttributes sourceValues = new SourceAttributes();
-        RDNBuilder rb = new RDNBuilder();
-
-        int column = 1;
-
-        //log.debug("Fields:");
-        for (EntrySource sourceRef : sourceRefs) {
-            String alias = sourceRef.getAlias();
-            //boolean primarySource = primarySourceRefs.contains(sourceRef);
-
-            Attributes fields = new Attributes();
-
-            for (EntryField fieldRef : sourceRef.getFields()) {
-
-                Object value = rs.getObject(column++);
-
-                String fieldName = fieldRef.getName();
-                String name = alias + "." + fieldName;
-
-                if (sourceRef.isPrimarySourceRef() && fieldRef.isPrimaryKey()) {
-                    if (value == null) return null;
-                    rb.set(name, value);
-                    //if (debug) log.debug(" - "+name+": "+value+" (pk)");
-                } else {
-                    if (value == null) continue;
-                    //if (debug) log.debug(" - "+name+": "+value);
-                }
-
-                fields.addValue(fieldName, value);
-            }
-
-            sourceValues.set(alias, fields);
-        }
-
-        searchResult.setSourceAttributes(sourceValues);
-        searchResult.setDn(new DN(rb.toRdn()));
-
-        return searchResult;
     }
 
     public void mergeSearchResult(SearchResult source, SearchResult destination) {
@@ -1219,7 +842,7 @@ public class JDBCSource extends Source {
 
     public Object clone() throws CloneNotSupportedException {
 
-        JDBCSource source = (JDBCSource)super.clone();
+        JDBCJoinSource source = (JDBCJoinSource)super.clone();
 
         source.connection       = connection;
 

@@ -41,9 +41,9 @@ public class SearchFilterBuilder {
 
     Partition partition;
 
-    Map<String, EntrySource> primarySourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
-    Map<String, EntrySource> localSourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
-    Map<String, EntrySource> sourceRefs = new LinkedHashMap<String, EntrySource>(); // need to maintain order
+    Map<String,EntrySource> primarySourceRefs = new LinkedHashMap<String,EntrySource>(); // need to maintain order
+    Map<String,EntrySource> localSourceRefs = new LinkedHashMap<String,EntrySource>(); // need to maintain order
+    Map<String,EntrySource> sourceRefs = new LinkedHashMap<String,EntrySource>(); // need to maintain order
 
     Interpreter interpreter;
 

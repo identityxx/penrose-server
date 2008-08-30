@@ -92,4 +92,8 @@ public class Field implements Cloneable {
     public boolean isText() {
         return fieldConfig.isText();
     }
+
+    public String toString() {
+        return source.getName()+"."+fieldConfig.getName();
+    }
 }

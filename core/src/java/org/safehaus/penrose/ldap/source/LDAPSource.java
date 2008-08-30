@@ -115,7 +115,7 @@ public class LDAPSource extends Source {
         newRequest.setDn(dn);
         newRequest.setAttributes(attributes);
 
-        if (debug) log.debug("Adding entry "+dn);
+        if (debug) log.debug("Adding entry "+dn+".");
 
         LDAPClient client = connection.getClient(session);
 
@@ -332,7 +332,7 @@ public class LDAPSource extends Source {
             connection.closeClient(session);
         }
 
-        log.debug("ModRdn operation completed.");
+        log.debug("Rename operation completed.");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,12 +375,12 @@ public class LDAPSource extends Source {
             public void add(SearchResult searchResult) throws Exception {
 
                 if (response.isClosed()) {
+                    if (debug) log.debug("Search response has been closed.");
                     close();
                     return;
                 }
 
                 SearchResult newSearchResult = createSearchResult(baseDn, searchResult);
-                if (newSearchResult == null) return;
 
                 if (debug) {
                     newSearchResult.print();
@@ -392,7 +392,7 @@ public class LDAPSource extends Source {
 
         newResponse.setSizeLimit(request.getSizeLimit());
 
-        if (debug) log.debug("Searching entry "+baseDn);
+        if (debug) log.debug("Searching entry "+baseDn+".");
 
         LDAPClient client = connection.getClient(session);
 
@@ -433,7 +433,7 @@ public class LDAPSource extends Source {
         UnbindRequest newRequest = (UnbindRequest)request.clone();
         newRequest.setDn(dn);
 
-        if (debug) log.debug("Binding as "+dn);
+        if (debug) log.debug("Unbinding as "+dn);
 
         LDAPClient client = connection.getClient(session);
 
@@ -444,7 +444,7 @@ public class LDAPSource extends Source {
             connection.closeClient(session);
         }
 
-        log.debug("Bind operation completed.");
+        log.debug("Unbind operation completed.");
     }
 
     public DN createBaseDn(SearchRequest request) throws Exception {

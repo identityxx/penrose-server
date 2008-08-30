@@ -689,7 +689,7 @@ public class Entry implements Cloneable {
         if (dn == null) return EMPTY_ENTRIES;
 
         DN entryDn        = getDn();
-        //if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
+        if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
 
         int entryDnLength = entryDn.getSize();
         int dnLength      = dn.getSize();
@@ -701,11 +701,11 @@ public class Entry implements Cloneable {
         }
 
         if (!dn.endsWith(entryDn)) {
-            //if (debug) log.debug("Doesn't match "+entryDn);
+            if (debug) log.debug("Doesn't match "+entryDn);
             return EMPTY_ENTRIES;
         }
 
-        //if (debug) log.debug("Searching children of \""+entryDn+"\".");
+        if (debug) log.debug("Searching children of \""+entryDn+"\".");
 
         Collection<Entry> results = new ArrayList<Entry>();
 
@@ -719,7 +719,7 @@ public class Entry implements Cloneable {
 
         results.add(this);
         
-        //if (debug) log.debug("Found entry \""+entryDn+"\".");
+        if (debug) log.debug("Found entry \""+entryDn+"\".");
 
         return results;
     }

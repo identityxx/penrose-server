@@ -226,7 +226,7 @@ public class SearchRequestBuilder extends RequestBuilder {
                 statement.addColumn(fieldRef.getSourceName()+"."+fieldRef.getOriginalName());
             }
 
-            statement.addSourceName(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
+            statement.addSource(sourceRef.getAlias(), sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
             if (sourceCounter == 0) { // join previous source
                 String where = sourceRef.getParameter(JDBCSource.FILTER);
@@ -279,7 +279,7 @@ public class SearchRequestBuilder extends RequestBuilder {
             EntrySource sourceRef = tableAliases.get(alias);
 
             if (debug) log.debug("Adding source " + alias);
-            statement.addSourceName(alias, sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
+            statement.addSource(alias, sourceRef.getSource().getPartition().getName(), sourceRef.getSource().getName());
 
             String joinType = generateJoinType(sourceRef);
             Filter joinCondition = generateJoinOn2(sourceRef, alias);
@@ -308,7 +308,7 @@ public class SearchRequestBuilder extends RequestBuilder {
                 sb.append(where);
                 sb.append(")");
             }
-            statement.setWhere(sb.toString());
+            statement.setWhereClause(sb.toString());
         }
 
         requests.add(statement);
