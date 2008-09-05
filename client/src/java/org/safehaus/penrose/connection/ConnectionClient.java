@@ -2,7 +2,6 @@ package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionClient;
