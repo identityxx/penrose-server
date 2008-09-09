@@ -29,7 +29,7 @@ public class JDBCSyncJob extends Job {
     private Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
     Map<String,Entry> tmpEntries = new LinkedHashMap<String,Entry>();
 
-    private String baseDn;
+    private DN baseDn;
     private int scope;
 
     private Source changelog;
@@ -81,7 +81,8 @@ public class JDBCSyncJob extends Job {
             }
         }
 
-        baseDn = jobConfig.getParameter("baseDn");
+        String s = jobConfig.getParameter("baseDn");
+        baseDn = s == null ? null : new DN(s);
 
         String scope = jobConfig.getParameter("scope");
         if ("OBJECT".equals(scope)) {
@@ -648,11 +649,11 @@ public class JDBCSyncJob extends Job {
         this.entries = entries;
     }
 
-    public String getBaseDn() {
+    public DN getBaseDn() {
         return baseDn;
     }
 
-    public void setBaseDn(String baseDn) {
+    public void setBaseDn(DN baseDn) {
         this.baseDn = baseDn;
     }
 

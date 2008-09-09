@@ -5,7 +5,7 @@
 
 <connections>
 
-  <connection name="MySQL">
+  <connection name="Database">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>

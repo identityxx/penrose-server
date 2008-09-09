@@ -42,6 +42,7 @@ import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ietf.ldap.LDAPException;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
@@ -633,6 +634,7 @@ public class Partition implements Cloneable {
         Collection<Entry> entries = findEntries(dn);
         Collection<Module> modules = findModules(dn);
 
+        boolean found = false;
         Exception exception = null;
 
         for (Entry entry : entries) {
@@ -644,11 +646,15 @@ public class Partition implements Cloneable {
 
                 return; // return after the first successful operation
 
+            } catch (LDAPException e) {
+                if (e.getResultCode() == LDAP.INVALID_CREDENTIALS) found = true;
+
             } catch (Exception e) {
                 exception = e;
             }
         }
 
+        if (found) throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         throw exception;
     }
 

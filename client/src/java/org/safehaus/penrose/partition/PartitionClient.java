@@ -10,6 +10,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.EntryClient;
+import org.safehaus.penrose.directory.DirectoryClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.management.BaseClient;
@@ -191,6 +192,10 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
     ////////////////////////////////////////////////////////////////////////////////
     // Directory
     ////////////////////////////////////////////////////////////////////////////////
+
+    public DirectoryClient getDirectoryClient() throws Exception {
+        return new DirectoryClient(client, name);
+    }
 
     public Collection<DN> getSuffixes() throws Exception {
         return (Collection<DN>)getAttribute("Suffixes");

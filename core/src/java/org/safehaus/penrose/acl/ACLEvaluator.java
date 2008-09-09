@@ -70,9 +70,11 @@ public class ACLEvaluator {
 
         if (entry == null) return true;
 
-        //log.debug("Checking ACL on \""+entry.getDn()+"\".");
-        //log.debug("Bind DN: "+bindDn);
-        //log.debug("Target DN: "+targetDn);
+        if (debug) {
+            log.debug("Checking ACL on \""+entry.getDn()+"\".");
+            //log.debug("Bind DN: "+bindDn);
+            //log.debug("Target DN: "+targetDn);
+        }
 
         for (ACI aci : entry.getACL()) {
             //log.debug(" - "+aci);

@@ -8,11 +8,6 @@ create table users (
 
 create table groups (
     groupname varchar(50),
+    description varchar(50),
     primary key (groupname)
-);
-
-create table usergroups (
-    groupname varchar(50),
-    username varchar(50),
-    primary key (groupname, username)
 );

@@ -56,6 +56,9 @@ public class Entry implements Cloneable {
     protected EntryConfig entryConfig;
     protected EntryContext entryContext;
 
+    protected Entry parent;
+    protected Collection<Entry> children = new LinkedHashSet<Entry>();
+
     protected Map<String, EntrySource> localSources = new LinkedHashMap<String, EntrySource>();
     //protected Map<String,SourceRef> localPrimarySourceRefs = new LinkedHashMap<String,SourceRef>();
 
@@ -73,6 +76,9 @@ public class Entry implements Cloneable {
     public void init(EntryConfig entryConfig, EntryContext entryContext) throws Exception {
         this.entryConfig = entryConfig;
         this.entryContext = entryContext;
+
+        parent = entryContext.getParent();
+        if (parent != null) parent.addChild(this);
 
         directory = entryContext.getDirectory();
         partition = directory.getPartition();
@@ -105,14 +111,14 @@ public class Entry implements Cloneable {
 
         // inherit source referencess from the parent entries
 
-        Entry parent = directory.getEntry(entryConfig.getParentId());
+        Entry p = parent;
 
-        while (parent != null) {
+        while (p != null) {
 
-            //String psn = parent.getPrimarySourceName();
+            //String psn = p.getPrimarySourceName();
 
-            for (EntrySource entrySource : parent.getLocalSources()) {
-                String alias = entrySource.getAlias();
+            for (EntrySource entrySource : p.getLocalSources()) {
+                //String alias = entrySource.getAlias();
 
                 addSource(entrySource);
 /*
@@ -122,7 +128,7 @@ public class Entry implements Cloneable {
 */
             }
 
-            parent = parent.getParent();
+            p = p.getParent();
         }
 
         init();
@@ -179,7 +185,8 @@ public class Entry implements Cloneable {
     }
 
     public String getParentId() {
-        return entryConfig.getParentId();
+
+        return parent == null ? null : parent.getId();
     }
 
     public DN getDn() {
@@ -254,11 +261,11 @@ public class Entry implements Cloneable {
     }
 */
     public Collection<Entry> getChildren() {
-        return directory.getChildren(this);
+        return children;
     }
 
     public void addChild(Entry child) throws Exception {
-        directory.addChild(this, child);
+        children.add(child);
     }
 
     public void addChildren(Collection<Entry> children) throws Exception {
@@ -268,19 +275,19 @@ public class Entry implements Cloneable {
     }
 
     public void removeChild(Entry child) throws Exception {
-        directory.removeChild(this, child);
+        children.remove(child);
     }
 
     public void removeChildren() {
-        directory.removeChildren(this);
+        children.clear();
     }
 
     public Entry getParent() {
-        return directory.getParent(this);
+        return parent;
     }
 
     public void setParent(Entry parent) {
-        directory.setParent(this, parent);
+        this.parent = parent;
     }
 
     public String getPrimarySourceName() {

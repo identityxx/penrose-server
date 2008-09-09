@@ -1,6 +1,4 @@
 dn: cn=test,ou=Groups,dc=JDBC,dc=Example,dc=com
 cn: test
+description: Test
 objectClass: groupOfUniqueNames
-uniqueMember: uid=test,ou=Users,dc=JDBC,dc=Example,dc=com
-uniqueMember: uid=swhite,ou=Users,dc=JDBC,dc=Example,dc=com
-uniqueMember: uid=lwalker,ou=Users,dc=JDBC,dc=Example,dc=com

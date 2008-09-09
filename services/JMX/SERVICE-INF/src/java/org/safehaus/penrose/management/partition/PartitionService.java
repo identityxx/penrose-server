@@ -13,6 +13,7 @@ import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.management.connection.ConnectionService;
 import org.safehaus.penrose.management.directory.EntryService;
+import org.safehaus.penrose.management.directory.DirectoryService;
 import org.safehaus.penrose.management.mapping.MappingService;
 import org.safehaus.penrose.management.module.ModuleService;
 import org.safehaus.penrose.management.scheduler.SchedulerService;
@@ -101,6 +102,14 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     ////////////////////////////////////////////////////////////////////////////////
     // Directory
     ////////////////////////////////////////////////////////////////////////////////
+
+    public DirectoryService getDirectoryService() throws Exception {
+
+        DirectoryService directoryService = new DirectoryService(jmxService, partitionManager, partitionName);
+        directoryService.init();
+
+        return directoryService;
+    }
 
     public Collection<DN> getSuffixes() throws Exception {
         Collection<DN> list = new ArrayList<DN>();
@@ -611,11 +620,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             mappingService.register();
         }
 
-        DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
-        for (String entryId : directoryConfig.getEntryIds()) {
-            EntryService entryService = getEntryService(entryId);
-            entryService.register();
-        }
+        DirectoryService directoryService = getDirectoryService();
+        directoryService.register();
 
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
         for (String moduleName : moduleConfigManager.getModuleNames()) {
@@ -641,11 +647,8 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             moduleService.unregister();
         }
 
-        DirectoryConfig directoryConfig = partitionConfig.getDirectoryConfig();
-        for (String entryId : directoryConfig.getEntryIds()) {
-            EntryService entryService = getEntryService(entryId);
-            entryService.unregister();
-        }
+        DirectoryService directoryService = getDirectoryService();
+        directoryService.unregister();
 
         MappingConfigManager mappingConfigManager = partitionConfig.getMappingConfigManager();
         for (String mappingName : mappingConfigManager.getMappingNames()) {

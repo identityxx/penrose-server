@@ -25,16 +25,7 @@ public class Directory implements Cloneable {
 
     protected DirectoryConfig directoryConfig;
 
-    protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
-
-    protected Map<String,Collection<String>> entriesByDn         = new LinkedHashMap<String,Collection<String>>();
-    protected Map<String,Collection<String>> entriesBySourceName = new LinkedHashMap<String,Collection<String>>();
-
-    protected Collection<String> rootIds                  = new ArrayList<String>();
-    protected Map<String,String> parentById               = new LinkedHashMap<String,String>();
-    protected Map<String,Collection<Entry>> childrenById  = new LinkedHashMap<String,Collection<Entry>>();
-
-    protected Collection<DN> suffixes         = new ArrayList<DN>();
+    protected Map<String,Entry> entriesById = new LinkedHashMap<String,Entry>();
 
     public Directory(Partition partition) throws Exception {
         this.partition = partition;
@@ -53,24 +44,20 @@ public class Directory implements Cloneable {
     }
 
     public void destroy() throws Exception {
-        for (String id : rootIds) {
+        for (String id : getRootIds()) {
             destroy(id);
         }
     }
 
     public void destroy(String id) throws Exception {
 
-        Collection<Entry> children = childrenById.get(id);
-        //log.debug("Destroying entry "+id+"'s children: "+children);
-        
-        if (children != null) {
-            for (Entry child : children) {
-                if (child.getPartition() != partition) continue;
-                destroy(child.getId());
-            }
+        Entry entry = getEntry(id);
+
+        for (Entry child : entry.getChildren()) {
+            if (child.getPartition() != partition) continue;
+            destroy(child.getId());
         }
 
-        Entry entry = entries.get(id);
         entry.destroy();
     }
 
@@ -80,6 +67,9 @@ public class Directory implements Cloneable {
 
         EntryContext entryContext = new EntryContext();
         entryContext.setDirectory(this);
+
+        Entry parent = findParent(entryConfig);
+        entryContext.setParent(parent);
 
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
@@ -92,42 +82,17 @@ public class Directory implements Cloneable {
         Entry entry = (Entry)clazz.newInstance();
         entry.init(entryConfig, entryContext);
 
-        addEntry(entry);
+        entriesById.put(entry.getId(), entry);
 
         return entry;
     }
 
     public Entry removeEntry(String id) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
-
-        Entry entry = entries.get(id);
+        Entry entry = entriesById.get(id);
 
         DN dn = entry.getDn();
         if (debug) log.debug("Removing entry \""+ dn +"\".");
-
-        String normalizedDn = dn.getNormalizedDn();
-
-        Collection<String> c1 = entriesByDn.get(normalizedDn);
-        if (c1 != null) {
-            c1.remove(id);
-            if (c1.isEmpty()) {
-                entriesByDn.remove(normalizedDn);
-            }
-        }
-
-        Collection<EntrySource> sourceRefs = entry.getSources();
-        for (EntrySource sourceRef : sourceRefs) {
-            String sourceName = sourceRef.getSource().getName();
-
-            Collection<String> c2 = entriesBySourceName.get(sourceName);
-            if (c2 != null) {
-                c2.remove(id);
-                if (c2.isEmpty()) {
-                    entriesBySourceName.remove(sourceName);
-                }
-            }
-        }
 
         Entry parent = entry.getParent();
 
@@ -137,111 +102,67 @@ public class Directory implements Cloneable {
             return entry;
         }
 
-        rootIds.remove(id);
-        suffixes.remove(entry.getDn());
-
         return entry;
     }
 
-    public void addEntry(Entry entry) throws Exception {
+    public Entry findParent(EntryConfig entryConfig) throws Exception {
 
-        boolean debug = log.isDebugEnabled();
+        if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\":");
 
-        DN dn = entry.getDn();
-        if (debug) log.debug("Adding entry \""+ dn +"\".");
-
-        String id = entry.getId();
-        if (debug) log.debug(" - ID: "+id);
-
-        // index by id
-        entries.put(id, entry);
-
-        // index by dn
-        String normalizedDn = dn.getNormalizedDn();
-        Collection<String> c1 = entriesByDn.get(normalizedDn);
-        if (c1 == null) {
-            c1 = new ArrayList<String>();
-            entriesByDn.put(normalizedDn, c1);
-        }
-        c1.add(id);
-
-        // index by source
-        Collection<EntrySource> sourceRefs = entry.getSources();
-        for (EntrySource sourceRef : sourceRefs) {
-            String sourceName = sourceRef.getSource().getName();
-            Collection<String> c2 = entriesBySourceName.get(sourceName);
-            if (c2 == null) {
-                c2 = new ArrayList<String>();
-                entriesBySourceName.put(sourceName, c2);
-            }
-            c2.add(id);
-        }
-
-        String parentId = entry.getParentId();
+        String parentId = entryConfig.getParentId();
 
         if (parentId != null) {
-            if (debug) log.debug(" - Searching parent with id "+parentId);
+            if (debug) log.debug(" - Parent ID: "+parentId);
             Entry parent = getEntry(parentId);
 
             if (parent != null) {
-                if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                parent.addChild(entry);
-                return;
+                if (debug) log.debug("Found parent \""+parent.getDn()+"\".");
+                return parent;
             }
         }
 
-        DN parentDn = dn.getParentDn();
+        DN parentDn = entryConfig.getParentDn();
 
-        if (entry.getEntryConfig().isAttached() && !parentDn.isEmpty()) {
+        if (entryConfig.isAttached() && !parentDn.isEmpty()) {
 
-            if (debug) log.debug(" - Searching local parent with dn \""+parentDn+"\".");
-            Collection<Entry> parents = getEntries(parentDn);
+            if (debug) log.debug(" - Parent DN: "+parentDn);
+            Entry parent = getEntry(parentDn);
 
-            if (!parents.isEmpty()) {
-                Entry parent = parents.iterator().next();
-                if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                parent.addChild(entry);
-                return;
+            if (parent != null) {
+                if (debug) log.debug("Found parent \""+parent.getDn()+"\".");
+                return parent;
             }
 
-            if (debug) log.debug(" - Local parent not found, searching external parent with dn \""+parentDn+"\"");
+            if (debug) log.debug(" - Searching other partitions.");
             PartitionContext partitionContext = partition.getPartitionContext();
             PenroseContext penroseContext = partitionContext.getPenroseContext();
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Collection<Entry> entries = partitionManager.findEntries(parentDn);
+            parent = partitionManager.getEntry(parentDn);
 
-            if (entries.isEmpty()) {
-                if (debug) log.debug(" - External parent not found.");
-/*
-            } else if (entries.size() > 1) {
-                log.debug(" - Found external parents:");
-                for (Entry e : entries) log.debug("   - "+e.getDn());
-                throw LDAP.createException(LDAP.OPERATIONS_ERROR, "Too many parents found.");
-*/
-            } else {
-                Entry parent = entries.iterator().next();
-                if (debug) log.debug(" - Found external parent \""+parent.getDn()+"\".");
-
-                Partition p = parent.getPartition();
-                if (debug) log.debug(" - Partition: "+p.getName());
-
-                parent.addChild(entry);
+            if (parent != null) {
+                if (debug) log.debug("Found parent \""+parent.getDn()+"\" in partition "+parent.getPartition().getName()+".");
+                return parent;
             }
         }
 
-        if (debug) log.debug(" - Add suffix \""+dn+"\"");
-        rootIds.add(id);
-        suffixes.add(entry.getDn());
+        if (debug) log.debug("Parent not found.");
+        return null;
     }
 
     public Entry getEntry(String id) {
-        return entries.get(id);
+        return entriesById.get(id);
+    }
+
+    public Entry getEntry(DN dn) throws Exception {
+        Collection<Entry> entries = getEntries(dn);
+        if (entries.isEmpty()) return null;
+        return entries.iterator().next();
     }
 
     public Collection<Entry> getEntries() {
         Collection<Entry> results = new ArrayList<Entry>();
-        results.addAll(entries.values());
+        results.addAll(entriesById.values());
         return results;
     }
     
@@ -251,7 +172,7 @@ public class Directory implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
         for (String id : ids) {
-            Entry entry = entries.get(id);
+            Entry entry = entriesById.get(id);
             results.add(entry);
         }
         return results;
@@ -261,21 +182,16 @@ public class Directory implements Cloneable {
 
         if (dn == null) return EMPTY_ENTRIES;
 
-        Collection<String> ids = entriesByDn.get(dn.getNormalizedDn());
+        Collection<String> ids = directoryConfig.getEntryIdsByDn(dn);
         return getEntries(ids);
-    }
-
-    public Collection<Entry> findEntries(String targetDn) throws Exception {
-        if (targetDn == null) return null;
-        return findEntries(new DN(targetDn));
     }
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
         Collection<Entry> results = new ArrayList<Entry>();
 
-        for (String id : rootIds) {
-            Entry entry = entries.get(id);
+        for (String id : getRootIds()) {
+            Entry entry = entriesById.get(id);
             Collection<Entry> list = entry.findEntries(dn);
             results.addAll(list);
         }
@@ -362,93 +278,32 @@ public class Directory implements Cloneable {
         return partition;
     }
 
+    public String getRootId() {
+        return directoryConfig.getRootId();
+    }
+
+    public Collection<String> getRootIds() {
+        return directoryConfig.getRootIds();
+    }
+
     public Entry getRootEntry() {
-        if (rootIds.isEmpty()) return null;
-        String id = rootIds.iterator().next();
-        return entries.get(id);
+        return getEntry(getRootId());
     }
 
     public Collection<Entry> getRootEntries() {
-        return getEntries(rootIds);
+        return getEntries(getRootIds());
     }
 
     public DN getSuffix() {
-        if (suffixes.isEmpty()) return null;
-        return suffixes.iterator().next();
+        return directoryConfig.getSuffix();
     }
 
     public Collection<DN> getSuffixes() {
-        return suffixes;
-    }
-
-    public Entry getParent(Entry entry) {
-        return getParent(entry.getId());
-    }
-    
-    public Entry getParent(String id) {
-        String parentId = parentById.get(id);
-        return entries.get(parentId);
-    }
-
-    public void setParent(Entry entry, Entry parent) {
-        setParent(entry.getId(), parent);
-    }
-
-    public void setParent(String id, Entry parent) {
-        parentById.put(id, parent.getId());
-    }
-
-    public Collection<Entry> getChildren(Entry parent) {
-        return getChildren(parent.getId());
-    }
-
-    public Collection<Entry> getChildren(String id) {
-        Collection<Entry> result = new ArrayList<Entry>();
-        Collection<Entry> children = childrenById.get(id);
-        if (children != null) result.addAll(children);
-        return result;
-    }
-
-    public void addChild(Entry parent, Entry child) {
-        addChild(parent.getId(), child);
-    }
-    
-    public void addChild(String id, Entry child) {
-        log.debug("Adding child to entry "+id+": "+child.getId());
-        Collection<Entry> children = childrenById.get(id);
-        if (children == null) {
-            children = new LinkedHashSet<Entry>();
-            childrenById.put(id, children);
-        }
-        children.add(child);
-
-        parentById.put(child.getId(), id);
-    }
-
-    public void removeChild(Entry parent, Entry child) {
-        removeChild(parent.getId(), child);
-    }
-    
-    public void removeChild(String id, Entry child) {
-        Collection<Entry> children = childrenById.get(id);
-        if (children == null) return;
-
-        children.remove(child);
-        if (children.isEmpty()) childrenById.remove(id);
-
-        parentById.remove(child.getId());
-    }
-
-    public void removeChildren(Entry entry) {
-        removeChildren(entry.getId());
-    }
-
-    public Collection<Entry> removeChildren(String id) {
-        return childrenById.remove(id);
+        return directoryConfig.getSuffixes();
     }
 
     public Collection<Entry> getEntriesBySourceName(String sourceName) {
-        Collection<String> ids = entriesBySourceName.get(sourceName);
+        Collection<String> ids = directoryConfig.getEntryIdsBySource(sourceName);
         return getEntries(ids);
     }
 }

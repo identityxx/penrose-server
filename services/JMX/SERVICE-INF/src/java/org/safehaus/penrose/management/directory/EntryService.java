@@ -1,9 +1,6 @@
 package org.safehaus.penrose.management.directory;
 
-import org.safehaus.penrose.directory.DirectoryConfig;
-import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.EntryClient;
+import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
@@ -41,19 +38,23 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     }
 
     public EntryConfig getEntryConfig() {
-        return getPartitionConfig().getDirectoryConfig().getEntryConfig(entryId);
+        return getDirectoryConfig().getEntryConfig(entryId);
     }
 
     public Entry getEntry() {
-        return getPartition().getDirectory().getEntry(entryId);
+        return getDirectory().getEntry(entryId);
     }
 
-    public PartitionConfig getPartitionConfig() {
-        return partitionManager.getPartitionConfig(partitionName);
+    public DirectoryConfig getDirectoryConfig() {
+        PartitionConfig partitionConfig = partitionManager.getPartitionConfig(partitionName);
+        if (partitionConfig == null) return null;
+        return partitionConfig.getDirectoryConfig();
     }
 
-    public Partition getPartition() {
-        return partitionManager.getPartition(partitionName);
+    public Directory getDirectory() {
+        Partition partition = partitionManager.getPartition(partitionName);
+        if (partition == null) return null;
+        return partition.getDirectory();
     }
 
     public DN getDn() throws Exception {
@@ -63,7 +64,7 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     
     public Collection<String> getChildIds() throws Exception {
         Collection<String> list = new ArrayList<String>();
-        DirectoryConfig directoryConfig = getPartitionConfig().getDirectoryConfig();
+        DirectoryConfig directoryConfig = getDirectoryConfig();
         for (EntryConfig childConfig : directoryConfig.getChildren(entryId)) {
             list.add(childConfig.getId());
         }
@@ -71,7 +72,7 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     }
 
     public String getParentId() throws Exception {
-        EntryConfig entryConfig = getEntryConfig();
-        return entryConfig.getParentId();
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getParentId(entryId);
     }
 }

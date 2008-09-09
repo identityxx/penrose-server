@@ -113,7 +113,7 @@ public class ETrustDirectoryModule extends Module {
 
             if ("ADD".equals(action)) {
                 int p = data.indexOf('\"', 1);
-                final String dn = data.substring(1, p);
+                final DN dn = new DN(data.substring(1, p));
                 String attributeNames = data.substring(p+2);
 
                 log.debug(" - dn: "+dn);
@@ -148,7 +148,7 @@ public class ETrustDirectoryModule extends Module {
                 }
 
             } else if ("REM".equals(action)) {
-                String dn = data.substring(1, data.length()-1);
+                DN dn = new DN(data.substring(1, data.length()-1));
 
                 log.debug(" - dn: "+dn);
 
@@ -165,7 +165,7 @@ public class ETrustDirectoryModule extends Module {
 
             } else if ("MOD".equals(action)) {
                 int p = data.indexOf('\"', 1);
-                String dn = data.substring(1, p);
+                DN dn = new DN(data.substring(1, p));
                 String attributeNames = data.substring(p+2);
 
                 log.debug(" - dn: "+dn);

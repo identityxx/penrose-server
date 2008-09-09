@@ -6,7 +6,7 @@
 <sources>
 
   <source name="users">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>
@@ -18,7 +18,7 @@
   </source>
 
   <source name="groups">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="groupname" primaryKey="true"/>
     <field name="description"/>
     <parameter>
@@ -28,7 +28,7 @@
   </source>
 
   <source name="usergroups">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="groupname" primaryKey="true"/>
     <field name="username" primaryKey="true"/>
     <parameter>
@@ -39,7 +39,7 @@
 
   <source name="joinedUsers">
     <source-class>org.safehaus.penrose.jdbc.source.JDBCJoinSource</source-class>
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true">
       <variable>u.username</variable>
     </field>
@@ -71,7 +71,7 @@
 
   <source name="joinedGroups">
     <source-class>org.safehaus.penrose.jdbc.source.JDBCJoinSource</source-class>
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="groupname" primaryKey="true">
       <variable>g.groupname</variable>
     </field>
