@@ -213,12 +213,7 @@ public class FederationModule extends Module implements FederationMBean {
 
         org.apache.tools.ant.Project antProject = new org.apache.tools.ant.Project();
 
-        antProject.setProperty("LDAP_URL",      repository.getParameter(LDAPRepository.LDAP_URL));
         antProject.setProperty("LDAP_SUFFIX",   repository.getParameter(LDAPRepository.LDAP_SUFFIX));
-        antProject.setProperty("LDAP_USER",     repository.getParameter(LDAPRepository.LDAP_USER));
-        antProject.setProperty("LDAP_PASSWORD", repository.getParameter(LDAPRepository.LDAP_PASSWORD));
-
-        antProject.setProperty("SUFFIX",        repository.getParameter(LDAPRepository.SUFFIX));
 
         for (String paramName : repository.getParameterNames()) {
             String paramValue = repository.getParameter(paramName);
@@ -304,10 +299,10 @@ public class FederationModule extends Module implements FederationMBean {
 
         antProject.setProperty("DOMAIN",       name);
 
-        antProject.setProperty("NIS_SERVER",   domain.getParameter(NISDomain.NIS_SERVER));
-        antProject.setProperty("NIS_DOMAIN",   domain.getParameter(NISDomain.NIS_DOMAIN));
-
-        antProject.setProperty("SUFFIX",       domain.getParameter(NISDomain.YP_SUFFIX));
+        for (String paramName : domain.getParameterNames()) {
+            String paramValue = domain.getParameter(paramName);
+            antProject.setProperty(paramName, paramValue);
+        }
 
         Copy copy = new Copy();
         copy.setOverwrite(true);
@@ -367,10 +362,6 @@ public class FederationModule extends Module implements FederationMBean {
         org.apache.tools.ant.Project antProject = new org.apache.tools.ant.Project();
 
         antProject.setProperty("DOMAIN",        name);
-
-        antProject.setProperty("NIS_DOMAIN",    domain.getParameter(NISDomain.NIS_DOMAIN));
-
-        antProject.setProperty("SUFFIX",        domain.getParameter(NISDomain.NIS_SUFFIX));
 
         for (String paramName : domain.getParameterNames()) {
             String paramValue = domain.getParameter(paramName);
@@ -437,9 +428,11 @@ public class FederationModule extends Module implements FederationMBean {
         antProject.setProperty("DOMAIN",        name);
 
         antProject.setProperty("NIS_DOMAIN",    domain.getParameter(NISDomain.NIS_DOMAIN));
-        antProject.setProperty("NIS_SUFFIX",    domain.getParameter(NISDomain.NIS_SUFFIX));
 
-        antProject.setProperty("SUFFIX",        domain.getParameter(NISDomain.NSS_SUFFIX));
+        for (String paramName : domain.getParameterNames()) {
+            String paramValue = domain.getParameter(paramName);
+            antProject.setProperty(paramName, paramValue);
+        }
 
         Copy copy = new Copy();
         copy.setOverwrite(true);

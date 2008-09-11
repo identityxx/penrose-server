@@ -9,15 +9,15 @@
     <adapter-name>LDAP</adapter-name>
     <parameter>
       <param-name>java.naming.provider.url</param-name>
-      <param-value>${LDAP_URL}</param-value>
+      <param-value>${ldapUrl}</param-value>
     </parameter>
     <parameter>
       <param-name>java.naming.security.principal</param-name>
-      <param-value>${LDAP_USER}</param-value>
+      <param-value>${ldapUser}</param-value>
     </parameter>
     <parameter>
       <param-name>java.naming.security.credentials</param-name>
-      <param-value>${LDAP_PASSWORD}</param-value>
+      <param-value>${ldapPassword}</param-value>
     </parameter>
   </connection>
 

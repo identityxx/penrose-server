@@ -5,14 +5,14 @@
 
 <directory>
 
-  <entry dn="${SUFFIX}">
+  <entry dn="${ypSuffix}">
     <oc>organizationalUnit</oc>
     <oc>nisDomainObject</oc>
     <at name="ou" rdn="true">
       <constant>${DOMAIN}</constant>
     </at>
     <at name="nisDomain">
-      <constant>${NIS_DOMAIN}</constant>
+      <constant>${nisDomain}</constant>
     </at>
     <aci subject="self">
       <permission>rws</permission>
@@ -28,14 +28,14 @@
     </aci>
   </entry>
 
-  <entry dn="ou=Users,${SUFFIX}">
+  <entry dn="ou=Users,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
 
-  <entry dn="uid=...,ou=Users,${SUFFIX}">
+  <entry dn="uid=...,ou=Users,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>account</oc>
     <oc>posixAccount</oc>
@@ -206,14 +206,14 @@ return bytes;
     </source>
   </entry>
 
-  <entry dn="ou=Groups,${SUFFIX}">
+  <entry dn="ou=Groups,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Groups,${SUFFIX}">
+  <entry dn="cn=...,ou=Groups,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>posixGroup</oc>
     <at name="cn" rdn="true">
@@ -239,14 +239,14 @@ return bytes;
     </source>
   </entry>
 
-  <entry dn="ou=Hosts,${SUFFIX}">
+  <entry dn="ou=Hosts,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Hosts</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...+ipHostNumber=...,ou=Hosts,${SUFFIX}">
+  <entry dn="cn=...+ipHostNumber=...,ou=Hosts,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>device</oc>
     <oc>ipHost</oc>
@@ -276,14 +276,14 @@ return h.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Services,${SUFFIX}">
+  <entry dn="ou=Services,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Services</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...+ipServicePort=...+ipServiceProtocol=...,ou=Services,${SUFFIX}">
+  <entry dn="cn=...+ipServicePort=...+ipServiceProtocol=...,ou=Services,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>ipService</oc>
     <at name="cn" rdn="true">
@@ -327,14 +327,14 @@ return s.cn;
     </source>
   </entry>
 
-  <entry dn="ou=RPCs,${SUFFIX}">
+  <entry dn="ou=RPCs,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>RPCs</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...+oncRpcNumber=...,ou=RPCs,${SUFFIX}">
+  <entry dn="cn=...+oncRpcNumber=...,ou=RPCs,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>oncRpc</oc>
     <at name="cn" rdn="true">
@@ -369,14 +369,14 @@ return r.cn;
     </source>
   </entry>
 
-  <entry dn="ou=NetIDs,${SUFFIX}">
+  <entry dn="ou=NetIDs,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>NetIDs</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=NetIDs,${SUFFIX}">
+  <entry dn="cn=...,ou=NetIDs,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>nisNetId</oc>
     <at name="cn" rdn="true">
@@ -408,14 +408,14 @@ return r.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Protocols,${SUFFIX}">
+  <entry dn="ou=Protocols,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Protocols</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...+ipProtocolNumber=...,ou=Protocols,${SUFFIX}">
+  <entry dn="cn=...+ipProtocolNumber=...,ou=Protocols,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>ipProtocol</oc>
     <at name="cn" rdn="true">
@@ -450,14 +450,14 @@ return p.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Aliases,${SUFFIX}">
+  <entry dn="ou=Aliases,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Aliases</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Aliases,${SUFFIX}">
+  <entry dn="cn=...,ou=Aliases,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>nisMailAlias</oc>
     <at name="cn" rdn="true">
@@ -483,14 +483,14 @@ return p.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Netgroups,${SUFFIX}">
+  <entry dn="ou=Netgroups,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Netgroups</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Netgroups,${SUFFIX}">
+  <entry dn="cn=...,ou=Netgroups,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>nisNetgroup</oc>
     <at name="cn" rdn="true">
@@ -522,14 +522,14 @@ return p.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Ethers,${SUFFIX}">
+  <entry dn="ou=Ethers,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Ethers</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Ethers,${SUFFIX}">
+  <entry dn="cn=...,ou=Ethers,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>device</oc>
     <oc>ieee802Device</oc>
@@ -550,14 +550,14 @@ return p.cn;
     </source>
   </entry>
 
-  <entry dn="ou=BootParams,${SUFFIX}">
+  <entry dn="ou=BootParams,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>BootParams</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=BootParams,${SUFFIX}">
+  <entry dn="cn=...,ou=BootParams,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>device</oc>
     <oc>bootableDevice</oc>
@@ -584,14 +584,14 @@ return p.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Networks,${SUFFIX}">
+  <entry dn="ou=Networks,${ypSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Networks</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Networks,${SUFFIX}">
+  <entry dn="cn=...,ou=Networks,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISEntry</entry-class>
     <oc>ipNetwork</oc>
     <at name="cn" rdn="true">
@@ -620,7 +620,7 @@ return n.cn;
     </source>
   </entry>
 
-  <entry dn="ou=Automounts,${SUFFIX}">
+  <entry dn="ou=Automounts,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
@@ -631,7 +631,7 @@ return n.cn;
     </source>
   </entry>
 <!--
-  <entry dn="nisMapName=...,ou=Automounts,${SUFFIX}">
+  <entry dn="nisMapName=...,ou=Automounts,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>nisMap</oc>
     <at name="nisMapName" rdn="true">
@@ -645,7 +645,7 @@ return n.cn;
     </source>
   </entry>
 
-  <entry dn="cn=...,nisMapName=...,ou=Automounts,${SUFFIX}">
+  <entry dn="cn=...,nisMapName=...,ou=Automounts,${ypSuffix}">
     <entry-class>org.safehaus.penrose.nis.directory.NISAutomountsEntry</entry-class>
     <oc>nisObject</oc>
     <at name="cn" rdn="true">
@@ -673,7 +673,7 @@ if (i &lt; 0) {
     info = a.automountInformation.substring(i+1);
 }
 
-a.automountInformation = "ldap:nisMapName="+name+",ou=Automounts,${SUFFIX}";
+a.automountInformation = "ldap:nisMapName="+name+",ou=Automounts,${ypSuffix}";
 if (info != null) a.automountInformation += " "+info;
 
 return a.automountInformation;

@@ -13,7 +13,7 @@
     </parameter>
     <parameter>
       <param-name>java.naming.provider.url</param-name>
-      <param-value>nis://${NIS_SERVER}/${NIS_DOMAIN}</param-value>
+      <param-value>nis://${nisServer}/${nisDomain}</param-value>
     </parameter>
     <parameter>
       <param-name>com.sun.jndi.nis.mailaliases</param-name>

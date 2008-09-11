@@ -38,6 +38,7 @@ public class LinkingModule extends Module {
 
     String sourceAttribute;
     String targetAttribute;
+    String storage;
 
     String mappingName;
     String mappingPrefix;
@@ -49,17 +50,21 @@ public class LinkingModule extends Module {
 
         sourceAttribute = getParameter("sourceAttribute");
         if (sourceAttribute == null) sourceAttribute = "dn";
-        log.debug("Source attribute: "+ sourceAttribute);
+        log.debug("Source attribute: "+sourceAttribute);
 
         targetAttribute = getParameter("targetAttribute");
         if (targetAttribute == null) targetAttribute = "seeAlso";
-        log.debug("Target attribute: "+ targetAttribute);
+        log.debug("Target attribute: "+targetAttribute);
+
+        storage = getParameter("storage");
+        if (storage == null) storage = "source";
+        log.debug("Storage: "+storage);
 
         mappingName = getParameter("mapping");
-        log.debug("Mapping name: "+ mappingName);
+        log.debug("Mapping name: "+mappingName);
 
         mappingPrefix = getParameter("mappingPrefix");
-        log.debug("Mapping prefix: "+ mappingPrefix);
+        log.debug("Mapping prefix: "+mappingPrefix);
     }
 
     public void linkEntry(DN sourceDn, DN targetDn) throws Exception {
@@ -72,26 +77,47 @@ public class LinkingModule extends Module {
             log.debug("##################################################################################################");
             log.debug("Link "+sourceDn+" to "+targetDn);
 
-            Object value;
-            if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                value = sourceDn.toString();
+            String sa, ta;
+            DN sdn, tdn;
+            Partition sp, tp;
+
+            if (storage.equals("source")) {
+                sa = targetAttribute;
+                ta = sourceAttribute;
+                sdn = targetDn;
+                tdn = sourceDn;
+                sp = targetPartition;
+                tp = partition;
 
             } else {
-                SearchResult sourceEntry = partition.find(adminSession, sourceDn);
-                Attributes sourceAttributes = sourceEntry.getAttributes();
-                value = sourceAttributes.getValue(sourceAttribute);
+                sa = sourceAttribute;
+                ta = targetAttribute;
+                sdn = sourceDn;
+                tdn = targetDn;
+                sp = partition;
+                tp = targetPartition;
+            }
+
+            Object value;
+            if (sa == null || sa.equals("dn")) {
+                value = sdn.toString();
+
+            } else {
+                SearchResult entry = sp.find(adminSession, sdn);
+                Attributes attributes = entry.getAttributes();
+                value = attributes.getValue(sa);
             }
 
             Collection<Modification> modifications = new ArrayList<Modification>();
-            modifications.add(new Modification(Modification.ADD, new Attribute(targetAttribute, value)));
+            modifications.add(new Modification(Modification.ADD, new Attribute(ta, value)));
 
             ModifyRequest request = new ModifyRequest();
-            request.setDn(targetDn);
+            request.setDn(tdn);
             request.setModifications(modifications);
 
             ModifyResponse response = new ModifyResponse();
 
-            targetPartition.modify(adminSession, request, response);
+            tp.modify(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -108,26 +134,47 @@ public class LinkingModule extends Module {
             log.debug("##################################################################################################");
             log.debug("Unlink "+sourceDn+" from "+targetDn);
 
-            Object value;
-            if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                value = sourceDn.toString();
+            String sa, ta;
+            DN sdn, tdn;
+            Partition sp, tp;
+
+            if (storage.equals("source")) {
+                sa = targetAttribute;
+                ta = sourceAttribute;
+                sdn = targetDn;
+                tdn = sourceDn;
+                sp = targetPartition;
+                tp = partition;
 
             } else {
-                SearchResult sourceEntry = partition.find(adminSession, sourceDn);
-                Attributes sourceAttributes = sourceEntry.getAttributes();
-                value = sourceAttributes.getValue(sourceAttribute);
+                sa = sourceAttribute;
+                ta = targetAttribute;
+                sdn = sourceDn;
+                tdn = targetDn;
+                sp = partition;
+                tp = targetPartition;
+            }
+
+            Object value;
+            if (sa == null || sa.equals("dn")) {
+                value = sdn.toString();
+
+            } else {
+                SearchResult entry = sp.find(adminSession, sdn);
+                Attributes attributes = entry.getAttributes();
+                value = attributes.getValue(sa);
             }
 
             Collection<Modification> modifications = new ArrayList<Modification>();
-            modifications.add(new Modification(Modification.DELETE, new Attribute(targetAttribute, value)));
+            modifications.add(new Modification(Modification.DELETE, new Attribute(ta, value)));
 
             ModifyRequest request = new ModifyRequest();
-            request.setDn(targetDn);
+            request.setDn(tdn);
             request.setModifications(modifications);
 
             ModifyResponse response = new ModifyResponse();
 
-            targetPartition.modify(adminSession, request, response);
+            tp.modify(adminSession, request, response);
 
         } finally {
             adminSession.close();

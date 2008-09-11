@@ -12,6 +12,7 @@ public class Repository implements Serializable, Comparable, Cloneable {
 
     public final static String LINKING_LOCAL_ATTRIBUTE  = "linkingLocalAttribute";
     public final static String LINKING_GLOBAL_ATTRIBUTE = "linkingGlobalAttribute";
+    public final static String LINKING_STORAGE          = "linkingStorage";
 
     public final static String IMPORT_MAPPING_NAME      = "importMappingName";
     public final static String IMPORT_MAPPING_PREFIX    = "importMappingPrefix";

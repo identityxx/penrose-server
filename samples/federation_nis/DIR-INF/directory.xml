@@ -5,7 +5,7 @@
 
 <directory>
 
-  <entry dn="${SUFFIX}">
+  <entry dn="${nisSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <source-name>LDAP</source-name>

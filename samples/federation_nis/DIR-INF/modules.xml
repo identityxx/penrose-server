@@ -34,8 +34,12 @@
       <param-value>${linkingLocalAttribute}</param-value>
     </parameter>
     <parameter>
-    <param-name>targetAttribute</param-name>
+      <param-name>targetAttribute</param-name>
       <param-value>${linkingGlobalAttribute}</param-value>
+    </parameter>
+    <parameter>
+      <param-name>storage</param-name>
+      <param-value>${linkingStorage}</param-value>
     </parameter>
     <parameter>
       <param-name>mapping</param-name>

@@ -10,7 +10,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${SUFFIX}</param-value>
+      <param-value>${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -40,7 +40,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Users,${SUFFIX}</param-value>
+      <param-value>ou=Users,${nisSuffix}</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>
@@ -63,7 +63,7 @@
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Groups,${SUFFIX}</param-value>
+      <param-value>ou=Groups,${nisSuffix}</param-value>
     </parameter>
     <parameter>
       <param-name>scope</param-name>
@@ -76,7 +76,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Hosts,${SUFFIX}</param-value>
+      <param-value>ou=Hosts,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -85,7 +85,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Services,${SUFFIX}</param-value>
+      <param-value>ou=Services,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -94,7 +94,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=RPCs,${SUFFIX}</param-value>
+      <param-value>ou=RPCs,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -103,7 +103,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=NetIDs,${SUFFIX}</param-value>
+      <param-value>ou=NetIDs,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -112,7 +112,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Protocols,${SUFFIX}</param-value>
+      <param-value>ou=Protocols,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -121,7 +121,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Aliases,${SUFFIX}</param-value>
+      <param-value>ou=Aliases,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -130,7 +130,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Netgroups,${SUFFIX}</param-value>
+      <param-value>ou=Netgroups,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -139,7 +139,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Ethers,${SUFFIX}</param-value>
+      <param-value>ou=Ethers,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -148,7 +148,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=BootParams,${SUFFIX}</param-value>
+      <param-value>ou=BootParams,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -157,7 +157,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Networks,${SUFFIX}</param-value>
+      <param-value>ou=Networks,${nisSuffix}</param-value>
     </parameter>
   </source>
 
@@ -166,7 +166,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Automounts,${SUFFIX}</param-value>
+      <param-value>ou=Automounts,${nisSuffix}</param-value>
     </parameter>
   </source>
 

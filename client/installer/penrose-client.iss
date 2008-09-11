@@ -24,7 +24,7 @@ UninstallDisplayName=${product.title} Client ${product.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=${project.name}-${product.version}
+OutputBaseFilename=${module.name}-${product.version}
 OutputDir=..\..\dist
 LicenseFile=dist\LICENSE.txt
 

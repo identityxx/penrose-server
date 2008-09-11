@@ -5,14 +5,14 @@
 
 <directory>
 
-  <entry dn="${SUFFIX}">
+  <entry dn="${nssSuffix}">
     <oc>organizationalUnit</oc>
     <oc>nisDomainObject</oc>
     <at name="ou" rdn="true">
       <constant>${DOMAIN}</constant>
     </at>
     <at name="nisDomain">
-      <constant>${NIS_DOMAIN}</constant>
+      <constant>${nisDomain}</constant>
     </at>
     <aci subject="self">
       <permission>rws</permission>
@@ -28,14 +28,14 @@
     </aci>
   </entry>
 
-  <entry dn="ou=Users,${SUFFIX}">
+  <entry dn="ou=Users,${nssSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Users</constant>
     </at>
   </entry>
 
-  <entry dn="uid=...,ou=Users,${SUFFIX}">
+  <entry dn="uid=...,ou=Users,${nssSuffix}">
     <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
     <mapping-name>users</mapping-name>
     <at name="uid" rdn="true">
@@ -50,20 +50,20 @@
       <partition-name>global</partition-name>
       <source-name>users</source-name>
       <mapping-name>users_to_global_users</mapping-name>
-      <field name="seeAlso">
-        <variable>n.dn</variable>
+      <field name="${linkingGlobalAttribute}">
+        <variable>n.${linkingLocalAttribute}</variable>
       </field>
     </source>
   </entry>
 
-  <entry dn="ou=Groups,${SUFFIX}">
+  <entry dn="ou=Groups,${nssSuffix}">
     <oc>organizationalUnit</oc>
     <at name="ou" rdn="true">
       <constant>Groups</constant>
     </at>
   </entry>
 
-  <entry dn="cn=...,ou=Groups,${SUFFIX}">
+  <entry dn="cn=...,ou=Groups,${nssSuffix}">
     <entry-class>org.safehaus.penrose.federation.directory.FederationEntry</entry-class>
     <mapping-name>nss_groups</mapping-name>
     <at name="cn" rdn="true">
@@ -81,13 +81,13 @@
       <partition-name>global</partition-name>
       <source-name>groups</source-name>
       <mapping-name>groups_to_global_groups</mapping-name>
-      <field name="seeAlso">
-        <variable>n.dn</variable>
+      <field name="${linkingGlobalAttribute}">
+        <variable>n.${linkingLocalAttribute}</variable>
       </field>
     </source>
   </entry>
 
-  <entry dn="ou=Hosts,${SUFFIX}">
+  <entry dn="ou=Hosts,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -95,7 +95,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Services,${SUFFIX}">
+  <entry dn="ou=Services,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -103,7 +103,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=RPCs,${SUFFIX}">
+  <entry dn="ou=RPCs,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -111,7 +111,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=NetIDs,${SUFFIX}">
+  <entry dn="ou=NetIDs,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -119,7 +119,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Protocols,${SUFFIX}">
+  <entry dn="ou=Protocols,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -127,7 +127,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Aliases,${SUFFIX}">
+  <entry dn="ou=Aliases,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -135,7 +135,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Netgroups,${SUFFIX}">
+  <entry dn="ou=Netgroups,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -143,7 +143,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Ethers,${SUFFIX}">
+  <entry dn="ou=Ethers,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -151,7 +151,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=BootParams,${SUFFIX}">
+  <entry dn="ou=BootParams,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -159,7 +159,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Networks,${SUFFIX}">
+  <entry dn="ou=Networks,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
       <partition-name>${DOMAIN}_nis</partition-name>
@@ -167,7 +167,7 @@
     </source>
   </entry>
 
-  <entry dn="ou=Automounts,${SUFFIX}">
+  <entry dn="ou=Automounts,${nssSuffix}">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <at name="nisMapEntry">
       <expression foreach="a.nisMapEntry" var="nisMapEntry">
@@ -189,7 +189,7 @@ if (i &lt; 0) {
 }
 
 DN dn = new DN(name);
-DN newDn = dn.getPrefix("${NIS_SUFFIX}").append("${SUFFIX}");
+DN newDn = dn.getPrefix("${nisSuffix}").append("${nssSuffix}");
 
 return "ldap:"+newDn+(info == null ? "" : " "+info);
       </expression>
