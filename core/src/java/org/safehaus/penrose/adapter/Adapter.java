@@ -87,10 +87,12 @@ public abstract class Adapter {
             ConnectionContext connectionContext
     ) throws Exception {
 
-        String connectionClass = getConnectionClassName();
+        String className = getConnectionClassName();
 
         ClassLoader cl = connectionContext.getClassLoader();
-        Class clazz = cl.loadClass(connectionClass);
+        Class clazz = cl.loadClass(className);
+
+        if (debug) log.debug("Creating "+className+".");
         Connection connection = (Connection)clazz.newInstance();
 
         connection.init(connectionConfig, connectionContext);

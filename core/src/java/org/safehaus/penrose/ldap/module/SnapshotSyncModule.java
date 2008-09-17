@@ -10,21 +10,20 @@ import org.safehaus.penrose.source.SourceManager;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPSyncModule extends Module {
+public class SnapshotSyncModule extends Module {
 
     protected String sourcePartitionName;
     protected String targetPartitionName;
 
     protected Source changes;
     protected Source errors;
+
+    protected Collection<String> ignoredAttributes = new HashSet<String>();
 
     public void init() throws Exception {
 
@@ -43,6 +42,16 @@ public class LDAPSyncModule extends Module {
         String errorsName = getParameter("errors");
         log.debug("Errors: "+errorsName);
         errors = sourceManager.getSource(errorsName);
+
+        String s = getParameter("ignoredAttributes");
+        log.debug("Ignored attributes: "+s);
+        if (s != null) {
+            StringTokenizer st = new StringTokenizer(s, ", \t\n\r\f");
+            while (st.hasMoreTokens()) {
+                String ignoredAttribute = st.nextToken();
+                ignoredAttributes.add(ignoredAttribute);
+            }
+        }
     }
 
     public boolean execute(Session session, AddRequest request) throws Exception {
@@ -594,10 +603,13 @@ public class LDAPSyncModule extends Module {
             Attributes attributes2
     ) throws Exception {
 
-        return LDAP.createModifications(
-                attributes1,
-                attributes2
-        );
+        Attributes attrs1 = (Attributes)attributes1.clone();
+        attrs1.remove(ignoredAttributes);
+
+        Attributes attrs2 = (Attributes)attributes2.clone();
+        attrs2.remove(ignoredAttributes);
+
+        return LDAP.createModifications(attrs1, attrs2);
     }
 
     public boolean synchronize(final Session session, final DN targetDn) throws Exception {

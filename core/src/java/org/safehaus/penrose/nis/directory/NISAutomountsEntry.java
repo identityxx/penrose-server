@@ -98,7 +98,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         response = createSearchResponse(session, request, response);
 
         try {
-            executeSearch(session, request, response);
+            expand(session, request, response);
 
         } finally {
             response.close();
@@ -113,7 +113,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         // ignore
     }
 
-    public void executeSearch(
+    public void expand(
             Session session,
             SearchRequest request,
             SearchResponse response

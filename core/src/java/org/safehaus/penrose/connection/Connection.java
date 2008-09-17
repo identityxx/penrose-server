@@ -140,6 +140,7 @@ public class Connection {
 
         Class clazz = cl.loadClass(className);
 
+        if (debug) log.debug("Creating "+className+".");
         Source source = (Source)clazz.newInstance();
         source.init(sourceConfig, sourceContext);
 

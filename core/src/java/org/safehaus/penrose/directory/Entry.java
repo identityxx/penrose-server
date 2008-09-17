@@ -92,7 +92,7 @@ public class Entry implements Cloneable {
 
         // create source references
         
-        //String primarySourceName = getPrimarySourceName();
+        //String primarySourceName = getPrimarySourceAlias();
 
         for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
 
@@ -115,7 +115,7 @@ public class Entry implements Cloneable {
 
         while (p != null) {
 
-            //String psn = p.getPrimarySourceName();
+            //String psn = p.getPrimarySourceAlias();
 
             for (EntrySource entrySource : p.getLocalSources()) {
                 //String alias = entrySource.getAlias();
@@ -290,7 +290,7 @@ public class Entry implements Cloneable {
         this.parent = parent;
     }
 
-    public String getPrimarySourceName() {
+    public String getPrimarySourceAlias() {
 
         for (EntryAttributeConfig rdnAttributeMapping : getRdnAttributeConfigs()) {
 
@@ -326,7 +326,7 @@ public class Entry implements Cloneable {
 
         } while (entry != null);
 
-        //return entryConfig.getPrimarySourceName();
+        //return entryConfig.getPrimarySourceAlias();
         return psn;
 */
     }
@@ -916,7 +916,7 @@ public class Entry implements Cloneable {
                 return;
             }
 
-            executeSearch(session, request, response);
+            expand(session, request, response);
 
         } finally {
             response.close();
@@ -944,7 +944,7 @@ public class Entry implements Cloneable {
         return new EntrySearchResponse(session, request, response, this);
     }
 
-    public void executeSearch(
+    public void expand(
             Session session,
             SearchRequest request,
             SearchResponse response

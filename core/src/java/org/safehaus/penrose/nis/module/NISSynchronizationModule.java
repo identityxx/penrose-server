@@ -1,6 +1,7 @@
 package org.safehaus.penrose.nis.module;
 
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.nis.NIS;
 
@@ -10,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class NISLDAPSyncModule extends org.safehaus.penrose.ldap.module.LDAPSyncModule {
+public class NISSynchronizationModule extends SnapshotSyncModule {
 
     public boolean checkSearchResult(SearchResult result) throws Exception {
 
@@ -32,7 +33,7 @@ public class NISLDAPSyncModule extends org.safehaus.penrose.ldap.module.LDAPSync
 
         convertAutomount(attributes2);
 
-        return LDAP.createModifications(
+        return super.createModifications(
                 attributes1,
                 attributes2
         );

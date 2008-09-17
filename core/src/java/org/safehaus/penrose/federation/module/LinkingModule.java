@@ -19,6 +19,8 @@ package org.safehaus.penrose.federation.module;
 
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.filter.SimpleFilter;
+import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingManager;
@@ -28,11 +30,15 @@ import org.safehaus.penrose.session.Session;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class LinkingModule extends Module {
+
+    public final static String SOURCE = "source";
+    public final static String TARGET = "target";
 
     String targetPartitionName;
 
@@ -57,7 +63,7 @@ public class LinkingModule extends Module {
         log.debug("Target attribute: "+targetAttribute);
 
         storage = getParameter("storage");
-        if (storage == null) storage = "source";
+        if (storage == null) storage = SOURCE;
         log.debug("Storage: "+storage);
 
         mappingName = getParameter("mapping");
@@ -81,7 +87,7 @@ public class LinkingModule extends Module {
             DN sdn, tdn;
             Partition sp, tp;
 
-            if (storage.equals("source")) {
+            if (storage.equals(SOURCE)) {
                 sa = targetAttribute;
                 ta = sourceAttribute;
                 sdn = targetDn;
@@ -138,7 +144,7 @@ public class LinkingModule extends Module {
             DN sdn, tdn;
             Partition sp, tp;
 
-            if (storage.equals("source")) {
+            if (storage.equals(SOURCE)) {
                 sa = targetAttribute;
                 ta = sourceAttribute;
                 sdn = targetDn;
@@ -188,37 +194,57 @@ public class LinkingModule extends Module {
         try {
             Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
 
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
-
             log.debug("##################################################################################################");
             log.debug("Search links for "+sourceDn);
 
-            Object value;
+            Collection<Object> links;
+
             if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                value = sourceDn.toString();
+                links = new ArrayList<Object>();
+                links.add(sourceDn);
 
             } else {
                 SearchResult sourceEntry = partition.find(adminSession, sourceDn);
                 Attributes sourceAttributes = sourceEntry.getAttributes();
-                value = sourceAttributes.getValue(sourceAttribute);
+                links = sourceAttributes.getValues(sourceAttribute);
             }
 
-            SimpleFilter filter = new SimpleFilter(targetAttribute, "=", value);
+            Collection<DN> results = new LinkedHashSet<DN>();
 
-            SearchRequest request = new SearchRequest();
-            request.setDn(targetSuffix);
-            request.setFilter(filter);
+            if (targetAttribute == null || targetAttribute.equals("dn")) {
+                for (Object link : links) {
+                    DN dn;
+                    if (link instanceof DN) {
+                        dn = (DN)link;
+                    } else {
+                        dn = new DN(link.toString());
+                    }
+                    results.add(dn);
+                }
 
-            SearchResponse response = new SearchResponse();
+            } else {
+                SearchRequest request = new SearchRequest();
+                request.setAttributes(new String[] { "dn" });
 
-            targetPartition.search(adminSession, request, response);
+                DN suffix = targetPartition.getDirectory().getSuffix();
+                request.setDn(suffix);
 
-            Collection<DN> results = new ArrayList<DN>();
+                Filter filter = null;
+                for (Object link : links) {
+                    SimpleFilter sf = new SimpleFilter(targetAttribute, "=", link);
+                    filter = FilterTool.appendOrFilter(filter, sf);
+                }
+                request.setFilter(filter);
 
-            while (response.hasNext()) {
-                SearchResult result = response.next();
-                DN dn = result.getDn();
-                results.add(dn);
+                SearchResponse response = new SearchResponse();
+
+                targetPartition.search(adminSession, request, response);
+
+                while (response.hasNext()) {
+                    SearchResult result = response.next();
+                    DN dn = result.getDn();
+                    results.add(dn);
+                }
             }
 
             return results;
@@ -261,15 +287,20 @@ public class LinkingModule extends Module {
                 targetAttributes = mapping.map(mappingPrefix, sourceAttributes);
             }
 
-            Object value;
-            if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                value = sourceEntry.getDn().toString();
+            if (!storage.equals(SOURCE)) {
 
-            } else {
-                value = sourceEntry.getAttributes().getValue(sourceAttribute);
+                log.debug("Creating link on target.");
+
+                Object value;
+                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
+                    value = sourceDn.toString();
+
+                } else {
+                    value = sourceAttributes.getValue(sourceAttribute);
+                }
+
+                targetAttributes.addValue(targetAttribute, value);
             }
-
-            targetAttributes.addValue(targetAttribute, value);
 
             AddRequest request = new AddRequest();
             request.setDn(targetDn);
@@ -279,7 +310,127 @@ public class LinkingModule extends Module {
 
             targetPartition.add(adminSession, request, response);
 
+            if (storage.equals(SOURCE)) {
+                try {
+                    log.debug("Creating link on source.");
+
+                    Object value;
+                    if (targetAttribute == null || targetAttribute.equals("dn")) {
+                        value = targetDn.toString();
+
+                    } else {
+                        value = targetAttributes.getValue(targetAttribute);
+                    }
+
+                    Modification modification = new Modification(
+                            Modification.ADD,
+                            new Attribute(sourceAttribute, value)
+                    );
+
+                    ModifyRequest modifyRequest = new ModifyRequest();
+                    modifyRequest.setDn(sourceDn);
+                    modifyRequest.addModification(modification);
+
+                    ModifyResponse modifyResponse = new ModifyResponse();
+
+                    partition.modify(adminSession, modifyRequest, modifyResponse);
+
+                } catch (LDAPException e) {
+                    log.error(e.getMessage(), e);
+                    if (e.getResultCode() != LDAP.ATTRIBUTE_OR_VALUE_EXISTS) throw e;
+                }
+            }
+
             return targetDn;
+
+        } catch (LDAPException e) {
+            LinkingException le = new LinkingException(e);
+            le.setSourceDn(sourceDn);
+            le.setSourceAttributes(sourceAttributes);
+            le.setTargetDn(targetDn);
+            le.setTargetAttributes(targetAttributes);
+            le.setReason(e.getLDAPErrorMessage());
+            throw le;
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public void importEntry(DN sourceDn, SearchResult targetEntry) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        Attributes sourceAttributes = null;
+
+        DN targetDn = null;
+        Attributes targetAttributes = null;
+
+        try {
+            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+
+            log.debug("##################################################################################################");
+            log.debug("Import "+ sourceDn);
+
+            SearchResult sourceEntry = partition.find(adminSession, sourceDn);
+            sourceAttributes = sourceEntry.getAttributes();
+
+            targetDn = targetEntry.getDn();
+            targetAttributes = targetEntry.getAttributes();
+
+            if (!storage.equals(SOURCE)) {
+
+                log.debug("Creating link on target.");
+
+                Object value;
+                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
+                    value = sourceDn.toString();
+
+                } else {
+                    value = sourceAttributes.getValue(sourceAttribute);
+                }
+
+                targetAttributes.addValue(targetAttribute, value);
+            }
+
+            AddRequest request = new AddRequest();
+            request.setDn(targetDn);
+            request.setAttributes(targetAttributes);
+
+            AddResponse response = new AddResponse();
+
+            targetPartition.add(adminSession, request, response);
+
+            if (storage.equals(SOURCE)) {
+                try {
+                    log.debug("Creating link on source.");
+
+                    Object value;
+                    if (targetAttribute == null || targetAttribute.equals("dn")) {
+                        value = targetDn.toString();
+
+                    } else {
+                        value = targetAttributes.getValue(targetAttribute);
+                    }
+
+                    Modification modification = new Modification(
+                            Modification.ADD,
+                            new Attribute(sourceAttribute, value)
+                    );
+
+                    ModifyRequest modifyRequest = new ModifyRequest();
+                    modifyRequest.setDn(sourceDn);
+                    modifyRequest.addModification(modification);
+
+                    ModifyResponse modifyResponse = new ModifyResponse();
+
+                    partition.modify(adminSession, modifyRequest, modifyResponse);
+
+                } catch (LDAPException e) {
+                    log.error(e.getMessage(), e);
+                    if (e.getResultCode() != LDAP.ATTRIBUTE_OR_VALUE_EXISTS) throw e;
+                }
+            }
 
         } catch (LDAPException e) {
             LinkingException le = new LinkingException(e);

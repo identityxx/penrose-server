@@ -56,14 +56,14 @@ public class NISEntry extends DynamicEntry {
         response = createSearchResponse(session, request, response);
 
         try {
-            executeSearch(session, request, response);
+            expand(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void executeSearch(
+    public void expand(
             final Session session,
             final SearchRequest request,
             final SearchResponse response

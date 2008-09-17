@@ -19,6 +19,7 @@
     <connection-name>LDAP</connection-name>
     <field name="dn" primaryKey="true"/>
     <field name="uid"/>
+    <field name="seeAlso"/>
     <field name="cn"/>
     <field name="uidNumber"/>
     <field name="gidNumber"/>

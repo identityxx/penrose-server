@@ -233,19 +233,27 @@
         <zip destfile="dist/${module.name}-${product.version}.zip">
             <zipfileset dir="target/dist" prefix="${module.name}-${product.version}" filemode="755">
                 <include name="bin/*.sh"/>
+                <include name="services/ApacheDS/bin/*.sh"/>
+                <include name="services/OpenDS/bin/*.sh"/>
             </zipfileset>
             <zipfileset dir="target/dist" prefix="${module.name}-${product.version}">
                 <include name="**/*"/>
                 <exclude name="bin/*.sh"/>
+                <exclude name="services/ApacheDS/bin/*.sh"/>
+                <exclude name="services/OpenDS/bin/*.sh"/>
             </zipfileset>
         </zip>
         <tar destfile="dist/${module.name}-${product.version}.tar.gz" compression="gzip">
             <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
                 <include name="bin/*.sh"/>
+                <include name="services/ApacheDS/bin/*.sh"/>
+                <include name="services/OpenDS/bin/*.sh"/>
             </tarfileset>
             <tarfileset dir="target/dist" prefix="${module.name}-${product.version}">
                 <include name="**/*"/>
                 <exclude name="bin/*.sh"/>
+                <exclude name="services/ApacheDS/bin/*.sh"/>
+                <exclude name="services/OpenDS/bin/*.sh"/>
             </tarfileset>
         </tar>
 

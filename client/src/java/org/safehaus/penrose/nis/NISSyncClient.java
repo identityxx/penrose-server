@@ -8,7 +8,7 @@ import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.DNBuilder;
-import org.safehaus.penrose.nis.NIS;
+import org.safehaus.penrose.federation.Federation;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -80,7 +80,7 @@ public class NISSyncClient {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(domain+"_nis");
         DN suffix = partitionClient.getSuffixes().iterator().next();
-        ModuleClient moduleClient = partitionClient.getModuleClient("NISLDAPSyncModule");
+        ModuleClient moduleClient = partitionClient.getModuleClient(Federation.SYNCHRONIZATION_MODULE);
 
         for (String map : NIS.mapLabels.keySet()) {
             synchronize(moduleClient, map, suffix);
@@ -90,7 +90,7 @@ public class NISSyncClient {
     public void synchronize(String domain, String map) throws Exception {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(domain+"_nis");
-        ModuleClient moduleClient = partitionClient.getModuleClient("NISLDAPSyncModule");
+        ModuleClient moduleClient = partitionClient.getModuleClient(Federation.SYNCHRONIZATION_MODULE);
         DN suffix = partitionClient.getSuffixes().iterator().next();
 
         synchronize(moduleClient, map, suffix);

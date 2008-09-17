@@ -8,7 +8,7 @@ import org.safehaus.penrose.federation.*;
 import org.safehaus.penrose.jdbc.connection.JDBCConnection;
 import org.safehaus.penrose.jdbc.source.JDBCSource;
 import org.safehaus.penrose.module.Module;
-import org.safehaus.penrose.nis.module.NISLDAPSyncModule;
+import org.safehaus.penrose.nis.module.NISSynchronizationModule;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
@@ -654,7 +654,7 @@ public class FederationModule extends Module implements FederationMBean {
 
             Partition nisPartition = partition.getPartitionContext().getPartition(name+"_"+NIS);
 
-            NISLDAPSyncModule module = (NISLDAPSyncModule)nisPartition.getModuleManager().getModule("NISLDAPSyncModule");
+            NISSynchronizationModule module = (NISSynchronizationModule)nisPartition.getModuleManager().getModule(Federation.SYNCHRONIZATION_MODULE);
             module.synchronize();
         }
     }
@@ -666,7 +666,7 @@ public class FederationModule extends Module implements FederationMBean {
 
         Partition nisPartition = partition.getPartitionContext().getPartition(name+"_"+NIS);
 
-        NISLDAPSyncModule module = (NISLDAPSyncModule)nisPartition.getModuleManager().getModule("NISLDAPSyncModule");
+        NISSynchronizationModule module = (NISSynchronizationModule)nisPartition.getModuleManager().getModule(Federation.SYNCHRONIZATION_MODULE);
 
         if (maps == null || maps.isEmpty()) {
             module.synchronize();

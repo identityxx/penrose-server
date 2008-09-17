@@ -63,7 +63,7 @@ public class Directory implements Cloneable {
 
     public Entry createEntry(EntryConfig entryConfig) throws Exception {
 
-        log.debug("Creating entry \""+ entryConfig.getDn()+"\".");
+        if (debug) log.debug("Creating entry \""+ entryConfig.getDn()+"\".");
 
         EntryContext entryContext = new EntryContext();
         entryContext.setDirectory(this);
@@ -74,11 +74,12 @@ public class Directory implements Cloneable {
         PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
 
-        String entryClass = entryConfig.getEntryClass();
-        if (entryClass == null) entryClass = Entry.class.getName();
+        String className = entryConfig.getEntryClass();
+        if (className == null) className = Entry.class.getName();
 
-        Class clazz = cl.loadClass(entryClass);
+        Class clazz = cl.loadClass(className);
 
+        if (debug) log.debug("Creating "+className+".");
         Entry entry = (Entry)clazz.newInstance();
         entry.init(entryConfig, entryContext);
 

@@ -473,10 +473,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
             log.debug(TextUtil.displayLine("DYNAMIC SEARCH", 80));
+            log.debug(TextUtil.displayLine("Class  : "+getClass().getName(), 80));
             log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
             log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
             log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+ LDAP.getScope(scope), 80));
+            log.debug(TextUtil.displayLine("Scope  : "+LDAP.getScope(scope), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
 
@@ -491,18 +492,20 @@ public class DynamicEntry extends Entry implements Cloneable {
         response = createSearchResponse(session, request, response);
 
         try {
-            executeSearch(session, request, response);
+            expand(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void executeSearch(
+    public void expand(
             Session session,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
+
+        if (debug) log.debug("Expanding dynamic entry.");
 
         DN baseDn = request.getDn();
         

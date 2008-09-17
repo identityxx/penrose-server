@@ -9,6 +9,7 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.SourceAttributes;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.directory.EntrySource;
 import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.directory.EntryFieldConfig;
@@ -591,6 +592,23 @@ public class Source implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Find
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Session createAdminSession() throws Exception {
+        SessionManager sessionManager = getPartition().getPartitionContext().getSessionManager();
+        return sessionManager.createAdminSession();
+    }
+
+    public SearchResult find(DN dn) throws Exception {
+
+        Session session = createAdminSession();
+
+        try {
+            return find(session, dn);
+
+        } finally {
+            session.close();
+        }
+    }
 
     public SearchResult find(Session session, String dn) throws Exception {
         return find(session, new DN(dn));

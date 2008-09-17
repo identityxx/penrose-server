@@ -99,13 +99,13 @@ public class FederationEntry extends DynamicEntry {
         return filter;
     }
 
-    public void executeSearch(
+    public void expand(
             Session session,
             SearchRequest request,
             SearchResponse response
     ) throws Exception {
 
-        //super.executeSearch(session, request, response);
+        //super.expand(session, request, response);
 
         DN baseDn = request.getDn();
         int scope = request.getScope();

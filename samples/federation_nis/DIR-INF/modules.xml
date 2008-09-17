@@ -5,8 +5,8 @@
 
 <modules>
 
-  <module name="NISLDAPSyncModule" enabled="true">
-    <module-class>org.safehaus.penrose.nis.module.NISLDAPSyncModule</module-class>
+  <module name="SynchronizationModule" enabled="true">
+    <module-class>org.safehaus.penrose.nis.module.NISSynchronizationModule</module-class>
     <parameter>
       <param-name>source</param-name>
       <param-value>${DOMAIN}_yp</param-value>
@@ -20,6 +20,10 @@
     <parameter>
       <param-name>errors</param-name>
       <param-value>errors</param-value>
+    </parameter>
+    <parameter>
+      <param-name>ignoredAttributes</param-name>
+      <param-value>${linkingLocalAttribute}</param-value>
     </parameter>
   </module>
 

@@ -68,14 +68,14 @@ public class RuntimeMonitorEntry extends Entry {
         response = createSearchResponse(session, request, response);
 
         try {
-            executeSearch(session, request, response);
+            expand(session, request, response);
 
         } finally {
             response.close();
         }
     }
 
-    public void executeSearch(
+    public void expand(
             Session session,
             SearchRequest request,
             SearchResponse response
