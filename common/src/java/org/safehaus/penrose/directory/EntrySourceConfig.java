@@ -315,12 +315,20 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         this.searchOrder = searchOrder;
     }
 
+    public void setSearchOrder(String searchOrder) {
+        this.searchOrder = Integer.parseInt(searchOrder);
+    }
+
     public Integer getBindOrder() {
         return bindOrder;
     }
 
     public void setBindOrder(Integer bindOrder) {
         this.bindOrder = bindOrder;
+    }
+
+    public void setBindOrder(String bindOrder) {
+        this.bindOrder = Integer.parseInt(bindOrder);
     }
 
     public Integer getAddOrder() {
@@ -331,12 +339,20 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         this.addOrder = addOrder;
     }
 
+    public void setAddOrder(String addOrder) {
+        this.addOrder = Integer.parseInt(addOrder);
+    }
+
     public Integer getDeleteOrder() {
         return deleteOrder;
     }
 
     public void setDeleteOrder(Integer deleteOrder) {
         this.deleteOrder = deleteOrder;
+    }
+
+    public void setDeleteOrder(String deleteOrder) {
+        this.deleteOrder = Integer.parseInt(deleteOrder);
     }
 
     public Integer getModifyOrder() {
@@ -347,11 +363,19 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         this.modifyOrder = modifyOrder;
     }
 
+    public void setModifyOrder(String modifyOrder) {
+        this.modifyOrder = Integer.parseInt(modifyOrder);
+    }
+
     public Integer getModrdnOrder() {
         return modrdnOrder;
     }
 
     public void setModrdnOrder(Integer modrdnOrder) {
         this.modrdnOrder = modrdnOrder;
+    }
+
+    public void setModrdnOrder(String modrdnOrder) {
+        this.modrdnOrder = Integer.parseInt(modrdnOrder);
     }
 }

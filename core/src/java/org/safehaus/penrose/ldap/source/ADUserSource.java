@@ -63,16 +63,22 @@ public class ADUserSource extends LDAPSource {
         log.debug("Checking Active Directory account.");
 
         long userAccountControl = Long.parseLong((String) attributes.getValue("userAccountControl"));
-        log.debug("userAccountControl: "+userAccountControl);
+        log.debug("User account control: "+userAccountControl);
 
         if (checkAccountDisabled && (userAccountControl & 0x0002) > 0) {
             if (debug) log.debug("Account is disabled.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+
+        } else {
+            if (debug) log.debug("Account is enabled.");
         }
 
         if (checkAccountLockout && (userAccountControl & 0x0010) > 0) {
             if (debug) log.debug("Account is locked out.");
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+
+        } else {
+            if (debug) log.debug("Account is not locked out.");
         }
 
         if (checkAccountExpires) {
@@ -80,10 +86,15 @@ public class ADUserSource extends LDAPSource {
             if (debug) log.debug("accountExpires: "+accountExpires);
 
             if (accountExpires != 0 && accountExpires != 0x7FFFFFFFFFFFFFFFL) {
+
                 Date d = toDate(accountExpires);
+
                 if (d.getTime() < System.currentTimeMillis()) {
                     if (debug) log.debug("Account has expired at "+d+".");
                     throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+
+                } else {
+                    if (debug) log.debug("Account has not expired.");
                 }
             }
         }
