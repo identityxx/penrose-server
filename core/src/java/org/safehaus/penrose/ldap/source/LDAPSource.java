@@ -165,36 +165,13 @@ public class LDAPSource extends Source {
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        if (attributes == null) {
-            LDAPClient client = connection.getClient(session);
+        LDAPClient client = connection.getClient(session);
 
-            try {
-                client.bind(request, response);
+        try {
+            client.bind(request, response);
 
-            } finally {
-                connection.closeClient(session);
-            }
-
-        } else {
-            byte[] password = request.getPassword();
-            Attribute attribute = attributes.get("userPassword");
-
-            if (attribute == null) {
-                log.debug("Attribute userPassword not found");
-                throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
-            }
-
-            boolean valid = false;
-            Collection<Object> userPasswords = attribute.getValues();
-            for (Object userPassword : userPasswords) {
-                if (debug) log.debug("userPassword: " + userPassword);
-                if (PasswordUtil.comparePassword(password, userPassword)) {
-                    valid = true;
-                    break;
-                }
-            }
-
-            if (!valid) throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+        } finally {
+            connection.closeClient(session);
         }
 
         log.debug("Bind operation completed.");
