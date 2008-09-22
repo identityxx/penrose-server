@@ -21,91 +21,31 @@ public abstract class BaseService implements DynamicMBean {
 
     protected PenroseJMXService jmxService;
 
-    protected Class objectClass;
-
     protected String description;
 
-    protected Collection<String> attributes = new TreeSet<String>();
-    protected Map<String,Method> getters    = new TreeMap<String,Method>();
-    protected Map<String,Method> setters    = new TreeMap<String,Method>();
-    protected Map<String,Method> operations = new TreeMap<String,Method>();
-
-    protected Collection<MBeanAttributeInfo> attributeInfos = new LinkedHashSet<MBeanAttributeInfo>();
-    protected Collection<MBeanOperationInfo> operationInfos = new ArrayList<MBeanOperationInfo>();
-
-    public BaseService(Class objectClass) {
-        this.objectClass = objectClass;
-    }
-
-    public BaseService(Class objectClass, String description) throws Exception {
-        this.objectClass = objectClass;
-        this.description = description;
+    public BaseService() {
     }
 
     public void init() throws Exception {
-
-        register(objectClass);
-        register(getClass());
-
-        for (String attributeName : attributes) {
-            Method getter = getters.get(attributeName);
-            Method setter = setters.get(attributeName);
-            attributeInfos.add(new MBeanAttributeInfo(attributeName, attributeName, getter, setter));
-        }
-
-        for (Method method : operations.values()) {
-            operationInfos.add(new MBeanOperationInfo(method.getName(), method));
-        }
     }
 
-    public void register(Class clazz) throws Exception {
-
-        Class superClass = clazz.getSuperclass();
-        if (superClass != null) register(superClass);
-
-        String className = clazz.getName();
-        for (Class interfaceClass : clazz.getInterfaces()) {
-            String interfaceName = interfaceClass.getName();
-            if (!interfaceName.equals(className+"MBean")) continue;
-
-            for (Method method : interfaceClass.getMethods()) {
-                register(method);
-            }
-        }
+    public String getDescription() {
+        return description;
     }
 
-    public void register(Method method) throws Exception {
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-        String methodName = method.getName();
+    public String getBindDn() {
+        Subject subject = Subject.getSubject(AccessController.getContext());
+        if (subject == null) return null;
 
-        if (methodName.length() > 3 &&
-                methodName.startsWith("get") &&
-                Character.isUpperCase(methodName.charAt(3)) &&
-                method.getParameterTypes().length == 0) {
-            String attributeName = methodName.substring(3);
-            attributes.add(attributeName);
-            getters.put(attributeName, method);
+        Collection<Principal> principals = subject.getPrincipals();
+        if (principals.isEmpty()) return null;
 
-        } else if (methodName.length() > 2 &&
-                methodName.startsWith("is") &&
-                Character.isUpperCase(methodName.charAt(2)) &&
-                method.getParameterTypes().length == 0) {
-            String attributeName = methodName.substring(2);
-            attributes.add(attributeName);
-            getters.put(attributeName, method);
-
-        } else if (methodName.length() > 3 &&
-                methodName.startsWith("set") &&
-                Character.isUpperCase(methodName.charAt(3)) &&
-                method.getParameterTypes().length == 1) {
-            String attributeName = methodName.substring(3);
-            attributes.add(attributeName);
-            setters.put(attributeName, method);
-
-        } else {
-            String signature = ClassUtil.getSignature(method);
-            operations.put(signature, method);
-        }
+        Principal principal = principals.iterator().next();
+        return principal.getName();
     }
 
     public PenroseJMXService getJmxService() {
@@ -257,7 +197,6 @@ public abstract class BaseService implements DynamicMBean {
 
     public Object invoke(String operation, Object[] paramValues, String[] paramTypes) throws MBeanException, ReflectionException {
         String signature = ClassUtil.getSignature(operation, paramTypes);
-        if (debug) log.debug("Invoking method "+signature);
 
         try {
             Class[] paramClass = new Class[paramTypes.length];
@@ -269,10 +208,12 @@ public abstract class BaseService implements DynamicMBean {
             Class clazz = getClass();
 
             try {
+                if (debug) log.debug("Invoking method "+signature+" on "+clazz.getName()+".");
                 Method method = clazz.getMethod(operation, paramClass);
                 return method.invoke(this, paramValues);
 
             } catch (NoSuchMethodException e) {
+                log.error(e.getMessage());
                 // ignore
             }
 
@@ -280,14 +221,16 @@ public abstract class BaseService implements DynamicMBean {
             Class objectClass = object.getClass();
 
             try {
+                if (debug) log.debug("Invoking method "+signature+" on "+objectClass.getName()+".");
                 Method method = objectClass.getMethod(operation, paramClass);
                 return method.invoke(object, paramValues);
 
             } catch (NoSuchMethodException e) {
+                log.error(e.getMessage());
                 // ignore
             }
 
-            throw new NoSuchMethodException();
+            throw new NoSuchMethodException(signature);
 
         } catch (ClassNotFoundException e) {
             throw new ReflectionException(e);
@@ -306,6 +249,59 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public MBeanInfo getMBeanInfo() {
+
+        Collection<String> attributes = new TreeSet<String>();
+        Map<String,Method> getters    = new TreeMap<String,Method>();
+        Map<String,Method> setters    = new TreeMap<String,Method>();
+        Map<String,Method> operations = new TreeMap<String,Method>();
+
+        Collection<MBeanAttributeInfo> attributeInfos = new LinkedHashSet<MBeanAttributeInfo>();
+        Collection<MBeanOperationInfo> operationInfos = new ArrayList<MBeanOperationInfo>();
+
+        Object object = getObject();
+        Class objectClass = object == null ? getClass() : object.getClass();
+
+        try {
+            if (object != null) register(
+                    object.getClass(),
+                    attributes,
+                    getters,
+                    setters,
+                    operations
+            );
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
+        try {
+            register(
+                    getClass(),
+                    attributes,
+                    getters,
+                    setters,
+                    operations
+            );
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
+        try {
+            for (String attributeName : attributes) {
+                Method getter = getters.get(attributeName);
+                Method setter = setters.get(attributeName);
+                attributeInfos.add(new MBeanAttributeInfo(attributeName, attributeName, getter, setter));
+            }
+
+            for (Method method : operations.values()) {
+                operationInfos.add(new MBeanOperationInfo(method.getName(), method));
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
         return new MBeanInfo(
                 objectClass.getName(),
                 description,
@@ -316,22 +312,77 @@ public abstract class BaseService implements DynamicMBean {
         );
     }
 
-    public String getDescription() {
-        return description;
+    public void register(
+            Class clazz,
+            Collection<String> attributes,
+            Map<String,Method> getters,
+            Map<String,Method> setters,
+            Map<String,Method> operations
+    ) throws Exception {
+
+        Class superClass = clazz.getSuperclass();
+        if (superClass != null) register(
+                superClass,
+                attributes,
+                getters,
+                setters,
+                operations
+        );
+
+        String className = clazz.getName();
+        for (Class interfaceClass : clazz.getInterfaces()) {
+            String interfaceName = interfaceClass.getName();
+            if (!interfaceName.equals(className+"MBean")) continue;
+
+            for (Method method : interfaceClass.getMethods()) {
+                register(
+                        method,
+                        attributes,
+                        getters,
+                        setters,
+                        operations
+                );
+            }
+        }
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public void register(
+            Method method,
+            Collection<String> attributes,
+            Map<String,Method> getters,
+            Map<String,Method> setters,
+            Map<String,Method> operations
+    ) throws Exception {
 
-    public String getBindDn() {
-        Subject subject = Subject.getSubject(AccessController.getContext());
-        if (subject == null) return null;
+        String methodName = method.getName();
 
-        Collection<Principal> principals = subject.getPrincipals();
-        if (principals.isEmpty()) return null;
+        if (methodName.length() > 3 &&
+                methodName.startsWith("get") &&
+                Character.isUpperCase(methodName.charAt(3)) &&
+                method.getParameterTypes().length == 0) {
+            String attributeName = methodName.substring(3);
+            attributes.add(attributeName);
+            getters.put(attributeName, method);
 
-        Principal principal = principals.iterator().next();
-        return principal.getName();
+        } else if (methodName.length() > 2 &&
+                methodName.startsWith("is") &&
+                Character.isUpperCase(methodName.charAt(2)) &&
+                method.getParameterTypes().length == 0) {
+            String attributeName = methodName.substring(2);
+            attributes.add(attributeName);
+            getters.put(attributeName, method);
+
+        } else if (methodName.length() > 3 &&
+                methodName.startsWith("set") &&
+                Character.isUpperCase(methodName.charAt(3)) &&
+                method.getParameterTypes().length == 1) {
+            String attributeName = methodName.substring(3);
+            attributes.add(attributeName);
+            setters.put(attributeName, method);
+
+        } else {
+            String signature = ClassUtil.getSignature(method);
+            operations.put(signature, method);
+        }
     }
 }

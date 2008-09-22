@@ -32,7 +32,6 @@ public class SourceService extends BaseService implements SourceServiceMBean {
             String partitionName,
             String sourceName
     ) throws Exception {
-        super(SourceServiceMBean.class);
         
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -53,7 +52,9 @@ public class SourceService extends BaseService implements SourceServiceMBean {
     }
 
     public Source getSource() {
-        return getPartition().getSourceManager().getSource(sourceName);
+        Partition partition = getPartition();
+        if (partition == null) return null;
+        return partition.getSourceManager().getSource(sourceName);
     }
 
     public PartitionConfig getPartitionConfig() {

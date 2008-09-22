@@ -25,7 +25,6 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
             String partitionName,
             String connectionName
     ) throws Exception {
-        super(ConnectionServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -46,7 +45,10 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
     }
 
     public Connection getConnection() {
-        ConnectionManager connectionManager = getPartition().getConnectionManager();
+        Partition partition = getPartition();
+        if (partition == null) return null;
+
+        ConnectionManager connectionManager = partition.getConnectionManager();
         return connectionManager.getConnection(connectionName);
     }
 

@@ -27,15 +27,15 @@ import org.safehaus.penrose.mapping.MappingManager;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.federation.LinkingData;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingModule extends Module {
+public class LinkingModule extends Module implements LinkingModuleMBean {
 
     public final static String SOURCE = "source";
     public final static String TARGET = "target";
@@ -187,12 +187,83 @@ public class LinkingModule extends Module {
         }
     }
 
-    public Collection<DN> searchLinks(DN sourceDn) throws Exception {
+    public Collection<LinkingData> search(SearchRequest request) throws Exception {
 
         Session adminSession = createAdminSession();
 
         try {
             Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+
+            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+
+            log.debug("##################################################################################################");
+            log.debug("Search "+request.getDn()+".");
+
+            Collection<LinkingData> results = new ArrayList<LinkingData>();
+
+            SearchResponse response = new SearchResponse();
+
+            partition.search(adminSession, request, response);
+
+            while (response.hasNext()) {
+                SearchResult localEntry = response.next();
+
+                LinkingData data = new LinkingData(localEntry);
+                data.setStorage(SOURCE.equals(storage) ? LinkingData.LOCAL_STORAGE : LinkingData.GLOBAL_STORAGE);
+                data.setLocalAttribute(sourceAttribute);
+                data.setGlobalAttribute(targetAttribute);
+
+                Collection<Object> links = new ArrayList<Object>();
+
+                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
+                    links.add(localEntry.getDn().toString());
+
+                } else {
+                    Attributes sourceAttributes = localEntry.getAttributes();
+                    links.addAll(sourceAttributes.getValues(sourceAttribute));
+                }
+
+                for (Object link : links) {
+                    SearchRequest globalRequest = new SearchRequest();
+
+                    if (targetAttribute == null || targetAttribute.equals("dn")) {
+                        globalRequest.setDn(link.toString());
+                        globalRequest.setScope(SearchRequest.SCOPE_BASE);
+                    } else {
+                        globalRequest.setDn(targetSuffix);
+                        globalRequest.setFilter(new SimpleFilter(targetAttribute, "=", link));
+                    }
+
+                    SearchResponse globalResponse = new SearchResponse();
+
+                    targetPartition.search(adminSession, globalRequest, globalResponse);
+
+                    if (!globalResponse.hasNext()) continue;
+
+                    while (globalResponse.hasNext()) {
+                        SearchResult globalEntry = globalResponse.next();
+                        data.addLinkedEntry(globalEntry);
+                    }
+                }
+
+                results.add(data);
+            }
+
+            return results;
+
+        } finally {
+            adminSession.close();
+        }
+    }
+
+    public Collection<SearchResult> searchLinks(SearchResult sourceEntry) throws Exception {
+
+        Session adminSession = createAdminSession();
+
+        try {
+            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+
+            DN sourceDn = sourceEntry.getDn();
 
             log.debug("##################################################################################################");
             log.debug("Search links for "+sourceDn);
@@ -204,12 +275,11 @@ public class LinkingModule extends Module {
                 links.add(sourceDn);
 
             } else {
-                SearchResult sourceEntry = partition.find(adminSession, sourceDn);
                 Attributes sourceAttributes = sourceEntry.getAttributes();
                 links = sourceAttributes.getValues(sourceAttribute);
             }
 
-            Collection<DN> results = new LinkedHashSet<DN>();
+            Collection<SearchResult> results = new ArrayList<SearchResult>();
 
             if (targetAttribute == null || targetAttribute.equals("dn")) {
                 for (Object link : links) {
@@ -219,7 +289,8 @@ public class LinkingModule extends Module {
                     } else {
                         dn = new DN(link.toString());
                     }
-                    results.add(dn);
+                    SearchResult result = targetPartition.find(adminSession, dn);
+                    results.add(result);
                 }
 
             } else {
@@ -242,8 +313,7 @@ public class LinkingModule extends Module {
 
                 while (response.hasNext()) {
                     SearchResult result = response.next();
-                    DN dn = result.getDn();
-                    results.add(dn);
+                    results.add(result);
                 }
             }
 
@@ -254,10 +324,11 @@ public class LinkingModule extends Module {
         }
     }
 
-    public DN importEntry(DN sourceDn) throws Exception {
+    public SearchResult importEntry(SearchResult sourceEntry) throws Exception {
 
         Session adminSession = createAdminSession();
 
+        DN sourceDn = sourceEntry.getDn();
         Attributes sourceAttributes = null;
 
         DN targetDn = null;
@@ -270,9 +341,8 @@ public class LinkingModule extends Module {
             DN targetSuffix = targetPartition.getDirectory().getSuffix();
 
             log.debug("##################################################################################################");
-            log.debug("Import "+ sourceDn);
+            log.debug("Import "+ sourceDn+".");
 
-            SearchResult sourceEntry = partition.find(adminSession, sourceDn);
             sourceAttributes = sourceEntry.getAttributes();
 
             targetDn = sourceEntry.getDn().getPrefix(sourceSuffix).append(targetSuffix);
@@ -341,7 +411,7 @@ public class LinkingModule extends Module {
                 }
             }
 
-            return targetDn;
+            return new SearchResult(targetDn, targetAttributes);
 
         } catch (LDAPException e) {
             LinkingException le = new LinkingException(e);
@@ -357,7 +427,7 @@ public class LinkingModule extends Module {
         }
     }
 
-    public void importEntry(DN sourceDn, SearchResult targetEntry) throws Exception {
+    public SearchResult importEntry(DN sourceDn, SearchResult targetEntry) throws Exception {
 
         Session adminSession = createAdminSession();
 
@@ -431,6 +501,8 @@ public class LinkingModule extends Module {
                     if (e.getResultCode() != LDAP.ATTRIBUTE_OR_VALUE_EXISTS) throw e;
                 }
             }
+
+            return new SearchResult(targetDn, targetAttributes);
 
         } catch (LDAPException e) {
             LinkingException le = new LinkingException(e);

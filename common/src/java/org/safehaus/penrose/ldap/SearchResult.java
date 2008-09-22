@@ -92,6 +92,14 @@ public class SearchResult implements Serializable, Cloneable {
         this.attributes = attributes;
     }
 
+    public void setAttribute(Attribute attribute) {
+        attributes.set(attribute);
+    }
+
+    public void removeAttribute(String name) {
+        attributes.remove(name);
+    }
+    
     public Attribute getAttribute(String name) {
         return attributes.get(name);
     }

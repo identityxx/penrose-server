@@ -13,7 +13,6 @@ public class ServiceService extends BaseService implements ServiceServiceMBean {
     private String serviceName;
 
     public ServiceService(PenroseJMXService jmxService, ServiceManager serviceManager, String serviceName) throws Exception {
-        super(ServiceServiceMBean.class);
 
         this.jmxService = jmxService;
         this.serviceManager = serviceManager;

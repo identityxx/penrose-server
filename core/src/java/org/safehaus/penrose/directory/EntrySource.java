@@ -248,6 +248,26 @@ public class EntrySource implements Cloneable {
         this.primarySourceRef = primarySourceRef;
     }
 
+    public void add(Session session, AddRequest request, AddResponse response) throws Exception {
+        source.add(session, request, response);
+    }
+
+    public void bind(Session session, BindRequest request, BindResponse response) throws Exception {
+        source.bind(session, request, response);
+    }
+
+    public void bind(Session session, BindRequest request, BindResponse response, Attributes attributes) throws Exception {
+        source.bind(session, request, response, attributes);
+    }
+
+    public void compare(Session session, CompareRequest request, CompareResponse response) throws Exception {
+        source.compare(session, request, response);
+    }
+
+    public void delete(Session session, DeleteRequest request, DeleteResponse response) throws Exception {
+        source.delete(session, request, response);
+    }
+
     public SearchResult find(Session session, String dn) throws Exception {
         return find(session, new DN(dn));
     }
@@ -267,6 +287,14 @@ public class EntrySource implements Cloneable {
         }
 
         return response.next();
+    }
+
+    public void modify(Session session, ModifyRequest request, ModifyResponse response) throws Exception {
+        source.modify(session, request, response);
+    }
+
+    public void modrdn(Session session, ModRdnRequest request, ModRdnResponse response) throws Exception {
+        source.modrdn(session, request, response);
     }
 
     public SearchResponse search(Session session, String filter) throws Exception {
@@ -307,6 +335,10 @@ public class EntrySource implements Cloneable {
 
     public void search(Session session, SearchRequest request, SearchResponse response) throws Exception {
         source.search(session, request, response);
+    }
+
+    public void unbind(Session session, UnbindRequest request, UnbindResponse response) throws Exception {
+        source.unbind(session, request, response);
     }
 
     public String getMappingName() {

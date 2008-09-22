@@ -167,6 +167,10 @@ public class Attribute implements Serializable, Cloneable {
         }
     }
 
+    public void clear() {
+        values.clear();
+    }
+
     public boolean isEmpty() {
         return values.isEmpty();
     }

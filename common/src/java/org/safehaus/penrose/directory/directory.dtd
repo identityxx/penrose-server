@@ -47,6 +47,12 @@
 <!ATTLIST source modify CDATA #IMPLIED>
 <!ATTLIST source modrdn CDATA #IMPLIED>
 <!ATTLIST source search CDATA #IMPLIED>
+<!ATTLIST source addOrder CDATA #IMPLIED>
+<!ATTLIST source bindOrder CDATA #IMPLIED>
+<!ATTLIST source deleteOrder CDATA #IMPLIED>
+<!ATTLIST source modifyOrder CDATA #IMPLIED>
+<!ATTLIST source modrdnOrder CDATA #IMPLIED>
+<!ATTLIST source searchOrder CDATA #IMPLIED>
 <!ELEMENT partition-name (#PCDATA)>
 <!ELEMENT source-name (#PCDATA)>
 

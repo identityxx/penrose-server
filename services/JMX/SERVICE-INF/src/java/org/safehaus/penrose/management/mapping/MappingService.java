@@ -25,7 +25,6 @@ public class MappingService extends BaseService implements MappingServiceMBean {
             String partitionName,
             String mappingName
     ) throws Exception {
-        super(MappingServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -46,7 +45,9 @@ public class MappingService extends BaseService implements MappingServiceMBean {
     }
 
     public Mapping getMapping() {
-        MappingManager mappingManager = getPartition().getMappingManager();
+        Partition partition = getPartition();
+        if (partition == null) return null;
+        MappingManager mappingManager = partition.getMappingManager();
         return mappingManager.getMapping(mappingName);
     }
 

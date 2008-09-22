@@ -189,6 +189,8 @@ public class Directory implements Cloneable {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
+        if (debug) log.debug("Searching for \""+dn+"\" in \""+partition.getName()+"\".");
+
         Collection<Entry> results = new ArrayList<Entry>();
 
         for (String id : getRootIds()) {

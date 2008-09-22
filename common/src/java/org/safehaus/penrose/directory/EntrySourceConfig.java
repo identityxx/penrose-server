@@ -54,7 +54,14 @@ public class EntrySourceConfig implements Serializable, Cloneable {
     public String modify;
     public String modrdn;
 
-	public EntrySourceConfig() {
+    public Integer searchOrder;
+    public Integer bindOrder;
+    public Integer addOrder;
+    public Integer deleteOrder;
+    public Integer modifyOrder;
+    public Integer modrdnOrder;
+
+    public EntrySourceConfig() {
 	}
 
     public EntrySourceConfig(String alias, String sourceName) {
@@ -195,12 +202,20 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
         if (!equals(parameters, sourceConfig.parameters)) return false;
         if (readOnly != sourceConfig.readOnly) return false;
+
         if (!equals(search, sourceConfig.search)) return false;
         if (!equals(bind, sourceConfig.bind)) return false;
         if (!equals(add, sourceConfig.add)) return false;
         if (!equals(delete, sourceConfig.delete)) return false;
         if (!equals(modify, sourceConfig.modify)) return false;
         if (!equals(modrdn, sourceConfig.modrdn)) return false;
+
+        if (!equals(searchOrder, sourceConfig.searchOrder)) return false;
+        if (!equals(bindOrder, sourceConfig.bindOrder)) return false;
+        if (!equals(addOrder, sourceConfig.addOrder)) return false;
+        if (!equals(deleteOrder, sourceConfig.deleteOrder)) return false;
+        if (!equals(modifyOrder, sourceConfig.modifyOrder)) return false;
+        if (!equals(modrdnOrder, sourceConfig.modrdnOrder)) return false;
 
         return true;
     }
@@ -229,6 +244,13 @@ public class EntrySourceConfig implements Serializable, Cloneable {
         delete = sourceConfig.delete;
         modify = sourceConfig.modify;
         modrdn = sourceConfig.modrdn;
+
+        searchOrder = sourceConfig.searchOrder;
+        bindOrder = sourceConfig.bindOrder;
+        addOrder = sourceConfig.addOrder;
+        deleteOrder = sourceConfig.deleteOrder;
+        modifyOrder = sourceConfig.modifyOrder;
+        modrdnOrder = sourceConfig.modrdnOrder;
     }
 
     public Object clone() throws CloneNotSupportedException {
@@ -283,5 +305,53 @@ public class EntrySourceConfig implements Serializable, Cloneable {
 
     public void setSearch(String search) {
         this.search = search;
+    }
+
+    public Integer getSearchOrder() {
+        return searchOrder;
+    }
+
+    public void setSearchOrder(Integer searchOrder) {
+        this.searchOrder = searchOrder;
+    }
+
+    public Integer getBindOrder() {
+        return bindOrder;
+    }
+
+    public void setBindOrder(Integer bindOrder) {
+        this.bindOrder = bindOrder;
+    }
+
+    public Integer getAddOrder() {
+        return addOrder;
+    }
+
+    public void setAddOrder(Integer addOrder) {
+        this.addOrder = addOrder;
+    }
+
+    public Integer getDeleteOrder() {
+        return deleteOrder;
+    }
+
+    public void setDeleteOrder(Integer deleteOrder) {
+        this.deleteOrder = deleteOrder;
+    }
+
+    public Integer getModifyOrder() {
+        return modifyOrder;
+    }
+
+    public void setModifyOrder(Integer modifyOrder) {
+        this.modifyOrder = modifyOrder;
+    }
+
+    public Integer getModrdnOrder() {
+        return modrdnOrder;
+    }
+
+    public void setModrdnOrder(Integer modrdnOrder) {
+        this.modrdnOrder = modrdnOrder;
     }
 }

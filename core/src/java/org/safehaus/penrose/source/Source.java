@@ -207,7 +207,7 @@ public class Source implements Cloneable {
             AddResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Adding "+request.getDn());
+        if (debug) log.debug("Adding "+request.getDn()+".");
 
         //connection.add(session, this, request, response);
     }
@@ -320,8 +320,17 @@ public class Source implements Cloneable {
             BindRequest request,
             BindResponse response
     ) throws Exception {
+        bind(session, request, response, null);
+    }
 
-        if (debug) log.debug("Binding "+request.getDn());
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            Attributes attributes
+    ) throws Exception {
+
+        if (debug) log.debug("Binding as "+request.getDn()+".");
 
         throw LDAP.createException(LDAP.LDAP_NOT_SUPPORTED);
     }
@@ -395,7 +404,7 @@ public class Source implements Cloneable {
             CompareResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Compare "+request.getDn());
+        if (debug) log.debug("Compare "+request.getDn()+".");
 
         //connection.compare(null, this, request, response);
     }
@@ -529,7 +538,7 @@ public class Source implements Cloneable {
             DeleteResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Deleting "+request.getDn());
+        if (debug) log.debug("Deleting "+request.getDn()+".");
 
         //connection.delete(null, this, request, response);
     }
@@ -620,7 +629,7 @@ public class Source implements Cloneable {
 
     public SearchResult find(Session session, DN dn) throws Exception {
 
-        if (debug) log.debug("Finding "+dn);
+        if (debug) log.debug("Finding "+dn+".");
 
         SearchResponse response = search(session, dn, null, SearchRequest.SCOPE_BASE);
         if (!response.hasNext()) return null;
@@ -671,7 +680,7 @@ public class Source implements Cloneable {
             ModifyResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Modifying "+request.getDn());
+        if (debug) log.debug("Modifying "+request.getDn()+".");
 
         //connection.modify(null, this, request, response);
     }
@@ -873,7 +882,7 @@ public class Source implements Cloneable {
             ModRdnResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Renaming "+request.getDn());
+        if (debug) log.debug("Renaming "+request.getDn()+".");
 
         //connection.modrdn(null, this, request, response);
     }
@@ -1003,7 +1012,7 @@ public class Source implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        if (debug) log.debug("Searching "+request.getDn());
+        if (debug) log.debug("Searching "+request.getDn()+".");
         
         //connection.search(session, this, request, response);
     }
@@ -1057,6 +1066,17 @@ public class Source implements Cloneable {
         };
 
         search(session, newRequest, newResponse);
+    }
+
+    public void unbind(
+            Session session,
+            UnbindRequest request,
+            UnbindResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Unbinding as "+request.getDn()+".");
+
+        throw LDAP.createException(LDAP.LDAP_NOT_SUPPORTED);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

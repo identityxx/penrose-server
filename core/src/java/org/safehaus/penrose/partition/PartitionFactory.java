@@ -37,10 +37,14 @@ public class PartitionFactory {
     public PartitionFactory() {
     }
 
+    public ClassLoader createClassLoader(PartitionConfig partitionConfig) throws Exception {
+        Collection<URL> classPaths = partitionConfig.getClassPaths();
+        return new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+    }
+
     public Partition createPartition(PartitionConfig partitionConfig) throws Exception {
 
-        Collection<URL> classPaths = partitionConfig.getClassPaths();
-        ClassLoader classLoader = new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+        ClassLoader classLoader = createClassLoader(partitionConfig);
 
         PartitionContext partitionContext = new PartitionContext();
 

@@ -260,6 +260,8 @@ public class SchemaManager {
     }
 
     public RDN normalize(RDN rdn) {
+        if (rdn == null) return null;
+
         RDNBuilder rb = new RDNBuilder();
 
         for (String name : rdn.getNames()) {
@@ -271,6 +273,8 @@ public class SchemaManager {
     }
 
     public DN normalize(DN dn) throws Exception {
+        if (dn == null) return null;
+
         DNBuilder db = new DNBuilder();
         RDNBuilder rb = new RDNBuilder();
 

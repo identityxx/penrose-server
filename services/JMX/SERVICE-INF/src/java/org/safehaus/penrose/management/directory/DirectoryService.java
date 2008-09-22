@@ -20,7 +20,6 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
     private String partitionName;
 
     public DirectoryService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
-        super(DirectoryServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -36,15 +35,23 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
     }
 
     public DirectoryConfig getDirectoryConfig() {
-        PartitionConfig partitionConfig = partitionManager.getPartitionConfig(partitionName);
+        PartitionConfig partitionConfig = getPartitionConfig();
         if (partitionConfig == null) return null;
         return partitionConfig.getDirectoryConfig();
     }
 
     public Directory getDirectory() {
-        Partition partition = partitionManager.getPartition(partitionName);
+        Partition partition = getPartition();
         if (partition == null) return null;
         return partition.getDirectory();
+    }
+
+    public PartitionConfig getPartitionConfig() {
+        return partitionManager.getPartitionConfig(partitionName);
+    }
+
+    public Partition getPartition() {
+        return partitionManager.getPartition(partitionName);
     }
 
     public Collection<DN> getSuffixes() throws Exception {

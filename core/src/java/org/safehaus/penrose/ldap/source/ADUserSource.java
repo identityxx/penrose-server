@@ -31,32 +31,34 @@ public class ADUserSource extends LDAPSource {
         checkAccountExpires = Boolean.parseBoolean(getParameter("checkAccountExpires"));
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bind
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void bind(
             Session session,
             BindRequest request,
             BindResponse response
     ) throws Exception {
 
-        DN dn = request.getDn();
+        SearchResult sr = find(request.getDn());
+        Attributes attributes = sr.getAttributes();
+
+        bind(session, request, response, attributes);
+    }
+
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            Attributes attributes
+    ) throws Exception {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
             log.debug(TextUtil.displayLine("AD User Bind "+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
-
-        SearchResult sr = null;
-
-        if (request instanceof SourceBindRequest) {
-            SourceBindRequest sbr = (SourceBindRequest)request;
-            sr = sbr.getSearchResult();
-        }
-
-        if (sr == null) {
-            sr = find(dn);
-        }
-
-        Attributes attributes = sr.getAttributes();
 
         log.debug("Checking Active Directory account.");
 

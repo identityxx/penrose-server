@@ -49,7 +49,6 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     private String partitionName;
 
     public PartitionService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName) throws Exception {
-        super(PartitionServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;

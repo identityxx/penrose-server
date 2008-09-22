@@ -22,7 +22,6 @@ public class JobService extends BaseService implements JobServiceMBean {
             String partitionName,
             String jobName
     ) {
-        super(JobServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -43,7 +42,9 @@ public class JobService extends BaseService implements JobServiceMBean {
     }
 
     public Job getJob() {
-        return getScheduler().getJob(jobName);
+        Scheduler scheduler = getScheduler();
+        if (scheduler == null) return null;
+        return scheduler.getJob(jobName);
     }
 
     public SchedulerConfig getSchedulerConfig() {

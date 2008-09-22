@@ -73,6 +73,13 @@ public class Entry implements Cloneable {
     protected FilterEvaluator filterEvaluator;
     protected EntryFilterEvaluator entryFilterEvaluator;
 
+    protected List<String> searchOrders;
+    protected List<String> bindOrders;
+    protected List<String> addOrders;
+    protected List<String> deleteOrders;
+    protected List<String> modifyOrders;
+    protected List<String> modrdnOrders;
+
     public void init(EntryConfig entryConfig, EntryContext entryContext) throws Exception {
         this.entryConfig = entryConfig;
         this.entryContext = entryContext;
@@ -94,9 +101,20 @@ public class Entry implements Cloneable {
         
         //String primarySourceName = getPrimarySourceAlias();
 
-        for (EntrySourceConfig sourceMapping : entryConfig.getSourceConfigs()) {
+        Collection<EntrySourceConfig> sourceConfigs = entryConfig.getSourceConfigs();
+        int size = sourceConfigs.size();
 
-            EntrySource entrySource = createSource(sourceMapping);
+        String[] searchOrdersArray = new String[size];
+        String[] bindOrdersArray = new String[size];
+        String[] addOrdersArray = new String[size];
+        String[] deleteOrdersArray = new String[size];
+        String[] modifyOrdersArray = new String[size];
+        String[] modrdnOrdersArray = new String[size];
+
+        int i = 0;
+        for (EntrySourceConfig sourceConfig : sourceConfigs) {
+
+            EntrySource entrySource = createSource(sourceConfig);
             String alias = entrySource.getAlias();
 
             addSource(entrySource);
@@ -107,6 +125,25 @@ public class Entry implements Cloneable {
                 primarySourceRefs.put(alias, entrySource);
             }
 */
+            Integer searchOrder = sourceConfig.getSearchOrder();
+            searchOrdersArray[searchOrder == null ? i : searchOrder] = alias;
+
+            Integer bindOrder = sourceConfig.getBindOrder();
+            bindOrdersArray[bindOrder == null ? i : bindOrder] = alias;
+
+            Integer addOrder = sourceConfig.getAddOrder();
+            addOrdersArray[addOrder == null ? i : addOrder] = alias;
+
+            Integer deleteOrder = sourceConfig.getDeleteOrder();
+            deleteOrdersArray[deleteOrder == null ? i : deleteOrder] = alias;
+
+            Integer modifyOrder = sourceConfig.getModifyOrder();
+            modifyOrdersArray[modifyOrder == null ? i : modifyOrder] = alias;
+
+            Integer modrdnOrder = sourceConfig.getModrdnOrder();
+            modrdnOrdersArray[modrdnOrder == null ? i : modrdnOrder] = alias;
+
+            i++;
         }
 
         // inherit source referencess from the parent entries
@@ -130,6 +167,13 @@ public class Entry implements Cloneable {
 
             p = p.getParent();
         }
+
+        searchOrders = Arrays.asList(searchOrdersArray);
+        bindOrders = Arrays.asList(bindOrdersArray);
+        addOrders = Arrays.asList(addOrdersArray);
+        deleteOrders = Arrays.asList(deleteOrdersArray);
+        modifyOrders = Arrays.asList(modifyOrdersArray);
+        modrdnOrders = Arrays.asList(modrdnOrdersArray);
 
         init();
     }
@@ -696,10 +740,10 @@ public class Entry implements Cloneable {
         if (dn == null) return EMPTY_ENTRIES;
 
         DN entryDn        = getDn();
-        if (debug) log.debug("Finding matching entries for \""+dn+"\" in \""+entryDn+"\".");
+        if (debug) log.debug("Checking \""+entryDn+"\".");
 
-        int entryDnLength = entryDn.getSize();
         int dnLength      = dn.getSize();
+        int entryDnLength = entryDn.getSize();
 
         if (dnLength == 0 && entryDnLength == 0) { // Root DSE
             Collection<Entry> results = new ArrayList<Entry>();
@@ -708,7 +752,7 @@ public class Entry implements Cloneable {
         }
 
         if (!dn.endsWith(entryDn)) {
-            if (debug) log.debug("Doesn't match "+entryDn);
+            //if (debug) log.debug("Doesn't match "+entryDn);
             return EMPTY_ENTRIES;
         }
 
@@ -1253,5 +1297,53 @@ public class Entry implements Cloneable {
     public void addSource(EntrySource entrySource) {
         sources.add(entrySource);
         sourcesByAlias.put(entrySource.getAlias(), entrySource);
+    }
+
+    public List<String> getSearchOrders() {
+        return searchOrders;
+    }
+
+    public String getSearchOrder(int i) {
+        return searchOrders.get(i);
+    }
+
+    public List<String> getBindOrders() {
+        return bindOrders;
+    }
+
+    public String getBindOrder(int i) {
+        return bindOrders.get(i);
+    }
+
+    public List<String> getAddOrders() {
+        return addOrders;
+    }
+
+    public String getAddOrder(int i) {
+        return addOrders.get(i);
+    }
+
+    public List<String> getDeleteOrders() {
+        return deleteOrders;
+    }
+
+    public String getDeleteOrder(int i) {
+        return deleteOrders.get(i);
+    }
+
+    public List<String> getModifyOrders() {
+        return modifyOrders;
+    }
+
+    public String getModifyOrder(int i) {
+        return modifyOrders.get(i);
+    }
+
+    public List<String> getModrdnOrders() {
+        return modrdnOrders;
+    }
+
+    public String getModrdnOrder(int i) {
+        return modrdnOrders.get(i);
     }
 }

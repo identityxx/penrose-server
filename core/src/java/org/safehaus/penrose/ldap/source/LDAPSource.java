@@ -13,6 +13,7 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
+import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.control.Control;
 
 import java.util.ArrayList;
@@ -138,12 +139,23 @@ public class LDAPSource extends Source {
             BindRequest request,
             BindResponse response
     ) throws Exception {
+        bind(session, request, response, null);
+    }
+
+    public void bind(
+            Session session,
+            BindRequest request,
+            BindResponse response,
+            Attributes attributes
+    ) throws Exception {
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
             log.debug(TextUtil.displayLine("Bind "+partition.getName()+"."+getName(), 80));
             log.debug(TextUtil.displaySeparator(80));
         }
+
+        if (debug) log.debug("Binding as "+request.getDn()+".");
 
         String authentication = getParameter(AUTHENTICATION);
         //if (debug) log.debug("Authentication: "+authentication);
@@ -153,25 +165,36 @@ public class LDAPSource extends Source {
             throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
-        DNBuilder db = new DNBuilder();
-        db.append(request.getDn());
+        if (attributes == null) {
+            LDAPClient client = connection.getClient(session);
 
-        //db.append(baseDn);
+            try {
+                client.bind(request, response);
 
-        DN dn = db.toDn();
+            } finally {
+                connection.closeClient(session);
+            }
 
-        BindRequest newRequest = (BindRequest)request.clone();
-        newRequest.setDn(dn);
+        } else {
+            byte[] password = request.getPassword();
+            Attribute attribute = attributes.get("userPassword");
 
-        if (debug) log.debug("Binding as "+dn);
+            if (attribute == null) {
+                log.debug("Attribute userPassword not found");
+                throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
+            }
 
-        LDAPClient client = connection.getClient(session);
+            boolean valid = false;
+            Collection<Object> userPasswords = attribute.getValues();
+            for (Object userPassword : userPasswords) {
+                if (debug) log.debug("userPassword: " + userPassword);
+                if (PasswordUtil.comparePassword(password, userPassword)) {
+                    valid = true;
+                    break;
+                }
+            }
 
-        try {
-            client.bind(newRequest, response);
-
-        } finally {
-            connection.closeClient(session);
+            if (!valid) throw LDAP.createException(LDAP.INVALID_CREDENTIALS);
         }
 
         log.debug("Bind operation completed.");

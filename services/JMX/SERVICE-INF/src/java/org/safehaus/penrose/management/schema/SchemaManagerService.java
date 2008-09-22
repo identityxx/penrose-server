@@ -15,7 +15,6 @@ public class SchemaManagerService extends BaseService implements SchemaManagerSe
     SchemaManager schemaManager;
 
     public SchemaManagerService(PenroseJMXService jmxService, SchemaManager schemaManager) {
-        super(SchemaManagerServiceMBean.class);
 
         this.jmxService = jmxService;
         this.schemaManager = schemaManager;

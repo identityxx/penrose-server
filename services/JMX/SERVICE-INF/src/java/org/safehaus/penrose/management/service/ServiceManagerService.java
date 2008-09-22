@@ -17,7 +17,6 @@ public class ServiceManagerService extends BaseService implements ServiceManager
     ServiceManager serviceManager;
 
     public ServiceManagerService(PenroseJMXService jmxService, ServiceManager serviceManager) {
-        super(ServiceManagerServiceMBean.class);
 
         this.jmxService = jmxService;
         this.serviceManager = serviceManager;

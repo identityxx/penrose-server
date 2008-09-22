@@ -24,7 +24,6 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
             String partitionName,
             String moduleName
     ) throws Exception {
-        super(ModuleServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -45,7 +44,10 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
     }
 
     public Module getModule() {
-        ModuleManager moduleManager = getPartition().getModuleManager();
+        Partition partition = getPartition();
+        if (partition == null) return null;
+
+        ModuleManager moduleManager = partition.getModuleManager();
         return moduleManager.getModule(moduleName);
     }
 

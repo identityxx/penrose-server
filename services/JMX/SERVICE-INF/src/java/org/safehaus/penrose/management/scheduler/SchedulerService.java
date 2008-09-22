@@ -30,7 +30,6 @@ public class SchedulerService extends BaseService implements SchedulerServiceMBe
             PartitionManager partitionManager,
             String partitionName
     ) throws Exception {
-        super(SchedulerServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -52,7 +51,9 @@ public class SchedulerService extends BaseService implements SchedulerServiceMBe
     }
 
     public Scheduler getScheduler() {
-        return getPartition().getScheduler();
+        Partition partition = getPartition();
+        if (partition == null) return null;
+        return partition.getScheduler();
     }
 
     public PartitionConfig getPartitionConfig() {

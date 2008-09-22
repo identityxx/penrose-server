@@ -21,7 +21,6 @@ public class PartitionManagerService extends BaseService implements PartitionMan
     PartitionManager partitionManager;
 
     public PartitionManagerService(PenroseJMXService jmxService, PartitionManager partitionManager) {
-        super(PartitionManagerServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;

@@ -20,7 +20,6 @@ public class SchemaService extends BaseService implements SchemaServiceMBean {
             SchemaManager schemaManager,
             String schemaName
     ) throws Exception {
-        super(SchemaServiceMBean.class);
 
         this.jmxService = jmxService;
         this.schemaManager = schemaManager;

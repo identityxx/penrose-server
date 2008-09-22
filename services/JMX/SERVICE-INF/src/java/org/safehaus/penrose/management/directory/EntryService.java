@@ -21,7 +21,6 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     private String entryId;
     
     public EntryService(PenroseJMXService jmxService, PartitionManager partitionManager, String partitionName, String entryId) throws Exception {
-        super(EntryServiceMBean.class);
 
         this.jmxService = jmxService;
         this.partitionManager = partitionManager;
@@ -42,7 +41,9 @@ public class EntryService extends BaseService implements EntryServiceMBean {
     }
 
     public Entry getEntry() {
-        return getDirectory().getEntry(entryId);
+        Directory directory = getDirectory();
+        if (directory == null) return null;
+        return directory.getEntry(entryId);
     }
 
     public DirectoryConfig getDirectoryConfig() {

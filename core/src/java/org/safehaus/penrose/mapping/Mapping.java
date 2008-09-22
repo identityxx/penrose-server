@@ -164,7 +164,7 @@ public class Mapping {
             if (!required) {
                 Object value = interpreter.get(name);
                 if (value != null) {
-                    if (debug) log.debug(" - Skipping "+name+": value has been set");
+                    //if (debug) log.debug(" - Skipping "+name+": value has been set");
                     continue;
                 }
             }
@@ -173,7 +173,7 @@ public class Mapping {
             if (variable != null) {
                 Object variableValue = interpreter.get(variable);
                 if (variableValue == null) {
-                    if (debug) log.debug(" - Skipping "+name+": "+variable+" is undefined");
+                    //if (debug) log.debug(" - Skipping "+name+": "+variable+" is undefined");
                     continue;
                 }
             }
@@ -183,7 +183,7 @@ public class Mapping {
                 if (!(conditionValue instanceof Boolean && (Boolean) conditionValue)) {
                     if (debug) {
                         //String className = conditionValue == null ? "" : " ("+conditionValue.getClass().getName()+")";
-                        log.debug(" - Skipping "+name+": condition is "+ conditionValue);
+                        //log.debug(" - Skipping "+name+": condition is "+ conditionValue);
                     }
                     continue;
                 }
@@ -191,7 +191,7 @@ public class Mapping {
 
             Object newValue = interpreter.eval(rule);
             if (newValue == null) {
-                if (debug) log.debug(" - Skipping "+name+": value is null");
+                //if (debug) log.debug(" - Skipping "+name+": value is null");
                 continue;
             }
 
