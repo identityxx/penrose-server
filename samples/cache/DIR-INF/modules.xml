@@ -8,8 +8,12 @@
   <module name="CacheModule">
     <module-class>org.safehaus.penrose.cache.module.CacheModule</module-class>
     <parameter>
-      <param-name>size</param-name>
-      <param-value>10</param-value>
+      <param-name>querySize</param-name>
+      <param-value>5</param-value>
+    </parameter>
+    <parameter>
+      <param-name>resultSize</param-name>
+      <param-value>5</param-value>
     </parameter>
     <parameter>
       <param-name>expiration</param-name>

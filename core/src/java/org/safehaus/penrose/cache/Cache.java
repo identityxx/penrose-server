@@ -1,48 +1,32 @@
 package org.safehaus.penrose.cache;
 
 import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class Cache {
 
-    private Date createDate = new Date();
+    private CacheKey key;
 
-    private int expiration; // minutes
+    private Date creationDate;
+    private Date expirationDate;
 
     private SearchResponse response;
 
     public Cache() {
     }
 
-    public Date getCreateDate() {
-        return createDate;
+    public Date getCreationDate() {
+        return creationDate;
     }
 
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
-    }
-
-    public boolean isExpired() {
-        return expiration != 0 &&
-                createDate.getTime() + expiration * 60 * 1000 <= System.currentTimeMillis();
-    }
-
-    public int getExpiration() {
-        return expiration;
-    }
-
-    public void setExpiration(int expiration) {
-        this.expiration = expiration;
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 
     public synchronized SearchResponse getResponse() {
@@ -60,5 +44,21 @@ public class Cache {
     public synchronized void setResponse(SearchResponse response) {
         this.response = response;
         notifyAll();
+    }
+
+    public CacheKey getKey() {
+        return key;
+    }
+
+    public void setKey(CacheKey key) {
+        this.key = key;
+    }
+
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
     }
 }

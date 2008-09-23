@@ -20,16 +20,16 @@ package org.safehaus.penrose.directory;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.util.TransformationUtil;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.filter.Filter;
+import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.*;
+import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.mapping.Mapping;
+import org.safehaus.penrose.mapping.MappingRule;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -498,7 +498,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             response.close();
         }
     }
-
+/*
     public void expand(
             Session session,
             SearchRequest request,
@@ -563,6 +563,486 @@ public class DynamicEntry extends Entry implements Cloneable {
                 newResponse
         );
 
+    }
+*/
+
+    public void expand(
+            Session session,
+            SearchRequest request,
+            SearchResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("Expanding entry.");
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        boolean baseSearch = (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)
+                && getDn().matches(baseDn);
+
+        Filter filter = request.getFilter();
+
+        Collection<String> requestedAliases = getRequestedAliases(request);
+        if (debug) log.debug("Requested sources: "+requestedAliases);
+
+        SourceAttributes sourceAttributes = new SourceAttributes();
+        Interpreter interpreter = partition.newInterpreter();
+
+        log.debug("Extracting source attributes from DN:");
+        extractSourceAttributes(baseDn, interpreter, sourceAttributes);
+
+        if (debug) {
+            log.debug("Source attributes:");
+            sourceAttributes.print();
+        }
+
+        if (debug) log.debug("Search orders: "+searchOrders);
+
+        Map<String,Filter> sourceFilters = createSourceFilters(filter, sourceAttributes, interpreter);
+        Map<String,Boolean> requestedSources = createRequestedSources(request, requestedAliases, sourceFilters);
+
+        String primaryAlias  = getSearchOrder(0);
+        Filter primaryFilter = sourceFilters.get(primaryAlias);
+
+        if (!baseSearch && !sourceFilters.isEmpty()) { // prevent infinite loop
+
+            Map<DN,SourceAttributes> entries = new LinkedHashMap<DN,SourceAttributes>();
+
+            for (String alias : searchOrders) {
+
+                Filter sourceFilter = sourceFilters.get(alias);
+                if (sourceFilter == null) continue;
+
+                if (debug) {
+                    log.debug(TextUtil.displaySeparator(80));
+                    log.debug(TextUtil.displayLine("Search source "+alias+" with filter "+sourceFilter+".", 80));
+                    log.debug(TextUtil.displaySeparator(80));
+                }
+
+                SourceAttributes sa = new SourceAttributes();
+
+                SearchRequest searchRequest = new SearchRequest();
+                searchRequest.setFilter(sourceFilter);
+
+                searchSource(session, sa, alias, searchRequest, entries);
+            }
+
+            log.debug("################################################################");
+
+            for (DN dn : entries.keySet()) {
+                SourceAttributes sa = entries.get(dn);
+                if (debug) log.debug("Returning "+dn+" with "+sa.getNames()+".");
+
+                RDN rdn = dn.getRdn();
+                Filter sourceFilter = null;
+                for (String name : rdn.getNames()) {
+                    Object value = rdn.get(name);
+                    SimpleFilter sf = new SimpleFilter(name, "=", value);
+                    sourceFilter = FilterTool.appendAndFilter(sourceFilter, sf);
+                }
+
+                SearchRequest newRequest = new SearchRequest();
+                newRequest.setFilter(sourceFilter);
+
+                SearchResponse newResponse = new Pipeline(response) {
+                    public void close() throws Exception {
+                    }
+                };
+
+                expandSource(session, newRequest, newResponse, sa, requestedSources);
+            }
+
+            log.debug("################################################################");
+            return;
+        }
+
+        SourceAttributes sa = new SourceAttributes();
+
+        SearchRequest newRequest = new SearchRequest();
+        newRequest.setFilter(primaryFilter);
+
+        SearchResponse newResponse = new Pipeline(response) {
+            public void close() throws Exception {
+            }
+        };
+
+        expandSource(session, newRequest, newResponse, sa, requestedSources);
+    }
+
+    public Collection<String> getRequestedAliases(SearchRequest request) throws Exception {
+
+        final Collection<String> requestedSources = new HashSet<String>();
+
+        final Mapping mapping = getMapping();
+        if (mapping != null) {
+
+            FilterProcessor fp = new FilterProcessor() {
+                public Filter process(Stack<Filter> path, Filter filter) throws Exception {
+                    if (filter instanceof ItemFilter) {
+                        ItemFilter f = (ItemFilter)filter;
+
+                        String attributeName = f.getAttribute();
+
+                        for (MappingRule rule : mapping.getRules(attributeName)) {
+                            String variable = rule.getVariable();
+                            if (variable == null) continue;
+
+                            int i = variable.indexOf('.');
+                            if (i < 0) continue;
+
+                            String sourceName = variable.substring(0, i);
+                            if (debug) log.debug("Filter attribute "+attributeName+": "+sourceName);
+                            requestedSources.add(sourceName);
+                        }
+
+                    } else {
+                        return super.process(path, filter);
+                    }
+
+                    return filter;
+                }
+            };
+
+            fp.process(request.getFilter());
+
+            for (String attributeName : request.getAttributes()) {
+                for (MappingRule rule : mapping.getRules(attributeName)) {
+                    String variable = rule.getVariable();
+                    if (variable == null) continue;
+
+                    int i = variable.indexOf('.');
+                    if (i < 0) continue;
+
+                    String sourceName = variable.substring(0, i);
+                    if (debug) log.debug("Requested attribute "+attributeName+": "+sourceName);
+                    requestedSources.add(sourceName);
+                }
+            }
+        }
+
+        return requestedSources;
+    }
+
+    public Map<String,Filter> createSourceFilters(Filter filter, SourceAttributes sourceAttributes, Interpreter interpreter) throws Exception {
+
+        Map<String,Filter> filterMap = new HashMap<String,Filter>();
+
+        FilterBuilder filterBuilder = new FilterBuilder(this, sourceAttributes, interpreter);
+
+        for (EntrySource source : getSources()) {
+            String alias = source.getAlias();
+            Attributes attributes = sourceAttributes.get(alias);
+
+            Filter sourceFilter = filterBuilder.convert(filter, source);
+            sourceFilter = FilterTool.appendAndFilter(sourceFilter, createFilter(attributes));
+
+            log.debug("Filter for "+alias+": "+sourceFilter);
+            if (sourceFilter != null) filterMap.put(alias, sourceFilter);
+        }
+
+        return filterMap;
+    }
+
+    public Filter createFilter(Attributes attributes) throws Exception {
+
+        Filter filter = null;
+
+        for (Attribute attribute : attributes.getAll()) {
+            String name = attribute.getName();
+            for (Object value : attribute.getValues()) {
+                SimpleFilter sf = new SimpleFilter(name, "=", value);
+                filter = FilterTool.appendAndFilter(filter, sf);
+            }
+        }
+
+        return filter;
+    }
+
+    public Map<String,Boolean> createRequestedSources(SearchRequest request, Collection<String> requestedSources, Map<String,Filter> filterMap) throws Exception {
+
+        Map<String,Boolean> requestedMap = new HashMap<String,Boolean>();
+
+        Collection<String> attributeNames = request.getAttributes();
+        boolean allRequested = attributeNames.contains("*");
+
+        for (EntrySource source : getSources()) {
+            String alias = source.getAlias();
+
+            Filter sourceFilter = filterMap.get(alias);
+            boolean requested = allRequested || requestedSources.contains(alias) || sourceFilter != null;
+            requestedMap.put(alias, requested);
+        }
+
+        return requestedMap;
+    }
+
+    public void searchSource(
+            Session session,
+            SourceAttributes sourceAttributes,
+            String alias,
+            SearchRequest searchRequest,
+            Map<DN,SourceAttributes> results
+    ) throws Exception {
+
+        EntrySource source = getSource(alias);
+
+        String linkedAttribute = null;
+        String prevAlias = null;
+        String prevLinkingAttribute = null;
+
+        boolean firstSource;
+
+        for (EntryField field : source.getFields()) {
+
+            String variable = field.getVariable();
+            int i = variable.indexOf(".");
+
+            if (i < 0) continue;
+
+            linkedAttribute = field.getName();
+            prevAlias = variable.substring(0, i);
+            prevLinkingAttribute = variable.substring(i+1);
+
+            break; // TODO need to support multiple link attributes
+        }
+
+        firstSource = prevAlias == null;
+
+        try {
+            SearchResponse searchResponse = new SearchResponse();
+            source.search(session, searchRequest, searchResponse);
+
+            while (searchResponse.hasNext()) {
+
+                SearchResult result = searchResponse.next();
+
+                SourceAttributes sa = (SourceAttributes)sourceAttributes.clone();
+                sa.set(alias, result);
+
+                if (debug) {
+                    log.debug("Source attributes:");
+                    sa.print();
+                }
+
+                if (firstSource) {
+                    DN dn = createDn(sa);
+                    if (debug) log.debug("Found "+dn+".");
+
+                    results.put(dn, sa);
+
+                    continue;
+                }
+
+                Collection<Object> prevLinks = sa.getValues(alias, linkedAttribute);
+
+                for (Object prevLink : prevLinks) {
+
+                    if (debug) log.debug("Following link "+prevLink+".");
+
+                    SearchRequest prevSearchRequest = new SearchRequest();
+
+                    if ("dn".equals(prevLinkingAttribute)) {
+                        prevSearchRequest.setDn((String)prevLink);
+                        prevSearchRequest.setScope(SearchRequest.SCOPE_BASE);
+
+                    } else {
+                        prevSearchRequest.setFilter(new SimpleFilter(prevLinkingAttribute, "=", prevLink));
+                    }
+
+                    searchSource(session, sa, prevAlias, prevSearchRequest, results);
+                }
+            }
+
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    public void expandSource(
+            Session session,
+            SearchRequest request,
+            SearchResponse response,
+            SourceAttributes sourceAttributes,
+            Map<String,Boolean> requestedSources
+    ) throws Exception {
+        expandSource(session, request, response, 0, sourceAttributes, requestedSources);
+    }
+
+    public void expandSource(
+            Session session,
+            SearchRequest request,
+            SearchResponse response,
+            int index,
+            SourceAttributes sourceAttributes,
+            Map<String,Boolean> requestedSources
+    ) throws Exception {
+
+        String alias = getSearchOrder(index);
+
+        int nextIndex = index+1;
+        boolean lastSource = nextIndex == getSources().size();
+
+        String nextAlias = null;
+
+        String nextLinkedAttribute = null;
+        String prevAlias = null;
+        String prevLinkingAttribute = null;
+
+        if (!lastSource) {
+            nextAlias = getSearchOrder(nextIndex);
+            EntrySource nextSource = getSource(nextAlias);
+
+            for (EntryField field : nextSource.getFields()) {
+
+                String variable = field.getVariable();
+                int i = variable.indexOf(".");
+
+                if (i < 0) continue;
+
+                nextLinkedAttribute = field.getName();
+                prevAlias = variable.substring(0, i);
+                prevLinkingAttribute = variable.substring(i+1);
+
+                break; // TODO need to support multiple link attributes
+            }
+        }
+
+        if (sourceAttributes.contains(alias)) {
+
+            if (debug) log.debug("Source "+alias+" has been fetched.");
+
+            expandSearchResult(
+                    session, request, response, index, sourceAttributes, requestedSources,
+                    nextLinkedAttribute, prevAlias, prevLinkingAttribute
+            );
+
+        } else {
+            EntrySource source = getSource(alias);
+            String search = source.getSearch();
+
+            SearchResponse searchResponse = new SearchResponse();
+
+            try {
+                source.search(session, request, searchResponse);
+
+            } catch (Exception e) {
+                if (EntrySourceConfig.REQUIRED.equals(search)) {
+                    if (debug) log.debug("Source "+alias+" is required and error occured.");
+
+                } else {
+                    if (debug) log.debug("Source "+alias+" is optional and error occured.");
+                    response.add(createSearchResult(sourceAttributes));
+                }
+                return;
+            }
+
+            if (!searchResponse.hasNext()) {
+                if (EntrySourceConfig.REQUIRED.equals(search)) {
+                    if (debug) log.debug("Source "+alias+" is required and link not found.");
+
+                } else {
+                    if (debug) log.debug("Source "+alias+" is optional and link not found.");
+                    response.add(createSearchResult(sourceAttributes));
+                }
+                return;
+            }
+
+            do {
+                SearchResult searchResult = searchResponse.next();
+
+                SourceAttributes sa  = (SourceAttributes)sourceAttributes.clone();
+                sa.set(alias, searchResult);
+
+                expandSearchResult(
+                        session, request, response, index, sa, requestedSources,
+                        nextLinkedAttribute, prevAlias, prevLinkingAttribute
+                );
+
+            } while (searchResponse.hasNext());
+        }
+    }
+
+    public void expandSearchResult(
+            Session session,
+            SearchRequest request,
+            SearchResponse response,
+            int index,
+            SourceAttributes sourceAttributes,
+            Map<String,Boolean> requestedSources,
+            String nextLinkedAttribute,
+            String prevAlias,
+            String prevLinkingAttribute
+    ) throws Exception {
+
+        String alias = getSearchOrder(index);
+
+        int nextIndex = index+1;
+        boolean lastSource = nextIndex == getSources().size();
+
+        if (lastSource) {
+            if (debug) log.debug("Source "+alias+" is the last source.");
+            response.add(createSearchResult(sourceAttributes));
+            return;
+        }
+
+        String nextAlias = getSearchOrder(nextIndex);
+
+        EntrySource nextSource = getSource(nextAlias);
+        String nextSearch = nextSource.getSearch();
+        boolean nextRequested = requestedSources.get(nextAlias);
+
+        if (EntrySourceConfig.IGNORE.equals(nextSearch)) {
+            if (debug) log.debug("Source "+nextAlias+" is ignored.");
+            response.add(createSearchResult(sourceAttributes));
+            return;
+        }
+
+        if (EntrySourceConfig.OPTIONAL.equals(nextSearch) && !nextRequested) {
+            if (debug) log.debug("Source "+nextAlias+" is optional and not requested.");
+            response.add(createSearchResult(sourceAttributes));
+            return;
+        }
+
+        if (nextLinkedAttribute == null || prevAlias == null || prevLinkingAttribute == null) {
+            if (EntrySourceConfig.REQUIRED.equals(nextSearch)) {
+                if (debug) log.debug("Source "+nextAlias+" is required and not linked.");
+
+            } else {
+                if (debug) log.debug("Source "+nextAlias+" is optional and not linked.");
+                response.add(createSearchResult(sourceAttributes));
+            }
+            return;
+        }
+
+        Collection<Object> links = sourceAttributes.getValues(prevAlias, prevLinkingAttribute);
+
+        if (links.isEmpty()) {
+            if (EntrySourceConfig.REQUIRED.equals(nextSearch)) {
+                if (debug) log.debug("Source "+nextAlias+" is required and not linked.");
+
+            } else {
+                if (debug) log.debug("Source "+nextAlias+" is optional and not linked.");
+                response.add(createSearchResult(sourceAttributes));
+            }
+            return;
+        }
+
+        for (Object link : links) {
+
+            if (debug) log.debug("Following link "+link+".");
+
+            SearchRequest searchRequest = new SearchRequest();
+
+            if ("dn".equals(nextLinkedAttribute)) {
+                searchRequest.setDn((String)link);
+                searchRequest.setScope(SearchRequest.SCOPE_BASE);
+
+            } else {
+                searchRequest.setFilter(new SimpleFilter(nextLinkedAttribute, "=", link));
+            }
+
+            expandSource(session, searchRequest, response, nextIndex, sourceAttributes, requestedSources);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

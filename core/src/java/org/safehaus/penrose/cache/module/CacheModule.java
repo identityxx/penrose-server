@@ -16,8 +16,9 @@ import org.safehaus.penrose.session.Session;
  */
 public class CacheModule extends Module implements CacheMBean {
 
-    public final static String SIZE       = "size";
-    public final static String EXPIRATION = "expiration"; // minutes
+    public final static String QUERY_SIZE  = "querySize";
+    public final static String RESULT_SIZE = "resultSize";
+    public final static String EXPIRATION  = "expiration"; // minutes
 
     protected CacheManager cacheManager;
 
@@ -25,13 +26,21 @@ public class CacheModule extends Module implements CacheMBean {
 
         cacheManager = new CacheManager();
 
-        String s = getParameter(SIZE);
+        String s = getParameter(QUERY_SIZE);
         if (s != null) {
-            cacheManager.setSize(Integer.parseInt(s));
+            if (debug) log.debug("Query size: "+s);
+            cacheManager.setQuerySize(Integer.parseInt(s));
+        }
+
+        s = getParameter(RESULT_SIZE);
+        if (s != null) {
+            if (debug) log.debug("Result size: "+s);
+            cacheManager.setResultSize(Integer.parseInt(s));
         }
 
         s = getParameter(EXPIRATION);
         if (s != null) {
+            if (debug) log.debug("Expiration: "+s);
             cacheManager.setExpiration(Integer.parseInt(s));
         }
     }
@@ -54,6 +63,8 @@ public class CacheModule extends Module implements CacheMBean {
             ModuleChain chain
     ) throws Exception {
 
+        String entryId = chain.getEntry().getId();
+
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(request.getDn());
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -61,15 +72,15 @@ public class CacheModule extends Module implements CacheMBean {
         CacheKey key = new CacheKey();
         key.setBindDn(request.getDn());
         key.setRequest(searchRequest);
-        key.setEntryId(chain.getEntry().getId());
+        key.setEntryId(entryId);
 
         Cache c = cacheManager.get(key);
 
         if (c != null) {
-            if (log.isWarnEnabled()) log.warn("Cache found for "+request.getDn()+".");
+            if (warn) log.warn("Cache found for "+entryId+" "+request.getDn()+" "+searchRequest.getFilter()+".");
 
         } else {
-            if (log.isWarnEnabled()) log.warn("Cache not found for "+request.getDn()+".");
+            if (warn) log.warn("Cache not found for "+entryId+" "+request.getDn()+" "+searchRequest.getFilter()+".");
         }
 
         chain.bind(session, request, response);
@@ -82,6 +93,8 @@ public class CacheModule extends Module implements CacheMBean {
             ModuleChain chain
     ) throws Exception {
 
+        String entryId = chain.getEntry().getId();
+
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.setDn(request.getDn());
         searchRequest.setScope(SearchRequest.SCOPE_BASE);
@@ -89,15 +102,15 @@ public class CacheModule extends Module implements CacheMBean {
         CacheKey key = new CacheKey();
         key.setBindDn(session.getBindDn());
         key.setRequest(searchRequest);
-        key.setEntryId(chain.getEntry().getId());
+        key.setEntryId(entryId);
 
         Cache c = cacheManager.get(key);
 
         if (c != null) {
-            if (log.isWarnEnabled()) log.warn("Cache found for "+request.getDn()+".");
+            if (warn) log.warn("Cache found for "+entryId+" "+request.getDn()+" "+searchRequest.getFilter()+".");
 
         } else {
-            if (log.isWarnEnabled()) log.warn("Cache not found for "+request.getDn()+".");
+            if (warn) log.warn("Cache not found for "+entryId+" "+request.getDn()+" "+searchRequest.getFilter()+".");
         }
 
         chain.compare(session, request, response);
@@ -137,21 +150,23 @@ public class CacheModule extends Module implements CacheMBean {
     }
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response,
-            ModuleChain chain
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response,
+            final ModuleChain chain
     ) throws Exception {
+
+        String entryId = chain.getEntry().getId();
 
         final CacheKey key = new CacheKey();
         key.setBindDn(session.getBindDn());
         key.setRequest(request);
-        key.setEntryId(chain.getEntry().getId());
+        key.setEntryId(entryId);
 
         Cache c = cacheManager.get(key);
 
         if (c != null) {
-            if (warn) log.warn("Cache found for "+request.getDn()+".");
+            if (warn) log.warn("Cache found for "+entryId+" "+request.getDn()+" "+request.getFilter()+".");
 
             SearchResponse sr = (SearchResponse)c.getResponse().clone();
             if (debug) log.debug("Cache contains "+sr.getTotalCount()+" entries.");
@@ -172,7 +187,7 @@ public class CacheModule extends Module implements CacheMBean {
             return;
         }
 
-        if (log.isWarnEnabled()) log.warn("Cache not found for "+request.getDn()+".");
+        if (warn) log.warn("Cache not found for "+entryId+" "+request.getDn()+" "+request.getFilter()+".");
 
         final Cache cache = cacheManager.create(key);
         final SearchResponse cacheResponse = new SearchResponse();
@@ -191,8 +206,11 @@ public class CacheModule extends Module implements CacheMBean {
                 cacheResponse.add(reference);
             }
             public void close() throws Exception {
+                if (debug) log.debug("Closing search response.");
                 cacheResponse.close();
                 cache.setResponse(cacheResponse);
+                cacheManager.add(cache);
+                super.close();
             }
         };
 
@@ -211,6 +229,6 @@ public class CacheModule extends Module implements CacheMBean {
 
     public void clear() {
         cacheManager.clear();
-        if (log.isWarnEnabled()) log.warn("Cache cleared.");
+        if (warn) log.warn("Cache cleared.");
     }
 }

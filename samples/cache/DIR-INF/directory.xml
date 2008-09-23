@@ -96,28 +96,16 @@ return cn.substring(i+1);
     <at name="cn" rdn="true">
       <variable>g.groupname</variable>
     </at>
-    <at name="uniqueMember">
-      <expression foreach="ug.username" var="username">
-return "uid="+username+",ou=Users,dc=Memory,dc=Example,dc=com";
-      </expression>
+    <at name="description">
+      <variable>g.description</variable>
     </at>
     <source alias="g">
       <source-name>groups</source-name>
       <field name="groupname">
         <variable>cn</variable>
       </field>
-    </source>
-    <source alias="ug">
-      <source-name>usergroups</source-name>
-      <field name="groupname">
-        <variable>g.groupname</variable>
-      </field>
-      <field name="username">
-        <expression foreach="uniqueMember" var="um">
-int i=um.indexOf("=");
-int j=um.indexOf(",");
-return um.substring(i+1, j);
-        </expression>
+      <field name="description">
+        <variable>description</variable>
       </field>
     </source>
   </entry>
