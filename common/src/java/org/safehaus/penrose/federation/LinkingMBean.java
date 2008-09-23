@@ -1,4 +1,4 @@
-package org.safehaus.penrose.federation.module;
+package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;
@@ -11,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public interface LinkingModuleMBean {
+public interface LinkingMBean {
 
     public Collection<LinkingData> search(SearchRequest request) throws Exception;
     public Collection<SearchResult> searchLinks(SearchResult sourceEntry) throws Exception;

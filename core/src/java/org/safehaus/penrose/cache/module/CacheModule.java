@@ -4,6 +4,7 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.cache.Cache;
 import org.safehaus.penrose.cache.CacheKey;
 import org.safehaus.penrose.cache.CacheManager;
+import org.safehaus.penrose.cache.CacheMBean;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
@@ -13,7 +14,7 @@ import org.safehaus.penrose.session.Session;
 /**
  * @author Endi Sukma Dewata
  */
-public class CacheModule extends Module {
+public class CacheModule extends Module implements CacheMBean {
 
     public final static String SIZE       = "size";
     public final static String EXPIRATION = "expiration"; // minutes

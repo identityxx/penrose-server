@@ -1,4 +1,4 @@
-package org.safehaus.penrose.federation.module;
+package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
@@ -6,7 +6,6 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.federation.LinkingData;
 
 import javax.management.MBeanException;
 import java.util.Collection;
@@ -14,9 +13,9 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingModuleClient extends ModuleClient implements LinkingModuleMBean {
+public class LinkingClient extends ModuleClient implements LinkingMBean {
 
-    public LinkingModuleClient(PenroseClient client, String partitionName, String name) throws Exception {
+    public LinkingClient(PenroseClient client, String partitionName, String name) throws Exception {
         super(client, partitionName, name);
     }
 

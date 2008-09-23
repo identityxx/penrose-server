@@ -24,12 +24,12 @@ esac
 
 if [ -z "$PENROSE_CLIENT_HOME" ] ; then
   # try to find PENROSE
-  if [ -d /opt/penrose ] ; then
-    PENROSE_CLIENT_HOME=/opt/penrose
+  if [ -d /opt/penrose-client ] ; then
+    PENROSE_CLIENT_HOME=/opt/penrose-client
   fi
 
-  if [ -d "$HOME/opt/penrose" ] ; then
-    PENROSE_CLIENT_HOME="$HOME/opt/penrose"
+  if [ -d "$HOME/opt/penrose-client" ] ; then
+    PENROSE_CLIENT_HOME="$HOME/opt/penrose-client"
   fi
 
   ## resolve links - $0 may be a link to Penrose's home
@@ -89,81 +89,18 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
-LOCALCLASSPATH=$LOCALCLASSPATH:$PENROSE_CLIENT_HOME/services/JMX/conf
-
-for i in "$PENROSE_CLIENT_HOME"/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-# add in the optional dependency .jar files
-for i in "$PENROSE_CLIENT_HOME"/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_CLIENT_HOME"/server/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_CLIENT_HOME"/server/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_CLIENT_HOME"/services/JMX/SERVICE-INF/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/server/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/server/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/services/JMX/SERVICE-INF/lib"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   PENROSE_CLIENT_HOME=`cygpath --windows "$PENROSE_CLIENT_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
--classpath "$LOCALCLASSPATH" \
--Dpenrose.home="$PENROSE_CLIENT_HOME" \
--Dorg.safehaus.penrose.management.home="$PENROSE_CLIENT_HOME/services/JMX" \
-org.safehaus.penrose.scheduler.JobClient $PENROSE_ARGS "$@"
+-Djava.ext.dirs="$LOCALLIBPATH" \
+-Djava.library.path="$LOCALLIBPATH" \
+-Dorg.safehaus.penrose.client.home="$PENROSE_CLIENT_HOME" \

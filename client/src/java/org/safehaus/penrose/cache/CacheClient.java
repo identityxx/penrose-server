@@ -1,4 +1,4 @@
-package org.safehaus.penrose.cache.client;
+package org.safehaus.penrose.cache;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
@@ -6,9 +6,8 @@ import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
-import org.safehaus.penrose.partition.PartitionClient;
-import org.safehaus.penrose.partition.PartitionManagerClient;
 
+import javax.management.MBeanException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,70 +16,55 @@ import java.util.Iterator;
 /**
  * @author Endi Sukma Dewata
  */
-public class CacheClient {
+public class CacheClient extends ModuleClient implements CacheMBean{
 
-    PenroseClient client;
-
-    public CacheClient(
-            String serverType,
-            String protocol,
-            String hostname,
-            int port,
-            String bindDn,
-            String bindPassword
-    ) throws Exception {
-
-        client = new PenroseClient(
-                serverType,
-                protocol,
-                hostname,
-                port,
-                bindDn,
-                bindPassword
-        );
+    public CacheClient(PenroseClient client, String partitionName, String name) throws Exception {
+        super(client, partitionName, name);
     }
 
-    public void setRmiTransportPort(int rmiTransportPort) {
-        client.setRmiTransportPort(rmiTransportPort);
+    public void clear() throws Exception {
+        try {
+            invoke(
+                    "clear",
+                    new Object[] { },
+                    new String[] { }
+            );
+        } catch (MBeanException e) {
+            throw (Exception)e.getCause();
+        }
     }
 
-    public void connect() throws Exception {
-        client.connect();
+    public static void clearCache(PenroseClient client, String partitionName) throws Exception {
+
+        CacheClient cacheClient = new CacheClient(client, partitionName, "CacheModule");
+        cacheClient.clear();
     }
 
-    public void close() throws Exception {
-        client.close();
+    public static void processClearCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
+        iterator.next(); // cache
+        iterator.next(); // in
+        iterator.next(); // partition
+
+        String partitionName = iterator.next();
+        clearCache(client, partitionName);
     }
 
-
-    public void execute(Collection<String> parameters) throws Exception {
+    public static void execute(PenroseClient client, Collection<String> parameters) throws Exception {
 
         Iterator<String> iterator = parameters.iterator();
-
         String command = iterator.next();
+        log.debug("Executing "+command);
+
         if ("clear".equals(command)) {
-            String partition = iterator.next();
-            clear(partition);
+            processClearCommand(client, iterator);
 
         } else {
             throw new Exception("Unknown command: "+command);
         }
     }
 
-    public void clear(String partitionName) throws Exception {
-        PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
-        PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient("CacheModule");
-
-        moduleClient.invoke(
-                "clear",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.cache.client.CacheClient [OPTION]... <command> [arguments]...");
+        System.out.println("Usage: org.safehaus.penrose.cache.CacheClient [OPTION]... <command> [arguments]...");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -93,7 +77,7 @@ public class CacheClient {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  clear <partition>              Clear cache.");
+        System.out.println("  clear cache in partition <partition>");
     }
 
     public static void main(String args[]) throws Exception {
@@ -159,14 +143,11 @@ public class CacheClient {
             System.exit(0);
         }
 
-        File penroseHome = new File(System.getProperty("penrose.home"));
+        File clientHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
 
-        //Logger rootLogger = Logger.getRootLogger();
-        //rootLogger.setLevel(Level.OFF);
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("org.safehaus.penrose");
 
-        Logger logger = Logger.getLogger("org.safehaus.penrose");
-
-        File log4jXml = new File(penroseHome, "conf"+File.separator+"log4j.xml");
+        File log4jXml = new File(clientHome, "conf"+File.separator+"log4j.xml");
 
         if (level.equals(Level.DEBUG)) {
             logger.setLevel(level);
@@ -188,7 +169,7 @@ public class CacheClient {
         }
 
         try {
-            CacheClient client = new CacheClient(
+            PenroseClient client = new PenroseClient(
                     serverType,
                     protocol,
                     hostname,
@@ -200,12 +181,15 @@ public class CacheClient {
             client.setRmiTransportPort(rmiTransportPort);
             client.connect();
 
-            client.execute(parameters);
+            execute(client, parameters);
 
             client.close();
 
+        } catch (SecurityException e) {
+            log.error(e.getMessage());
+
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
 }

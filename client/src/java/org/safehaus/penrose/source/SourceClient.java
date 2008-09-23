@@ -850,14 +850,11 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
             System.exit(0);
         }
 
-        File serviceHome = new File(System.getProperty("org.safehaus.penrose.management.home"));
-
-        //Logger rootLogger = Logger.getRootLogger();
-        //rootLogger.setLevel(Level.OFF);
+        File clientHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
 
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("org.safehaus.penrose");
 
-        File log4jXml = new File(serviceHome, "conf"+File.separator+"log4j.xml");
+        File log4jXml = new File(clientHome, "conf"+File.separator+"log4j.xml");
 
         if (level.equals(Level.DEBUG)) {
             logger.setLevel(level);

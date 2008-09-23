@@ -28,6 +28,7 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.federation.LinkingData;
+import org.safehaus.penrose.federation.LinkingMBean;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +36,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingModule extends Module implements LinkingModuleMBean {
+public class LinkingModule extends Module implements LinkingMBean {
 
     public final static String SOURCE = "source";
     public final static String TARGET = "target";

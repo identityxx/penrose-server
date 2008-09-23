@@ -506,7 +506,7 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
             System.exit(0);
         }
 
-        File serviceHome = new File(System.getProperty("org.safehaus.penrose.management.home"));
+        File serviceHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
 
         //Logger rootLogger = Logger.getRootLogger();
         //rootLogger.setLevel(Level.OFF);

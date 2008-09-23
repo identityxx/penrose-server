@@ -22,14 +22,14 @@ case "`uname`" in
            ;;
 esac
 
-if [ -z "$PENROSE_AGENT_HOME" ] ; then
+if [ -z "$PENROSE_CLIENT_HOME" ] ; then
   # try to find PENROSE AGENT
-  if [ -d /opt/penrose-agent ] ; then
-    PENROSE_AGENT_HOME=/opt/penrose-agent
+  if [ -d /opt/penrose-client ] ; then
+    PENROSE_CLIENT_HOME=/opt/penrose-client
   fi
 
-  if [ -d "$HOME/opt/penrose-agent" ] ; then
-    PENROSE_AGENT_HOME="$HOME/opt/penrose-agent"
+  if [ -d "$HOME/opt/penrose-client" ] ; then
+    PENROSE_CLIENT_HOME="$HOME/opt/penrose-client"
   fi
 
   ## resolve links - $0 may be a link to Penrose's home
@@ -51,18 +51,18 @@ if [ -z "$PENROSE_AGENT_HOME" ] ; then
     fi
   done
 
-  PENROSE_AGENT_HOME=`dirname "$PRG"`/..
+  PENROSE_CLIENT_HOME=`dirname "$PRG"`/..
 
   cd "$saveddir"
 
   # make it fully qualified
-  PENROSE_AGENT_HOME=`cd "$PENROSE_AGENT_HOME" && pwd`
+  PENROSE_CLIENT_HOME=`cd "$PENROSE_CLIENT_HOME" && pwd`
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
-  [ -n "$PENROSE_AGENT_HOME" ] &&
-    PENROSE_AGENT_HOME=`cygpath --unix "$PENROSE_AGENT_HOME"`
+  [ -n "$PENROSE_CLIENT_HOME" ] &&
+    PENROSE_CLIENT_HOME=`cygpath --unix "$PENROSE_CLIENT_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
 fi
@@ -90,12 +90,12 @@ if [ ! -x "$JAVACMD" ] ; then
 fi
 
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_AGENT_HOME/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_AGENT_HOME/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_CLIENT_HOME/lib/ext"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
-  PENROSE_AGENT_HOME=`cygpath --windows "$PENROSE_AGENT_HOME"`
+  PENROSE_CLIENT_HOME=`cygpath --windows "$PENROSE_CLIENT_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
@@ -103,5 +103,5 @@ fi
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
--Dpenrose.home="$PENROSE_AGENT_HOME" \
+-Dorg.safehaus.penrose.client.home="$PENROSE_CLIENT_HOME" \
 org.safehaus.penrose.nis.NISSyncClient $PENROSE_ARGS "$@"
