@@ -63,21 +63,14 @@ echo.
 
 :runPenrose
 
-set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar
-set LOCALCLASSPATH=%LOCALCLASSPATH%;%PENROSE_CLIENT_HOME%\services\JMX\conf
-
 set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\server\lib
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\server\lib\ext
-set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\services\JMX\SERVICE-INF\lib
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -classpath "%LOCALCLASSPATH%" -Djava.ext.dirs="%LOCALLIBPATH%" -Dpenrose.home="%PENROSE_CLIENT_HOME%" -Dorg.safehaus.penrose.client.home="%PENROSE_CLIENT_HOME%\services\JMX" org.safehaus.penrose.connection.ConnectionClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dorg.safehaus.penrose.client.home="%PENROSE_CLIENT_HOME%" org.safehaus.penrose.connection.ConnectionManagerClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
 goto end
 
 :end
-set LOCALCLASSPATH=
 set LOCALLIBPATH=
 set _JAVACMD=
 set PENROSE_CMD_LINE_ARGS=

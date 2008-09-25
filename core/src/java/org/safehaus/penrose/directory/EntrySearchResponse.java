@@ -31,6 +31,8 @@ public class EntrySearchResponse extends Pipeline {
     boolean allRegularAttributes;
     boolean allOpAttributes;
 
+    SearchResult lastResult;
+
     public EntrySearchResponse(
             Session session,
             SearchRequest request,
@@ -55,19 +57,46 @@ public class EntrySearchResponse extends Pipeline {
 
     public void add(SearchResult result) throws Exception {
 
-        try {
-            entry.validatePermission(session, result);
-
-        } catch (Exception e) {
+        if (lastResult == null) {
+            lastResult = result;
             return;
         }
 
-        if (!entry.validateSearchResult(request, result)) return;
+        if (result.getDn().equals(lastResult.getDn())) {
+            if (debug) log.debug("Merging entry "+lastResult.getDn()+".");
+            mergeSearchResult(result, lastResult);
+            return;
+        }
 
-        aclEvaluator.filterAttributes(session, result);
-        filterAttributes(result);
+        try {
+            entry.validatePermission(session, lastResult);
 
-        super.add(result);
+        } catch (Exception e) {
+            lastResult = result;
+            return;
+        }
+
+        if (!entry.validateSearchResult(request, lastResult)) {
+            lastResult = result;
+            return;
+        }
+
+        aclEvaluator.filterAttributes(session, lastResult);
+        filterAttributes(lastResult);
+
+        super.add(lastResult);
+        lastResult = result;
+    }
+
+    public void mergeSearchResult(SearchResult source, SearchResult destination) {
+
+        Attributes sourceAttributes = source.getAttributes();
+        Attributes destinationAttributes = destination.getAttributes();
+        destinationAttributes.add(sourceAttributes);
+
+        SourceAttributes sourceValues = source.getSourceAttributes();
+        SourceAttributes destinationValues = destination.getSourceAttributes();
+        destinationValues.add(sourceValues);
     }
 
     public void filterAttributes(SearchResult result) throws Exception {
@@ -110,5 +139,13 @@ public class EntrySearchResponse extends Pipeline {
         }
 
         if (debug) log.debug("Returning: "+attributes.getNames());
+    }
+
+
+    public void close() throws Exception {
+        if (lastResult != null) {
+            super.add(lastResult);
+        }
+        super.close();
     }
 }

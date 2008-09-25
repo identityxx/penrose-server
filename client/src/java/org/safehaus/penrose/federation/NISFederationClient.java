@@ -265,7 +265,7 @@ public class NISFederationClient {
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("Client", args, "-:?dvt:h:p:r:P:D:w:", longopts);
+        Getopt getopt = new Getopt("NISFederationClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection<String> commands = new ArrayList<String>();
         int c;
@@ -313,7 +313,7 @@ public class NISFederationClient {
             System.exit(0);
         }
 
-        File penroseHome = new File(System.getProperty("penrose.home"));
+        File penroseHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
 
         //Logger rootLogger = Logger.getRootLogger();
         //rootLogger.setLevel(Level.OFF);

@@ -2,14 +2,12 @@ package org.safehaus.penrose.directory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.management.BaseClient;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.Client;
 import org.safehaus.penrose.management.directory.DirectoryServiceMBean;
 import org.safehaus.penrose.ldap.DN;
 import org.apache.log4j.Level;
@@ -319,7 +317,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
             switch (c) {
                 case ':':
                 case '?':
-                    Client.showUsage();
+                    showUsage();
                     System.exit(0);
                     break;
                 case 1:

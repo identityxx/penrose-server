@@ -5,18 +5,6 @@
 
 <sources>
 
-  <source name="jdbc_users">
-    <connection-name>Database</connection-name>
-    <field name="username" primaryKey="true"/>
-    <field name="firstName"/>
-    <field name="lastName"/>
-    <field name="password"/>
-    <parameter>
-      <param-name>table</param-name>
-      <param-value>users</param-value>
-    </parameter>
-  </source>
-
   <source name="ldap_users">
     <connection-name>Directory</connection-name>
     <field name="uid" primaryKey="true"/>
@@ -41,12 +29,15 @@
     </parameter>
   </source>
 
-  <source name="jdbc_groups">
+  <source name="jdbc_users">
     <connection-name>Database</connection-name>
-    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
     <parameter>
       <param-name>table</param-name>
-      <param-value>groups</param-value>
+      <param-value>users</param-value>
     </parameter>
   </source>
 
@@ -69,6 +60,16 @@
     <parameter>
       <param-name>objectClasses</param-name>
       <param-value>groupOfUniqueNames</param-value>
+    </parameter>
+  </source>
+
+  <source name="jdbc_usergroups">
+    <connection-name>Database</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="username" primaryKey="true"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>usergroups</param-value>
     </parameter>
   </source>
 

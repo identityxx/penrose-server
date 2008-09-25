@@ -5,7 +5,7 @@
 
 <connections>
 
-  <connection name="HSQLDB">
+  <connection name="Database">
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
@@ -13,7 +13,7 @@
     </parameter>
     <parameter>
       <param-name>url</param-name>
-      <param-value>jdbc:hsqldb:file:db/example</param-value>
+      <param-value>jdbc:hsqldb:file:partitions/hsqldb/db/example</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>

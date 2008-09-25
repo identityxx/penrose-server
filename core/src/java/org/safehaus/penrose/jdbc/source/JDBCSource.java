@@ -741,10 +741,10 @@ public class JDBCSource extends Source {
 
             if (field.isPrimaryKey()) {
                 rb.set(fieldName, value);
-                if (debug) log.debug(" - "+fieldName+": "+value);
+                if (debug) log.debug(" - "+fieldName+": "+value+" (pk)");
 
             } else {
-                if (debug) log.debug(" - "+fieldName+": "+value+" (pk)");
+                if (debug) log.debug(" - "+fieldName+": "+value);
             }
         }
 

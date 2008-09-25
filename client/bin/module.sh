@@ -104,4 +104,4 @@ exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
 -Dorg.safehaus.penrose.client.home="$PENROSE_CLIENT_HOME" \
-org.safehaus.penrose.module.ModuleClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.module.ModuleManagerClient $PENROSE_ARGS "$@"

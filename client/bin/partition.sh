@@ -103,6 +103,5 @@ fi
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
--Dpenrose.home="$PENROSE_CLIENT_HOME" \
 -Dorg.safehaus.penrose.client.home="$PENROSE_CLIENT_HOME" \
 org.safehaus.penrose.partition.PartitionManagerClient $PENROSE_ARGS "$@"

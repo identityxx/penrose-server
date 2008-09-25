@@ -25,6 +25,58 @@
       <param-name>ignoredAttributes</param-name>
       <param-value>${linkingLocalAttribute}</param-value>
     </parameter>
+    <parameter>
+      <param-name>nisMap.aliases</param-name>
+      <param-value>ou=Aliases</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.automounts</param-name>
+      <param-value>ou=Automounts</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.bootparams</param-name>
+      <param-value>ou=BootParams</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.ethers</param-name>
+      <param-value>ou=Ethers</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.groups</param-name>
+      <param-value>ou=Groups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.hosts</param-name>
+      <param-value>ou=Hosts</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.netgroups</param-name>
+      <param-value>ou=Netgroups</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.netids</param-name>
+      <param-value>ou=NetIDs</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.networks</param-name>
+      <param-value>ou=Networks</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.protocols</param-name>
+      <param-value>ou=Protocols</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.rpcs</param-name>
+      <param-value>ou=RPCs</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.services</param-name>
+      <param-value>ou=Services</param-value>
+    </parameter>
+    <parameter>
+      <param-name>nisMap.users</param-name>
+      <param-value>ou=Users</param-value>
+    </parameter>
   </module>
 
   <module name="LinkingModule" enabled="true">

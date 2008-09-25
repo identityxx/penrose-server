@@ -3,16 +3,42 @@ package org.safehaus.penrose.nis.module;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.nis.NIS;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class NISSynchronizationModule extends SnapshotSyncModule {
 
+    public static Map<String,String> nisMapRDNs = new LinkedHashMap<String,String>();
+
+    public void init() throws Exception {
+        super.init();
+
+        for (String name : getParameterNames()) {
+            if (!name.startsWith("nisMap.")) continue;
+
+            String nisMap = name.substring(7);
+            String rdn = getParameter(name);
+            nisMapRDNs.put(nisMap, rdn);
+        }
+    }
+
+    public Map<String,String> getNisMapRDNs() {
+        return nisMapRDNs;
+    }
+
+    public Collection<String> getNisMaps() {
+        Collection<String> list = new ArrayList<String>();
+        list.addAll(nisMapRDNs.keySet());
+        return list;
+    }
+
+    public String getNisMapRDN(String nisMap) {
+        return nisMapRDNs.get(nisMap);
+    }
+    
     public boolean checkSearchResult(SearchResult result) throws Exception {
 
         Attributes attributes = result.getAttributes();
@@ -82,24 +108,34 @@ public class NISSynchronizationModule extends SnapshotSyncModule {
         attribute.addValues(addList);
     }
 
-    public void synchronizeMap(String map) throws Exception {
+    public boolean synchronize() throws Exception {
 
-        log.debug("Synchronizing NIS map "+map+"...");
+        boolean b = true;
+        for (String nisMap : nisMapRDNs.keySet()) {
+            if (!synchronizeNISMap(nisMap)) b = false;
+        }
 
-        String label = NIS.mapLabels.get(map);
+        return b;
+    }
 
-        if (label == null) {
-            log.debug("Unknown NIS map: "+map);
-            return;
+    public boolean synchronizeNISMap(String nisMap) throws Exception {
+
+        log.debug("Synchronizing NIS map "+nisMap+"...");
+
+        String rdn = nisMapRDNs.get(nisMap);
+
+        if (rdn == null) {
+            log.debug("Unknown NIS map: "+nisMap);
+            return false;
         }
 
         DN targetSuffix = getTargetSuffix();
         
         DNBuilder db = new DNBuilder();
-        db.append("ou="+label);
+        db.append(rdn);
         db.append(targetSuffix);
         DN targetDn = db.toDn();
 
-        synchronize(targetDn);
+        return synchronize(targetDn);
     }
 }

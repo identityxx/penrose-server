@@ -89,67 +89,19 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
-
-for i in "$PENROSE_SERVER_HOME"/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-# add in the optional dependency .jar files
-for i in "$PENROSE_SERVER_HOME"/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_SERVER_HOME"/server/lib/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
-for i in "$PENROSE_SERVER_HOME"/server/lib/ext/*.jar
-do
-  if [ -f "$i" ] ; then
-    if [ -z "$LOCALCLASSPATH" ] ; then
-      LOCALCLASSPATH="$i"
-    else
-      LOCALCLASSPATH="$LOCALCLASSPATH":"$i"
-    fi
-  fi
-done
-
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_SERVER_HOME/lib"
 LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_SERVER_HOME/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_SERVER_HOME/server/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_SERVER_HOME/server/lib/ext"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
   PENROSE_SERVER_HOME=`cygpath --windows "$PENROSE_SERVER_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
+  LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
 exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
--classpath "$LOCALCLASSPATH" \
--Dpenrose.home="$PENROSE_SERVER_HOME" \
+-Djava.ext.dirs="$LOCALLIBPATH" \
+-Djava.library.path="$LOCALLIBPATH" \
+-Dorg.safehaus.penrose.client.home="$PENROSE_SERVER_HOME" \
 org.safehaus.penrose.federation.FederationClient $PENROSE_ARGS "$@"

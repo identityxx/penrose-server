@@ -95,7 +95,7 @@ public class CacheClient extends ModuleClient implements CacheMBean{
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("Client", args, "-:?dvt:h:p:r:P:D:w:", longopts);
+        Getopt getopt = new Getopt("CacheClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection<String> parameters = new ArrayList<String>();
         int c;

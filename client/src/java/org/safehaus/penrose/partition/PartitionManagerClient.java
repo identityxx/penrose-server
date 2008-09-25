@@ -8,13 +8,11 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.management.BaseClient;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.Client;
 import org.safehaus.penrose.management.partition.PartitionManagerServiceMBean;
 
 import java.util.Collection;
@@ -170,12 +168,12 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
 
     public static void startPartitions(PenroseClient client) throws Exception {
 
-        log.debug("Starting all partition...");
+        log.debug("Starting all partitions...");
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         partitionManagerClient.startPartitions();
 
-        log.debug("All partition started.");
+        log.debug("All partitions started.");
     }
 
     public static void startPartition(PenroseClient client, String partitionName) throws Exception {
@@ -205,12 +203,12 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
 
     public static void stopPartitions(PenroseClient client) throws Exception {
 
-        log.debug("Stopping all partition...");
+        log.debug("Stopping all partitions...");
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         partitionManagerClient.stopPartitions();
 
-        log.debug("All partition started.");
+        log.debug("All partitions stopped.");
     }
 
     public static void stopPartition(PenroseClient client, String partitionName) throws Exception {
@@ -401,7 +399,7 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
             switch (c) {
                 case ':':
                 case '?':
-                    Client.showUsage();
+                    showUsage();
                     System.exit(0);
                     break;
                 case 1:
@@ -441,14 +439,14 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
             System.exit(0);
         }
 
-        File serviceHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
+        File clientHome = new File(System.getProperty("org.safehaus.penrose.client.home"));
 
         //Logger rootLogger = Logger.getRootLogger();
         //rootLogger.setLevel(Level.OFF);
 
         org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("org.safehaus.penrose");
 
-        File log4jXml = new File(serviceHome, "conf"+File.separator+"log4j.xml");
+        File log4jXml = new File(clientHome, "conf"+File.separator+"log4j.xml");
 
         if (level.equals(Level.DEBUG)) {
             logger.setLevel(level);

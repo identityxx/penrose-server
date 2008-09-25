@@ -1,0 +1,194 @@
+dn: dc=Example,dc=com
+dc: Example
+objectClass: top
+objectClass: domain
+
+dn: ou=Global,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: global
+
+dn: ou=Users,ou=Global,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: ou=Groups,ou=Global,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+
+dn: ou=NIS,dc=Example,dc=com
+ou: NIS
+objectClass: top
+objectClass: organizationalunit
+
+dn: ou=domain,ou=NIS,dc=Example,dc=com
+ou: domain
+objectClass: top
+objectClass: organizationalunit
+
+dn: ou=Users,ou=domain,ou=NIS,dc=Example,dc=com
+ou: Users
+objectClass: top
+objectClass: organizationalunit
+
+dn: uid=user,ou=Users,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: top
+cn: User
+gecos: User
+gidNumber: 1000
+homeDirectory: /home/user
+loginShell: /bin/bash
+uid: user
+uidNumber: 1000
+userPassword: test
+
+dn: ou=Groups,ou=domain,ou=NIS,dc=Example,dc=com
+ou: Groups
+objectClass: top
+objectClass: organizationalunit
+
+dn: cn=group,ou=Groups,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: posixGroup
+objectClass: top
+cn: group
+gidNumber: 1000
+memberUid: user
+
+dn: ou=Hosts,ou=domain,ou=NIS,dc=Example,dc=com
+ou: Hosts
+objectClass: top
+objectClass: organizationalunit
+
+dn: cn=host+ipHostNumber=127.0.0.1,ou=Hosts,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: device
+objectClass: ipHost
+objectClass: top
+cn: host
+ipHostNumber: 127.0.0.1
+
+dn: ou=Services,ou=domain,ou=NIS,dc=Example,dc=com
+ou: Services
+objectClass: top
+objectClass: organizationalunit
+
+dn: cn=service+ipServicePort=1000+ipServiceProtocol=tcp,ou=Services,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: ipService
+objectClass: top
+cn: service
+ipServicePort: 1000
+ipServiceProtocol: tcp
+
+dn: ou=RPCs,ou=domain,ou=NIS,dc=Example,dc=com
+ou: RPCs
+objectClass: top
+objectClass: organizationalunit
+
+dn: cn=rpc+oncRpcNumber=1000,ou=RPCs,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: oncRpc
+objectClass: top
+cn: rpc
+oncRpcNumber: 1000
+description: RPC
+
+dn: ou=NetIDs,ou=domain,ou=NIS,dc=Example,dc=com
+ou: NetIDs
+objectClass: top
+objectClass: organizationalunit
+
+dn: cn=netid,ou=NetIDs,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: nisNetId
+objectClass: top
+cn: netid
+nisNetIdGroup: 1000
+nisNetIdUser: 1000
+
+dn: ou=Protocols,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Protocols
+
+dn: cn=protocol+ipProtocolNumber=1000,ou=Protocols,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: ipProtocol
+objectClass: top
+cn: protocol
+ipProtocolNumber: 1000
+description: Protocol
+
+dn: ou=Aliases,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Aliases
+
+dn: cn=alias,ou=Aliases,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: nisMailAlias
+objectClass: top
+cn: alias
+rfc822MailMember: user
+
+dn: ou=Netgroups,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Netgroups
+
+dn: cn=netgroup,ou=Netgroups,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: nisNetgroup
+objectClass: top
+cn: netgroup
+nisNetgroupTriple: (host.example.com,,)
+
+dn: ou=Ethers,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Ethers
+
+dn: cn=ether,ou=Ethers,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: device
+objectClass: ieee802Device
+objectClass: top
+cn: ether
+macAddress: 00:00:00:00:00:00
+
+dn: ou=BootParams,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: BootParams
+
+dn: cn=bootparam,ou=BootParams,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: device
+objectClass: bootableDevice
+objectClass: top
+cn: bootparam
+bootParameter: root=server:/export/www/root swap=server:/export/www/swap domain=www.example.com
+
+dn: ou=Networks,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Networks
+
+dn: cn=network,ou=Networks,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: ipNetwork
+objectClass: top
+cn: network
+ipNetworkNumber: 1000
+
+dn: ou=Automounts,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Automounts
+
+dn: nismapname=auto.master,ou=Automounts,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: nisMap
+objectClass: top
+nisMapName: auto.master
+
+dn: cn=/home,nisMapName=auto.master,ou=Automounts,ou=domain,ou=NIS,dc=Example,dc=com
+objectClass: nisObject
+objectClass: top
+cn: /home
+nisMapEntry: ldap:nisMapName=auto.home,ou=Automounts,ou=domain,ou=NIS,dc=Example,dc=com
+nisMapName: auto.master

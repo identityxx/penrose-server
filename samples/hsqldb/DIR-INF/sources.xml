@@ -6,7 +6,7 @@
 <sources>
 
   <source name="users">
-    <connection-name>HSQLDB</connection-name>
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>
@@ -22,7 +22,7 @@
   </source>
 
   <source name="groups">
-    <connection-name>HSQLDB</connection-name>
+    <connection-name>Database</connection-name>
     <field name="groupname" primaryKey="true"/>
     <parameter>
       <param-name>table</param-name>
@@ -35,7 +35,7 @@
   </source>
 
   <source name="usergroups">
-    <connection-name>HSQLDB</connection-name>
+    <connection-name>Database</connection-name>
     <field name="groupname" primaryKey="true"/>
     <field name="username" primaryKey="true"/>
     <parameter>

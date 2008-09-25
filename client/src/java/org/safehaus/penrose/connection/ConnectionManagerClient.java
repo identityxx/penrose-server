@@ -1,15 +1,12 @@
-package org.safehaus.penrose.scheduler;
+package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.scheduler.JobConfig;
 import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
-import org.safehaus.penrose.management.BaseClient;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.scheduler.JobServiceMBean;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
@@ -18,8 +15,8 @@ import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.management.*;
 import java.util.Collection;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.ArrayList;
 import java.io.File;
 
 import gnu.getopt.LongOpt;
@@ -28,104 +25,64 @@ import gnu.getopt.Getopt;
 /**
  * @author Endi Sukma Dewata
  */
-public class JobClient extends BaseClient implements JobServiceMBean {
+public class ConnectionManagerClient {
 
-    public static Logger log = LoggerFactory.getLogger(JobClient.class);
-
-    protected String partitionName;
-
-    public JobClient(PenroseClient client, String partitionName, String name) throws Exception {
-        super(client, name, getStringObjectName(partitionName, name));
-
-        this.partitionName = partitionName;
-    }
-
-    public JobConfig getJobConfig() throws Exception {
-        return (JobConfig)connection.getAttribute(objectName, "JobConfig");
-    }
-
-    public static String getStringObjectName(String partitionName, String name) {
-        return "Penrose:type=job,partition="+partitionName+",name="+name;
-    }
-
-    public String getPartitionName() {
-        return partitionName;
-    }
-
-    public void setPartitionName(String partitionName) {
-        this.partitionName = partitionName;
-    }
-
-    public void start() throws Exception {
-        invoke("start", new Object[] {}, new String[] {});
-    }
-
-    public void stop() throws Exception {
-        invoke("stop", new Object[] {}, new String[] {});
-    }
-
-    public void restart() throws Exception {
-        invoke("restart", new Object[] {}, new String[] {});
-    }
+    public static Logger log = LoggerFactory.getLogger(ConnectionManagerClient.class);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Command Line
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static void showJobs(PenroseClient client, String partitionName) throws Exception {
+    public static void showConnections(PenroseClient client, String partitionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        System.out.print(TextUtil.rightPad("JOB", 15)+" ");
-        System.out.println(TextUtil.rightPad("STATUS", 10));
+        System.out.print(TextUtil.rightPad("CONNECTION", 40)+" ");
+        System.out.println(TextUtil.leftPad("STATUS", 10));
 
-        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.print(TextUtil.repeat("-", 40)+" ");
         System.out.println(TextUtil.repeat("-", 10));
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        for (String jobName : schedulerClient.getJobNames()) {
+        for (String connectionName : partitionClient.getConnectionNames()) {
 
-            //JobClient jobClient = partitionClient.getJobClient(jobName);
+            //ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
             String status = "OK";
 
-            System.out.print(TextUtil.rightPad(jobName, 15)+" ");
-            System.out.println(TextUtil.rightPad(status, 10)+" ");
+            System.out.print(TextUtil.rightPad(connectionName, 40)+" ");
+            System.out.println(TextUtil.leftPad(status, 10)+" ");
         }
     }
 
-    public static void showJob(PenroseClient client, String partitionName, String jobName) throws Exception {
+    public static void showConnection(PenroseClient client, String partitionName, String connectionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        JobClient jobClient = schedulerClient.getJobClient(jobName);
-        JobConfig jobConfig = jobClient.getJobConfig();
+        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionConfig connectionConfig = connectionClient.getConnectionConfig();
 
-        System.out.println("Job         : "+jobConfig.getName());
+        System.out.println("Connection  : "+connectionConfig.getName());
         System.out.println("Partition   : "+partitionName);
 
-        String description = jobConfig.getDescription();
+        String description = connectionConfig.getDescription();
         System.out.println("Description : "+(description == null ? "" : description));
-
-        System.out.println("Enabled     : "+jobConfig.isEnabled());
         System.out.println();
 
         System.out.println("Parameters  :");
-        for (String paramName : jobConfig.getParameterNames()) {
-            String value = jobConfig.getParameter(paramName);
+        for (String paramName : connectionConfig.getParameterNames()) {
+            String value = connectionConfig.getParameter(paramName);
             System.out.println(" - " + paramName + ": " + value);
         }
         System.out.println();
 
         System.out.println("Attributes:");
-        for (MBeanAttributeInfo attributeInfo  : jobClient.getAttributes()) {
+        for (MBeanAttributeInfo attributeInfo  : connectionClient.getAttributes()) {
             System.out.println(" - "+attributeInfo.getName()+" ("+attributeInfo.getType()+")");
         }
         System.out.println();
 
         System.out.println("Operations:");
-        for (MBeanOperationInfo operationInfo : jobClient.getOperations()) {
+        for (MBeanOperationInfo operationInfo : connectionClient.getOperations()) {
 
             Collection<String> paramTypes = new ArrayList<String>();
             for (MBeanParameterInfo parameterInfo : operationInfo.getSignature()) {
@@ -139,171 +96,165 @@ public class JobClient extends BaseClient implements JobServiceMBean {
 
     public static void processShowCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
         String target = iterator.next();
-        if ("jobs".equals(target)) {
+        if ("connections".equals(target)) {
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            showJobs(client, partitionName);
+            showConnections(client, partitionName);
 
-        } else if ("job".equals(target)) {
-            String jobName = iterator.next();
+        } else if ("connection".equals(target)) {
+            String connectionName = iterator.next();
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            showJob(client, partitionName, jobName);
+            showConnection(client, partitionName, connectionName);
 
         } else {
             System.out.println("Invalid target: "+target);
         }
     }
 
-    public static void startJobs(PenroseClient client, String partitionName) throws Exception {
+    public static void startConnections(PenroseClient client, String partitionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        for (String jobName : schedulerClient.getJobNames()) {
+        for (String connectionName : partitionClient.getConnectionNames()) {
 
-            log.debug("Starting job "+jobName+" in partition "+partitionName+"...");
+            System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-            JobClient jobClient = schedulerClient.getJobClient(jobName);
-            jobClient.start();
+            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            connectionClient.start();
 
-            log.debug("Job started.");
+            System.out.println("Connection started.");
         }
     }
 
-    public static void startJob(PenroseClient client, String partitionName, String jobName) throws Exception {
+    public static void startConnection(PenroseClient client, String partitionName, String connectionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        log.debug("Starting job "+jobName+" in partition "+partitionName+"...");
+        System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        JobClient jobClient = schedulerClient.getJobClient(jobName);
-        jobClient.start();
+        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        connectionClient.start();
 
-        log.debug("Job started.");
+        System.out.println("Connection started.");
     }
 
     public static void processStartCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
         String target = iterator.next();
-        if ("jobs".equals(target)) {
+        if ("connections".equals(target)) {
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            startJobs(client, partitionName);
+            startConnections(client, partitionName);
 
-        } else if ("job".equals(target)) {
-            String jobName = iterator.next();
+        } else if ("connection".equals(target)) {
+            String connectionName = iterator.next();
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            startJob(client, partitionName, jobName);
+            startConnection(client, partitionName, connectionName);
 
         } else {
             System.out.println("Invalid target: "+target);
         }
     }
 
-    public static void stopJobs(PenroseClient client, String partitionName) throws Exception {
+    public static void stopConnections(PenroseClient client, String partitionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        for (String jobName : schedulerClient.getJobNames()) {
+        for (String connectionName : partitionClient.getConnectionNames()) {
 
-            log.debug("Starting job "+jobName+" in partition "+partitionName+"...");
+            System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-            JobClient jobClient = schedulerClient.getJobClient(jobName);
-            jobClient.stop();
+            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            connectionClient.stop();
 
-            log.debug("Job started.");
+            System.out.println("Connection started.");
         }
     }
 
-    public static void stopJob(PenroseClient client, String partitionName, String jobName) throws Exception {
+    public static void stopConnection(PenroseClient client, String partitionName, String connectionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        log.debug("Stopping job "+jobName+" in partition "+partitionName+"...");
+        System.out.println("Stopping connection "+connectionName+" in partition "+partitionName+"...");
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        JobClient jobClient = schedulerClient.getJobClient(jobName);
-        jobClient.stop();
+        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        connectionClient.stop();
 
-        log.debug("Job stopped.");
+        System.out.println("Connection stopped.");
     }
 
     public static void processStopCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
         String target = iterator.next();
-        if ("jobs".equals(target)) {
+        if ("connections".equals(target)) {
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            stopJobs(client, partitionName);
+            stopConnections(client, partitionName);
 
-        } else if ("job".equals(target)) {
-            String jobName = iterator.next();
+        } else if ("connection".equals(target)) {
+            String connectionName = iterator.next();
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            stopJob(client, partitionName, jobName);
+            stopConnection(client, partitionName, connectionName);
 
         } else {
             System.out.println("Invalid target: "+target);
         }
     }
 
-    public static void restartJobs(PenroseClient client, String partitionName) throws Exception {
+    public static void restartConnections(PenroseClient client, String partitionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        for (String jobName : schedulerClient.getJobNames()) {
+        for (String connectionName : partitionClient.getConnectionNames()) {
 
-            log.debug("Restarting job "+jobName+" in partition "+partitionName+"...");
+            System.out.println("Restarting connection "+connectionName+" in partition "+partitionName+"...");
 
-            JobClient jobClient = schedulerClient.getJobClient(jobName);
-            jobClient.restart();
+            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            connectionClient.restart();
 
-            log.debug("Job restarted.");
+            System.out.println("Connection restarted.");
         }
     }
 
-    public static void restartJob(PenroseClient client, String partitionName, String jobName) throws Exception {
+    public static void restartConnection(PenroseClient client, String partitionName, String connectionName) throws Exception {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
 
-        log.debug("Restarting job "+jobName+" in partition "+partitionName+"...");
+        System.out.println("Restarting connection "+connectionName+" in partition "+partitionName+"...");
 
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        JobClient jobClient = schedulerClient.getJobClient(jobName);
-        jobClient.restart();
+        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        connectionClient.restart();
 
-        log.debug("Job restarted.");
+        System.out.println("Connection restarted.");
     }
 
     public static void processRestartCommand(PenroseClient client, Iterator<String> iterator) throws Exception {
         String target = iterator.next();
-        if ("jobs".equals(target)) {
+        if ("connections".equals(target)) {
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            restartJobs(client, partitionName);
+            restartConnections(client, partitionName);
 
-        } else if ("job".equals(target)) {
-            String jobName = iterator.next();
+        } else if ("connection".equals(target)) {
+            String connectionName = iterator.next();
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
-            restartJob(client, partitionName, jobName);
+            restartConnection(client, partitionName, connectionName);
 
         } else {
             System.out.println("Invalid target: "+target);
@@ -313,7 +264,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
     public static void invokeMethod(
             PenroseClient client,
             String partitionName,
-            String jobName,
+            String connectionName,
             String methodName,
             Object[] paramValues,
             String[] paramTypes
@@ -321,10 +272,9 @@ public class JobClient extends BaseClient implements JobServiceMBean {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        SchedulerClient schedulerClient = partitionClient.getSchedulerClient();
-        JobClient jobClient = schedulerClient.getJobClient(jobName);
+        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
 
-        Object returnValue = jobClient.invoke(
+        Object returnValue = connectionClient.invoke(
                 methodName,
                 paramValues,
                 paramTypes
@@ -339,8 +289,8 @@ public class JobClient extends BaseClient implements JobServiceMBean {
         iterator.next(); // in
 
         String target = iterator.next();
-        if ("job".equals(target)) {
-            String jobName = iterator.next();
+        if ("connection".equals(target)) {
+            String connectionName = iterator.next();
             iterator.next(); // in
             iterator.next(); // partition
             String partitionName = iterator.next();
@@ -368,7 +318,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
                 paramTypes = new String[0];
             }
 
-            invokeMethod(client, partitionName, jobName, methodName, paramValues, paramTypes);
+            invokeMethod(client, partitionName, connectionName, methodName, paramValues, paramTypes);
 
         } else {
             System.out.println("Invalid target: "+target);
@@ -379,7 +329,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
 
         Iterator<String> iterator = parameters.iterator();
         String command = iterator.next();
-        log.debug("Executing "+command);
+        System.out.println("Executing "+command);
 
         if ("show".equals(command)) {
             processShowCommand(client, iterator);
@@ -402,7 +352,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
     }
 
     public static void showUsage() {
-        System.out.println("Usage: org.safehaus.penrose.scheduler.JobClient [OPTION]... <COMMAND>");
+        System.out.println("Usage: org.safehaus.penrose.connection.ConnectionManagerClient [OPTION]... <COMMAND>");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -?, --help         display this help and exit");
@@ -416,19 +366,17 @@ public class JobClient extends BaseClient implements JobServiceMBean {
         System.out.println();
         System.out.println("Commands:");
         System.out.println();
-        System.out.println("  show jobs in partition <partition name>");
-        System.out.println("  show job <job name> in partition <partition name>>");
+        System.out.println("  show connections in partition <partition name>");
+        System.out.println("  show connection <connection name> in partition <partition name>>");
         System.out.println();
-        System.out.println("  start jobs in partition <partition name>");
-        System.out.println("  start job <job name> in partition <partition name>");
+        System.out.println("  start connections in partition <partition name>");
+        System.out.println("  start connection <connection name> in partition <partition name>");
         System.out.println();
-        System.out.println("  stop jobs in partition <partition name>");
-        System.out.println("  stop job <job name> in partition <partition name>");
+        System.out.println("  stop connections in partition <partition name>");
+        System.out.println("  stop connection <connection name> in partition <partition name>");
         System.out.println();
-        System.out.println("  restart jobs in partition <partition name>");
-        System.out.println("  restart job <job name> in partition <partition name>");
-        System.out.println();
-        System.out.println("  invoke method <method name> in job <job name> in partition <partition name> [with <parameter>...]");
+        System.out.println("  restart connections in partition <partition name>");
+        System.out.println("  restart connection <connection name> in partition <partition name>");
     }
 
     public static void main(String args[]) throws Exception {
@@ -446,7 +394,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
         LongOpt[] longopts = new LongOpt[1];
         longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, '?');
 
-        Getopt getopt = new Getopt("JobClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
+        Getopt getopt = new Getopt("ConnectionManagerClient", args, "-:?dvt:h:p:r:P:D:w:", longopts);
 
         Collection<String> parameters = new ArrayList<String>();
         int c;

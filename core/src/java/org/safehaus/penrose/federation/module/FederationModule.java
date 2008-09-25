@@ -673,7 +673,7 @@ public class FederationModule extends Module implements FederationMBean {
 
         } else {
             for (String map : maps) {
-                module.synchronizeMap(map);
+                module.synchronizeNISMap(map);
             }
         }
     }

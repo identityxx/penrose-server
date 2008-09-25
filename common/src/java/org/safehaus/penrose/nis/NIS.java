@@ -1,8 +1,5 @@
 package org.safehaus.penrose.nis;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 /**
  * @author Endi Sukma Dewata
  */
@@ -23,22 +20,4 @@ public class NIS {
     public final static String FILTER         = "filter";
     public final static String OBJECT_CLASSES = "objectClasses";
     public final static String PAM            = "pam";
-
-    public static Map<String,String> mapLabels = new TreeMap<String,String>();
-
-    static {
-        mapLabels.put("users",      "Users");
-        mapLabels.put("groups",     "Groups");
-        mapLabels.put("hosts",      "Hosts");
-        mapLabels.put("services",   "Services");
-        mapLabels.put("rpcs",       "RPCs");
-        mapLabels.put("netids",     "NetIDs");
-        mapLabels.put("protocols",  "Protocols");
-        mapLabels.put("aliases",    "Aliases");
-        mapLabels.put("netgroups",  "Netgroups");
-        mapLabels.put("ethers",     "Ethers");
-        mapLabels.put("bootparams", "BootParams");
-        mapLabels.put("networks",   "Networks");
-        mapLabels.put("automounts", "Automounts");
-    }
 }

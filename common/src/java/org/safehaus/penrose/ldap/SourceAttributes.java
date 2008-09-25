@@ -55,6 +55,12 @@ public class SourceAttributes implements Serializable, Cloneable {
         add(sourceName, result.getAttributes());
     }
 
+    public void add(String sourceName, SearchResult result) {
+        Attributes attributes = get(sourceName);
+        attributes.addValue("dn", result.getDn().toString());
+        attributes.add(result.getAttributes());
+    }
+
     public void set(String sourceName, String attributeName, Object attributeValue) {
         Attributes attributes = get(sourceName);
         attributes.setValue(attributeName, attributeValue);
