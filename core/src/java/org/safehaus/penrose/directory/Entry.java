@@ -756,7 +756,7 @@ public class Entry implements Cloneable {
             return EMPTY_ENTRIES;
         }
 
-        if (debug) log.debug("Searching children of \""+entryDn+"\".");
+        //if (debug) log.debug("Searching children of \""+entryDn+"\".");
 
         Collection<Entry> results = new ArrayList<Entry>();
 

@@ -788,16 +788,16 @@ public class Session {
 
             SearchResponse sr = new Pipeline(response) {
                 public void add(SearchResult result) throws Exception {
-                    if (debug) log.debug("Returning search result \""+result.getDn()+"\".");
+                    if (debug) log.debug("Result: \""+result.getDn()+"\".");
                     //if (debug) result.getAttributes().print();
                     super.add(result);
                 }
                 public void add(SearchReference reference) throws Exception {
-                    if (debug) log.debug("Returning search referral \""+ reference.getDn()+"\".");
+                    if (debug) log.debug("Reference: \""+ reference.getDn()+"\".");
                     super.add(reference);
                 }
                 public void setException(LDAPException exception) {
-                    if (debug) log.debug("Returning error \""+exception.getMessage()+"\".");
+                    if (debug) log.debug("Error: \""+exception.getMessage()+"\".");
                     super.setException(exception);
                 }
                 public void close() throws Exception {
