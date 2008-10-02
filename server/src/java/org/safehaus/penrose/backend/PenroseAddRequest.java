@@ -1,15 +1,15 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.AddRequest;
-import com.identyx.javabackend.DN;
-import com.identyx.javabackend.Attributes;
+import org.safehaus.penrose.ldapbackend.DN;
+import org.safehaus.penrose.ldapbackend.Attributes;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseAddRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.AddRequest {
+        implements org.safehaus.penrose.ldapbackend.AddRequest {
 
     AddRequest addRequest;
 

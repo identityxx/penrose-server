@@ -47,23 +47,28 @@ public class Session {
     public final static String EVENTS_ENABLED              = "eventsEnabled";
     public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";
 
-    private PenroseConfig penroseConfig;
-    private PenroseContext penroseContext;
-    private SessionContext sessionContext;
+    protected PenroseConfig penroseConfig;
+    protected PenroseContext penroseContext;
+    protected SessionContext sessionContext;
 
-    private EventManager eventManager;
+    protected EventManager eventManager;
 
-    private Object sessionId;
+    protected Object sessionId;
 
-    private DN bindDn;
-    private boolean rootUser;
+    protected DN bindDn;
+    protected boolean rootUser;
 
-    private Map<String,Object> attributes = new HashMap<String,Object>();
+    protected Map<String,Object> attributes = new HashMap<String,Object>();
     
     protected boolean eventsEnabled = true;
     protected long bufferSize;
 
-    private List<SessionListener> listeners = new ArrayList<SessionListener>();
+    protected Map<Integer,Request> requests = new LinkedHashMap<Integer,Request>();
+    protected Map<Integer,Response> response = new LinkedHashMap<Integer,Response>();
+
+    protected List<SessionListener> listeners = new ArrayList<SessionListener>();
+
+    protected int nextMessageId;
 
     public Session() {
     }
@@ -120,6 +125,30 @@ public class Session {
         this.bindDn = bindDn;
     }
 
+    public synchronized Integer getNextMessageId() {
+        return nextMessageId++;
+    }
+
+    public void checkMessageId(Request request, Response response) {
+
+        Integer messageId = request.getMessageId();
+
+        if (messageId == null) {
+            messageId = getNextMessageId();
+            request.setMessageId(messageId);
+        }
+
+        response.setMessageId(messageId);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Abandon
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void abandon(int messageId) throws LDAPException {
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,6 +158,7 @@ public class Session {
     }
 
     public void add(DN dn, Attributes attributes) throws LDAPException {
+
         AddRequest request = new AddRequest();
         request.setDn(dn);
         request.setAttributes(attributes);
@@ -139,35 +169,23 @@ public class Session {
     }
     
     public void add(AddRequest request, AddResponse response) throws LDAPException {
-
         try {
+            checkMessageId(request, response);
+
+            Access.log(this, request);
+
+            int messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            add(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void add(
-            Partition partition,
-            AddRequest request,
-            AddResponse response
-    ) throws LDAPException {
-        try {
-            Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Add "+request.getDn()+".");
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Add "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
-                log.debug(" - Session : "+sessionId);
-                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - Entry   : "+request.getDn());
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - Entry          : "+dn);
                 log.debug("");
 
                 log.debug("Attributes:");
@@ -177,6 +195,9 @@ public class Session {
                 log.debug("Controls: "+request.getControls());
                 log.debug("");
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	AddEvent beforeModifyEvent = new AddEvent(this, AddEvent.BEFORE_ADD, this, partition, request, response);
@@ -224,6 +245,7 @@ public class Session {
     }
 
     public void bind(DN dn, byte[] password) throws LDAPException {
+
         BindRequest request = new BindRequest();
         request.setDn(dn);
         request.setPassword(password);
@@ -239,42 +261,31 @@ public class Session {
     }
 
     public void bind(BindRequest request, BindResponse response) throws LDAPException {
-
         try {
-            DN dn = request.getDn();
+            checkMessageId(request, response);
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            bind(partition, request, response);
+            Access.log(this, request);
 
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void bind(
-            Partition partition,
-            BindRequest request,
-            BindResponse response
-    ) throws LDAPException {
-        try {
+            int messageId = request.getMessageId();
             DN dn = request.getDn();
             byte[] password = request.getPassword();
 
-            Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
-                log.debug(" - Session       : "+sessionId);
-                log.debug(" - Bind DN       : "+dn);
-                log.debug(" - Bind Password : "+(password == null ? "" : new String(password)));
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+dn);
+                log.debug(" - Bind Password  : "+(password == null ? "" : new String(password)));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	BindEvent beforeBindEvent = new BindEvent(this, BindEvent.BEFORE_BIND, this, partition, request, response);
@@ -346,6 +357,7 @@ public class Session {
     }
 
     public boolean compare(DN dn, String attributeName, Object attributeValue) throws LDAPException {
+
         CompareRequest request = new CompareRequest();
         request.setDn(dn);
         request.setAttributeName(attributeName);
@@ -359,36 +371,24 @@ public class Session {
     }
 
     public void compare(CompareRequest request, CompareResponse response) throws LDAPException {
-
         try {
+            checkMessageId(request, response);
+
+            Access.log(this, request);
+
+            int messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            compare(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void compare(
-            Partition partition,
-            CompareRequest request,
-            CompareResponse response
-    ) throws LDAPException {
-        try {
-            Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Compare "+request.getDn()+".");
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Compare "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
-                log.debug(" - Session         : "+sessionId);
-                log.debug(" - Bind DN         : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - DN              : "+request.getDn());
-                log.debug(" - Attribute Name  : "+request.getAttributeName());
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - DN             : "+request.getDn());
+                log.debug(" - Attribute Name : "+request.getAttributeName());
 
                 Object attributeValue = request.getAttributeValue();
 
@@ -405,6 +405,9 @@ public class Session {
 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	CompareEvent beforeCompareEvent = new CompareEvent(this, CompareEvent.BEFORE_COMPARE, this, partition, request, response);
@@ -444,6 +447,7 @@ public class Session {
     }
 
     public void delete(DN dn) throws LDAPException {
+
         DeleteRequest request = new DeleteRequest();
         request.setDn(dn);
 
@@ -453,39 +457,30 @@ public class Session {
     }
 
     public void delete(DeleteRequest request, DeleteResponse response) throws LDAPException {
-
         try {
+            checkMessageId(request, response);
+
+            Access.log(this, request);
+
+            int messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            delete(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void delete(
-            Partition partition,
-            DeleteRequest request,
-            DeleteResponse response
-    ) throws LDAPException {
-        try {
-            Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Delete "+request.getDn()+".");
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Delete "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
-                log.debug(" - Session : "+sessionId);
-                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - DN      : "+request.getDn());
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - DN             : "+dn);
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	DeleteEvent beforeDeleteEvent = new DeleteEvent(this, DeleteEvent.BEFORE_DELETE, this, partition, request, response);
@@ -525,6 +520,7 @@ public class Session {
     }
 
     public void modify(DN dn, Collection<Modification> modifications) throws LDAPException {
+
         ModifyRequest request = new ModifyRequest();
         request.setDn(dn);
         request.setModifications(modifications);
@@ -535,35 +531,22 @@ public class Session {
     }
 
     public void modify(ModifyRequest request, ModifyResponse response) throws LDAPException {
-
         try {
+            checkMessageId(request, response);
+            Access.log(this, request);
+
+            int messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            modify(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void modify(
-            Partition partition,
-            ModifyRequest request,
-            ModifyResponse response
-    ) throws LDAPException {
-        try {
-            Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Modify "+request.getDn()+".");
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Modify "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
-                log.debug(" - Session : "+sessionId);
-                log.debug(" - Bind DN : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - DN      : "+request.getDn());
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - DN             : "+dn);
                 log.debug("");
 
                 log.debug("Modifications:");
@@ -581,6 +564,9 @@ public class Session {
 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	ModifyEvent beforeModifyEvent = new ModifyEvent(this, ModifyEvent.BEFORE_MODIFY, this, partition, request, response);
@@ -624,6 +610,7 @@ public class Session {
     }
 
     public void modrdn(DN dn, RDN newRdn, boolean deleteOldRdn) throws LDAPException {
+
         ModRdnRequest request = new ModRdnRequest();
         request.setDn(dn);
         request.setNewRdn(newRdn);
@@ -635,41 +622,32 @@ public class Session {
     }
 
     public void modrdn(ModRdnRequest request, ModRdnResponse response) throws LDAPException {
-
         try {
-            DN dn = request.getDn();
-
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            modrdn(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void modrdn(
-            Partition partition,
-            ModRdnRequest request,
-            ModRdnResponse response
-    ) throws LDAPException {
-        try {
+            checkMessageId(request, response);
             Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": ModRDN "+request.getDn()+".");
+
+            int messageId = request.getMessageId();
+            DN dn = request.getDn();
+            RDN newRdn = request.getNewRdn();
+
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Rename "+dn+" to "+newRdn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
                 log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - DN             : "+request.getDn());
-                log.debug(" - New RDN        : "+request.getNewRdn());
+                log.debug(" - DN             : "+dn);
+                log.debug(" - New RDN        : "+newRdn);
                 log.debug(" - Delete old RDN : "+request.getDeleteOldRdn());
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             if (eventsEnabled) {
             	ModRdnEvent beforeModRdnEvent = new ModRdnEvent(this, ModRdnEvent.BEFORE_MODRDN, this, partition, request, response);
@@ -743,43 +721,35 @@ public class Session {
         return response;
     }
 
-    public void search(SearchRequest request, SearchResponse response) throws LDAPException {
+    public void search(final SearchRequest request, final SearchResponse response) throws LDAPException {
 
         try {
-            DN dn = request.getDn();
-
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-            search(partition, request, response);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void search(
-            final Partition partition,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws LDAPException {
-        try {
+            checkMessageId(request, response);
             Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Search "+request.getDn()+" with filter "+request.getFilter()+".");
+
+            int messageId = request.getMessageId();
+            DN dn = request.getDn();
+            Filter filter = request.getFilter();
+
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Search "+dn+" with filter "+filter+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
-                log.debug(" - Session    : "+sessionId);
-                log.debug(" - Bind DN    : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - Base DN    : "+request.getDn());
-                log.debug(" - Scope      : "+LDAP.getScope(request.getScope()));
-                log.debug(" - Filter     : "+request.getFilter());
-                log.debug(" - Attributes : "+request.getAttributes());
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - Base DN        : "+dn);
+                log.debug(" - Scope          : "+LDAP.getScope(request.getScope()));
+                log.debug(" - Filter         : "+filter);
+                log.debug(" - Attributes     : "+request.getAttributes());
                 log.debug("");
                 
                 log.debug("Controls: "+request.getControls());
             }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition = partitionManager.getPartition(dn);
 
             final Session session = this;
 
@@ -839,37 +809,31 @@ public class Session {
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
 
         try {
-            if (!rootUser && bindDn != null) {
-                PartitionManager partitionManager = penroseContext.getPartitionManager();
-                Partition partition = partitionManager.getPartition(bindDn);
-                unbind(partition, request, response);
-
-            } else {
-                unbind(null, request, response);
-            }
-            
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw LDAP.createException(e);
-        }
-    }
-
-    public void unbind(
-            Partition partition,
-            UnbindRequest request,
-            UnbindResponse response
-    ) throws LDAPException {
-        try {
+            checkMessageId(request, response);
             Access.log(this, request);
-            if (warn) log.warn("Session "+sessionId+": Unbind.");
+
+            int messageId = request.getMessageId();
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Unbind.");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("UNBIND:");
-                log.debug(" - Bind DN: "+(bindDn == null ? "" : bindDn));
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
+            }
+
+            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            Partition partition;
+
+            if (!rootUser && bindDn != null) {
+                partition = partitionManager.getPartition(bindDn);
+
+            } else {
+                partition = partitionManager.getPartition("DEFAULT");
             }
 
             if (eventsEnabled) {

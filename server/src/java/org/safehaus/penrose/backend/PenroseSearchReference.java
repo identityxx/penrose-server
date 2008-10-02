@@ -1,8 +1,8 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.Control;
-import com.identyx.javabackend.DN;
-import com.identyx.javabackend.SearchReference;
+import org.safehaus.penrose.ldapbackend.Control;
+import org.safehaus.penrose.ldapbackend.DN;
+import org.safehaus.penrose.ldapbackend.SearchReference;
 
 import java.util.ArrayList;
 import java.util.Collection;

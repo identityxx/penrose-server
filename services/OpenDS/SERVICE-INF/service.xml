@@ -7,4 +7,9 @@
 
   <service-class>org.safehaus.penrose.opends.OpenDSLDAPService</service-class>
 
+  <parameter>
+    <param-name>ldapBackendPlugin</param-name>
+    <param-value>cn=LDAP Backend,cn=Plugins,cn=config</param-value>
+  </parameter>
+
 </service>

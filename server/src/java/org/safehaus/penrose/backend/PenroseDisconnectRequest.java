@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.DisconnectRequest;
+import org.safehaus.penrose.ldapbackend.DisconnectRequest;
 
 /**
  * @author Endi Sukma Dewata

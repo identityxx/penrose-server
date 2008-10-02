@@ -9,7 +9,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseAttributes implements com.identyx.javabackend.Attributes {
+public class PenroseAttributes implements org.safehaus.penrose.ldapbackend.Attributes {
 
     Attributes attributes;
 
@@ -21,25 +21,25 @@ public class PenroseAttributes implements com.identyx.javabackend.Attributes {
         return attributes.getNames();
     }
 
-    public Collection<com.identyx.javabackend.Attribute> getAll() throws Exception {
-        Collection<com.identyx.javabackend.Attribute> list = new ArrayList<com.identyx.javabackend.Attribute>();
+    public Collection<org.safehaus.penrose.ldapbackend.Attribute> getAll() throws Exception {
+        Collection<org.safehaus.penrose.ldapbackend.Attribute> list = new ArrayList<org.safehaus.penrose.ldapbackend.Attribute>();
         for (Attribute attribute : attributes.getAll()) {
             list.add(new PenroseAttribute(attribute));
         }
         return list;
     }
 
-    public void add(com.identyx.javabackend.Attribute attribute) throws Exception {
+    public void add(org.safehaus.penrose.ldapbackend.Attribute attribute) throws Exception {
         PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
         attributes.add(penroseAttribute.getAttribute());
     }
 
-    public void set(com.identyx.javabackend.Attribute attribute) throws Exception {
+    public void set(org.safehaus.penrose.ldapbackend.Attribute attribute) throws Exception {
         PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
         attributes.set(penroseAttribute.getAttribute());
     }
 
-    public com.identyx.javabackend.Attribute get(String name) throws Exception {
+    public org.safehaus.penrose.ldapbackend.Attribute get(String name) throws Exception {
         Attribute attribute = attributes.get(name);
         return new PenroseAttribute(attribute);
     }

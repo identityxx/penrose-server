@@ -5,12 +5,11 @@ import org.safehaus.penrose.control.Control;
 
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseRequest implements com.identyx.javabackend.Request {
+public class PenroseRequest implements org.safehaus.penrose.ldapbackend.Request {
 
     Request request;
 
@@ -26,29 +25,36 @@ public class PenroseRequest implements com.identyx.javabackend.Request {
         this.request = request;
     }
 
-    public void addControl(com.identyx.javabackend.Control control) throws Exception {
+    public void setMessageId(Integer messageId) throws Exception {
+        request.setMessageId(messageId);
+    }
+
+    public Integer getMessageId() throws Exception  {
+        return request.getMessageId();
+    }
+
+    public void addControl(org.safehaus.penrose.ldapbackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         request.addControl(penroseControl.getControl());
     }
 
-    public void removeControl(com.identyx.javabackend.Control control) throws Exception {
+    public void removeControl(org.safehaus.penrose.ldapbackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         request.removeControl(penroseControl.getControl());
     }
 
-    public void setControls(Collection controls) throws Exception {
+    public void setControls(Collection<org.safehaus.penrose.ldapbackend.Control> controls) throws Exception {
         Collection<Control> list = new ArrayList<Control>();
-        for (Iterator i=controls.iterator(); i.hasNext(); ) {
-            PenroseControl control = (PenroseControl)i.next();
-            list.add(control.getControl());
+        for (org.safehaus.penrose.ldapbackend.Control control : controls) {
+            PenroseControl penroseControl = (PenroseControl)control;
+            list.add(penroseControl.getControl());
         }
         request.setControls(list);
     }
 
-    public Collection getControls() throws Exception {
-        Collection list = new ArrayList();
-        for (Iterator i= request.getControls().iterator(); i.hasNext(); ) {
-            org.safehaus.penrose.control.Control control = (org.safehaus.penrose.control.Control)i.next();
+    public Collection<org.safehaus.penrose.ldapbackend.Control> getControls() throws Exception {
+        Collection<org.safehaus.penrose.ldapbackend.Control> list = new ArrayList<org.safehaus.penrose.ldapbackend.Control>();
+        for (Control control : request.getControls()) {
             list.add(new PenroseControl(control));
         }
         return list;

@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.BindResponse;
  */
 public class PenroseBindResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.BindResponse {
+        implements org.safehaus.penrose.ldapbackend.BindResponse {
 
     BindResponse bindResponse;
 

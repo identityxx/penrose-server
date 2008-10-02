@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.DeleteResponse;
  */
 public class PenroseDeleteResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.DeleteResponse {
+        implements org.safehaus.penrose.ldapbackend.DeleteResponse {
 
     DeleteResponse deleteResponse;
 

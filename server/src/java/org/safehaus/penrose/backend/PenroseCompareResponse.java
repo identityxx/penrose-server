@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.CompareResponse;
  */
 public class PenroseCompareResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.CompareResponse {
+        implements org.safehaus.penrose.ldapbackend.CompareResponse {
 
     CompareResponse compareResponse;
 

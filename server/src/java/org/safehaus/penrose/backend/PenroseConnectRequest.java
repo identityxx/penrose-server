@@ -1,6 +1,6 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.ConnectRequest;
+import org.safehaus.penrose.ldapbackend.ConnectRequest;
 
 /**
  * @author Endi Sukma Dewata

@@ -18,6 +18,7 @@ public abstract class BaseService implements DynamicMBean {
 
     public Logger log = Logger.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
+    public boolean info = log.isInfoEnabled();
 
     protected PenroseJMXService jmxService;
 
@@ -68,7 +69,7 @@ public abstract class BaseService implements DynamicMBean {
     public abstract Object getObject();
 
     public Object getAttribute(String name) throws AttributeNotFoundException, MBeanException, ReflectionException {
-        if (debug) log.debug("Getting attribute "+name+" from "+getObjectName());
+        if (info) log.info("Getting attribute "+name+" from "+getObjectName()+".");
 
         try {
             Class[] paramClass = new Class[0];
@@ -119,13 +120,18 @@ public abstract class BaseService implements DynamicMBean {
             Exception cause = (Exception)e.getCause();
             log.error(cause.getMessage(), cause);
             throw new MBeanException(cause);
+
+        } finally {
+            if (info) log.info("Get attribute completed.");
         }
     }
 
     public void setAttribute(Attribute attribute) throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+
         String name = attribute.getName();
         Object value = attribute.getValue();
-        if (debug) log.debug("Setting attribute "+name+" in "+getObjectName()+": "+value);
+
+        if (info) log.info("Setting attribute "+name+" in "+getObjectName()+".");
 
         try {
             Class[] paramClass = new Class[] { value.getClass() };
@@ -163,6 +169,9 @@ public abstract class BaseService implements DynamicMBean {
             Exception cause = (Exception)e.getCause();
             log.error(cause.getMessage(), cause);
             throw new MBeanException(cause);
+
+        } finally {
+            if (info) log.info("Set attribute "+name+" in "+getObjectName()+" completed.");
         }
     }
 
@@ -196,7 +205,9 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public Object invoke(String operation, Object[] paramValues, String[] paramTypes) throws MBeanException, ReflectionException {
+
         String signature = ClassUtil.getSignature(operation, paramTypes);
+        if (info) log.info("Invoking method "+signature+" in "+getObjectName()+".");
 
         try {
             Class[] paramClass = new Class[paramTypes.length];
@@ -208,12 +219,11 @@ public abstract class BaseService implements DynamicMBean {
             Class clazz = getClass();
 
             try {
-                if (debug) log.debug("Invoking method "+signature+" on "+clazz.getName()+".");
                 Method method = clazz.getMethod(operation, paramClass);
                 return method.invoke(this, paramValues);
 
             } catch (NoSuchMethodException e) {
-                log.error(e.getMessage());
+                if (debug) log.debug("No such method in "+clazz.getName()+".");
                 // ignore
             }
 
@@ -221,16 +231,15 @@ public abstract class BaseService implements DynamicMBean {
             Class objectClass = object.getClass();
 
             try {
-                if (debug) log.debug("Invoking method "+signature+" on "+objectClass.getName()+".");
                 Method method = objectClass.getMethod(operation, paramClass);
                 return method.invoke(object, paramValues);
 
             } catch (NoSuchMethodException e) {
-                log.error(e.getMessage());
+                if (debug) log.debug("No such method in "+objectClass.getName()+".");
                 // ignore
             }
 
-            throw new NoSuchMethodException(signature);
+            throw new NoSuchMethodException("No such method: "+signature);
 
         } catch (ClassNotFoundException e) {
             throw new ReflectionException(e);
@@ -245,6 +254,9 @@ public abstract class BaseService implements DynamicMBean {
             Exception cause = (Exception)e.getCause();
             log.error(cause.getMessage(), cause);
             throw new MBeanException(cause);
+
+        } finally {
+            if (info) log.info("Invoke method completed.");
         }
     }
 

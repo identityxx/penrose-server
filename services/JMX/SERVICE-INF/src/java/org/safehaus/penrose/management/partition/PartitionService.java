@@ -729,10 +729,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             AddResponse response
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Adding "+request.getDn()+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             partition.add(session, request, response);
 
             int rc = response.getReturnCode();
@@ -742,6 +744,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         } finally {
             session.close();
+            if (debug) log.debug("Add completed.");
         }
     }
 
@@ -790,10 +793,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             DeleteResponse response
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Deleting "+request.getDn()+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             partition.delete(session, request, response);
 
             int rc = response.getReturnCode();
@@ -803,6 +808,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         } finally {
             session.close();
+            if (debug) log.debug("Delete completed.");
         }
     }
 
@@ -828,14 +834,17 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             DN dn
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Finding "+dn+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             return partition.find(session, dn);
 
         } finally {
             session.close();
+            if (debug) log.debug("Find completed.");
         }
     }
 
@@ -890,10 +899,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             ModifyResponse response
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Modifying "+request.getDn()+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             partition.modify(session, request, response);
 
             int rc = response.getReturnCode();
@@ -903,6 +914,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         } finally {
             session.close();
+            if (debug) log.debug("Modify completed.");
         }
     }
 
@@ -963,10 +975,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             ModRdnResponse response
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Renaming "+request.getDn()+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             partition.modrdn(session, request, response);
 
             int rc = response.getReturnCode();
@@ -976,6 +990,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         } finally {
             session.close();
+            if (debug) log.debug("Rename completed.");
         }
     }
 
@@ -1036,10 +1051,12 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
             SearchResponse response
     ) throws Exception {
 
+        Partition partition = getPartition();
+        if (debug) log.debug("Searching "+request.getDn()+".");
+
         Session session = getSession();
 
         try {
-            Partition partition = getPartition();
             partition.search(session, request, response);
 
             int rc = response.waitFor();
@@ -1049,6 +1066,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
 
         } finally {
             session.close();
+            if (debug) log.debug("Search completed.");
         }
     }
 

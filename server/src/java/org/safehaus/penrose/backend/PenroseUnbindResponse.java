@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.UnbindResponse;
  */
 public class PenroseUnbindResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.UnbindResponse {
+        implements org.safehaus.penrose.ldapbackend.UnbindResponse {
 
     UnbindResponse unbindResponse;
 

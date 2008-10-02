@@ -19,10 +19,30 @@ package org.safehaus.penrose.backend;
 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.ldapbackend.*;
+import org.safehaus.penrose.ldapbackend.ConnectRequest;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.AddRequest;
+import org.safehaus.penrose.ldap.AddResponse;
+import org.safehaus.penrose.ldap.Attributes;
+import org.safehaus.penrose.ldap.BindRequest;
+import org.safehaus.penrose.ldap.BindResponse;
+import org.safehaus.penrose.ldap.CompareRequest;
+import org.safehaus.penrose.ldap.CompareResponse;
+import org.safehaus.penrose.ldap.DeleteRequest;
+import org.safehaus.penrose.ldap.DeleteResponse;
+import org.safehaus.penrose.ldap.DN;
+import org.safehaus.penrose.ldap.ModifyRequest;
+import org.safehaus.penrose.ldap.ModifyResponse;
+import org.safehaus.penrose.ldap.ModRdnRequest;
+import org.safehaus.penrose.ldap.ModRdnResponse;
+import org.safehaus.penrose.ldap.RDN;
+import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.UnbindRequest;
+import org.safehaus.penrose.ldap.UnbindResponse;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
 
@@ -31,12 +51,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.identyx.javabackend.Connection;
+import org.safehaus.penrose.ldapbackend.Connection;
+import org.safehaus.penrose.ldapbackend.DisconnectRequest;
+import org.safehaus.penrose.ldapbackend.Attribute;
+import org.safehaus.penrose.ldapbackend.Modification;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseBackend implements com.identyx.javabackend.Backend {
+public class PenroseBackend implements Backend {
 
     public File home;
 
@@ -68,7 +91,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return contains(new DN(dn));
     }
 
-    public boolean contains(com.identyx.javabackend.DN dn) throws Exception {
+    public boolean contains(org.safehaus.penrose.ldapbackend.DN dn) throws Exception {
         PenroseDN penroseDn = (PenroseDN)dn;
         return contains(penroseDn.getDn());
     }
@@ -86,15 +109,15 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return sessions.get(connectionId);
     }
 
-    public com.identyx.javabackend.ConnectRequest createConnectRequest() throws Exception {
+    public ConnectRequest createConnectRequest() throws Exception {
         return new PenroseConnectRequest();
     }
 
-    public com.identyx.javabackend.DisconnectRequest createDisconnectRequest() throws Exception {
+    public DisconnectRequest createDisconnectRequest() throws Exception {
         return new PenroseDisconnectRequest();
     }
 
-    public Connection connect(com.identyx.javabackend.ConnectRequest request) throws Exception {
+    public Connection connect(ConnectRequest request) throws Exception {
 
         Penrose penrose = penroseServer.getPenrose();
         PenroseConnection session = new PenroseConnection(penrose.createSession());
@@ -106,7 +129,7 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         return session;
     }
 
-    public void disconnect(com.identyx.javabackend.DisconnectRequest request) throws Exception {
+    public void disconnect(DisconnectRequest request) throws Exception {
 
         PenroseConnection session = sessions.remove(request.getConnectionId());
         if (session == null) return;
@@ -115,95 +138,95 @@ public class PenroseBackend implements com.identyx.javabackend.Backend {
         session.close();
     }
 
-    public com.identyx.javabackend.Control createControl(String oid, byte[] value, boolean critical) throws Exception {
+    public org.safehaus.penrose.ldapbackend.Control createControl(String oid, byte[] value, boolean critical) throws Exception {
         return new PenroseControl(new Control(oid, value, critical));
     }
 
-    public com.identyx.javabackend.DN createDn(String dn) throws Exception {
+    public org.safehaus.penrose.ldapbackend.DN createDn(String dn) throws Exception {
         return new PenroseDN(new DN(dn));
     }
 
-    public com.identyx.javabackend.RDN createRdn(String rdn) throws Exception {
+    public org.safehaus.penrose.ldapbackend.RDN createRdn(String rdn) throws Exception {
         return new PenroseRDN(new RDN(rdn));
     }
 
-    public com.identyx.javabackend.Filter createFilter(String filter) throws Exception {
+    public Filter createFilter(String filter) throws Exception {
         return new PenroseFilter(FilterTool.parseFilter(filter));
     }
 
-    public com.identyx.javabackend.Attributes createAttributes() throws Exception {
+    public org.safehaus.penrose.ldapbackend.Attributes createAttributes() throws Exception {
         return new PenroseAttributes(new Attributes());
     }
 
-    public com.identyx.javabackend.Attribute createAttribute(String name) throws Exception {
+    public Attribute createAttribute(String name) throws Exception {
         return new PenroseAttribute(name);
     }
 
-    public com.identyx.javabackend.Modification createModification(int type, com.identyx.javabackend.Attribute attribute) throws Exception {
+    public Modification createModification(int type, Attribute attribute) throws Exception {
         return new PenroseModification(type, attribute);
     }
 
-    public com.identyx.javabackend.AddRequest createAddRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.AddRequest createAddRequest() throws Exception {
         return new PenroseAddRequest(new AddRequest());
     }
 
-    public com.identyx.javabackend.AddResponse createAddResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.AddResponse createAddResponse() throws Exception {
         return new PenroseAddResponse(new AddResponse());
     }
 
-    public com.identyx.javabackend.BindRequest createBindRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.BindRequest createBindRequest() throws Exception {
         return new PenroseBindRequest(new BindRequest());
     }
 
-    public com.identyx.javabackend.BindResponse createBindResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.BindResponse createBindResponse() throws Exception {
         return new PenroseBindResponse(new BindResponse());
     }
 
-    public com.identyx.javabackend.CompareRequest createCompareRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.CompareRequest createCompareRequest() throws Exception {
         return new PenroseCompareRequest(new CompareRequest());
     }
 
-    public com.identyx.javabackend.CompareResponse createCompareResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.CompareResponse createCompareResponse() throws Exception {
         return new PenroseCompareResponse(new CompareResponse());
     }
 
-    public com.identyx.javabackend.DeleteRequest createDeleteRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.DeleteRequest createDeleteRequest() throws Exception {
         return new PenroseDeleteRequest(new DeleteRequest());
     }
 
-    public com.identyx.javabackend.DeleteResponse createDeleteResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.DeleteResponse createDeleteResponse() throws Exception {
         return new PenroseDeleteResponse(new DeleteResponse());
     }
 
-    public com.identyx.javabackend.ModifyRequest createModifyRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.ModifyRequest createModifyRequest() throws Exception {
         return new PenroseModifyRequest(new ModifyRequest());
     }
 
-    public com.identyx.javabackend.ModifyResponse createModifyResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.ModifyResponse createModifyResponse() throws Exception {
         return new PenroseModifyResponse(new ModifyResponse());
     }
 
-    public com.identyx.javabackend.ModRdnRequest createModRdnRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.ModRdnRequest createModRdnRequest() throws Exception {
         return new PenroseModRdnRequest(new ModRdnRequest());
     }
 
-    public com.identyx.javabackend.ModRdnResponse createModRdnResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.ModRdnResponse createModRdnResponse() throws Exception {
         return new PenroseModRdnResponse(new ModRdnResponse());
     }
 
-    public com.identyx.javabackend.SearchRequest createSearchRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.SearchRequest createSearchRequest() throws Exception {
         return new PenroseSearchRequest(new SearchRequest());
     }
 
-    public com.identyx.javabackend.SearchResponse createSearchResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.SearchResponse createSearchResponse() throws Exception {
         return new PenroseSearchResponse(new SearchResponse());
     }
 
-    public com.identyx.javabackend.UnbindRequest createUnbindRequest() throws Exception {
+    public org.safehaus.penrose.ldapbackend.UnbindRequest createUnbindRequest() throws Exception {
         return new PenroseUnbindRequest(new UnbindRequest());
     }
 
-    public com.identyx.javabackend.UnbindResponse createUnbindResponse() throws Exception {
+    public org.safehaus.penrose.ldapbackend.UnbindResponse createUnbindResponse() throws Exception {
         return new PenroseUnbindResponse(new UnbindResponse());
     }
 }

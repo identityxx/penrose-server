@@ -1,12 +1,13 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.Attributes;
-import com.identyx.javabackend.Control;
-import com.identyx.javabackend.DN;
-import com.identyx.javabackend.SearchResult;
+import org.safehaus.penrose.ldapbackend.Attributes;
+import org.safehaus.penrose.ldapbackend.DN;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.safehaus.penrose.ldapbackend.Control;
+import org.safehaus.penrose.ldapbackend.*;
 
 /**
  * @author Endi S. Dewata

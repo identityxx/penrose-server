@@ -1,11 +1,12 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.Modification;
+import org.safehaus.penrose.ldapbackend.Attribute;
 
 /**
  * @author Endi S. Dewata
  */
-public class PenroseModification implements com.identyx.javabackend.Modification {
+public class PenroseModification implements org.safehaus.penrose.ldapbackend.Modification {
 
     Modification modification;
 
@@ -13,7 +14,7 @@ public class PenroseModification implements com.identyx.javabackend.Modification
         this.modification = modification;
     }
     
-    public PenroseModification(int type, com.identyx.javabackend.Attribute attribute) throws Exception {
+    public PenroseModification(int type, Attribute attribute) throws Exception {
         PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
         this.modification = new Modification(type, penroseAttribute.getAttribute());
     }
@@ -26,12 +27,12 @@ public class PenroseModification implements com.identyx.javabackend.Modification
         return modification.getType();
     }
 
-    public void setAttribute(com.identyx.javabackend.Attribute attribute) throws Exception {
+    public void setAttribute(Attribute attribute) throws Exception {
         PenroseAttribute penroseAttribute = (PenroseAttribute)attribute;
         modification.setAttribute(penroseAttribute.getAttribute());
     }
 
-    public com.identyx.javabackend.Attribute getAttribute() throws Exception {
+    public Attribute getAttribute() throws Exception {
         return new PenroseAttribute(modification.getAttribute());
     }
 

@@ -1,6 +1,7 @@
 package org.safehaus.penrose.management;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.util.ClassUtil;
 
 import javax.management.*;
 
@@ -40,32 +41,38 @@ public class BaseClient {
     }
 
     public Object invoke(String method) throws Exception {
-
-        log.debug("Invoke method "+method+"() on "+objectName+".");
-
-        return connection.invoke(objectName, method, null, null);
+        return invoke(method, null, null);
     }
     
-    public Object invoke(String method, Object[] paramValues, String[] paramClassNames) throws Exception {
+    public Object invoke(String method, Object[] paramValues, String[] paramTypes) throws Exception {
 
-        log.debug("Invoking method "+method+"() on "+ objectName +".");
+        String signature = ClassUtil.getSignature(method, paramTypes);
+        log.debug("Invoking method "+signature+" on "+objectName+".");
 
-        return connection.invoke(objectName, method, paramValues, paramClassNames);
+        Object object = connection.invoke(objectName, method, paramValues, paramTypes);
+        log.debug("Invoke method completed.");
+
+        return object;
     }
 
     public Object getAttribute(String attributeName) throws Exception {
 
-        log.debug("Getting attribute "+ attributeName +" from "+name+".");
+        log.debug("Getting attribute "+ attributeName +" from "+objectName+".");
 
-        return connection.getAttribute(objectName, attributeName);
+        Object object = connection.getAttribute(objectName, attributeName);
+        log.debug("Get attribute completed.");
+
+        return object;
     }
 
     public void setAttribute(String attributeName, Object value) throws Exception {
 
-        log.debug("Setting attribute "+ attributeName +" from "+name+".");
+        log.debug("Setting attribute "+ attributeName +" from "+objectName+".");
 
         Attribute attribute = new Attribute(attributeName, value);
         connection.setAttribute(objectName, attribute);
+
+        log.debug("Set attribute completed.");
     }
 
     public PenroseClient getClient() {

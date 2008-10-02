@@ -1,14 +1,14 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.BindRequest;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseBindRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.BindRequest {
+        implements org.safehaus.penrose.ldapbackend.BindRequest {
 
     BindRequest bindRequest;
 

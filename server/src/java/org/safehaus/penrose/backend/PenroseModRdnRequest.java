@@ -1,15 +1,15 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.ModRdnRequest;
-import com.identyx.javabackend.DN;
-import com.identyx.javabackend.RDN;
+import org.safehaus.penrose.ldapbackend.DN;
+import org.safehaus.penrose.ldapbackend.RDN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseModRdnRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.ModRdnRequest {
+        implements org.safehaus.penrose.ldapbackend.ModRdnRequest {
 
     ModRdnRequest modRdnRequest;
 

@@ -7,23 +7,24 @@ import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.filter.Filter;
 
+import java.util.Collection;
+
 /**
  * @author Endi Sukma Dewata
  */
 public class Access {
 
     public static Logger log = LoggerFactory.getLogger(Access.class);
+    public static boolean warn = log.isWarnEnabled();
 
     public static void log(Session session, ConnectRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("CONNECT session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
-
-            sb.append("CONNECT");
+            sb.append("\"");
 
             if (request.getClientAddress() != null) {
                 sb.append(" from=\"");
@@ -49,14 +50,12 @@ public class Access {
 
     public static void log(Session session, DisconnectRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("DISCONNECT session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
-
-            sb.append("DISCONNECT");
+            sb.append("\"");
 
             log.warn(sb.toString());
         }
@@ -64,14 +63,21 @@ public class Access {
 
     public static void log(Session session, AddRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("ADD session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("ADD dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\"");
 
@@ -81,14 +87,21 @@ public class Access {
 
     public static void log(Session session, AddResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("ADD session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("ADD result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -98,14 +111,21 @@ public class Access {
 
     public static void log(Session session, BindRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("BIND session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("BIND dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\"");
 
@@ -115,14 +135,21 @@ public class Access {
 
     public static void log(Session session, BindResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("BIND session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("BIND result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -138,14 +165,21 @@ public class Access {
 
     public static void log(Session session, CompareRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("COMPARE session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("COMPARE dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\" attr=\"");
             sb.append(request.getAttributeName());
@@ -157,14 +191,21 @@ public class Access {
 
     public static void log(Session session, CompareResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("COMPARE session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("COMPARE result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -174,14 +215,21 @@ public class Access {
 
     public static void log(Session session, DeleteRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("DELETE session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("DELETE dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\"");
 
@@ -191,14 +239,21 @@ public class Access {
 
     public static void log(Session session, DeleteResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("DELETE session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("DELETE result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -208,14 +263,21 @@ public class Access {
 
     public static void log(Session session, ModifyRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("MODIFY session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("MODIFY dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\"");
 
@@ -225,14 +287,21 @@ public class Access {
 
     public static void log(Session session, ModifyResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("MODIFY session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("MODIFY result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -242,14 +311,21 @@ public class Access {
 
     public static void log(Session session, ModRdnRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("MODRDN session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("MODRDN dn=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" dn=\"");
             sb.append(request.getDn());
             sb.append("\" newRdn=\"");
             sb.append(request.getNewRdn());
@@ -263,14 +339,21 @@ public class Access {
 
     public static void log(Session session, ModRdnResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("MODRDN session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("MODRDN result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
@@ -280,14 +363,21 @@ public class Access {
 
     public static void log(Session session, SearchRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("SEARCH session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("SEARCH base=\"");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" base=\"");
             sb.append(request.getDn());
             sb.append("\" scope=\"");
             sb.append(LDAP.getScope(request.getScope()));
@@ -296,19 +386,24 @@ public class Access {
             Filter filter = request.getFilter();
             sb.append(filter == null ? "(objectClass=*)" : filter.toString());
 
-            sb.append("\" attrs=\"");
-
-            boolean first = true;
-            for (String attribute : request.getAttributes()) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(",");
-                }
-                sb.append(attribute);
-            }
-            
             sb.append("\"");
+
+            Collection<String> attributes = request.getAttributes();
+            if (attributes.isEmpty()) {
+                sb.append(" attrs=\"");
+
+                boolean first = true;
+                for (String attribute : attributes) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        sb.append(",");
+                    }
+                    sb.append(attribute);
+                }
+
+                sb.append("\"");
+            }
 
             log.warn(sb.toString());
         }
@@ -316,19 +411,24 @@ public class Access {
 
     public static void log(Session session, SearchResponse response) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("SEARCH session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("SEARCH result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\" entries=\"");
-
             sb.append(response.getTotalCount());
-
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -337,34 +437,46 @@ public class Access {
 
     public static void log(Session session, UnbindRequest request) {
 
-        if (log.isWarnEnabled()) {
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("UNBIND session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("UNBIND");
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
 
             log.warn(sb.toString());
         }
     }
 
     public static void log(Session session, UnbindResponse response) {
-
-        if (log.isWarnEnabled()) {
+/*
+        if (warn) {
             StringBuilder sb = new StringBuilder();
 
-            sb.append("session=\"");
+            sb.append("UNBIND session=\"");
             sb.append(session.getSessionId());
-            sb.append("\" - ");
+            sb.append("\"");
 
-            sb.append("UNBIND result=\"");
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\"");
 
             log.warn(sb.toString());
         }
+*/
     }
-
 }

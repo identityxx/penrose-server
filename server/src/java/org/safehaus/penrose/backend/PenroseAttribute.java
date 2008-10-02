@@ -7,7 +7,7 @@ import java.util.Collection;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseAttribute implements com.identyx.javabackend.Attribute {
+public class PenroseAttribute implements org.safehaus.penrose.ldapbackend.Attribute {
 
     Attribute attribute;
 

@@ -1,14 +1,14 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.CompareRequest;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseCompareRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.CompareRequest {
+        implements org.safehaus.penrose.ldapbackend.CompareRequest {
 
     CompareRequest compareRequest;
 

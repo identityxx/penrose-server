@@ -1,18 +1,18 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.SearchRequest;
+import org.safehaus.penrose.ldapbackend.Filter;
 
 import java.util.Collection;
 
-import com.identyx.javabackend.DN;
-import com.identyx.javabackend.Filter;
+import org.safehaus.penrose.ldapbackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseSearchRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.SearchRequest {
+        implements org.safehaus.penrose.ldapbackend.SearchRequest {
 
     SearchRequest searchRequest;
 
@@ -63,11 +63,11 @@ public class PenroseSearchRequest
         return searchRequest.getSizeLimit();
     }
 
-    public void setAttributes(Collection attributes) throws Exception {
+    public void setAttributes(Collection<String> attributes) throws Exception {
         searchRequest.setAttributes(attributes);
     }
 
-    public Collection getAttributes() throws Exception {
+    public Collection<String> getAttributes() throws Exception {
         return searchRequest.getAttributes();
     }
 

@@ -8,6 +8,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.attributeSyntax.AttributeSyntax;
 import org.safehaus.penrose.ldap.LDAPService;
+import org.safehaus.penrose.ldapbackend.mina.MinaHandler;
 import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
 import org.apache.mina.transport.socket.nio.SocketSessionConfig;
@@ -19,8 +20,7 @@ import java.util.*;
 import edu.emory.mathcs.backport.java.util.concurrent.TimeUnit;
 import edu.emory.mathcs.backport.java.util.concurrent.LinkedBlockingQueue;
 import edu.emory.mathcs.backport.java.util.concurrent.ThreadPoolExecutor;
-import com.identyx.javabackend.Backend;
-import com.identyx.javabackend.mina.MinaHandler;
+import org.safehaus.penrose.ldapbackend.Backend;
 
 /**
  * @author Endi S. Dewata

@@ -56,6 +56,7 @@ public class Partition implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
+    public boolean info = log.isInfoEnabled();
 
     public final static String     SCHEMA_CHECKING         = "schemaChecking";
     public final static boolean    DEFAULT_SCHEMA_CHECKING = false; // disabled

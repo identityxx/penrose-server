@@ -10,7 +10,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseResponse implements com.identyx.javabackend.Response {
+public class PenroseResponse implements org.safehaus.penrose.ldapbackend.Response {
 
     Response response;
 
@@ -26,27 +26,35 @@ public class PenroseResponse implements com.identyx.javabackend.Response {
         this.response = response;
     }
 
-    public void addControl(com.identyx.javabackend.Control control) throws Exception {
+    public void setMessageId(Integer messageId) throws Exception {
+        response.setMessageId(messageId);
+    }
+
+    public Integer getMessageId() throws Exception  {
+        return response.getMessageId();
+    }
+
+    public void addControl(org.safehaus.penrose.ldapbackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         response.addControl(penroseControl.getControl());
     }
 
-    public void removeControl(com.identyx.javabackend.Control control) throws Exception {
+    public void removeControl(org.safehaus.penrose.ldapbackend.Control control) throws Exception {
         PenroseControl penroseControl = (PenroseControl)control;
         response.removeControl(penroseControl.getControl());
     }
 
-    public void setControls(Collection<com.identyx.javabackend.Control> controls) throws Exception {
+    public void setControls(Collection<org.safehaus.penrose.ldapbackend.Control> controls) throws Exception {
         Collection<Control> list = new ArrayList<Control>();
-        for (com.identyx.javabackend.Control control : controls) {
+        for (org.safehaus.penrose.ldapbackend.Control control : controls) {
             PenroseControl penroseControl = (PenroseControl) control;
             list.add(penroseControl.getControl());
         }
         response.setControls(list);
     }
 
-    public Collection<com.identyx.javabackend.Control> getControls() throws Exception {
-        Collection<com.identyx.javabackend.Control> list = new ArrayList<com.identyx.javabackend.Control>();
+    public Collection<org.safehaus.penrose.ldapbackend.Control> getControls() throws Exception {
+        Collection<org.safehaus.penrose.ldapbackend.Control> list = new ArrayList<org.safehaus.penrose.ldapbackend.Control>();
         for (Control control : response.getControls()) {
             list.add(new PenroseControl(control));
         }

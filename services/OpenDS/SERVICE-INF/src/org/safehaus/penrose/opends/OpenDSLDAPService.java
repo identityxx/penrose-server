@@ -2,6 +2,7 @@ package org.safehaus.penrose.opends;
 
 import org.safehaus.penrose.backend.PenroseBackend;
 import org.safehaus.penrose.ldap.LDAPService;
+import org.safehaus.penrose.ldapbackend.opends.LDAPBackendPlugin;
 import org.opends.server.core.DirectoryServer;
 import org.opends.server.core.PluginConfigManager;
 import org.opends.server.api.ConfigHandler;
@@ -13,8 +14,6 @@ import org.opends.messages.MessageBuilder;
 
 import java.io.File;
 
-import com.identyx.javabackend.opends.JavaBackendPlugin;
-
 /**
  * @author Endi S. Dewata
  */
@@ -24,8 +23,13 @@ public class OpenDSLDAPService extends LDAPService {
     File configFile;
     File schemaPath;
 
+    String ldapBackendPluginName = "cn=LDAP Backend,cn=Plugins,cn=config";
+
     public void init() throws Exception {
         super.init();
+
+        String s = getParameter("ldapBackendPlugin");
+        if (s != null) ldapBackendPluginName = s;
 
         File serviceDir = serviceContext.getPath();
         log.debug("Service path: "+serviceDir);
@@ -71,10 +75,10 @@ public class OpenDSLDAPService extends LDAPService {
         directoryServer.startServer();
 
         PluginConfigManager pluginConfigManager = DirectoryServer.getPluginConfigManager();
-        JavaBackendPlugin javaBackend = (JavaBackendPlugin)pluginConfigManager.getRegisteredPlugin(DN.decode("cn=Java Backend,cn=Plugins,cn=config"));
+        LDAPBackendPlugin LDAPBackend = (LDAPBackendPlugin)pluginConfigManager.getRegisteredPlugin(DN.decode(ldapBackendPluginName));
 
-        if (javaBackend != null) {
-            javaBackend.setBackend(new PenroseBackend(serviceContext.getPenroseServer()));
+        if (LDAPBackend != null) {
+            LDAPBackend.setBackend(new PenroseBackend(serviceContext.getPenroseServer()));
         }
 
         ConfigHandler configHandler = DirectoryServer.getConfigHandler();

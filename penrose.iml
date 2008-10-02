@@ -439,9 +439,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="java-backend" />
-    <orderEntry type="module" module-name="opends" />
-    <orderEntry type="module" module-name="openldap-jldap" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -626,6 +623,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/common/lib/openldap-jldap.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/javaee.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

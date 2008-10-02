@@ -11,6 +11,7 @@ import java.io.Serializable;
  */
 public class Request implements Serializable, Cloneable {
 
+    protected Integer messageId;
     protected Collection<Control> controls = new ArrayList<Control>();
 
     public Request() {
@@ -19,7 +20,15 @@ public class Request implements Serializable, Cloneable {
     public Request(Request request) {
         controls.addAll(request.controls);
     }
-    
+
+    public void setMessageId(Integer messageId) {
+        this.messageId = messageId;
+    }
+
+    public Integer getMessageId() {
+        return messageId;
+    }
+
     public void addControl(Control control) {
         controls.add(control);
     }
@@ -54,17 +63,23 @@ public class Request implements Serializable, Cloneable {
         if (object.getClass() != this.getClass()) return false;
 
         Request request = (Request)object;
+        if (!equals(messageId, request.messageId)) return false;
         if (!equals(controls, request.controls)) return false;
 
         return true;
     }
 
+    public void copy(Request request) {
+
+        messageId = request.messageId;
+
+        controls = new ArrayList<Control>();
+        controls.addAll(request.controls);
+    }
+
     public Object clone() throws CloneNotSupportedException {
         Request request = (Request)super.clone();
-
-        request.controls = new ArrayList<Control>();
-        request.controls.addAll(controls);
-
+        request.copy(this);
         return request;
     }
 }

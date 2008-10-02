@@ -2200,12 +2200,12 @@ ds-cfg-java-class: org.opends.server.extensions.TraditionalWorkQueue
 ds-cfg-num-worker-threads: 24
 ds-cfg-max-work-queue-capacity: 0
 
-dn: cn=Java Backend,cn=Plugins,cn=config
+dn: cn=LDAP Backend,cn=Plugins,cn=config
 objectClass: top
 objectClass: ds-cfg-plugin
 objectClass: extensibleObject
-cn: Java Backend
-ds-cfg-java-class: com.identyx.javabackend.opends.JavaBackendPlugin
+cn: LDAP Backend
+ds-cfg-java-class: org.safehaus.penrose.ldapbackend.opends.LDAPBackendPlugin
 ds-cfg-enabled: true
 ds-cfg-plugin-type: postConnect
 ds-cfg-plugin-type: postDisconnect

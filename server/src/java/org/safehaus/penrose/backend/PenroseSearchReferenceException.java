@@ -1,7 +1,7 @@
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.SearchReference;
-import com.identyx.javabackend.SearchReferenceException;
+import org.safehaus.penrose.ldapbackend.SearchReference;
+import org.safehaus.penrose.ldapbackend.SearchReferenceException;
 
 /**
  * @author Endi Sukma Dewata

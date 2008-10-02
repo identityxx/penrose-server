@@ -25,11 +25,13 @@ import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.UnbindRequest;
 import org.safehaus.penrose.ldap.UnbindResponse;
+import org.safehaus.penrose.ldap.ConnectRequest;
+import org.safehaus.penrose.ldap.DisconnectRequest;
 
 import java.util.Collection;
 import java.util.ArrayList;
 
-import com.identyx.javabackend.Connection;
+import org.safehaus.penrose.ldapbackend.Connection;
 
 public class PenroseConnection implements Connection {
 
@@ -54,7 +56,7 @@ public class PenroseConnection implements Connection {
         session.close();
     }
 
-    public com.identyx.javabackend.DN getBindDn() {
+    public org.safehaus.penrose.ldapbackend.DN getBindDn() {
         return session.getBindDn() == null ? null : new PenroseDN(session.getBindDn());
     }
 
@@ -70,7 +72,7 @@ public class PenroseConnection implements Connection {
     // Connect
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void connect(com.identyx.javabackend.ConnectRequest request) throws Exception {
+    public void connect(org.safehaus.penrose.ldapbackend.ConnectRequest request) throws Exception {
 
         if (debug) log.debug("connect("+request.getConnectionId()+")");
 
@@ -83,7 +85,7 @@ public class PenroseConnection implements Connection {
     // Disconnect
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void disconnect(com.identyx.javabackend.DisconnectRequest request) throws Exception {
+    public void disconnect(org.safehaus.penrose.ldapbackend.DisconnectRequest request) throws Exception {
 
         if (debug) log.debug("disconnect("+request.getConnectionId()+")");
 
@@ -97,8 +99,8 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void add(
-            com.identyx.javabackend.DN dn,
-            com.identyx.javabackend.Attributes attributes
+            org.safehaus.penrose.ldapbackend.DN dn,
+            org.safehaus.penrose.ldapbackend.Attributes attributes
     ) throws Exception {
 
         if (debug) log.debug("add("+dn+")");
@@ -110,8 +112,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void add(
-            com.identyx.javabackend.AddRequest request,
-            com.identyx.javabackend.AddResponse response
+            org.safehaus.penrose.ldapbackend.AddRequest request,
+            org.safehaus.penrose.ldapbackend.AddResponse response
     ) throws Exception {
 
         if (debug) log.debug("add("+request.getDn()+")");
@@ -127,7 +129,7 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void bind(
-            com.identyx.javabackend.DN dn,
+            org.safehaus.penrose.ldapbackend.DN dn,
             String password
     ) throws Exception {
 
@@ -139,7 +141,7 @@ public class PenroseConnection implements Connection {
     }
 
     public void bind(
-            com.identyx.javabackend.DN dn,
+            org.safehaus.penrose.ldapbackend.DN dn,
             byte[] password
     ) throws Exception {
 
@@ -151,8 +153,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void bind(
-            com.identyx.javabackend.BindRequest request,
-            com.identyx.javabackend.BindResponse response
+            org.safehaus.penrose.ldapbackend.BindRequest request,
+            org.safehaus.penrose.ldapbackend.BindResponse response
     ) throws Exception {
 
         byte[] password = request.getPassword();
@@ -169,7 +171,7 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public boolean compare(
-            com.identyx.javabackend.DN dn,
+            org.safehaus.penrose.ldapbackend.DN dn,
             String attributeName,
             Object attributeValue
     ) throws Exception {
@@ -182,8 +184,8 @@ public class PenroseConnection implements Connection {
     }
 
     public boolean compare(
-            com.identyx.javabackend.CompareRequest request,
-            com.identyx.javabackend.CompareResponse response
+            org.safehaus.penrose.ldapbackend.CompareRequest request,
+            org.safehaus.penrose.ldapbackend.CompareResponse response
     ) throws Exception {
 
         if (debug) log.debug("compare("+request.getDn()+", "+request.getAttributeName()+", "+request.getAttributeValue()+")");
@@ -201,7 +203,7 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void delete(
-            com.identyx.javabackend.DN dn
+            org.safehaus.penrose.ldapbackend.DN dn
     ) throws Exception {
 
         if (debug) log.debug("delete(\""+dn+")");
@@ -212,8 +214,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void delete(
-            com.identyx.javabackend.DeleteRequest request,
-            com.identyx.javabackend.DeleteResponse response
+            org.safehaus.penrose.ldapbackend.DeleteRequest request,
+            org.safehaus.penrose.ldapbackend.DeleteResponse response
     ) throws Exception {
 
         if (debug) log.debug("delete("+request.getDn()+")");
@@ -229,8 +231,8 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modify(
-            com.identyx.javabackend.DN dn,
-            Collection<com.identyx.javabackend.Modification> modifications
+            org.safehaus.penrose.ldapbackend.DN dn,
+            Collection<org.safehaus.penrose.ldapbackend.Modification> modifications
     ) throws Exception {
 
         if (debug) log.debug("modify("+dn+")");
@@ -238,7 +240,7 @@ public class PenroseConnection implements Connection {
         DN penroseDn = ((PenroseDN)dn).getDn();
 
         Collection<Modification> penroseModifications = new ArrayList<Modification>();
-        for (com.identyx.javabackend.Modification modification : modifications) {
+        for (org.safehaus.penrose.ldapbackend.Modification modification : modifications) {
             PenroseModification penroseModification = (PenroseModification) modification;
             penroseModifications.add(penroseModification.getModification());
         }
@@ -247,8 +249,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void modify(
-            com.identyx.javabackend.ModifyRequest request,
-            com.identyx.javabackend.ModifyResponse response
+            org.safehaus.penrose.ldapbackend.ModifyRequest request,
+            org.safehaus.penrose.ldapbackend.ModifyResponse response
     ) throws Exception {
 
         if (debug) log.debug("modify("+request.getDn()+")");
@@ -264,8 +266,8 @@ public class PenroseConnection implements Connection {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void modrdn(
-            com.identyx.javabackend.DN dn,
-            com.identyx.javabackend.RDN newRdn,
+            org.safehaus.penrose.ldapbackend.DN dn,
+            org.safehaus.penrose.ldapbackend.RDN newRdn,
             boolean deleteOldRdn
     ) throws Exception {
 
@@ -278,8 +280,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void modrdn(
-            com.identyx.javabackend.ModRdnRequest request,
-            com.identyx.javabackend.ModRdnResponse response
+            org.safehaus.penrose.ldapbackend.ModRdnRequest request,
+            org.safehaus.penrose.ldapbackend.ModRdnResponse response
     ) throws Exception {
 
         if (debug) log.debug("modrdn(\""+request.getDn()+"\", \""+request.getNewRdn()+"\")");
@@ -294,9 +296,9 @@ public class PenroseConnection implements Connection {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public com.identyx.javabackend.SearchResponse search(
-            com.identyx.javabackend.DN dn,
-            com.identyx.javabackend.Filter filter,
+    public org.safehaus.penrose.ldapbackend.SearchResponse search(
+            org.safehaus.penrose.ldapbackend.DN dn,
+            org.safehaus.penrose.ldapbackend.Filter filter,
             int scope
     ) throws Exception {
 
@@ -309,8 +311,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void search(
-            com.identyx.javabackend.SearchRequest request,
-            com.identyx.javabackend.SearchResponse response
+            org.safehaus.penrose.ldapbackend.SearchRequest request,
+            org.safehaus.penrose.ldapbackend.SearchResponse response
     ) throws Exception {
 
         if (debug) log.debug("search(\""+request.getDn()+"\", \""+request.getFilter()+"\")");
@@ -334,8 +336,8 @@ public class PenroseConnection implements Connection {
     }
 
     public void unbind(
-            com.identyx.javabackend.UnbindRequest request,
-            com.identyx.javabackend.UnbindResponse response
+            org.safehaus.penrose.ldapbackend.UnbindRequest request,
+            org.safehaus.penrose.ldapbackend.UnbindResponse response
     ) throws Exception {
 
         if (debug) log.debug("unbind()");

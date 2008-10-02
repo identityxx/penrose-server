@@ -67,7 +67,7 @@ public class JDBCClient {
         }
     }
 
-    public void close() throws Exception {
+    public synchronized void close() throws Exception {
         if (connection != null) connection.close();
         connection = null;
     }

@@ -7,7 +7,7 @@ import org.safehaus.penrose.ldap.AddResponse;
  */
 public class PenroseAddResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.AddResponse {
+        implements org.safehaus.penrose.ldapbackend.AddResponse {
 
     AddResponse addResponse;
 

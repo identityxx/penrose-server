@@ -1,14 +1,14 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.DeleteRequest;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseDeleteRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.DeleteRequest {
+        implements org.safehaus.penrose.ldapbackend.DeleteRequest {
 
     DeleteRequest deleteRequest;
 

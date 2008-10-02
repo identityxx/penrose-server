@@ -2,7 +2,7 @@ package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.ModifyRequest;
 import org.safehaus.penrose.ldap.Modification;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
  */
 public class PenroseModifyRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.ModifyRequest {
+        implements org.safehaus.penrose.ldapbackend.ModifyRequest {
 
     ModifyRequest modifyRequest;
 

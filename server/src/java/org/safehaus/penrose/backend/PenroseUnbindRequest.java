@@ -1,14 +1,14 @@
 package org.safehaus.penrose.backend;
 
 import org.safehaus.penrose.ldap.UnbindRequest;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 
 /**
  * @author Endi S. Dewata
  */
 public class PenroseUnbindRequest
         extends PenroseRequest
-        implements com.identyx.javabackend.UnbindRequest {
+        implements org.safehaus.penrose.ldapbackend.UnbindRequest {
 
     UnbindRequest unbindRequest;
 

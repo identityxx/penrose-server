@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseRDN implements com.identyx.javabackend.RDN {
+public class PenroseRDN implements org.safehaus.penrose.ldapbackend.RDN {
 
     RDN rdn;
 

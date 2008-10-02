@@ -6,7 +6,7 @@ import org.safehaus.penrose.filter.Filter;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseFilter implements com.identyx.javabackend.Filter {
+public class PenroseFilter implements org.safehaus.penrose.ldapbackend.Filter {
 
     Filter filter;
 

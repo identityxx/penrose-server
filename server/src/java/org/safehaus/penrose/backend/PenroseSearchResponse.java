@@ -17,10 +17,13 @@
  */
 package org.safehaus.penrose.backend;
 
-import com.identyx.javabackend.Attributes;
-import com.identyx.javabackend.DN;
+import org.safehaus.penrose.ldapbackend.DN;
 import org.safehaus.penrose.control.Control;
-import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.SearchListener;
+import org.safehaus.penrose.ldap.SearchReference;
+import org.safehaus.penrose.ldap.SearchReferenceException;
+import org.safehaus.penrose.ldap.SearchResponse;
+import org.safehaus.penrose.ldap.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +35,7 @@ import java.util.Collection;
  */
 public class PenroseSearchResponse
         extends PenroseResponse
-        implements com.identyx.javabackend.SearchResponse {
+        implements org.safehaus.penrose.ldapbackend.SearchResponse {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
@@ -46,9 +49,9 @@ public class PenroseSearchResponse
     public PenroseSearchResult createSearchResult(SearchResult result) {
 
         DN dn = new PenroseDN(result.getDn());
-        Attributes attributes = new PenroseAttributes(result.getAttributes());
+        org.safehaus.penrose.ldapbackend.Attributes attributes = new PenroseAttributes(result.getAttributes());
 
-        Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
+        Collection<org.safehaus.penrose.ldapbackend.Control> controls = new ArrayList<org.safehaus.penrose.ldapbackend.Control>();
         for (Control control : result.getControls()) {
             controls.add(new PenroseControl(control));
         }
@@ -61,7 +64,7 @@ public class PenroseSearchResponse
         DN dn = new PenroseDN(result.getDn());
         Collection<String> urls = result.getUrls();
 
-        Collection<com.identyx.javabackend.Control> controls = new ArrayList<com.identyx.javabackend.Control>();
+        Collection<org.safehaus.penrose.ldapbackend.Control> controls = new ArrayList<org.safehaus.penrose.ldapbackend.Control>();
         for (Control control : result.getControls()) {
             controls.add(new PenroseControl(control));
         }
@@ -80,7 +83,7 @@ public class PenroseSearchResponse
         }
     }
 
-    public void addListener(final com.identyx.javabackend.SearchListener listener) throws Exception {
+    public void addListener(final org.safehaus.penrose.ldapbackend.SearchListener listener) throws Exception {
         searchResponse.addListener(new SearchListener() {
             public void add(SearchResult result) throws Exception {
                 listener.add(createSearchResult(result));

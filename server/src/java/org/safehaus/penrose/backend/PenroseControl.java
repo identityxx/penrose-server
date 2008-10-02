@@ -5,7 +5,7 @@ import org.safehaus.penrose.control.Control;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseControl implements com.identyx.javabackend.Control {
+public class PenroseControl implements org.safehaus.penrose.ldapbackend.Control {
 
     Control control;
 
