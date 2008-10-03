@@ -110,13 +110,14 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
         return directoryService;
     }
 
-    public Collection<DN> getSuffixes() throws Exception {
-        Collection<DN> list = new ArrayList<DN>();
+    public DN getSuffix() throws Exception {
         PartitionConfig partitionConfig = getPartitionConfig();
-        for (EntryConfig entryConfig : partitionConfig.getDirectoryConfig().getRootEntryConfigs()) {
-            list.add(entryConfig.getDn());
-        }
-        return list;
+        return partitionConfig.getDirectoryConfig().getSuffix();
+    }
+
+    public Collection<DN> getSuffixes() throws Exception {
+        PartitionConfig partitionConfig = getPartitionConfig();
+        return partitionConfig.getDirectoryConfig().getSuffixes();
     }
 
     public Collection<String> getRootEntryIds() throws Exception {

@@ -23,6 +23,7 @@ public interface PartitionServiceMBean {
 
     public PartitionConfig getPartitionConfig() throws Exception;
 
+    public DN getSuffix() throws Exception;
     public Collection<DN> getSuffixes() throws Exception;
     public Collection<String> getRootEntryIds() throws Exception;
 

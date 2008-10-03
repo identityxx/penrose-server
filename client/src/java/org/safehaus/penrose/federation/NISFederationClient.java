@@ -3,6 +3,7 @@ package org.safehaus.penrose.federation;
 import org.safehaus.penrose.partition.*;
 import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.federation.SynchronizationResult;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 
@@ -200,8 +201,8 @@ public class NISFederationClient {
         federation.removePartitions(name);
     }
 
-    public void synchronizeNISMaps(String name, Collection<String> parameters) throws Exception {
-        moduleClient.invoke(
+    public SynchronizationResult synchronizeNISMaps(String name, Collection<String> parameters) throws Exception {
+        return (SynchronizationResult)moduleClient.invoke(
                 "synchronizeNISMaps",
                 new Object[] { name, parameters },
                 new String[] { String.class.getName(), Collection.class.getName() }
@@ -224,7 +225,15 @@ public class NISFederationClient {
                 parameters.add(parameter);
             }
 
-            synchronizeNISMaps(repository, parameters);
+            SynchronizationResult result = synchronizeNISMaps(repository, parameters);
+            System.out.println("Synchronization Result:");
+            System.out.println(" - added     : "+result.getAddedEntries());
+            System.out.println(" - modified  : "+result.getModifiedEntries());
+            System.out.println(" - deleted   : "+result.getDeletedEntries());
+            System.out.println(" - unchanged : "+result.getUnchangedEntries());
+            System.out.println(" - failed    : "+result.getFailedEntries());
+            System.out.println(" - total     : "+result.getTotalEntries());
+            System.out.println(" - time      : "+result.getDuration()/1000.0+" s");
 
             System.out.println("Done.");
 

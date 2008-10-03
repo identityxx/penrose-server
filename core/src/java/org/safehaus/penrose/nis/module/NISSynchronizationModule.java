@@ -2,6 +2,7 @@ package org.safehaus.penrose.nis.module;
 
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
+import org.safehaus.penrose.federation.SynchronizationResult;
 import org.safehaus.penrose.partition.Partition;
 
 import java.util.*;
@@ -108,17 +109,18 @@ public class NISSynchronizationModule extends SnapshotSyncModule {
         attribute.addValues(addList);
     }
 
-    public boolean synchronize() throws Exception {
+    public SynchronizationResult synchronize() throws Exception {
 
-        boolean b = true;
+        SynchronizationResult totalResult = new SynchronizationResult();
         for (String nisMap : nisMapRDNs.keySet()) {
-            if (!synchronizeNISMap(nisMap)) b = false;
+            SynchronizationResult r = synchronizeNISMap(nisMap);
+            totalResult.add(r);
         }
 
-        return b;
+        return totalResult;
     }
 
-    public boolean synchronizeNISMap(String nisMap) throws Exception {
+    public SynchronizationResult synchronizeNISMap(String nisMap) throws Exception {
 
         log.debug("Synchronizing NIS map "+nisMap+"...");
 
@@ -126,7 +128,7 @@ public class NISSynchronizationModule extends SnapshotSyncModule {
 
         if (rdn == null) {
             log.debug("Unknown NIS map: "+nisMap);
-            return false;
+            return new SynchronizationResult();
         }
 
         DN targetSuffix = getTargetSuffix();

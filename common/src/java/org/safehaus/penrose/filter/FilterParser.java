@@ -246,7 +246,7 @@ public class FilterParser implements FilterParserConstants {
             filter = new SimpleFilter(attr, "=", FilterTool.unescape(value));
 
         } else {
-            Collection values = new ArrayList();
+            Collection<Object> values = new ArrayList<Object>();
             StringTokenizer st = new StringTokenizer(value, "*", true);
             while (st.hasMoreTokens()) {
                 String token = st.nextToken();

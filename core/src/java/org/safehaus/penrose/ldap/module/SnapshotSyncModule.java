@@ -6,6 +6,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
+import org.safehaus.penrose.federation.SynchronizationResult;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -54,7 +55,7 @@ public class SnapshotSyncModule extends Module {
         }
     }
 
-    public boolean execute(Session session, AddRequest request) throws Exception {
+    public void execute(Session session, AddRequest request) throws Exception {
 
         try {
             AddResponse response = new AddResponse();
@@ -78,14 +79,9 @@ public class SnapshotSyncModule extends Module {
                 changes.add(session, new DN(), attrs);
             }
 
-            return true;
-
         } catch (Throwable e) {
 
-            if (errors == null) {
-                throw new Exception(e);
-
-            } else {
+            if (errors != null) {
 
                 Attributes attrs = new Attributes();
                 attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
@@ -106,13 +102,13 @@ public class SnapshotSyncModule extends Module {
                 attrs.setValue("description", sb.toString());
 
                 errors.add(session, new DN(), attrs);
-
-                return false;
             }
+
+            throw new Exception(e);
         }
     }
 
-    public boolean execute(Session session, DeleteRequest request) throws Exception {
+    public void execute(Session session, DeleteRequest request) throws Exception {
         try {
             DeleteResponse response = new DeleteResponse();
 
@@ -135,14 +131,9 @@ public class SnapshotSyncModule extends Module {
                 changes.add(session, new DN(), attrs);
             }
 
-            return true;
-
         } catch (Throwable e) {
 
-            if (errors == null) {
-                throw new Exception(e);
-
-            } else {
+            if (errors != null) {
 
                 Attributes attrs = new Attributes();
                 attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
@@ -163,13 +154,13 @@ public class SnapshotSyncModule extends Module {
                 attrs.setValue("description", sb.toString());
 
                 errors.add(session, new DN(), attrs);
-
-                return false;
             }
+
+            throw new Exception(e);
         }
     }
 
-    public boolean execute(Session session, ModifyRequest request) throws Exception {
+    public void execute(Session session, ModifyRequest request) throws Exception {
 
         try {
             ModifyResponse response = new ModifyResponse();
@@ -193,14 +184,9 @@ public class SnapshotSyncModule extends Module {
                 changes.add(session, new DN(), attrs);
             }
 
-            return true;
-
         } catch (Throwable e) {
 
-            if (errors == null) {
-                throw new Exception(e);
-
-            } else {
+            if (errors != null) {
 
                 Attributes attrs = new Attributes();
                 attrs.setValue("time", new Timestamp(System.currentTimeMillis()));
@@ -221,17 +207,17 @@ public class SnapshotSyncModule extends Module {
                 attrs.setValue("description", sb.toString());
 
                 errors.add(session, new DN(), attrs);
-
-                return false;
             }
+
+            throw new Exception(e);
         }
     }
 
-    public boolean deleteSubtree(Session session, String baseDn) throws Exception {
-        return deleteSubtree(session, new DN(baseDn));
+    public void deleteSubtree(Session session, String baseDn) throws Exception {
+        deleteSubtree(session, new DN(baseDn));
     }
 
-    public boolean deleteSubtree(Session session, final DN baseDn) throws Exception {
+    public void deleteSubtree(Session session, final DN baseDn) throws Exception {
 
         Partition targetPartition = getTargetPartition();
 
@@ -260,7 +246,6 @@ public class SnapshotSyncModule extends Module {
         int rc = response.waitFor();
         log.debug("RC: "+rc);
 
-        boolean b = true;
         for (int i=dns.size()-1; i>=0; i--) {
             DN dn = dns.get(i);
 
@@ -268,10 +253,9 @@ public class SnapshotSyncModule extends Module {
 
             DeleteRequest deleteRequest = new DeleteRequest();
             deleteRequest.setDn(dn);
-            if (!execute(session, deleteRequest)) b = false;
-        }
 
-        return b;
+            execute(session, deleteRequest);
+        }
     }
 
     public boolean checkSearchResult(SearchResult result) throws Exception {
@@ -552,7 +536,7 @@ public class SnapshotSyncModule extends Module {
         }
     }
 
-    public boolean synchronize() throws Exception {
+    public SynchronizationResult synchronize() throws Exception {
 
         Session adminSession = createAdminSession();
 
@@ -570,23 +554,24 @@ public class SnapshotSyncModule extends Module {
 
             targetPartition.search(adminSession, request, response);
 
-            boolean b = true;
+            SynchronizationResult totalResult = new SynchronizationResult();
             for (SearchResult result : response.getResults()) {
-                if (!synchronize(adminSession, result.getDn())) b = false;
+                SynchronizationResult r = synchronize(adminSession, result.getDn());
+                totalResult.add(r);
             }
 
-            return b;
+            return totalResult;
 
         } finally {
             adminSession.close();
         }
     }
 
-    public boolean synchronize(String targetDn) throws Exception {
+    public SynchronizationResult synchronize(String targetDn) throws Exception {
         return synchronize(new DN(targetDn));
     }
 
-    public boolean synchronize(final DN targetDn) throws Exception {
+    public SynchronizationResult synchronize(final DN targetDn) throws Exception {
 
         Session adminSession = createAdminSession();
 
@@ -612,7 +597,7 @@ public class SnapshotSyncModule extends Module {
         return LDAP.createModifications(attrs1, attrs2);
     }
 
-    public boolean synchronize(final Session session, final DN targetDn) throws Exception {
+    public SynchronizationResult synchronize(final Session session, final DN targetDn) throws Exception {
 
         final Partition sourcePartition = getSourcePartition();
         final Partition targetPartition = getTargetPartition();
@@ -659,8 +644,9 @@ public class SnapshotSyncModule extends Module {
 
         if (warn) log.warn("Found "+response1.getTotalCount()+" entries.");
 
-        final long[] counters = new long[] { 0, 0, 0 };
-        final boolean[] success = new boolean[] { true };
+        final SynchronizationResult result = new SynchronizationResult();
+
+        final boolean[] xsuccess = new boolean[] { true };
 
         SearchRequest request2 = new SearchRequest();
         request2.setDn(sourceDn);
@@ -694,6 +680,7 @@ public class SnapshotSyncModule extends Module {
 
                     if (modifications.isEmpty()) {
                         //if (warn) log.warn("No changes, skipping "+normalizedDn+".");
+                        result.incUnchangedEntries();
 
                     } else { // modify entry
 
@@ -702,9 +689,14 @@ public class SnapshotSyncModule extends Module {
                         ModifyRequest request = new ModifyRequest();
                         request.setDn(dn1);
                         request.setModifications(modifications);
-                        if (!execute(session, request)) success[0] = false;
 
-                        counters[1]++;
+                        try {
+                            execute(session, request);
+                            result.incModifiedEntries();
+
+                        } catch (Exception e) {
+                            result.incFailedEntries();
+                        }
                     }
 
                     dns.remove(normalizedDn);
@@ -716,9 +708,14 @@ public class SnapshotSyncModule extends Module {
                     AddRequest request = new AddRequest();
                     request.setDn(dn1);
                     request.setAttributes(result2.getAttributes());
-                    if (!execute(session, request)) success[0] = false;
 
-                    counters[0]++;
+                    try {
+                        execute(session, request);
+                        result.incAddedEntries();
+
+                    } catch (Exception e) {
+                        result.incFailedEntries();
+                    }
                 }
 
                 if (warn) {
@@ -747,20 +744,29 @@ public class SnapshotSyncModule extends Module {
 
                 DeleteRequest deleteRequest = new DeleteRequest();
                 deleteRequest.setDn(dn);
-                if (!execute(session, deleteRequest)) success[0] = false;
 
-                counters[2]++;
+                try {
+                    execute(session, deleteRequest);
+                    result.incDeletedEntries();
+
+                } catch (Exception e) {
+                    result.incFailedEntries();
+                }
             }
         }
 
         if (warn) {
-            log.warn("Processed "+response2.getTotalCount()+" entries:");
-            log.warn(" - added   : "+counters[0]);
-            log.warn(" - modified: "+counters[1]);
-            log.warn(" - deleted : "+counters[2]);
+            log.warn("Synchronization Result:");
+            log.warn(" - added     : "+result.getAddedEntries());
+            log.warn(" - modified  : "+result.getModifiedEntries());
+            log.warn(" - deleted   : "+result.getDeletedEntries());
+            log.warn(" - unchanged : "+result.getUnchangedEntries());
+            log.warn(" - failed    : "+result.getFailedEntries());
+            log.warn(" - total     : "+result.getTotalEntries());
+            log.warn(" - time      : "+result.getDuration()/1000.0+" s");
         }
 
-        return success[0];
+        return result;
     }
 
 /*

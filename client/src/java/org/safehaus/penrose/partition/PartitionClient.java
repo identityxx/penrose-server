@@ -184,6 +184,10 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
         return new DirectoryClient(client, name);
     }
 
+    public DN getSuffix() throws Exception {
+        return (DN)getAttribute("Suffix");
+    }
+
     public Collection<DN> getSuffixes() throws Exception {
         return (Collection<DN>)getAttribute("Suffixes");
     }
