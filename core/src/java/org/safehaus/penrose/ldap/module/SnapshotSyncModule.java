@@ -599,6 +599,8 @@ public class SnapshotSyncModule extends Module {
 
     public SynchronizationResult synchronize(final Session session, final DN targetDn) throws Exception {
 
+        long startTime = System.currentTimeMillis();
+
         final Partition sourcePartition = getSourcePartition();
         final Partition targetPartition = getTargetPartition();
 
@@ -645,8 +647,6 @@ public class SnapshotSyncModule extends Module {
         if (warn) log.warn("Found "+response1.getTotalCount()+" entries.");
 
         final SynchronizationResult result = new SynchronizationResult();
-
-        final boolean[] xsuccess = new boolean[] { true };
 
         SearchRequest request2 = new SearchRequest();
         request2.setDn(sourceDn);
@@ -754,6 +754,9 @@ public class SnapshotSyncModule extends Module {
                 }
             }
         }
+
+        long endTime = System.currentTimeMillis();
+        result.setDuration(endTime - startTime);
 
         if (warn) {
             log.warn("Synchronization Result:");
