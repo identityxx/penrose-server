@@ -1,6 +1,7 @@
 package org.safehaus.penrose.ldap.module;
 
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
@@ -933,23 +934,23 @@ public class SnapshotSyncModule extends Module {
     }
 */
 
-    public Source getSource() throws Exception {
+    public LDAPSource getSource() throws Exception {
         Partition sourcePartition = getPartition(sourcePartitionName);
-        return sourcePartition.getSourceManager().getSource(sourceName);
+        return (LDAPSource)sourcePartition.getSourceManager().getSource(sourceName);
     }
 
-    public Source getTarget() throws Exception {
+    public LDAPSource getTarget() throws Exception {
         Partition targetPartition = getPartition(targetPartitionName);
-        return targetPartition.getSourceManager().getSource(targetName);
+        return (LDAPSource)targetPartition.getSourceManager().getSource(targetName);
     }
 
     public DN getSourceSuffix() throws Exception {
-        Source source = getSource();
-        return new DN(source.getParameter("baseDn"));
+        LDAPSource source = getSource();
+        return source.getBaseDn();
     }
 
     public DN getTargetSuffix() throws Exception {
-        Source target = getTarget();
-        return new DN(target.getParameter("baseDn"));
+        LDAPSource target = getTarget();
+        return target.getBaseDn();
     }
 }

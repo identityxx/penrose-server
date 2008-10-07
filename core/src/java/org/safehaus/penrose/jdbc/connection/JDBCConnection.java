@@ -161,7 +161,7 @@ public class JDBCConnection extends Connection {
         return new JDBCPoolableClient(connectionPool, connectionFactory);
     }
 
-    public JDBCClient getClient(final Session session) throws Exception {
+    public synchronized JDBCClient getClient(final Session session) throws Exception {
 
         if (debug) log.debug("Getting LDAP client from session.");
         final String attributeName = getPartition().getName()+".connection."+getName();

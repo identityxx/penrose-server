@@ -22,6 +22,7 @@ import org.safehaus.penrose.filter.SimpleFilter;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;
+import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingManager;
 import org.safehaus.penrose.module.Module;
@@ -295,7 +296,7 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Source target = getTarget();
+            LDAPSource target = getTarget();
 
             DN sourceDn = sourceEntry.getDn();
 
@@ -331,7 +332,7 @@ public class LinkingModule extends Module implements LinkingMBean {
                 SearchRequest request = new SearchRequest();
                 request.setAttributes(new String[] { "dn" });
 
-                DN targetSuffix = new DN(target.getParameter("baseDn"));
+                DN targetSuffix = getTargetSuffix();
                 request.setDn(targetSuffix);
 
                 Filter filter = null;
@@ -594,23 +595,23 @@ public class LinkingModule extends Module implements LinkingMBean {
         }
     }
 
-    public Source getSource() throws Exception {
+    public LDAPSource getSource() throws Exception {
         Partition sourcePartition = getPartition(sourcePartitionName);
-        return sourcePartition.getSourceManager().getSource(sourceName);
+        return (LDAPSource)sourcePartition.getSourceManager().getSource(sourceName);
     }
 
-    public Source getTarget() throws Exception {
+    public LDAPSource getTarget() throws Exception {
         Partition targetPartition = getPartition(targetPartitionName);
-        return targetPartition.getSourceManager().getSource(targetName);
+        return (LDAPSource)targetPartition.getSourceManager().getSource(targetName);
     }
 
     public DN getSourceSuffix() throws Exception {
-        Source source = getSource();
-        return new DN(source.getParameter("baseDn"));
+        LDAPSource source = getSource();
+        return source.getBaseDn();
     }
 
     public DN getTargetSuffix() throws Exception {
-        Source target = getTarget();
-        return new DN(target.getParameter("baseDn"));
+        LDAPSource target = getTarget();
+        return target.getBaseDn();
     }
 }
