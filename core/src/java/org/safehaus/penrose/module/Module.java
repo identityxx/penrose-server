@@ -168,6 +168,10 @@ public class Module {
         this.partition = partition;
     }
 
+    public Partition getPartition(String name) {
+        return partition.getPartitionContext().getPartition(name);
+    }
+
     public ModuleContext getModuleContext() {
         return moduleContext;
     }

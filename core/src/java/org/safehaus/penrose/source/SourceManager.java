@@ -7,6 +7,8 @@ import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.EntrySourceConfig;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
+import org.safehaus.penrose.partition.PartitionContext;
+import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,21 +59,44 @@ public class SourceManager {
         String partitionName = sourceConfig.getPartitionName();
         String connectionName = sourceConfig.getConnectionName();
 
-        Partition connectionPartition;
+        Partition sourcePartition;
 
         if (partitionName == null) {
-            connectionPartition = partition;
+            sourcePartition = partition;
 
         } else {
-            connectionPartition = partition.getPartitionContext().getPartition(partitionName);
-            if (connectionPartition == null) throw new Exception("Unknown partition "+partitionName+".");
+            sourcePartition = partition.getPartitionContext().getPartition(partitionName);
+            if (sourcePartition == null) throw new Exception("Unknown partition "+partitionName+".");
         }
 
-        ConnectionManager connectionManager = connectionPartition.getConnectionManager();
-        Connection connection = connectionManager.getConnection(connectionName);
-        if (connection == null) throw new Exception("Unknown connection "+connectionName+".");
+        String className = sourceConfig.getSourceClass();
 
-        Source source = connection.createSource(partition, sourceConfig);
+        SourceContext sourceContext = new SourceContext();
+        sourceContext.setPartition(partition);
+
+        Source source;
+
+        if (connectionName != null) {
+            ConnectionManager connectionManager = sourcePartition.getConnectionManager();
+            Connection connection = connectionManager.getConnection(connectionName);
+            if (connection == null) throw new Exception("Unknown connection "+connectionName+".");
+
+            Adapter adapter = connection.getAdapter();
+
+            sourceContext.setAdapter(adapter);
+            sourceContext.setConnection(connection);
+
+            if (className == null) className = adapter.getSourceClassName();
+        }
+
+        PartitionContext partitionContext = partition.getPartitionContext();
+        ClassLoader cl = partitionContext.getClassLoader();
+        Class clazz = cl.loadClass(className);
+
+        log.debug("Creating "+className+".");
+        source = (Source)clazz.newInstance();
+        source.init(sourceConfig, sourceContext);
+
         addSource(source);
 
         return source;

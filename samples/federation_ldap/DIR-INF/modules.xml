@@ -8,8 +8,12 @@
   <module name="LinkingModule" enabled="true">
     <module-class>org.safehaus.penrose.federation.module.LinkingModule</module-class>
     <parameter>
+      <param-name>source</param-name>
+      <param-value>LDAP</param-value>
+    </parameter>
+    <parameter>
       <param-name>target</param-name>
-      <param-value>global</param-value>
+      <param-value>global.LDAP</param-value>
     </parameter>
     <parameter>
       <param-name>sourceAttribute</param-name>

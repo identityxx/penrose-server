@@ -15,6 +15,7 @@ import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.adapter.FilterBuilder;
+import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,8 +81,7 @@ public class Source implements Cloneable {
     }
 
     public String getAdapterName() {
-        Connection connection = sourceContext.getConnection();
-        return connection.getAdapterName();
+        return sourceContext.getAdapter().getName();
     }
 
     public String getConnectionName() {
@@ -108,6 +108,10 @@ public class Source implements Cloneable {
         return sourceContext.getPartition();
     }
 
+    public Partition getPartition(String name) {
+        return sourceContext.getPartition().getPartitionContext().getPartition(name);
+    }
+    
     public String getParameter(String name) {
         return sourceConfig.getParameter(name);
     }

@@ -5,6 +5,10 @@
 
 <sources>
 
+  <source name="LDAP">
+    <source-class>org.safehaus.penrose.partition.source.PartitionSource</source-class>
+  </source>
+
   <source name="users">
     <connection-name>NIS</connection-name>
     <field name="uid" primaryKey="true"/>

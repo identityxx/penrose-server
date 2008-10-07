@@ -18,11 +18,8 @@
 package org.safehaus.penrose.connection;
 
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.source.Source;
-import org.safehaus.penrose.source.SourceContext;
-import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.slf4j.Logger;
@@ -114,41 +111,6 @@ public class Connection {
 
     public Partition getPartition() {
         return connectionContext.getPartition();
-    }
-
-    public Source createSource(SourceConfig sourceConfig) throws Exception {
-
-        Partition partition = connectionContext.getPartition();
-        return createSource(partition, sourceConfig);
-    }
-
-    public Source createSource(Partition partition, SourceConfig sourceConfig) throws Exception {
-
-        SourceContext sourceContext = new SourceContext();
-        sourceContext.setPartition(partition);
-        sourceContext.setConnection(this);
-
-        PartitionContext partitionContext = partition.getPartitionContext();
-        ClassLoader cl = partitionContext.getClassLoader();
-
-        String className = sourceConfig.getSourceClass();
-
-        if (className == null) {
-            Adapter adapter = connectionContext.getAdapter();
-            className = adapter.getSourceClassName();
-        }
-
-        Class clazz = cl.loadClass(className);
-
-        if (debug) log.debug("Creating "+className+".");
-        Source source = (Source)clazz.newInstance();
-        source.init(sourceConfig, sourceContext);
-
-        return source;
-    }
-
-    public String getSourceClassName() throws Exception {
-        return Source.class.getName();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

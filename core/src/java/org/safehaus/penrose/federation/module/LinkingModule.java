@@ -29,6 +29,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.federation.LinkingData;
 import org.safehaus.penrose.federation.LinkingMBean;
+import org.safehaus.penrose.source.Source;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,19 +42,48 @@ public class LinkingModule extends Module implements LinkingMBean {
     public final static String SOURCE = "source";
     public final static String TARGET = "target";
 
-    String targetPartitionName;
+    protected String sourcePartitionName;
+    protected String sourceName;
 
-    String sourceAttribute;
-    String targetAttribute;
-    String storage;
+    protected String targetPartitionName;
+    protected String targetName;
 
-    String mappingName;
-    String mappingPrefix;
+    protected String sourceAttribute;
+    protected String targetAttribute;
+    protected String storage;
+
+    protected String mappingName;
+    protected String mappingPrefix;
 
     public void init() throws Exception {
 
-        targetPartitionName = getParameter("target");
+        String s = getParameter("source");
+        int i = s.indexOf('.');
+
+        if (i < 0) {
+            sourcePartitionName = getPartition().getName();
+            sourceName = s;
+        } else {
+            sourcePartitionName = s.substring(0, i);
+            sourceName = s.substring(i+1);
+        }
+
+        log.debug("Source partition: "+sourcePartitionName);
+        log.debug("Source: "+sourceName);
+
+        s = getParameter("target");
+        i = s.indexOf('.');
+
+        if (i < 0) {
+            targetPartitionName = getPartition().getName();
+            targetName = s;
+        } else {
+            targetPartitionName = s.substring(0, i);
+            targetName = s.substring(i+1);
+        }
+
         log.debug("Target partition: "+targetPartitionName);
+        log.debug("Target: "+targetName);
 
         sourceAttribute = getParameter("sourceAttribute");
         if (sourceAttribute == null) sourceAttribute = "dn";
@@ -79,30 +109,31 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+            Source source = getSource();
+            Source target = getTarget();
 
             log.debug("##################################################################################################");
             log.debug("Link "+sourceDn+" to "+targetDn);
 
             String sa, ta;
             DN sdn, tdn;
-            Partition sp, tp;
+            Source s, t;
 
             if (storage.equals(SOURCE)) {
                 sa = targetAttribute;
                 ta = sourceAttribute;
                 sdn = targetDn;
                 tdn = sourceDn;
-                sp = targetPartition;
-                tp = partition;
+                s = target;
+                t = source;
 
             } else {
                 sa = sourceAttribute;
                 ta = targetAttribute;
                 sdn = sourceDn;
                 tdn = targetDn;
-                sp = partition;
-                tp = targetPartition;
+                s = source;
+                t = target;
             }
 
             Object value;
@@ -110,7 +141,7 @@ public class LinkingModule extends Module implements LinkingMBean {
                 value = sdn.toString();
 
             } else {
-                SearchResult entry = sp.find(adminSession, sdn);
+                SearchResult entry = s.find(adminSession, sdn);
                 Attributes attributes = entry.getAttributes();
                 value = attributes.getValue(sa);
             }
@@ -124,7 +155,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             ModifyResponse response = new ModifyResponse();
 
-            tp.modify(adminSession, request, response);
+            t.modify(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -136,30 +167,31 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+            Source source = getSource();
+            Source target = getTarget();
 
             log.debug("##################################################################################################");
             log.debug("Unlink "+sourceDn+" from "+targetDn);
 
             String sa, ta;
             DN sdn, tdn;
-            Partition sp, tp;
+            Source s, t;
 
             if (storage.equals(SOURCE)) {
                 sa = targetAttribute;
                 ta = sourceAttribute;
                 sdn = targetDn;
                 tdn = sourceDn;
-                sp = targetPartition;
-                tp = partition;
+                s = target;
+                t = source;
 
             } else {
                 sa = sourceAttribute;
                 ta = targetAttribute;
                 sdn = sourceDn;
                 tdn = targetDn;
-                sp = partition;
-                tp = targetPartition;
+                s = source;
+                t = target;
             }
 
             Object value;
@@ -167,7 +199,7 @@ public class LinkingModule extends Module implements LinkingMBean {
                 value = sdn.toString();
 
             } else {
-                SearchResult entry = sp.find(adminSession, sdn);
+                SearchResult entry = s.find(adminSession, sdn);
                 Attributes attributes = entry.getAttributes();
                 value = attributes.getValue(sa);
             }
@@ -181,7 +213,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             ModifyResponse response = new ModifyResponse();
 
-            tp.modify(adminSession, request, response);
+            t.modify(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -193,9 +225,10 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+            Source source = getSource();
+            Source target = getTarget();
 
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Search "+request.getDn()+".");
@@ -204,7 +237,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             SearchResponse response = new SearchResponse();
 
-            partition.search(adminSession, request, response);
+            source.search(adminSession, request, response);
 
             while (response.hasNext()) {
                 SearchResult localEntry = response.next();
@@ -237,7 +270,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                     SearchResponse globalResponse = new SearchResponse();
 
-                    targetPartition.search(adminSession, globalRequest, globalResponse);
+                    target.search(adminSession, globalRequest, globalResponse);
 
                     if (!globalResponse.hasNext()) continue;
 
@@ -262,7 +295,7 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
+            Source target = getTarget();
 
             DN sourceDn = sourceEntry.getDn();
 
@@ -290,7 +323,7 @@ public class LinkingModule extends Module implements LinkingMBean {
                     } else {
                         dn = new DN(link.toString());
                     }
-                    SearchResult result = targetPartition.find(adminSession, dn);
+                    SearchResult result = target.find(adminSession, dn);
                     results.add(result);
                 }
 
@@ -298,8 +331,8 @@ public class LinkingModule extends Module implements LinkingMBean {
                 SearchRequest request = new SearchRequest();
                 request.setAttributes(new String[] { "dn" });
 
-                DN suffix = targetPartition.getDirectory().getSuffix();
-                request.setDn(suffix);
+                DN targetSuffix = new DN(target.getParameter("baseDn"));
+                request.setDn(targetSuffix);
 
                 Filter filter = null;
                 for (Object link : links) {
@@ -310,7 +343,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                 SearchResponse response = new SearchResponse();
 
-                targetPartition.search(adminSession, request, response);
+                target.search(adminSession, request, response);
 
                 while (response.hasNext()) {
                     SearchResult result = response.next();
@@ -336,10 +369,8 @@ public class LinkingModule extends Module implements LinkingMBean {
         Attributes targetAttributes = null;
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-
-            DN sourceSuffix = partition.getDirectory().getSuffix();
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN sourceSuffix = getSourceSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Import "+ sourceDn+".");
@@ -379,7 +410,8 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             AddResponse response = new AddResponse();
 
-            targetPartition.add(adminSession, request, response);
+            Source target = getTarget();
+            target.add(adminSession, request, response);
 
             if (storage.equals(SOURCE)) {
                 try {
@@ -438,12 +470,11 @@ public class LinkingModule extends Module implements LinkingMBean {
         Attributes targetAttributes = null;
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-
             log.debug("##################################################################################################");
             log.debug("Import "+ sourceDn);
 
-            SearchResult sourceEntry = partition.find(adminSession, sourceDn);
+            Source source = getSource();
+            SearchResult sourceEntry = source.find(adminSession, sourceDn);
             sourceAttributes = sourceEntry.getAttributes();
 
             targetDn = targetEntry.getDn();
@@ -470,7 +501,8 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             AddResponse response = new AddResponse();
 
-            targetPartition.add(adminSession, request, response);
+            Source target = getTarget();
+            target.add(adminSession, request, response);
 
             if (storage.equals(SOURCE)) {
                 try {
@@ -524,8 +556,6 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-
             log.debug("##################################################################################################");
             log.debug("Add "+ targetDn);
 
@@ -535,7 +565,8 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             AddResponse response = new AddResponse();
 
-            targetPartition.add(adminSession, request, response);
+            Source target = getTarget();
+            target.add(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -547,8 +578,6 @@ public class LinkingModule extends Module implements LinkingMBean {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-
             log.debug("##################################################################################################");
             log.debug("Delete "+ targetDn);
 
@@ -557,10 +586,31 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             DeleteResponse response = new DeleteResponse();
 
-            targetPartition.delete(adminSession, request, response);
+            Source target = getTarget();
+            target.delete(adminSession, request, response);
 
         } finally {
             adminSession.close();
         }
+    }
+
+    public Source getSource() throws Exception {
+        Partition sourcePartition = getPartition(sourcePartitionName);
+        return sourcePartition.getSourceManager().getSource(sourceName);
+    }
+
+    public Source getTarget() throws Exception {
+        Partition targetPartition = getPartition(targetPartitionName);
+        return targetPartition.getSourceManager().getSource(targetName);
+    }
+
+    public DN getSourceSuffix() throws Exception {
+        Source source = getSource();
+        return new DN(source.getParameter("baseDn"));
+    }
+
+    public DN getTargetSuffix() throws Exception {
+        Source target = getTarget();
+        return new DN(target.getParameter("baseDn"));
     }
 }

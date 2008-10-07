@@ -213,7 +213,7 @@ public class Entry implements Cloneable {
             sourcePartition = partition;
 
         } else {
-            sourcePartition = partition.getPartitionContext().getPartition(partitionName);
+            sourcePartition = getPartition(partitionName);
             if (sourcePartition == null) throw new Exception("Unknown partition "+partitionName+".");
         }
 
@@ -255,6 +255,10 @@ public class Entry implements Cloneable {
 
     public Partition getPartition() {
         return partition;
+    }
+
+    public Partition getPartition(String name) {
+        return partition.getPartitionContext().getPartition(name);
     }
 
     public Mapping getMapping() {

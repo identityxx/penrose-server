@@ -76,6 +76,7 @@ public class SourceConfig implements Serializable, Cloneable {
     public String sourceClass;
 
     public String partitionName;
+    public String adapterName;
     public String connectionName;
 
     public Map<String,String> parameters = new HashMap<String,String>();
@@ -90,17 +91,6 @@ public class SourceConfig implements Serializable, Cloneable {
 
     public SourceConfig() {
 	}
-
-    public SourceConfig(String name, String connectionName) {
-        this.name = name;
-        this.connectionName = connectionName;
-    }
-    
-    public SourceConfig(String name, String partitionName, String connectionName) {
-        this.name = name;
-        this.partitionName = partitionName; 
-        this.connectionName = connectionName;
-    }
 
 	public String getName() {
 		return name;
@@ -273,6 +263,14 @@ public class SourceConfig implements Serializable, Cloneable {
         this.connectionName = connectionName;
     }
 
+    public String getAdapterName() {
+        return adapterName;
+    }
+
+    public void setAdapterName(String adapterName) {
+        this.adapterName = adapterName;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -328,6 +326,7 @@ public class SourceConfig implements Serializable, Cloneable {
         if (!equals(sourceClass, sourceConfig.sourceClass)) return false;
 
         if (!equals(partitionName, sourceConfig.partitionName)) return false;
+        if (!equals(adapterName, sourceConfig.adapterName)) return false;
         if (!equals(connectionName, sourceConfig.connectionName)) return false;
 
         if (!equals(fieldConfigs, sourceConfig.fieldConfigs)) return false;
@@ -346,6 +345,7 @@ public class SourceConfig implements Serializable, Cloneable {
         sourceClass = sourceConfig.sourceClass;
 
         partitionName = sourceConfig.partitionName;
+        adapterName = sourceConfig.adapterName;
         connectionName = sourceConfig.connectionName;
 
         fieldConfigs               = new LinkedHashMap<String,FieldConfig>();

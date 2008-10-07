@@ -19,7 +19,10 @@ import java.util.*;
 public class SnapshotSyncModule extends Module {
 
     protected String sourcePartitionName;
+    protected String sourceName;
+
     protected String targetPartitionName;
+    protected String targetName;
 
     protected Source changes;
     protected Source errors;
@@ -28,23 +31,45 @@ public class SnapshotSyncModule extends Module {
 
     public void init() throws Exception {
 
-        SourceManager sourceManager = partition.getSourceManager();
+        String s = getParameter("source");
+        int i = s.indexOf('.');
 
-        sourcePartitionName = getParameter("source");
-        log.debug("Source: "+sourcePartitionName);
+        if (i < 0) {
+            sourcePartitionName = getPartition().getName();
+            sourceName = s;
+        } else {
+            sourcePartitionName = s.substring(0, i);
+            sourceName = s.substring(i+1);
+        }
 
-        targetPartitionName = getParameter("target");
-        log.debug("Target: "+targetPartitionName);
+        log.debug("Source partition: "+sourcePartitionName);
+        log.debug("Source: "+sourceName);
+
+        s = getParameter("target");
+        i = s.indexOf('.');
+
+        if (i < 0) {
+            targetPartitionName = getPartition().getName();
+            targetName = s;
+        } else {
+            targetPartitionName = s.substring(0, i);
+            targetName = s.substring(i+1);
+        }
+
+        log.debug("Target partition: "+targetPartitionName);
+        log.debug("Target: "+targetName);
 
         String changesName = getParameter("changes");
-        log.debug("Errors: "+changesName);
-        changes = sourceManager.getSource(changesName);
+        log.debug("Changes: "+changesName);
 
         String errorsName = getParameter("errors");
         log.debug("Errors: "+errorsName);
+
+        SourceManager sourceManager = partition.getSourceManager();
+        changes = sourceManager.getSource(changesName);
         errors = sourceManager.getSource(errorsName);
 
-        String s = getParameter("ignoredAttributes");
+        s = getParameter("ignoredAttributes");
         log.debug("Ignored attributes: "+s);
         if (s != null) {
             StringTokenizer st = new StringTokenizer(s, ", \t\n\r\f");
@@ -60,8 +85,8 @@ public class SnapshotSyncModule extends Module {
         try {
             AddResponse response = new AddResponse();
 
-            Partition targetPartition = getTargetPartition();
-            targetPartition.add(session, request, response);
+            Source target = getTarget();
+            target.add(session, request, response);
 
             if (changes != null) {
                 Attributes attrs = new Attributes();
@@ -112,8 +137,8 @@ public class SnapshotSyncModule extends Module {
         try {
             DeleteResponse response = new DeleteResponse();
 
-            Partition targetPartition = getTargetPartition();
-            targetPartition.delete(session, request, response);
+            Source target = getTarget();
+            target.delete(session, request, response);
 
             if (changes != null) {
                 Attributes attrs = new Attributes();
@@ -165,8 +190,8 @@ public class SnapshotSyncModule extends Module {
         try {
             ModifyResponse response = new ModifyResponse();
 
-            Partition targetPartition = getTargetPartition();
-            targetPartition.modify(session, request, response);
+            Source target = getTarget();
+            target.modify(session, request, response);
 
             if (changes != null) {
                 Attributes attrs = new Attributes();
@@ -219,8 +244,6 @@ public class SnapshotSyncModule extends Module {
 
     public void deleteSubtree(Session session, final DN baseDn) throws Exception {
 
-        Partition targetPartition = getTargetPartition();
-
         final ArrayList<DN> dns = new ArrayList<DN>();
 
         SearchRequest request = new SearchRequest();
@@ -240,7 +263,8 @@ public class SnapshotSyncModule extends Module {
             }
         };
 
-        targetPartition.search(session, request, response);
+        Source target = getTarget();
+        target.search(session, request, response);
 
         log.debug("Waiting for operation to complete.");
         int rc = response.waitFor();
@@ -270,8 +294,6 @@ public class SnapshotSyncModule extends Module {
 
         //if (warn) log.warn("Getting DNs in subtree "+baseDn+".");
 
-        Partition targetPartition = getTargetPartition();
-
         final ArrayList<DN> dns = new ArrayList<DN>();
 
         SearchRequest request = new SearchRequest();
@@ -295,7 +317,8 @@ public class SnapshotSyncModule extends Module {
             }
         };
 
-        targetPartition.search(session, request, response);
+        Source target = getTarget();
+        target.search(session, request, response);
 
         //log.debug("Waiting for operation to complete.");
         int rc = response.waitFor();
@@ -311,16 +334,14 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition sourcePartition = getSourcePartition();
-            Partition targetPartition = getTargetPartition();
-
-            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN sourceSuffix = getSourceSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Creating "+targetSuffix);
 
-            SearchResult result = sourcePartition.find(adminSession, sourceSuffix);
+            Source source = getSource();
+            SearchResult result = source.find(adminSession, sourceSuffix);
             Attributes attributes = result.getAttributes();
 
             AddRequest request = new AddRequest();
@@ -329,7 +350,8 @@ public class SnapshotSyncModule extends Module {
 
             AddResponse response = new AddResponse();
 
-            targetPartition.add(adminSession, request, response);
+            Source target = getTarget();
+            target.add(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -341,9 +363,7 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = getTargetPartition();
-
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Creating "+targetSuffix);
@@ -353,7 +373,8 @@ public class SnapshotSyncModule extends Module {
 
             DeleteResponse response = new DeleteResponse();
 
-            targetPartition.delete(adminSession, request, response);
+            Source target = getTarget();
+            target.delete(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -369,11 +390,8 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition sourcePartition = getSourcePartition();
-            Partition targetPartition = getTargetPartition();
-
-            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN sourceSuffix = getSourceSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Creating "+targetDn);
@@ -384,7 +402,9 @@ public class SnapshotSyncModule extends Module {
             request.setDn(sourceDn);
 
             SearchResponse response = new SearchResponse();
-            sourcePartition.search(adminSession, request, response);
+
+            Source source = getSource();
+            source.search(adminSession, request, response);
 
             SearchResult result = response.next();
             Attributes attributes = result.getAttributes();
@@ -395,7 +415,8 @@ public class SnapshotSyncModule extends Module {
 
             AddResponse addResponse = new AddResponse();
 
-            targetPartition.add(adminSession, addRequest, addResponse);
+            Source target = getTarget();
+            target.add(adminSession, addRequest, addResponse);
 
         } finally {
             adminSession.close();
@@ -411,11 +432,8 @@ public class SnapshotSyncModule extends Module {
         final Session adminSession = createAdminSession();
 
         try {
-            Partition sourcePartition = getSourcePartition();
-            Partition targetPartition = getTargetPartition();
-
-            DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN sourceSuffix = getSourceSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             log.debug("##################################################################################################");
             log.debug("Loading "+targetDn);
@@ -445,7 +463,8 @@ public class SnapshotSyncModule extends Module {
                 }
             };
 
-            sourcePartition.search(adminSession, request, response);
+            Source source = getSource();
+            source.search(adminSession, request, response);
 
             log.debug("Waiting for operation to complete.");
             int rc = response.waitFor();
@@ -484,8 +503,6 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = getTargetPartition();
-
             log.debug("##################################################################################################");
             log.debug("Removing "+targetDn);
 
@@ -496,7 +513,8 @@ public class SnapshotSyncModule extends Module {
 
             DeleteResponse response = new DeleteResponse();
 
-            targetPartition.delete(adminSession, request, response);
+            Source target = getTarget();
+            target.delete(adminSession, request, response);
 
         } finally {
             adminSession.close();
@@ -512,8 +530,6 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = getTargetPartition();
-
             SearchRequest request = new SearchRequest();
             request.setDn(targetDn);
             request.setAttributes(new String[] { "dn" });
@@ -521,7 +537,8 @@ public class SnapshotSyncModule extends Module {
 
             SearchResponse response = new SearchResponse();
 
-            targetPartition.search(adminSession, request, response);
+            Source target = getTarget();
+            target.search(adminSession, request, response);
 
             log.debug("Waiting for operation to complete.");
             int rc = response.waitFor();
@@ -541,9 +558,7 @@ public class SnapshotSyncModule extends Module {
         Session adminSession = createAdminSession();
 
         try {
-            Partition targetPartition = getTargetPartition();
-
-            DN targetSuffix = targetPartition.getDirectory().getSuffix();
+            DN targetSuffix = getTargetSuffix();
 
             SearchRequest request = new SearchRequest();
             request.setDn(targetSuffix);
@@ -552,7 +567,8 @@ public class SnapshotSyncModule extends Module {
 
             SearchResponse response = new SearchResponse();
 
-            targetPartition.search(adminSession, request, response);
+            Source target = getTarget();
+            target.search(adminSession, request, response);
 
             SynchronizationResult totalResult = new SynchronizationResult();
             for (SearchResult result : response.getResults()) {
@@ -601,11 +617,8 @@ public class SnapshotSyncModule extends Module {
 
         long startTime = System.currentTimeMillis();
 
-        final Partition sourcePartition = getSourcePartition();
-        final Partition targetPartition = getTargetPartition();
-
-        final DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
-        final DN targetSuffix = targetPartition.getDirectory().getSuffix();
+        final DN sourceSuffix = getSourceSuffix();
+        final DN targetSuffix = getTargetSuffix();
 
         log.debug("##################################################################################################");
         log.warn("Synchronizing "+targetDn);
@@ -639,7 +652,8 @@ public class SnapshotSyncModule extends Module {
             }
         };
 
-        targetPartition.search(session, request1, response1);
+        final Source target = getTarget();
+        target.search(session, request1, response1);
 
         int rc1 = response1.waitFor();
         if (warn) log.warn("Search completed. RC="+rc1+".");
@@ -666,7 +680,7 @@ public class SnapshotSyncModule extends Module {
 
                 if (dns.contains(normalizedDn)) {
 
-                    SearchResult result1 = targetPartition.find(session, dn1);
+                    SearchResult result1 = target.find(session, dn1);
 
                     Attributes attributes1 = result1.getAttributes();
                     if (!checkSearchResult(result1)) return;
@@ -724,7 +738,8 @@ public class SnapshotSyncModule extends Module {
             }
         };
 
-        sourcePartition.search(session, request2, response2);
+        Source source = getSource();
+        source.search(session, request2, response2);
 
         int rc2 = response2.waitFor();
         if (warn) log.warn("Search completed. RC="+rc2+".");
@@ -918,31 +933,23 @@ public class SnapshotSyncModule extends Module {
     }
 */
 
-    public Partition getSourcePartition() throws Exception {
-        if (sourcePartitionName == null) return partition;
-
-        Partition sourcePartition = partition.getPartitionContext().getPartition(sourcePartitionName);
-        if (sourcePartition == null) throw new Exception("Partition "+sourcePartitionName+" not found.");
-
-        return sourcePartition;
+    public Source getSource() throws Exception {
+        Partition sourcePartition = getPartition(sourcePartitionName);
+        return sourcePartition.getSourceManager().getSource(sourceName);
     }
 
-    public Partition getTargetPartition() throws Exception {
-        if (targetPartitionName == null) return partition;
-
-        Partition targetPartition = partition.getPartitionContext().getPartition(targetPartitionName);
-        if (targetPartition == null) throw new Exception("Partition "+targetPartitionName+" not found.");
-
-        return targetPartition;
+    public Source getTarget() throws Exception {
+        Partition targetPartition = getPartition(targetPartitionName);
+        return targetPartition.getSourceManager().getSource(targetName);
     }
 
     public DN getSourceSuffix() throws Exception {
-        Partition sourcePartition = getSourcePartition();
-        return sourcePartition.getDirectory().getSuffix();
+        Source source = getSource();
+        return new DN(source.getParameter("baseDn"));
     }
 
     public DN getTargetSuffix() throws Exception {
-        Partition targetPartition = getTargetPartition();
-        return targetPartition.getDirectory().getSuffix();
+        Source target = getTarget();
+        return new DN(target.getParameter("baseDn"));
     }
 }

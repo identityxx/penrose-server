@@ -71,11 +71,8 @@ public class NISSynchronizationModule extends SnapshotSyncModule {
         Attribute attribute = attributes.get("nisMapEntry");
         if (attribute == null) return;
 
-        Partition sourcePartition = getSourcePartition();
-        Partition targetPartition = getTargetPartition();
-
-        DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
-        DN targetSuffix = targetPartition.getDirectory().getSuffix();
+        DN sourceSuffix = getSourceSuffix();
+        DN targetSuffix = getTargetSuffix();
 
         Collection<Object> removeList = new ArrayList<Object>();
         Collection<Object> addList = new ArrayList<Object>();

@@ -9,7 +9,7 @@
     <oc>organizationalUnit</oc>
     <oc>nisDomainObject</oc>
     <at name="ou" rdn="true">
-      <constant>${DOMAIN}</constant>
+      <constant>${repository.name}</constant>
     </at>
     <at name="nisDomain">
       <constant>${nisDomain}</constant>

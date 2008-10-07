@@ -19,6 +19,7 @@ package org.safehaus.penrose.source;
 
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.connection.Connection;
+import org.safehaus.penrose.adapter.Adapter;
 
 /**
  * @author Endi Sukma Dewata
@@ -26,6 +27,7 @@ import org.safehaus.penrose.connection.Connection;
 public class SourceContext {
 
     private Partition partition;
+    private Adapter adapter;
     private Connection connection;
 
     public Partition getPartition() {
@@ -34,6 +36,14 @@ public class SourceContext {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
+    }
+
+    public Adapter getAdapter() {
+        return adapter;
+    }
+
+    public void setAdapter(Adapter adapter) {
+        this.adapter = adapter;
     }
 
     public Connection getConnection() {

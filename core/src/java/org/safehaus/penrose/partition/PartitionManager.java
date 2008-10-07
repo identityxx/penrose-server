@@ -78,7 +78,7 @@ public class PartitionManager {
                 loadPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                errorLog.error("Failed loading "+partitionName+" partition.", e);
             }
         }
 
@@ -89,7 +89,7 @@ public class PartitionManager {
                 startPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error(e.getMessage(), e);
+                errorLog.error("Failed starting "+partitionName+" partition.", e);
             }
         }
     }
@@ -97,7 +97,7 @@ public class PartitionManager {
     public void loadDefaultPartition() throws Exception {
 
         if (debug) log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading partition DEFAULT.");
+        log.debug("Loading DEFAULT partition.");
 
         DefaultPartitionConfig partitionConfig = new DefaultPartitionConfig();
 
@@ -109,13 +109,13 @@ public class PartitionManager {
 
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
-        if (debug) log.debug("Partition DEFAULT loaded.");
+        if (debug) log.debug("DEFAULT partition loaded.");
     }
 
     public void loadPartition(String partitionName) throws Exception {
 
         log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading partition "+partitionName+".");
+        log.debug("Loading "+partitionName+" partition.");
 
         File partitionDir = new File(partitionsDir, partitionName);
 
@@ -124,38 +124,38 @@ public class PartitionManager {
 
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
-        if (debug) log.debug("Partition "+partitionName+" loaded.");
+        if (debug) log.debug(partitionName+" partition loaded.");
     }
 
     public void startPartition(String name) throws Exception {
 
         Partition partition = partitions.get(name);
         if (partition != null) {
-            log.info("Partition "+name+" already started.");
+            log.debug(name+" partition already started.");
             return;
         }
 
         PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
         if (partitionConfig == null) {
-            log.error("Can't start partition "+name+": Partition not found.");
+            log.error("Can't start "+name+" partition: Partition not found.");
             return;
         }
 
         if (!partitionConfig.isEnabled()) {
-            log.info("Partition "+name+" disabled.");
+            log.debug(name+" partition disabled.");
             return;
         }
 
         for (String depend : partitionConfig.getDepends()) {
             if (partitionConfigManager.getPartitionConfig(depend) == null) {
-                log.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
+                log.error("Can't start "+name+" partition: Missing dependency ["+depend+"].");
                 return;
             }
             startPartition(depend);
         }
 
         log.debug("----------------------------------------------------------------------------------");
-        log.debug("Starting partition "+name+".");
+        log.debug("Starting "+name+" partition.");
 
         PartitionFactory partitionFactory = new PartitionFactory();
         partitionFactory.setPartitionsDir(partitionsDir);
@@ -171,7 +171,7 @@ public class PartitionManager {
             listener.partitionStarted(event);
         }
 
-        log.debug("Partition "+name+" started.");
+        log.debug(name+" partition started.");
     }
 
     public void stopPartitions() throws Exception {
@@ -200,7 +200,7 @@ public class PartitionManager {
         Partition partition = partitions.get(name);
 
         if (partition == null) {
-            log.debug("Partition "+name+" not started.");
+            log.debug(name+" partition not started.");
             return;
         }
 
@@ -213,13 +213,13 @@ public class PartitionManager {
             listener.partitionStopped(event);
         }
 
-        log.debug("Partition "+name+" stopped.");
+        log.debug(name+" partition stopped.");
     }
 
     public void unloadPartition(String name) throws Exception {
         partitionConfigManager.removePartitionConfig(name);
 
-        log.debug("Partition "+name+" unloaded.");
+        log.debug(name+" partition unloaded.");
     }
 
     public void clear() throws Exception {

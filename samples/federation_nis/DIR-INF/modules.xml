@@ -9,7 +9,11 @@
     <module-class>org.safehaus.penrose.nis.module.NISSynchronizationModule</module-class>
     <parameter>
       <param-name>source</param-name>
-      <param-value>${DOMAIN}_yp</param-value>
+      <param-value>${repository.name}_yp.LDAP</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>LDAP</param-value>
     </parameter>
 <!--
     <parameter>
@@ -82,8 +86,12 @@
   <module name="LinkingModule" enabled="true">
     <module-class>org.safehaus.penrose.federation.module.LinkingModule</module-class>
     <parameter>
+      <param-name>source</param-name>
+      <param-value>LDAP</param-value>
+    </parameter>
+    <parameter>
       <param-name>target</param-name>
-      <param-value>global</param-value>
+      <param-value>global.LDAP</param-value>
     </parameter>
     <parameter>
       <param-name>sourceAttribute</param-name>
