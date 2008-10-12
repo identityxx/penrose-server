@@ -19,6 +19,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.management.*;
+import javax.management.Attribute;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -64,6 +65,11 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
 
     public SourceConfig getSourceConfig() throws Exception {
         return (SourceConfig)connection.getAttribute(objectName, "SourceConfig");
+    }
+
+    public void setSourceConfig(SourceConfig sourceConfig) throws Exception {
+        Attribute attribute = new Attribute("SourceConfig", sourceConfig);
+        connection.setAttribute(objectName, attribute);
     }
 
     public static String getStringObjectName(String partitionName, String sourceName) {

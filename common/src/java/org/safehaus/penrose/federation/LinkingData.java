@@ -21,7 +21,6 @@ public class LinkingData implements Serializable {
 
     private SearchResult entry;
 
-    private int storage;
     private String localAttribute;
     private String globalAttribute;
 
@@ -109,14 +108,6 @@ public class LinkingData implements Serializable {
 
     public void removeMatchedEntries() {
         matchedEntries.clear();
-    }
-
-    public int getStorage() {
-        return storage;
-    }
-
-    public void setStorage(int storage) {
-        this.storage = storage;
     }
 
     public String getLocalAttribute() {

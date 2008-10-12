@@ -11,6 +11,13 @@ public interface PartitionManagerServiceMBean {
 
     public Collection<String> getPartitionNames() throws Exception;
 
+    public void storePartition(String name) throws Exception;
+    public void loadPartition(String name) throws Exception;
+    public void unloadPartition(String name) throws Exception;
+
+    public void startPartition(String name) throws Exception;
+    public void stopPartition(String name) throws Exception;
+
     public void startPartitions() throws Exception;
     public void stopPartitions() throws Exception;
 

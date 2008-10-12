@@ -1,26 +1,23 @@
 package org.safehaus.penrose.federation;
 
-import java.util.Map;
-
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPRepository extends Repository {
+public class LDAPRepository extends FederationRepositoryConfig {
 
-    public final static String LDAP_URL           = "ldapUrl";
-    public final static String LDAP_SUFFIX        = "ldapSuffix";
-    public final static String LDAP_USER          = "ldapUser";
-    public final static String LDAP_PASSWORD      = "ldapPassword";
+    public final static String URL      = "url";
+    public final static String SUFFIX   = "suffix";
+    public final static String USER     = "user";
+    public final static String PASSWORD = "password";
 
-    public final static String ENABLED            = "enabled";
-    public final static String SUFFIX             = "suffix";
-    public final static String TEMPLATE           = "template";
+    public final static String ENABLED  = "enabled";
+    public final static String TEMPLATE = "template";
 
     public LDAPRepository() {
         setType("LDAP");
     }
 
-    public LDAPRepository(Repository repository) {
+    public LDAPRepository(FederationRepositoryConfig repository) {
         super(repository);
     }
 }

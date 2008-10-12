@@ -6,7 +6,7 @@
 <modules>
 
   <module name="users">
-    <module-class>org.safehaus.penrose.ldap.module.LDAPSourceSyncModule</module-class>
+    <module-class>org.safehaus.penrose.ldap.module.ChangeLogSyncModule</module-class>
     <parameter>
       <param-name>source</param-name>
       <param-value>users</param-value>
@@ -26,7 +26,7 @@
   </module>
 
   <module name="groups">
-    <module-class>org.safehaus.penrose.ldap.module.LDAPSourceSyncModule</module-class>
+    <module-class>org.safehaus.penrose.ldap.module.ChangeLogSyncModule</module-class>
     <parameter>
       <param-name>source</param-name>
       <param-value>groups</param-value>

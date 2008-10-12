@@ -2,7 +2,7 @@
 
 <!ELEMENT mappings (mapping*)>
 
-<!ELEMENT mapping (mapping-class?, description?, pre?, post?, field*, parameter*)>
+<!ELEMENT mapping (mapping-class?, description?, pre?, post?, rule*, parameter*)>
 <!ATTLIST mapping name CDATA #REQUIRED>
 <!ELEMENT mapping-class (#PCDATA)>
 
@@ -10,9 +10,9 @@
 <!ELEMENT post (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
 
-<!ELEMENT field (condition?,(binary|constant|variable|expression))>
-<!ATTLIST field name CDATA #REQUIRED>
-<!ATTLIST field required (true|false) "true">
+<!ELEMENT rule (condition?,(binary|constant|variable|expression))>
+<!ATTLIST rule name CDATA #REQUIRED>
+<!ATTLIST rule required (true|false) "true">
 
 <!ELEMENT condition (#PCDATA)>
 <!ELEMENT binary (#PCDATA)>

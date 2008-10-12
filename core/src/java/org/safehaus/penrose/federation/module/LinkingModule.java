@@ -34,6 +34,8 @@ import org.safehaus.penrose.source.Source;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author Endi Sukma Dewata
@@ -42,6 +44,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
     public final static String SOURCE = "source";
     public final static String TARGET = "target";
+    public final static String BOTH   = "both";
 
     protected String sourcePartitionName;
     protected String sourceName;
@@ -51,7 +54,9 @@ public class LinkingModule extends Module implements LinkingMBean {
 
     protected String sourceAttribute;
     protected String targetAttribute;
-    protected String storage;
+
+    protected String sourceKey;
+    protected String targetKey;
 
     protected String mappingName;
     protected String mappingPrefix;
@@ -87,16 +92,18 @@ public class LinkingModule extends Module implements LinkingMBean {
         log.debug("Target: "+targetName);
 
         sourceAttribute = getParameter("sourceAttribute");
-        if (sourceAttribute == null) sourceAttribute = "dn";
         log.debug("Source attribute: "+sourceAttribute);
 
         targetAttribute = getParameter("targetAttribute");
-        if (targetAttribute == null) targetAttribute = "seeAlso";
         log.debug("Target attribute: "+targetAttribute);
 
-        storage = getParameter("storage");
-        if (storage == null) storage = SOURCE;
-        log.debug("Storage: "+storage);
+        sourceKey = getParameter("sourceKey");
+        if (sourceKey == null) sourceKey = "dn";
+        log.debug("Source key: "+sourceKey);
+
+        targetKey = getParameter("targetKey");
+        if (targetKey == null) targetKey = "dn";
+        log.debug("Target key: "+targetKey);
 
         mappingName = getParameter("mapping");
         log.debug("Mapping name: "+mappingName);
@@ -107,7 +114,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
     public void linkEntry(DN sourceDn, DN targetDn) throws Exception {
 
-        Session adminSession = createAdminSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -116,56 +123,59 @@ public class LinkingModule extends Module implements LinkingMBean {
             log.debug("##################################################################################################");
             log.debug("Link "+sourceDn+" to "+targetDn);
 
-            String sa, ta;
-            DN sdn, tdn;
-            Source s, t;
-
-            if (storage.equals(SOURCE)) {
-                sa = targetAttribute;
-                ta = sourceAttribute;
-                sdn = targetDn;
-                tdn = sourceDn;
-                s = target;
-                t = source;
-
-            } else {
-                sa = sourceAttribute;
-                ta = targetAttribute;
-                sdn = sourceDn;
-                tdn = targetDn;
-                s = source;
-                t = target;
+            if (sourceAttribute != null) {
+                linkEntry(session, targetDn, sourceDn, targetKey, sourceAttribute, target, source);
             }
 
-            Object value;
-            if (sa == null || sa.equals("dn")) {
-                value = sdn.toString();
-
-            } else {
-                SearchResult entry = s.find(adminSession, sdn);
-                Attributes attributes = entry.getAttributes();
-                value = attributes.getValue(sa);
+            if (targetAttribute != null) {
+                linkEntry(session, sourceDn, targetDn, sourceKey, targetAttribute, source, target);
             }
-
-            Collection<Modification> modifications = new ArrayList<Modification>();
-            modifications.add(new Modification(Modification.ADD, new Attribute(ta, value)));
-
-            ModifyRequest request = new ModifyRequest();
-            request.setDn(tdn);
-            request.setModifications(modifications);
-
-            ModifyResponse response = new ModifyResponse();
-
-            t.modify(adminSession, request, response);
 
         } finally {
-            adminSession.close();
+            session.close();
+        }
+    }
+
+    public void linkEntry(
+            Session session,
+            DN sourceDn,
+            DN targetDn,
+            String sourceKey,
+            String targetAttribute,
+            Source source,
+            Source target
+    ) throws Exception {
+
+        Object value;
+        if (sourceKey == null || sourceKey.equals("dn")) {
+            value = sourceDn.toString();
+
+        } else {
+            SearchResult entry = source.find(session, sourceDn);
+            Attributes attributes = entry.getAttributes();
+            value = attributes.getValue(sourceKey);
+        }
+
+        Collection<Modification> modifications = new ArrayList<Modification>();
+        modifications.add(new Modification(Modification.ADD, new Attribute(targetAttribute, value)));
+
+        ModifyRequest request = new ModifyRequest();
+        request.setDn(targetDn);
+        request.setModifications(modifications);
+
+        ModifyResponse response = new ModifyResponse();
+
+        try {
+            target.modify(session, request, response);
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
     public void unlinkEntry(DN sourceDn, DN targetDn) throws Exception {
 
-        Session adminSession = createAdminSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -174,56 +184,59 @@ public class LinkingModule extends Module implements LinkingMBean {
             log.debug("##################################################################################################");
             log.debug("Unlink "+sourceDn+" from "+targetDn);
 
-            String sa, ta;
-            DN sdn, tdn;
-            Source s, t;
-
-            if (storage.equals(SOURCE)) {
-                sa = targetAttribute;
-                ta = sourceAttribute;
-                sdn = targetDn;
-                tdn = sourceDn;
-                s = target;
-                t = source;
-
-            } else {
-                sa = sourceAttribute;
-                ta = targetAttribute;
-                sdn = sourceDn;
-                tdn = targetDn;
-                s = source;
-                t = target;
+            if (sourceAttribute != null) {
+                unlinkEntry(session, targetDn, sourceDn, targetKey, sourceAttribute, target, source);
             }
 
-            Object value;
-            if (sa == null || sa.equals("dn")) {
-                value = sdn.toString();
-
-            } else {
-                SearchResult entry = s.find(adminSession, sdn);
-                Attributes attributes = entry.getAttributes();
-                value = attributes.getValue(sa);
+            if (targetAttribute != null) {
+                unlinkEntry(session, sourceDn, targetDn, sourceKey, targetAttribute, source, target);
             }
-
-            Collection<Modification> modifications = new ArrayList<Modification>();
-            modifications.add(new Modification(Modification.DELETE, new Attribute(ta, value)));
-
-            ModifyRequest request = new ModifyRequest();
-            request.setDn(tdn);
-            request.setModifications(modifications);
-
-            ModifyResponse response = new ModifyResponse();
-
-            t.modify(adminSession, request, response);
 
         } finally {
-            adminSession.close();
+            session.close();
+        }
+    }
+
+    public void unlinkEntry(
+            Session session,
+            DN sourceDn,
+            DN targetDn,
+            String sourceKey,
+            String targetAttribute,
+            Source source,
+            Source target
+    ) throws Exception {
+
+        Object value;
+        if (sourceKey == null || sourceKey.equals("dn")) {
+            value = sourceDn.toString();
+
+        } else {
+            SearchResult entry = source.find(session, sourceDn);
+            Attributes attributes = entry.getAttributes();
+            value = attributes.getValue(sourceKey);
+        }
+
+        Collection<Modification> modifications = new ArrayList<Modification>();
+        modifications.add(new Modification(Modification.DELETE, new Attribute(targetAttribute, value)));
+
+        ModifyRequest request = new ModifyRequest();
+        request.setDn(targetDn);
+        request.setModifications(modifications);
+
+        ModifyResponse response = new ModifyResponse();
+
+        try {
+            target.modify(session, request, response);
+            
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
     public Collection<LinkingData> search(SearchRequest request) throws Exception {
 
-        Session adminSession = createAdminSession();
+        Session session = createAdminSession();
 
         try {
             Source source = getSource();
@@ -238,46 +251,68 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             SearchResponse response = new SearchResponse();
 
-            source.search(adminSession, request, response);
+            source.search(session, request, response);
 
             while (response.hasNext()) {
                 SearchResult localEntry = response.next();
 
                 LinkingData data = new LinkingData(localEntry);
-                data.setStorage(SOURCE.equals(storage) ? LinkingData.LOCAL_STORAGE : LinkingData.GLOBAL_STORAGE);
-                data.setLocalAttribute(sourceAttribute);
-                data.setGlobalAttribute(targetAttribute);
 
-                Collection<Object> links = new ArrayList<Object>();
+                if (sourceAttribute != null) {
+                    data.setLocalAttribute(sourceAttribute);
 
-                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                    links.add(localEntry.getDn().toString());
-
-                } else {
                     Attributes sourceAttributes = localEntry.getAttributes();
-                    links.addAll(sourceAttributes.getValues(sourceAttribute));
+                    Collection<Object> links = sourceAttributes.getValues(sourceAttribute);
+
+                    for (Object link : links) {
+                        SearchRequest globalRequest = new SearchRequest();
+
+                        if (targetKey == null || targetKey.equals("dn")) {
+                            globalRequest.setDn(link.toString());
+                            globalRequest.setScope(SearchRequest.SCOPE_BASE);
+                        } else {
+                            globalRequest.setDn(targetSuffix);
+                            globalRequest.setFilter(new SimpleFilter(targetKey, "=", link));
+                        }
+
+                        SearchResponse globalResponse = new SearchResponse();
+
+                        target.search(session, globalRequest, globalResponse);
+
+                        while (globalResponse.hasNext()) {
+                            SearchResult globalEntry = globalResponse.next();
+                            data.addLinkedEntry(globalEntry);
+                        }
+                    }
                 }
 
-                for (Object link : links) {
-                    SearchRequest globalRequest = new SearchRequest();
+                if (targetAttribute != null) {
+                    data.setGlobalAttribute(targetAttribute);
 
-                    if (targetAttribute == null || targetAttribute.equals("dn")) {
-                        globalRequest.setDn(link.toString());
-                        globalRequest.setScope(SearchRequest.SCOPE_BASE);
+                    Collection<Object> targetLinks;
+
+                    if (sourceKey == null || sourceKey.equals("dn")) {
+                        targetLinks = new ArrayList<Object>();
+                        targetLinks.add(localEntry.getDn().toString());
+
                     } else {
-                        globalRequest.setDn(targetSuffix);
-                        globalRequest.setFilter(new SimpleFilter(targetAttribute, "=", link));
+                        Attributes sourceAttributes = localEntry.getAttributes();
+                        targetLinks = sourceAttributes.getValues(sourceKey);
                     }
 
-                    SearchResponse globalResponse = new SearchResponse();
+                    for (Object link : targetLinks) {
+                        SearchRequest globalRequest = new SearchRequest();
+                        globalRequest.setDn(targetSuffix);
+                        globalRequest.setFilter(new SimpleFilter(targetAttribute, "=", link));
 
-                    target.search(adminSession, globalRequest, globalResponse);
+                        SearchResponse globalResponse = new SearchResponse();
 
-                    if (!globalResponse.hasNext()) continue;
+                        target.search(session, globalRequest, globalResponse);
 
-                    while (globalResponse.hasNext()) {
-                        SearchResult globalEntry = globalResponse.next();
-                        data.addLinkedEntry(globalEntry);
+                        while (globalResponse.hasNext()) {
+                            SearchResult globalEntry = globalResponse.next();
+                            data.addLinkedEntry(globalEntry);
+                        }
                     }
                 }
 
@@ -287,7 +322,7 @@ public class LinkingModule extends Module implements LinkingMBean {
             return results;
 
         } finally {
-            adminSession.close();
+            session.close();
         }
     }
 
@@ -303,43 +338,61 @@ public class LinkingModule extends Module implements LinkingMBean {
             log.debug("##################################################################################################");
             log.debug("Search links for "+sourceDn);
 
-            Collection<Object> links;
+            Map<DN,SearchResult> map = new HashMap<DN,SearchResult>();
 
-            if (sourceAttribute == null || sourceAttribute.equals("dn")) {
-                links = new ArrayList<Object>();
-                links.add(sourceDn);
+            if (sourceAttribute != null) {
 
-            } else {
                 Attributes sourceAttributes = sourceEntry.getAttributes();
-                links = sourceAttributes.getValues(sourceAttribute);
+                Collection<Object> links = sourceAttributes.getValues(sourceAttribute);
+
+                if (targetKey == null || targetKey.equals("dn")) {
+                    for (Object link : links) {
+                        String dn = (String)link;
+                        SearchResult result = target.find(adminSession, dn);
+                        map.put(result.getDn(), result);
+                    }
+
+                } else {
+                    Filter filter = null;
+                    for (Object link : links) {
+                        SimpleFilter sf = new SimpleFilter(targetKey, "=", link);
+                        filter = FilterTool.appendOrFilter(filter, sf);
+                    }
+
+                    SearchRequest request = new SearchRequest();
+                    request.setFilter(filter);
+
+                    SearchResponse response = new SearchResponse();
+
+                    target.search(adminSession, request, response);
+
+                    while (response.hasNext()) {
+                        SearchResult result = response.next();
+                        map.put(result.getDn(), result);
+                    }
+                }
             }
 
-            Collection<SearchResult> results = new ArrayList<SearchResult>();
+            if (targetAttribute != null) {
 
-            if (targetAttribute == null || targetAttribute.equals("dn")) {
-                for (Object link : links) {
-                    DN dn;
-                    if (link instanceof DN) {
-                        dn = (DN)link;
-                    } else {
-                        dn = new DN(link.toString());
-                    }
-                    SearchResult result = target.find(adminSession, dn);
-                    results.add(result);
+                Collection<Object> links;
+
+                if (sourceKey == null || sourceKey.equals("dn")) {
+                    links = new ArrayList<Object>();
+                    links.add(sourceDn);
+
+                } else {
+                    Attributes sourceAttributes = sourceEntry.getAttributes();
+                    links = sourceAttributes.getValues(sourceKey);
                 }
-
-            } else {
-                SearchRequest request = new SearchRequest();
-                request.setAttributes(new String[] { "dn" });
-
-                DN targetSuffix = getTargetSuffix();
-                request.setDn(targetSuffix);
 
                 Filter filter = null;
                 for (Object link : links) {
                     SimpleFilter sf = new SimpleFilter(targetAttribute, "=", link);
                     filter = FilterTool.appendOrFilter(filter, sf);
                 }
+
+                SearchRequest request = new SearchRequest();
                 request.setFilter(filter);
 
                 SearchResponse response = new SearchResponse();
@@ -348,9 +401,12 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                 while (response.hasNext()) {
                     SearchResult result = response.next();
-                    results.add(result);
+                    map.put(result.getDn(), result);
                 }
             }
+
+            Collection<SearchResult> results = new ArrayList<SearchResult>();
+            results.addAll(map.values());
 
             return results;
 
@@ -370,6 +426,9 @@ public class LinkingModule extends Module implements LinkingMBean {
         Attributes targetAttributes = null;
 
         try {
+            Source source = getSource();
+            Source target = getTarget();
+
             DN sourceSuffix = getSourceSuffix();
             DN targetSuffix = getTargetSuffix();
 
@@ -390,16 +449,16 @@ public class LinkingModule extends Module implements LinkingMBean {
                 targetAttributes = mapping.map(mappingPrefix, sourceAttributes);
             }
 
-            if (!storage.equals(SOURCE)) {
+            if (targetAttribute != null) {
 
                 log.debug("Creating link on target.");
 
                 Object value;
-                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
+                if (sourceKey == null || sourceKey.equals("dn")) {
                     value = sourceDn.toString();
 
                 } else {
-                    value = sourceAttributes.getValue(sourceAttribute);
+                    value = sourceAttributes.getValue(sourceKey);
                 }
 
                 targetAttributes.addValue(targetAttribute, value);
@@ -411,19 +470,18 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             AddResponse response = new AddResponse();
 
-            Source target = getTarget();
             target.add(adminSession, request, response);
 
-            if (storage.equals(SOURCE)) {
+            if (sourceAttribute != null) {
                 try {
                     log.debug("Creating link on source.");
 
                     Object value;
-                    if (targetAttribute == null || targetAttribute.equals("dn")) {
+                    if (targetKey == null || targetKey.equals("dn")) {
                         value = targetDn.toString();
 
                     } else {
-                        value = targetAttributes.getValue(targetAttribute);
+                        value = targetAttributes.getValue(targetKey);
                     }
 
                     Modification modification = new Modification(
@@ -437,7 +495,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                     ModifyResponse modifyResponse = new ModifyResponse();
 
-                    partition.modify(adminSession, modifyRequest, modifyResponse);
+                    source.modify(adminSession, modifyRequest, modifyResponse);
 
                 } catch (LDAPException e) {
                     log.error(e.getMessage(), e);
@@ -471,26 +529,28 @@ public class LinkingModule extends Module implements LinkingMBean {
         Attributes targetAttributes = null;
 
         try {
+            Source target = getTarget();
+            Source source = getSource();
+
             log.debug("##################################################################################################");
             log.debug("Import "+ sourceDn);
 
-            Source source = getSource();
             SearchResult sourceEntry = source.find(adminSession, sourceDn);
             sourceAttributes = sourceEntry.getAttributes();
 
             targetDn = targetEntry.getDn();
             targetAttributes = targetEntry.getAttributes();
 
-            if (!storage.equals(SOURCE)) {
+            if (targetAttribute != null) {
 
                 log.debug("Creating link on target.");
 
                 Object value;
-                if (sourceAttribute == null || sourceAttribute.equals("dn")) {
+                if (sourceKey == null || sourceKey.equals("dn")) {
                     value = sourceDn.toString();
 
                 } else {
-                    value = sourceAttributes.getValue(sourceAttribute);
+                    value = sourceAttributes.getValue(sourceKey);
                 }
 
                 targetAttributes.addValue(targetAttribute, value);
@@ -502,19 +562,18 @@ public class LinkingModule extends Module implements LinkingMBean {
 
             AddResponse response = new AddResponse();
 
-            Source target = getTarget();
             target.add(adminSession, request, response);
 
-            if (storage.equals(SOURCE)) {
+            if (sourceAttribute != null) {
                 try {
                     log.debug("Creating link on source.");
 
                     Object value;
-                    if (targetAttribute == null || targetAttribute.equals("dn")) {
+                    if (targetKey == null || targetKey.equals("dn")) {
                         value = targetDn.toString();
 
                     } else {
-                        value = targetAttributes.getValue(targetAttribute);
+                        value = targetAttributes.getValue(targetKey);
                     }
 
                     Modification modification = new Modification(
@@ -528,7 +587,7 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                     ModifyResponse modifyResponse = new ModifyResponse();
 
-                    partition.modify(adminSession, modifyRequest, modifyResponse);
+                    source.modify(adminSession, modifyRequest, modifyResponse);
 
                 } catch (LDAPException e) {
                     log.error(e.getMessage(), e);

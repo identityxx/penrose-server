@@ -33,9 +33,7 @@ public class LinkEntry extends Entry {
     public Entry getLink() throws Exception {
 
         PartitionContext partitionContext = partition.getPartitionContext();
-        PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-        PartitionManager partitionManager = penroseContext.getPartitionManager();
+        PartitionManager partitionManager = partitionContext.getPartitionManager();
         Partition p = partitionName == null ? partition : partitionManager.getPartition(partitionName);
 
         Directory directory = p.getDirectory();

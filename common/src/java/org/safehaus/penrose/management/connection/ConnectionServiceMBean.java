@@ -12,5 +12,6 @@ public interface ConnectionServiceMBean {
     public void restart() throws Exception;
     
     public ConnectionConfig getConnectionConfig() throws Exception;
+    public void setConnectionConfig(ConnectionConfig connectionConfig) throws Exception;
     public String getAdapterName() throws Exception;
 }

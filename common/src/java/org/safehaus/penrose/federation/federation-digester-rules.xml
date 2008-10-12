@@ -22,24 +22,49 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 -->
 <digester-rules>
 
-    <pattern value="federation">
+  <pattern value="federation">
 
-        <pattern value="repository">
+    <pattern value="repository">
 
-            <object-create-rule classname="org.safehaus.penrose.federation.Repository" />
+      <object-create-rule classname="org.safehaus.penrose.federation.FederationRepositoryConfig"/>
+      <set-properties-rule/>
 
-            <set-properties-rule/>
+      <pattern value="parameter">
+        <call-method-rule methodname="setParameter" paramcount="2"/>
+        <call-param-rule pattern="param-name" paramnumber="0"/>
+        <call-param-rule pattern="param-value" paramnumber="1"/>
+      </pattern>
 
-            <pattern value="parameter">
-                <call-method-rule methodname="setParameter" paramcount="2" />
-                <call-param-rule pattern="param-name"  paramnumber="0"/>
-                <call-param-rule pattern="param-value" paramnumber="1"/>
-            </pattern>
-
-            <set-next-rule methodname="addRepository" />
-
-        </pattern>
+      <set-next-rule methodname="addRepository"/>
 
     </pattern>
+
+    <pattern value="partition">
+
+      <object-create-rule classname="org.safehaus.penrose.federation.FederationPartitionConfig"/>
+      <set-properties-rule/>
+
+      <call-method-rule pattern="template" methodname="setTemplate" paramcount="0" />
+
+      <pattern value="repository-ref">
+
+        <object-create-rule classname="org.safehaus.penrose.federation.FederationRepositoryRef"/>
+        <set-properties-rule/>
+
+        <set-next-rule methodname="setRepositoryRef"/>
+
+      </pattern>
+
+      <pattern value="parameter">
+        <call-method-rule methodname="setParameter" paramcount="2"/>
+        <call-param-rule pattern="param-name" paramnumber="0"/>
+        <call-param-rule pattern="param-value" paramnumber="1"/>
+      </pattern>
+
+      <set-next-rule methodname="addPartition"/>
+
+    </pattern>
+
+  </pattern>
 
 </digester-rules>

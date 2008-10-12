@@ -26,7 +26,7 @@ import java.util.TreeSet;
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPSourceSyncModule extends Module {
+public class ChangeLogSyncModule extends Module {
 
     LDAPSource source;
     LDAPSource target;

@@ -18,6 +18,10 @@
     <adapter-class>org.safehaus.penrose.ldap.adapter.LDAPAdapter</adapter-class>
   </adapter>
 
+  <adapter name="NIS">
+    <adapter-class>org.safehaus.penrose.nis.adapter.NISAdapter</adapter-class>
+  </adapter>
+
   <root>
     <root-dn>uid=admin,ou=system</root-dn>
     <root-password>secret</root-password>

@@ -1,12 +1,21 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <!ELEMENT federation (
-    repository*
+    repository*, partition*
 )>
 
 <!ELEMENT repository (parameter*)>
 <!ATTLIST repository name CDATA #IMPLIED>
 <!ATTLIST repository type CDATA #IMPLIED>
+
+<!ELEMENT partition (template, repository-ref*, parameter*)>
+<!ATTLIST partition name CDATA #IMPLIED>
+
+<!ELEMENT template (#PCDATA)>
+
+<!ELEMENT repository-ref (#PCDATA)>
+<!ATTLIST repository-ref name CDATA #IMPLIED>
+<!ATTLIST repository-ref repository CDATA #IMPLIED>
 
 <!ELEMENT parameter (param-name, param-value)>
 <!ELEMENT param-name (#PCDATA)>

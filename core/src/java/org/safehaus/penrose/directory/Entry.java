@@ -262,10 +262,26 @@ public class Entry implements Cloneable {
     }
 
     public Mapping getMapping() {
-        String mappingName = entryConfig.getMappingName();
+        return getMapping(entryConfig.getMappingName());
+    }
+
+    public Mapping getMapping(String mappingName) {
         if (mappingName == null) return null;
-        
-        return partition.getMappingManager().getMapping(mappingName);
+
+        Partition mappingPartition;
+
+        int i = mappingName.indexOf('.');
+        if (i < 0) {
+            mappingPartition = partition;
+
+        } else {
+            String partitionName = mappingName.substring(0, i);
+            mappingName = mappingName.substring(i+1);
+
+            mappingPartition = getPartition(partitionName);
+        }
+
+        return mappingPartition.getMappingManager().getMapping(mappingName);
     }
 
     public Collection<String> getLocalSourceNames() {
@@ -1209,9 +1225,8 @@ public class Entry implements Cloneable {
 
             Attributes attributes = sourceAttributes.get(entrySource.getAlias());
 
-            String mappingName = entrySource.getMappingName();
-            if (mappingName != null) {
-                Mapping mapping = partition.getMappingManager().getMapping(mappingName);
+            Mapping mapping = entrySource.getMapping();
+            if (mapping != null) {
                 mapping.map(interpreter, attributes);
                 
             } else {

@@ -5,6 +5,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
+import org.safehaus.penrose.mapping.Mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -343,5 +344,9 @@ public class EntrySource implements Cloneable {
 
     public String getMappingName() {
         return sourceConfig.getMappingName();
+    }
+
+    public Mapping getMapping() {
+        return entry.getMapping(sourceConfig.getMappingName());
     }
 }

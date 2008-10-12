@@ -80,9 +80,10 @@ public class DirectoryWriter {
             element.add(descriptionElement);
         }
 
-        if (entryConfig.getMappingName() != null) {
+        String mappingName = entryConfig.getMappingName();
+        if (mappingName != null) {
             Element mappingNameElement = new DefaultElement("mapping-name");
-            mappingNameElement.setText(entryConfig.getMappingName());
+            mappingNameElement.setText(mappingName);
             element.add(mappingNameElement);
         }
 

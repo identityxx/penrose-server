@@ -307,10 +307,7 @@ public class PenroseServer {
             penroseServer.start();
 
         } catch (Exception e) {
-            String name = e.getClass().getName();
-            name = name.substring(name.lastIndexOf(".")+1);
-            log.error(e.getMessage(), e);
-            log.error("Server failed to start: "+name+": "+e.getMessage());
+            log.error("Server failed to start: "+e.getMessage(), e);
             System.exit(1);
         }
     }

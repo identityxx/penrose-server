@@ -25,7 +25,6 @@ import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.ldap.SearchResponse;
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.SearchRequest;
 import org.safehaus.penrose.ldap.SearchResult;
@@ -70,9 +69,6 @@ public class PartitionManagerTest extends TestCase {
         penrose = penroseFactory.createPenrose();
         penrose.start();
 
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penrose.getPartitionManager();
-
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
         EntryConfig entryConfig = new EntryConfig();
@@ -81,13 +77,8 @@ public class PartitionManagerTest extends TestCase {
         entryConfig.addAttributesFromRdn();
         partitionConfig.getDirectoryConfig().addEntryConfig(entryConfig);
 
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        Partition partition = partitionFactory.createPartition(partitionConfig);
-
-        partitionManager.addPartition(partition);
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        partitionManager.createPartition(partitionConfig);
 
         Session session = penrose.createSession();
         session.setBindDn("uid=admin,ou=system");

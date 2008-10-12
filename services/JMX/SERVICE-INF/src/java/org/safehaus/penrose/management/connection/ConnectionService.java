@@ -44,6 +44,10 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
         return getPartitionConfig().getConnectionConfigManager().getConnectionConfig(connectionName);
     }
 
+    public void setConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+        getPartitionConfig().getConnectionConfigManager().addConnectionConfig(connectionConfig);
+    }
+
     public Connection getConnection() {
         Partition partition = getPartition();
         if (partition == null) return null;

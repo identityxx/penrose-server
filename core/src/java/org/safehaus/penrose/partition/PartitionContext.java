@@ -34,6 +34,7 @@ public class PartitionContext implements Cloneable {
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
+    private PartitionManager partitionManager;
     private ClassLoader classLoader;
 
     public PartitionContext() {
@@ -82,5 +83,13 @@ public class PartitionContext implements Cloneable {
     public SessionManager getSessionManager() {
         SessionContext sessionContext = penroseContext.getSessionContext();
         return sessionContext.getSessionManager();
+    }
+
+    public PartitionManager getPartitionManager() {
+        return partitionManager;
+    }
+
+    public void setPartitionManager(PartitionManager partitionManager) {
+        this.partitionManager = partitionManager;
     }
 }

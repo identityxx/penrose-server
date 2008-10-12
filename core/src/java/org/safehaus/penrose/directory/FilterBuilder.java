@@ -115,9 +115,8 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        String mappingName = source.getMappingName();
-        if (mappingName != null) {
-            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
+        Mapping mapping = source.getMapping();
+        if (mapping != null) {
 
             Attributes output = new Attributes();
             mapping.map(interpreter, output);
@@ -165,9 +164,8 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        String mappingName = source.getMappingName();
-        if (mappingName != null) {
-            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
+        Mapping mapping = source.getMapping();
+        if (mapping != null) {
 
             for (MappingRule rule : mapping.getRules()) {
 
@@ -210,9 +208,8 @@ public class FilterBuilder {
 
         Filter newFilter = null;
 
-        String mappingName = source.getMappingName();
-        if (mappingName != null) {
-            Mapping mapping = entry.getPartition().getMappingManager().getMapping(mappingName);
+        Mapping mapping = source.getMapping();
+        if (mapping != null) {
 
             for (MappingRule rule : mapping.getRules()) {
 

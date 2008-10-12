@@ -62,20 +62,59 @@ public class FederationWriter {
     public Element createElement(FederationConfig federationConfig)  {
         Element element = new DefaultElement("federation");
 
-        for (Repository repository : federationConfig.getRepositories()) {
+        for (FederationRepositoryConfig repository : federationConfig.getRepositories()) {
             element.add(createElement(repository));
+        }
+
+        for (FederationPartitionConfig partitionConfig : federationConfig.getPartitions()) {
+            element.add(createElement(partitionConfig));
         }
 
         return element;
     }
 
-    public Element createElement(Repository repository) {
+    public Element createElement(FederationRepositoryConfig repository) {
         Element element = new DefaultElement("repository");
         element.addAttribute("name", repository.getName());
         element.addAttribute("type", repository.getType());
 
         for (String name : repository.getParameterNames()) {
             String value = repository.getParameter(name);
+
+            Element parameter = new DefaultElement("parameter");
+
+            Element paramName = new DefaultElement("param-name");
+            paramName.add(new DefaultText(name));
+            parameter.add(paramName);
+
+            Element paramValue = new DefaultElement("param-value");
+            paramValue.add(new DefaultText(value));
+            parameter.add(paramValue);
+
+            element.add(parameter);
+        }
+
+        return element;
+    }
+
+    public Element createElement(FederationPartitionConfig partition) {
+        Element element = new DefaultElement("partition");
+        element.addAttribute("name", partition.getName());
+
+        Element template = new DefaultElement("template");
+        template.add(new DefaultText(partition.getTemplate()));
+        element.add(template);
+
+        for (String refName : partition.getRepositoryRefNames()) {
+            String repository = partition.getRepository(refName);
+            
+            Element repositoryRef = new DefaultElement("repository-ref");
+            repositoryRef.addAttribute("name", refName);
+            repositoryRef.addAttribute("repository", repository);
+        }
+
+        for (String name : partition.getParameterNames()) {
+            String value = partition.getParameter(name);
 
             Element parameter = new DefaultElement("parameter");
 

@@ -1,6 +1,8 @@
 package org.safehaus.penrose.federation;
 
 import org.apache.log4j.Logger;
+import org.safehaus.penrose.module.ModuleClient;
+import org.safehaus.penrose.partition.PartitionClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,56 +20,63 @@ public class LDAPFederationClient {
 
     public Logger log = Logger.getLogger(getClass());
 
-    private FederationClient federation;
+    private FederationClient federationClient;
+    private ModuleClient moduleClient;
 
-    public LDAPFederationClient(FederationClient federation) {
-        this.federation = federation;
+    public LDAPFederationClient(FederationClient federationClient) throws Exception {
+        this.federationClient = federationClient;
+        PartitionClient partitionClient = federationClient.getPartitionClient();
+        moduleClient = partitionClient.getModuleClient("LDAP");
     }
 
-    public LDAPRepository getRepository(String name) throws Exception {
-        return (LDAPRepository) federation.getRepository(name);
+    public FederationClient getFederationClient() {
+        return federationClient;
+    }
+    
+    public FederationRepositoryConfig getRepository(String name) throws Exception {
+        return federationClient.getRepository(name);
     }
 
-    public Collection<LDAPRepository> getRepositories() throws Exception {
-        Collection<LDAPRepository> list = new ArrayList<LDAPRepository>();
-        for (Repository repository : federation.getRepositories("LDAP")) {
-            list.add((LDAPRepository)repository);
+    public Collection<FederationRepositoryConfig> getRepositories() throws Exception {
+        Collection<FederationRepositoryConfig> list = new ArrayList<FederationRepositoryConfig>();
+        for (FederationRepositoryConfig repository : federationClient.getRepositories("LDAP")) {
+            list.add(repository);
         }
         return list;
     }
 
-    public void addRepository(LDAPRepository repository) throws Exception {
-        federation.addRepository(repository);
-        federation.storeFederationConfig();
+    public void addRepository(FederationRepositoryConfig repository) throws Exception {
+        federationClient.addRepository(repository);
+        federationClient.storeFederationConfig();
     }
 
-    public void updateRepository(LDAPRepository repository) throws Exception {
+    public void updateRepository(FederationRepositoryConfig repository) throws Exception {
 
         String name = repository.getName();
 
-        federation.stopPartitions(name);
-        federation.removePartitions(name);
+        federationClient.stopPartition(name);
+        federationClient.removePartition(name);
 
-        federation.removeRepository(name);
-        federation.addRepository(repository);
-        federation.storeFederationConfig();
+        federationClient.removeRepository(name);
+        federationClient.addRepository(repository);
+        federationClient.storeFederationConfig();
 
-        federation.createPartitions(name);
-        federation.startPartitions(name);
+        federationClient.createPartition(name);
+        federationClient.startPartition(name);
     }
 
     public void removeRepository(String name) throws Exception {
-        federation.removeRepository(name);
-        federation.storeFederationConfig();
+        federationClient.removeRepository(name);
+        federationClient.storeFederationConfig();
     }
 
     public void createPartitions(String name) throws Exception {
-        federation.createPartitions(name);
-        federation.startPartitions(name);
+        federationClient.createPartition(name);
+        federationClient.startPartition(name);
     }
 
     public void removePartitions(String name) throws Exception {
-        federation.stopPartitions(name);
-        federation.removePartitions(name);
+        federationClient.stopPartition(name);
+        federationClient.removePartition(name);
     }
 }

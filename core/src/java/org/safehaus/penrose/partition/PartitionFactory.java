@@ -56,6 +56,8 @@ public class PartitionFactory {
 
         partitionContext.setPenroseConfig(penroseConfig);
         partitionContext.setPenroseContext(penroseContext);
+
+        partitionContext.setPartitionManager(penroseContext.getPartitionManager());
         partitionContext.setClassLoader(classLoader);
 
         Partition partition;

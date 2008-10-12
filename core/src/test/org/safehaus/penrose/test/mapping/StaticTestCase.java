@@ -5,7 +5,6 @@ import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.PenroseFactory;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.*;
 import org.apache.log4j.Logger;
 import junit.framework.TestCase;
@@ -32,9 +31,6 @@ public class StaticTestCase extends TestCase {
         PenroseFactory penroseFactory = PenroseFactory.getInstance();
         penrose = penroseFactory.createPenrose(penroseConfig);
         penrose.start();
-
-        PenroseContext penroseContext = penrose.getPenroseContext();
-        PartitionManager partitionManager = penrose.getPartitionManager();
 
         PartitionConfig partitionConfig = new PartitionConfig("DEFAULT");
 
@@ -71,13 +67,8 @@ public class StaticTestCase extends TestCase {
 
         partitionConfig.getDirectoryConfig().addEntryConfig(member2);
 
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        Partition partition = partitionFactory.createPartition(partitionConfig);
-
-        partitionManager.addPartition(partition);
+        PartitionManager partitionManager = penrose.getPartitionManager();
+        partitionManager.createPartition(partitionConfig);
     }
     
     public void testDummy()

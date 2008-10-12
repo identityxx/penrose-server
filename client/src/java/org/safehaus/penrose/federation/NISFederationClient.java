@@ -1,9 +1,8 @@
 package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.federation.SynchronizationResult;
+import org.safehaus.penrose.module.ModuleClient;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 
@@ -31,16 +30,22 @@ public class NISFederationClient {
 
     public final static String LDAP_CONNECTION_NAME  = "LDAP";
 
-    FederationClient federation;
+    FederationClient federationClient;
+    PartitionClient partitionClient;
     ModuleClient moduleClient;
 
-    public NISFederationClient(FederationClient federation) {
-        this.federation = federation;
-        moduleClient = federation.getFederationModuleClient();
+    public NISFederationClient(FederationClient federationClient) throws Exception {
+        this.federationClient = federationClient;
+        partitionClient = federationClient.getFederationPartitionClient();
+        moduleClient = partitionClient.getModuleClient("NIS");
     }
 
+    public FederationClient getFederationClient() {
+        return federationClient;
+    }
+    
     public void createYPPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "createYPPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -48,7 +53,7 @@ public class NISFederationClient {
     }
 
     public void startYPPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "startYPPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -56,7 +61,7 @@ public class NISFederationClient {
     }
 
     public void stopYPPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "stopYPPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -64,7 +69,7 @@ public class NISFederationClient {
     }
 
     public void removeYPPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removeYPPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -72,7 +77,7 @@ public class NISFederationClient {
     }
 
     public void createNISPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "createNISPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -80,7 +85,7 @@ public class NISFederationClient {
     }
 
     public void startNISPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "startNISPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -88,7 +93,7 @@ public class NISFederationClient {
     }
 
     public void stopNISPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "stopNISPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -96,7 +101,7 @@ public class NISFederationClient {
     }
 
     public void removeNISPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removeNISPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -104,7 +109,7 @@ public class NISFederationClient {
     }
 
     public void createNSSPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "createNSSPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -112,7 +117,7 @@ public class NISFederationClient {
     }
 
     public void startNSSPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "startNSSPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -120,7 +125,7 @@ public class NISFederationClient {
     }
 
     public void stopNSSPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "stopNSSPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -128,96 +133,103 @@ public class NISFederationClient {
     }
 
     public void removeNSSPartition(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removeNSSPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void addRepository(NISDomain repository) throws Exception {
-        federation.addRepository(repository);
-        federation.storeFederationConfig();
+    public void addRepository(FederationRepositoryConfig repository) throws Exception {
+        federationClient.addRepository(repository);
+        federationClient.storeFederationConfig();
     }
 
-    public void updateRepository(NISDomain repository) throws Exception {
+    public void updateRepository(FederationRepositoryConfig repository) throws Exception {
 
         String name = repository.getName();
-        federation.stopPartitions(name);
-        federation.removePartitions(name);
+        federationClient.stopPartition(name);
+        federationClient.removePartition(name);
 
-        federation.removeRepository(name);
-        federation.addRepository(repository);
-        federation.storeFederationConfig();
+        federationClient.removeRepository(name);
+        federationClient.addRepository(repository);
+        federationClient.storeFederationConfig();
 
-        federation.createPartitions(name);
-        federation.startPartitions(name);
+        federationClient.createPartition(name);
+        federationClient.startPartition(name);
     }
 
     public void removeRepository(String name) throws Exception {
-        federation.removeRepository(name);
-        federation.storeFederationConfig();
+        federationClient.removeRepository(name);
+        federationClient.storeFederationConfig();
     }
 
-    public NISDomain getRepository(String name) throws Exception {
-        return (NISDomain)federation.getRepository(name);
+    public FederationRepositoryConfig getRepository(String name) throws Exception {
+        return federationClient.getRepository(name);
     }
     
     public Collection<String> getRepositoryNames() throws Exception {
-        return federation.getRepositoryNames();
+        return federationClient.getRepositoryNames();
     }
     
-    public Collection<NISDomain> getRepositories() throws Exception {
-        Collection<NISDomain> list = new ArrayList<NISDomain>();
-        for (Repository repository : federation.getRepositories("NIS")) {
-            list.add((NISDomain)repository);
+    public Collection<FederationRepositoryConfig> getRepositories() throws Exception {
+        Collection<FederationRepositoryConfig> list = new ArrayList<FederationRepositoryConfig>();
+        for (FederationRepositoryConfig repository : federationClient.getRepositories("NIS")) {
+            list.add(repository);
         }
         return list;
     }
 
-    public void createDatabase(NISDomain domain, PartitionConfig nisPartitionConfig) throws Exception {
-        moduleClient.invoke(
+    public void createDatabase(FederationRepositoryConfig domain, PartitionConfig nisPartitionConfig) throws Exception {
+        partitionClient.invoke(
                 "createDatabase",
                 new Object[] { domain, nisPartitionConfig },
-                new String[] { NISDomain.class.getName(), PartitionConfig.class.getName() }
+                new String[] { FederationRepositoryConfig.class.getName(), PartitionConfig.class.getName() }
         );
     }
 
-    public void removeDatabase(NISDomain domain) throws Exception {
-        moduleClient.invoke(
+    public void removeDatabase(FederationRepositoryConfig domain) throws Exception {
+        partitionClient.invoke(
                 "removeDatabase",
                 new Object[] { domain },
-                new String[] { NISDomain.class.getName() }
+                new String[] { FederationRepositoryConfig.class.getName() }
         );
     }
 
     public void createPartitions(String name) throws Exception {
-        federation.createPartitions(name);
-        federation.startPartitions(name);
+        federationClient.createPartition(name);
+        federationClient.startPartition(name);
     }
 
     public void removePartitions(String name) throws Exception {
-        federation.stopPartitions(name);
-        federation.removePartitions(name);
+        federationClient.stopPartition(name);
+        federationClient.removePartition(name);
     }
 
     public SynchronizationResult synchronizeNISMaps(String name, Collection<String> parameters) throws Exception {
-        return (SynchronizationResult)moduleClient.invoke(
+        return (SynchronizationResult) partitionClient.invoke(
                 "synchronizeNISMaps",
                 new Object[] { name, parameters },
                 new String[] { String.class.getName(), Collection.class.getName() }
         );
     }
 
-    public void execute(Collection<String> commands) throws Exception {
+    public static SynchronizationResult synchronizeNISMaps(PenroseClient client, String partition, String name, Collection<String> parameters) throws Exception {
+        FederationClient federationClient = new FederationClient(client, partition);
+        NISFederationClient nisFederationClient = new NISFederationClient(federationClient);
+        return nisFederationClient.synchronizeNISMaps(name, parameters);
+    }
+
+    public static void execute(PenroseClient client, Collection<String> commands) throws Exception {
 
         Iterator<String> iterator = commands.iterator();
         String command = iterator.next();
 
         if ("synchronize".equals(command)) {
 
+            String partition = iterator.next();
             String repository = iterator.next();
-            System.out.println("Synchronizing "+repository+"...");
+            System.out.println("Synchronizing "+partition+" "+repository+"...");
 
             Collection<String> parameters = new ArrayList<String>();
             while (iterator.hasNext()) {
@@ -225,7 +237,7 @@ public class NISFederationClient {
                 parameters.add(parameter);
             }
 
-            SynchronizationResult result = synchronizeNISMaps(repository, parameters);
+            SynchronizationResult result = synchronizeNISMaps(client, partition, repository, parameters);
             System.out.println("Synchronization Result:");
             System.out.println(" - added     : "+result.getAddedEntries());
             System.out.println(" - modified  : "+result.getModifiedEntries());
@@ -256,7 +268,7 @@ public class NISFederationClient {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  synchronize [<repository> [maps...]]  Synchronize NIS repository.");
+        System.out.println("  synchronize <partition> [<domain> [maps...]]  Synchronize NIS domain.");
     }
 
     public static void main(String args[]) throws Exception {
@@ -363,9 +375,7 @@ public class NISFederationClient {
             client.setRmiTransportPort(rmiTransportPort);
             client.connect();
 
-            FederationClient federationClient = new FederationClient(client);
-            NISFederationClient nisFederationClient = new NISFederationClient(federationClient);
-            nisFederationClient.execute(commands);
+            execute(client, commands);
 
             client.close();
 

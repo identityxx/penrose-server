@@ -129,7 +129,7 @@ public class LDAPConnection extends Connection {
         return new LDAPPoolableClient(connectionPool, connectionFactory);
     }
 
-    public LDAPClient getClient(final Session session) throws Exception {
+    public synchronized LDAPClient getClient(final Session session) throws Exception {
 
         if (debug) log.debug("Getting LDAP client from session.");
         final String attributeName = getPartition().getName()+".connection."+getName();

@@ -51,6 +51,10 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         return getPartitionConfig().getSourceConfigManager().getSourceConfig(sourceName);
     }
 
+    public void setSourceConfig(SourceConfig sourceConfig) {
+        getPartitionConfig().getSourceConfigManager().addSourceConfig(sourceConfig);
+    }
+
     public Source getSource() {
         Partition partition = getPartition();
         if (partition == null) return null;

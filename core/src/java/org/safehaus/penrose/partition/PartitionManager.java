@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author Endi S. Dewata
@@ -52,6 +54,7 @@ public class PartitionManager {
     }
 
     public void addPartitionConfig(PartitionConfig partitionConfig) {
+        log.debug("Adding "+partitionConfig.getName()+" partition config.");
         partitionConfigManager.addPartitionConfig(partitionConfig);
     }
 
@@ -59,8 +62,9 @@ public class PartitionManager {
         return partitionsDir;
     }
     
-    public void addPartition(Partition partition) {
-        partitions.put(partition.getName(), partition);
+    public void addPartition(String partitionName, Partition partition) {
+        log.debug("Adding "+partitionName+" partition.");
+        partitions.put(partitionName, partition);
     }
 
     public Partition removePartition(String name) {
@@ -82,7 +86,10 @@ public class PartitionManager {
             }
         }
 
-        for (String partitionName : partitionConfigManager.getPartitionNames()) {
+        Collection<String> partitionNames = new ArrayList<String>();
+        partitionNames.addAll(partitionConfigManager.getPartitionNames());
+
+        for (String partitionName : partitionNames) {
             if ("DEFAULT".equals(partitionName)) continue;
             
             try {
@@ -112,19 +119,27 @@ public class PartitionManager {
         if (debug) log.debug("DEFAULT partition loaded.");
     }
 
-    public void loadPartition(String partitionName) throws Exception {
+    public PartitionConfig loadPartition(String partitionName) throws Exception {
+
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
+        if (partitionConfig != null) {
+            log.debug(partitionName+" partition is already loaded.");
+            return partitionConfig;
+        }
 
         log.debug("----------------------------------------------------------------------------------");
         log.debug("Loading "+partitionName+" partition.");
 
         File partitionDir = new File(partitionsDir, partitionName);
 
-        PartitionConfig partitionConfig = new PartitionConfig(partitionName);
+        partitionConfig = new PartitionConfig(partitionName);
         partitionConfig.load(partitionDir);
 
-        partitionConfigManager.addPartitionConfig(partitionConfig);
+        addPartitionConfig(partitionConfig);
 
         if (debug) log.debug(partitionName+" partition loaded.");
+
+        return partitionConfig;
     }
 
     public void startPartition(String name) throws Exception {
@@ -151,20 +166,15 @@ public class PartitionManager {
                 log.error("Can't start "+name+" partition: Missing dependency ["+depend+"].");
                 return;
             }
+
+            log.debug(name+" partition is dependent on "+depend+" partition.");
             startPartition(depend);
         }
 
         log.debug("----------------------------------------------------------------------------------");
         log.debug("Starting "+name+" partition.");
 
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPartitionsDir(partitionsDir);
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        partition = partitionFactory.createPartition(partitionConfig);
-
-        partitions.put(name, partition);
+        partition = createPartition(partitionConfig);
 
         PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_STARTED, partition);
         for (PartitionListener listener : listeners) {
@@ -172,6 +182,61 @@ public class PartitionManager {
         }
 
         log.debug(name+" partition started.");
+    }
+
+    public ClassLoader createClassLoader(PartitionConfig partitionConfig) throws Exception {
+        Collection<URL> classPaths = partitionConfig.getClassPaths();
+        return new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]), getClass().getClassLoader());
+    }
+
+    public PartitionContext createPartitionContext(PartitionConfig partitionConfig) throws Exception {
+
+        ClassLoader classLoader = createClassLoader(partitionConfig);
+
+        PartitionContext partitionContext = new PartitionContext();
+
+        if (partitionConfig instanceof DefaultPartitionConfig) {
+            partitionContext.setPath(null);
+        } else {
+            partitionContext.setPath(partitionsDir == null ? null : new File(partitionsDir, partitionConfig.getName()));
+        }
+
+        partitionContext.setPenroseConfig(penroseConfig);
+        partitionContext.setPenroseContext(penroseContext);
+
+        partitionContext.setPartitionManager(penroseContext.getPartitionManager());
+        partitionContext.setClassLoader(classLoader);
+
+        return partitionContext;
+    }
+
+    public Partition createPartition(PartitionConfig partitionConfig) throws Exception {
+
+        PartitionContext partitionContext = createPartitionContext(partitionConfig);
+
+        Partition partition = createPartition(partitionConfig, partitionContext);
+        addPartition(partitionConfig.getName(), partition);
+
+        partition.init(partitionConfig, partitionContext);
+
+        return partition;
+    }
+
+    public Partition createPartition(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
+
+        Partition partition;
+
+        String className = partitionConfig.getPartitionClass();
+        if (className == null) {
+            partition = new Partition();
+
+        } else {
+            ClassLoader classLoader = partitionContext.getClassLoader();
+            Class clazz = classLoader.loadClass(className);
+            partition = (Partition)clazz.newInstance();
+        }
+
+        return partition;
     }
 
     public void stopPartitions() throws Exception {
@@ -227,6 +292,21 @@ public class PartitionManager {
         partitions.clear();
     }
 
+    public void storePartition(String name) throws Exception {
+
+        File baseDir;
+
+        if ("DEFAULT".equals(name)) {
+            baseDir = home;
+
+        } else {
+            baseDir = new File(partitionsDir, name);
+        }
+
+        PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
+        partitionConfig.store(baseDir);
+    }
+
     public Partition getPartition(String name) {
         return partitions.get(name);
     }
@@ -235,6 +315,10 @@ public class PartitionManager {
         return partitionConfigManager.getPartitionConfig(name);
     }
     
+    public Collection<PartitionConfig> getPartitionConfigs() {
+        return partitionConfigManager.getPartitionConfigs();
+    }
+
     public Partition getPartition(EntrySourceConfig sourceMapping) throws Exception {
 
         if (sourceMapping == null) return null;

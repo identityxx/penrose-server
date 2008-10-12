@@ -42,6 +42,26 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         return list;
     }
     
+    public void storePartition(String name) throws Exception {
+        partitionManager.storePartition(name);
+    }
+
+    public void loadPartition(String name) throws Exception {
+        partitionManager.loadPartition(name);
+    }
+
+    public void unloadPartition(String name) throws Exception {
+        partitionManager.unloadPartition(name);
+    }
+
+    public void startPartition(String name) throws Exception {
+        partitionManager.startPartition(name);
+    }
+
+    public void stopPartition(String name) throws Exception {
+        partitionManager.stopPartition(name);
+    }
+
     public void startPartitions() throws Exception {
         partitionManager.startPartitions();
     }
@@ -107,14 +127,17 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         PartitionService defaultPartitionService = getPartitionService("DEFAULT");
         defaultPartitionService.register();
 
-        for (String partitionName : partitionManager.getAvailablePartitionNames()) {
+        for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
+            String partitionName = partitionConfig.getName();
             PartitionService partitionService = getPartitionService(partitionName);
             partitionService.register();
         }
     }
 
     public void unregister() throws Exception {
-        for (String partitionName : partitionManager.getAvailablePartitionNames()) {
+
+        for (PartitionConfig partitionConfig : partitionManager.getPartitionConfigs()) {
+            String partitionName = partitionConfig.getName();
             PartitionService partitionService = getPartitionService(partitionName);
             partitionService.unregister();
         }

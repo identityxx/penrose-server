@@ -48,6 +48,7 @@ import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.io.File;
 
 /**
  * @author Endi S. Dewata
@@ -57,6 +58,11 @@ public class Partition implements Cloneable {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
     public boolean info = log.isInfoEnabled();
+
+    public final static String     STARTING = "STARTING";
+    public final static String     STARTED  = "STARTED";
+    public final static String     STOPPING = "STOPPING";
+    public final static String     STOPPED  = "STOPPED";
 
     public final static String     SCHEMA_CHECKING         = "schemaChecking";
     public final static boolean    DEFAULT_SCHEMA_CHECKING = false; // disabled
@@ -71,20 +77,23 @@ public class Partition implements Cloneable {
     protected Directory            directory;
     protected ModuleManager        moduleManager;
 
-    protected Scheduler scheduler;
-    protected ThreadManager threadManager;
+    protected Scheduler            scheduler;
+    protected ThreadManager        threadManager;
 
-    protected SchemaManager schemaManager;
-    protected ACLEvaluator aclEvaluator;
+    protected SchemaManager        schemaManager;
+    protected ACLEvaluator         aclEvaluator;
 
-    protected boolean schemaChecking;
+    protected boolean              schemaChecking;
+    protected String               status = STOPPED;
 
     public Partition() {
     }
 
-    public void init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
+    public synchronized void init(PartitionConfig partitionConfig, PartitionContext partitionContext) throws Exception {
 
         //log.debug("Initializing "+partitionConfig.getName()+" partition.");
+        if (STARTING.equals(status)) return;
+        status = STARTING;
 
         this.partitionConfig = partitionConfig;
         this.partitionContext = partitionContext;
@@ -120,11 +129,19 @@ public class Partition implements Cloneable {
         String s = getParameter(SCHEMA_CHECKING);
         schemaChecking = s == null ? DEFAULT_SCHEMA_CHECKING : Boolean.valueOf(s);
 
+        init();
+
+        status = STARTED;
         //log.debug("Partition "+partitionConfig.getName()+" started.");
+    }
+
+    public void init() throws Exception {
     }
 
     public void destroy() throws Exception {
         //log.debug("Stopping "+partitionConfig.getName()+" partition.");
+        if (STOPPING.equals(status)) return;
+        status = STOPPING;
 
         if (scheduler != null) scheduler.destroy();
         if (threadManager != null) threadManager.destroy();
@@ -135,6 +152,7 @@ public class Partition implements Cloneable {
         sourceManager.destroy();
         connectionManager.destroy();
 
+        status = STOPPED;
         //log.debug("Partition "+partitionConfig.getName()+" stopped.");
     }
 
@@ -152,6 +170,10 @@ public class Partition implements Cloneable {
 
     public void setDescription(String description) {
         partitionConfig.setDescription(description);
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     public Map<String,String> getParameters() {
@@ -1049,5 +1071,24 @@ public class Partition implements Cloneable {
 
     public void setThreadManager(ThreadManager threadManager) {
         this.threadManager = threadManager;
+    }
+
+    public void store() throws Exception {
+
+        String partitionName = getName();
+
+        File baseDir;
+
+        File path = partitionContext.getPath();
+        if (path == null) {
+            baseDir = partitionContext.getPenroseContext().getHome();
+
+        } else {
+            File partitionsDir = partitionContext.getPartitionManager().getPartitionsDir();
+            baseDir = new File(partitionsDir, partitionName);
+        }
+
+        PartitionConfig partitionConfig = getPartitionConfig();
+        partitionConfig.store(baseDir);
     }
 }

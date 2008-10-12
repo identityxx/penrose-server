@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * @author Endi Sukma Dewata
  */
-public class Repository implements Serializable, Comparable, Cloneable {
+public class FederationRepositoryConfig implements Serializable, Comparable, Cloneable {
 
     public final static String LINKING_LOCAL_ATTRIBUTE  = "linkingLocalAttribute";
     public final static String LINKING_GLOBAL_ATTRIBUTE = "linkingGlobalAttribute";
@@ -22,10 +22,10 @@ public class Repository implements Serializable, Comparable, Cloneable {
 
     protected Map<String,String> parameters = new LinkedHashMap<String,String>();
 
-    public Repository() {
+    public FederationRepositoryConfig() {
     }
 
-    public Repository(Repository repository) {
+    public FederationRepositoryConfig(FederationRepositoryConfig repository) {
         setName(repository.name);
         setType(repository.type);
         setParameters(repository.parameters);
@@ -107,7 +107,7 @@ public class Repository implements Serializable, Comparable, Cloneable {
         if (object == null) return false;
         if (object.getClass() != this.getClass()) return false;
 
-        Repository domain = (Repository)object;
+        FederationRepositoryConfig domain = (FederationRepositoryConfig)object;
         if (!equals(name, domain.name)) return false;
         if (!equals(type, domain.type)) return false;
         if (!equals(parameters, domain.parameters)) return false;
@@ -116,7 +116,7 @@ public class Repository implements Serializable, Comparable, Cloneable {
     }
 
     public Object clone() throws CloneNotSupportedException {
-        Repository repository = (Repository)super.clone();
+        FederationRepositoryConfig repository = (FederationRepositoryConfig)super.clone();
 
         repository.name = name;
         repository.type = type;
@@ -133,9 +133,9 @@ public class Repository implements Serializable, Comparable, Cloneable {
     public int compareTo(Object object) {
         if (this == object) return 0;
         if (object == null) return 0;
-        if (!(object instanceof Repository)) return 0;
+        if (!(object instanceof FederationRepositoryConfig)) return 0;
 
-        Repository repository = (Repository)object;
+        FederationRepositoryConfig repository = (FederationRepositoryConfig)object;
         return name.compareTo(repository.name);
     }
 }

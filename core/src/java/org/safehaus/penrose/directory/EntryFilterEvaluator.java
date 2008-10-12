@@ -91,6 +91,8 @@ public class EntryFilterEvaluator {
 
         if (mapping != null) {
 
+            if (debug) log.debug("Checking "+mapping.getName()+" mapping.");
+
             for (MappingRule rule : mapping.getRules(attributeName)) {
 
                 Object constant = rule.getConstant();
@@ -101,7 +103,7 @@ public class EntryFilterEvaluator {
                     EqualityMatchingRule equalityMatchingRule = EqualityMatchingRule.getInstance(equality);
 
                     boolean b = equalityMatchingRule.compare(constant, attributeValue);
-                    log.debug(" - ["+constant+"] => "+b);
+                    if (debug) log.debug(" - ["+constant+"] => "+b);
 
                     if (b) return true;
 
@@ -110,7 +112,7 @@ public class EntryFilterEvaluator {
                     OrderingMatchingRule orderingMatchingRule = OrderingMatchingRule.getInstance(ordering);
 
                     int c = orderingMatchingRule.compare(constant, attributeValue);
-                    log.debug(" - ["+constant+"] => "+c);
+                    if (debug) log.debug(" - ["+constant+"] => "+c);
 
                     if ("<=".equals(operator) && c > 0) return true;
                     if (">=".equals(operator) && c < 0) return true;
@@ -124,14 +126,21 @@ public class EntryFilterEvaluator {
         }
 
         if (attributeName.equalsIgnoreCase("objectclass")) {
+            if (debug) log.debug("Checking object classes: "+entry.getObjectClasses());
             return entry.containsObjectClass(attributeValue.toString());
         }
 
         EntryAttributeConfig attributeMapping = entry.getAttributeConfig(attributeName);
-        if (attributeMapping == null) return false;
+        if (attributeMapping == null) {
+            if (debug) log.debug(attributeName+" attribute undefined.");
+            return false;
+        }
 
         Object constant = attributeMapping.getConstant();
-        if (constant == null) return true;
+        if (constant == null) {
+            if (debug) log.debug(attributeName+" attribute is dynamic.");
+            return true;
+        }
 
         if ("=".equals(operator)) {
             String equality = attributeType == null ? null : attributeType.getEquality();
@@ -166,13 +175,24 @@ public class EntryFilterEvaluator {
         Mapping mapping = entry.getMapping();
 
         if (mapping != null) {
+
+            if (debug) log.debug("Checking "+mapping.getName()+" mapping.");
+
             Collection<MappingRule> rules = mapping.getRules(attributeName);
             return !rules.isEmpty();
         }
 
-        if (attributeName.equalsIgnoreCase("objectclass")) return true;
+        if (attributeName.equalsIgnoreCase("objectclass")) {
+            if (debug) log.debug("Object class is always present.");
+            return true;
+        }
 
-        return entry.getAttributeConfig(attributeName) != null;
+        if (entry.getAttributeConfig(attributeName) == null) {
+            if (debug) log.debug(attributeName+" attribute undefined.");
+            return false;
+        }
+
+        return true;
     }
 
     public boolean eval(SubstringFilter filter) throws Exception {
@@ -186,6 +206,8 @@ public class EntryFilterEvaluator {
 
         if (mapping != null) {
 
+            if (debug) log.debug("Checking "+mapping.getName()+" mapping.");
+
             for (MappingRule rule : mapping.getRules(attributeName)) {
 
                 Object constant = rule.getConstant();
@@ -195,7 +217,7 @@ public class EntryFilterEvaluator {
                 SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
 
                 boolean b = substringsMatchingRule.compare(constant, substrings);
-                log.debug(" - ["+constant+"] => "+b);
+                if (debug) log.debug(" - ["+constant+"] => "+b);
 
                 if (b) return true;
             }
@@ -213,7 +235,7 @@ public class EntryFilterEvaluator {
         SubstringsMatchingRule substringsMatchingRule = SubstringsMatchingRule.getInstance(substring);
 
         boolean b = substringsMatchingRule.compare(constant, substrings);
-        log.debug(" - ["+constant+"] => "+b);
+        if (debug) log.debug(" - ["+constant+"] => "+b);
 
         return b;
     }

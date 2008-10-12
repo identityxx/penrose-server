@@ -42,18 +42,32 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
         return (Collection<String>)getAttribute("PartitionNames");
     }
 
+    public void storePartition(String name) throws Exception {
+        invoke("storePartition", new Object[] { name }, new String[] { String.class.getName() });
+    }
+
+    public void loadPartition(String name) throws Exception {
+        invoke("loadPartition", new Object[] { name }, new String[] { String.class.getName() });
+    }
+
+    public void unloadPartition(String name) throws Exception {
+        invoke("unloadPartition", new Object[] { name }, new String[] { String.class.getName() });
+    }
+
+    public void startPartition(String name) throws Exception {
+        invoke("startPartition", new Object[] { name }, new String[] { String.class.getName() });
+    }
+
+    public void stopPartition(String name) throws Exception {
+        invoke("stopPartition", new Object[] { name }, new String[] { String.class.getName() });
+    }
+
     public void startPartitions() throws Exception {
-        invoke(
-                "startPartitions",
-                new Object[] { },
-                new String[] { });
+        invoke("startPartitions", new Object[] { }, new String[] { });
     }
 
     public void stopPartitions() throws Exception {
-        invoke(
-                "stopPartitions",
-                new Object[] { },
-                new String[] { });
+        invoke("stopPartitions", new Object[] { }, new String[] { });
     }
 
     public PartitionConfig getPartitionConfig(String partitionName) throws Exception {

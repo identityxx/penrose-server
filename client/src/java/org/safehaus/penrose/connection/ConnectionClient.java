@@ -6,6 +6,8 @@ import org.safehaus.penrose.management.BaseClient;
 import org.safehaus.penrose.management.PenroseClient;
 import org.safehaus.penrose.management.connection.ConnectionServiceMBean;
 
+import javax.management.Attribute;
+
 /**
  * @author Endi Sukma Dewata
  */
@@ -25,6 +27,11 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
         return (ConnectionConfig)connection.getAttribute(objectName, "ConnectionConfig");
     }
     
+    public void setConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
+        Attribute attribute = new Attribute("ConnectionConfig", connectionConfig);
+        connection.setAttribute(objectName, attribute);
+    }
+
     public static String getStringObjectName(String partitionName, String connectionName) {
         return "Penrose:type=connection,partition="+partitionName+",name="+connectionName;
     }

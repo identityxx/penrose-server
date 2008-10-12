@@ -12,7 +12,6 @@ import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;
-import org.safehaus.penrose.naming.PenroseContext;
 
 /**
  * @author Endi S. Dewata
@@ -113,16 +112,8 @@ public class NestedTestCase extends JDBCTestCase {
 
         partitionConfig.getDirectoryConfig().addEntryConfig(members);
 
-        PenroseContext penroseContext = penrose.getPenroseContext();
         PartitionManager partitionManager = penrose.getPartitionManager();
-
-        PartitionFactory partitionFactory = new PartitionFactory();
-        partitionFactory.setPenroseConfig(penroseConfig);
-        partitionFactory.setPenroseContext(penroseContext);
-
-        Partition partition = partitionFactory.createPartition(partitionConfig);
-
-        partitionManager.addPartition(partition);
+        partitionManager.createPartition(partitionConfig);
     }
     
     public void testDummy()

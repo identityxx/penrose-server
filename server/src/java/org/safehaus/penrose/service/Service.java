@@ -28,6 +28,7 @@ import java.util.Collection;
 public class Service {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected ServiceConfig serviceConfig;
     protected ServiceContext serviceContext;

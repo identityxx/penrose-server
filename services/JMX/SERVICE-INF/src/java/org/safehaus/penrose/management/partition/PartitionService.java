@@ -598,6 +598,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     }
 
     public void register() throws Exception {
+
         jmxService.register(getObjectName(), this);
 
         PartitionConfig partitionConfig = getPartitionConfig();

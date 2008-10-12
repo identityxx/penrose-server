@@ -136,9 +136,7 @@ public class Directory implements Cloneable {
 
             if (debug) log.debug(" - Searching other partitions.");
             PartitionContext partitionContext = partition.getPartitionContext();
-            PenroseContext penroseContext = partitionContext.getPenroseContext();
-
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
+            PartitionManager partitionManager = partitionContext.getPartitionManager();
             parent = partitionManager.getEntry(parentDn);
 
             if (parent != null) {

@@ -69,7 +69,7 @@ public class PartitionMonitorEntry extends Entry {
             SearchResponse response
     ) throws Exception {
 
-        PartitionManager partitionManager = partition.getPartitionContext().getPenroseContext().getPartitionManager();
+        PartitionManager partitionManager = partition.getPartitionContext().getPartitionManager();
         for (Partition partition : partitionManager.getPartitions()) {
             SearchResult result = createBaseSearchResult(partition);
             response.add(result);

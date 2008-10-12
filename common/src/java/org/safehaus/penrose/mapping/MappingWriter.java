@@ -106,7 +106,7 @@ public class MappingWriter {
 
     public Element createElement(MappingRuleConfig ruleConfig) throws Exception {
         
-        Element element = new DefaultElement("field");
+        Element element = new DefaultElement("rule");
         element.add(new DefaultAttribute("name", ruleConfig.getName()));
 
         if (!ruleConfig.isRequired()) {

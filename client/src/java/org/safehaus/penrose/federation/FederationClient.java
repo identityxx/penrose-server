@@ -3,7 +3,6 @@ package org.safehaus.penrose.federation;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.module.ModuleConfig;
@@ -33,22 +32,34 @@ public class FederationClient implements FederationMBean {
     public final static String REPOSITORIES             = "repositories";
     public final static String REPOSITORY_PARAMETERS    = "repository_parameters";
 
-    PenroseClient client;
-    ModuleClient moduleClient;
+    String name;
 
-    public FederationClient(PenroseClient client) throws Exception {
+    PenroseClient client;
+    PartitionClient partitionClient;
+    //ModuleClient moduleClient;
+
+    public FederationClient(PenroseClient client, String name) throws Exception {
         this.client = client;
+        this.name = name;
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
-        PartitionClient partitionClient = partitionManagerClient.getPartitionClient("DEFAULT");
+        partitionClient = partitionManagerClient.getPartitionClient(name);
 
-        moduleClient = partitionClient.getModuleClient("FederationModule");
-
-        if (!isInstalled()) {
-            install();
-        }
+        //moduleClient = partitionClient.getModuleClient("FederationModule");
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public PenroseClient getClient() {
+        return client;
+    }
+    
+    public PartitionClient getPartitionClient() {
+        return partitionClient;
+    }
+    
     public void install() throws Exception {
 
         ModuleConfig moduleConfig = new ModuleConfig();
@@ -72,35 +83,35 @@ public class FederationClient implements FederationMBean {
     }
 
     public boolean isInstalled() throws Exception {
-        return moduleClient.exists();
+        return partitionClient.exists();
     }
 
-    public ModuleClient getFederationModuleClient() {
-        return moduleClient;
+    public PartitionClient getFederationPartitionClient() {
+        return partitionClient;
     }
     
-    public GlobalRepository getGlobalRepository() throws Exception {
-        return (GlobalRepository)getRepository(GLOBAL);
+    public FederationRepositoryConfig getGlobalRepository() throws Exception {
+        return getRepository(GLOBAL);
     }
 
-    public void updateGlobalRepository(Repository repository) throws Exception {
-        moduleClient.invoke(
+    public void updateGlobalRepository(FederationRepositoryConfig repository) throws Exception {
+        partitionClient.invoke(
                 "updateGlobalRepository",
                 new Object[] { repository },
-                new String[] { Repository.class.getName() }
+                new String[] { FederationRepositoryConfig.class.getName() }
         );
     }
 
-    public void addRepository(Repository repository) throws Exception {
-        moduleClient.invoke(
+    public void addRepository(FederationRepositoryConfig repository) throws Exception {
+        partitionClient.invoke(
                 "addRepository",
                 new Object[] { repository },
-                new String[] { Repository.class.getName() }
+                new String[] { FederationRepositoryConfig.class.getName() }
         );
     }
 
     public void removeRepository(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removeRepository",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -108,51 +119,75 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationConfig getFederationConfig() throws Exception {
-        return (FederationConfig)moduleClient.getAttribute("FederationConfig");
+        return (FederationConfig)partitionClient.getAttribute("FederationConfig");
     }
 
     public void setFederationConfig(FederationConfig federationConfig) throws Exception {
-        moduleClient.setAttribute("FederationConfig", federationConfig);
+        partitionClient.setAttribute("FederationConfig", federationConfig);
     }
 
     public void storeFederationConfig() throws Exception {
-        moduleClient.invoke("store");
+        partitionClient.invoke("store");
     }
 
     public Collection<String> getRepositoryNames() throws Exception {
-        return (Collection)moduleClient.invoke(
+        return (Collection)partitionClient.invoke(
                 "getRepositoryNames",
                 new Object[] { },
                 new String[] { }
         );
     }
 
-    public Collection<Repository> getRepositories() throws Exception {
-        return (Collection)moduleClient.invoke(
+    public Collection<FederationRepositoryConfig> getRepositories() throws Exception {
+        return (Collection)partitionClient.invoke(
                 "getRepositories",
                 new Object[] { },
                 new String[] { }
         );
     }
 
-    public Collection<Repository> getRepositories(String type) throws Exception {
-        return (Collection)moduleClient.invoke(
+    public Collection<FederationRepositoryConfig> getRepositories(String type) throws Exception {
+        return (Collection)partitionClient.invoke(
                 "getRepositories",
                 new Object[] { type },
                 new String[] { String.class.getName() }
         );
     }
 
-    public Repository getRepository(String name) throws Exception {
-        return (Repository)moduleClient.invoke(
+    public FederationRepositoryConfig getRepository(String name) throws Exception {
+        return (FederationRepositoryConfig)partitionClient.invoke(
                 "getRepository",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
+    public Collection<String> getPartitionNames() throws Exception {
+        return (Collection)partitionClient.invoke(
+                "getPartitionNames",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
+    public Collection<FederationPartitionConfig> getPartitions() throws Exception {
+        return (Collection)partitionClient.invoke(
+                "getPartitions",
+                new Object[] { },
+                new String[] { }
+        );
+    }
+
+    public FederationPartitionConfig getPartition(String name) throws Exception {
+        return (FederationPartitionConfig)partitionClient.invoke(
+                "getPartition",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
+
     public void createPartitions() throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "createPartitions",
                 new Object[] { },
                 new String[] { }
@@ -160,31 +195,31 @@ public class FederationClient implements FederationMBean {
     }
 
     public void startPartitions() throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "createPartitions",
                 new Object[] { },
                 new String[] { }
         );
     }
 
-    public void createPartitions(String name) throws Exception {
-        moduleClient.invoke(
-                "createPartitions",
+    public void createPartition(String name) throws Exception {
+        partitionClient.invoke(
+                "createPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void startPartitions(String name) throws Exception {
-        moduleClient.invoke(
-                "startPartitions",
+    public void startPartition(String name) throws Exception {
+        partitionClient.invoke(
+                "startPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
     public void stopPartitions() throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removePartitions",
                 new Object[] { },
                 new String[] { }
@@ -192,47 +227,50 @@ public class FederationClient implements FederationMBean {
     }
 
     public void removePartitions() throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "removePartitions",
                 new Object[] { },
                 new String[] { }
         );
     }
 
-    public void stopPartitions(String name) throws Exception {
-        moduleClient.invoke(
-                "stopPartitions",
+    public void stopPartition(String name) throws Exception {
+        partitionClient.invoke(
+                "stopPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void removePartitions(String name) throws Exception {
-        moduleClient.invoke(
-                "removePartitions",
+    public void removePartition(String name) throws Exception {
+        partitionClient.invoke(
+                "removePartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
     public void synchronize(String name) throws Exception {
-        moduleClient.invoke(
+        partitionClient.invoke(
                 "synchronize",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void execute(Collection<String> commands) throws Exception {
+    public static void execute(PenroseClient client, Collection<String> commands) throws Exception {
 
         Iterator<String> iterator = commands.iterator();
         String command = iterator.next();
 
         if ("status".equals(command)) {
-            if (isInstalled()) {
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
+
+            if (federationClient.isInstalled()) {
                 System.out.println("Federation module is installed.");
 
-                Collection<String> repositoryNames = getRepositoryNames();
+                Collection<String> repositoryNames = federationClient.getRepositoryNames();
 
                 if (repositoryNames.isEmpty()) {
                     System.out.println("There are no repositories.");
@@ -250,15 +288,21 @@ public class FederationClient implements FederationMBean {
 
         } else if ("install".equals(command)) {
             System.out.println("Installing Federation module...");
-            install();
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
+            federationClient.install();
             System.out.println("Done.");
 
         } else if ("uninstall".equals(command)) {
             System.out.println("Uninstalling Federation module...");
-            uninstall();
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
+            federationClient.uninstall();
             System.out.println("Done.");
 
         } else if ("createPartitions".equals(command)) {
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
 
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
@@ -269,19 +313,22 @@ public class FederationClient implements FederationMBean {
                 }
 
             } else {
-                repositoryNames = getRepositoryNames();
+                repositoryNames = federationClient.getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
                 System.out.println("Creating partitions for "+repository+"...");
-                createPartitions(repository);
-                startPartitions(repository);
+                federationClient.createPartition(repository);
+                federationClient.startPartition(repository);
             }
 
             System.out.println("Done.");
 
         } else if ("removePartitions".equals(command)) {
 
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
+
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
                 repositoryNames = new ArrayList<String>();
@@ -291,19 +338,22 @@ public class FederationClient implements FederationMBean {
                 }
 
             } else {
-                repositoryNames = getRepositoryNames();
+                repositoryNames = federationClient.getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
                 System.out.println("Removing partitions for "+repository+"...");
-                stopPartitions(repository);
-                removePartitions(repository);
+                federationClient.stopPartition(repository);
+                federationClient.removePartition(repository);
             }
 
             System.out.println("Done.");
 
         } else if ("synchronize".equals(command)) {
 
+            String partition = iterator.next();
+            FederationClient federationClient = new FederationClient(client, partition);
+
             Collection<String> repositoryNames;
             if (iterator.hasNext()) {
                 repositoryNames = new ArrayList<String>();
@@ -313,12 +363,12 @@ public class FederationClient implements FederationMBean {
                 }
 
             } else {
-                repositoryNames = getRepositoryNames();
+                repositoryNames = federationClient.getRepositoryNames();
             }
 
             for (String repository : repositoryNames) {
                 System.out.println("Synchronizing "+repository+"...");
-                synchronize(repository);
+                federationClient.synchronize(repository);
             }
 
             System.out.println("Done.");
@@ -342,12 +392,12 @@ public class FederationClient implements FederationMBean {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  install                                   Install Federation module on the server.");
-        System.out.println("  uninstall                                 Uninstall Federation module from the server.");
-        System.out.println("  status                                    Display Federation status.");
-        System.out.println("  createPartitions [repository...]          Create partitions for this repository");
-        System.out.println("  removePartitions [repository...]          Remove partitions for this repository");
-        System.out.println("  synchronize [repository...]               Synchronize this repository.");
+        System.out.println("  install <partition>                                   Install Federation module on the server.");
+        System.out.println("  uninstall <partition>                                 Uninstall Federation module from the server.");
+        System.out.println("  status <partition>                                    Display Federation status.");
+        System.out.println("  createPartitions <partition> [repository...]          Create partitions for this repository");
+        System.out.println("  removePartitions <partition> [repository...]          Remove partitions for this repository");
+        System.out.println("  synchronize <partition> [repository...]               Synchronize this repository.");
     }
 
     public static void main(String args[]) throws Exception {
@@ -454,8 +504,7 @@ public class FederationClient implements FederationMBean {
             client.setRmiTransportPort(rmiTransportPort);
             client.connect();
 
-            FederationClient federationClient = new FederationClient(client);
-            federationClient.execute(commands);
+            execute(client, commands);
 
             client.close();
 

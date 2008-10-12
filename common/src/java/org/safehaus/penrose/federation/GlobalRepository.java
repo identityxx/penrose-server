@@ -3,7 +3,7 @@ package org.safehaus.penrose.federation;
 /**
  * @author Endi Sukma Dewata
  */
-public class GlobalRepository extends Repository {
+public class GlobalRepository extends FederationRepositoryConfig {
 
     public final static String LDAP_URL           = "ldapUrl";
     public final static String LDAP_SUFFIX        = "ldapSuffix";
@@ -16,7 +16,7 @@ public class GlobalRepository extends Repository {
     public GlobalRepository() {
     }
 
-    public GlobalRepository(Repository repository) {
+    public GlobalRepository(FederationRepositoryConfig repository) {
         super(repository);
     }
 }
