@@ -41,6 +41,8 @@ public class EntrySearchResponse extends Pipeline {
     ) {
         super(response);
 
+        if (debug) log.debug("Creating default search result processor.");
+
         this.session = session;
         this.request = request;
         this.response = response;
@@ -57,35 +59,45 @@ public class EntrySearchResponse extends Pipeline {
 
     public void add(SearchResult result) throws Exception {
 
+        if (debug) log.debug("Processing search result "+result.getDn()+".");
+
         if (lastResult == null) {
             lastResult = result;
             return;
         }
 
         if (result.getDn().equals(lastResult.getDn())) {
-            if (debug) log.debug("Merging entry "+lastResult.getDn()+".");
+            if (debug) log.debug("Merging with previous search result.");
             mergeSearchResult(result, lastResult);
             return;
         }
 
+        returnLastSearchResult();
+
+        lastResult = result;
+    }
+
+    public void returnLastSearchResult() throws Exception {
         try {
+            if (debug) log.debug("Validating ACL.");
             entry.validatePermission(session, lastResult);
 
         } catch (Exception e) {
-            lastResult = result;
+            if (debug) log.debug("Search result "+lastResult.getDn()+" failed ACL check.");
             return;
         }
 
+        if (debug) log.debug("Validating search filter.");
         if (!entry.validateSearchResult(request, lastResult)) {
-            lastResult = result;
+            if (debug) log.debug("Search result "+lastResult.getDn()+" failed search filter check.");
             return;
         }
 
+        if (debug) log.debug("Filtering attributes.");
         aclEvaluator.filterAttributes(session, lastResult);
         filterAttributes(lastResult);
 
         super.add(lastResult);
-        lastResult = result;
     }
 
     public void mergeSearchResult(SearchResult source, SearchResult destination) {
@@ -144,7 +156,7 @@ public class EntrySearchResponse extends Pipeline {
 
     public void close() throws Exception {
         if (lastResult != null) {
-            super.add(lastResult);
+            returnLastSearchResult();
         }
         super.close();
     }

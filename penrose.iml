@@ -637,6 +637,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="ldap-backend" />
     <orderEntryProperties />
   </component>
 </module>

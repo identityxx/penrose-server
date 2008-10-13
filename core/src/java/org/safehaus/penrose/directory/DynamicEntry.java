@@ -799,8 +799,11 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             if (i < 0) continue;
 
+            String s = variable.substring(0, i);
+            if ("rdn".equals(s)) continue;
+
             linkedAttribute = field.getName();
-            prevAlias = variable.substring(0, i);
+            prevAlias = s;
             prevLinkingAttribute = variable.substring(i+1);
 
             break; // TODO need to support multiple link attributes

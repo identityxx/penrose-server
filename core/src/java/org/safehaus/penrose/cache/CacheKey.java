@@ -38,7 +38,10 @@ public class CacheKey {
 
     public int hashCode() {
         return (bindDn == null ? 0 : bindDn.hashCode()) +
-                (request == null ? 0 : request.hashCode()) +
+                (request.getMessageId() == null ? 0 : request.getMessageId().hashCode()) +
+                (request.getDn() == null ? 0 : request.getDn().hashCode()) +
+                (request.getFilter()== null ? 0 : request.getFilter().hashCode()) +
+                request.getScope() +
                 (entryId == null ? 0 : entryId.hashCode());
     }
 
@@ -55,7 +58,22 @@ public class CacheKey {
 
         CacheKey cacheKey = (CacheKey)object;
         if (!equals(bindDn, cacheKey.bindDn)) return false;
-        if (!equals(request, cacheKey.request)) return false;
+
+        if (!equals(request.getMessageId(), cacheKey.request.getMessageId())) return false;
+        if (!equals(request.getControls(), cacheKey.request.getControls())) return false;
+
+        if (!equals(request.getDn(), cacheKey.request.getDn())) return false;
+        if (!equals(request.getFilter(), cacheKey.request.getFilter())) return false;
+        if (!equals(request.getScope(), cacheKey.request.getScope())) return false;
+
+        if (!equals(request.getAttributes(), cacheKey.request.getAttributes())) return false;
+        if (!equals(request.isTypesOnly(), cacheKey.request.isTypesOnly())) return false;
+
+        if (!equals(request.getDereference(), cacheKey.request.getDereference())) return false;
+
+        if (!equals(request.getSizeLimit(), cacheKey.request.getSizeLimit())) return false;
+        if (!equals(request.getTimeLimit(), cacheKey.request.getTimeLimit())) return false;
+
         if (!equals(entryId, cacheKey.entryId)) return false;
 
         return true;

@@ -1005,6 +1005,9 @@ public class Entry implements Cloneable {
             final SearchRequest request,
             final SearchResponse response
     ) throws Exception {
+
+        if (debug) log.debug("Creating search result processor.");
+
         return new EntrySearchResponse(session, request, response, this);
     }
 
