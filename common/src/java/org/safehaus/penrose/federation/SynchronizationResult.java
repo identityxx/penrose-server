@@ -18,7 +18,7 @@ public class SynchronizationResult implements Serializable {
     private long failedEntries;
 
     public long getTargetEntries() {
-        return addedEntries+modifiedEntries+deletedEntries+unchangedEntries;
+        return unchangedEntries+addedEntries+modifiedEntries;
     }
     
     public void add(SynchronizationResult result) {

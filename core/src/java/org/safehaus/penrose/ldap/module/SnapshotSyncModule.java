@@ -522,24 +522,24 @@ public class SnapshotSyncModule extends Module {
         }
     }
 
-    public long getCount(String targetDn) throws Exception {
-        return getCount(new DN(targetDn));
+    public Long getSourceCount(String sourceDn) throws Exception {
+        return getSourceCount(new DN(sourceDn));
     }
 
-    public long getCount(DN targetDn) throws Exception {
+    public Long getSourceCount(DN sourceDn) throws Exception {
 
-        Session adminSession = createAdminSession();
+        Session session = createAdminSession();
 
         try {
             SearchRequest request = new SearchRequest();
-            request.setDn(targetDn);
+            request.setDn(sourceDn);
             request.setAttributes(new String[] { "dn" });
             request.setTypesOnly(true);
 
             SearchResponse response = new SearchResponse();
 
-            Source target = getTarget();
-            target.search(adminSession, request, response);
+            Source source = getSource();
+            source.search(session, request, response);
 
             log.debug("Waiting for operation to complete.");
             int rc = response.waitFor();
@@ -550,7 +550,39 @@ public class SnapshotSyncModule extends Module {
             return response.getTotalCount()-1;
 
         } finally {
-            adminSession.close();
+            session.close();
+        }
+    }
+
+    public Long getTargetCount(String targetDn) throws Exception {
+        return getTargetCount(new DN(targetDn));
+    }
+
+    public Long getTargetCount(DN targetDn) throws Exception {
+
+        Session session = createAdminSession();
+
+        try {
+            SearchRequest request = new SearchRequest();
+            request.setDn(targetDn);
+            request.setAttributes(new String[] { "dn" });
+            request.setTypesOnly(true);
+
+            SearchResponse response = new SearchResponse();
+
+            Source target = getTarget();
+            target.search(session, request, response);
+
+            log.debug("Waiting for operation to complete.");
+            int rc = response.waitFor();
+            log.debug("RC: "+rc);
+
+            if (rc != LDAP.SUCCESS) throw response.getException();
+
+            return response.getTotalCount()-1;
+
+        } finally {
+            session.close();
         }
     }
 
