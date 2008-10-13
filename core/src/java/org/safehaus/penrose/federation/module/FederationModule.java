@@ -644,23 +644,4 @@ public class FederationModule extends Module {
             module.synchronize();
         }
     }
-
-    public void synchronizeNISMaps(String name, Collection<String> maps) throws Exception {
-
-        FederationRepositoryConfig repository = federationConfig.getRepository(name);
-        if (repository == null) return;
-
-        Partition nisPartition = getPartition(name+"_"+NIS);
-
-        NISSynchronizationModule module = (NISSynchronizationModule)nisPartition.getModuleManager().getModule(Federation.SYNCHRONIZATION_MODULE);
-
-        if (maps == null || maps.isEmpty()) {
-            module.synchronize();
-
-        } else {
-            for (String map : maps) {
-                module.synchronizeNISMap(map);
-            }
-        }
-    }
 }

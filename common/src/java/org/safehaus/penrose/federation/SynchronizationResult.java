@@ -9,14 +9,16 @@ public class SynchronizationResult implements Serializable {
 
     private long duration;
 
+    private long sourceEntries;
+
     private long addedEntries;
     private long modifiedEntries;
     private long deletedEntries;
     private long unchangedEntries;
     private long failedEntries;
 
-    public long getTotalEntries() {
-        return addedEntries+modifiedEntries+deletedEntries+unchangedEntries+failedEntries;
+    public long getTargetEntries() {
+        return addedEntries+modifiedEntries+deletedEntries+unchangedEntries;
     }
     
     public void add(SynchronizationResult result) {
@@ -96,5 +98,13 @@ public class SynchronizationResult implements Serializable {
 
     public void incFailedEntries() {
         failedEntries++;
+    }
+
+    public long getSourceEntries() {
+        return sourceEntries;
+    }
+
+    public void setSourceEntries(long sourceEntries) {
+        this.sourceEntries = sourceEntries;
     }
 }

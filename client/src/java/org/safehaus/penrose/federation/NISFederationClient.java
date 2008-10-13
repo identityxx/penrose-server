@@ -207,7 +207,7 @@ public class NISFederationClient {
     }
 
     public SynchronizationResult synchronizeNISMaps(String name, Collection<String> parameters) throws Exception {
-        return (SynchronizationResult) partitionClient.invoke(
+        return (SynchronizationResult) moduleClient.invoke(
                 "synchronizeNISMaps",
                 new Object[] { name, parameters },
                 new String[] { String.class.getName(), Collection.class.getName() }
@@ -239,12 +239,13 @@ public class NISFederationClient {
 
             SynchronizationResult result = synchronizeNISMaps(client, partition, repository, parameters);
             System.out.println("Synchronization Result:");
+            System.out.println(" - source    : "+result.getSourceEntries());
+            System.out.println(" - target    : "+result.getTargetEntries());
             System.out.println(" - added     : "+result.getAddedEntries());
             System.out.println(" - modified  : "+result.getModifiedEntries());
             System.out.println(" - deleted   : "+result.getDeletedEntries());
             System.out.println(" - unchanged : "+result.getUnchangedEntries());
             System.out.println(" - failed    : "+result.getFailedEntries());
-            System.out.println(" - total     : "+result.getTotalEntries());
             System.out.println(" - time      : "+result.getDuration()/1000.0+" s");
 
             System.out.println("Done.");
@@ -268,7 +269,7 @@ public class NISFederationClient {
         System.out.println("  -v                 run in verbose mode");
         System.out.println();
         System.out.println("Commands:");
-        System.out.println("  synchronize <partition> [<domain> [maps...]]  Synchronize NIS domain.");
+        System.out.println("  synchronize <Federation domain> [<NIS domain> [maps...]]  Synchronize NIS domain.");
     }
 
     public static void main(String args[]) throws Exception {

@@ -628,13 +628,13 @@ public class SnapshotSyncModule extends Module {
 
         final Collection<String> dns = new LinkedHashSet<String>();
 
-        SearchRequest request1 = new SearchRequest();
-        request1.setDn(targetDn);
-        request1.setAttributes(new String[] { "dn" });
+        SearchRequest targetRequest = new SearchRequest();
+        targetRequest.setDn(targetDn);
+        targetRequest.setAttributes(new String[] { "dn" });
 
         if (warn) log.warn("Searching existing entries: "+targetDn);
 
-        SearchResponse response1 = new SearchResponse() {
+        SearchResponse targetResponse = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
 
                 DN dn = result.getDn();
@@ -654,21 +654,21 @@ public class SnapshotSyncModule extends Module {
         };
 
         final Source target = getTarget();
-        target.search(session, request1, response1);
+        target.search(session, targetRequest, targetResponse);
 
-        int rc1 = response1.waitFor();
+        int rc1 = targetResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc1+".");
 
-        if (warn) log.warn("Found "+response1.getTotalCount()+" entries.");
+        if (warn) log.warn("Found "+targetResponse.getTotalCount()+" entries.");
 
         final SynchronizationResult result = new SynchronizationResult();
 
-        SearchRequest request2 = new SearchRequest();
-        request2.setDn(sourceDn);
+        SearchRequest sourceRequest = new SearchRequest();
+        sourceRequest.setDn(sourceDn);
 
         if (warn) log.warn("Searching new entries: "+sourceDn);
 
-        SearchResponse response2 = new SearchResponse() {
+        SearchResponse sourceResponse = new SearchResponse() {
             public void add(SearchResult result2) throws Exception {
 
                 DN dn2 = result2.getDn();
@@ -740,10 +740,13 @@ public class SnapshotSyncModule extends Module {
         };
 
         Source source = getSource();
-        source.search(session, request2, response2);
+        source.search(session, sourceRequest, sourceResponse);
 
-        int rc2 = response2.waitFor();
+        int rc2 = sourceResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc2+".");
+
+        if (warn) log.warn("Found "+sourceResponse.getTotalCount()+" source entries.");
+        result.setSourceEntries(sourceResponse.getTotalCount());
 
         for (String normalizedDn : dns) { // deleting entry
 
@@ -776,12 +779,13 @@ public class SnapshotSyncModule extends Module {
 
         if (warn) {
             log.warn("Synchronization Result:");
+            log.warn(" - source    : "+result.getSourceEntries());
+            log.warn(" - target    : "+result.getTargetEntries());
             log.warn(" - added     : "+result.getAddedEntries());
             log.warn(" - modified  : "+result.getModifiedEntries());
             log.warn(" - deleted   : "+result.getDeletedEntries());
             log.warn(" - unchanged : "+result.getUnchangedEntries());
             log.warn(" - failed    : "+result.getFailedEntries());
-            log.warn(" - total     : "+result.getTotalEntries());
             log.warn(" - time      : "+result.getDuration()/1000.0+" s");
         }
 
