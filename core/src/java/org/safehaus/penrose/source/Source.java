@@ -28,6 +28,7 @@ public class Source implements Cloneable {
 
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
+    public boolean warn = log.isWarnEnabled();
 
     protected SourceConfig sourceConfig;
     protected SourceContext sourceContext;

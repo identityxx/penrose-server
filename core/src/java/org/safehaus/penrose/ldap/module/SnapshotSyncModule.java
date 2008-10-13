@@ -526,7 +526,7 @@ public class SnapshotSyncModule extends Module {
         return getSourceCount(new DN(sourceDn));
     }
 
-    public Long getSourceCount(DN sourceDn) throws Exception {
+    public Long getSourceCount(final DN sourceDn) throws Exception {
 
         Session session = createAdminSession();
 
@@ -536,7 +536,19 @@ public class SnapshotSyncModule extends Module {
             request.setAttributes(new String[] { "dn" });
             request.setTypesOnly(true);
 
-            SearchResponse response = new SearchResponse();
+            SearchResponse response = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
+
+                    DN dn = result.getDn();
+                    if (dn.equals(sourceDn)) return;
+
+                    totalCount++;
+                    if (warn && (totalCount % 100 == 0)) log.warn("Found "+totalCount+" entries.");
+                }
+                public void close() throws Exception {
+                    if (warn && (totalCount % 100 != 0)) log.warn("Found "+totalCount+" entries.");
+                }
+            };
 
             Source source = getSource();
             source.search(session, request, response);
@@ -558,7 +570,7 @@ public class SnapshotSyncModule extends Module {
         return getTargetCount(new DN(targetDn));
     }
 
-    public Long getTargetCount(DN targetDn) throws Exception {
+    public Long getTargetCount(final DN targetDn) throws Exception {
 
         Session session = createAdminSession();
 
@@ -568,7 +580,19 @@ public class SnapshotSyncModule extends Module {
             request.setAttributes(new String[] { "dn" });
             request.setTypesOnly(true);
 
-            SearchResponse response = new SearchResponse();
+            SearchResponse response = new SearchResponse() {
+                public void add(SearchResult result) throws Exception {
+
+                    DN dn = result.getDn();
+                    if (dn.equals(targetDn)) return;
+
+                    totalCount++;
+                    if (warn && (totalCount % 100 == 0)) log.warn("Found "+totalCount+" entries.");
+                }
+                public void close() throws Exception {
+                    if (warn && (totalCount % 100 != 0)) log.warn("Found "+totalCount+" entries.");
+                }
+            };
 
             Source target = getTarget();
             target.search(session, request, response);

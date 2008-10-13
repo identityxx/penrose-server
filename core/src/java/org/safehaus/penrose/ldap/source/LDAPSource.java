@@ -860,7 +860,15 @@ public class LDAPSource extends Source {
         request.setAttributes(new String[] { "dn" });
         request.setTypesOnly(true);
 
-        SearchResponse response = new SearchResponse();
+        SearchResponse response = new SearchResponse() {
+            public void add(SearchResult result) throws Exception {
+                totalCount++;
+                if (warn && (totalCount % 100 == 0)) log.warn("Found "+totalCount+" entries.");
+            }
+            public void close() throws Exception {
+                if (warn && (totalCount % 100 != 0)) log.warn("Found "+totalCount+" entries.");
+            }
+        };
 
         LDAPClient client = connection.getClient(session);
 
