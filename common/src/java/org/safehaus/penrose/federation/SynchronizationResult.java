@@ -25,6 +25,7 @@ public class SynchronizationResult implements Serializable {
 
         duration += result.duration;
 
+        sourceEntries += result.sourceEntries;
         addedEntries += result.addedEntries;
         modifiedEntries += result.modifiedEntries;
         deletedEntries += result.deletedEntries;
