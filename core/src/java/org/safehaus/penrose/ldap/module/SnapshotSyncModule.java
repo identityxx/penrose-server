@@ -560,7 +560,7 @@ public class SnapshotSyncModule extends Module {
 
             if (rc != LDAP.SUCCESS) throw response.getException();
 
-            return response.getTotalCount()-1;
+            return response.getTotalCount();
 
         } finally {
             session.close();
@@ -605,7 +605,7 @@ public class SnapshotSyncModule extends Module {
 
             if (rc != LDAP.SUCCESS) throw response.getException();
 
-            return response.getTotalCount()-1;
+            return response.getTotalCount();
 
         } finally {
             session.close();
