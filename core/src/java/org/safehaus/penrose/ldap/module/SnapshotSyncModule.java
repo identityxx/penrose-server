@@ -547,6 +547,7 @@ public class SnapshotSyncModule extends Module {
                 }
                 public void close() throws Exception {
                     if (warn && (totalCount % 100 != 0)) log.warn("Found "+totalCount+" entries.");
+                    super.close();
                 }
             };
 
@@ -591,6 +592,7 @@ public class SnapshotSyncModule extends Module {
                 }
                 public void close() throws Exception {
                     if (warn && (totalCount % 100 != 0)) log.warn("Found "+totalCount+" entries.");
+                    super.close();
                 }
             };
 
