@@ -968,13 +968,13 @@ public class Partition implements Cloneable {
 
         for (final Entry entry : entries) {
             if (debug) log.debug("Searching \""+entry.getDn()+"\".");
-
+/*
             if (session.isAbandoned(request.getMessageId())) {
                 if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
                 response.close();
                 continue;
             }
-
+*/
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
