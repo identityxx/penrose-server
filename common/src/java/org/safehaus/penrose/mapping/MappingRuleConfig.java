@@ -36,12 +36,16 @@ public class MappingRuleConfig implements Serializable, Cloneable {
     public static transient Logger log;
     public static boolean debug = log.isDebugEnabled();
 
+    public final static String ADD            = "add";
+    public final static String REPLACE        = "replace";
+
     public final static String CONSTANT       = "CONSTANT";
     public final static String VARIABLE       = "VARIABLE";
     public final static String EXPRESSION     = "EXPRESSION";
 
     protected String name;
 
+    protected String action    = ADD;
     protected boolean required = true;
     protected String condition;
 
@@ -142,6 +146,7 @@ public class MappingRuleConfig implements Serializable, Cloneable {
         MappingRuleConfig ruleConfig = (MappingRuleConfig)object;
         if (!equals(name, ruleConfig.name)) return false;
 
+        if (!equals(action, ruleConfig.action)) return false;
         if (!equals(required, ruleConfig.required)) return false;
         if (!equals(condition, ruleConfig.condition)) return false;
 
@@ -160,6 +165,7 @@ public class MappingRuleConfig implements Serializable, Cloneable {
     public void copy(MappingRuleConfig ruleConfig) throws CloneNotSupportedException {
         name = ruleConfig.name;
 
+        action = ruleConfig.action;
         required = ruleConfig.required;
         condition = ruleConfig.condition;
 
@@ -193,5 +199,13 @@ public class MappingRuleConfig implements Serializable, Cloneable {
 
     public void setRequired(boolean required) {
         this.required = required;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 }

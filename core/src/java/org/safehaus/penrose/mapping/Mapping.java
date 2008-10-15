@@ -195,13 +195,20 @@ public class Mapping {
                 continue;
             }
 
-            if (debug) log.debug(" - Adding "+name+": "+newValue+" ("+newValue.getClass().getName()+")");
-
             Object oldValue = interpreter.get(name);
             //if (debug) {
             //    String className = oldValue == null ? "" : " ("+oldValue.getClass().getName()+")";
             //    log.debug("   Old value: "+oldValue+className);
             //}
+
+            boolean add = MappingRuleConfig.ADD.equals(rule.getAction());
+            if (debug) {
+                if (add) {
+                    log.debug(" - Adding "+name+": "+newValue+" ("+newValue.getClass().getName()+")");
+                } else {
+                    log.debug(" - Replacing "+name+": "+newValue+" ("+newValue.getClass().getName()+")");
+                }
+            }
 
             if (oldValue == newValue) {
                 // skip
@@ -211,6 +218,7 @@ public class Mapping {
 
             } else if (oldValue instanceof Collection) {
                 Collection<Object> list = (Collection<Object>)oldValue;
+                if (!add) list.clear();
                 if (newValue instanceof Collection) {
                     list.addAll((Collection<Object>)newValue);
                 } else {
@@ -220,7 +228,7 @@ public class Mapping {
             } else if (oldValue.equals(newValue)) {
                 // skip
 
-            } else {
+            } else if (add) {
                 Collection<Object> list = new LinkedHashSet<Object>();
                 list.add(oldValue);
                 if (newValue instanceof Collection) {
@@ -229,6 +237,9 @@ public class Mapping {
                     list.add(newValue);
                 }
                 interpreter.set(name, list);
+
+            } else { // replace
+                interpreter.set(name, newValue);
             }
         }
 

@@ -69,6 +69,7 @@ public class Session {
     protected List<SessionListener> listeners = new ArrayList<SessionListener>();
 
     protected int nextMessageId;
+    protected boolean closed;
 
     public Session() {
     }
@@ -106,11 +107,17 @@ public class Session {
             log.debug("Closing session "+sessionId+".");
         }
 
+        closed = true;
+
         for (SessionListener listener : listeners) {
             listener.sessionClosed();
         }
 
         if (debug) log.debug("Session "+sessionId+" closed.");
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
     public DN getBindDn() {
@@ -147,6 +154,10 @@ public class Session {
 
     public void abandon(int messageId) throws LDAPException {
 
+    }
+
+    public boolean isAbandoned(int messageId) throws LDAPException {
+        return closed || sessionContext.isClosed();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

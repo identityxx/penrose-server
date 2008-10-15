@@ -110,6 +110,7 @@ public class OpenDSLDAPService extends LDAPService {
 
         ShutdownTaskThread shutdownThread = new ShutdownTaskThread(new MessageBuilder("Shutdown").toMessage());
         shutdownThread.start();
+        shutdownThread.join();
 
         log.warn("LDAP Service has been shutdown.");
     }

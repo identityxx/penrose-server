@@ -29,9 +29,7 @@ import org.safehaus.penrose.service.ServiceConfigManager;
 import org.safehaus.penrose.service.ServiceManager;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * @author Endi S. Dewata
@@ -131,7 +129,13 @@ public class PenroseServer {
         log.debug("----------------------------------------------------------------------------------");
         log.debug("Stopping Penrose Server...");
 
-        for (String serviceName : serviceConfigManager.getAvailableServiceNames()) {
+        List<String> serviceNames = new ArrayList<String>();
+
+        for (String serviceName : serviceManager.getServiceNames()) {
+            serviceNames.add(0, serviceName);
+        }
+
+        for (String serviceName : serviceNames) {
 
             try {
                 serviceManager.stopService(serviceName);

@@ -29,6 +29,10 @@ public class MappingRule {
         return ruleConfig.getName();
     }
 
+    public String getAction() {
+        return ruleConfig.getAction();
+    }
+
     public boolean isRequired() {
         return ruleConfig.isRequired();
     }

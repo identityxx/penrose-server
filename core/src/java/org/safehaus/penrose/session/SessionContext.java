@@ -19,6 +19,8 @@ public class SessionContext {
     private EventManager   eventManager;
     private SessionManager sessionManager;
 
+    private boolean closed;
+
     public SessionContext() {
     }
 
@@ -75,6 +77,11 @@ public class SessionContext {
     }
 
     public void stop() throws Exception {
+        closed = true;
         sessionManager.stop();
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }

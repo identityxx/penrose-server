@@ -12,6 +12,7 @@
 
 <!ELEMENT rule (condition?,(binary|constant|variable|expression))>
 <!ATTLIST rule name CDATA #REQUIRED>
+<!ATTLIST rule action (add|replace) "add">
 <!ATTLIST rule required (true|false) "true">
 
 <!ELEMENT condition (#PCDATA)>

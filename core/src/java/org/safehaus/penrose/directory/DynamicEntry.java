@@ -604,11 +604,16 @@ public class DynamicEntry extends Entry implements Cloneable {
         String primaryAlias  = getSearchOrder(0);
         Filter primaryFilter = sourceFilters.get(primaryAlias);
 
-        if (!baseSearch && !sourceFilters.isEmpty()) { // prevent infinite loop
+        if (!baseSearch && !sourceFilters.isEmpty()) {
 
             Map<DN,SourceAttributes> entries = new LinkedHashMap<DN,SourceAttributes>();
 
             for (String alias : searchOrders) {
+
+                if (session.isAbandoned(request.getMessageId())) {
+                    if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
+                    return;
+                }
 
                 Filter sourceFilter = sourceFilters.get(alias);
                 if (sourceFilter == null) continue;
@@ -630,6 +635,12 @@ public class DynamicEntry extends Entry implements Cloneable {
             log.debug("################################################################");
 
             for (DN dn : entries.keySet()) {
+
+                if (session.isAbandoned(request.getMessageId())) {
+                    if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
+                    return;
+                }
+
                 SourceAttributes sa = entries.get(dn);
                 if (debug) log.debug("Returning "+dn+" with "+sa.getNames()+".");
 

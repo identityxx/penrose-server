@@ -62,15 +62,6 @@ public class PartitionManager {
         return partitionsDir;
     }
     
-    public void addPartition(String partitionName, Partition partition) {
-        log.debug("Adding "+partitionName+" partition.");
-        partitions.put(partitionName, partition);
-    }
-
-    public Partition removePartition(String name) {
-        return partitions.remove(name);
-    }
-
     public void startPartitions() throws Exception {
         
         loadDefaultPartition();
@@ -215,7 +206,9 @@ public class PartitionManager {
         PartitionContext partitionContext = createPartitionContext(partitionConfig);
 
         Partition partition = createPartition(partitionConfig, partitionContext);
-        addPartition(partitionConfig.getName(), partition);
+
+        log.debug("Adding "+partitionConfig.getName()+" partition.");
+        partitions.put(partitionConfig.getName(), partition);
 
         partition.init(partitionConfig, partitionContext);
 

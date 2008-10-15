@@ -238,7 +238,7 @@ public class NISFederationClient {
             }
 
             SynchronizationResult result = synchronizeNISMaps(client, partition, repository, parameters);
-            System.out.println("Synchronization Result:");
+            System.out.println("Result:");
             System.out.println(" - source    : "+result.getSourceEntries());
             System.out.println(" - target    : "+result.getTargetEntries());
             System.out.println(" - added     : "+result.getAddedEntries());
@@ -247,8 +247,6 @@ public class NISFederationClient {
             System.out.println(" - unchanged : "+result.getUnchangedEntries());
             System.out.println(" - failed    : "+result.getFailedEntries());
             System.out.println(" - time      : "+result.getDuration()/1000.0+" s");
-
-            System.out.println("Done.");
 
         } else {
             throw new Exception("Unknown command: "+command);

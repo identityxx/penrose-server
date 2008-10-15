@@ -638,6 +638,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="ldap-backend" />
+    <orderEntry type="module" module-name="opends" />
     <orderEntryProperties />
   </component>
 </module>
