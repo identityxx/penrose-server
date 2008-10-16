@@ -44,7 +44,7 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
     }
     
     public Long getCount() throws Exception {
-        return (Long)connection.getAttribute(objectName, "Count");
+        return (Long)getAttribute("Count");
     }
 
     public void create() throws Exception {
@@ -60,16 +60,15 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
     }
 
     public String getAdapterName() throws Exception {
-        return (String)connection.getAttribute(objectName, "AdapterName");
+        return (String)getAttribute("AdapterName");
     }
 
     public SourceConfig getSourceConfig() throws Exception {
-        return (SourceConfig)connection.getAttribute(objectName, "SourceConfig");
+        return (SourceConfig)getAttribute("SourceConfig");
     }
 
     public void setSourceConfig(SourceConfig sourceConfig) throws Exception {
-        Attribute attribute = new Attribute("SourceConfig", sourceConfig);
-        connection.setAttribute(objectName, attribute);
+        setAttribute("SourceConfig", sourceConfig);
     }
 
     public static String getStringObjectName(String partitionName, String sourceName) {

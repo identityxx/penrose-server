@@ -24,12 +24,11 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
     }
 
     public ConnectionConfig getConnectionConfig() throws Exception {
-        return (ConnectionConfig)connection.getAttribute(objectName, "ConnectionConfig");
+        return (ConnectionConfig)getAttribute("ConnectionConfig");
     }
     
     public void setConnectionConfig(ConnectionConfig connectionConfig) throws Exception {
-        Attribute attribute = new Attribute("ConnectionConfig", connectionConfig);
-        connection.setAttribute(objectName, attribute);
+        setAttribute("ConnectionConfig", connectionConfig);
     }
 
     public static String getStringObjectName(String partitionName, String connectionName) {
@@ -57,6 +56,6 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
     }
 
     public String getAdapterName() throws Exception {
-        return (String)connection.getAttribute(objectName, "AdapterName");
+        return (String)getAttribute("AdapterName");
     }
 }

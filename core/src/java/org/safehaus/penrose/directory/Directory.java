@@ -108,12 +108,12 @@ public class Directory implements Cloneable {
 
     public Entry findParent(EntryConfig entryConfig) throws Exception {
 
-        if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\":");
+        if (debug) log.debug("Searching parent of \""+entryConfig.getDn()+"\".");
 
         String parentId = entryConfig.getParentId();
 
         if (parentId != null) {
-            if (debug) log.debug(" - Parent ID: "+parentId);
+            if (debug) log.debug("Searching parent ID: "+parentId);
             Entry parent = getEntry(parentId);
 
             if (parent != null) {
@@ -126,7 +126,7 @@ public class Directory implements Cloneable {
 
         if (entryConfig.isAttached() && !parentDn.isEmpty()) {
 
-            if (debug) log.debug(" - Parent DN: "+parentDn);
+            if (debug) log.debug("Searching parent DN: "+parentDn);
             Entry parent = getEntry(parentDn);
 
             if (parent != null) {
@@ -134,14 +134,30 @@ public class Directory implements Cloneable {
                 return parent;
             }
 
-            if (debug) log.debug(" - Searching other partitions.");
+            if (debug) log.debug("Searching parent DN in other partitions.");
             PartitionContext partitionContext = partition.getPartitionContext();
             PartitionManager partitionManager = partitionContext.getPartitionManager();
-            parent = partitionManager.getEntry(parentDn);
+            Collection<String> depends = partition.getDepends();
 
-            if (parent != null) {
-                if (debug) log.debug("Found parent \""+parent.getDn()+"\" in partition "+parent.getPartition().getName()+".");
+            for (String depend : depends) {
+                Partition p = partitionManager.getPartition(depend);
+
+                Collection<Entry> parents = p.findEntries(parentDn);
+                if (parents.isEmpty()) continue;
+
+                parent = parents.iterator().next();
+                if (debug) log.debug("Found parent \""+parent.getDn()+"\" in partition "+p.getName()+".");
                 return parent;
+            }
+
+            Partition p = partitionManager.getPartition("DEFAULT");
+            if (p != partition) {
+                Collection<Entry> parents = p.findEntries(parentDn);
+                if (!parents.isEmpty()) {
+                    parent = parents.iterator().next();
+                    if (debug) log.debug("Found parent \""+parent.getDn()+"\" in partition "+p.getName()+".");
+                    return parent;
+                }
             }
         }
 
@@ -187,7 +203,7 @@ public class Directory implements Cloneable {
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
-        if (debug) log.debug("Searching for \""+dn+"\" in \""+partition.getName()+"\".");
+        if (debug) log.debug("Searching for \""+dn+"\" in \""+partition.getName()+"\":");
 
         Collection<Entry> results = new ArrayList<Entry>();
 

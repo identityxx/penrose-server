@@ -18,19 +18,19 @@ public class ServiceClient extends BaseClient implements ServiceServiceMBean {
     }
 
     public String getStatus() throws Exception {
-        return (String)connection.getAttribute(objectName, "Status");
+        return (String)getAttribute("Status");
     }
 
     public void start() throws Exception {
-        connection.invoke(objectName, "start", new Object[] {}, new String[] {});
+        invoke("start", new Object[] {}, new String[] {});
     }
 
     public void stop() throws Exception {
-        connection.invoke(objectName, "stop", new Object[] {}, new String[] {});
+        invoke("stop", new Object[] {}, new String[] {});
     }
 
     public ServiceConfig getServiceConfig() throws Exception {
-        return (ServiceConfig)connection.getAttribute(objectName, "ServiceConfig");
+        return (ServiceConfig)getAttribute("ServiceConfig");
     }
 
     public static String getStringObjectName(String name) {

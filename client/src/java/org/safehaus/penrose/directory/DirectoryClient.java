@@ -41,7 +41,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
     }
 
     public DirectoryConfig getDirectoryConfig() throws Exception {
-        return (DirectoryConfig)connection.getAttribute(objectName, "DirectoryConfig");
+        return (DirectoryConfig)getAttribute("DirectoryConfig");
     }
 
     public static String getStringObjectName(String partitionName) {

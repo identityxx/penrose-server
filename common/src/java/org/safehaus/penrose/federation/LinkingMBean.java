@@ -23,5 +23,5 @@ public interface LinkingMBean {
     public SearchResult importEntry(DN sourceDn, SearchResult targetEntry) throws Exception;
 
     public void addEntry(DN targetDn, Attributes targetAttributes) throws Exception;
-    public void deleteEntry(DN targetDn) throws Exception;
+    public void deleteEntry(DN sourceDn, DN targetDn) throws Exception;
 }

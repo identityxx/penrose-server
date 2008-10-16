@@ -277,11 +277,15 @@ public class LinkingModule extends Module implements LinkingMBean {
 
                         SearchResponse globalResponse = new SearchResponse();
 
-                        target.search(session, globalRequest, globalResponse);
+                        try {
+                            target.search(session, globalRequest, globalResponse);
 
-                        while (globalResponse.hasNext()) {
-                            SearchResult globalEntry = globalResponse.next();
-                            data.addLinkedEntry(globalEntry);
+                            while (globalResponse.hasNext()) {
+                                SearchResult globalEntry = globalResponse.next();
+                                data.addLinkedEntry(globalEntry);
+                            }
+                        } catch (Exception e) {
+                            log.error("Unable to find "+targetKey+"="+link);
                         }
                     }
                 }
@@ -633,24 +637,30 @@ public class LinkingModule extends Module implements LinkingMBean {
         }
     }
 
-    public void deleteEntry(DN targetDn) throws Exception {
+    public void deleteEntry(DN sourceDn, DN targetDn) throws Exception {
 
-        Session adminSession = createAdminSession();
+        Session session = createAdminSession();
 
         try {
+            Source source = getSource();
+            Source target = getTarget();
+
             log.debug("##################################################################################################");
             log.debug("Delete "+ targetDn);
+
+            if (sourceAttribute != null) {
+                unlinkEntry(session, targetDn, sourceDn, targetKey, sourceAttribute, target, source);
+            }
 
             DeleteRequest request = new DeleteRequest();
             request.setDn(targetDn);
 
             DeleteResponse response = new DeleteResponse();
 
-            Source target = getTarget();
-            target.delete(adminSession, request, response);
+            target.delete(session, request, response);
 
         } finally {
-            adminSession.close();
+            session.close();
         }
     }
 

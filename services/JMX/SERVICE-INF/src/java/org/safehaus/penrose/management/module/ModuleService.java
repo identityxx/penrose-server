@@ -8,6 +8,7 @@ import org.safehaus.penrose.management.BaseService;
 import org.safehaus.penrose.management.PenroseJMXService;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata
@@ -41,6 +42,18 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
 
     public ModuleConfig getModuleConfig() throws Exception {
         return getPartitionConfig().getModuleConfigManager().getModuleConfig(moduleName);
+    }
+
+    public Collection<String> getParameterNames() throws Exception {
+        ModuleConfig moduleConfig = getModuleConfig();
+        Collection<String> list = new ArrayList<String>();
+        list.addAll(moduleConfig.getParameterNames());
+        return list;
+    }
+
+    public String getParameter(String name) throws Exception {
+        ModuleConfig moduleConfig = getModuleConfig();
+        return moduleConfig.getParameter(name);
     }
 
     public Module getModule() {

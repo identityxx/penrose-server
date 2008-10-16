@@ -11,6 +11,7 @@ import javax.management.*;
 public class BaseClient {
 
     public Logger log = Logger.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected PenroseClient client;
     protected String name;
@@ -46,33 +47,35 @@ public class BaseClient {
     
     public Object invoke(String method, Object[] paramValues, String[] paramTypes) throws Exception {
 
-        String signature = ClassUtil.getSignature(method, paramTypes);
-        log.debug("Invoking method "+signature+" on "+objectName+".");
+        if (debug) {
+            String signature = ClassUtil.getSignature(method, paramTypes);
+            log.debug("Invoking method "+signature+" on "+objectName+".");
+        }
 
         Object object = connection.invoke(objectName, method, paramValues, paramTypes);
-        log.debug("Invoke method completed.");
+        if (debug) log.debug("Invoke method completed.");
 
         return object;
     }
 
     public Object getAttribute(String attributeName) throws Exception {
 
-        log.debug("Getting attribute "+ attributeName +" from "+objectName+".");
+        if (debug) log.debug("Getting attribute "+ attributeName +" from "+objectName+".");
 
         Object object = connection.getAttribute(objectName, attributeName);
-        log.debug("Get attribute completed.");
+        if (debug) log.debug("Get attribute completed.");
 
         return object;
     }
 
     public void setAttribute(String attributeName, Object value) throws Exception {
 
-        log.debug("Setting attribute "+ attributeName +" from "+objectName+".");
+        if (debug) log.debug("Setting attribute "+ attributeName +" from "+objectName+".");
 
         Attribute attribute = new Attribute(attributeName, value);
         connection.setAttribute(objectName, attribute);
 
-        log.debug("Set attribute completed.");
+        if (debug) log.debug("Set attribute completed.");
     }
 
     public PenroseClient getClient() {

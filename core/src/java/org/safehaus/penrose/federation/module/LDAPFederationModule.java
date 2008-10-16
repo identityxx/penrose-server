@@ -5,5 +5,5 @@ import org.safehaus.penrose.module.Module;
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPFederationModule extends FederationModule {
+public class LDAPFederationModule extends Module {
 }

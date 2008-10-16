@@ -377,14 +377,6 @@ public class PartitionManager {
         return results;
     }
 
-    public Entry getEntry(DN dn) throws Exception {
-        for (Partition partition : partitions.values()) {
-            Directory directory = partition.getDirectory();
-            directory.getEntry(dn);
-        }
-        return null;
-    }
-
     public Collection<Entry> findEntries(DN dn) throws Exception {
 
         Collection<Entry> results = new ArrayList<Entry>();

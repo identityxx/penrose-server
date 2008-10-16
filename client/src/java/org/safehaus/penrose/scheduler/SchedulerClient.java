@@ -36,7 +36,7 @@ public class SchedulerClient extends BaseClient implements SchedulerServiceMBean
     }
 
     public Collection<String> getJobNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(objectName, "JobNames");
+        return (Collection<String>)getAttribute("JobNames");
     }
 
     public JobClient getJobClient(String jobName) throws Exception {
@@ -52,7 +52,7 @@ public class SchedulerClient extends BaseClient implements SchedulerServiceMBean
     }
 
     public Collection<String> getTriggerNames() throws Exception {
-        return (Collection<String>)connection.getAttribute(objectName, "TriggerNames");
+        return (Collection<String>)getAttribute("TriggerNames");
     }
 
 }

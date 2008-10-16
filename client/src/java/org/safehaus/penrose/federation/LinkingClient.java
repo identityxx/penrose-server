@@ -103,12 +103,12 @@ public class LinkingClient extends ModuleClient implements LinkingMBean {
         }
     }
 
-    public void deleteEntry(DN targetDn) throws Exception {
+    public void deleteEntry(DN sourceDn, DN targetDn) throws Exception {
         try {
             invoke(
                     "deleteEntry",
-                    new Object[] { targetDn },
-                    new String[] { DN.class.getName() }
+                    new Object[] { sourceDn, targetDn },
+                    new String[] { DN.class.getName(), DN.class.getName() }
             );
         } catch (MBeanException e) {
             throw (Exception)e.getCause();

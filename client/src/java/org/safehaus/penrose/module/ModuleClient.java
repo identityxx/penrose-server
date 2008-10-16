@@ -24,7 +24,19 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
     }
 
     public ModuleConfig getModuleConfig() throws Exception {
-        return (ModuleConfig)connection.getAttribute(objectName, "ModuleConfig");
+        return (ModuleConfig)getAttribute("ModuleConfig");
+    }
+
+    public Collection<String> getParameterNames() throws Exception {
+        return (Collection<String>)getAttribute("ParameterNames");
+    }
+
+    public String getParameter(String name) throws Exception {
+        return (String)invoke(
+                "getParameter",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
     }
 
     public void addModuleMapping(ModuleMapping moduleMapping) throws Exception {
@@ -44,7 +56,7 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
     }
 
     public Collection<ModuleMapping> getModuleMappings() throws Exception {
-        return (Collection<ModuleMapping>)connection.getAttribute(objectName, "ModuleMappings");
+        return (Collection<ModuleMapping>)getAttribute("ModuleMappings");
     }
 
     public static String getStringObjectName(String partitionName, String name) {

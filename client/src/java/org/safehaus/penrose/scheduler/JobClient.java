@@ -41,7 +41,7 @@ public class JobClient extends BaseClient implements JobServiceMBean {
     }
 
     public JobConfig getJobConfig() throws Exception {
-        return (JobConfig)connection.getAttribute(objectName, "JobConfig");
+        return (JobConfig)getAttribute("JobConfig");
     }
 
     public static String getStringObjectName(String partitionName, String name) {

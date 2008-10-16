@@ -1,22 +1,21 @@
 package org.safehaus.penrose.federation.module;
 
-import org.safehaus.penrose.federation.FederationRepositoryConfig;
 import org.safehaus.penrose.federation.Federation;
 import org.safehaus.penrose.federation.SynchronizationResult;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.nis.module.NISSynchronizationModule;
+import org.safehaus.penrose.module.Module;
 
 import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class NISFederationModule extends FederationModule {
+public class NISFederationModule extends Module {
+
+    public final static String NIS        = "nis";
 
     public SynchronizationResult synchronizeNISMaps(String name, Collection<String> maps) throws Exception {
-
-        FederationRepositoryConfig repository = federationConfig.getRepository(name);
-        if (repository == null) return null;
 
         Partition nisPartition = getPartition(name+"_"+NIS);
 

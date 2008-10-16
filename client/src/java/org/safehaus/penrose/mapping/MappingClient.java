@@ -23,7 +23,7 @@ public class MappingClient extends BaseClient implements MappingServiceMBean {
     }
 
     public MappingConfig getMappingConfig() throws Exception {
-        return (MappingConfig)connection.getAttribute(objectName, "MappingConfig");
+        return (MappingConfig)getAttribute("MappingConfig");
     }
 
     public static String getStringObjectName(String partitionName, String mappingName) {
