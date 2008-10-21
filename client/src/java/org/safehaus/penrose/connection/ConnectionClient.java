@@ -2,11 +2,9 @@ package org.safehaus.penrose.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.connection.ConnectionServiceMBean;
-
-import javax.management.Attribute;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.connection.ConnectionServiceMBean;
 
 /**
  * @author Endi Sukma Dewata
@@ -17,8 +15,8 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
 
     protected String partitionName;
 
-    public ConnectionClient(PenroseClient client, String partitionName, String name) throws Exception {
-        super(client, name, getStringObjectName(partitionName, name));
+    public ConnectionClient(PenroseClient client, String partitionName, String connectionName) throws Exception {
+        super(client, connectionName, getStringObjectName(partitionName, connectionName));
 
         this.partitionName = partitionName;
     }

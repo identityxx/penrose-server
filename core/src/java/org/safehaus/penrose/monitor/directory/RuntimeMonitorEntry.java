@@ -1,7 +1,7 @@
 package org.safehaus.penrose.monitor.directory;
 
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.TextUtil;
@@ -25,27 +25,17 @@ public class RuntimeMonitorEntry extends Entry {
         super.init();
     }
 
-    public SearchResponse createSearchResponse(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
-    ) {
-        return response;
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -58,27 +48,17 @@ public class RuntimeMonitorEntry extends Entry {
         }
 
         try {
-            validateSearchRequest(session, request, response);
+            validate(operation);
 
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
-
-        try {
-            expand(session, request, response);
+            expand(operation);
 
         } finally {
-            response.close();
+            operation.close();
         }
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         Runtime rt = Runtime.getRuntime();
@@ -103,6 +83,6 @@ public class RuntimeMonitorEntry extends Entry {
         SearchResult result = new SearchResult(entryDn, attributes);
         result.setEntryId(getId());
 
-        response.add(result);
+        operation.add(result);
     }
 }

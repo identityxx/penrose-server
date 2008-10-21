@@ -22,6 +22,11 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Collection;
+
 public class SessionManager implements SessionManagerMBean {
 
     public Logger log = LoggerFactory.getLogger(getClass());
@@ -34,6 +39,8 @@ public class SessionManager implements SessionManagerMBean {
 
     public long sessionCounter;
 
+    public Map<String,Session> sessions = Collections.synchronizedMap(new HashMap<String,Session>());
+
     public SessionManager() {
     }
 
@@ -43,46 +50,52 @@ public class SessionManager implements SessionManagerMBean {
     public void stop() throws Exception {
     }
 
-    public synchronized Session createSession() throws Exception {
-        Object sessionId = createSessionId();
+    public Session createSession() throws Exception {
+        String sessionId = createSessionName();
         return createSession(sessionId);
     }
 
-    public synchronized Session createAdminSession() throws Exception {
+    public Session createAdminSession() throws Exception {
         Session session = createSession();
         session.setBindDn(penroseConfig.getRootDn());
         session.setRootUser(true);
         return session;
     }
 
-    public synchronized Session createSession(Object sessionId) throws Exception {
+    public Session createSession(String sessionName) throws Exception {
 
         Session session = new Session();
-        session.setSessionId(sessionId);
+        session.setSessionName(sessionName);
         session.setPenroseConfig(penroseConfig);
         session.setPenroseContext(penroseContext);
         session.setSessionContext(sessionContext);
         session.init();
 
+        sessions.put(sessionName, session);
+
         return session;
     }
 
-    public synchronized Object createSessionId() {
-        Long sessionId = sessionCounter;
+    public Collection<String> getSessionNames() {
+        return sessions.keySet();
+    }
+    
+    public Session getSession(String sessionName) {
+        return sessions.get(sessionName);
+    }
+
+    public Session removeSession(String sessionName) throws Exception {
+        return sessions.remove(sessionName);
+    }
+
+    public synchronized String createSessionName() {
+        String sessionId = "session-"+sessionCounter;
         if (sessionCounter == Long.MAX_VALUE) {
             sessionCounter = 0;
         } else {
             sessionCounter++;
         }
         return sessionId;
-    }
-
-    public SessionConfig getSessionManagerConfig() {
-        return sessionConfig;
-    }
-
-    public void setSessionManagerConfig(SessionConfig sessionConfig) {
-        this.sessionConfig = sessionConfig;
     }
 
     public SessionConfig getSessionConfig() {

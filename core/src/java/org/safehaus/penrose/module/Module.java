@@ -21,6 +21,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 
 import org.slf4j.LoggerFactory;
@@ -135,12 +136,10 @@ public class Module {
     }
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response,
+            SearchOperation operation,
             ModuleChain chain
     ) throws Exception {
-        chain.search(session, request, response);
+        chain.search(operation);
     }
 
     public void unbind(

@@ -1,8 +1,8 @@
 package org.safehaus.penrose.module;
 
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.module.ModuleServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.module.ModuleServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

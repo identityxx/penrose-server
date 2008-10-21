@@ -9,6 +9,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
 
@@ -80,7 +81,7 @@ public class FederationEntry extends DynamicEntry {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateFilter(Filter filter) throws Exception {
+    public void validateFilter(SearchOperation operation) throws Exception {
         // ignore
     }
 
@@ -100,22 +101,22 @@ public class FederationEntry extends DynamicEntry {
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        //super.expand(session, request, response);
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         boolean baseSearch = (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)
                 && getDn().matches(baseDn);
 
-        Filter filter = request.getFilter();
+        Filter filter = operation.getFilter();
 
-        Collection<String> attributeNames = request.getAttributes();
+        Collection<String> attributeNames = operation.getAttributes();
         Collection<String> requestedSources = new HashSet<String>();
 
         Mapping mapping = getMapping();

@@ -2,9 +2,9 @@ package org.safehaus.penrose.scheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.scheduler.SchedulerServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.scheduler.SchedulerServiceMBean;
 
 import java.util.Collection;
 

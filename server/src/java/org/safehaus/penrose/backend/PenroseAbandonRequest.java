@@ -17,11 +17,11 @@ public class PenroseAbandonRequest
     }
 
     public void setIdToAbandon(int idToAbandon) throws Exception {
-        abandonRequest.setIdToAbandon(idToAbandon);
+        abandonRequest.setOperationName(""+idToAbandon);
     }
 
     public int getIdToAbandon() throws Exception {
-        return abandonRequest.getIdToAbandon();
+        return Integer.parseInt(abandonRequest.getOperationName());
     }
 
     public AbandonRequest getAbandonRequest() {

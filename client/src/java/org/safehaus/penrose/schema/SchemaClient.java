@@ -1,14 +1,12 @@
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.schema.SchemaServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.schema.SchemaServiceMBean;
 import org.safehaus.penrose.schema.AttributeType;
-import org.safehaus.penrose.schema.Schema;
 import org.safehaus.penrose.schema.ObjectClass;
 
 import java.util.Collection;
-import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata

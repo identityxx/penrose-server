@@ -1,7 +1,7 @@
 package org.safehaus.penrose.federation;
 
 import org.safehaus.penrose.partition.*;
-import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;

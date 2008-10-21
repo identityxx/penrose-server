@@ -11,9 +11,9 @@ import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.partition.PartitionManagerServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.partition.PartitionManagerServiceMBean;
 
 import java.util.Collection;
 import java.util.ArrayList;

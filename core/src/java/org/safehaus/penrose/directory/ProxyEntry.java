@@ -10,6 +10,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;
@@ -145,7 +146,7 @@ public class ProxyEntry extends Entry {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchRequest request) throws Exception {
+    public void validateScope(SearchOperation operation) throws Exception {
         // ignore
     }
 
@@ -157,7 +158,7 @@ public class ProxyEntry extends Entry {
         return true;
     }
 
-    public void validateFilter(Filter filter) throws Exception {
+    public void validateFilter(SearchOperation operation) throws Exception {
         // ignore
     }
 
@@ -463,14 +464,12 @@ public class ProxyEntry extends Entry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -483,40 +482,26 @@ public class ProxyEntry extends Entry {
         }
 
         try {
-            validateSearchRequest(session, request, response);
+            validate(operation);
 
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
-
-        try {
-            expand(session, request, response);
+            expand(operation);
 
         } finally {
-            response.close();
+            operation.close();
         }
-    }
-
-    public SearchResponse createSearchResponse(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
-    ) {
-        return response;
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
+
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         boolean subset = baseDn.endsWith(getDn());
 

@@ -3,6 +3,7 @@ package org.safehaus.penrose.nis.directory;
 import org.safehaus.penrose.directory.DynamicEntry;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.EntrySearchOperation;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
@@ -10,6 +11,7 @@ import org.safehaus.penrose.nis.NISMap;
 import org.safehaus.penrose.nis.NISObject;
 import org.safehaus.penrose.nis.source.NISAutomountsSource;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;
@@ -68,14 +70,12 @@ public class NISAutomountsEntry extends DynamicEntry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -87,67 +87,59 @@ public class NISAutomountsEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
-    public void validateScope(SearchRequest request) throws Exception {
+    public void validateScope(SearchOperation operation) throws Exception {
         // ignore
     }
 
-    public void validateFilter(Filter filter) throws Exception {
+    public void validateFilter(SearchOperation operation) throws Exception {
         // ignore
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        DN baseDn = request.getDn();
+        DN baseDn = operation.getDn();
         DN entryDn = getDn();
 
         int level = baseDn.getSize() - entryDn.getSize();
 
         if (level < -1 && entryDn.endsWith(baseDn)) {
-            searchAncestor(session, request, response);
+            searchAncestor(operation);
 
         } else if (level == -1 && entryDn.getParentDn().matches(baseDn)) {
-            searchParent(session, request, response);
+            searchParent(operation);
 
         } else if (level == 0 && entryDn.matches(baseDn)) {
-            searchEntry(session, request, response);
+            searchEntry(operation);
 
         } else if (level > 0 && baseDn.endsWith(entryDn)) {
-            searchChildren(session, request, response);
+            searchChildren(operation);
         }
     }
 
     public void searchAncestor(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
+
+        Session session = operation.getSession();
 
         if (debug) log.debug("Searching ancestor");
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
         boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
@@ -155,7 +147,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         if (baseSearch || oneLevelSearch) return;
 
         SearchResult automountsSearchResult = createAutomountsSearchResult();
-        response.add(automountsSearchResult);
+        operation.add(automountsSearchResult);
 
         Map<String,NISMap> maps = getAutomountMaps(session);
 
@@ -164,7 +156,7 @@ public class NISAutomountsEntry extends DynamicEntry {
             DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
 
             SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
-            response.add(automountMapSearchResult);
+            operation.add(automountMapSearchResult);
         }
 
         for (NISMap map : maps.values()) {
@@ -176,21 +168,21 @@ public class NISAutomountsEntry extends DynamicEntry {
                 DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
 
                 SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
-                response.add(automountMapEntrySearchResult);
+                operation.add(automountMapEntrySearchResult);
             }
         }
     }
 
     public void searchParent(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
+
+        Session session = operation.getSession();
 
         if (debug) log.debug("Searching parent");
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
         boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
@@ -198,7 +190,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         if (baseSearch) return;
 
         SearchResult automountsSearchResult = createAutomountsSearchResult();
-        response.add(automountsSearchResult);
+        operation.add(automountsSearchResult);
 
         if (oneLevelSearch) return;
 
@@ -209,7 +201,7 @@ public class NISAutomountsEntry extends DynamicEntry {
             DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
 
             SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
-            response.add(automountMapSearchResult);
+            operation.add(automountMapSearchResult);
         }
 
         for (NISMap map : maps.values()) {
@@ -221,21 +213,21 @@ public class NISAutomountsEntry extends DynamicEntry {
                 DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
 
                 SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
-                response.add(automountMapEntrySearchResult);
+                operation.add(automountMapEntrySearchResult);
             }
         }
     }
 
     public void searchEntry(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
+
+        Session session = operation.getSession();
 
         if (debug) log.debug("Searching entry");
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         boolean baseSearch     = scope == SearchRequest.SCOPE_BASE;
         boolean oneLevelSearch = scope == SearchRequest.SCOPE_ONE;
@@ -243,7 +235,7 @@ public class NISAutomountsEntry extends DynamicEntry {
 
         if (baseSearch || subtreeSearch) {
             SearchResult automountsSearchResult = createAutomountsSearchResult();
-            response.add(automountsSearchResult);
+            operation.add(automountsSearchResult);
 
             if (baseSearch) return;
         }
@@ -257,7 +249,7 @@ public class NISAutomountsEntry extends DynamicEntry {
                 DN automountMapDn = createAutomountMapDn(baseDn, map.getName());
 
                 SearchResult automountMapSearchResult = createAutomountMapSearchResult(automountMapDn, map);
-                response.add(automountMapSearchResult);
+                operation.add(automountMapSearchResult);
             }
 
             if (oneLevelSearch) return;
@@ -272,33 +264,31 @@ public class NISAutomountsEntry extends DynamicEntry {
                 DN automountMapEntryDn = createAutomountMapEntryDn(automountMapDn, object.getName());
 
                 SearchResult automountMapEntrySearchResult = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
-                response.add(automountMapEntrySearchResult);
+                operation.add(automountMapEntrySearchResult);
             }
         }
     }
 
     public void searchChildren(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         if (debug) log.debug("Searching children");
 
-        DN baseDn = request.getDn();
+        DN baseDn = operation.getDn();
         DN automountsDn = getDn();
 
         DN automountMapDn = createAutomountMapDn(automountsDn, "...");
 
         if (baseDn.matches(automountMapDn)) {
-            searchAutomountMap(session, request, response);
+            searchAutomountMap(operation);
             return;
         }
 
         DN automountEntryDn = createAutomountMapEntryDn(automountMapDn, "...");
 
         if (baseDn.matches(automountEntryDn)) {
-            searchAutomountMapEntry(session, request, response);
+            searchAutomountMapEntry(operation);
             return;
         }
 
@@ -393,10 +383,12 @@ public class NISAutomountsEntry extends DynamicEntry {
     }
 
     public void searchAutomountMap(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
+
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
 
         DN automountMapDn = request.getDn();
         RDN automountMapRdn = automountMapDn.getRdn();
@@ -433,12 +425,12 @@ public class NISAutomountsEntry extends DynamicEntry {
     }
 
     public void searchAutomountMapEntry(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        DN automountMapEntryDn = request.getDn();
+        Session session = operation.getSession();
+
+        DN automountMapEntryDn = operation.getDn();
         RDN automountMapEntryRdn = automountMapEntryDn.getRdn();
 
         String name = (String)automountMapEntryRdn.get("cn");
@@ -468,11 +460,11 @@ public class NISAutomountsEntry extends DynamicEntry {
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        int scope = request.getScope();
+        int scope = operation.getScope();
 
         if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
             SearchResult result = createAutomountMapEntrySearchResult(automountMapEntryDn, map, object);
-            response.add(result);
+            operation.add(result);
         }
     }
 

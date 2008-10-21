@@ -21,8 +21,8 @@ import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.util.BinaryUtil;
 
 import java.util.Arrays;
@@ -150,32 +150,29 @@ public class DemoModule extends Module implements DemoModuleMBean {
     }
 
     public void search(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response,
+            final SearchOperation operation,
             final ModuleChain chain
     ) throws Exception {
 
-        System.out.println("#### Searching "+request.getDn()+".");
+        System.out.println("#### Searching "+operation.getDn()+".");
 
-        Filter filter = request.getFilter();
+        Filter filter = operation.getFilter();
         if (filter != null && filter.toString().equalsIgnoreCase("(cn=secret)")) {
             throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
         }
 
-        // register result listener
-        SearchResponse sr = new Pipeline(response) {
+        SearchOperation op = new SearchOperation(operation) {
             public void add(SearchResult result) throws Exception {
                 System.out.println("#### Returning "+result.getDn()+".");
                 super.add(result);
             }
         };
+        
+        chain.search(op);
 
-        chain.search(session, request, sr);
-
-        int rc = response.waitFor();
+        int rc = op.waitFor();
         if (rc == LDAP.SUCCESS) {
-            System.out.println("#### Search returned "+response.getTotalCount()+" entries.");
+            System.out.println("#### Search returned "+operation.getTotalCount()+" entries.");
         } else {
             System.out.println("#### Search failed. RC="+rc);
         }

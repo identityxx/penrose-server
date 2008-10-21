@@ -11,6 +11,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.connection.Connection;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 
 import java.util.*;
 
@@ -363,11 +364,11 @@ public class JDBCSyncJob extends Job {
 
         SearchResponse response = new SearchResponse();
 
-        entry.search(
-                session,
-                request,
-                response
-        );
+        SearchOperation operation = session.createSearchOperation();
+        operation.setRequest(request);
+        operation.setResponse(response);
+
+        entry.search(operation);
 
         return response;
     }

@@ -19,6 +19,7 @@ package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.service.Service;
 import org.safehaus.penrose.service.ServiceConfig;
+import org.safehaus.penrose.client.PenroseClient;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;

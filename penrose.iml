@@ -9,6 +9,34 @@
         <webroots>
           <root url="file://$MODULE_DIR$/samples/tomcat" relative="/WEB-INF" />
         </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/client/src/java" />
+          <root url="file://$MODULE_DIR$/common/src/java" />
+          <root url="file://$MODULE_DIR$/core/src/java" />
+          <root url="file://$MODULE_DIR$/core/src/test" />
+          <root url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/src" />
+          <root url="file://$MODULE_DIR$/monitors/LDAP/MONITOR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/ad_sync/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/adapter/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/cache/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/changelog/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/embedded/src" />
+          <root url="file://$MODULE_DIR$/samples/jdbc_sync/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/ldap_sync/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/listener/src" />
+          <root url="file://$MODULE_DIR$/samples/lockout/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/module/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/samba/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/scheduler/DIR-INF/src" />
+          <root url="file://$MODULE_DIR$/samples/tomcat/WEB-INF/src" />
+          <root url="file://$MODULE_DIR$/server/src/java" />
+          <root url="file://$MODULE_DIR$/server/src/test" />
+          <root url="file://$MODULE_DIR$/services/ApacheDS/SERVICE-INF/src" />
+          <root url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src/java" />
+          <root url="file://$MODULE_DIR$/services/JMX/SERVICE-INF/src/test" />
+          <root url="file://$MODULE_DIR$/services/LDAP/SERVICE-INF/src" />
+          <root url="file://$MODULE_DIR$/services/OpenDS/SERVICE-INF/src" />
+        </sourceRoots>
         <building>
           <setting name="EXPLODED_URL" value="file://" />
           <setting name="EXPLODED_ENABLED" value="false" />
@@ -48,6 +76,7 @@
       <sourceFolder url="file://$MODULE_DIR$/core/src/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/JMX/MONITOR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/monitors/LDAP/MONITOR-INF/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/samples/abandon/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/ad_sync/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/adapter/DIR-INF/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/samples/cache/DIR-INF/src" isTestSource="false" />

@@ -5,28 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.filter.Filter;
-import org.safehaus.penrose.util.ClassUtil;
-import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.partition.PartitionManagerClient;
-import org.safehaus.penrose.partition.PartitionClient;
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.source.SourceServiceMBean;
-import org.apache.log4j.Level;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.xml.DOMConfigurator;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.source.SourceServiceMBean;
 
-import javax.management.*;
-import javax.management.Attribute;
 import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.io.File;
-
-import gnu.getopt.LongOpt;
-import gnu.getopt.Getopt;
 
 /**
  * @author Endi Sukma Dewata

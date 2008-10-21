@@ -1,6 +1,6 @@
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.TextUtil;
@@ -15,9 +15,9 @@ public class RootEntry extends Entry {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchRequest request) throws Exception {
+    public void validateScope(SearchOperation operation) throws Exception {
 
-        int scope = request.getScope();
+        int scope = operation.getScope();
 
         if (scope != SearchRequest.SCOPE_BASE) {
             log.debug("Entry out of scope.");
@@ -29,7 +29,7 @@ public class RootEntry extends Entry {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-     public void validateFilter(Filter filter) throws Exception {
+     public void validateFilter(SearchOperation operation) throws Exception {
         // ignore
     }
 
@@ -38,14 +38,12 @@ public class RootEntry extends Entry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -57,28 +55,20 @@ public class RootEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         Interpreter interpreter = partition.newInterpreter();
@@ -89,6 +79,6 @@ public class RootEntry extends Entry {
         SearchResult result = new SearchResult(dn, attributes);
         result.setEntryId(getId());
 
-        response.add(result);
+        operation.add(result);
     }
 }

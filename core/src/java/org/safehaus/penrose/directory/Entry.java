@@ -31,6 +31,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.FieldConfig;
@@ -495,7 +496,9 @@ public class Entry implements Cloneable {
         partition.validatePermission(session, request, this);
     }
 
-    public void validatePermission(Session session, SearchRequest request) throws Exception {
+    public void validatePermission(SearchOperation operation) throws Exception {
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
         partition.validatePermission(session, request, this);
     }
 
@@ -527,10 +530,10 @@ public class Entry implements Cloneable {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchRequest request) throws Exception {
+    public void validateScope(SearchOperation operation) throws Exception {
 
-        DN dn = request.getDn();
-        int scope = request.getScope();
+        DN dn = operation.getDn();
+        int scope = operation.getScope();
 
         if (debug) log.debug("Checking search scope "+LDAP.getScope(scope)+".");
 
@@ -544,8 +547,9 @@ public class Entry implements Cloneable {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateFilter(Filter filter) throws Exception {
+    public void validateFilter(SearchOperation operation) throws Exception {
 
+        Filter filter = operation.getFilter();
         if (debug) log.debug("Checking search filter "+filter+".");
 
         if (!entryFilterEvaluator.eval(filter)) {
@@ -854,11 +858,11 @@ public class Entry implements Cloneable {
 
         SearchResponse response = new SearchResponse();
 
-        search(
-                session,
-                request,
-                response
-        );
+        SearchOperation operation = session.createSearchOperation();
+        operation.setRequest(request);
+        operation.setResponse(response);
+
+        search(operation);
 
         response.close();
 
@@ -932,14 +936,12 @@ public class Entry implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        DN baseDn     = request.getDn();
-        Filter filter = request.getFilter();
-        int scope     = request.getScope();
+        DN baseDn     = operation.getDn();
+        Filter filter = operation.getFilter();
+        int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -951,21 +953,13 @@ public class Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
+            validate(op);
+
             Interpreter interpreter = partition.newInterpreter();
-            interpreter.set("session", session);
-            interpreter.set("request", request);
-            interpreter.set("response", response);
+            interpreter.set("operation", op);
             interpreter.set("entry", this);
 
             for (EntrySearchConfig searchConfig : entryConfig.getSearchConfigs()) {
@@ -980,41 +974,24 @@ public class Entry implements Cloneable {
                 return;
             }
 
-            expand(session, request, response);
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
-    public void validateSearchRequest(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+    public void validate(
+            SearchOperation operation
     ) throws Exception {
 
-        validateScope(request);
-        validatePermission(session, request);
-
-        Filter filter = request.getFilter();
-        validateFilter(filter);
-    }
-
-    public SearchResponse createSearchResponse(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
-    ) throws Exception {
-
-        if (debug) log.debug("Creating search result processor.");
-
-        return new EntrySearchResponse(session, request, response, this);
+        validateScope(operation);
+        validatePermission(operation);
+        validateFilter(operation);
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         Interpreter interpreter = partition.newInterpreter();
@@ -1025,7 +1002,7 @@ public class Entry implements Cloneable {
         SearchResult result = new SearchResult(dn, attributes);
         result.setEntryId(getId());
 
-        response.add(result);
+        operation.add(result);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

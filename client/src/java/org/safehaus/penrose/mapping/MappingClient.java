@@ -1,8 +1,8 @@
 package org.safehaus.penrose.mapping;
 
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.mapping.MappingServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.mapping.MappingServiceMBean;
 import org.safehaus.penrose.mapping.MappingConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

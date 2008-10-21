@@ -6,7 +6,7 @@ import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
-import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.client.PenroseClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;

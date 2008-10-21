@@ -23,7 +23,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("CONNECT session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             if (request.getClientAddress() != null) {
@@ -54,7 +54,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("DISCONNECT session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -67,7 +67,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("ABANDON session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -77,8 +77,8 @@ public class Access {
                 sb.append("\"");
             }
 
-            sb.append(" idToAbandon=\"");
-            sb.append(request.getIdToAbandon());
+            sb.append(" operation=\"");
+            sb.append(request.getOperationName());
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -86,12 +86,12 @@ public class Access {
     }
 
     public static void log(Session session, AbandonResponse response) {
-/*
+
         if (warn) {
             StringBuilder sb = new StringBuilder();
 
             sb.append("ABANDON session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -107,7 +107,7 @@ public class Access {
 
             log.warn(sb.toString());
         }
-*/
+
     }
 
     public static void log(Session session, AddRequest request) {
@@ -116,7 +116,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("ADD session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -140,7 +140,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("ADD session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -164,7 +164,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("BIND session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -188,7 +188,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("BIND session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -218,7 +218,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("COMPARE session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -244,7 +244,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("COMPARE session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -268,7 +268,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("DELETE session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -292,7 +292,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("DELETE session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -316,7 +316,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("MODIFY session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -340,7 +340,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("MODIFY session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -364,7 +364,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("MODRDN session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -392,7 +392,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("MODRDN session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -416,7 +416,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("SEARCH session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -464,7 +464,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("SEARCH session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();
@@ -490,7 +490,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("UNBIND session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = request.getMessageId();
@@ -510,7 +510,7 @@ public class Access {
             StringBuilder sb = new StringBuilder();
 
             sb.append("UNBIND session=\"");
-            sb.append(session.getSessionId());
+            sb.append(session.getSessionName());
             sb.append("\"");
 
             Integer messageId = response.getMessageId();

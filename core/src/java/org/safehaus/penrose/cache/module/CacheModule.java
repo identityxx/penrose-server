@@ -10,6 +10,7 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 
 /**
  * @author Endi Sukma Dewata
@@ -150,23 +151,21 @@ public class CacheModule extends Module implements CacheMBean {
     }
 
     public void search(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response,
+            final SearchOperation operation,
             final ModuleChain chain
     ) throws Exception {
 
         String entryId = chain.getEntry().getId();
 
         final CacheKey key = new CacheKey();
-        key.setBindDn(session.getBindDn());
-        key.setRequest(request);
+        key.setBindDn(operation.getSession().getBindDn());
+        key.setRequest((SearchRequest)operation.getRequest());
         key.setEntryId(entryId);
 
         Cache c = cacheManager.get(key);
 
         if (c != null) {
-            if (warn) log.warn("Cache found for "+entryId+" "+request.getDn()+" "+request.getFilter()+".");
+            if (warn) log.warn("Cache found for "+entryId+" "+operation.getDn()+" "+operation.getFilter()+".");
 
             SearchResponse sr = (SearchResponse)c.getResponse().clone();
             if (debug) log.debug("Cache contains "+sr.getTotalCount()+" entries.");
@@ -174,32 +173,32 @@ public class CacheModule extends Module implements CacheMBean {
             while (sr.hasNext()) {
                 try {
                     SearchResult result = sr.next();
-                    response.add(result);
+                    operation.add(result);
 
                 } catch (SearchReferenceException e) {
                     SearchReference reference = e.getReference();
-                    response.add(reference);
+                    operation.add(reference);
                 }
             }
 
-            response.setException(response.getException());
+            operation.setException(sr.getException());
 
             return;
         }
 
-        if (warn) log.warn("Cache not found for "+entryId+" "+request.getDn()+" "+request.getFilter()+".");
+        if (warn) log.warn("Cache not found for "+entryId+" "+operation.getDn()+" "+operation.getFilter()+".");
 
         final Cache cache = cacheManager.create(key);
         final SearchResponse cacheResponse = new SearchResponse();
 
-        SearchResponse sr = new Pipeline(response) {
+        SearchOperation op = new SearchOperation(operation) {
             public void add(SearchResult result) throws Exception {
                 try {
                     super.add(result);
                     cacheResponse.add(result);
                 } catch (LDAPException e) {
                     cacheResponse.setException(e);
-                }                    
+                }
             }
             public void add(SearchReference reference) throws Exception {
                 super.add(reference);
@@ -214,7 +213,7 @@ public class CacheModule extends Module implements CacheMBean {
             }
         };
 
-        chain.search(session, request, sr);
+        chain.search(op);
     }
 
     public void unbind(

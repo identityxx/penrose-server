@@ -19,6 +19,7 @@ package org.safehaus.penrose.backend;
 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldapbackend.ConnectRequest;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.control.Control;
@@ -46,7 +47,7 @@ public class PenroseBackend implements org.safehaus.penrose.ldapbackend.Backend 
 
     public PenroseServer penroseServer;
 
-    public Map<Object, PenroseConnection> sessions = Collections.synchronizedMap(new HashMap<Object, PenroseConnection>());
+    public Map<Object,PenroseConnection> connections = Collections.synchronizedMap(new HashMap<Object,PenroseConnection>());
 
     public PenroseBackend() {
         home = new File(System.getProperty("penrose.home"));
@@ -87,7 +88,7 @@ public class PenroseBackend implements org.safehaus.penrose.ldapbackend.Backend 
     }
 
     public Connection getConnection(Object connectionId) throws Exception {
-        return sessions.get(connectionId);
+        return connections.get(connectionId);
     }
 
     public ConnectRequest createConnectRequest() throws Exception {
@@ -100,23 +101,28 @@ public class PenroseBackend implements org.safehaus.penrose.ldapbackend.Backend 
 
     public Connection connect(ConnectRequest request) throws Exception {
 
+        Object connectionId = request.getConnectionId();
+
         Penrose penrose = penroseServer.getPenrose();
-        PenroseConnection session = new PenroseConnection(penrose.createSession());
+        Session session = penrose.createSession(""+connectionId);
 
-        session.connect(request);
+        PenroseConnection connection = new PenroseConnection(session);
+        connection.connect(request);
 
-        sessions.put(request.getConnectionId(), session);
+        connections.put(connectionId, connection);
 
-        return session;
+        return connection;
     }
 
     public void disconnect(DisconnectRequest request) throws Exception {
 
-        PenroseConnection session = sessions.remove(request.getConnectionId());
-        if (session == null) return;
+        Object connectionId = request.getConnectionId();
 
-        session.disconnect(request);
-        session.close();
+        PenroseConnection connection = connections.remove(connectionId);
+        if (connection == null) return;
+
+        connection.disconnect(request);
+        connection.close();
     }
 
     public org.safehaus.penrose.ldapbackend.Control createControl(String oid, byte[] value, boolean critical) throws Exception {

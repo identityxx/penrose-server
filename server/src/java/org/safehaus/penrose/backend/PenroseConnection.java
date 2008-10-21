@@ -104,7 +104,7 @@ public class PenroseConnection implements Connection {
 
         if (debug) log.debug("abandon("+idToAbandon+")");
 
-        session.abandon(idToAbandon);
+        session.abandon(""+idToAbandon);
     }
 
     public void abandon(

@@ -273,6 +273,11 @@ public class Penrose {
         return sessionManager.createSession();
     }
 
+    public Session createSession(String sessionId) throws Exception {
+        SessionManager sessionManager = sessionContext.getSessionManager();
+        return sessionManager.createSession(sessionId);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Setters & Getters
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

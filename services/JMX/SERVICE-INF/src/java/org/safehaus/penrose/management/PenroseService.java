@@ -19,11 +19,15 @@ package org.safehaus.penrose.management;
 
 import org.apache.log4j.Logger;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.PenroseServiceMBean;
+import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.management.partition.PartitionManagerService;
 import org.safehaus.penrose.management.schema.SchemaManagerService;
 import org.safehaus.penrose.management.service.ServiceManagerService;
+import org.safehaus.penrose.management.session.SessionManagerService;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.server.PenroseServer;
@@ -50,6 +54,7 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
     protected SchemaManagerService schemaManagerService;
     protected PartitionManagerService partitionManagerService;
     protected ServiceManagerService serviceManagerService;
+    protected SessionManagerService sessionManagerService;
 
     public PenroseService(PenroseJMXService jmxService, PenroseServer penroseServer) throws Exception {
         super(PenroseServiceMBean.class);
@@ -81,10 +86,17 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
         serviceManagerService = new ServiceManagerService(jmxService, serviceManager);
         serviceManagerService.init();
         serviceManagerService.register();
+
+        SessionManager sessionManager = penrose.getSessionContext().getSessionManager();
+
+        sessionManagerService = new SessionManagerService(jmxService, sessionManager);
+        sessionManagerService.init();
+        sessionManagerService.register();
     }
 
     public void destroy() throws Exception {
 
+        sessionManagerService.unregister();
         serviceManagerService.unregister();
         partitionManagerService.unregister();
         schemaManagerService.unregister();
@@ -218,6 +230,14 @@ public class PenroseService extends StandardMBean implements PenroseServiceMBean
 
     public ServiceManagerService getServiceManagerService() throws Exception {
         return serviceManagerService;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Sessions
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public SessionManagerService getSessionManagerService() throws Exception {
+        return sessionManagerService;
     }
 
     ////////////////////////////////////////////////////////////////////////////////

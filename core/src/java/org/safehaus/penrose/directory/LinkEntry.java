@@ -1,11 +1,11 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Collection;
 
@@ -144,12 +144,10 @@ public class LinkEntry extends Entry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
         Entry link = getLink();
-        link.search(session, request, response);
+        link.search(operation);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

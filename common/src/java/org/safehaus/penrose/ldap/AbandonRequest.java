@@ -5,28 +5,28 @@ package org.safehaus.penrose.ldap;
  */
 public class AbandonRequest extends Request implements Cloneable {
 
-    protected int idToAbandon;
+    protected String operationName;
 
     public AbandonRequest() {
     }
 
     public AbandonRequest(AbandonRequest request) {
         super(request);
-        idToAbandon = request.getIdToAbandon();
+        operationName = request.getOperationName();
     }
 
-    public int getIdToAbandon() {
-        return idToAbandon;
+    public String getOperationName() {
+        return operationName;
     }
 
-    public void setIdToAbandon(int idToAbandon) throws Exception {
-        this.idToAbandon = idToAbandon;
+    public void setOperationName(String operationName) {
+        this.operationName = operationName;
     }
 
     public Object clone() throws CloneNotSupportedException {
         AbandonRequest request = (AbandonRequest)super.clone();
 
-        request.idToAbandon = idToAbandon;
+        request.operationName = operationName;
 
         return request;
     }

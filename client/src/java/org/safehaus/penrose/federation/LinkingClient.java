@@ -1,6 +1,6 @@
 package org.safehaus.penrose.federation;
 
-import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;

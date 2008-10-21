@@ -4,7 +4,7 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.pipeline.Pipeline;
 
@@ -32,27 +32,17 @@ public class PartitionsMonitorEntry extends Entry {
         children.add(partitionEntry);
     }
 
-    public SearchResponse createSearchResponse(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
-    ) {
-        return response;
-    }
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -65,50 +55,42 @@ public class PartitionsMonitorEntry extends Entry {
         }
 
         try {
-            validateSearchRequest(session, request, response);
+            validate(operation);
 
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
-
-        try {
-            expand(session, request, response);
+            expand(operation);
 
         } finally {
-            response.close();
+            operation.close();
         }
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        int scope = request.getScope();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
+        int scope = operation.getScope();
 
         SearchResult result = createBaseSearchResult();
-        response.add(result);
+        operation.add(result);
 
         if (scope == SearchRequest.SCOPE_SUB) {
+
+            SearchOperation op = new SearchOperation(operation) {
+                public void add(SearchResult result) throws Exception {
+                    log.debug("Returning "+result.getDn());
+                    super.add(result);
+                }
+                public void close() throws Exception {
+                    //super.close();
+                }
+            };
 
             for (Entry entry : children) {
                 log.debug("Searching "+entry.getDn());
 
-                SearchResponse sr = new Pipeline(response) {
-                    public void add(SearchResult result) throws Exception {
-                        log.debug("Returning "+result.getDn());
-                        super.add(result);
-                    }
-                    public void close() throws Exception {
-                        //super.close();
-                    }
-                };
-
-                entry.search(session, request, sr);
+                entry.search(op);
             }
         }
    }

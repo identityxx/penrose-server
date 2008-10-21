@@ -2,12 +2,14 @@ package org.safehaus.penrose.ldap.directory;
 
 import org.safehaus.penrose.directory.DynamicEntry;
 import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.EntrySearchOperation;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
 
@@ -94,14 +96,12 @@ public class LDAPMergeEntry extends DynamicEntry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -113,31 +113,27 @@ public class LDAPMergeEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        DN baseDn = request.getDn();
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
+
+        DN baseDn = operation.getDn();
 
         final Set<String> keys = new LinkedHashSet<String>();
         final Interpreter interpreter = partition.newInterpreter();

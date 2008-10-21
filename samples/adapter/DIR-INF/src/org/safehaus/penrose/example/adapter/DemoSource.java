@@ -6,7 +6,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterEvaluator;
-import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.naming.PenroseContext;
 
 import java.util.Collection;
@@ -61,7 +60,7 @@ public class DemoSource extends Source {
         DN dn = request.getDn();
         byte[] password = request.getPassword();
 
-        System.out.println("Binding as "+dn+" with password "+password+".");
+        System.out.println("Binding as "+dn+" with password "+new String(password)+".");
 
         RDN rdn = dn.getRdn();
 

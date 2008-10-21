@@ -24,6 +24,7 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.mapping.Mapping;
@@ -461,14 +462,12 @@ public class DynamicEntry extends Entry implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -481,21 +480,15 @@ public class DynamicEntry extends Entry implements Cloneable {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 /*
@@ -567,20 +560,22 @@ public class DynamicEntry extends Entry implements Cloneable {
 */
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         if (debug) log.debug("Expanding entry.");
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
+
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         boolean baseSearch = (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB)
                 && getDn().matches(baseDn);
 
-        Filter filter = request.getFilter();
+        Filter filter = operation.getFilter();
 
         Collection<String> requestedAliases = getRequestedAliases(request);
         if (debug) log.debug("Requested sources: "+requestedAliases);
@@ -610,8 +605,8 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             for (String alias : searchOrders) {
 
-                if (session.isAbandoned(request.getMessageId())) {
-                    if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
+                if (operation.isAbandoned()) {
+                    if (debug) log.debug("Operation "+operation.getOperationName()+" has been abandoned.");
                     return;
                 }
 
@@ -636,8 +631,8 @@ public class DynamicEntry extends Entry implements Cloneable {
 
             for (DN dn : entries.keySet()) {
 
-                if (session.isAbandoned(request.getMessageId())) {
-                    if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
+                if (operation.isAbandoned()) {
+                    if (debug) log.debug("Operation "+operation.getOperationName()+" has been abandoned.");
                     return;
                 }
 

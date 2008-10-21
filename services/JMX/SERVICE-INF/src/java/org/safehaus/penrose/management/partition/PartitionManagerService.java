@@ -5,6 +5,7 @@ import org.safehaus.penrose.management.PenroseJMXService;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionManagerClient;
+import org.safehaus.penrose.partition.PartitionManagerServiceMBean;
 import org.safehaus.penrose.partition.event.PartitionEvent;
 import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.util.FileUtil;

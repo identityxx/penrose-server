@@ -53,7 +53,7 @@ public class Session {
 
     protected EventManager eventManager;
 
-    protected Object sessionId;
+    protected String sessionName;
 
     protected DN bindDn;
     protected boolean rootUser;
@@ -63,8 +63,7 @@ public class Session {
     protected boolean eventsEnabled = true;
     protected long bufferSize;
 
-    protected Map<Integer,Request> requests = new LinkedHashMap<Integer,Request>();
-    protected Map<Integer,Response> response = new LinkedHashMap<Integer,Response>();
+    protected Map<String,Operation> operations = Collections.synchronizedMap(new LinkedHashMap<String,Operation>());
 
     protected List<SessionListener> listeners = new ArrayList<SessionListener>();
 
@@ -78,7 +77,7 @@ public class Session {
 
         if (debug) {
             log.debug("----------------------------------------------------------------------------------");
-            log.debug("Creating session "+sessionId+".");
+            log.debug("Creating session "+ sessionName +".");
         }
 
         String s = penroseConfig.getProperty(EVENTS_ENABLED);
@@ -87,24 +86,24 @@ public class Session {
         s = penroseConfig.getProperty(SEARCH_RESPONSE_BUFFER_SIZE);
         bufferSize = s == null ? 0 : Long.parseLong(s);
 
-        if (debug) log.debug("Session "+sessionId+" created.");
+        if (debug) log.debug("Session "+ sessionName +" created.");
     }
 
     public void connect(ConnectRequest request) throws Exception {
         Access.log(this, request);
-        if (warn) log.warn("Session "+sessionId+": Connect from "+request.getClientAddress()+".");
+        if (warn) log.warn("Session "+ sessionName +": Connect from "+request.getClientAddress()+".");
     }
 
     public void disconnect(DisconnectRequest request) throws Exception {
         Access.log(this, request);
-        if (warn) log.warn("Session "+sessionId+": Disconnect.");
+        if (warn) log.warn("Session "+ sessionName +": Disconnect.");
     }
 
     public void close() throws Exception {
 
         if (debug) {
             log.debug("----------------------------------------------------------------------------------");
-            log.debug("Closing session "+sessionId+".");
+            log.debug("Closing session "+ sessionName +".");
         }
 
         closed = true;
@@ -113,7 +112,15 @@ public class Session {
             listener.sessionClosed();
         }
 
-        if (debug) log.debug("Session "+sessionId+" closed.");
+        for (String operationName : operations.keySet()) {
+            Operation operation = operations.get(operationName);
+            operation.abandon();
+        }
+
+        SessionManager sessionManager = sessionContext.getSessionManager();
+        sessionManager.removeSession(sessionName);
+
+        if (debug) log.debug("Session "+ sessionName +" closed.");
     }
 
     public boolean isClosed() {
@@ -149,15 +156,29 @@ public class Session {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getOperationNames() {
+        return operations.keySet();
+    }
+
+    public Operation getOperation(String operationName) {
+        return operations.get(operationName);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Abandon
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void abandon(int messageId) throws LDAPException {
+    public void abandon(String operationName) throws LDAPException {
 
-    }
+        AbandonRequest request = new AbandonRequest();
+        request.setOperationName(operationName);
 
-    public boolean isAbandoned(int messageId) throws LDAPException {
-        return closed || sessionContext.isClosed();
+        AbandonResponse response = new AbandonResponse();
+
+        abandon(request, response);
     }
 
     public void abandon(AbandonRequest request, AbandonResponse response) throws LDAPException {
@@ -166,23 +187,28 @@ public class Session {
 
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
-            int idToAbandon = request.getIdToAbandon();
+            Integer messageId = request.getMessageId();
+            String operationName = request.getOperationName();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Abandon "+idToAbandon+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Abandon "+operationName+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ABANDON:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - ID to abandon  : "+idToAbandon);
+                log.debug(" - ID to abandon  : "+operationName);
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
                 log.debug("");
             }
+
+            Operation operation = operations.get(operationName);
+            if (operation == null) return;
+
+            operation.abandon();
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -219,15 +245,15 @@ public class Session {
 
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Add "+dn+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Add "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("ADD:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Entry          : "+dn);
@@ -311,16 +337,16 @@ public class Session {
 
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
             byte[] password = request.getPassword();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("BIND:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+dn);
                 log.debug(" - Bind Password  : "+(password == null ? "" : new String(password)));
@@ -421,15 +447,15 @@ public class Session {
 
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Compare "+dn+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Compare "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("COMPARE:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+request.getDn());
@@ -507,15 +533,15 @@ public class Session {
 
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Delete "+dn+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Delete "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("DELETE:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+dn);
@@ -580,15 +606,15 @@ public class Session {
             checkMessageId(request, response);
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Modify "+dn+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Modify "+dn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODIFY:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+dn);
@@ -671,16 +697,16 @@ public class Session {
             checkMessageId(request, response);
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
+            Integer messageId = request.getMessageId();
             DN dn = request.getDn();
             RDN newRdn = request.getNewRdn();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Rename "+dn+" to "+newRdn+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Rename "+dn+" to "+newRdn+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("MODRDN:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+dn);
@@ -727,6 +753,26 @@ public class Session {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public SearchOperation createSearchOperation() {
+
+        String operationName = "operation-"+getNextMessageId();
+
+        SearchOperation operation = new SearchOperation();
+        operation.setSession(this);
+        operation.setOperationName(operationName);
+
+        return operation;
+    }
+
+    public SearchOperation createSearchOperation(String operationName) {
+
+        SearchOperation operation = new SearchOperation();
+        operation.setSession(this);
+        operation.setOperationName(operationName);
+
+        return operation;
+    }
+
     public SearchResponse search(
             String baseDn,
             String filter
@@ -767,30 +813,44 @@ public class Session {
     }
 
     public void search(final SearchRequest request, final SearchResponse response) throws LDAPException {
+        checkMessageId(request, response);
+
+        SearchOperation operation = createSearchOperation(""+request.getMessageId());
+        operation.setRequest(request);
+        operation.setResponse(response);
+
+        search(operation);
+    }
+
+    public void search(SearchOperation operation) throws LDAPException {
+
+        final String operationName = operation.getOperationName();
+        operations.put(operationName, operation);
+
+        final SearchResponse response = (SearchResponse)operation.getResponse();
 
         try {
-            checkMessageId(request, response);
-            Access.log(this, request);
+            Access.log(this, (SearchRequest)operation.getRequest());
 
-            int messageId = request.getMessageId();
-            DN dn = request.getDn();
-            Filter filter = request.getFilter();
+            DN dn = operation.getDn();
+            Filter filter = operation.getFilter();
+            int scope = operation.getScope();
 
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Search "+dn+" with filter "+filter+".");
+            if (warn) log.warn("Session "+ sessionName +" ("+operationName+"): Search "+dn+" with filter "+filter+".");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("SEARCH:");
-                log.debug(" - Session        : "+sessionId);
-                log.debug(" - Message        : "+messageId);
+                log.debug(" - Session        : "+ sessionName);
+                log.debug(" - Message        : "+operationName);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Base DN        : "+dn);
-                log.debug(" - Scope          : "+LDAP.getScope(request.getScope()));
+                log.debug(" - Scope          : "+LDAP.getScope(scope));
                 log.debug(" - Filter         : "+filter);
-                log.debug(" - Attributes     : "+request.getAttributes());
+                log.debug(" - Attributes     : "+operation.getAttributes());
                 log.debug("");
-                
-                log.debug("Controls: "+request.getControls());
+
+                log.debug("Controls: "+operation.getControls());
             }
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
@@ -798,10 +858,10 @@ public class Session {
 
             final Session session = this;
 
-            response.setBufferSize(bufferSize);
-            response.setSizeLimit(request.getSizeLimit());
+            operation.setBufferSize(bufferSize);
+            response.setSizeLimit(operation.getSizeLimit());
 
-            SearchResponse sr = new Pipeline(response) {
+            SearchOperation op = new SearchOperation(operation) {
                 public void add(SearchResult result) throws Exception {
                     if (debug) log.debug("Result: \""+result.getDn()+"\".");
                     //if (debug) result.getAttributes().print();
@@ -823,18 +883,22 @@ public class Session {
                         super.close();
                     }
 
-                    Access.log(session, response);
+                    operations.remove(operationName);
+                    Access.log(session, (SearchResponse)getResponse());
                 }
             };
 
-            partition.search(this, request, sr);
+            partition.search(op);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            response.setException(e);
-            try { response.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
-            Access.log(this, response);
-            throw response.getException();
+            operation.setException(e);
+            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
+
+            operations.remove(operationName);
+
+            Access.log(this, (SearchResponse)operation.getResponse());
+            throw operation.getException();
         }
     }
 
@@ -857,13 +921,13 @@ public class Session {
             checkMessageId(request, response);
             Access.log(this, request);
 
-            int messageId = request.getMessageId();
-            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Unbind.");
+            Integer messageId = request.getMessageId();
+            if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Unbind.");
 
             if (debug) {
                 log.debug("----------------------------------------------------------------------------------");
                 log.debug("UNBIND:");
-                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug("");
@@ -920,12 +984,12 @@ public class Session {
         }
     }
 
-    public Object getSessionId() {
-        return sessionId;
+    public String getSessionName() {
+        return sessionName;
     }
 
-    public void setSessionId(Object sessionId) {
-        this.sessionId = sessionId;
+    public void setSessionName(String sessionName) {
+        this.sessionName = sessionName;
     }
 
     public EventManager getEventManager() {

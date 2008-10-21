@@ -14,6 +14,7 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceClient;
+import org.safehaus.penrose.source.SourceServiceMBean;
 
 import java.util.Collection;
 

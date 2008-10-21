@@ -1,9 +1,6 @@
 package org.safehaus.penrose.nis.directory;
 
-import org.safehaus.penrose.directory.DynamicEntry;
-import org.safehaus.penrose.directory.EntryField;
-import org.safehaus.penrose.directory.FilterBuilder;
-import org.safehaus.penrose.directory.EntrySource;
+import org.safehaus.penrose.directory.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.filter.SimpleFilter;
@@ -11,6 +8,7 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
 
@@ -26,14 +24,12 @@ public class NISEntry extends DynamicEntry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -45,33 +41,29 @@ public class NISEntry extends DynamicEntry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
     public void expand(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
+            final SearchOperation operation
     ) throws Exception {
 
-        DN baseDn = request.getDn();
+        final Session session = operation.getSession();
+        SearchRequest request = (SearchRequest)operation.getRequest();
+        SearchResponse response = (SearchResponse)operation.getResponse();
 
-        if (debug) log.debug("Searching entry "+ entryConfig.getDn());
+        DN baseDn = operation.getDn();
+
+        if (debug) log.debug("Searching entry "+baseDn);
 
         final Interpreter interpreter = partition.newInterpreter();
         final EntrySource primarySourceRef = getSource(0);

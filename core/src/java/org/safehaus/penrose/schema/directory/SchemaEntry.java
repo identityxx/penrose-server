@@ -1,13 +1,14 @@
 package org.safehaus.penrose.schema.directory;
 
 import org.safehaus.penrose.directory.Entry;
+import org.safehaus.penrose.directory.EntrySearchOperation;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.Collection;
@@ -21,7 +22,7 @@ public class SchemaEntry extends Entry {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-     public void validateFilter(Filter filter) throws Exception {
+     public void validateFilter(SearchOperation operation) throws Exception {
         // ignore
     }
 
@@ -30,14 +31,12 @@ public class SchemaEntry extends Entry {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
-        final DN baseDn     = request.getDn();
-        final Filter filter = request.getFilter();
-        final int scope     = request.getScope();
+        final DN baseDn     = operation.getDn();
+        final Filter filter = operation.getFilter();
+        final int scope     = operation.getScope();
 
         if (debug) {
             log.debug(TextUtil.displaySeparator(80));
@@ -49,28 +48,20 @@ public class SchemaEntry extends Entry {
             log.debug(TextUtil.displaySeparator(80));
         }
 
-        try {
-            validateSearchRequest(session, request, response);
-
-        } catch (Exception e) {
-            response.close();
-            return;
-        }
-
-        response = createSearchResponse(session, request, response);
+        EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            expand(session, request, response);
+            validate(op);
+
+            expand(op);
 
         } finally {
-            response.close();
+            op.close();
         }
     }
 
     public void expand(
-            Session session,
-            SearchRequest request,
-            SearchResponse response
+            SearchOperation operation
     ) throws Exception {
 
         Interpreter interpreter = partition.newInterpreter();
@@ -97,6 +88,6 @@ public class SchemaEntry extends Entry {
         SearchResult result = new SearchResult(dn, attributes);
         result.setEntryId(getId());
 
-        response.add(result);
+        operation.add(result);
     }
 }

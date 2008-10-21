@@ -15,7 +15,6 @@ import org.safehaus.penrose.directory.EntryField;
 import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.adapter.FilterBuilder;
-import org.safehaus.penrose.adapter.Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -213,8 +212,6 @@ public class Source implements Cloneable {
     ) throws Exception {
 
         if (debug) log.debug("Adding "+request.getDn()+".");
-
-        //connection.add(session, this, request, response);
     }
 
     public void add(

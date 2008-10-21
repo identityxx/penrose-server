@@ -1,9 +1,6 @@
 package org.safehaus.penrose.management.connection;
 
-import org.safehaus.penrose.connection.Connection;
-import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.connection.ConnectionManager;
-import org.safehaus.penrose.connection.ConnectionClient;
+import org.safehaus.penrose.connection.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.partition.PartitionConfig;

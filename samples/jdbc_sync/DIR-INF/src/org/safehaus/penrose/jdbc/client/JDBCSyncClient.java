@@ -4,7 +4,7 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;

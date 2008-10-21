@@ -1,6 +1,7 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.directory.Entry;
 
@@ -95,11 +96,11 @@ public class ModuleChain {
         }
     }
 
-    public void search(Session session, SearchRequest request, SearchResponse response) throws Exception {
+    public void search(SearchOperation operation) throws Exception {
         if (module == null) {
-            entry.search(session, request, response);
+            entry.search(operation);
         } else {
-            module.search(session, request, response, chain);
+            module.search(operation, chain);
         }
     }
 

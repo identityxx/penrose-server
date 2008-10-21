@@ -30,13 +30,13 @@ import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.scheduler.Scheduler;
 import org.safehaus.penrose.scheduler.SchedulerConfig;
 import org.safehaus.penrose.scheduler.SchedulerContext;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.session.SearchOperation;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
@@ -782,10 +782,7 @@ public class Partition implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Collection<Entry> findEntries(DN dn) throws Exception {
-
-        Collection<Entry> entries = directory.findEntries(dn);
-
-        return entries;
+        return directory.findEntries(dn);
     }
     
     public SearchResult find(Session session, DN dn) throws Exception {
@@ -906,15 +903,26 @@ public class Partition implements Cloneable {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void search(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response
+            Session session,
+            SearchRequest request,
+            SearchResponse response
     ) throws Exception {
 
-        normalize(request);
+        SearchOperation operation = session.createSearchOperation(""+request.getMessageId());
+        operation.setRequest(request);
+        operation.setResponse(response);
 
-        DN dn = request.getDn();
-        Collection<String> requestedAttributes = request.getAttributes();
+        search(operation);
+    }
+
+    public void search(
+            SearchOperation operation
+    ) throws Exception {
+
+        operation.normalize();
+
+        DN dn = operation.getDn();
+        Collection<String> requestedAttributes = operation.getAttributes();
 
         if (debug) {
             log.debug("Normalized base DN: "+dn);
@@ -926,31 +934,25 @@ public class Partition implements Cloneable {
         try {
             entries = findEntries(dn);
         } catch (Exception e) {
-            response.close();
+            operation.close();
             throw e;
         }
 
         if (entries.isEmpty()) {
             if (debug) log.debug("Entry "+dn+" not found.");
-            response.close();
+            operation.close();
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        ParallelSearchResponse newResponse = new ParallelSearchResponse(response, entries.size());
-        searchEntries(session, request, newResponse, entries);
-
-        // don't block
-        // newResponse.waitFor();
+        searchEntries(operation, entries, false);
     }
 
     public void searchEntry(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response,
-            final Entry entry
+            SearchOperation operation,
+            Entry entry
     ) throws Exception {
 
-        SearchResponse sr = new Pipeline(response) {
+        SearchOperation op = new SearchOperation(operation) {
             public void close() throws Exception {
                 //super.close();
             }
@@ -958,10 +960,10 @@ public class Partition implements Cloneable {
 
         Collection<Module> modules = findModules(entry.getDn());
         ModuleChain chain = createModuleChain(entry, modules);
-        chain.search(session, request, sr);
+        chain.search(op);
 
-        DN baseDn = request.getDn();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        int scope = operation.getScope();
 
         if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_ONE && entry.getParentDn().matches(baseDn)) {
             if (debug) log.debug("Children of "+entry.getDn()+" are out of scope.");
@@ -977,20 +979,16 @@ public class Partition implements Cloneable {
 
         if (debug) log.debug("Searching children of "+entry.getDn()+".");
 
-        ParallelSearchResponse newResponse = new ParallelSearchResponse(sr, children.size());
-        searchEntries(session, request, newResponse, children);
-
-        if (debug) log.debug("Waiting for children of "+entry.getDn()+".");
-
-        newResponse.waitFor();
+        searchEntries(op, children, true);
     }
 
     public void searchEntries(
-            final Session session,
-            final SearchRequest request,
-            final SearchResponse response,
-            final Collection<Entry> entries
+            final SearchOperation operation,
+            final Collection<Entry> entries,
+            boolean wait
     ) throws Exception {
+
+        final ParallelSearchOperation op = new ParallelSearchOperation(operation, entries.size());
 
         if (threadManager == null) {
             if (debug) log.debug("Searching "+entries.size()+" entries sequentially.");
@@ -1010,16 +1008,16 @@ public class Partition implements Cloneable {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        searchEntry(session, request, response, entry);
+                        searchEntry(op, entry);
 
                     } catch (Throwable e) {
                         log.error(e.getMessage(), e);
-                        response.setException(LDAP.createException(e));
+                        op.setException(LDAP.createException(e));
 
                     } finally {
                         try {
                             if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
-                            response.close();
+                            op.close();
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
@@ -1032,6 +1030,11 @@ public class Partition implements Cloneable {
             } else {
                 threadManager.execute(runnable);
             }
+        }
+
+        if (wait) {
+            //if (debug) log.debug("Waiting for children of "+entry.getDn()+".");
+            op.waitFor();
         }
     }
 

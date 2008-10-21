@@ -11,7 +11,7 @@ import org.safehaus.penrose.util.ClassUtil;
 import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.partition.PartitionClient;
-import org.safehaus.penrose.management.PenroseClient;
+import org.safehaus.penrose.client.PenroseClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

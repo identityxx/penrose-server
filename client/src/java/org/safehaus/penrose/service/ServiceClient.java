@@ -2,9 +2,9 @@ package org.safehaus.penrose.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.management.BaseClient;
-import org.safehaus.penrose.management.PenroseClient;
-import org.safehaus.penrose.management.service.ServiceServiceMBean;
+import org.safehaus.penrose.client.BaseClient;
+import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.service.ServiceServiceMBean;
 
 /**
  * @author Endi Sukma Dewata
