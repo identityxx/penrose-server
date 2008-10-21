@@ -2209,6 +2209,7 @@ ds-cfg-java-class: org.safehaus.penrose.ldapbackend.opends.LDAPBackendPlugin
 ds-cfg-enabled: true
 ds-cfg-plugin-type: postConnect
 ds-cfg-plugin-type: postDisconnect
+ds-cfg-plugin-type: preParseAbandon
 ds-cfg-plugin-type: preParseAdd
 ds-cfg-plugin-type: preParseBind
 ds-cfg-plugin-type: preParseUnbind
