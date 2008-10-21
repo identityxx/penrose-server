@@ -61,6 +61,55 @@ public class Access {
         }
     }
 
+    public static void log(Session session, AbandonRequest request) {
+
+        if (warn) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("ABANDON session=\"");
+            sb.append(session.getSessionId());
+            sb.append("\"");
+
+            Integer messageId = request.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" idToAbandon=\"");
+            sb.append(request.getIdToAbandon());
+            sb.append("\"");
+
+            log.warn(sb.toString());
+        }
+    }
+
+    public static void log(Session session, AbandonResponse response) {
+/*
+        if (warn) {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("ABANDON session=\"");
+            sb.append(session.getSessionId());
+            sb.append("\"");
+
+            Integer messageId = response.getMessageId();
+            if (messageId != null) {
+                sb.append(" message=\"");
+                sb.append(messageId);
+                sb.append("\"");
+            }
+
+            sb.append(" result=\"");
+            sb.append(response.getErrorMessage());
+            sb.append("\"");
+
+            log.warn(sb.toString());
+        }
+*/
+    }
+
     public static void log(Session session, AddRequest request) {
 
         if (warn) {

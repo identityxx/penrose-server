@@ -19,30 +19,11 @@ package org.safehaus.penrose.backend;
 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.ldapbackend.*;
 import org.safehaus.penrose.ldapbackend.ConnectRequest;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.filter.FilterTool;
-import org.safehaus.penrose.ldap.AddRequest;
-import org.safehaus.penrose.ldap.AddResponse;
-import org.safehaus.penrose.ldap.Attributes;
-import org.safehaus.penrose.ldap.BindRequest;
-import org.safehaus.penrose.ldap.BindResponse;
-import org.safehaus.penrose.ldap.CompareRequest;
-import org.safehaus.penrose.ldap.CompareResponse;
-import org.safehaus.penrose.ldap.DeleteRequest;
-import org.safehaus.penrose.ldap.DeleteResponse;
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.ModifyRequest;
-import org.safehaus.penrose.ldap.ModifyResponse;
-import org.safehaus.penrose.ldap.ModRdnRequest;
-import org.safehaus.penrose.ldap.ModRdnResponse;
-import org.safehaus.penrose.ldap.RDN;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.UnbindRequest;
-import org.safehaus.penrose.ldap.UnbindResponse;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.server.PenroseServer;
 
@@ -59,7 +40,7 @@ import org.safehaus.penrose.ldapbackend.Modification;
 /**
  * @author Endi S. Dewata
  */
-public class PenroseBackend implements Backend {
+public class PenroseBackend implements org.safehaus.penrose.ldapbackend.Backend {
 
     public File home;
 
@@ -150,7 +131,7 @@ public class PenroseBackend implements Backend {
         return new PenroseRDN(new RDN(rdn));
     }
 
-    public Filter createFilter(String filter) throws Exception {
+    public org.safehaus.penrose.ldapbackend.Filter createFilter(String filter) throws Exception {
         return new PenroseFilter(FilterTool.parseFilter(filter));
     }
 
@@ -164,6 +145,14 @@ public class PenroseBackend implements Backend {
 
     public Modification createModification(int type, Attribute attribute) throws Exception {
         return new PenroseModification(type, attribute);
+    }
+
+    public org.safehaus.penrose.ldapbackend.AbandonRequest createAbandonRequest() throws Exception {
+        return new PenroseAbandonRequest(new AbandonRequest());
+    }
+
+    public org.safehaus.penrose.ldapbackend.AbandonResponse createAbandonResponse() throws Exception {
+        return new PenroseAbandonResponse(new AbandonResponse());
     }
 
     public org.safehaus.penrose.ldapbackend.AddRequest createAddRequest() throws Exception {

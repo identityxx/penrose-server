@@ -160,6 +160,40 @@ public class Session {
         return closed || sessionContext.isClosed();
     }
 
+    public void abandon(AbandonRequest request, AbandonResponse response) throws LDAPException {
+        try {
+            checkMessageId(request, response);
+
+            Access.log(this, request);
+
+            int messageId = request.getMessageId();
+            int idToAbandon = request.getIdToAbandon();
+
+            if (warn) log.warn("Session "+sessionId+"("+messageId+"): Abandon "+idToAbandon+".");
+
+            if (debug) {
+                log.debug("----------------------------------------------------------------------------------");
+                log.debug("ABANDON:");
+                log.debug(" - Session        : "+sessionId);
+                log.debug(" - Message        : "+messageId);
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - ID to abandon  : "+idToAbandon);
+                log.debug("");
+
+                log.debug("Controls: "+request.getControls());
+                log.debug("");
+            }
+
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            response.setException(e);
+            throw response.getException();
+
+        } finally {
+            Access.log(this, response);
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

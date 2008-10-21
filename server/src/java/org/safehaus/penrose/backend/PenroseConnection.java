@@ -95,6 +95,32 @@ public class PenroseConnection implements Connection {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Abandon
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void abandon(
+            int idToAbandon
+    ) throws Exception {
+
+        if (debug) log.debug("abandon("+idToAbandon+")");
+
+        session.abandon(idToAbandon);
+    }
+
+    public void abandon(
+            org.safehaus.penrose.ldapbackend.AbandonRequest request,
+            org.safehaus.penrose.ldapbackend.AbandonResponse response
+    ) throws Exception {
+
+        if (debug) log.debug("abandon("+request.getIdToAbandon()+")");
+
+        AbandonRequest penroseRequest = ((PenroseAbandonRequest)request).getAbandonRequest();
+        AbandonResponse penroseResponse = ((PenroseAbandonResponse)response).getAbandonResponse();
+
+        session.abandon(penroseRequest, penroseResponse);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Add
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
