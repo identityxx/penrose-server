@@ -56,6 +56,10 @@
         <pathelement location="../../server/target/classes"/>
     </path>
 
+    <target name="import" depends="init">
+        <copy file="../../../ldap-backend/apacheds/target/ldap-backend-apacheds-1.2.jar" todir="SERVICE-INF/lib"/>
+    </target>
+
     <target name="build" depends="init">
         <mkdir dir="SERVICE-INF/target/classes"/>
         <javac

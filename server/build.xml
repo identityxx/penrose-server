@@ -79,6 +79,11 @@
         </condition>
     </target>
 
+    <target name="import" depends="init">
+        <copy file="../../ldap-backend/target/ldap-backend-1.2.jar" todir="lib"/>
+        <ant dir="../services" target="import"/>
+    </target>
+  
     <target name="compile" depends="init">
         <echo message="Compiling ${module.name}."/>
         <mkdir dir="target/classes"/>

@@ -30,6 +30,12 @@
         </condition>
     </target>
 
+    <target name="import" depends="init">
+        <ant dir="ApacheDS" target="import"/>
+        <ant dir="LDAP" target="import"/>
+        <ant dir="OpenDS" target="import"/>
+    </target>
+
     <target name="build" depends="init">
         <ant dir="ApacheDS" target="build"/>
         <ant dir="JMX" target="build"/>

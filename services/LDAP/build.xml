@@ -52,6 +52,10 @@
         <pathelement location="../../server/target/classes"/>
     </path>
 
+    <target name="import" depends="init">
+        <copy file="../../../ldap-backend/mina/target/ldap-backend-mina-1.2.jar" todir="SERVICE-INF/lib"/>
+    </target>
+
     <target name="build" depends="init">
         <mkdir dir="SERVICE-INF/target/classes"/>
         <javac

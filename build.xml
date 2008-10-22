@@ -40,6 +40,10 @@
         <ant dir="core"    target="javacc"/>
     </target>
     
+    <target name="import" depends="init">
+        <ant dir="server"  target="import"/>
+    </target>
+
     <target name="compile" depends="init">
         <ant dir="common"  target="compile"/>
         <ant dir="core"    target="compile"/>
