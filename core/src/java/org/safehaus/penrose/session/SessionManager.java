@@ -22,10 +22,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Collection;
+import java.util.*;
 
 public class SessionManager implements SessionManagerMBean {
 
@@ -48,6 +45,13 @@ public class SessionManager implements SessionManagerMBean {
     }
 
     public void stop() throws Exception {
+
+        Collection<Session> list = new ArrayList<Session>();
+        list.addAll(sessions.values());
+
+        for (Session session : list) {
+            session.close();
+        }
     }
 
     public Session createSession() throws Exception {
