@@ -1,12 +1,9 @@
 package org.safehaus.penrose.session;
 
-import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.ldap.SearchResult;
-import org.safehaus.penrose.ldap.SearchResponse;
-import org.safehaus.penrose.ldap.SearchReference;
+import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.filter.Filter;
+import org.ietf.ldap.LDAPException;
 
 import java.util.Collection;
 
@@ -112,6 +109,15 @@ public class SearchOperation extends Operation {
         if (isAbandoned()) {
             if (debug) log.debug("Operation "+getOperationName()+" has been abandoned.");
             return;
+        }
+
+        long sizeLimit = getSizeLimit();
+        long totalCount = getTotalCount();
+
+        if (sizeLimit > 0 && totalCount >= sizeLimit) {
+            LDAPException exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
+            setException(exception);
+            throw exception;
         }
 
         if (parent == null) {

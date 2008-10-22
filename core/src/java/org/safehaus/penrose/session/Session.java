@@ -826,8 +826,6 @@ public class Session {
         final String operationName = operation.getOperationName();
         operations.put(operationName, operation);
 
-        final SearchResponse response = (SearchResponse)operation.getResponse();
-
         try {
             Access.log(this, (SearchRequest)operation.getRequest());
 
@@ -856,12 +854,10 @@ public class Session {
             Partition partition = partitionManager.getPartition(dn);
 
             operation.setBufferSize(bufferSize);
-            response.setSizeLimit(operation.getSizeLimit());
 
             SearchOperation op = new SearchOperation(operation) {
                 public void add(SearchResult result) throws Exception {
                     if (debug) log.debug("Result: \""+result.getDn()+"\".");
-                    //if (debug) result.getAttributes().print();
                     super.add(result);
                 }
                 public void add(SearchReference reference) throws Exception {
@@ -873,9 +869,10 @@ public class Session {
                     super.setException(exception);
                 }
                 public void close() throws Exception {
-                    if (debug) log.debug("Closing search response.");
+                    String operationName = getOperationName();
+                    if (debug) log.debug("Closing search operation "+operationName+".");
                     if (super.isClosed()) {
-                        if (debug) log.debug("Search response is already closed.");
+                        if (debug) log.debug("Search operation is already closed.");
                     } else {
                         super.close();
                     }
