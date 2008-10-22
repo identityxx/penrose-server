@@ -20,49 +20,78 @@ public class SearchOperation extends Operation {
 
     public SearchOperation(SearchOperation parent) {
         super(parent);
-
-        if (debug) {
-            log.debug("Search Operation:");
-
-            SearchRequest request = (SearchRequest)parent.getRequest();
-            log.debug(" - DN: "+request.getDn());
-        }
     }
 
     public DN getDn() {
-        return ((SearchRequest)getRequest()).getDn();
+        if (parent == null) {
+            return ((SearchRequest)request).getDn();
+        } else {
+            return ((SearchOperation)parent).getDn();
+        }
     }
 
     public void setDn(DN dn) {
-        ((SearchRequest)getRequest()).setDn(dn);
+        if (parent == null) {
+            ((SearchRequest)request).setDn(dn);
+        } else {
+            ((SearchOperation)parent).setDn(dn);
+        }
     }
 
     public int getScope() {
-        return ((SearchRequest)getRequest()).getScope();
+        if (parent == null) {
+            return ((SearchRequest)request).getScope();
+        } else {
+            return ((SearchOperation)parent).getScope();
+        }
     }
 
     public void setScope(int scope) {
-        ((SearchRequest)getRequest()).setScope(scope);
+        if (parent == null) {
+            ((SearchRequest)request).setScope(scope);
+        } else {
+            ((SearchOperation)parent).setScope(scope);
+        }
     }
 
     public Filter getFilter() {
-        return ((SearchRequest)getRequest()).getFilter();
+        if (parent == null) {
+            return ((SearchRequest)request).getFilter();
+        } else {
+            return ((SearchOperation)parent).getFilter();
+        }
     }
 
     public void setFilter(Filter filter) {
-        ((SearchRequest)getRequest()).setFilter(filter);
+        if (parent == null) {
+            ((SearchRequest)request).setFilter(filter);
+        } else {
+            ((SearchOperation)parent).setFilter(filter);
+        }
     }
 
     public Collection<String> getAttributes() {
-        return ((SearchRequest)getRequest()).getAttributes();
+        if (parent == null) {
+            return ((SearchRequest)request).getAttributes();
+        } else {
+            return ((SearchOperation)parent).getAttributes();
+        }
     }
 
     public void setAttributes(Collection<String> attributes) {
-        ((SearchRequest)getRequest()).setAttributes(attributes);
+        if (parent == null) {
+            ((SearchRequest)request).setAttributes(attributes);
+        } else {
+            ((SearchOperation)parent).setAttributes(attributes);
+        }
     }
 
     public long getSizeLimit() {
-        return ((SearchRequest)getRequest()).getSizeLimit();
+        if (parent == null) {
+            return ((SearchRequest)request).getSizeLimit();
+        } else {
+            return ((SearchOperation)parent).getSizeLimit();
+        }
     }
 
     public void normalize() throws Exception {
@@ -79,32 +108,70 @@ public class SearchOperation extends Operation {
     }
 
     public void add(SearchResult result) throws Exception {
-        if (isAbandoned()) return;
-        ((SearchResponse)getResponse()).add(result);
+
+        if (isAbandoned()) {
+            if (debug) log.debug("Operation "+getOperationName()+" has been abandoned.");
+            return;
+        }
+
+        if (parent == null) {
+            ((SearchResponse)response).add(result);
+        } else {
+            ((SearchOperation)parent).add(result);
+        }
     }
 
     public void add(SearchReference reference) throws Exception {
-        if (isAbandoned()) return;
-        ((SearchResponse)getResponse()).add(reference);
+
+        if (isAbandoned()) {
+            if (debug) log.debug("Operation "+getOperationName()+" has been abandoned.");
+            return;
+        }
+
+        if (parent == null) {
+            ((SearchResponse)response).add(reference);
+        } else {
+            ((SearchOperation)parent).add(reference);
+        }
     }
 
     public void close() throws Exception {
-        ((SearchResponse)getResponse()).close();
+        if (parent == null) {
+            ((SearchResponse)response).close();
+        } else {
+            ((SearchOperation)parent).close();
+        }
     }
 
     public boolean isClosed() {
-        return ((SearchResponse)getResponse()).isClosed();
+        if (parent == null) {
+            return ((SearchResponse)response).isClosed();
+        } else {
+            return ((SearchOperation)parent).isClosed();
+        }
     }
 
     public long getTotalCount() {
-        return ((SearchResponse)getResponse()).getTotalCount();
+        if (parent == null) {
+            return ((SearchResponse)response).getTotalCount();
+        } else {
+            return ((SearchOperation)parent).getTotalCount();
+        }
     }
 
     public void setBufferSize(long bufferSize) {
-        ((SearchResponse)getResponse()).setBufferSize(bufferSize);
+        if (parent == null) {
+            ((SearchResponse)response).setBufferSize(bufferSize);
+        } else {
+            ((SearchOperation)parent).setBufferSize(bufferSize);
+        }
     }
 
     public long getBufferSize() {
-        return ((SearchResponse)getResponse()).getBufferSize();
+        if (parent == null) {
+            return ((SearchResponse)response).getBufferSize();
+        } else {
+            return ((SearchOperation)parent).getBufferSize();
+        }
     }
 }

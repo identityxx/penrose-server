@@ -11,20 +11,29 @@ import java.util.*;
  */
 public class ParallelSearchOperation extends SearchOperation {
 
+    public int total;
     public int counter;
     public Set<DN> dns = new HashSet<DN>();
 
-    public ParallelSearchOperation(SearchOperation parent, int counter) {
+    public ParallelSearchOperation(SearchOperation parent, int total) {
         super(parent);
 
-        //log.debug("Counter = "+counter);
-        this.counter = counter;
+        this.total = total;
+
+        if (debug) log.debug("Start searching "+total+" entries.");
+
+        counter = total;
     }
 
     public void add(SearchResult result) throws Exception {
 
+        //if (debug) log.debug("Result: \""+result.getDn()+"\".");
+
         DN dn = result.getDn();
-        if (dns.contains(dn)) return;
+        if (dns.contains(dn)) {
+            if (debug) log.debug("Duplicate entry \""+result.getDn()+"\".");
+            return;
+        }
 
         dns.add(dn);
         super.add(result);
@@ -40,6 +49,8 @@ public class ParallelSearchOperation extends SearchOperation {
         //log.debug("Counter = "+counter);
 
         if (counter > 0) return;
+
+        if (debug) log.debug("Done searching "+total+" entries.");
 
         super.close();
         notifyAll();

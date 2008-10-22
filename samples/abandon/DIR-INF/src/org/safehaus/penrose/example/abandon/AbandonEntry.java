@@ -20,7 +20,7 @@ public class AbandonEntry extends Entry {
         for (int i=0; i<10; i++) {
 
             if (operation.isAbandoned()) {
-                log.debug("Search has been abandoned.");
+                if (debug) log.debug("Operation "+operation.getOperationName()+" has been abandoned.");
                 return;
             }
 

@@ -948,12 +948,21 @@ public class Partition implements Cloneable {
     }
 
     public void searchEntry(
-            SearchOperation operation,
-            Entry entry
+            final SearchOperation operation,
+            final Entry entry
     ) throws Exception {
 
         SearchOperation op = new SearchOperation(operation) {
+            public void add(SearchResult result) throws Exception {
+                //if (debug) log.debug("Result: \""+result.getDn()+"\".");
+                super.add(result);
+            }
+            public void add(SearchReference reference) throws Exception {
+                //if (debug) log.debug("Reference: \""+ reference.getDn()+"\".");
+                super.add(reference);
+            }
             public void close() throws Exception {
+                //if (debug) log.debug("Done.");
                 //super.close();
             }
         };
@@ -962,8 +971,8 @@ public class Partition implements Cloneable {
         ModuleChain chain = createModuleChain(entry, modules);
         chain.search(op);
 
-        DN baseDn = operation.getDn();
-        int scope = operation.getScope();
+        DN baseDn = op.getDn();
+        int scope = op.getScope();
 
         if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_ONE && entry.getParentDn().matches(baseDn)) {
             if (debug) log.debug("Children of "+entry.getDn()+" are out of scope.");
@@ -998,13 +1007,13 @@ public class Partition implements Cloneable {
 
         for (final Entry entry : entries) {
             if (debug) log.debug("Searching \""+entry.getDn()+"\".");
-/*
-            if (session.isAbandoned(request.getMessageId())) {
-                if (debug) log.debug("Request "+request.getMessageId()+" has been abandoned.");
-                response.close();
+
+            if (op.isAbandoned()) {
+                if (debug) log.debug("Operation "+op.getOperationName()+" has been abandoned.");
+                op.close();
                 continue;
             }
-*/
+
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
@@ -1015,12 +1024,8 @@ public class Partition implements Cloneable {
                         op.setException(LDAP.createException(e));
 
                     } finally {
-                        try {
-                            if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
-                            op.close();
-                        } catch (Exception e) {
-                            log.error(e.getMessage(), e);
-                        }
+                        if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
+                        try { op.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
                     }
                 }
             };
@@ -1033,7 +1038,7 @@ public class Partition implements Cloneable {
         }
 
         if (wait) {
-            //if (debug) log.debug("Waiting for children of "+entry.getDn()+".");
+            if (debug) log.debug("Waiting for "+entries.size()+" entries.");
             op.waitFor();
         }
     }

@@ -28,7 +28,6 @@ import org.safehaus.penrose.log.Access;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -856,8 +855,6 @@ public class Session {
             PartitionManager partitionManager = penroseContext.getPartitionManager();
             Partition partition = partitionManager.getPartition(dn);
 
-            final Session session = this;
-
             operation.setBufferSize(bufferSize);
             response.setSizeLimit(operation.getSizeLimit());
 
@@ -884,7 +881,7 @@ public class Session {
                     }
 
                     operations.remove(operationName);
-                    Access.log(session, (SearchResponse)getResponse());
+                    Access.log(Session.this, (SearchResponse)getResponse());
                 }
             };
 

@@ -17,15 +17,15 @@ public class Operation {
     public Logger log = LoggerFactory.getLogger(getClass());
     public boolean debug = log.isDebugEnabled();
 
-    private Session session;
-    private String operationName;
+    protected Session session;
+    protected String operationName;
 
-    private Request request;
-    private Response response;
+    protected Request request;
+    protected Response response;
 
-    private boolean abandoned;
+    protected boolean abandoned;
 
-    private Operation parent;
+    protected Operation parent;
 
     public Operation() {
     }
@@ -47,7 +47,11 @@ public class Operation {
     }
 
     public String getOperationName() {
-        return parent == null ? operationName : parent.getOperationName();
+        if (parent == null) {
+            return operationName;
+        } else {
+            return parent.getOperationName();
+        }
     }
 
     public void setOperationName(String operationName) {
@@ -59,7 +63,11 @@ public class Operation {
     }
 
     public Request getRequest() {
-        return parent == null ? request : parent.getRequest();
+        if (parent == null) {
+            return request;
+        } else {
+            return parent.getRequest();
+        }
     }
 
     public void setRequest(Request request) {
@@ -71,7 +79,11 @@ public class Operation {
     }
 
     public Response getResponse() {
-        return parent == null ? response : parent.getResponse();
+        if (parent == null) {
+            return response;
+        } else {
+            return parent.getResponse();
+        }
     }
 
     public void setResponse(Response response) {
@@ -91,30 +103,62 @@ public class Operation {
     }
 
     public synchronized boolean isAbandoned() {
-        return parent == null ? abandoned : parent.isAbandoned();
+        if (parent == null) {
+            return abandoned;
+        } else {
+            return parent.isAbandoned();
+        }
     }
 
     public int getReturnCode() {
-        return getResponse().getReturnCode();
+        if (parent == null) {
+            return response.getReturnCode();
+        } else {
+            return parent.getReturnCode();
+        }
     }
 
     public Collection<Control> getControls() {
-        return getRequest().getControls();
+        if (parent == null) {
+            return request.getControls();
+        } else {
+            return parent.getControls();
+        }
     }
 
     public LDAPException getException() {
-        return getResponse().getException();
+        if (parent == null) {
+            return response.getException();
+        } else {
+            return parent.getException();
+        }
     }
 
     public void setException(LDAPException exception) {
-        getResponse().setException(exception);
+        if (parent == null) {
+            response.setException(exception);
+        } else {
+            parent.setException(exception);
+        }
     }
 
     public void setException(Exception exception) {
-        getResponse().setException(exception);
+        if (parent == null) {
+            response.setException(exception);
+        } else {
+            parent.setException(exception);
+        }
     }
 
     public int waitFor() throws Exception {
-        return getResponse().waitFor();
+        if (parent == null) {
+            return response.waitFor();
+        } else {
+            return parent.waitFor();
+        }
+    }
+
+    public Operation getParent() {
+        return parent;
     }
 }
