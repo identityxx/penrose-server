@@ -21,7 +21,7 @@ import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 
 import org.slf4j.LoggerFactory;

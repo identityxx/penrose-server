@@ -1,9 +1,8 @@
 package org.safehaus.penrose.example.abandon;
 
 import org.safehaus.penrose.directory.Entry;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.filter.Filter;
 
 /**
  * @author Endi Sukma Dewata

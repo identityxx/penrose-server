@@ -9,7 +9,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
 

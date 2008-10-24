@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.config.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.event.EventManager;
+import org.safehaus.penrose.Penrose;
 
 /**
  * @author Endi S. Dewata
@@ -13,6 +14,7 @@ public class SessionContext {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
+    private Penrose penrose;
     private PenroseConfig penroseConfig;
     private PenroseContext penroseContext;
 
@@ -21,7 +23,8 @@ public class SessionContext {
 
     private boolean closed;
 
-    public SessionContext() {
+    public SessionContext(Penrose penrose) {
+        this.penrose = penrose;
     }
 
     public PenroseConfig getPenroseConfig() {
@@ -63,7 +66,7 @@ public class SessionContext {
         eventManager.setPenroseContext(penroseContext);
         eventManager.setSessionContext(this);
 
-        sessionManager = new SessionManager();
+        sessionManager = new SessionManager(penrose);
         sessionManager.setPenroseConfig(penroseConfig);
         sessionManager.setPenroseContext(penroseContext);
         sessionManager.setSessionContext(this);

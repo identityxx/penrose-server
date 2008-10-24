@@ -2,14 +2,15 @@ package org.safehaus.penrose.partition;
 
 import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 
 import java.util.*;
 
 /**
  * @author Endi S. Dewata
  */
-public class ParallelSearchOperation extends SearchOperation {
+public class ParallelSearchOperation extends PipelineSearchOperation {
 
     public int total;
     public int counter;

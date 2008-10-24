@@ -10,7 +10,7 @@
     <param name="MaxFileSize" value="10MB"/>
     <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss.SSS}] %m%n"/>
     </layout>
   </appender>
 
@@ -19,7 +19,7 @@
     <param name="MaxFileSize" value="10MB"/>
     <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss.SSS}] %m%n"/>
     </layout>
   </appender>
 
@@ -28,7 +28,7 @@
     <param name="MaxFileSize" value="10MB"/>
     <param name="MaxBackupIndex" value="100"/>
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss}] %m%n"/>
+      <param name="ConversionPattern" value="[%d{MM/dd/yyyy HH:mm:ss.SSS}] %m%n"/>
     </layout>
   </appender>
 

@@ -1,6 +1,6 @@
 package org.safehaus.penrose.directory;
 
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.util.TextUtil;

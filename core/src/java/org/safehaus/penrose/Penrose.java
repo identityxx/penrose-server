@@ -31,6 +31,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionContext;
 import org.safehaus.penrose.session.SessionManager;
+import org.safehaus.penrose.statistic.StatisticManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,8 @@ public class Penrose {
     private PenroseConfig  penroseConfig;
     private PenroseContext penroseContext;
     private SessionContext sessionContext;
+
+    private StatisticManager statisticManager;
 
     private String status = STOPPED;
 
@@ -182,7 +185,7 @@ public class Penrose {
         }
 
         penroseContext = new PenroseContext(home);
-        sessionContext = new SessionContext();
+        sessionContext = new SessionContext(this);
 
         penroseContext.setSessionContext(sessionContext);
         penroseContext.init(penroseConfig);
@@ -192,6 +195,8 @@ public class Penrose {
         sessionContext.init();
 
         sessionContext.load();
+
+        statisticManager = new StatisticManager();
     }
 
     public void clear() throws Exception {
@@ -313,5 +318,9 @@ public class Penrose {
     public void setHome(String home) {
         this.home = new File(home);
         penroseContext.setHome(this.home);
+    }
+
+    public StatisticManager getStatisticManager() {
+        return statisticManager;
     }
 }

@@ -24,7 +24,7 @@ import org.safehaus.penrose.filter.*;
 import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.*;
 import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.mapping.Mapping;

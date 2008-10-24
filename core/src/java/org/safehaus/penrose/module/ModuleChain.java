@@ -1,7 +1,7 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.directory.Entry;
 

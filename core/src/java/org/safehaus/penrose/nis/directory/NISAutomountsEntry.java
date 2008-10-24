@@ -11,7 +11,7 @@ import org.safehaus.penrose.nis.NISMap;
 import org.safehaus.penrose.nis.NISObject;
 import org.safehaus.penrose.nis.source.NISAutomountsSource;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;

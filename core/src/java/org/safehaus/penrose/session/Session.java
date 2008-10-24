@@ -29,6 +29,11 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.operation.Operation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.BasicSearchOperation;
+import org.safehaus.penrose.statistic.StatisticManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +51,7 @@ public class Session {
     public final static String EVENTS_ENABLED              = "eventsEnabled";
     public final static String SEARCH_RESPONSE_BUFFER_SIZE = "searchResponseBufferSize";
 
+    protected Penrose penrose;
     protected PenroseConfig penroseConfig;
     protected PenroseContext penroseContext;
     protected SessionContext sessionContext;
@@ -62,14 +68,15 @@ public class Session {
     protected boolean eventsEnabled = true;
     protected long bufferSize;
 
-    protected Map<String,Operation> operations = Collections.synchronizedMap(new LinkedHashMap<String,Operation>());
+    protected Map<String, Operation> operations = Collections.synchronizedMap(new LinkedHashMap<String,Operation>());
 
     protected List<SessionListener> listeners = new ArrayList<SessionListener>();
 
     protected int nextMessageId;
     protected boolean closed;
 
-    public Session() {
+    public Session(Penrose penrose) {
+        this.penrose = penrose;
     }
 
     public void init() {
@@ -186,6 +193,9 @@ public class Session {
 
             Access.log(this, request);
 
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.ABANDON);
+
             Integer messageId = request.getMessageId();
             String operationName = request.getOperationName();
 
@@ -243,6 +253,9 @@ public class Session {
             checkMessageId(request, response);
 
             Access.log(this, request);
+
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.ADD);
 
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
@@ -335,6 +348,9 @@ public class Session {
             checkMessageId(request, response);
 
             Access.log(this, request);
+
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.BIND);
 
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
@@ -446,6 +462,9 @@ public class Session {
 
             Access.log(this, request);
 
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.COMPARE);
+
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
@@ -532,6 +551,9 @@ public class Session {
 
             Access.log(this, request);
 
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.DELETE);
+
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
 
@@ -603,7 +625,11 @@ public class Session {
     public void modify(ModifyRequest request, ModifyResponse response) throws LDAPException {
         try {
             checkMessageId(request, response);
+
             Access.log(this, request);
+
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.MODIFY);
 
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
@@ -696,6 +722,9 @@ public class Session {
             checkMessageId(request, response);
             Access.log(this, request);
 
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.MODRDN);
+
             Integer messageId = request.getMessageId();
             DN dn = request.getDn();
             RDN newRdn = request.getNewRdn();
@@ -753,21 +782,15 @@ public class Session {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public SearchOperation createSearchOperation() {
-
-        String operationName = "operation-"+getNextMessageId();
-
-        SearchOperation operation = new SearchOperation();
-        operation.setSession(this);
-        operation.setOperationName(operationName);
-
-        return operation;
+        String operationName = "operation-"+ getNextMessageId();
+        return createSearchOperation(operationName);
     }
 
     public SearchOperation createSearchOperation(String operationName) {
 
-        SearchOperation operation = new SearchOperation();
-        operation.setSession(this);
+        SearchOperation operation = new BasicSearchOperation(this);
         operation.setOperationName(operationName);
+        operation.setBufferSize(bufferSize);
 
         return operation;
     }
@@ -818,80 +841,10 @@ public class Session {
         operation.setRequest(request);
         operation.setResponse(response);
 
-        search(operation);
-    }
-
-    public void search(SearchOperation operation) throws LDAPException {
-
-        final String operationName = operation.getOperationName();
-        operations.put(operationName, operation);
-
         try {
-            Access.log(this, (SearchRequest)operation.getRequest());
-
-            DN dn = operation.getDn();
-            Filter filter = operation.getFilter();
-            int scope = operation.getScope();
-
-            if (warn) log.warn("Session "+ sessionName +" ("+operationName+"): Search "+dn+" with filter "+filter+".");
-
-            if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
-                log.debug("SEARCH:");
-                log.debug(" - Session        : "+ sessionName);
-                log.debug(" - Message        : "+operationName);
-                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - Base DN        : "+dn);
-                log.debug(" - Scope          : "+LDAP.getScope(scope));
-                log.debug(" - Filter         : "+filter);
-                log.debug(" - Attributes     : "+operation.getAttributes());
-                log.debug("");
-
-                log.debug("Controls: "+operation.getControls());
-            }
-
-            PartitionManager partitionManager = penroseContext.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            operation.setBufferSize(bufferSize);
-
-            SearchOperation op = new SearchOperation(operation) {
-                public void add(SearchResult result) throws Exception {
-                    if (debug) log.debug("Result: \""+result.getDn()+"\".");
-                    super.add(result);
-                }
-                public void add(SearchReference reference) throws Exception {
-                    if (debug) log.debug("Reference: \""+ reference.getDn()+"\".");
-                    super.add(reference);
-                }
-                public void setException(LDAPException exception) {
-                    if (debug) log.debug("Error: \""+exception.getMessage()+"\".");
-                    super.setException(exception);
-                }
-                public void close() throws Exception {
-                    String operationName = getOperationName();
-                    if (debug) log.debug("Closing search operation "+operationName+".");
-                    if (super.isClosed()) {
-                        if (debug) log.debug("Search operation is already closed.");
-                    } else {
-                        super.close();
-                    }
-
-                    operations.remove(operationName);
-                    Access.log(Session.this, (SearchResponse)getResponse());
-                }
-            };
-
-            partition.search(op);
+            operation.execute();
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            operation.setException(e);
-            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
-
-            operations.remove(operationName);
-
-            Access.log(this, (SearchResponse)operation.getResponse());
             throw operation.getException();
         }
     }
@@ -910,10 +863,12 @@ public class Session {
     }
 
     public void unbind(UnbindRequest request, UnbindResponse response) throws LDAPException {
-
         try {
             checkMessageId(request, response);
             Access.log(this, request);
+
+            StatisticManager statisticManager = penrose.getStatisticManager();
+            statisticManager.incrementCounter(StatisticManager.UNBIND);
 
             Integer messageId = request.getMessageId();
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Unbind.");
@@ -1136,5 +1091,17 @@ public class Session {
 
     public void removeListener(SessionListener listener) {
         listeners.remove(listener);
+    }
+
+    public void addOperation(Operation operation) {
+        operations.put(operation.getOperationName(), operation);
+    }
+
+    public void removeOperation(String operationName) {
+        operations.remove(operationName);
+    }
+
+    public Penrose getPenrose() {
+        return penrose;
     }
 }

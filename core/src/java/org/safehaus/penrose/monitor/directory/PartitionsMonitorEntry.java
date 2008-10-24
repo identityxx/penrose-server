@@ -4,9 +4,9 @@ import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.pipeline.Pipeline;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,7 +77,7 @@ public class PartitionsMonitorEntry extends Entry {
 
         if (scope == SearchRequest.SCOPE_SUB) {
 
-            SearchOperation op = new SearchOperation(operation) {
+            SearchOperation op = new PipelineSearchOperation(operation) {
                 public void add(SearchResult result) throws Exception {
                     log.debug("Returning "+result.getDn());
                     super.add(result);

@@ -4,14 +4,15 @@ import org.safehaus.penrose.acl.ACLEvaluator;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 
 import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
  */
-public class EntrySearchOperation extends SearchOperation {
+public class EntrySearchOperation extends PipelineSearchOperation {
 
     Entry entry;
 

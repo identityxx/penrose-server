@@ -31,7 +31,7 @@ import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.schema.matchingRule.EqualityMatchingRule;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.session.SessionManager;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.source.FieldConfig;

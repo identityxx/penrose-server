@@ -8,9 +8,9 @@ import org.safehaus.penrose.cache.CacheMBean;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleChain;
-import org.safehaus.penrose.pipeline.Pipeline;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 
 /**
  * @author Endi Sukma Dewata
@@ -191,7 +191,7 @@ public class CacheModule extends Module implements CacheMBean {
         final Cache cache = cacheManager.create(key);
         final SearchResponse cacheResponse = new SearchResponse();
 
-        SearchOperation op = new SearchOperation(operation) {
+        SearchOperation op = new PipelineSearchOperation(operation) {
             public void add(SearchResult result) throws Exception {
                 try {
                     super.add(result);

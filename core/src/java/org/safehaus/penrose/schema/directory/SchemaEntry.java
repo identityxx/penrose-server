@@ -8,7 +8,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.schema.AttributeType;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.Collection;

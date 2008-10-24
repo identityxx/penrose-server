@@ -36,7 +36,8 @@ import org.safehaus.penrose.scheduler.SchedulerContext;
 import org.safehaus.penrose.schema.ObjectClass;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.session.SearchOperation;
+import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
@@ -919,8 +920,6 @@ public class Partition implements Cloneable {
             SearchOperation operation
     ) throws Exception {
 
-        operation.normalize();
-
         DN dn = operation.getDn();
         Collection<String> requestedAttributes = operation.getAttributes();
 
@@ -952,7 +951,7 @@ public class Partition implements Cloneable {
             final Entry entry
     ) throws Exception {
 
-        SearchOperation op = new SearchOperation(operation) {
+        SearchOperation op = new PipelineSearchOperation(operation) {
             public void add(SearchResult result) throws Exception {
                 //if (debug) log.debug("Result: \""+result.getDn()+"\".");
                 super.add(result);

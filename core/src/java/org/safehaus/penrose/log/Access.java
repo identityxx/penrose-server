@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.LDAP;
 import org.safehaus.penrose.session.Session;
+import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.filter.Filter;
 
 import java.util.Collection;
@@ -72,12 +73,12 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
 
-            sb.append(" operation=\"");
+            sb.append(" operationToAbandon=\"");
             sb.append(request.getOperationName());
             sb.append("\"");
 
@@ -96,7 +97,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -121,7 +122,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -145,7 +146,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -169,7 +170,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -193,7 +194,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -223,7 +224,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -249,7 +250,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -273,7 +274,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -297,7 +298,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -321,7 +322,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -345,7 +346,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -369,7 +370,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -397,7 +398,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -410,23 +411,19 @@ public class Access {
         }
     }
 
-    public static void log(Session session, SearchRequest request) {
+    public static void log(SearchOperation operation) {
 
         if (warn) {
+
+            SearchRequest request = operation.getSearchRequest();
+            
             StringBuilder sb = new StringBuilder();
 
             sb.append("SEARCH session=\"");
-            sb.append(session.getSessionName());
-            sb.append("\"");
-
-            Integer messageId = request.getMessageId();
-            if (messageId != null) {
-                sb.append(" message=\"");
-                sb.append(messageId);
-                sb.append("\"");
-            }
-
-            sb.append(" base=\"");
+            sb.append(operation.getSessionName());
+            sb.append("\" operation=\"");
+            sb.append(operation.getOperationName());
+            sb.append("\" base=\"");
             sb.append(request.getDn());
             sb.append("\" scope=\"");
             sb.append(LDAP.getScope(request.getScope()));
@@ -438,7 +435,7 @@ public class Access {
             sb.append("\"");
 
             Collection<String> attributes = request.getAttributes();
-            if (attributes.isEmpty()) {
+            if (!attributes.isEmpty()) {
                 sb.append(" attrs=\"");
 
                 boolean first = true;
@@ -458,26 +455,24 @@ public class Access {
         }
     }
 
-    public static void log(Session session, SearchResponse response) {
+    public static void log(SearchOperation searchOperation, long elapsedTime) {
 
         if (warn) {
+
+            SearchResponse response = searchOperation.getSearchResponse();
+
             StringBuilder sb = new StringBuilder();
 
             sb.append("SEARCH session=\"");
-            sb.append(session.getSessionName());
-            sb.append("\"");
-
-            Integer messageId = response.getMessageId();
-            if (messageId != null) {
-                sb.append(" message=\"");
-                sb.append(messageId);
-                sb.append("\"");
-            }
-
-            sb.append(" result=\"");
+            sb.append(searchOperation.getSessionName());
+            sb.append("\" operation=\"");
+            sb.append(searchOperation.getOperationName());
+            sb.append("\" result=\"");
             sb.append(response.getErrorMessage());
             sb.append("\" entries=\"");
             sb.append(response.getTotalCount());
+            sb.append("\" time=\"");
+            sb.append(elapsedTime);
             sb.append("\"");
 
             log.warn(sb.toString());
@@ -495,7 +490,7 @@ public class Access {
 
             Integer messageId = request.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
@@ -515,7 +510,7 @@ public class Access {
 
             Integer messageId = response.getMessageId();
             if (messageId != null) {
-                sb.append(" message=\"");
+                sb.append(" operation=\"");
                 sb.append(messageId);
                 sb.append("\"");
             }
