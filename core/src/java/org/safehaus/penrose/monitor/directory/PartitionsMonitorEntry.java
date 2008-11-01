@@ -55,7 +55,7 @@ public class PartitionsMonitorEntry extends Entry {
         }
 
         try {
-            validate(operation);
+            if (!validate(operation)) return;
 
             expand(operation);
 
@@ -68,8 +68,6 @@ public class PartitionsMonitorEntry extends Entry {
             SearchOperation operation
     ) throws Exception {
 
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
         int scope = operation.getScope();
 
         SearchResult result = createBaseSearchResult();

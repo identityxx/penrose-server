@@ -22,6 +22,8 @@ public class ModuleWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(moduleConfigManager);
+        
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -35,7 +37,7 @@ public class ModuleWriter {
                 "http://penrose.safehaus.org/dtd/modules.dtd"
         );
 
-        writer.write(createElement(moduleConfigManager));
+        writer.write(element);
         writer.close();
     }
 

@@ -81,8 +81,8 @@ public class FederationEntry extends DynamicEntry {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     public Filter createFilter(Attributes attributes) throws Exception {
@@ -105,8 +105,7 @@ public class FederationEntry extends DynamicEntry {
     ) throws Exception {
 
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchResponse response = operation.getSearchResponse();
 
         DN baseDn = operation.getDn();
         int scope = operation.getScope();

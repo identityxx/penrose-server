@@ -364,9 +364,7 @@ public class JDBCSyncJob extends Job {
 
         SearchResponse response = new SearchResponse();
 
-        SearchOperation operation = session.createSearchOperation();
-        operation.setRequest(request);
-        operation.setResponse(response);
+        SearchOperation operation = session.createSearchOperation(request, response);
 
         entry.search(operation);
 

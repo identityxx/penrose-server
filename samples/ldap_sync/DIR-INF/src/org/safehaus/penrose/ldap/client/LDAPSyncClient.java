@@ -6,6 +6,7 @@ import org.apache.log4j.*;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
+import org.safehaus.penrose.module.ModuleManagerClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 
@@ -63,7 +64,8 @@ public class LDAPSyncClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
 
         moduleClient.invoke(
                 command,

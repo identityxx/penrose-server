@@ -46,6 +46,8 @@ public class PenroseConfigWriter {
 
     public void write(File file, PenroseConfig penroseConfig) throws Exception {
 
+        Element element = createElement(penroseConfig);
+
         file.getParentFile().mkdirs();
         Writer writer = new FileWriter(file);
 
@@ -61,7 +63,7 @@ public class PenroseConfigWriter {
                 "http://penrose.safehaus.org/dtd/server.dtd"
         );
 
-        xmlWriter.write(createElement(penroseConfig));
+        xmlWriter.write(element);
         xmlWriter.close();
 
         writer.close();

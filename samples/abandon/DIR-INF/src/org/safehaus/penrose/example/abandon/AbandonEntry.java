@@ -9,7 +9,8 @@ import org.safehaus.penrose.ldap.*;
  */
 public class AbandonEntry extends Entry {
 
-    public void validateFilter(SearchOperation operation) throws Exception {
+    public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     public void expand(

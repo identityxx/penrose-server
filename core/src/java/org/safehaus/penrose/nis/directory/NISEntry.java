@@ -44,7 +44,7 @@ public class NISEntry extends DynamicEntry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -58,8 +58,7 @@ public class NISEntry extends DynamicEntry {
     ) throws Exception {
 
         final Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchResponse response = operation.getSearchResponse();
 
         DN baseDn = operation.getDn();
 
@@ -68,7 +67,7 @@ public class NISEntry extends DynamicEntry {
         final Interpreter interpreter = partition.newInterpreter();
         final EntrySource primarySourceRef = getSource(0);
 
-        SearchRequest newRequest = createSearchRequest(session, request, interpreter);
+        SearchRequest newRequest = createSearchRequest(session, operation, interpreter);
 
         SearchResponse newResponse = new Pipeline(response) {
             public void add(SearchResult primaryResult) throws Exception {
@@ -113,15 +112,16 @@ public class NISEntry extends DynamicEntry {
 
     public SearchRequest createSearchRequest(
             Session session,
-            SearchRequest request,
+            SearchOperation operation,
             Interpreter interpreter
     ) throws Exception {
 
+        SearchRequest request = operation.getSearchRequest();
         SearchRequest newRequest = (SearchRequest)request.clone();
 
-        DN baseDn = request.getDn();
-        Filter filter = request.getFilter();
-        int scope = request.getScope();
+        DN baseDn = operation.getDn();
+        Filter filter = operation.getFilter();
+        int scope = operation.getScope();
 
         final EntrySource primarySourceRef = getSource(0);
 

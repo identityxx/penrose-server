@@ -49,6 +49,8 @@ public class Log4jConfigWriter {
 
     public void write(Log4jConfig config) throws Exception {
 
+        Element element = createConfigElement(config);
+        
         Writer out;
         if (file == null) {
             out = new PrintWriter(System.out, true);
@@ -70,7 +72,7 @@ public class Log4jConfigWriter {
                 "-//Apache//DTD Log4j 1.2//EN",
                 "http://logging.apache.org/log4j/docs/api/org/apache/log4j/xml/log4j.dtd");
 
-        writer.write(createConfigElement(config));
+        writer.write(element);
         writer.close();
 
         out.close();

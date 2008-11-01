@@ -76,6 +76,11 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         return sessionManager.createAdminSession();
     }
 
+    public String getStatus() throws Exception {
+        Source source = getSource();
+        return source == null ? SourceServiceMBean.STOPPED : SourceServiceMBean.STARTED;
+    }
+
     public Long getCount() throws Exception {
 
         Session session = createAdminSession();
@@ -133,12 +138,19 @@ public class SourceService extends BaseService implements SourceServiceMBean {
         String partitionName = sourceConfig.getPartitionName();
         String connectionName = sourceConfig.getConnectionName();
 
-        Partition partition = getPartition();
-        if (partitionName != null) partition = partition.getPartitionContext().getPartition(partitionName);
+        PartitionConfig partitionConfig;
 
-        ConnectionConfigManager connectionConfigManager = partition.getPartitionConfig().getConnectionConfigManager();
+        if (partitionName == null) {
+            partitionConfig = getPartitionConfig();
+        } else {
+            partitionConfig = partitionManager.getPartitionConfig(partitionName);
+        }
+
+        ConnectionConfigManager connectionConfigManager = partitionConfig.getConnectionConfigManager();
 
         ConnectionConfig connectionConfig = connectionConfigManager.getConnectionConfig(connectionName);
+        if (connectionConfig == null) return null;
+
         return connectionConfig.getAdapterName();
     }
 

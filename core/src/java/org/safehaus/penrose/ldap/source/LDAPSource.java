@@ -13,8 +13,8 @@ import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.source.Field;
 import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.util.PasswordUtil;
 import org.safehaus.penrose.control.Control;
+import org.safehaus.penrose.pipeline.Pipeline;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -371,12 +371,11 @@ public class LDAPSource extends Source {
         newRequest.setAttributes(attributes);
         newRequest.setControls(controls);
 
-        SearchResponse newResponse = new SearchResponse() {
+        SearchResponse newResponse = new Pipeline(response) {
             public void add(SearchResult searchResult) throws Exception {
 
-                if (response.isClosed()) {
+                if (isClosed()) {
                     if (debug) log.debug("Search response has been closed.");
-                    close();
                     return;
                 }
 
@@ -386,11 +385,11 @@ public class LDAPSource extends Source {
                     newSearchResult.print();
                 }
 
-                response.add(newSearchResult);
+                super.add(newSearchResult);
             }
         };
 
-        newResponse.setSizeLimit(request.getSizeLimit());
+        newResponse.setSizeLimit(response.getSizeLimit());
 
         if (debug) log.debug("Searching entry "+baseDn+".");
 
@@ -400,7 +399,6 @@ public class LDAPSource extends Source {
             client.search(newRequest, newResponse);
 
         } finally {
-            response.close();
             connection.closeClient(session);
         }
 
@@ -447,12 +445,12 @@ public class LDAPSource extends Source {
         log.debug("Unbind operation completed.");
     }
 
-    public DN createBaseDn(SearchRequest request) throws Exception {
+    public DN createBaseDn(SearchRequest operation) throws Exception {
 
-        if (request.getDn() == null) {
+        if (operation.getDn() == null) {
             return baseDn;
         } else {
-            return request.getDn();
+            return operation.getDn();
         }
 /*
         DNBuilder db = new DNBuilder();
@@ -462,13 +460,13 @@ public class LDAPSource extends Source {
 */
     }
 
-    public int createScope(SearchRequest request) throws Exception {
+    public int createScope(SearchRequest operation) throws Exception {
 
         if (scope == SearchRequest.SCOPE_BASE) {
             return SearchRequest.SCOPE_BASE;
 
         } else if (scope == SearchRequest.SCOPE_ONE) {
-            DN baseDn = request.getDn();
+            DN baseDn = operation.getDn();
 
             if (baseDn != null && !baseDn.isEmpty()) {
                 return SearchRequest.SCOPE_BASE;
@@ -478,13 +476,13 @@ public class LDAPSource extends Source {
             }
 
         } else {
-            return request.getScope();
+            return operation.getScope();
         }
     }
 
-    public Filter createFilter(final SearchRequest request) throws Exception {
+    public Filter createFilter(SearchRequest operation) throws Exception {
 
-        return FilterTool.appendAndFilter(request.getFilter(), this.filter);
+        return FilterTool.appendAndFilter(operation.getFilter(), filter);
 /*
         DN baseDn = request.getDn();
         int scope = request.getScope();
@@ -613,31 +611,31 @@ public class LDAPSource extends Source {
         return FilterTool.appendAndFilter(newFilter, sourceFilter);
     }
 */
-    public long createSizeLimit(SearchRequest request) {
-        long sizeLimit = request.getSizeLimit();
+    public long createSizeLimit(SearchRequest operation) {
+        long sizeLimit = operation.getSizeLimit();
         if (sourceSizeLimit > sizeLimit) sizeLimit = sourceSizeLimit;
         return sizeLimit;
     }
 
-    public long createTimeLimit(SearchRequest request) {
-        long timeLimit = request.getTimeLimit();
+    public long createTimeLimit(SearchRequest operation) {
+        long timeLimit = operation.getTimeLimit();
         if (sourceTimeLimit > timeLimit) timeLimit = sourceTimeLimit;
         return timeLimit;
     }
 
-    public Collection<String> createAttributes(SearchRequest request) {
+    public Collection<String> createAttributes(SearchRequest operation) {
         Collection<String> attributes = new ArrayList<String>();
         attributes.addAll(getFieldNames());
 
         if (attributes.isEmpty()) {
-            attributes.addAll(request.getAttributes());
+            attributes.addAll(operation.getAttributes());
         }
 
         return attributes;
     }
 
-    public Collection<Control> createControls(SearchRequest request) {
-        return request.getControls();
+    public Collection<Control> createControls(SearchRequest operation) {
+        return operation.getControls();
     }
 
     public void search(

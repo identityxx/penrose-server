@@ -54,30 +54,29 @@ public class DirectoryService extends BaseService implements DirectoryServiceMBe
         return partitionManager.getPartition(partitionName);
     }
 
+    public DN getSuffix() throws Exception {
+        DirectoryConfig directoryConfig = getDirectoryConfig();
+        return directoryConfig.getSuffix();
+    }
+
     public Collection<DN> getSuffixes() throws Exception {
         Collection<DN> list = new ArrayList<DN>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        for (EntryConfig entryConfig : directoryConfig.getRootEntryConfigs()) {
-            list.add(entryConfig.getDn());
-        }
+        list.addAll(directoryConfig.getSuffixes());
         return list;
     }
 
     public Collection<String> getRootEntryIds() throws Exception {
         Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        for (EntryConfig entryConfig : directoryConfig.getRootEntryConfigs()) {
-            list.add(entryConfig.getId());
-        }
+        list.addAll(directoryConfig.getRootIds());
         return list;
     }
 
     public Collection<String> getEntryIds() throws Exception {
         Collection<String> list = new ArrayList<String>();
         DirectoryConfig directoryConfig = getDirectoryConfig();
-        for (EntryConfig entryConfig : directoryConfig.getEntryConfigs()) {
-            list.add(entryConfig.getId());
-        }
+        list.addAll(directoryConfig.getEntryIds());
         return list;
     }
 

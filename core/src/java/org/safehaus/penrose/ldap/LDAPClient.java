@@ -240,7 +240,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         if (warn) log.warn("Binding as "+bindDn+".");
         
         if (debug) {
-            log.debug("Password: "+new String(bindPassword));
+            if (bindPassword != null) log.debug("Password: "+new String(bindPassword));
         }
 
         LDAPConnection connection = getConnection();
@@ -584,8 +584,16 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             do {
                 constraints.setControls(convertControls(requestControls));
 
+                if (debug) log.debug("Executing LDAP search...");
+
+                long startTime = System.currentTimeMillis();
+
                 LDAPSearchResults rs = connection.search(baseDn, scope, filter, attributeNames, typesOnly, constraints);
 
+                long endTime = System.currentTimeMillis();
+
+                if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
+                
                 while (rs.hasMore()) {
                     if (response.isClosed()) {
                         if (debug) log.debug("Search response has been closed.");

@@ -15,22 +15,25 @@ public class RootEntry extends Entry {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchOperation operation) throws Exception {
+    public boolean validateScope(SearchOperation operation) throws Exception {
 
         int scope = operation.getScope();
 
         if (scope != SearchRequest.SCOPE_BASE) {
             log.debug("Entry out of scope.");
-            throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+            //throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
+            return false;
         }
+
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-     public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+     public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +61,7 @@ public class RootEntry extends Entry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 

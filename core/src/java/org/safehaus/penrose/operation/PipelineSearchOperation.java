@@ -41,6 +41,14 @@ public class PipelineSearchOperation extends PipelineOperation implements Search
         searchOperation.setDn(dn);
     }
 
+    public Filter getFilter() {
+        return searchOperation.getFilter();
+    }
+
+    public void setFilter(Filter filter) {
+        searchOperation.setFilter(filter);
+    }
+
     public int getScope() {
         return searchOperation.getScope();
     }
@@ -49,12 +57,20 @@ public class PipelineSearchOperation extends PipelineOperation implements Search
         searchOperation.setScope(scope);
     }
 
-    public Filter getFilter() {
-        return searchOperation.getFilter();
+    public int getDereference() {
+        return searchOperation.getDereference();
     }
 
-    public void setFilter(Filter filter) {
-        searchOperation.setFilter(filter);
+    public void setDereference(int dereference) {
+        searchOperation.setDereference(dereference);
+    }
+
+    public boolean isTypesOnly() {
+        return searchOperation.isTypesOnly();
+    }
+
+    public void setTypesOnly(boolean typesOnly) {
+        searchOperation.setTypesOnly(typesOnly);
     }
 
     public Collection<String> getAttributes() {
@@ -71,6 +87,14 @@ public class PipelineSearchOperation extends PipelineOperation implements Search
 
     public void setSizeLimit(long sizeLimit) {
         searchOperation.setSizeLimit(sizeLimit);
+    }
+
+    public long getTimeLimit() {
+        return searchOperation.getTimeLimit();
+    }
+
+    public void setTimeLimit(long timeLimit) {
+        searchOperation.setTimeLimit(timeLimit);
     }
 
     public void setBufferSize(long bufferSize) {
@@ -99,5 +123,13 @@ public class PipelineSearchOperation extends PipelineOperation implements Search
 
     public long getTotalCount() {
         return searchOperation.getTotalCount();
+    }
+
+    public long getCreateTimestamp() {
+        return searchOperation.getCreateTimestamp();
+    }
+
+    public long getCloseTimestamp() {
+        return searchOperation.getCloseTimestamp();
     }
 }

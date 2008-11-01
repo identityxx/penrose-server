@@ -1,14 +1,7 @@
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
-import org.safehaus.penrose.mapping.MappingConfig;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.partition.PartitionConfig;
-import org.safehaus.penrose.source.SourceConfig;
 
 import java.util.Collection;
 
@@ -22,36 +15,6 @@ public interface PartitionServiceMBean {
     public String getStatus() throws Exception;
 
     public PartitionConfig getPartitionConfig() throws Exception;
-
-    public DN getSuffix() throws Exception;
-    public Collection<DN> getSuffixes() throws Exception;
-    public Collection<String> getRootEntryIds() throws Exception;
-
-    public Collection<String> getEntryIds() throws Exception;
-    public String createEntry(EntryConfig entryConfig) throws Exception;
-    public void updateEntry(String id, EntryConfig entryConfig) throws Exception;
-    public void removeEntry(String id) throws Exception;
-
-    public Collection<String> getConnectionNames() throws Exception;
-    public void createConnection(ConnectionConfig connectionConfig) throws Exception;
-    public void updateConnection(String name, ConnectionConfig connectionConfig) throws Exception;
-    public void removeConnection(String name) throws Exception;
-
-    public Collection<String> getSourceNames() throws Exception;
-    public void createSource(SourceConfig sourceConfig) throws Exception;
-    public void updateSource(String name, SourceConfig sourceConfig) throws Exception;
-    public void removeSource(String name) throws Exception;
-
-    public Collection<String> getMappingNames() throws Exception;
-    public void createMapping(MappingConfig mappingConfig) throws Exception;
-    public void updateMapping(String name, MappingConfig connectionConfig) throws Exception;
-    public void removeMapping(String name) throws Exception;
-
-    public Collection<String> getModuleNames() throws Exception;
-    public void createModule(ModuleConfig moduleConfig) throws Exception;
-    public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception;
-    public void updateModule(String name, ModuleConfig moduleConfig) throws Exception;
-    public void removeModule(String name) throws Exception;
 
     public void store() throws Exception;
 

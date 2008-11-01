@@ -24,8 +24,8 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-     public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+     public boolean validateFilter(SearchOperation operation) throws Exception {
+         return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -67,8 +67,7 @@ public class ActiveDirectorySchemaEntry extends SchemaEntry {
     ) throws Exception {
 
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchResponse response = operation.getSearchResponse();
 
         Interpreter interpreter = partition.newInterpreter();
 

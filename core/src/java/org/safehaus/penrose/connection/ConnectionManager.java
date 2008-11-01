@@ -6,13 +6,13 @@ import org.safehaus.penrose.adapter.Adapter;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.SourceConfigManager;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author Endi Sukma Dewata
@@ -36,18 +36,30 @@ public class ConnectionManager {
 
     public void init() throws Exception {
 
-        for (ConnectionConfig connectionConfig : connectionConfigManager.getConnectionConfigs()) {
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(getConnectionNames());
+
+        for (String name : names) {
+
+            ConnectionConfig connectionConfig = getConnectionConfig(name);
             if (!connectionConfig.isEnabled()) continue;
 
-            createConnection(connectionConfig);
+            startConnection(name);
         }
     }
 
     public void destroy() throws Exception {
-        for (Connection connection : connections.values()) {
-            if (debug) log.debug("Stopping "+connection.getName()+" connection.");
-            connection.destroy();
+
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(connections.keySet());
+
+        for (String name : names) {
+            stopConnection(name);
         }
+    }
+
+    public Collection<String> getConnectionNames() {
+        return connectionConfigManager.getConnectionNames();
     }
 
     public ConnectionConfig getConnectionConfig(String name) {
@@ -55,12 +67,14 @@ public class ConnectionManager {
     }
 
     public void startConnection(String name) throws Exception {
-        ConnectionConfig connectionConfig = connectionConfigManager.getConnectionConfig(name);
+        if (debug) log.debug("Starting connection "+name+".");
+        ConnectionConfig connectionConfig = getConnectionConfig(name);
         createConnection(connectionConfig);
     }
 
     public void stopConnection(String name) throws Exception {
-        Connection connection = connections.remove(name);
+        if (debug) log.debug("Stopping connection "+name+".");
+        Connection connection = removeConnection(name);
         connection.destroy();
     }
 
@@ -70,7 +84,7 @@ public class ConnectionManager {
     
     public Connection createConnection(ConnectionConfig connectionConfig) throws Exception {
 
-        PartitionContext partitionContext = partition.getPartitionContext();
+        if (debug) log.debug("Creating connection "+connectionConfig.getName()+".");
 
         String adapterName = connectionConfig.getAdapterName();
         if (adapterName == null) throw new Exception("Missing adapter name.");
@@ -78,6 +92,7 @@ public class ConnectionManager {
         Adapter adapter = partition.getAdapterManager().getAdapter(adapterName);
         if (adapter == null) throw new Exception("Unknown adapter "+adapterName+".");
 
+        PartitionContext partitionContext = partition.getPartitionContext();
         ClassLoader cl = partitionContext.getClassLoader();
 
         ConnectionContext connectionContext = new ConnectionContext();
@@ -96,18 +111,23 @@ public class ConnectionManager {
         connections.put(connection.getName(), connection);
     }
 
-    public void removeConnection(String name) throws Exception {
-        Connection connection = connections.remove(name);
-        if (connection != null) connection.destroy();
-        connectionConfigManager.removeConnectionConfig(name);
-    }
-    
-    public Connection getConnection(String name) {
-        return connections.get(name);
+    public Connection removeConnection(String name) throws Exception {
+        return connections.remove(name);
     }
 
-    public ConnectionConfigManager getConnectionConfigs() {
-        return connectionConfigManager;
+    public Collection<Connection> getConnections() {
+        return connections.values();
+    }
+
+    public Connection getConnection(String name) {
+        Connection connection = connections.get(name);
+        if (connection != null) return connection;
+
+        if (partition.getName().equals("DEFAULT")) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+
+        ConnectionManager connectionManager = defaultPartition.getConnectionManager();
+        return connectionManager.getConnection(name);
     }
 
     public void updateConnectionConfig(String name, ConnectionConfig connectionConfig) throws Exception {
@@ -127,7 +147,7 @@ public class ConnectionManager {
         return connectionConfigManager.removeConnectionConfig(name);
     }
 
-    public Collection<Connection> getConnections() {
-        return connections.values();
+    public ConnectionConfigManager getConnectionManager() {
+        return connectionConfigManager;
     }
 }

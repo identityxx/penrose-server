@@ -29,6 +29,8 @@ public class DirectoryWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(directoryConfig);
+
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -42,7 +44,7 @@ public class DirectoryWriter {
                 "http://penrose.safehaus.org/dtd/directory.dtd"
         );
 
-        writer.write(createElement(directoryConfig));
+        writer.write(element);
         writer.close();
     }
 

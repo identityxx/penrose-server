@@ -781,16 +781,21 @@ public class Session {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public SearchOperation createSearchOperation() {
+    public SearchOperation createSearchOperation(SearchRequest request, SearchResponse response) throws Exception {
         String operationName = "operation-"+ getNextMessageId();
-        return createSearchOperation(operationName);
+        return createSearchOperation(operationName, request, response);
     }
 
-    public SearchOperation createSearchOperation(String operationName) {
+    public SearchOperation createSearchOperation(String operationName, SearchRequest request, SearchResponse response) throws Exception {
+
+        checkMessageId(request, response);
 
         SearchOperation operation = new BasicSearchOperation(this);
         operation.setOperationName(operationName);
         operation.setBufferSize(bufferSize);
+        operation.setRequest(request);
+        operation.setResponse(response);
+        operation.init();
 
         return operation;
     }
@@ -798,7 +803,7 @@ public class Session {
     public SearchResponse search(
             String baseDn,
             String filter
-    ) throws LDAPException {
+    ) throws Exception {
         return search(baseDn, filter, SearchRequest.SCOPE_SUB);
     }
 
@@ -806,7 +811,7 @@ public class Session {
             String baseDn,
             String filter,
             int scope
-    ) throws LDAPException {
+    ) throws Exception {
         try {
             return search(new DN(baseDn), FilterTool.parseFilter(filter), scope);
 
@@ -820,7 +825,7 @@ public class Session {
             DN baseDn,
             Filter filter,
             int scope
-    ) throws LDAPException {
+    ) throws Exception {
 
         SearchRequest request = new SearchRequest();
         request.setDn(baseDn);
@@ -834,18 +839,50 @@ public class Session {
         return response;
     }
 
-    public void search(final SearchRequest request, final SearchResponse response) throws LDAPException {
-        checkMessageId(request, response);
+    public void search(SearchRequest request, final SearchResponse response) throws Exception {
+        SearchOperation operation = createSearchOperation(""+request.getMessageId(), request, response);
+        search(operation);
+    }
 
-        SearchOperation operation = createSearchOperation(""+request.getMessageId());
-        operation.setRequest(request);
-        operation.setResponse(response);
+    public void search(SearchOperation operation) throws Exception {
+
+        Access.log(operation);
+        addOperation(operation);
 
         try {
-            operation.execute();
+
+            if (warn) log.warn("Session "+ sessionName+" ("+operation.getOperationName()+"): Search "+operation.getDn()+" with filter "+operation.getFilter()+".");
+
+            if (debug) {
+                log.debug("----------------------------------------------------------------------------------");
+                log.debug("SEARCH:");
+                log.debug(" - Session        : "+sessionName);
+                log.debug(" - Message        : "+operation.getOperationName());
+                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
+                log.debug(" - Base DN        : "+operation.getDn());
+                log.debug(" - Scope          : "+LDAP.getScope(operation.getScope()));
+                log.debug(" - Filter         : "+operation.getFilter());
+                log.debug(" - Attributes     : "+operation.getAttributes());
+                log.debug("");
+
+                log.debug("Controls: "+operation.getRequestControls());
+            }
+
+            PartitionManager partitionManager = penrose.getPartitionManager();
+            Partition partition = partitionManager.getPartition(operation.getDn());
+            partition.search(operation);
 
         } catch (Exception e) {
-            throw operation.getException();
+            log.error(e.getMessage(), e);
+
+            operation.setException(e);
+            try { operation.close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
+
+            throw e;
+
+        } finally {
+            removeOperation(operation);
+            Access.log(operation, operation.getCloseTimestamp() - operation.getCreateTimestamp());
         }
     }
 
@@ -1097,8 +1134,8 @@ public class Session {
         operations.put(operation.getOperationName(), operation);
     }
 
-    public void removeOperation(String operationName) {
-        operations.remove(operationName);
+    public void removeOperation(Operation operation) {
+        operations.remove(operation.getOperationName());
     }
 
     public Penrose getPenrose() {

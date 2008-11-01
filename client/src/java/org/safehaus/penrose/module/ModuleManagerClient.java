@@ -12,6 +12,7 @@ import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.client.BaseClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,73 @@ import java.util.Iterator;
 /**
  * @author Endi Sukma Dewata
  */
-public class ModuleManagerClient {
+public class ModuleManagerClient extends BaseClient implements ModuleManagerServiceMBean {
 
     public static Logger log = LoggerFactory.getLogger(ModuleManagerClient.class);
+
+    protected String partitionName;
+
+    public ModuleManagerClient(PenroseClient client, String partitionName) throws Exception {
+        super(client, "ModuleManager", getStringObjectName(partitionName));
+
+        this.partitionName = partitionName;
+    }
+
+    public static String getStringObjectName(String partitionName) {
+        return "Penrose:type=moduleManager,partition="+partitionName;
+    }
+
+    public String getPartitionName() {
+        return partitionName;
+    }
+
+    public void setPartitionName(String partitionName) {
+        this.partitionName = partitionName;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Modules
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getModuleNames() throws Exception {
+        return (Collection<String>)getAttribute("ModuleNames");
+    }
+
+    public ModuleClient getModuleClient(String moduleName) throws Exception {
+        return new ModuleClient(client, partitionName, moduleName);
+    }
+
+    public void createModule(ModuleConfig moduleConfig) throws Exception {
+        invoke(
+                "createModule",
+                new Object[] { moduleConfig },
+                new String[] { ModuleConfig.class.getName() }
+        );
+    }
+
+    public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception {
+        invoke(
+                "createModule",
+                new Object[] { moduleConfig, moduleMappings },
+                new String[] { ModuleConfig.class.getName(), Collection.class.getName() }
+        );
+    }
+
+    public void updateModule(String name, ModuleConfig moduleConfig) throws Exception {
+        invoke(
+                "updateModule",
+                new Object[] { name, moduleConfig },
+                new String[] { String.class.getName(), ModuleConfig.class.getName() }
+        );
+    }
+
+    public void removeModule(String name) throws Exception {
+        invoke(
+                "removeModule",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Command Line
@@ -36,19 +101,20 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
-        System.out.print(TextUtil.rightPad("MODULE", 15)+" ");
+        System.out.print(TextUtil.rightPad("MODULE", 40)+" ");
         System.out.println(TextUtil.rightPad("STATUS", 10));
 
-        System.out.print(TextUtil.repeat("-", 15)+" ");
+        System.out.print(TextUtil.repeat("-", 40)+" ");
         System.out.println(TextUtil.repeat("-", 10));
 
-        for (String moduleName : partitionClient.getModuleNames()) {
+        for (String moduleName : moduleManagerClient.getModuleNames()) {
 
-            //ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
-            String status = "OK";
+            ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
+            String status = moduleClient.getStatus();
 
-            System.out.print(TextUtil.rightPad(moduleName, 15)+" ");
+            System.out.print(TextUtil.rightPad(moduleName, 40)+" ");
             System.out.println(TextUtil.rightPad(status, 10)+" ");
         }
     }
@@ -57,7 +123,8 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
         ModuleConfig moduleConfig = moduleClient.getModuleConfig();
 
         System.out.println("Module      : "+moduleConfig.getName());
@@ -119,12 +186,13 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
-        for (String moduleName : partitionClient.getModuleNames()) {
+        for (String moduleName : moduleManagerClient.getModuleNames()) {
 
             System.out.println("Starting module "+moduleName+" in partition "+partitionName+"...");
 
-            ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+            ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
             moduleClient.start();
 
             System.out.println("Module started.");
@@ -135,10 +203,11 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
         System.out.println("Starting module "+moduleName+" in partition "+partitionName+"...");
 
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
         moduleClient.start();
 
         System.out.println("Module started.");
@@ -168,12 +237,13 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
-        for (String moduleName : partitionClient.getModuleNames()) {
+        for (String moduleName : moduleManagerClient.getModuleNames()) {
 
             System.out.println("Starting module "+moduleName+" in partition "+partitionName+"...");
 
-            ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+            ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
             moduleClient.stop();
 
             System.out.println("Module started.");
@@ -184,10 +254,11 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
         System.out.println("Stopping module "+moduleName+" in partition "+partitionName+"...");
 
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
         moduleClient.stop();
 
         System.out.println("Module stopped.");
@@ -217,12 +288,13 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
-        for (String moduleName : partitionClient.getModuleNames()) {
+        for (String moduleName : moduleManagerClient.getModuleNames()) {
 
             System.out.println("Restarting module "+moduleName+" in partition "+partitionName+"...");
 
-            ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+            ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
             moduleClient.restart();
 
             System.out.println("Module restarted.");
@@ -233,10 +305,11 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
 
         System.out.println("Restarting module "+moduleName+" in partition "+partitionName+"...");
 
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
         moduleClient.restart();
 
         System.out.println("Module restarted.");
@@ -273,7 +346,8 @@ public class ModuleManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient(moduleName);
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient(moduleName);
 
         Object returnValue = moduleClient.invoke(
                 methodName,

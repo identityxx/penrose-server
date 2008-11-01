@@ -159,7 +159,7 @@ public class CacheModule extends Module implements CacheMBean {
 
         final CacheKey key = new CacheKey();
         key.setBindDn(operation.getSession().getBindDn());
-        key.setRequest((SearchRequest)operation.getRequest());
+        key.setRequest(operation.getSearchRequest());
         key.setEntryId(entryId);
 
         Cache c = cacheManager.get(key);

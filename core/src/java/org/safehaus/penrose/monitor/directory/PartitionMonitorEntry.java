@@ -36,7 +36,7 @@ public class PartitionMonitorEntry extends Entry {
         }
 
         try {
-            validate(operation);
+            if (!validate(operation)) return;
 
             expand(operation);
 

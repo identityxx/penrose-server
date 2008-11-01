@@ -17,6 +17,7 @@ import java.util.Map;
 public class ModuleManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     protected Partition partition;
     protected ModuleConfigManager moduleConfigManager;
@@ -32,11 +33,46 @@ public class ModuleManager {
 
     public void init() throws Exception {
         
-        for (ModuleConfig moduleConfig : moduleConfigManager.getModuleConfigs()) {
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(getModuleNames());
+
+        for (String name : names) {
+
+            ModuleConfig moduleConfig = getModuleConfig(name);
             if (!moduleConfig.isEnabled()) continue;
 
             createModule(moduleConfig);
         }
+    }
+
+    public void destroy() throws Exception {
+
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(modules.keySet());
+
+        for (String name : names) {
+            stopModule(name);
+        }
+    }
+
+    public Collection<String> getModuleNames() {
+        return moduleConfigManager.getModuleNames();
+    }
+
+    public ModuleConfig getModuleConfig(String name) {
+        return moduleConfigManager.getModuleConfig(name);
+    }
+
+    public void startModule(String name) throws Exception {
+        if (debug) log.debug("Starting module "+name+".");
+        ModuleConfig moduleConfig = getModuleConfig(name);
+        createModule(moduleConfig);
+    }
+
+    public void stopModule(String name) throws Exception {
+        if (debug) log.debug("Stopping module "+name+".");
+        Module module = removeModule(name);
+        module.destroy();
     }
 
     public Module createModule(ModuleConfig moduleConfig) throws Exception {
@@ -70,13 +106,14 @@ public class ModuleManager {
     }
 
     public Module getModule(String name) {
-        return modules.get(name);
-    }
+        Module module = modules.get(name);
+        if (module != null) return module;
 
-    public void destroy() throws Exception {
-        for (Module module : modules.values()) {
-            module.destroy();
-        }
+        if (partition.getName().equals("DEFAULT")) return null;
+        Partition defaultPartition = partition.getPartitionContext().getPartition("DEFAULT");
+
+        ModuleManager moduleManager = defaultPartition.getModuleManager();
+        return moduleManager.getModule(name);
     }
 
     public Collection<Module> findModules(DN dn) throws Exception {

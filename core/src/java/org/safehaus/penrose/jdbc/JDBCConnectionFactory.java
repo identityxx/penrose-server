@@ -61,12 +61,12 @@ public class JDBCConnectionFactory implements ConnectionFactory {
 
         properties.putAll(parameters);
 
-        url = parameters.remove(JDBCConnection.URL);
+        url = (String)properties.remove(JDBCConnection.URL);
 
         String s = parameters.remove(JDBCConnection.QUERY_TIMEOUT);
         queryTimeout = s == null ? 0 : Integer.parseInt(s);
 
-        quote = parameters.remove(JDBCConnection.QUOTE);
+        quote = (String)properties.remove(JDBCConnection.QUOTE);
     }
 
     public void init() throws Exception {

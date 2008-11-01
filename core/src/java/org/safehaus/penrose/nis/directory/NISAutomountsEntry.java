@@ -90,7 +90,7 @@ public class NISAutomountsEntry extends DynamicEntry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -99,12 +99,12 @@ public class NISAutomountsEntry extends DynamicEntry {
         }
     }
 
-    public void validateScope(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateScope(SearchOperation operation) throws Exception {
+        return true;
     }
 
-    public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     public void expand(
@@ -387,10 +387,9 @@ public class NISAutomountsEntry extends DynamicEntry {
     ) throws Exception {
 
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchResponse response = operation.getSearchResponse();
 
-        DN automountMapDn = request.getDn();
+        DN automountMapDn = operation.getDn();
         RDN automountMapRdn = automountMapDn.getRdn();
 
         String automountMapName = (String)automountMapRdn.get("nisMapName");
@@ -404,7 +403,7 @@ public class NISAutomountsEntry extends DynamicEntry {
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        int scope = request.getScope();
+        int scope = operation.getScope();
 
         if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
             SearchResult result = createAutomountMapSearchResult(automountMapDn, map);

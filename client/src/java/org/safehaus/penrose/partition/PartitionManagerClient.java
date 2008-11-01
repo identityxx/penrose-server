@@ -13,7 +13,6 @@ import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.module.ModuleConfig;
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
-import org.safehaus.penrose.partition.PartitionManagerServiceMBean;
 
 import java.util.Collection;
 import java.util.ArrayList;

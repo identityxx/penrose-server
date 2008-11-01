@@ -116,7 +116,7 @@ public class LDAPMergeEntry extends DynamicEntry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -130,8 +130,8 @@ public class LDAPMergeEntry extends DynamicEntry {
     ) throws Exception {
 
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchRequest request = operation.getSearchRequest();
+        SearchResponse response = operation.getSearchResponse();
 
         DN baseDn = operation.getDn();
 

@@ -110,7 +110,7 @@ return "uid="+um.substring(i+1, j)+",ou=Users,dc=JDBC-LDAP,dc=Example,dc=com";
         <expression foreach="uniqueMember" var="um">
 int i=um.indexOf("=");
 int j=um.indexOf(",");
-return "uid="+um.substring(i+1, j)+",ou=Users,dc=Example,dc=com";
+return "uid="+um.substring(i+1, j)+",ou=Users,dc=my-domain,dc=com";
         </expression>
       </field>
     </source>

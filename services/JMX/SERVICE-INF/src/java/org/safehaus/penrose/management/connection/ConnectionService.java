@@ -65,7 +65,7 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
         ConnectionConfig connectionConfig = getConnectionConfig();
         return connectionConfig.getAdapterName();
     }
-    
+
     public void start() throws Exception {
 
         log.debug("Starting connection "+partitionName+"/"+connectionName+"...");
@@ -98,5 +98,10 @@ public class ConnectionService extends BaseService implements ConnectionServiceM
         connectionManager.startConnection(connectionName);
 
         log.debug("Connection restarted.");
+    }
+
+    public String getStatus() throws Exception {
+        Connection connection = getConnection();
+        return connection == null ? ConnectionServiceMBean.STOPPED : ConnectionServiceMBean.STARTED;
     }
 }

@@ -22,8 +22,8 @@ public class SchemaEntry extends Entry {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-     public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+     public boolean validateFilter(SearchOperation operation) throws Exception {
+         return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ public class SchemaEntry extends Entry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 

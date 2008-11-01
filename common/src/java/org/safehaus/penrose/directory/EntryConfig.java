@@ -208,6 +208,10 @@ public class EntryConfig implements Serializable, Cloneable {
         sourceConfigs.add(entrySourceConfig);
     }
 
+    public void addSourceConfigs(Collection<EntrySourceConfig> entrySourceConfigs) {
+        sourceConfigs.addAll(entrySourceConfigs);
+    }
+
     public int getSourceConfigIndex(EntrySourceConfig entrySourceConfig) {
         return sourceConfigs.indexOf(entrySourceConfig);
     }

@@ -90,6 +90,11 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
         return moduleConfigManager.getModuleMappings(moduleName);
     }
 
+    public String getStatus() throws Exception {
+        Module module = getModule();
+        return module == null ? ModuleServiceMBean.STOPPED : ModuleServiceMBean.STARTED;
+    }
+
     public void start() throws Exception {
 
         log.debug("Starting module "+partitionName+"/"+moduleName+"...");

@@ -51,6 +51,8 @@ public class PartitionWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(partitionConfig);
+        
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -64,7 +66,7 @@ public class PartitionWriter {
                 "http://penrose.safehaus.org/dtd/partition.dtd"
         );
 
-        writer.write(createElement(partitionConfig));
+        writer.write(element);
         writer.close();
     }
 

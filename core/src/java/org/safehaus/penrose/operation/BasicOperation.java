@@ -103,10 +103,10 @@ public class BasicOperation implements Operation {
         response.setException(exception);
     }
 
-    public int waitFor() throws Exception {
+    public int waitFor() {
         return response.waitFor();
     }
 
-    public void execute() throws Exception {
+    public void init() throws Exception {
     }
 }

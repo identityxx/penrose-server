@@ -39,7 +39,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
         this.schemaManager = partition.getSchemaManager();
         this.aclEvaluator = partition.getAclEvaluator();
 
-        requestedAttributes = ((SearchRequest)getRequest()).getAttributes();
+        requestedAttributes = getAttributes();
         allRegularAttributes = requestedAttributes.isEmpty() || requestedAttributes.contains("*");
         allOpAttributes = requestedAttributes.contains("+");
     }
@@ -67,7 +67,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
     public void returnLastSearchResult() throws Exception {
         try {
             if (debug) log.debug("Validating ACL.");
-            entry.validatePermission(getSession(), lastResult);
+            entry.validatePermission(this, lastResult);
 
         } catch (Exception e) {
             if (debug) log.debug("Search result "+lastResult.getDn()+" failed ACL check.");
@@ -75,7 +75,7 @@ public class EntrySearchOperation extends PipelineSearchOperation {
         }
 
         if (debug) log.debug("Validating search filter.");
-        if (!entry.validateSearchResult(((SearchRequest)getRequest()), lastResult)) {
+        if (!entry.validateSearchResult(this, lastResult)) {
             if (debug) log.debug("Search result "+lastResult.getDn()+" failed search filter check.");
             return;
         }

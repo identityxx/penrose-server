@@ -7,7 +7,11 @@ import java.util.Collection;
  */
 public interface FederationMBean {
 
+    public Collection<String> getTypes() throws Exception;
+
     public Collection<String> getRepositoryNames() throws Exception;
+    public Collection<String> getRepositoryNames(String type) throws Exception;
+
     public Collection<FederationRepositoryConfig> getRepositories() throws Exception;
     public Collection<FederationRepositoryConfig> getRepositories(String type) throws Exception;
     public FederationRepositoryConfig getRepository(String name) throws Exception;

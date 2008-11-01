@@ -4,9 +4,6 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.schema.SchemaManager;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.partition.PartitionManager;
-import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.log.Access;
 import org.safehaus.penrose.statistic.StatisticManager;
 import org.ietf.ldap.LDAPException;
 
@@ -17,10 +14,29 @@ import java.util.Collection;
  */
 public class BasicSearchOperation extends BasicOperation implements SearchOperation {
 
+    protected long createTimestamp;
+    protected long closeTimestamp;
+
     protected SearchRequest searchRequest;
     protected SearchResponse searchResponse;
 
     protected long bufferSize;
+
+    protected DN bindDn;
+
+    protected DN dn;
+    protected Filter filter;
+
+    protected int scope;
+    protected int dereference;
+    protected boolean typesOnly;
+
+    protected long sizeLimit;
+    protected long timeLimit;
+
+    protected Collection<String> attributes;
+
+    protected long totalCount;
 
     public BasicSearchOperation(Session session) {
         super(session);
@@ -50,7 +66,6 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
     public void setSearchResponse(SearchResponse searchResponse) {
         super.setResponse(searchResponse);
         this.searchResponse = searchResponse;
-        searchResponse.setBufferSize(bufferSize);
     }
 
     public DN getDn() {
@@ -61,6 +76,14 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
         searchRequest.setDn(dn);
     }
 
+    public Filter getFilter() {
+        return searchRequest.getFilter();
+    }
+
+    public void setFilter(Filter filter) {
+        searchRequest.setFilter(filter);
+    }
+
     public int getScope() {
         return searchRequest.getScope();
     }
@@ -69,12 +92,20 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
         searchRequest.setScope(scope);
     }
 
-    public Filter getFilter() {
-        return searchRequest.getFilter();
+    public int getDereference() {
+        return searchRequest.getDereference();
     }
 
-    public void setFilter(Filter filter) {
-        searchRequest.setFilter(filter);
+    public void setDereference(int dereference) {
+        searchRequest.setDereference(dereference);
+    }
+
+    public boolean isTypesOnly() {
+        return searchRequest.isTypesOnly();
+    }
+
+    public void setTypesOnly(boolean typesOnly) {
+        searchRequest.setTypesOnly(typesOnly);
     }
 
     public Collection<String> getAttributes() {
@@ -93,30 +124,49 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
         searchRequest.setSizeLimit(sizeLimit);
     }
 
+    public long getTimeLimit() {
+        return searchRequest.getTimeLimit();
+    }
+
+    public void setTimeLimit(long timeLimit) {
+        searchRequest.setTimeLimit(timeLimit);
+    }
+
     public void add(SearchResult result) throws Exception {
 
-        if (isAbandoned()) {
+        if (sizeLimit > 0 && totalCount >= sizeLimit) {
+            LDAPException exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
+            response.setException(exception);
+            throw exception;
+        }
+
+        if (timeLimit > 0 && System.currentTimeMillis() - createTimestamp > timeLimit) {
+            LDAPException exception = LDAP.createException(LDAP.TIME_LIMIT_EXCEEDED);
+            response.setException(exception);
+            throw exception;
+        }
+
+        if (abandoned) {
             if (debug) log.debug("Operation "+operationName+" has been abandoned.");
             return;
         }
 
         if (debug) log.debug("Result: \""+result.getDn()+"\".");
 
-        long sizeLimit = getSizeLimit();
-        long totalCount = getTotalCount();
-
-        if (sizeLimit > 0 && totalCount >= sizeLimit) {
-            LDAPException exception = LDAP.createException(LDAP.SIZE_LIMIT_EXCEEDED);
-            setException(exception);
-            throw exception;
-        }
-
         searchResponse.add(result);
+
+        totalCount++;
     }
 
     public void add(SearchReference reference) throws Exception {
 
-        if (isAbandoned()) {
+        if (timeLimit > 0 && System.currentTimeMillis() - createTimestamp > timeLimit) {
+            LDAPException exception = LDAP.createException(LDAP.TIME_LIMIT_EXCEEDED);
+            response.setException(exception);
+            throw exception;
+        }
+
+        if (abandoned) {
             if (debug) log.debug("Operation "+operationName+" has been abandoned.");
             return;
         }
@@ -126,15 +176,50 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
         searchResponse.add(reference);
     }
 
+    public void init() throws Exception {
+
+        createTimestamp = System.currentTimeMillis();
+
+        bindDn      = session.getBindDn();
+
+        dn          = searchRequest.getDn();
+        filter      = searchRequest.getFilter();
+
+        scope       = searchRequest.getScope();
+        dereference = searchRequest.getDereference();
+        typesOnly   = searchRequest.isTypesOnly();
+
+        sizeLimit   = searchRequest.getSizeLimit();
+        timeLimit   = searchRequest.getTimeLimit();
+
+        attributes  = searchRequest.getAttributes();
+
+        StatisticManager statisticManager = penrose.getStatisticManager();
+        SchemaManager schemaManager = session.getPenroseContext().getSchemaManager();
+
+        statisticManager.incrementCounter(StatisticManager.SEARCH);
+
+        dn = schemaManager.normalize(dn);
+        //searchRequest.setDn(dn);
+
+        attributes = schemaManager.normalize(attributes);
+        //searchRequest.setAttributes(attributes);
+
+        if (searchResponse != null) searchResponse.setBufferSize(bufferSize);
+    }
+
     public void close() throws Exception {
 
-        if (searchResponse.isClosed()) {
-            if (debug) log.debug("Search operation is already closed.");
+        if (searchResponse != null && searchResponse.isClosed()) {
+            if (debug) log.debug("Operation "+operationName+" already closed.");
             return;
         }
 
-        if (debug) log.debug("Closing search operation "+operationName+".");
-        searchResponse.close();
+        if (debug) log.debug("Closing operation "+operationName+".");
+
+        closeTimestamp = System.currentTimeMillis();
+
+        if (searchResponse != null) searchResponse.close();
     }
 
     public boolean isClosed() {
@@ -143,6 +228,14 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
 
     public long getTotalCount() {
         return searchResponse.getTotalCount();
+    }
+
+    public long getCreateTimestamp() {
+        return createTimestamp;
+    }
+
+    public long getCloseTimestamp() {
+        return closeTimestamp;
     }
 
     public void setBufferSize(long bufferSize) {
@@ -156,82 +249,5 @@ public class BasicSearchOperation extends BasicOperation implements SearchOperat
     public void setException(LDAPException exception) {
         if (debug) log.debug("Error: \""+exception.getMessage()+"\".");
         super.setException(exception);
-    }
-
-    public void normalize() throws Exception {
-
-        SchemaManager schemaManager = session.getPenroseContext().getSchemaManager();
-
-        DN dn = getDn();
-        DN normalizedDn = schemaManager.normalize(dn);
-        setDn(normalizedDn);
-
-        Collection<String> attributes = getAttributes();
-        Collection<String> normalizedAttributes = schemaManager.normalize(attributes);
-        setAttributes(normalizedAttributes);
-    }
-
-    public void execute() throws Exception {
-
-        final long timestamp = System.currentTimeMillis();
-        Access.log(this);
-
-        session.addOperation(this);
-
-        try {
-            StatisticManager statisticManager = penrose.getStatisticManager();
-            statisticManager.incrementCounter(StatisticManager.SEARCH);
-
-            String sessionName = session.getSessionName();
-
-            DN bindDn     = session.getBindDn();
-            DN dn         = searchRequest.getDn();
-            Filter filter = searchRequest.getFilter();
-            int scope     = searchRequest.getScope();
-
-            if (warn) log.warn("Session "+ sessionName+" ("+operationName+"): Search "+dn+" with filter "+filter+".");
-
-            if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
-                log.debug("SEARCH:");
-                log.debug(" - Session        : "+sessionName);
-                log.debug(" - Message        : "+operationName);
-                log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
-                log.debug(" - Base DN        : "+dn);
-                log.debug(" - Scope          : "+LDAP.getScope(scope));
-                log.debug(" - Filter         : "+filter);
-                log.debug(" - Attributes     : "+getAttributes());
-                log.debug("");
-
-                log.debug("Controls: "+getRequestControls());
-            }
-
-            normalize();
-            
-            PartitionManager partitionManager = penrose.getPartitionManager();
-            Partition partition = partitionManager.getPartition(dn);
-
-            SearchOperation op = new PipelineSearchOperation(this) {
-                public void close() throws Exception {
-                    super.close();
-
-                    session.removeOperation(searchOperation.getOperationName());
-                    Access.log(searchOperation, System.currentTimeMillis() - timestamp);
-                }
-            };
-
-            partition.search(op);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-
-            response.setException(e);
-            try { close(); } catch (Exception ex) { log.error(ex.getMessage(), ex); }
-
-            session.removeOperation(this.getOperationName());
-            Access.log(this, System.currentTimeMillis() - timestamp);
-
-            throw e;
-        }
     }
 }

@@ -11,6 +11,10 @@ import java.util.Collection;
  */
 public interface SourceServiceMBean {
 
+    public final static String STARTED = "STARTED";
+    public final static String STOPPED = "STOPPED";
+
+    public String getStatus() throws Exception;
     public Long getCount() throws Exception;
 
     public void create() throws Exception;

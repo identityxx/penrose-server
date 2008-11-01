@@ -39,7 +39,7 @@ public interface Operation {
     public void setException(LDAPException exception);
     public void setException(Exception exception);
 
-    public int waitFor() throws Exception;
+    public int waitFor();
 
-    public void execute() throws Exception;
+    public void init() throws Exception;
 }

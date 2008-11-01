@@ -437,24 +437,24 @@ public class Partition implements Cloneable {
         throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
     }
 
-    public void validatePermission(Session session, SearchRequest request, Entry entry) throws Exception {
+    public void validatePermission(SearchOperation operation, Entry entry) throws Exception {
 
-        DN dn = request.getDn();
+        DN dn = operation.getDn();
 
-        int rc = aclEvaluator.checkSearch(session, entry, dn);
+        int rc = aclEvaluator.checkSearch(operation.getSession(), entry, dn);
         if (rc == LDAP.SUCCESS) return;
 
         if (debug) log.debug("Not allowed to search entry \""+dn+"\".");
         throw LDAP.createException(LDAP.INSUFFICIENT_ACCESS_RIGHTS);
     }
 
-    public void validatePermission(Session session, SearchResult result) throws Exception {
+    public void validatePermission(SearchOperation operation, SearchResult result) throws Exception {
 
         DN dn = result.getDn();
         String entryId = result.getEntryId();
         Entry entry = directory.getEntry(entryId);
 
-        int rc = aclEvaluator.checkRead(session, entry, dn);
+        int rc = aclEvaluator.checkRead(operation.getSession(), entry, dn);
         if (rc == LDAP.SUCCESS) return;
 
         if (debug) log.debug("Not allowed to read entry \""+dn+"\".");
@@ -909,9 +909,7 @@ public class Partition implements Cloneable {
             SearchResponse response
     ) throws Exception {
 
-        SearchOperation operation = session.createSearchOperation(""+request.getMessageId());
-        operation.setRequest(request);
-        operation.setResponse(response);
+        SearchOperation operation = session.createSearchOperation(""+request.getMessageId(), request, response);
 
         search(operation);
     }
@@ -943,7 +941,7 @@ public class Partition implements Cloneable {
             throw LDAP.createException(LDAP.NO_SUCH_OBJECT);
         }
 
-        searchEntries(operation, entries, false);
+        searchEntries(operation, entries, true);
     }
 
     public void searchEntry(
@@ -1023,8 +1021,7 @@ public class Partition implements Cloneable {
                         op.setException(LDAP.createException(e));
 
                     } finally {
-                        if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
-                        try { op.close(); } catch (Exception e) { log.error(e.getMessage(), e); }
+                        try { op.close(entry); } catch (Exception e) { log.error(e.getMessage(), e); }
                     }
                 }
             };

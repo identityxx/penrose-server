@@ -17,6 +17,8 @@ public class ServiceWriter {
 
     public void write(File directory, ServiceConfig serviceConfig) throws Exception {
 
+        Element element = createElement(serviceConfig);
+        
         File serviceInf = new File(directory, "SERVICE-INF");
         serviceInf.mkdirs();
 
@@ -36,7 +38,7 @@ public class ServiceWriter {
                 "http://penrose.safehaus.org/dtd/service.dtd"
         );
 
-        xmlWriter.write(createElement(serviceConfig));
+        xmlWriter.write(element);
         xmlWriter.close();
 
         writer.close();

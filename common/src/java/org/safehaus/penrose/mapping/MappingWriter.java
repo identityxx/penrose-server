@@ -24,6 +24,8 @@ public class MappingWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(mappingConfigManager);
+        
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -37,7 +39,7 @@ public class MappingWriter {
                 "http://penrose.safehaus.org/dtd/mappings.dtd"
         );
 
-        writer.write(createElement(mappingConfigManager));
+        writer.write(element);
         writer.close();
     }
 

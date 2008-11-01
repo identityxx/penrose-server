@@ -7,6 +7,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.module.ModuleClient;
+import org.safehaus.penrose.module.ModuleManagerClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.lockout.Lock;
@@ -77,7 +78,8 @@ public class LockoutClient {
     public void reset(String partitionName, String account) throws Exception {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient("LockoutModule");
 
         moduleClient.invoke(
                 "reset",
@@ -89,7 +91,8 @@ public class LockoutClient {
     public void list(String partitionName) throws Exception {
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ModuleClient moduleClient = partitionClient.getModuleClient("LockoutModule");
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        ModuleClient moduleClient = moduleManagerClient.getModuleClient("LockoutModule");
         Collection<Lock> accounts = (Collection<Lock>)moduleClient.invoke("list", new Object[] {}, new String[] {});
 
         for (Lock lock : accounts) {

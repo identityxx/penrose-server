@@ -2,11 +2,9 @@ package org.safehaus.penrose.directory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
-import org.safehaus.penrose.directory.EntryServiceMBean;
 
 import java.util.Collection;
 

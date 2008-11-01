@@ -117,6 +117,18 @@ public class FederationConfig implements Serializable, Cloneable {
         repositories.put(name, repository);
     }
 
+    public Collection<String> getRepositoryNames(String type) {
+        Collection<String> list = new ArrayList<String>();
+
+        for (FederationRepositoryConfig repository : repositories.values()) {
+            if (type.equals(repository.getType())) {
+                list.add(repository.getName());
+            }
+        }
+
+        return list;
+    }
+
     public Collection<String> getRepositoryNames() {
         Collection<String> list = new ArrayList<String>();
         list.addAll(repositories.keySet());

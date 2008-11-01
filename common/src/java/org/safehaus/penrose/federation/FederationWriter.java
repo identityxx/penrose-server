@@ -42,6 +42,8 @@ public class FederationWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(federationConfig);
+        
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -55,7 +57,7 @@ public class FederationWriter {
                 "http://penrose.safehaus.org/dtd/federation.dtd"
         );
 
-        writer.write(createElement(federationConfig));
+        writer.write(element);
         writer.close();
     }
 

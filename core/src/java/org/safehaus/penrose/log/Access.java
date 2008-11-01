@@ -415,8 +415,6 @@ public class Access {
 
         if (warn) {
 
-            SearchRequest request = operation.getSearchRequest();
-            
             StringBuilder sb = new StringBuilder();
 
             sb.append("SEARCH session=\"");
@@ -424,17 +422,17 @@ public class Access {
             sb.append("\" operation=\"");
             sb.append(operation.getOperationName());
             sb.append("\" base=\"");
-            sb.append(request.getDn());
+            sb.append(operation.getDn());
             sb.append("\" scope=\"");
-            sb.append(LDAP.getScope(request.getScope()));
+            sb.append(LDAP.getScope(operation.getScope()));
             sb.append("\" filter=\"");
 
-            Filter filter = request.getFilter();
+            Filter filter = operation.getFilter();
             sb.append(filter == null ? "(objectClass=*)" : filter.toString());
 
             sb.append("\"");
 
-            Collection<String> attributes = request.getAttributes();
+            Collection<String> attributes = operation.getAttributes();
             if (!attributes.isEmpty()) {
                 sb.append(" attrs=\"");
 

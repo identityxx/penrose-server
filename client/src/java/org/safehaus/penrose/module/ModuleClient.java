@@ -2,7 +2,6 @@ package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
-import org.safehaus.penrose.module.ModuleServiceMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +19,18 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
     public ModuleClient(PenroseClient client, String partitionName, String name) throws Exception {
         super(client, name, getStringObjectName(partitionName, name));
 
+        this.partitionName = partitionName;
+    }
+
+    public static String getStringObjectName(String partitionName, String name) {
+        return "Penrose:type=module,partition="+partitionName+",name="+name;
+    }
+
+    public String getPartitionName() {
+        return partitionName;
+    }
+
+    public void setPartitionName(String partitionName) {
         this.partitionName = partitionName;
     }
 
@@ -59,16 +70,8 @@ public class ModuleClient extends BaseClient implements ModuleServiceMBean {
         return (Collection<ModuleMapping>)getAttribute("ModuleMappings");
     }
 
-    public static String getStringObjectName(String partitionName, String name) {
-        return "Penrose:type=module,partition="+partitionName+",name="+name;
-    }
-
-    public String getPartitionName() {
-        return partitionName;
-    }
-
-    public void setPartitionName(String partitionName) {
-        this.partitionName = partitionName;
+    public String getStatus() throws Exception {
+        return (String)getAttribute("Status");
     }
 
     public void start() throws Exception {

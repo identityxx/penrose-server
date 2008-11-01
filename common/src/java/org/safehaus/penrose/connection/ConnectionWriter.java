@@ -26,6 +26,8 @@ public class ConnectionWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(connectionConfigManager);
+
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -39,7 +41,7 @@ public class ConnectionWriter {
                 "http://penrose.safehaus.org/dtd/connections.dtd"
         );
 
-        writer.write(createElement(connectionConfigManager));
+        writer.write(element);
         writer.close();
     }
 

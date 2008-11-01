@@ -7,6 +7,7 @@ import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.client.BaseClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
@@ -25,9 +26,65 @@ import gnu.getopt.Getopt;
 /**
  * @author Endi Sukma Dewata
  */
-public class ConnectionManagerClient {
+public class ConnectionManagerClient extends BaseClient implements ConnectionManagerServiceMBean {
 
     public static Logger log = LoggerFactory.getLogger(ConnectionManagerClient.class);
+
+    protected String partitionName;
+
+    public ConnectionManagerClient(PenroseClient client, String partitionName) throws Exception {
+        super(client, "ConnectionManager", getStringObjectName(partitionName));
+
+        this.partitionName = partitionName;
+    }
+
+    public static String getStringObjectName(String partitionName) {
+        return "Penrose:type=connectionManager,partition="+partitionName;
+    }
+
+    public String getPartitionName() {
+        return partitionName;
+    }
+
+    public void setPartitionName(String partitionName) {
+        this.partitionName = partitionName;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Connections
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public ConnectionClient getConnectionClient(String connectionName) throws Exception {
+        return new ConnectionClient(client, partitionName, connectionName);
+    }
+
+    public Collection<String> getConnectionNames() throws Exception {
+        return (Collection<String>)getAttribute("ConnectionNames");
+    }
+
+    public void createConnection(ConnectionConfig connectionConfig) throws Exception {
+        invoke(
+                "createConnection",
+                new Object[] { connectionConfig },
+                new String[] { ConnectionConfig.class.getName() }
+        );
+    }
+
+    public void updateConnection(String name, ConnectionConfig connectionConfig) throws Exception {
+        invoke(
+                "updateConnection",
+                new Object[] { name, connectionConfig },
+                new String[] { String.class.getName(), ConnectionConfig.class.getName() }
+        );
+    }
+
+    public void removeConnection(String name) throws Exception {
+        invoke(
+                "removeConnection",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Command Line
@@ -37,20 +94,21 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
         System.out.print(TextUtil.rightPad("CONNECTION", 40)+" ");
-        System.out.println(TextUtil.leftPad("STATUS", 10));
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
         System.out.print(TextUtil.repeat("-", 40)+" ");
         System.out.println(TextUtil.repeat("-", 10));
 
-        for (String connectionName : partitionClient.getConnectionNames()) {
+        for (String connectionName : connectionManagerClient.getConnectionNames()) {
 
-            //ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
-            String status = "OK";
+            ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
+            String status = connectionClient.getStatus();
 
             System.out.print(TextUtil.rightPad(connectionName, 40)+" ");
-            System.out.println(TextUtil.leftPad(status, 10)+" ");
+            System.out.println(TextUtil.rightPad(status, 10)+" ");
         }
     }
 
@@ -58,7 +116,8 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
+        ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
         ConnectionConfig connectionConfig = connectionClient.getConnectionConfig();
 
         System.out.println("Connection  : "+connectionConfig.getName());
@@ -118,12 +177,13 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
-        for (String connectionName : partitionClient.getConnectionNames()) {
+        for (String connectionName : connectionManagerClient.getConnectionNames()) {
 
             System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
             connectionClient.start();
 
             System.out.println("Connection started.");
@@ -134,10 +194,11 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
         System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
         connectionClient.start();
 
         System.out.println("Connection started.");
@@ -167,12 +228,13 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
-        for (String connectionName : partitionClient.getConnectionNames()) {
+        for (String connectionName : connectionManagerClient.getConnectionNames()) {
 
             System.out.println("Starting connection "+connectionName+" in partition "+partitionName+"...");
 
-            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
             connectionClient.stop();
 
             System.out.println("Connection started.");
@@ -183,10 +245,11 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
         System.out.println("Stopping connection "+connectionName+" in partition "+partitionName+"...");
 
-        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
         connectionClient.stop();
 
         System.out.println("Connection stopped.");
@@ -216,12 +279,13 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
-        for (String connectionName : partitionClient.getConnectionNames()) {
+        for (String connectionName : connectionManagerClient.getConnectionNames()) {
 
             System.out.println("Restarting connection "+connectionName+" in partition "+partitionName+"...");
 
-            ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+            ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
             connectionClient.restart();
 
             System.out.println("Connection restarted.");
@@ -232,10 +296,11 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
 
         System.out.println("Restarting connection "+connectionName+" in partition "+partitionName+"...");
 
-        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
         connectionClient.restart();
 
         System.out.println("Connection restarted.");
@@ -272,7 +337,8 @@ public class ConnectionManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        ConnectionClient connectionClient = partitionClient.getConnectionClient(connectionName);
+        ConnectionManagerClient connectionManagerClient = partitionClient.getConnectionManagerClient();
+        ConnectionClient connectionClient = connectionManagerClient.getConnectionClient(connectionName);
 
         Object returnValue = connectionClient.invoke(
                 methodName,
@@ -329,7 +395,7 @@ public class ConnectionManagerClient {
 
         Iterator<String> iterator = parameters.iterator();
         String command = iterator.next();
-        System.out.println("Executing "+command);
+        //System.out.println("Executing "+command);
 
         if ("show".equals(command)) {
             processShowCommand(client, iterator);

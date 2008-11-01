@@ -26,7 +26,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.source.*;
-import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.mapping.Mapping;
 import org.safehaus.penrose.mapping.MappingRule;
 
@@ -483,7 +483,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -566,8 +566,6 @@ public class DynamicEntry extends Entry implements Cloneable {
         if (debug) log.debug("Expanding entry.");
 
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
 
         DN baseDn = operation.getDn();
         int scope = operation.getScope();
@@ -577,7 +575,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         Filter filter = operation.getFilter();
 
-        Collection<String> requestedAliases = getRequestedAliases(request);
+        Collection<String> requestedAliases = getRequestedAliases(operation);
         if (debug) log.debug("Requested sources: "+requestedAliases);
 
         SourceAttributes sourceAttributes = new SourceAttributes();
@@ -594,7 +592,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         if (debug) log.debug("Search orders: "+searchOrders);
 
         Map<String,Filter> sourceFilters = createSourceFilters(filter, sourceAttributes, interpreter);
-        Map<String,Boolean> requestedSources = createRequestedSources(request, requestedAliases, sourceFilters);
+        Map<String,Boolean> requestedSources = createRequestedSources(operation, requestedAliases, sourceFilters);
 
         String primaryAlias  = getSearchOrder(0);
         Filter primaryFilter = sourceFilters.get(primaryAlias);
@@ -650,7 +648,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 SearchRequest newRequest = new SearchRequest();
                 newRequest.setFilter(sourceFilter);
 
-                SearchResponse newResponse = new Pipeline(response) {
+                SearchResponse newResponse = new SOPipeline(operation) {
                     public void close() throws Exception {
                     }
                 };
@@ -667,7 +665,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         SearchRequest newRequest = new SearchRequest();
         newRequest.setFilter(primaryFilter);
 
-        SearchResponse newResponse = new Pipeline(response) {
+        SearchResponse newResponse = new SOPipeline(operation) {
             public void close() throws Exception {
             }
         };
@@ -675,7 +673,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         expandSource(session, newRequest, newResponse, sa, requestedSources);
     }
 
-    public Collection<String> getRequestedAliases(SearchRequest request) throws Exception {
+    public Collection<String> getRequestedAliases(SearchOperation operation) throws Exception {
 
         final Collection<String> requestedSources = new HashSet<String>();
 
@@ -709,9 +707,9 @@ public class DynamicEntry extends Entry implements Cloneable {
                 }
             };
 
-            fp.process(request.getFilter());
+            fp.process(operation.getFilter());
 
-            for (String attributeName : request.getAttributes()) {
+            for (String attributeName : operation.getAttributes()) {
                 for (MappingRule rule : mapping.getRules(attributeName)) {
                     String variable = rule.getVariable();
                     if (variable == null) continue;
@@ -764,11 +762,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         return filter;
     }
 
-    public Map<String,Boolean> createRequestedSources(SearchRequest request, Collection<String> requestedSources, Map<String,Filter> filterMap) throws Exception {
+    public Map<String,Boolean> createRequestedSources(SearchOperation operation, Collection<String> requestedSources, Map<String,Filter> filterMap) throws Exception {
 
         Map<String,Boolean> requestedMap = new HashMap<String,Boolean>();
 
-        Collection<String> attributeNames = request.getAttributes();
+        Collection<String> attributeNames = operation.getAttributes();
         boolean allRequested = attributeNames.contains("*");
 
         for (EntrySource source : getSources()) {
@@ -819,6 +817,7 @@ public class DynamicEntry extends Entry implements Cloneable {
 
         try {
             SearchResponse searchResponse = new SearchResponse();
+
             source.search(session, searchRequest, searchResponse);
 
             while (searchResponse.hasNext()) {
@@ -878,24 +877,24 @@ public class DynamicEntry extends Entry implements Cloneable {
     }
 
     public void expandSource(
-            Session session,
-            SearchRequest request,
-            SearchResponse response,
-            int index,
-            SourceAttributes sourceAttributes,
-            Map<String,Boolean> requestedSources
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response,
+            final int index,
+            final SourceAttributes sourceAttributes,
+            final Map<String,Boolean> requestedSources
     ) throws Exception {
 
-        String alias = getSearchOrder(index);
+        final String alias = getSearchOrder(index);
 
         int nextIndex = index+1;
         boolean lastSource = nextIndex == getSources().size();
 
-        String nextAlias = null;
+        String nextAlias;
 
-        String nextLinkedAttribute = null;
-        String prevAlias = null;
-        String prevLinkingAttribute = null;
+        String nla = null;
+        String pa = null;
+        String pla = null;
 
         if (!lastSource) {
             nextAlias = getSearchOrder(nextIndex);
@@ -908,13 +907,17 @@ public class DynamicEntry extends Entry implements Cloneable {
 
                 if (i < 0) continue;
 
-                nextLinkedAttribute = field.getName();
-                prevAlias = variable.substring(0, i);
-                prevLinkingAttribute = variable.substring(i+1);
+                nla = field.getName();
+                pa = variable.substring(0, i);
+                pla = variable.substring(i+1);
 
                 break; // TODO need to support multiple link attributes
             }
         }
+
+        final String nextLinkedAttribute = nla;
+        final String prevAlias = pa;
+        final String prevLinkingAttribute = pla;
 
         if (sourceAttributes.contains(alias)) {
 
@@ -929,13 +932,24 @@ public class DynamicEntry extends Entry implements Cloneable {
             EntrySource source = getSource(alias);
             String search = source.getSearch();
 
-            SearchResponse searchResponse = new SearchResponse();
+            SearchResponse searchResponse = new SearchResponse() {
+                public void add(SearchResult searchResult) throws Exception {
+
+                    SourceAttributes sa  = (SourceAttributes)sourceAttributes.clone();
+                    sa.set(alias, searchResult);
+
+                    expandSearchResult(
+                            session, request, response, index, sa, requestedSources,
+                            nextLinkedAttribute, prevAlias, prevLinkingAttribute
+                    );
+                }
+            };
 
             try {
                 source.search(session, request, searchResponse);
 
             } catch (Exception e) {
-                if (EntrySourceConfig.REQUIRED.equals(search)) {
+                if (index == 0 || EntrySourceConfig.REQUIRED.equals(search)) {
                     if (debug) log.debug("Source "+alias+" is required and error occured.");
 
                 } else {
@@ -945,17 +959,17 @@ public class DynamicEntry extends Entry implements Cloneable {
                 return;
             }
 
-            if (!searchResponse.hasNext()) {
-                if (EntrySourceConfig.REQUIRED.equals(search)) {
-                    if (debug) log.debug("Source "+alias+" is required and link not found.");
+            if (searchResponse.getTotalCount() == 0) {
+                if (index == 0 || EntrySourceConfig.REQUIRED.equals(search)) {
+                    if (debug) log.debug("Source "+alias+" is required and no results found.");
 
                 } else {
-                    if (debug) log.debug("Source "+alias+" is optional and link not found.");
+                    if (debug) log.debug("Source "+alias+" is optional and no results found.");
                     response.add(createSearchResult(sourceAttributes));
                 }
                 return;
             }
-
+/*
             do {
                 SearchResult searchResult = searchResponse.next();
 
@@ -968,6 +982,7 @@ public class DynamicEntry extends Entry implements Cloneable {
                 );
 
             } while (searchResponse.hasNext());
+*/
         }
     }
 

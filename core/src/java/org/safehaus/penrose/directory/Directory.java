@@ -1,7 +1,6 @@
 package org.safehaus.penrose.directory;
 
 import org.safehaus.penrose.ldap.DN;
-import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionConfig;
 import org.safehaus.penrose.partition.PartitionContext;
@@ -25,7 +24,7 @@ public class Directory implements Cloneable {
 
     protected DirectoryConfig directoryConfig;
 
-    protected Map<String,Entry> entriesById = new LinkedHashMap<String,Entry>();
+    protected Map<String,Entry> entries = new LinkedHashMap<String,Entry>();
 
     public Directory(Partition partition) throws Exception {
         this.partition = partition;
@@ -83,24 +82,28 @@ public class Directory implements Cloneable {
         Entry entry = (Entry)clazz.newInstance();
         entry.init(entryConfig, entryContext);
 
-        entriesById.put(entry.getId(), entry);
+        entries.put(entry.getId(), entry);
 
         return entry;
     }
 
     public Entry removeEntry(String id) throws Exception {
 
-        Entry entry = entriesById.get(id);
+        if (debug) log.debug("Removing entry \""+id+"\".");
+
+        Entry entry = entries.remove(id);
+        if (entry == null) {
+            if (debug) log.debug("Entry \""+id+"\" not found.");
+            return null;
+        }
 
         DN dn = entry.getDn();
-        if (debug) log.debug("Removing entry \""+ dn +"\".");
+        if (debug) log.debug("Removing entry \""+dn+"\".");
 
         Entry parent = entry.getParent();
-
         if (parent != null) {
             if (debug) log.debug("Detaching from \""+parent.getDn()+"\".");
             parent.removeChild(entry);
-            return entry;
         }
 
         return entry;
@@ -166,7 +169,7 @@ public class Directory implements Cloneable {
     }
 
     public Entry getEntry(String id) {
-        return entriesById.get(id);
+        return entries.get(id);
     }
 
     public Entry getEntry(DN dn) throws Exception {
@@ -177,7 +180,7 @@ public class Directory implements Cloneable {
 
     public Collection<Entry> getEntries() {
         Collection<Entry> results = new ArrayList<Entry>();
-        results.addAll(entriesById.values());
+        results.addAll(entries.values());
         return results;
     }
     
@@ -187,7 +190,7 @@ public class Directory implements Cloneable {
 
         Collection<Entry> results = new ArrayList<Entry>();
         for (String id : ids) {
-            Entry entry = entriesById.get(id);
+            Entry entry = entries.get(id);
             results.add(entry);
         }
         return results;
@@ -208,7 +211,7 @@ public class Directory implements Cloneable {
         Collection<Entry> results = new ArrayList<Entry>();
 
         for (String id : getRootIds()) {
-            Entry entry = entriesById.get(id);
+            Entry entry = entries.get(id);
             Collection<Entry> list = entry.findEntries(dn);
             results.addAll(list);
         }

@@ -82,7 +82,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
 
             if (parent != null) {
                 if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                addChildren(parentId, entryConfig);
+                addChild(parentId, entryConfig.getId());
                 return;
             }
         }
@@ -97,7 +97,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
             if (!parents.isEmpty()) {
                 EntryConfig parent = parents.iterator().next();
                 if (debug) log.debug(" - Found parent \""+parent.getDn()+"\".");
-                addChildren(parent.getId(), entryConfig);
+                addChild(parent.getId(), entryConfig.getId());
                 return;
             }
         }
@@ -137,43 +137,27 @@ public class DirectoryConfig implements Serializable, Cloneable {
         oldEntryConfig.setId(id);
     }
 
+    public void removeEntryConfig(String id) throws Exception {
+        EntryConfig entryConfig = getEntryConfig(id);
+        if (entryConfig == null) return;
+        removeEntryConfig(entryConfig);
+    }
+
     public void removeEntryConfig(EntryConfig entryConfig) throws Exception {
         entryConfigsById.remove(entryConfig.getId());
 
         EntryConfig parent = getParent(entryConfig);
         if (parent == null) {
-            rootIds.add(entryConfig.getId());
+            rootIds.remove(entryConfig.getId());
 
         } else {
-            Collection<EntryConfig> children = getChildren(parent);
-            if (children != null) children.remove(entryConfig);
+            removeChild(parent.getId(), entryConfig.getId());
         }
 
         Collection<String> c = entryConfigsByDn.get(entryConfig.getDn().getNormalizedDn());
         if (c == null) return;
 
         c.remove(entryConfig.getId());
-        if (c.isEmpty()) {
-            entryConfigsByDn.remove(entryConfig.getDn().getNormalizedDn());
-        }
-    }
-
-    public void removeEntryConfig(String id) throws Exception {
-        EntryConfig entryConfig = entryConfigsById.remove(id);
-
-        EntryConfig parent = getParent(entryConfig);
-        if (parent == null) {
-            rootIds.remove(id);
-
-        } else {
-            Collection<EntryConfig> children = getChildren(parent);
-            if (children != null) children.remove(entryConfig);
-        }
-
-        Collection<String> c = entryConfigsByDn.get(entryConfig.getDn().getNormalizedDn());
-        if (c == null) return;
-
-        c.remove(id);
         if (c.isEmpty()) {
             entryConfigsByDn.remove(entryConfig.getDn().getNormalizedDn());
         }
@@ -208,6 +192,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         Collection<EntryConfig> entryConfigs = new ArrayList<EntryConfig>();
         for (String entryId : entryIds) {
             EntryConfig entryConfig = getEntryConfig(entryId);
+            if (entryConfig == null) continue;
             entryConfigs.add(entryConfig);
         }
         return entryConfigs;
@@ -296,7 +281,7 @@ public class DirectoryConfig implements Serializable, Cloneable {
         if (debug) log.debug("New parent "+(newParent == null ? null : newParent.getDn()));
 
         if (newParent != null) {
-            addChildren(newParent.getId(), entryConfig);
+            addChild(newParent.getId(), entryConfig.getId());
         }
 
         Collection<EntryConfig> children = getChildren(entryConfig);
@@ -327,15 +312,25 @@ public class DirectoryConfig implements Serializable, Cloneable {
         return children;
     }
 
-    public void addChildren(String parentId, EntryConfig childConfig) {
-    	//if (debug) log.debug("Adding "+childConfig.getDn()+" under "+parentConfig.getDn());
+    public void addChild(String parentId, String childId) {
         Collection<String> children = childrenById.get(parentId);
         if (children == null) {
             children = new ArrayList<String>();
             childrenById.put(parentId, children);
         }
-        children.add(childConfig.getId());
-        parentById.put(childConfig.getId(), parentId);
+
+        children.add(childId);
+        parentById.put(childId, parentId);
+    }
+
+    public void removeChild(String parentId, String childId) throws Exception {
+        parentById.remove(childId);
+
+        Collection<String> children = childrenById.get(parentId);
+        if (children == null) return;
+
+        children.remove(childId);
+        if (children.isEmpty()) childrenById.remove(parentId);
     }
 
     public Collection<EntryConfig> getChildren(EntryConfig parentConfig) {

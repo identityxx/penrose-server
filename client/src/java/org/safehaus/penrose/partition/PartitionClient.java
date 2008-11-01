@@ -1,23 +1,16 @@
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.connection.ConnectionConfig;
-import org.safehaus.penrose.directory.EntryConfig;
-import org.safehaus.penrose.directory.EntryClient;
 import org.safehaus.penrose.directory.DirectoryClient;
 import org.safehaus.penrose.filter.Filter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
-import org.safehaus.penrose.partition.PartitionServiceMBean;
-import org.safehaus.penrose.connection.ConnectionClient;
+import org.safehaus.penrose.connection.ConnectionManagerClient;
 import org.safehaus.penrose.mapping.MappingClient;
-import org.safehaus.penrose.module.ModuleClient;
 import org.safehaus.penrose.scheduler.SchedulerClient;
-import org.safehaus.penrose.source.SourceClient;
-import org.safehaus.penrose.mapping.MappingConfig;
-import org.safehaus.penrose.module.ModuleConfig;
-import org.safehaus.penrose.module.ModuleMapping;
-import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.mapping.MappingManagerClient;
+import org.safehaus.penrose.module.ModuleManagerClient;
+import org.safehaus.penrose.source.SourceManagerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,108 +65,28 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
     // Connections
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getConnectionNames() throws Exception {
-        return (Collection<String>)getAttribute("ConnectionNames");
-    }
-
-    public ConnectionClient getConnectionClient(String connectionName) throws Exception {
-        return new ConnectionClient(client, name, connectionName);
-    }
-
-    public void createConnection(ConnectionConfig connectionConfig) throws Exception {
-        invoke(
-                "createConnection",
-                new Object[] { connectionConfig },
-                new String[] { ConnectionConfig.class.getName() }
-        );
-    }
-
-    public void updateConnection(String name, ConnectionConfig connectionConfig) throws Exception {
-        invoke(
-                "updateConnection",
-                new Object[] { name, connectionConfig },
-                new String[] { String.class.getName(), ConnectionConfig.class.getName() }
-        );
-    }
-
-    public void removeConnection(String name) throws Exception {
-        invoke(
-                "removeConnection",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
+    public ConnectionManagerClient getConnectionManagerClient() throws Exception {
+        return new ConnectionManagerClient(client, name);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Sources
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getSourceNames() throws Exception {
-        return (Collection<String>)getAttribute("SourceNames");
-    }
-
-    public SourceClient getSourceClient(String sourceName) throws Exception {
-        return new SourceClient(client, name, sourceName);
-    }
-
-    public void createSource(SourceConfig sourceConfig) throws Exception {
-        invoke(
-                "createSource",
-                new Object[] { sourceConfig },
-                new String[] { SourceConfig.class.getName() }
-        );
-    }
-
-    public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
-        invoke(
-                "updateSource",
-                new Object[] { name, sourceConfig },
-                new String[] { String.class.getName(), SourceConfig.class.getName() }
-        );
-    }
-
-    public void removeSource(String name) throws Exception {
-        invoke(
-                "removeSource",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
+    public SourceManagerClient getSourceManagerClient() throws Exception {
+        return new SourceManagerClient(client, name);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Mappings
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getMappingNames() throws Exception {
-        return (Collection<String>)getAttribute("MappingNames");
+    public MappingManagerClient getMappingManagerClient() throws Exception {
+        return new MappingManagerClient(client, name);
     }
 
     public MappingClient getMappingClient(String mappingName) throws Exception {
         return new MappingClient(client, name, mappingName);
-    }
-
-    public void createMapping(MappingConfig mappingConfig) throws Exception {
-        invoke(
-                "createMapping",
-                new Object[] { mappingConfig },
-                new String[] { MappingConfig.class.getName() }
-        );
-    }
-
-    public void updateMapping(String mappingName, MappingConfig mappingConfig) throws Exception {
-        invoke(
-                "updateMapping",
-                new Object[] { mappingName, mappingConfig },
-                new String[] { String.class.getName(), MappingConfig.class.getName() }
-        );
-    }
-
-    public void removeMapping(String mappingName) throws Exception {
-        invoke(
-                "removeMapping",
-                new Object[] { mappingName },
-                new String[] { String.class.getName() }
-        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -184,92 +97,12 @@ public class PartitionClient extends BaseClient implements PartitionServiceMBean
         return new DirectoryClient(client, name);
     }
 
-    public DN getSuffix() throws Exception {
-        return (DN)getAttribute("Suffix");
-    }
-
-    public Collection<DN> getSuffixes() throws Exception {
-        return (Collection<DN>)getAttribute("Suffixes");
-    }
-
-    public Collection<String> getRootEntryIds() throws Exception {
-        return (Collection<String>)getAttribute("RootEntryIds");
-    }
-
-    public Collection<String> getEntryIds() throws Exception {
-        return (Collection<String>)getAttribute("EntryIds");
-    }
-
-    public EntryClient getEntryClient(String entryId) throws Exception {
-        return new EntryClient(client, name, entryId);
-    }
-
-    public String createEntry(EntryConfig entryConfig) throws Exception {
-        return (String)invoke(
-                "createEntry",
-                new Object[] { entryConfig },
-                new String[] { EntryConfig.class.getName() }
-        );
-    }
-
-    public void updateEntry(String id, EntryConfig entryConfig) throws Exception {
-        invoke(
-                "updateEntry",
-                new Object[] { id, entryConfig },
-                new String[] { String.class.getName(), EntryConfig.class.getName() }
-        );
-    }
-
-    public void removeEntry(String id) throws Exception {
-        invoke(
-                "removeEntry",
-                new Object[] { id },
-                new String[] { String.class.getName() }
-        );
-    }
-
     ////////////////////////////////////////////////////////////////////////////////
     // Modules
     ////////////////////////////////////////////////////////////////////////////////
 
-    public Collection<String> getModuleNames() throws Exception {
-        return (Collection<String>)getAttribute("ModuleNames");
-    }
-
-    public ModuleClient getModuleClient(String moduleName) throws Exception {
-        return new ModuleClient(client, name, moduleName);
-    }
-
-    public void createModule(ModuleConfig moduleConfig) throws Exception {
-        invoke(
-                "createModule",
-                new Object[] { moduleConfig },
-                new String[] { ModuleConfig.class.getName() }
-        );
-    }
-
-    public void createModule(ModuleConfig moduleConfig, Collection<ModuleMapping> moduleMappings) throws Exception {
-        invoke(
-                "createModule",
-                new Object[] { moduleConfig, moduleMappings },
-                new String[] { ModuleConfig.class.getName(), Collection.class.getName() }
-        );
-    }
-
-    public void updateModule(String name, ModuleConfig moduleConfig) throws Exception {
-        invoke(
-                "updateModule",
-                new Object[] { name, moduleConfig },
-                new String[] { String.class.getName(), ModuleConfig.class.getName() }
-        );
-    }
-
-    public void removeModule(String name) throws Exception {
-        invoke(
-                "removeModule",
-                new Object[] { name },
-                new String[] { String.class.getName() }
-        );
+    public ModuleManagerClient getModuleManagerClient() throws Exception {
+        return new ModuleManagerClient(client, name);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

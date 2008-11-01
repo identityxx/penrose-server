@@ -25,6 +25,8 @@ public class SourceWriter {
 
         log.debug("Writing "+file+".");
 
+        Element element = createElement(sourceConfigManager);
+        
         FileWriter fw = new FileWriter(file);
         OutputFormat format = OutputFormat.createPrettyPrint();
         format.setTrimText(false);
@@ -38,7 +40,7 @@ public class SourceWriter {
                 "http://penrose.safehaus.org/dtd/sources.dtd"
         );
 
-        writer.write(createElement(sourceConfigManager));
+        writer.write(element);
         writer.close();
     }
 

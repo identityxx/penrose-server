@@ -5,8 +5,16 @@
 
 <modules>
 
-  <module name="FederationModule" enabled="true">
-    <module-class>org.safehaus.penrose.federation.module.FederationModule</module-class>
+  <module name="JDBC">
+    <module-class>org.safehaus.penrose.federation.module.JDBCFederationModule</module-class>
+  </module>
+  
+  <module name="LDAP">
+    <module-class>org.safehaus.penrose.federation.module.LDAPFederationModule</module-class>
+  </module>
+
+  <module name="NIS">
+    <module-class>org.safehaus.penrose.federation.module.NISFederationModule</module-class>
   </module>
 
 </modules>

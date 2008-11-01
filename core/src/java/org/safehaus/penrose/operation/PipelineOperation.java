@@ -93,11 +93,11 @@ public class PipelineOperation implements Operation {
         operation.setException(exception);
     }
 
-    public int waitFor() throws Exception {
+    public int waitFor() {
         return operation.waitFor();
     }
 
-    public void execute() throws Exception {
-        operation.execute();
+    public void init() throws Exception {
+        operation.init();
     }
 }

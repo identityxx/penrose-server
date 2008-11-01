@@ -177,6 +177,9 @@ public class SearchResponse extends Response implements Cloneable {
         closed = true;
 
         notifyAll();
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        log.debug("Search response has been closed.");
     }
 
     public boolean isClosed() {

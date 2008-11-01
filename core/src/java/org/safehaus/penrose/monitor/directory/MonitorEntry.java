@@ -102,12 +102,12 @@ public class MonitorEntry extends Entry {
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateScope(SearchOperation operation) throws Exception {
+        return true;
     }
 
-    public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,7 @@ public class MonitorEntry extends Entry {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             expand(op);
 
@@ -179,9 +179,6 @@ public class MonitorEntry extends Entry {
     public void searchBaseEntry(
             SearchOperation operation
     ) throws Exception {
-
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
 
         DN baseDn = operation.getDn();
         int scope = operation.getScope();

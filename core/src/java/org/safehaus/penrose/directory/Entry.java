@@ -497,13 +497,11 @@ public class Entry implements Cloneable {
     }
 
     public void validatePermission(SearchOperation operation) throws Exception {
-        Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        partition.validatePermission(session, request, this);
+        partition.validatePermission(operation, this);
     }
 
-    public void validatePermission(Session session, SearchResult result) throws Exception {
-        partition.validatePermission(session, result);
+    public void validatePermission(SearchOperation operation, SearchResult result) throws Exception {
+        partition.validatePermission(operation, result);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -530,7 +528,7 @@ public class Entry implements Cloneable {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchOperation operation) throws Exception {
+    public boolean validateScope(SearchOperation operation) throws Exception {
 
         DN dn = operation.getDn();
         int scope = operation.getScope();
@@ -539,28 +537,33 @@ public class Entry implements Cloneable {
 
         if (scope == SearchRequest.SCOPE_ONE && !getParentDn().matches(dn)) {
             log.debug("Entry \""+getDn()+"\" is out of scope.");
-            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+            //throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+            return false;
         }
+
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Filter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateFilter(SearchOperation operation) throws Exception {
+    public boolean validateFilter(SearchOperation operation) throws Exception {
 
         Filter filter = operation.getFilter();
         if (debug) log.debug("Checking search filter "+filter+".");
 
         if (!entryFilterEvaluator.eval(filter)) {
             if (debug) log.debug("Entry \""+getDn()+"\" doesn't match search filter.");
-            throw LDAP.createException(LDAP.UNWILLING_TO_PERFORM);
+            return false;
         }
+
+        return true;
     }
 
-    public boolean validateSearchResult(SearchRequest request, SearchResult result) throws Exception {
+    public boolean validateSearchResult(SearchOperation operation, SearchResult result) throws Exception {
 
-        Filter filter = request.getFilter();
+        Filter filter = operation.getFilter();
         Attributes attributes = result.getAttributes();
 
         if (debug) log.debug("Checking search filter "+filter+".");
@@ -858,9 +861,7 @@ public class Entry implements Cloneable {
 
         SearchResponse response = new SearchResponse();
 
-        SearchOperation operation = session.createSearchOperation();
-        operation.setRequest(request);
-        operation.setResponse(response);
+        SearchOperation operation = session.createSearchOperation(request, response);
 
         search(operation);
 
@@ -956,7 +957,7 @@ public class Entry implements Cloneable {
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
 
         try {
-            validate(op);
+            if (!validate(op)) return;
 
             Interpreter interpreter = partition.newInterpreter();
             interpreter.set("operation", op);
@@ -981,13 +982,27 @@ public class Entry implements Cloneable {
         }
     }
 
-    public void validate(
+    public boolean validate(
             SearchOperation operation
     ) throws Exception {
 
-        validateScope(operation);
+        if (debug) log.debug("Validating search scope.");
+
+        if (!validateScope(operation)) {
+            if (debug) log.debug("Entry doesn't match search scope.");
+            return false;
+        }
+
+        if (debug) log.debug("Validating search filter.");
+        if (!validateFilter(operation)) {
+            if (debug) log.debug("Entry doesn't match search filter.");
+            return false;
+        }
+
+        if (debug) log.debug("Validating ACL.");
         validatePermission(operation);
-        validateFilter(operation);
+
+        return true;
     }
 
     public void expand(

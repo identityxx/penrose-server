@@ -8,6 +8,7 @@ import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.client.PenroseClient;
+import org.safehaus.penrose.client.BaseClient;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.PatternLayout;
@@ -26,9 +27,65 @@ import gnu.getopt.Getopt;
 /**
  * @author Endi Sukma Dewata
  */
-public class SourceManagerClient {
+public class SourceManagerClient extends BaseClient implements SourceManagerServiceMBean {
 
     public static Logger log = LoggerFactory.getLogger(SourceManagerClient.class);
+
+    protected String partitionName;
+
+    public SourceManagerClient(PenroseClient client, String partitionName) throws Exception {
+        super(client, "SourceManager", getStringObjectName(partitionName));
+
+        this.partitionName = partitionName;
+    }
+
+    public static String getStringObjectName(String partitionName) {
+        return "Penrose:type=sourceManager,partition="+partitionName;
+    }
+
+    public String getPartitionName() {
+        return partitionName;
+    }
+
+    public void setPartitionName(String partitionName) {
+        this.partitionName = partitionName;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Sources
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public Collection<String> getSourceNames() throws Exception {
+        return (Collection<String>)getAttribute("SourceNames");
+    }
+
+    public SourceClient getSourceClient(String sourceName) throws Exception {
+        return new SourceClient(client, partitionName, sourceName);
+    }
+
+    public void createSource(SourceConfig sourceConfig) throws Exception {
+        invoke(
+                "createSource",
+                new Object[] { sourceConfig },
+                new String[] { SourceConfig.class.getName() }
+        );
+    }
+
+    public void updateSource(String name, SourceConfig sourceConfig) throws Exception {
+        invoke(
+                "updateSource",
+                new Object[] { name, sourceConfig },
+                new String[] { String.class.getName(), SourceConfig.class.getName() }
+        );
+    }
+
+    public void removeSource(String name) throws Exception {
+        invoke(
+                "removeSource",
+                new Object[] { name },
+                new String[] { String.class.getName() }
+        );
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Command Line
@@ -38,26 +95,21 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
         System.out.print(TextUtil.rightPad("SOURCE", 40)+" ");
-        System.out.println(TextUtil.leftPad("ENTRIES", 10));
+        System.out.println(TextUtil.rightPad("STATUS", 10));
 
         System.out.print(TextUtil.repeat("-", 40)+" ");
         System.out.println(TextUtil.repeat("-", 10));
 
-        for (String sourceName : partitionClient.getSourceNames()) {
+        for (String sourceName : sourceManagerClient.getSourceNames()) {
 
-            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
-
-            String entries;
-            try {
-                entries = ""+sourceClient.getCount();
-            } catch (Exception e) {
-                entries = "N/A";
-            }
+            SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
+            String status = sourceClient.getStatus();
 
             System.out.print(TextUtil.rightPad(sourceName, 40)+" ");
-            System.out.println(TextUtil.leftPad(entries, 10)+" ");
+            System.out.println(TextUtil.rightPad(status, 10)+" ");
         }
     }
 
@@ -65,7 +117,8 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
+        SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
         SourceConfig sourceConfig = sourceClient.getSourceConfig();
 
         System.out.println("Source      : "+sourceConfig.getName());
@@ -137,12 +190,13 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
-        for (String sourceName : partitionClient.getSourceNames()) {
+        for (String sourceName : sourceManagerClient.getSourceNames()) {
 
             System.out.println("Creating source "+sourceName+" in partition "+partitionName+"...");
 
-            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+            SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
             sourceClient.create();
 
             System.out.println("Source created.");
@@ -153,10 +207,11 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
         System.out.println("Creating source "+sourceName+" in partition "+partitionName+"...");
 
-        SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+        SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
         sourceClient.create();
 
         System.out.println("Source created.");
@@ -186,12 +241,13 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
-        for (String sourceName : partitionClient.getSourceNames()) {
+        for (String sourceName : sourceManagerClient.getSourceNames()) {
 
             System.out.println("Clearing source "+sourceName+" in partition "+partitionName+"...");
 
-            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+            SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
             sourceClient.clear();
 
             System.out.println("Source cleared.");
@@ -202,10 +258,11 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
         System.out.println("Clearing source "+sourceName+" in partition "+partitionName+"...");
 
-        SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+        SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
         sourceClient.clear();
 
         System.out.println("Source cleared.");
@@ -235,12 +292,13 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
-        for (String sourceName : partitionClient.getSourceNames()) {
+        for (String sourceName : sourceManagerClient.getSourceNames()) {
 
             System.out.println("Dropping source "+sourceName+" in partition "+partitionName+"...");
 
-            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+            SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
             sourceClient.drop();
 
             System.out.println("Source dropped.");
@@ -251,10 +309,11 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
 
         System.out.println("Dropping source "+sourceName+" in partition "+partitionName+"...");
 
-        SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+        SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
         sourceClient.drop();
 
         System.out.println("Source dropped.");
@@ -291,7 +350,8 @@ public class SourceManagerClient {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-        SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+        SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
+        SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
 
         Object returnValue = sourceClient.invoke(
                 methodName,
@@ -354,7 +414,8 @@ public class SourceManagerClient {
 
             PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
             PartitionClient partitionClient = partitionManagerClient.getPartitionClient(partitionName);
-            SourceClient sourceClient = partitionClient.getSourceClient(sourceName);
+            SourceManagerClient sourceManagerClient = partitionClient.getSourceManagerClient();
+            SourceClient sourceClient = sourceManagerClient.getSourceClient(sourceName);
 
             SearchRequest request = new SearchRequest();
             SearchResponse response = new SearchResponse();

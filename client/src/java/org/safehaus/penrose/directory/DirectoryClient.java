@@ -8,7 +8,6 @@ import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.client.BaseClient;
 import org.safehaus.penrose.client.PenroseClient;
-import org.safehaus.penrose.directory.DirectoryServiceMBean;
 import org.safehaus.penrose.ldap.DN;
 import org.apache.log4j.Level;
 import org.apache.log4j.ConsoleAppender;
@@ -60,12 +59,20 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
     // Entries
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public DN getSuffix() throws Exception {
+        return (DN)getAttribute("Suffix");
+    }
+
+    public Collection<DN> getSuffixes() throws Exception {
+        return (Collection<DN>)getAttribute("Suffixes");
+    }
+
+    public Collection<String> getRootEntryIds() throws Exception {
+        return (Collection<String>)getAttribute("RootEntryIds");
+    }
+
     public Collection<String> getEntryIds() throws Exception {
-        return (Collection<String>)invoke(
-                "getEntryIds",
-                new Object[] { },
-                new String[] { }
-        );
+        return (Collection<String>)getAttribute("EntryIds");
     }
 
     public EntryClient getEntryClient(String entryId) throws Exception {
@@ -107,7 +114,7 @@ public class DirectoryClient extends BaseClient implements DirectoryServiceMBean
         DirectoryClient directoryClient = partitionClient.getDirectoryClient();
 
         System.out.print(TextUtil.rightPad("ENTRIES", 10)+" ");
-        System.out.println(TextUtil.leftPad("DN", 50));
+        System.out.println(TextUtil.rightPad("DN", 50));
 
         System.out.print(TextUtil.repeat("-", 10)+" ");
         System.out.println(TextUtil.repeat("-", 50));

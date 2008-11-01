@@ -9,8 +9,11 @@ import org.safehaus.penrose.interpreter.Interpreter;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.pipeline.Pipeline;
+import org.safehaus.penrose.pipeline.SOPipeline;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
+import org.safehaus.penrose.operation.BasicSearchOperation;
+import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.util.TextUtil;
 
 import java.util.*;
@@ -146,8 +149,8 @@ public class ProxyEntry extends Entry {
     // Scope
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void validateScope(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateScope(SearchOperation operation) throws Exception {
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,8 +161,8 @@ public class ProxyEntry extends Entry {
         return true;
     }
 
-    public void validateFilter(SearchOperation operation) throws Exception {
-        // ignore
+    public boolean validateFilter(SearchOperation operation) throws Exception {
+        return true;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,7 +485,7 @@ public class ProxyEntry extends Entry {
         }
 
         try {
-            validate(operation);
+            if (!validate(operation)) return;
 
             expand(operation);
 
@@ -492,12 +495,13 @@ public class ProxyEntry extends Entry {
     }
 
     public void expand(
-            SearchOperation operation
+            final SearchOperation operation
     ) throws Exception {
 
+        if (debug) log.debug("Expanding "+getDn()+".");
+
         Session session = operation.getSession();
-        SearchRequest request = (SearchRequest)operation.getRequest();
-        SearchResponse response = (SearchResponse)operation.getResponse();
+        SearchRequest request = operation.getSearchRequest();
 
         final DN baseDn     = operation.getDn();
         final Filter filter = operation.getFilter();
@@ -561,7 +565,7 @@ public class ProxyEntry extends Entry {
 
             final Interpreter interpreter = partition.newInterpreter();
 
-            SearchResponse newResponse = new Pipeline(response) {
+            SearchResponse newResponse = new SOPipeline(operation) {
                 public void add(SearchResult result) throws Exception {
                     SearchResult newResult = createSearchResult(interpreter, result);
                     newResult.setEntryId(getId());
@@ -577,6 +581,7 @@ public class ProxyEntry extends Entry {
             source.search(session, newRequest, newResponse);
 
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             if (subset) throw e;
         }
     }

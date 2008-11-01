@@ -23,6 +23,7 @@ import java.util.Map;
 public class SourceManager {
 
     public Logger log = LoggerFactory.getLogger(getClass());
+    public boolean debug = log.isDebugEnabled();
 
     public Partition partition;
     protected SourceConfigManager sourceConfigManager;
@@ -39,22 +40,51 @@ public class SourceManager {
 
     public void init() throws Exception {
 
-        for (SourceConfig sourceConfig : sourceConfigManager.getSourceConfigs()) {
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(getSourceNames());
+
+        for (String name : names) {
+
+            SourceConfig sourceConfig = getSourceConfig(name);
             if (!sourceConfig.isEnabled()) continue;
 
-            createSource(sourceConfig);
+            startSource(name);
         }
     }
 
-    public SourceConfigManager getSourceConfigManager() {
-        return sourceConfigManager;
+    public void destroy() throws Exception {
+
+        Collection<String> names = new ArrayList<String>();
+        names.addAll(sources.keySet());
+
+        for (String name : names) {
+            stopSource(name);
+        }
     }
 
-    public Source createSource(
-            SourceConfig sourceConfig
-    ) throws Exception {
+    public Collection<String> getSourceNames() {
+        return sourceConfigManager.getSourceNames();
+    }
 
-        if (log.isDebugEnabled()) log.debug("Creating source "+sourceConfig.getName()+".");
+    public SourceConfig getSourceConfig(String name) {
+        return sourceConfigManager.getSourceConfig(name);
+    }
+
+    public void startSource(String name) throws Exception {
+        if (debug) log.debug("Starting source "+name+".");
+        SourceConfig sourceConfig = getSourceConfig(name);
+        createSource(sourceConfig);
+    }
+
+    public void stopSource(String name) throws Exception {
+        if (debug) log.debug("Stopping source "+name+".");
+        Source source = removeSource(name);
+        source.destroy();
+    }
+
+    public Source createSource(SourceConfig sourceConfig) throws Exception {
+
+        if (debug) log.debug("Creating source "+sourceConfig.getName()+".");
 
         String partitionName = sourceConfig.getPartitionName();
         String connectionName = sourceConfig.getConnectionName();
@@ -93,7 +123,7 @@ public class SourceManager {
         ClassLoader cl = partitionContext.getClassLoader();
         Class clazz = cl.loadClass(className);
 
-        log.debug("Creating "+className+".");
+         if (debug) log.debug("Creating "+className+".");
         source = (Source)clazz.newInstance();
         source.init(sourceConfig, sourceContext);
 
@@ -136,11 +166,6 @@ public class SourceManager {
         return sources.values();
     }
 
-    public Source getSource() {
-        if (sources.isEmpty()) return null;
-        return sources.values().iterator().next();
-    }
-
     public Source getSource(String name) {
         Source source = sources.get(name);
         if (source != null) return source;
@@ -169,10 +194,7 @@ public class SourceManager {
         return sourcesByConnectionName.get(connectionName);
     }
 
-    public void destroy() throws Exception {
-
-        for (Source source : sources.values()) {
-            source.destroy();
-        }
+    public SourceConfigManager getSourceConfigManager() {
+        return sourceConfigManager;
     }
 }

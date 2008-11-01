@@ -49,7 +49,7 @@ public class MemoryMonitorEntry extends Entry {
         }
 
         try {
-            validate(operation);
+            if (!validate(operation)) return;
 
             expand(operation);
 

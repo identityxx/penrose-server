@@ -4,6 +4,7 @@ import org.ietf.ldap.LDAPException;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.operation.SearchOperation;
 import org.safehaus.penrose.operation.PipelineSearchOperation;
+import org.safehaus.penrose.directory.Entry;
 
 import java.util.*;
 
@@ -44,16 +45,20 @@ public class ParallelSearchOperation extends PipelineSearchOperation {
         if (getReturnCode() == LDAP.SUCCESS) super.setException(exception);
     }
 
-    public synchronized void close() throws Exception {
+    public synchronized void close(Entry entry) throws Exception {
+
+        if (debug) log.debug("Done searching \""+entry.getDn()+"\".");
 
         if (counter > 0) counter--;
         //log.debug("Counter = "+counter);
 
-        if (counter > 0) return;
+        if (counter > 0) {
+            if (debug) log.debug("Waiting for "+counter+" more search operations.");
+            return;
+        }
 
         if (debug) log.debug("Done searching "+total+" entries.");
-
-        super.close();
+        close();
         notifyAll();
     }
 

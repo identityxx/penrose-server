@@ -26,6 +26,10 @@ public class SourceClient extends BaseClient implements SourceServiceMBean {
         this.partitionName = partitionName;
     }
     
+    public String getStatus() throws Exception {
+        return (String)getAttribute("Status");
+    }
+
     public Long getCount() throws Exception {
         return (Long)getAttribute("Count");
     }

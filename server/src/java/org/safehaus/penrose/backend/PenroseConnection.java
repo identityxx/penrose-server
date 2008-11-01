@@ -333,7 +333,21 @@ public class PenroseConnection implements Connection {
         DN penroseDn = ((PenroseDN)dn).getDn();
         Filter penroseFilter = ((PenroseFilter)filter).getFilter();
 
-        return new PenroseSearchResponse(session.search(penroseDn, penroseFilter, scope));
+        SearchRequest penroseRequest = new SearchRequest();
+        penroseRequest.setDn(penroseDn);
+        penroseRequest.setFilter(penroseFilter);
+        penroseRequest.setScope(scope);
+
+        SearchResponse penroseResponse = new SearchResponse();
+
+        try {
+            session.search(penroseRequest, penroseResponse);
+
+        } catch (Exception e) {
+            penroseResponse.setException(e);
+        }
+
+        return new PenroseSearchResponse(penroseResponse);
     }
 
     public void search(
@@ -346,7 +360,12 @@ public class PenroseConnection implements Connection {
         SearchRequest penroseRequest = ((PenroseSearchRequest)request).getSearchRequest();
         SearchResponse penroseResponse = ((PenroseSearchResponse)response).getSearchResponse();
 
-        session.search(penroseRequest, penroseResponse);
+        try {
+            session.search(penroseRequest, penroseResponse);
+
+        } catch (Exception e) {
+            penroseResponse.setException(e);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

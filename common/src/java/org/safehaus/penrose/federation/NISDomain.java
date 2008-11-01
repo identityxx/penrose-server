@@ -9,7 +9,6 @@ public class NISDomain extends FederationRepositoryConfig {
     public final static String DOMAIN     = "domain";
 
     public final static String YP                    = "yp";
-    public final static String NIS                   = "nis";
     public final static String NSS                   = "nss";
     public final static String DB                    = "db";
 

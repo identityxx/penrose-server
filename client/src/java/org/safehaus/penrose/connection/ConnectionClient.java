@@ -41,6 +41,10 @@ public class ConnectionClient extends BaseClient implements ConnectionServiceMBe
         this.partitionName = partitionName;
     }
 
+    public String getStatus() throws Exception {
+        return (String)getAttribute("Status");
+    }
+
     public void start() throws Exception {
         invoke("start", new Object[] {}, new String[] {});
     }

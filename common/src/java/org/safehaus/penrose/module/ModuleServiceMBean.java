@@ -10,6 +10,11 @@ import java.util.Collection;
  */
 public interface ModuleServiceMBean {
 
+    public final static String STARTED = "STARTED";
+    public final static String STOPPED = "STOPPED";
+
+    public String getStatus() throws Exception;
+
     public void start() throws Exception;
     public void stop() throws Exception;
     public void restart() throws Exception;
