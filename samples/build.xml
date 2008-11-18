@@ -9,7 +9,6 @@
     <property file="../build.properties"/>
 
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
@@ -70,7 +69,7 @@
     </target>
 
     <target name="install" depends="init">
-        <copy todir="${penrose.home}/samples" overwrite="true">
+        <copy todir="${server.home}/samples" overwrite="true">
             <fileset dir="../server/target/dist/samples"/>
         </copy>
     </target>

@@ -4,7 +4,6 @@
 -->
 <project name="penrose-tomcat" default="build" basedir="../..">
 
-    <property name="penrose.home" value="${basedir}"/>
     <property name="tomcat.home" value="/usr/local/tomcat"/>
     <property name="webapp.name" value="penrose"/>
     <property name="webapp.dir" value="${tomcat.home}/webapps/${webapp.name}"/>

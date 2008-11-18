@@ -12,7 +12,8 @@
     <property name="module.name" value="${product.name}-server"/>
     <property name="project.dist" value="dist"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${module.name}-${product.version}"/>
+    <property name="server.home" value="${prefix}/opt/${module.name}-${product.version}"/>
+    
     <property name="docs.target" value="dist/javadoc"/>
 
     <tstamp>
@@ -441,17 +442,17 @@
     </target>
 
     <target name="check-install">
-        <mkdir dir="${penrose.home}"/>
+        <mkdir dir="${server.home}"/>
         <condition property="penrose.conf.missing">
           <not>
-            <available file="${penrose.home}/conf/server.xml"/>
+            <available file="${server.home}/conf/server.xml"/>
           </not>
         </condition>
     </target>
 
     <target name="install-conf" if="penrose.conf.missing">
         <echo message="Installing configuration files."/>
-        <copy todir="${penrose.home}">
+        <copy todir="${server.home}">
             <fileset dir="target/dist">
                 <include name="conf/**/*"/>
             </fileset>
@@ -459,7 +460,7 @@
     </target>
 
     <target name="install" depends="init,check-install,install-conf">
-        <copy todir="${penrose.home}" overwrite="true">
+        <copy todir="${server.home}" overwrite="true">
             <fileset dir="target/dist">
                 <exclude name="conf/**/*"/>
                 <exclude name="samples/**/*"/>
@@ -470,12 +471,12 @@
             </fileset>
         </copy>
         <delete failonerror="true">
-            <fileset dir="${penrose.home}">
+            <fileset dir="${server.home}">
                 <include name="lib/*"/>
                 <include name="server/lib/*"/>
             </fileset>
         </delete>
-        <copy todir="${penrose.home}" overwrite="true">
+        <copy todir="${server.home}" overwrite="true">
             <fileset dir="target/dist">
                 <include name="lib/*"/>
                 <include name="server/lib/*"/>
@@ -484,19 +485,19 @@
         <ant dir="../monitors" target="install"/>
         <ant dir="../services" target="install"/>
         <ant dir="../samples" target="install"/>
-        <chmod dir="${penrose.home}" perm="ugo+rw" includes="**/*"/>
-        <chmod dir="${penrose.home}" perm="ugo+rx" includes="**/*.sh"/>
+        <chmod dir="${server.home}" perm="ugo+rw" includes="**/*"/>
+        <chmod dir="${server.home}" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 
     <target name="uninstall" depends="init">
         <delete failonerror="false" includeemptydirs="true">
-            <fileset dir="${penrose.home}/bin" includes="**/*"/>
-            <fileset dir="${penrose.home}/conf/default" includes="*"/>
-            <fileset dir="${penrose.home}/docs" includes="**/*"/>
-            <fileset dir="${penrose.home}/lib" includes="*"/>
-            <fileset dir="${penrose.home}/samples" includes="**/*"/>
-            <fileset dir="${penrose.home}/schema" includes="**/*"/>
-            <fileset dir="${penrose.home}" includes="*"/>
+            <fileset dir="${server.home}/bin" includes="**/*"/>
+            <fileset dir="${server.home}/conf/default" includes="*"/>
+            <fileset dir="${server.home}/docs" includes="**/*"/>
+            <fileset dir="${server.home}/lib" includes="*"/>
+            <fileset dir="${server.home}/samples" includes="**/*"/>
+            <fileset dir="${server.home}/schema" includes="**/*"/>
+            <fileset dir="${server.home}" includes="*"/>
         </delete>
     </target>
 

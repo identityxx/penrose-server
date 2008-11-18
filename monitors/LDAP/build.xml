@@ -10,8 +10,6 @@
     <property name="monitor.title" value="LDAP"/>
     <property name="monitor.dir" value="monitors/${monitor.title}"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
-
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
@@ -93,13 +91,13 @@
     <target name="check-install">
         <condition property="config.missing">
           <not>
-            <available file="${penrose.home}/${monitor.dir}/MONITOR-INF/monitor.xml"/>
+            <available file="${server.home}/${monitor.dir}/MONITOR-INF/monitor.xml"/>
           </not>
         </condition>
     </target>
 
     <target name="install-config" if="config.missing">
-        <copy todir="${penrose.home}/${monitor.dir}">
+        <copy todir="${server.home}/${monitor.dir}">
             <fileset dir="../../server/target/dist/${monitor.dir}">
                 <include name="MONITOR-INF/monitor.xml"/>
             </fileset>
@@ -110,7 +108,7 @@
     </target>
 
     <target name="install" depends="init,check-install,install-config">
-        <copy todir="${penrose.home}/${monitor.dir}" overwrite="true">
+        <copy todir="${server.home}/${monitor.dir}" overwrite="true">
             <fileset dir="../../server/target/dist/${monitor.dir}">
                 <exclude name="MONITOR-INF/monitor.xml"/>
             </fileset>

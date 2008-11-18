@@ -4,7 +4,6 @@
 -->
 <project name="penrose-jboss" default="build" basedir="../..">
 
-    <property name="penrose.home" value="${basedir}"/>
     <property name="jboss.home" value="/usr/local/jboss"/>
     <property name="jboss.server" value="default"/>
     <property name="jboss.deploy" value="${jboss.home}/server/${jboss.server}/deploy"/>

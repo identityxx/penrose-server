@@ -11,7 +11,6 @@
 
     <property name="project.dist" value="../dist"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/${product.name}-${product.version}"/>
     <property name="docs.target" value="${project.dist}/javadoc"/>
 
     <tstamp>

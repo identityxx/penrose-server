@@ -6,7 +6,7 @@
 <beans>
 
   <bean id="penroseServer" class="org.safehaus.penrose.server.PenroseServer">
-    <constructor-arg><value>${penrose.home}</value></constructor-arg>
+    <constructor-arg><value>${penrose.server.home}</value></constructor-arg>
   </bean>
 
   <bean id="penroseInterceptor" class="org.safehaus.penrose.ldapbackend.apacheds.LDAPBackendInterceptor">

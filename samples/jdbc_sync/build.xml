@@ -9,7 +9,6 @@
     <property file="../../build.properties"/>
 
     <property name="prefix" value=""/>
-    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>

@@ -12,7 +12,7 @@
     <property name="module.name" value="penrose-client"/>
 
     <property name="prefix" value=""/>
-    <property name="install.dir" value="${prefix}/usr/local/${module.name}-${product.version}"/>
+    <property name="client.home" value="${prefix}/opt/${module.name}-${product.version}"/>
     <property name="docs.target" value="dist/javadoc"/>
 
     <tstamp>
@@ -349,16 +349,16 @@
     </target>
 
     <target name="pre-install">
-        <mkdir dir="${install.dir}"/>
+        <mkdir dir="${client.home}"/>
         <condition property="conf.missing">
           <not>
-            <available file="${install.dir}/conf/log4j.xml"/>
+            <available file="${client.home}/conf/log4j.xml"/>
           </not>
         </condition>
     </target>
 
     <target name="copy-penrose-conf" if="conf.missing">
-        <copy todir="${install.dir}">
+        <copy todir="${client.home}">
             <fileset dir="target/dist">
                 <include name="conf/**/*"/>
             </fileset>
@@ -366,20 +366,20 @@
     </target>
 
     <target name="install" depends="init,pre-install,copy-penrose-conf">
-        <mkdir dir="${install.dir}"/>
+        <mkdir dir="${client.home}"/>
         <delete failonerror="false">
-            <fileset dir="${install.dir}">
+            <fileset dir="${client.home}">
                 <include name="lib/*"/>
             </fileset>
         </delete>
-        <copy todir="${install.dir}">
+        <copy todir="${client.home}">
             <fileset dir="target/dist">
                 <include name="**/*"/>
                 <exclude name="conf/**/*"/>
             </fileset>
         </copy>
-        <chmod dir="${install.dir}" perm="ugo+rw" includes="**/*"/>
-        <chmod dir="${install.dir}" perm="ugo+rx" includes="**/*.sh"/>
+        <chmod dir="${client.home}" perm="ugo+rw" includes="**/*"/>
+        <chmod dir="${client.home}" perm="ugo+rx" includes="**/*.sh"/>
     </target>
 
     <target name="clean">

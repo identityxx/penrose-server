@@ -10,8 +10,6 @@
     <property name="service.title" value="OpenDS"/>
     <property name="service.dir" value="services/${service.title}"/>
 
-    <property name="penrose.home" value="${prefix}/usr/local/penrose-server-${product.version}"/>
-
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>
     </tstamp>
@@ -101,18 +99,18 @@
     <target name="check-install">
         <condition property="config.missing">
           <not>
-            <available file="${penrose.home}/${service.dir}/SERVICE-INF/service.xml"/>
+            <available file="${server.home}/${service.dir}/SERVICE-INF/service.xml"/>
           </not>
         </condition>
     </target>
 
     <target name="install-config" if="config.missing">
-        <copy todir="${penrose.home}/${service.dir}">
+        <copy todir="${server.home}/${service.dir}">
             <fileset dir="../../server/target/dist/${service.dir}">
                 <include name="config/**/*"/>
             </fileset>
         </copy>
-        <copy todir="${penrose.home}/${service.dir}">
+        <copy todir="${server.home}/${service.dir}">
             <fileset dir="../../server/target/dist/${service.dir}">
                 <include name="SERVICE-INF/service.xml"/>
             </fileset>
@@ -123,7 +121,7 @@
     </target>
 
     <target name="install" depends="init,check-install,install-config">
-        <copy todir="${penrose.home}/${service.dir}" overwrite="true">
+        <copy todir="${server.home}/${service.dir}" overwrite="true">
             <fileset dir="../../server/target/dist/${service.dir}">
                 <exclude name="config/**/*"/>
                 <exclude name="SERVICE-INF/service.xml"/>

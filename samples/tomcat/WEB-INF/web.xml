@@ -11,7 +11,7 @@
         <servlet-class>org.safehaus.penrose.example.tomcat.DemoServlet</servlet-class>
         <init-param>
             <param-name>penrose.home</param-name>
-            <param-value>${penrose.home}</param-value>
+            <param-value>${penrose.server.home}</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
