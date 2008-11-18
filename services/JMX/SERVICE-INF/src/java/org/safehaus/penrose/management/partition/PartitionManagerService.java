@@ -52,7 +52,7 @@ public class PartitionManagerService extends BaseService implements PartitionMan
     }
 
     public void unloadPartition(String name) throws Exception {
-        partitionManager.unloadPartition(name);
+        partitionManager.removePartition(name);
     }
 
     public void startPartition(String name) throws Exception {
@@ -75,25 +75,24 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         return partitionManager.getPartitionConfig(partitionName);
     }
 
-    public void createPartition(PartitionConfig partitionConfig) throws Exception {
+    public void addPartition(PartitionConfig partitionConfig) throws Exception {
 
         String partitionName = partitionConfig.getName();
 
         File partitionsDir = partitionManager.getPartitionsDir();
-        File path = new File(partitionsDir, partitionConfig.getName());
+        File path = new File(partitionsDir, partitionName);
         partitionConfig.store(path);
 
         partitionManager.addPartitionConfig(partitionConfig);
-        partitionManager.startPartition(partitionName);
     }
 
-    public void updatePartition(String name, PartitionConfig partitionConfig) throws Exception {
+    public void updatePartition(String partitionName, PartitionConfig partitionConfig) throws Exception {
 
-        partitionManager.stopPartition(name);
-        partitionManager.unloadPartition(name);
+        partitionManager.stopPartition(partitionName);
+        partitionManager.removePartition(partitionName);
 
         File partitionsDir = partitionManager.getPartitionsDir();
-        File oldDir = new File(partitionsDir, name);
+        File oldDir = new File(partitionsDir, partitionName);
         File newDir = new File(partitionsDir, partitionConfig.getName());
         oldDir.renameTo(newDir);
 
@@ -103,13 +102,16 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         partitionManager.startPartition(partitionConfig.getName());
     }
 
-    public void removePartition(String name) throws Exception {
+    public void removePartition(String partitionName) throws Exception {
+
+        PartitionService partitionService = getPartitionService(partitionName);
+        partitionService.unregister();
 
         File partitionsDir = partitionManager.getPartitionsDir();
-        File partitionDir = new File(partitionsDir, name);
+        File partitionDir = new File(partitionsDir, partitionName);
 
-        partitionManager.stopPartition(name);
-        partitionManager.unloadPartition(name);
+        partitionManager.stopPartition(partitionName);
+        partitionManager.removePartition(partitionName);
 
         FileUtil.delete(partitionDir);
     }
@@ -149,19 +151,25 @@ public class PartitionManagerService extends BaseService implements PartitionMan
         super.unregister();
     }
 
-    public void partitionStarted(PartitionEvent event) throws Exception {
+    public void partitionAdded(PartitionEvent event) throws Exception {
 
-        String partitionName = event.getPartition().getName();
+        String partitionName = event.getPartitionName();
 
         PartitionService partitionService = getPartitionService(partitionName);
         partitionService.register();
     }
 
-    public void partitionStopped(PartitionEvent event) throws Exception {
+    public void partitionRemoved(PartitionEvent event) throws Exception {
 
-        String partitionName = event.getPartition().getName();
+        String partitionName = event.getPartitionName();
 
         PartitionService partitionService = getPartitionService(partitionName);
         partitionService.unregister();
+    }
+
+    public void partitionStarted(PartitionEvent event) throws Exception {
+    }
+
+    public void partitionStopped(PartitionEvent event) throws Exception {
     }
 }

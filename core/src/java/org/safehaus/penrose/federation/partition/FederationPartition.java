@@ -119,7 +119,7 @@ public class FederationPartition extends Partition implements FederationMBean {
 
         PartitionManager partitionManager = partitionContext.getPartitionManager();
         partitionManager.stopPartition(partitionName);
-        partitionManager.unloadPartition(partitionName);
+        partitionManager.removePartition(partitionName);
     }
 
     public void removePartition(String partitionName) {

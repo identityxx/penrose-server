@@ -112,7 +112,7 @@ public class PenroseMonitor {
                     if (logger.getAppender("console") != null) {
                         logger.setLevel(Level.INFO);
                         logger.removeAppender("console");
-                        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss}] %m%n"));
+                        ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%d{MM/dd/yyyy HH:mm:ss.SSS}] %m%n"));
                         logger.addAppender(appender);
                     }
                 }

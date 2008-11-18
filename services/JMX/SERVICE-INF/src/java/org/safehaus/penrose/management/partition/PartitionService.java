@@ -57,7 +57,7 @@ public class PartitionService extends BaseService implements PartitionServiceMBe
     }
 
     public String getStatus() {
-        return getPartition() == null ? "STOPPED" : "RUNNING";
+        return getPartition() == null ? "STOPPED" : "STARTED";
     }
 
     public void store() throws Exception {

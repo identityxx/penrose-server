@@ -233,6 +233,9 @@
         <ant dir="../monitors" target="dist"/>
         <ant dir="../services" target="dist"/>
         <ant dir="../samples" target="dist"/>
+    </target>
+
+    <target name="package" depends="dist">
 
         <mkdir dir="dist"/>
         <zip destfile="dist/${module.name}-${product.version}.zip">
@@ -308,7 +311,7 @@
         </tar>
     </target>
 
-    <target name="dist-macosx" depends="docs,dist" if="isMac">
+    <target name="dist-macosx" depends="docs,package" if="isMac">
         <echo message="Creating ${module.name}-${product.version}.pkg"/>
         <mkdir dir="target/${module.name}-${product.version}.dmg"/>
         <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
@@ -340,10 +343,10 @@
 
     </target>
 
-    <target name="dist-unix" depends="docs,dist" if="isUnix">
+    <target name="dist-unix" depends="docs,package" if="isUnix">
     </target>
 
-    <target name="dist-win32" depends="docs,dist" if="isWindows">
+    <target name="dist-win32" depends="docs,package" if="isWindows">
         <echo message="Creating ${module.name}-${product.version}.exe"/>
         <copy todir="target" file="installer/${module.name}.iss">
             <filterchain>
@@ -401,7 +404,7 @@
         </condition>
     </target>
 
-    <target name="rpm-build" depends="dist" if="hasRpmBuilder">
+    <target name="rpm-build" depends="package" if="hasRpmBuilder">
         <copy todir="target" file="installer/${rpm.spec}">
             <filterchain>
                 <expandproperties/>

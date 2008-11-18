@@ -53,9 +53,14 @@ public class PartitionManager {
         return partitionConfigManager;
     }
 
-    public void addPartitionConfig(PartitionConfig partitionConfig) {
+    public void addPartitionConfig(PartitionConfig partitionConfig) throws Exception {
         log.debug("Adding "+partitionConfig.getName()+" partition config.");
         partitionConfigManager.addPartitionConfig(partitionConfig);
+
+        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig);
+        for (PartitionListener listener : listeners) {
+            listener.partitionAdded(event);
+        }
     }
 
     public File getPartitionsDir() {
@@ -242,7 +247,7 @@ public class PartitionManager {
         for (String partitionName : list) {
             try {
                 stopPartition(partitionName);
-                unloadPartition(partitionName);
+                removePartition(partitionName);
 
             } catch (Exception e) {
                 errorLog.error(e.getMessage(), e);
@@ -274,10 +279,16 @@ public class PartitionManager {
         log.debug(name+" partition stopped.");
     }
 
-    public void unloadPartition(String name) throws Exception {
-        partitionConfigManager.removePartitionConfig(name);
+    public void removePartition(String name) throws Exception {
 
-        log.debug(name+" partition unloaded.");
+        PartitionConfig partitionConfig = partitionConfigManager.removePartitionConfig(name);
+
+        PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_REMOVED, partitionConfig);
+        for (PartitionListener listener : listeners) {
+            listener.partitionRemoved(event);
+        }
+
+        log.debug(name+" partition removed.");
     }
 
     public void clear() throws Exception {

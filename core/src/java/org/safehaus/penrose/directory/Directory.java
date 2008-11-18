@@ -50,9 +50,12 @@ public class Directory implements Cloneable {
 
     public void destroy(String id) throws Exception {
 
-        Entry entry = getEntry(id);
+        Entry entry = removeEntry(id);
 
-        for (Entry child : entry.getChildren()) {
+        Collection<Entry> children = new ArrayList<Entry>();
+        children.addAll(entry.getChildren());
+
+        for (Entry child : children) {
             if (child.getPartition() != partition) continue;
             destroy(child.getId());
         }
@@ -82,9 +85,13 @@ public class Directory implements Cloneable {
         Entry entry = (Entry)clazz.newInstance();
         entry.init(entryConfig, entryContext);
 
-        entries.put(entry.getId(), entry);
+        addEntry(entry);
 
         return entry;
+    }
+
+    public void addEntry(Entry entry) throws Exception {
+        entries.put(entry.getId(), entry);
     }
 
     public Entry removeEntry(String id) throws Exception {

@@ -23,7 +23,7 @@ public interface PartitionManagerServiceMBean {
 
     public PartitionConfig getPartitionConfig(String partitionName) throws Exception;
 
-    public void createPartition(PartitionConfig partitionConfig) throws Exception;
-    public void updatePartition(String name, PartitionConfig partitionConfig) throws Exception;
-    public void removePartition(String name) throws Exception;
+    public void addPartition(PartitionConfig partitionConfig) throws Exception;
+    public void updatePartition(String partitionName, PartitionConfig partitionConfig) throws Exception;
+    public void removePartition(String partitionName) throws Exception;
 }

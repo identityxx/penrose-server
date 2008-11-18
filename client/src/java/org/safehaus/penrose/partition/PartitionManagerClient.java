@@ -80,23 +80,23 @@ public class PartitionManagerClient extends BaseClient implements PartitionManag
         return new PartitionClient(client, partitionName);
     }
 
-    public void createPartition(PartitionConfig partitionConfig) throws Exception {
-        invoke("createPartition",
+    public void addPartition(PartitionConfig partitionConfig) throws Exception {
+        invoke("addPartition",
                 new Object[] { partitionConfig },
                 new String[] { PartitionConfig.class.getName() }
         );
     }
 
-    public void updatePartition(String name, PartitionConfig partitionConfig) throws Exception {
+    public void updatePartition(String partitionName, PartitionConfig partitionConfig) throws Exception {
         invoke("updatePartition",
-                new Object[] { name, partitionConfig },
+                new Object[] { partitionName, partitionConfig },
                 new String[] { String.class.getName(), PartitionConfig.class.getName() }
         );
     }
 
-    public void removePartition(String name) throws Exception {
+    public void removePartition(String partitionName) throws Exception {
         invoke("removePartition",
-                new Object[] { name },
+                new Object[] { partitionName },
                 new String[] { String.class.getName() }
         );
     }
