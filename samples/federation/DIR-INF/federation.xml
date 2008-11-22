@@ -5,113 +5,58 @@
 
 <federation>
     
-  <repository name="global" type="GLOBAL">
+  <repository name="ldap" type="LDAP">
     <parameter>
-      <param-name>ldapUrl</param-name>
+      <param-name>url</param-name>
       <param-value>ldap://localhost/</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapSuffix</param-name>
-      <param-value>ou=Global,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapUser</param-name>
-      <param-value>cn=Manager,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapPassword</param-name>
-      <param-value>secret</param-value>
     </parameter>
     <parameter>
       <param-name>suffix</param-name>
-      <param-value>ou=Global,dc=Example,dc=com</param-value>
-    </parameter>
-  </repository>
-
-  <repository name="ldap" type="LDAP">
-    <parameter>
-      <param-name>ldapUrl</param-name>
-      <param-value>ldap://localhost/</param-value>
-    </parameter>
-    <parameter>
-      <param-name>ldapSuffix</param-name>
       <param-value>dc=my-domain,dc=com</param-value>
     </parameter>
     <parameter>
-      <param-name>ldapUser</param-name>
+      <param-name>user</param-name>
       <param-value>cn=Manager,dc=my-domain,dc=com</param-value>
     </parameter>
     <parameter>
-      <param-name>ldapPassword</param-name>
+      <param-name>password</param-name>
       <param-value>secret</param-value>
-    </parameter>
-    <parameter>
-      <param-name>suffix</param-name>
-      <param-value>dc=my-domain,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingLocalAttribute</param-name>
-      <param-value>dn</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingGlobalAttribute</param-name>
-      <param-value>seeAlso</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingStorage</param-name>
-      <param-value>target</param-value>
-    </parameter>
-    <parameter>
-      <param-name>importMappingName</param-name>
-      <param-value>users</param-value>
-    </parameter>
-    <parameter>
-      <param-name>importMappingPrefix</param-name>
-      <param-value>l</param-value>
     </parameter>
   </repository>
 
   <repository name="nis" type="NIS">
     <parameter>
-      <param-name>nisServer</param-name>
+      <param-name>server</param-name>
       <param-value>localhost</param-value>
     </parameter>
     <parameter>
-      <param-name>nisDomain</param-name>
+      <param-name>domain</param-name>
       <param-value>example.com</param-value>
     </parameter>
-    <parameter>
-      <param-name>ypSuffix</param-name>
-      <param-value>ou=yp,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>nisSuffix</param-name>
-      <param-value>ou=nis,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>nssSuffix</param-name>
-      <param-value>ou=nss,dc=Example,dc=com</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingLocalAttribute</param-name>
-      <param-value>seeAlso</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingGlobalAttribute</param-name>
-      <param-value>dn</param-value>
-    </parameter>
-    <parameter>
-      <param-name>linkingStorage</param-name>
-      <param-value>source</param-value>
-    </parameter>
-    <parameter>
-      <param-name>importMappingName</param-name>
-      <param-value>users</param-value>
-    </parameter>
-    <parameter>
-      <param-name>importMappingPrefix</param-name>
-      <param-value>n</param-value>
-    </parameter>
   </repository>
+
+  <partition name="ldap">
+    <template>partitions/federation/templates/ldap</template>
+    <repository-ref name="ldap" repository="ldap"/>
+  </partition>
+
+  <partition name="nis_yp">
+    <template>partitions/federation/templates/yp</template>
+    <repository-ref name="nis" repository="nis"/>
+  </partition>
+
+  <partition name="nis">
+    <template>partitions/federation/templates/nis</template>
+    <repository-ref name="nis" repository="nis"/>
+  </partition>
+
+  <partition name="nis_nss">
+    <template>partitions/federation/templates/nss</template>
+    <repository-ref name="nis" repository="nis"/>
+  </partition>
+
+  <partition name="global">
+    <template>partitions/federation/templates/global</template>
+  </partition>
 
 </federation>

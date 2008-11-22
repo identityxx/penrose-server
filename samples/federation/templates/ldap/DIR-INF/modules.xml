@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE modules PUBLIC
+  "-//Penrose/DTD Modules ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/modules.dtd">
+
+<modules>
+
+  <module name="LinkingModule" enabled="true">
+    <module-class>org.safehaus.penrose.federation.module.LinkingModule</module-class>
+    <parameter>
+      <param-name>source</param-name>
+      <param-value>LDAP</param-value>
+    </parameter>
+    <parameter>
+      <param-name>target</param-name>
+      <param-value>federation.LDAP</param-value>
+    </parameter>
+    <parameter>
+      <param-name>sourceKey</param-name>
+      <param-value>dn</param-value>
+    </parameter>
+    <parameter>
+    <param-name>targetAttribute</param-name>
+      <param-value>seeAlso</param-value>
+    </parameter>
+    <parameter>
+      <param-name>mapping</param-name>
+      <param-value>import_users</param-value>
+    </parameter>
+    <parameter>
+      <param-name>mappingPrefix</param-name>
+      <param-value>l</param-value>
+    </parameter>
+  </module>
+
+</modules>

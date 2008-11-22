@@ -9,19 +9,23 @@
     <adapter-name>JDBC</adapter-name>
     <parameter>
       <param-name>driver</param-name>
-      <param-value>com.mysql.jdbc.Driver</param-value>
+      <param-value>org.hsqldb.jdbcDriver</param-value>
     </parameter>
     <parameter>
       <param-name>url</param-name>
-      <param-value>jdbc:mysql://localhost/jdbc?autoReconnect=true</param-value>
+      <param-value>jdbc:hsqldb:file:partitions/cache/db/example</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>
-      <param-value>penrose</param-value>
+      <param-value>sa</param-value>
     </parameter>
     <parameter>
       <param-name>password</param-name>
-      <param-value>penrose</param-value>
+      <param-value></param-value>
+    </parameter>
+    <parameter>
+      <param-name>shutdown</param-name>
+      <param-value>true</param-value>
     </parameter>
   </connection>
 

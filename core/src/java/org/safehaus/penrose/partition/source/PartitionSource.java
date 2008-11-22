@@ -3,7 +3,6 @@ package org.safehaus.penrose.partition.source;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.ldap.source.LDAPSource;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.source.Source;
 import org.safehaus.penrose.partition.Partition;
 
 /**

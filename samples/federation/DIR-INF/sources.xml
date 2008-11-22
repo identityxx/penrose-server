@@ -5,4 +5,91 @@
 
 <sources>
 
+  <source name="LDAP">
+
+    <connection-name>LDAP</connection-name>
+
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Global,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="users">
+
+    <connection-name>LDAP</connection-name>
+
+    <field name="dn" primaryKey="true"/>
+
+    <!-- account -->
+    <field name="uid"/>
+    <field name="description"/>
+    <field name="seeAlso"/>
+    <field name="l"/>
+    <field name="o"/>
+    <field name="ou"/>
+    <field name="host"/>
+
+    <!-- posixAccount -->
+    <field name="cn"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+
+    <!-- shadowAccount -->
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>account,posixAccount,shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,ou=Global,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="groups">
+
+    <connection-name>LDAP</connection-name>
+
+    <field name="dn" primaryKey="true"/>
+
+    <field name="cn"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <field name="seeAlso"/>
+
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+
+  </source>
+
 </sources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mappings PUBLIC
+  "-//Penrose/DTD Mappings ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/mappings.dtd">
+
+<mappings>
+
+  <mapping name="import_users">
+
+    <rule name="objectClass">
+      <constant>account</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>posixAccount</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>shadowAccount</constant>
+    </rule>
+
+    <!-- account -->
+    <rule name="uid">
+      <variable>a.sAMAccountName</variable>
+    </rule>
+
+    <!-- posixAcoount -->
+    <rule name="gecos" required="false">
+      <condition>!a.name.equals("NULL")</condition>
+      <variable>a.name</variable>
+    </rule>
+
+  </mapping>
+
+</mappings>

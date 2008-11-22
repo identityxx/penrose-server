@@ -39,9 +39,9 @@ public class LDAPSource extends Source {
 
     LDAPConnection connection;
 
-    DN baseDn;
-    int scope;
-    Filter filter;
+    DN sourceBaseDn;
+    int sourceScope;
+    Filter sourceFilter;
     String objectClasses;
 
     long sourceSizeLimit;
@@ -53,9 +53,9 @@ public class LDAPSource extends Source {
     public void init() throws Exception {
         connection = (LDAPConnection)getConnection();
 
-        baseDn = new DN(getParameter(BASE_DN));
-        scope = getScope(getParameter(SCOPE));
-        filter = FilterTool.parseFilter(getParameter(FILTER));
+        sourceBaseDn = new DN(getParameter(BASE_DN));
+        sourceScope = getScope(getParameter(SCOPE));
+        sourceFilter = FilterTool.parseFilter(getParameter(FILTER));
 
         objectClasses = getParameter(OBJECT_CLASSES);
 
@@ -339,6 +339,400 @@ public class LDAPSource extends Source {
     // Search
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    public void searchFullTree(
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        final Filter filter = createFilter(request);
+        long sizeLimit = createSizeLimit(request);
+        long timeLimit = createTimeLimit(request);
+
+        Collection<String> attributes = createAttributes(request);
+        Collection<Control> controls = createControls(request);
+
+        LDAPClient client = connection.getClient(session);
+
+        try {
+
+            if (baseDn != null && baseDn.isEmpty()) {
+
+                SearchRequest rootRequest = new SearchRequest();
+                rootRequest.setScope(SearchRequest.SCOPE_BASE);
+                rootRequest.setAttributes(new String[] { "+", "*" });
+
+                SearchResponse rootResponse = new SearchResponse();
+
+                client.search(rootRequest, rootResponse);
+
+                SearchResult root = rootResponse.next();
+
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+                    response.add(root);
+                }
+
+                if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Naming contexts:");
+                    Attribute namingContexts = root.getAttribute("namingContexts");
+
+                    for (Object value : namingContexts.getValues()) {
+                        String dn = value.toString();
+                        if (debug) log.debug(" - "+dn);
+
+                        SearchRequest newRequest = new SearchRequest();
+                        newRequest.setDn(dn);
+                        newRequest.setScope(scope == SearchRequest.SCOPE_ONE ? SearchRequest.SCOPE_BASE : scope);
+
+                        newRequest.setFilter(filter);
+                        newRequest.setSizeLimit(sizeLimit);
+                        newRequest.setTimeLimit(timeLimit);
+                        newRequest.setAttributes(attributes);
+                        newRequest.setControls(controls);
+
+                        SearchResponse newResponse = new Pipeline(response) {
+                            public void add(SearchResult searchResult) throws Exception {
+
+                                if (isClosed()) {
+                                    if (debug) log.debug("Search response has been closed.");
+                                    return;
+                                }
+
+                                SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                                if (debug) {
+                                    newSearchResult.print();
+                                }
+
+                                super.add(newSearchResult);
+                            }
+                            public void close() {
+                                // ignore
+                            }
+                        };
+
+                        client.search(newRequest, newResponse);
+                    }
+                }
+
+            } else {
+
+                if (sourceScope == SearchRequest.SCOPE_BASE) {
+                    if (scope == SearchRequest.SCOPE_ONE) {
+                        return;
+                    } else {
+                        scope = SearchRequest.SCOPE_BASE;
+                    }
+                }
+
+                SearchRequest newRequest = new SearchRequest();
+                newRequest.setDn(baseDn);
+                newRequest.setScope(scope);
+
+                newRequest.setFilter(filter);
+                newRequest.setSizeLimit(sizeLimit);
+                newRequest.setTimeLimit(timeLimit);
+                newRequest.setAttributes(attributes);
+                newRequest.setControls(controls);
+
+                SearchResponse newResponse = new Pipeline(response) {
+                    public void add(SearchResult searchResult) throws Exception {
+
+                        if (isClosed()) {
+                            if (debug) log.debug("Search response has been closed.");
+                            return;
+                        }
+
+                        SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                        if (debug) {
+                            newSearchResult.print();
+                        }
+
+                        super.add(newSearchResult);
+                    }
+                    public void close() {
+                        // ignore
+                    }
+                };
+
+                client.search(newRequest, newResponse);
+            }
+
+        } finally {
+            connection.closeClient(session);
+            response.close();
+        }
+    }
+
+    public void searchSubTree(
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        final Filter filter = createFilter(request);
+        long sizeLimit = createSizeLimit(request);
+        long timeLimit = createTimeLimit(request);
+
+        Collection<String> attributes = createAttributes(request);
+        Collection<Control> controls = createControls(request);
+
+        LDAPClient client = connection.getClient(session);
+
+        try {
+
+            if (baseDn != null && baseDn.isEmpty()) {
+
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    SearchResult root = new SearchResult();
+
+                    if (debug) log.debug("Naming contexts:");
+                    Attribute namingContexts = new Attribute("namingContexts");
+
+                    String dn = sourceBaseDn.toString();
+                    if (debug) log.debug(" - "+dn);
+
+                    namingContexts.addValue(dn);
+
+                    root.setAttribute(namingContexts);
+
+                    response.add(root);
+                }
+
+                if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    SearchRequest newRequest = new SearchRequest();
+                    newRequest.setDn(sourceBaseDn);
+                    newRequest.setScope(scope == SearchRequest.SCOPE_ONE ? SearchRequest.SCOPE_BASE : scope);
+
+                    newRequest.setFilter(filter);
+                    newRequest.setSizeLimit(sizeLimit);
+                    newRequest.setTimeLimit(timeLimit);
+                    newRequest.setAttributes(attributes);
+                    newRequest.setControls(controls);
+
+                    SearchResponse newResponse = new Pipeline(response) {
+                        public void add(SearchResult searchResult) throws Exception {
+
+                            if (isClosed()) {
+                                if (debug) log.debug("Search response has been closed.");
+                                return;
+                            }
+
+                            SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                            if (debug) {
+                                newSearchResult.print();
+                            }
+
+                            super.add(newSearchResult);
+                        }
+                        public void close() {
+                            // ignore
+                        }
+                    };
+
+                    client.search(newRequest, newResponse);
+                }
+
+            } else {
+
+                if (sourceScope == SearchRequest.SCOPE_BASE) {
+                    if (scope == SearchRequest.SCOPE_ONE) {
+                        return;
+                    } else {
+                        scope = SearchRequest.SCOPE_BASE;
+                    }
+                }
+
+                SearchRequest newRequest = new SearchRequest();
+                newRequest.setDn(baseDn == null ? sourceBaseDn : baseDn);
+                newRequest.setScope(scope);
+
+                newRequest.setFilter(filter);
+                newRequest.setSizeLimit(sizeLimit);
+                newRequest.setTimeLimit(timeLimit);
+                newRequest.setAttributes(attributes);
+                newRequest.setControls(controls);
+
+                SearchResponse newResponse = new Pipeline(response) {
+                    public void add(SearchResult searchResult) throws Exception {
+
+                        if (isClosed()) {
+                            if (debug) log.debug("Search response has been closed.");
+                            return;
+                        }
+
+                        SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                        if (debug) {
+                            newSearchResult.print();
+                        }
+
+                        super.add(newSearchResult);
+                    }
+                    public void close() {
+                        // ignore
+                    }
+                };
+
+                client.search(newRequest, newResponse);
+            }
+
+        } finally {
+            connection.closeClient(session);
+            response.close();
+        }
+    }
+
+    public void searchFlatTree(
+            final Session session,
+            final SearchRequest request,
+            final SearchResponse response
+    ) throws Exception {
+
+        DN baseDn = request.getDn();
+        int scope = request.getScope();
+
+        final Filter filter = createFilter(request);
+        long sizeLimit = createSizeLimit(request);
+        long timeLimit = createTimeLimit(request);
+
+        Collection<String> attributes = createAttributes(request);
+        Collection<Control> controls = createControls(request);
+
+        LDAPClient client = connection.getClient(session);
+
+        try {
+
+            if (baseDn != null && baseDn.isEmpty()) {
+
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    SearchRequest newRequest = new SearchRequest();
+                    newRequest.setDn(sourceBaseDn);
+                    newRequest.setScope(sourceScope);
+
+                    newRequest.setFilter(filter);
+                    newRequest.setSizeLimit(sizeLimit);
+                    newRequest.setTimeLimit(timeLimit);
+                    newRequest.setAttributes(attributes);
+                    newRequest.setControls(controls);
+
+                    SearchResponse newResponse = new SearchResponse();
+
+                    client.search(newRequest, newResponse);
+
+                    SearchResult result = new SearchResult();
+
+                    if (debug) log.debug("Naming contexts:");
+                    Attribute namingContexts = new Attribute("namingContexts");
+
+                    while (newResponse.hasNext()) {
+                        SearchResult entry = newResponse.next();
+                        String dn = entry.getDn().toString();
+                        if (debug) log.debug(" - "+dn);
+                        namingContexts.addValue(dn);
+                    }
+
+                    result.setAttribute(namingContexts);
+
+                    response.add(result);
+                }
+
+                if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    SearchRequest newRequest = new SearchRequest();
+                    newRequest.setDn(sourceBaseDn);
+                    newRequest.setScope(sourceScope);
+
+                    newRequest.setFilter(filter);
+                    newRequest.setSizeLimit(sizeLimit);
+                    newRequest.setTimeLimit(timeLimit);
+                    newRequest.setAttributes(attributes);
+                    newRequest.setControls(controls);
+
+                    SearchResponse newResponse = new Pipeline(response) {
+                        public void add(SearchResult searchResult) throws Exception {
+
+                            if (isClosed()) {
+                                if (debug) log.debug("Search response has been closed.");
+                                return;
+                            }
+
+                            SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                            if (debug) {
+                                newSearchResult.print();
+                            }
+
+                            super.add(newSearchResult);
+                        }
+                        public void close() {
+                            // ignore
+                        }
+                    };
+
+                    client.search(newRequest, newResponse);
+                }
+
+            } else {
+
+                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    SearchRequest newRequest = new SearchRequest();
+                    newRequest.setDn(baseDn);
+                    newRequest.setScope(SearchRequest.SCOPE_BASE);
+
+                    newRequest.setFilter(filter);
+                    newRequest.setSizeLimit(sizeLimit);
+                    newRequest.setTimeLimit(timeLimit);
+                    newRequest.setAttributes(attributes);
+                    newRequest.setControls(controls);
+
+                    SearchResponse newResponse = new Pipeline(response) {
+                        public void add(SearchResult searchResult) throws Exception {
+
+                            if (isClosed()) {
+                                if (debug) log.debug("Search response has been closed.");
+                                return;
+                            }
+
+                            SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                            if (debug) {
+                                newSearchResult.print();
+                            }
+
+                            super.add(newSearchResult);
+                        }
+                        public void close() {
+                            // ignore
+                        }
+                    };
+
+                    client.search(newRequest, newResponse);
+
+                } else {
+
+                }
+            }
+
+        } finally {
+            connection.closeClient(session);
+            response.close();
+        }
+    }
+
     public void search(
             final Session session,
             final SearchRequest request,
@@ -351,10 +745,21 @@ public class LDAPSource extends Source {
             log.debug(TextUtil.displaySeparator(80));
         }
 
+        if (sourceBaseDn == null || sourceBaseDn.isEmpty()) {
+            searchFullTree(session, request, response);
+
+        } else if (sourceScope != SearchRequest.SCOPE_ONE) {
+            searchSubTree(session, request, response);
+
+        } else {
+            searchFlatTree(session, request, response);
+        }
+
+/*
         final DN baseDn = createBaseDn(request);
         final int scope = createScope(request);
-        final Filter filter = createFilter(request);
 
+        final Filter filter = createFilter(request);
         long sizeLimit = createSizeLimit(request);
         long timeLimit = createTimeLimit(request);
 
@@ -365,6 +770,7 @@ public class LDAPSource extends Source {
         SearchRequest newRequest = new SearchRequest();
         newRequest.setDn(baseDn);
         newRequest.setScope(scope);
+
         newRequest.setFilter(filter);
         newRequest.setSizeLimit(sizeLimit);
         newRequest.setTimeLimit(timeLimit);
@@ -401,7 +807,7 @@ public class LDAPSource extends Source {
         } finally {
             connection.closeClient(session);
         }
-
+*/
         log.debug("Search operation completed.");
     }
 
@@ -448,7 +854,7 @@ public class LDAPSource extends Source {
     public DN createBaseDn(SearchRequest operation) throws Exception {
 
         if (operation.getDn() == null) {
-            return baseDn;
+            return sourceBaseDn;
         } else {
             return operation.getDn();
         }
@@ -462,10 +868,10 @@ public class LDAPSource extends Source {
 
     public int createScope(SearchRequest operation) throws Exception {
 
-        if (scope == SearchRequest.SCOPE_BASE) {
+        if (sourceScope == SearchRequest.SCOPE_BASE) {
             return SearchRequest.SCOPE_BASE;
 
-        } else if (scope == SearchRequest.SCOPE_ONE) {
+        } else if (sourceScope == SearchRequest.SCOPE_ONE) {
             DN baseDn = operation.getDn();
 
             if (baseDn != null && !baseDn.isEmpty()) {
@@ -482,7 +888,7 @@ public class LDAPSource extends Source {
 
     public Filter createFilter(SearchRequest operation) throws Exception {
 
-        return FilterTool.appendAndFilter(operation.getFilter(), filter);
+        return FilterTool.appendAndFilter(operation.getFilter(), sourceFilter);
 /*
         DN baseDn = request.getDn();
         int scope = request.getScope();
@@ -814,7 +1220,7 @@ public class LDAPSource extends Source {
         SearchResponse response = new SearchResponse() {
             public void add(SearchResult result) throws Exception {
                 DN dn = result.getDn();
-                if (scope == SearchRequest.SCOPE_ONE && baseDn.matches(dn)) return;
+                if (sourceScope == SearchRequest.SCOPE_ONE && sourceBaseDn.matches(dn)) return;
                 dns.add(dn);
             }
         };
@@ -898,27 +1304,27 @@ public class LDAPSource extends Source {
     }
 
     public DN getBaseDn() {
-        return baseDn;
+        return sourceBaseDn;
     }
 
     public void setBaseDn(DN baseDn) {
-        this.baseDn = baseDn;
+        this.sourceBaseDn = baseDn;
     }
 
     public int getScope() {
-        return scope;
+        return sourceScope;
     }
 
     public void setScope(int scope) {
-        this.scope = scope;
+        this.sourceScope = scope;
     }
 
     public Filter getFilter() {
-        return filter;
+        return sourceFilter;
     }
 
     public void setFilter(Filter filter) {
-        this.filter = filter;
+        this.sourceFilter = filter;
     }
 
     public String getObjectClasses() {

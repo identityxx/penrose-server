@@ -5,45 +5,11 @@
 
 <directory>
 
-  <entry dn="dc=Proxy,dc=Example,dc=com">
-    <oc>dcObject</oc>
-    <oc>organization</oc>
-    <at name="dc" rdn="true">
-      <constant>Proxy</constant>
-    </at>
-    <at name="o">
-      <constant>Proxy</constant>
-    </at>
-    <aci subject="self">
-      <permission>rws</permission>
-    </aci>
-    <aci>
-      <target>ATTRIBUTES</target>
-      <attributes>userPassword</attributes>
-      <action>deny</action>
-      <permission>rs</permission>
-    </aci>
-    <aci>
-      <permission>rs</permission>
-    </aci>
-  </entry>
-
-  <entry dn="ou=Users,dc=Proxy,dc=Example,dc=com">
+  <entry dn="dc=my-domain,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <source-name>users</source-name>
+      <source-name>LDAP</source-name>
     </source>
-  </entry>
-
-  <entry dn="ou=Groups,dc=Proxy,dc=Example,dc=com">
-    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
-    <source>
-      <source-name>groups</source-name>
-    </source>
-    <parameter>
-      <param-name>attributes</param-name>
-      <param-value>uniqueMember</param-value>
-    </parameter>
   </entry>
 
 </directory>

@@ -5,4 +5,25 @@
 
 <directory>
 
+  <entry dn="dc=Federation,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Federation</constant>
+    </at>
+    <at name="o">
+      <constant>Federation</constant>
+    </at>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=NSS,dc=Federation,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>NSS</constant>
+    </at>
+  </entry>
+
 </directory>

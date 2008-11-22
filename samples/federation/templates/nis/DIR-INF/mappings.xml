@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mappings PUBLIC
+  "-//Penrose/DTD Mappings 2.0//EN"
+  "http://penrose.safehaus.org/dtd/mappings.dtd">
+
+<mappings>
+
+  <mapping name="import_users">
+
+    <pre>
+if (n == void || n == null) return;
+if (n.gecos == void || n.gecos == null) return;
+
+int i = n.gecos.indexOf(" ");
+if (i &lt; 0) i = n.gecos.length();
+String name = n.gecos.substring(0, i);
+
+int j = name.indexOf(".");
+if (j &lt; 0) return;
+
+if (n.givenName == void || n.givenName == null) n.givenName = name.substring(0, j);
+if (n.sn == void || n.sn == null) n.sn = name.substring(j+1);
+if (n.cn == void || n.cn == null) n.cn = n.givenName+" "+n.sn;
+    </pre>
+
+    <rule name="objectClass">
+      <constant>account</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>posixAccount</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>shadowAccount</constant>
+    </rule>
+
+    <!-- account -->
+    <rule name="uid">
+      <variable>n.uid</variable>
+    </rule>
+    <rule name="description">
+      <variable>n.description</variable>
+    </rule>
+    <rule name="seeAlso">
+      <variable>n.seeAlso</variable>
+    </rule>
+    <rule name="l">
+      <variable>n.l</variable>
+    </rule>
+    <rule name="o">
+      <variable>n.o</variable>
+    </rule>
+    <rule name="ou">
+      <variable>n.ou</variable>
+    </rule>
+    <rule name="host">
+      <variable>n.host</variable>
+    </rule>
+
+    <!-- posixAccount -->
+    <rule name="uidNumber" required="false">
+      <condition>!n.uidNumber.equals("0")</condition>
+      <variable>n.uidNumber</variable>
+    </rule>
+    <rule name="gidNumber" required="false">
+      <condition>!n.gidNumber.equals("0")</condition>
+      <variable>n.gidNumber</variable>
+    </rule>
+    <rule name="homeDirectory" required="false">
+      <condition>!n.homeDirectory.equals("NULL")</condition>
+      <variable>n.homeDirectory</variable>
+    </rule>
+    <rule name="loginShell" required="false">
+      <condition>!n.loginShell.equals("NULL")</condition>
+      <variable>n.loginShell</variable>
+    </rule>
+    <rule name="gecos" required="false">
+      <condition>!n.gecos.equals("NULL")</condition>
+      <variable>n.gecos</variable>
+    </rule>
+
+    <!-- shadowAccount -->
+    <rule name="shadowLastChange">
+      <variable>n.shadowLastChange</variable>
+    </rule>
+    <rule name="shadowMin">
+      <variable>n.shadowMin</variable>
+    </rule>
+    <rule name="shadowMax">
+      <variable>n.shadowMax</variable>
+    </rule>
+    <rule name="shadowWarning">
+      <variable>n.shadowWarning</variable>
+    </rule>
+    <rule name="shadowInactive">
+      <variable>n.shadowInactive</variable>
+    </rule>
+    <rule name="shadowExpire">
+      <variable>n.shadowExpire</variable>
+    </rule>
+    <rule name="shadowFlag">
+      <variable>n.shadowFlag</variable>
+    </rule>
+
+  </mapping>
+
+</mappings>

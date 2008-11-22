@@ -133,7 +133,7 @@ public class DN implements Serializable, Comparable {
 
     public synchronized boolean isEmpty() {
         if (originalDn == null) {
-            return rdns.isEmpty();
+            return rdns == null || rdns.isEmpty();
         } else {
             return "".equals(originalDn);
         }

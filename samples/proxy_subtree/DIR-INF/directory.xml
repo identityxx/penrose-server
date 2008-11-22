@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="dc=Proxy Subtree,dc=Example,dc=com">
+    <oc>dcObject</oc>
+    <oc>organization</oc>
+    <at name="dc" rdn="true">
+      <constant>Proxy Subtree</constant>
+    </at>
+    <at name="o">
+      <constant>Proxy Subtree</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,dc=Proxy Subtree,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <source>
+      <source-name>users</source-name>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,dc=Proxy Subtree,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
+    <source>
+      <source-name>groups</source-name>
+    </source>
+    <parameter>
+      <param-name>attributes</param-name>
+      <param-value>uniqueMember</param-value>
+    </parameter>
+  </entry>
+
+</directory>

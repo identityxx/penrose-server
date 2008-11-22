@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="LDAP">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="users">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="uid"/>
+    <field name="seeAlso"/>
+    <field name="cn"/>
+    <field name="uidNumber"/>
+    <field name="gidNumber"/>
+    <field name="homeDirectory"/>
+    <field name="userPassword"/>
+    <field name="loginShell"/>
+    <field name="gecos"/>
+    <field name="description"/>
+    <field name="shadowLastChange"/>
+    <field name="shadowMin"/>
+    <field name="shadowMax"/>
+    <field name="shadowWarning"/>
+    <field name="shadowInactive"/>
+    <field name="shadowExpire"/>
+    <field name="shadowFlag"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>account,posixAccount,shadowAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <field name="dn" primaryKey="true"/>
+    <field name="cn"/>
+    <field name="gidNumber"/>
+    <field name="userPassword"/>
+    <field name="memberUid"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>objectClasses</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+    <parameter>
+      <param-name>scope</param-name>
+      <param-value>ONELEVEL</param-value>
+    </parameter>
+  </source>
+
+  <source name="hosts">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Hosts,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="services">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Services,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="rpcs">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=RPCs,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="netids">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=NetIDs,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="protocols">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Protocols,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="aliases">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Aliases,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="netgroups">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Netgroups,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="ethers">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Ethers,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="bootparams">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=BootParams,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="networks">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Networks,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="automounts">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Automounts,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="profiles">
+    <partition-name>federation</partition-name>
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Profile,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="errors">
+    <connection-name>Database</connection-name>
+    <field name="id" type="INTEGER" primaryKey="true" autoIncrement="true"
+        originalType="INTEGER generated by default as identity"/>
+    <field name="time" type="DATETIME"/>
+    <field name="title" type="TEXT" originalType="VARCHAR"/>
+    <field name="description" type="TEXT" originalType="VARCHAR"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>errors</param-value>
+    </parameter>
+    <parameter>
+      <param-name>create</param-name>
+      <param-value>true</param-value>
+    </parameter>
+  </source>
+
+</sources>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE directory PUBLIC
+  "-//Penrose/DTD Directory ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/directory.dtd">
+
+<directory>
+
+  <entry dn="ou=Global,dc=Federation,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Global</constant>
+    </at>
+    <aci subject="self">
+      <permission>rws</permission>
+    </aci>
+    <aci>
+      <target>ATTRIBUTES</target>
+      <attributes>userPassword</attributes>
+      <action>deny</action>
+      <permission>rs</permission>
+    </aci>
+    <aci>
+      <permission>rs</permission>
+    </aci>
+  </entry>
+
+  <entry dn="ou=Users,ou=Global,dc=Federation,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Users</constant>
+    </at>
+  </entry>
+
+  <entry dn="uid=...,ou=Users,ou=Global,dc=Federation,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <mapping-name>virtual_users</mapping-name>
+    <at name="uid" rdn="true">
+      <variable>g.uid</variable>
+    </at>
+    <source alias="g" bind="sufficient">
+      <partition-name>federation</partition-name>
+      <source-name>users</source-name>
+      <mapping-name>virtual_users_to_global_users</mapping-name>
+      <field name="uid" primaryKey="true">
+        <variable>rdn.uid</variable>
+      </field>
+    </source>
+    <source alias="l" bind="sufficient">
+      <partition-name>ldap</partition-name>
+      <source-name>users</source-name>
+      <mapping-name>virtual_users_to_ldap_users</mapping-name>
+      <field name="dn">
+        <variable>g.seeAlso</variable>
+      </field>
+    </source>
+  </entry>
+
+  <entry dn="ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com">
+    <oc>organizationalUnit</oc>
+    <at name="ou" rdn="true">
+      <constant>Groups</constant>
+    </at>
+  </entry>
+
+  <entry dn="cn=...,ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com">
+    <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
+    <mapping-name>virtual_groups</mapping-name>
+    <at name="cn" rdn="true">
+      <variable>g.primaryKey.cn</variable>
+    </at>
+    <source alias="g">
+      <partition-name>federation</partition-name>
+      <source-name>groups</source-name>
+      <mapping-name>virtual_groups_to_global_groups</mapping-name>
+      <field name="cn" primaryKey="true">
+        <variable>rdn.cn</variable>
+      </field>
+    </source>
+    <source alias="l">
+      <partition-name>ldap</partition-name>
+      <source-name>groups</source-name>
+      <mapping-name>virtual_groups_to_ldap_groups</mapping-name>
+      <field name="dn">
+        <variable>g.seeAlso</variable>
+      </field>
+    </source>
+  </entry>
+
+</directory>

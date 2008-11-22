@@ -1,0 +1,28 @@
+dn: dc=Example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: Example
+o: Example
+
+dn: dc=Federation,dc=Example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: Federation
+o: Federation
+
+dn: ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: Global
+
+dn: ou=Users,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: organizationalUnit
+ou: NIS
+

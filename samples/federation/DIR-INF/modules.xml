@@ -4,10 +4,6 @@
   "http://penrose.safehaus.org/dtd/modules.dtd">
 
 <modules>
-
-  <module name="JDBC">
-    <module-class>org.safehaus.penrose.federation.module.JDBCFederationModule</module-class>
-  </module>
   
   <module name="LDAP">
     <module-class>org.safehaus.penrose.federation.module.LDAPFederationModule</module-class>

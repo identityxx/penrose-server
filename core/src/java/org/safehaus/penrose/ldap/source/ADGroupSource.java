@@ -66,7 +66,7 @@ public class ADGroupSource extends LDAPSource {
             for (int i = 0; i < filters.size(); i++) {
                 Filter f = filters.get(i);
 
-                f = FilterTool.appendAndFilter(f, filter);
+                f = FilterTool.appendAndFilter(f, sourceFilter);
 
                 searchEntries(session, request, response, f, filters, results, fp, client);
             }
@@ -138,7 +138,7 @@ public class ADGroupSource extends LDAPSource {
     public SearchResult findUser(LDAPClient client, Object sAMAccountName) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(baseDn);
+        newRequest.setDn(sourceBaseDn);
         newRequest.setFilter(new SimpleFilter(SAM_ACCOUNT_NAME, "=", sAMAccountName));
         newRequest.setSizeLimit(sourceSizeLimit);
         newRequest.setTimeLimit(sourceTimeLimit);
@@ -155,11 +155,11 @@ public class ADGroupSource extends LDAPSource {
     public SearchResult findGroup(LDAPClient client, Object cn) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(baseDn);
-        newRequest.setScope(scope);
+        newRequest.setDn(sourceBaseDn);
+        newRequest.setScope(sourceScope);
 
         Filter newFilter = new SimpleFilter(CN, "=", cn);
-        newFilter = FilterTool.appendAndFilter(newFilter, filter);
+        newFilter = FilterTool.appendAndFilter(newFilter, sourceFilter);
 
         newRequest.setFilter(newFilter);
         newRequest.setSizeLimit(sourceSizeLimit);
@@ -186,8 +186,8 @@ public class ADGroupSource extends LDAPSource {
     ) throws Exception {
 
         SearchRequest newRequest = new SearchRequest();
-        newRequest.setDn(baseDn);
-        newRequest.setScope(scope);
+        newRequest.setDn(sourceBaseDn);
+        newRequest.setScope(sourceScope);
         newRequest.setFilter(filter);
         newRequest.setSizeLimit(sourceSizeLimit);
         newRequest.setTimeLimit(sourceTimeLimit);
@@ -201,12 +201,12 @@ public class ADGroupSource extends LDAPSource {
                     return;
                 }
 
-                SearchResult newSearchResult = createSearchResult(baseDn, searchResult);
+                SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
 
-                DN dn = newSearchResult.getDn().append(baseDn);
+                DN dn = newSearchResult.getDn().append(sourceBaseDn);
                 String groupDn = dn.getNormalizedDn();
 
-                Collection<Object> users = searchMembers(baseDn, searchResult, map, client);
+                Collection<Object> users = searchMembers(sourceBaseDn, searchResult, map, client);
 
                 Attributes attributes = newSearchResult.getAttributes();
                 attributes.setValues(memberField.getName(), users);

@@ -87,7 +87,12 @@ public class ModuleService extends BaseService implements ModuleServiceMBean {
     public Collection<ModuleMapping> getModuleMappings() throws Exception {
         PartitionConfig partitionConfig = getPartitionConfig();
         ModuleConfigManager moduleConfigManager = partitionConfig.getModuleConfigManager();
-        return moduleConfigManager.getModuleMappings(moduleName);
+
+        Collection<ModuleMapping> results = new ArrayList<ModuleMapping>();
+        Collection<ModuleMapping> list = moduleConfigManager.getModuleMappings(moduleName);
+        if (list != null) results.addAll(list);
+
+        return results;
     }
 
     public String getStatus() throws Exception {

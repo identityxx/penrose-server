@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mappings PUBLIC
+  "-//Penrose/DTD Mappings 2.0//EN"
+  "http://penrose.safehaus.org/dtd/mappings.dtd">
+
+<mappings>
+
+  <mapping name="virtual_users">
+
+    <rule name="objectClass">
+      <constant>account</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>posixAccount</constant>
+    </rule>
+    <rule name="objectClass">
+      <constant>shadowAccount</constant>
+    </rule>
+
+    <!-- account -->
+    <rule name="description">
+      <variable>g.description</variable>
+    </rule>
+    <rule name="seeAlso" action="replace">
+     <expression foreach="g.seeAlso" var="seeAlso">
+import org.safehaus.penrose.ldap.*;
+
+DN nisDn = new DN(seeAlso);
+DN prefix = nisDn.getPrefix("ou=NIS,dc=Federation,dc=Example,dc=com");
+DN nssDn = prefix.append("ou=NSS,dc=Federation,dc=Example,dc=com");
+return nssDn.toString();
+      </expression>
+    </rule>
+    <rule name="l">
+      <variable>g.l</variable>
+    </rule>
+    <rule name="o">
+      <variable>g.o</variable>
+    </rule>
+    <rule name="ou">
+      <variable>g.ou</variable>
+    </rule>
+    <rule name="host">
+      <variable>g.host</variable>
+    </rule>
+
+    <!-- posixAccount -->
+    <rule name="uidNumber" required="false">
+      <condition>!g.uidNumber.equals("0")</condition>
+      <variable>g.uidNumber</variable>
+    </rule>
+    <rule name="gidNumber" required="false">
+      <condition>!g.gidNumber.equals("0")</condition>
+      <variable>g.gidNumber</variable>
+    </rule>
+    <rule name="homeDirectory" required="false">
+      <condition>!g.homeDirectory.equals("NULL")</condition>
+      <variable>g.homeDirectory</variable>
+    </rule>
+    <rule name="loginShell" required="false">
+      <condition>!g.loginShell.equals("NULL")</condition>
+      <variable>g.loginShell</variable>
+    </rule>
+    <rule name="gecos" required="false">
+      <condition>!g.gecos.equals("NULL")</condition>
+      <variable>g.gecos</variable>
+    </rule>
+
+    <!-- shadowAccount -->
+    <rule name="shadowLastChange">
+      <variable>g.shadowLastChange</variable>
+    </rule>
+    <rule name="shadowMin">
+      <variable>g.shadowMin</variable>
+    </rule>
+    <rule name="shadowMax">
+      <variable>g.shadowMax</variable>
+    </rule>
+    <rule name="shadowWarning">
+      <variable>g.shadowWarning</variable>
+    </rule>
+    <rule name="shadowInactive">
+      <variable>g.shadowInactive</variable>
+    </rule>
+    <rule name="shadowExpire">
+      <variable>g.shadowExpire</variable>
+    </rule>
+    <rule name="shadowFlag">
+      <variable>g.shadowFlag</variable>
+    </rule>
+
+  </mapping>
+
+  <mapping name="virtual_users_to_global_users">
+
+    <!-- account -->
+    <rule name="description">
+      <variable>description</variable>
+    </rule>
+    <rule name="seeAlso">
+      <variable>seeAlso</variable>
+    </rule>
+    <rule name="l">
+      <variable>l</variable>
+    </rule>
+    <rule name="o">
+      <variable>o</variable>
+    </rule>
+    <rule name="ou">
+      <variable>ou</variable>
+    </rule>
+    <rule name="host">
+      <variable>host</variable>
+    </rule>
+
+    <!-- posixAccount -->
+    <rule name="uidNumber">
+      <variable>uidNumber</variable>
+    </rule>
+    <rule name="gidNumber">
+      <variable>gidNumber</variable>
+    </rule>
+    <rule name="homeDirectory">
+      <variable>homeDirectory</variable>
+    </rule>
+    <rule name="loginShell">
+      <variable>loginShell</variable>
+    </rule>
+    <rule name="gecos">
+      <variable>gecos</variable>
+    </rule>
+
+  </mapping>
+
+  <mapping name="virtual_users_to_ldap_users">
+
+    <rule name="sn">
+      <variable>sn</variable>
+    </rule>
+    <rule name="givenName">
+      <variable>givenName</variable>
+    </rule>
+    <rule name="sAMAccountName">
+      <variable>adiNTUid</variable>
+    </rule>
+    <rule name="name">
+      <variable>cn</variable>
+    </rule>
+    <rule name="physicalDeliveryOfficeName">
+      <variable>l</variable>
+    </rule>
+    <rule name="telephoneNumber">
+      <variable>telephoneNumber</variable>
+    </rule>
+    <rule name="organizationalUnit">
+      <variable>ou</variable>
+    </rule>
+    <rule name="department">
+      <variable>adiDepartment</variable>
+    </rule>
+    <rule name="c">
+      <variable>c</variable>
+    </rule>
+    <rule name="facsimileTelephoneNumber">
+      <variable>facsimileTelephoneNumber</variable>
+    </rule>
+    <rule name="mail">
+      <variable>mail</variable>
+    </rule>
+    <rule name="displayName">
+      <variable>displayName</variable>
+    </rule>
+    <rule name="otherTelephone">
+      <variable>adiOtherTelephone</variable>
+    </rule>
+    <rule name="extensionAttribute1">
+      <variable>employeeNumber</variable>
+    </rule>
+    <rule name="extensionAttribute7">
+      <variable>adiCostCenter</variable>
+    </rule>
+    <rule name="countryCode">
+      <variable>adiCountryCode</variable>
+    </rule>
+    <rule name="mailNickname">
+      <variable>adiMailNickname</variable>
+    </rule>
+    <rule name="info">
+      <variable>adiInfo</variable>
+    </rule>
+
+  </mapping>
+
+  <mapping name="virtual_groups">
+
+    <rule name="objectClass">
+      <constant>posixGroup</constant>
+    </rule>
+
+    <rule name="cn">
+      <variable>g.cn</variable>
+    </rule>
+    <rule name="gidNumber" required="false">
+      <condition>!g.gidNumber.equals("0")</condition>
+      <variable>g.gidNumber</variable>
+    </rule>
+    <rule name="memberUid" required="false">
+      <condition>!g.memberUid.equals("NULL")</condition>
+      <variable>g.memberUid</variable>
+    </rule>
+    <rule name="description" required="false">
+      <condition>!g.description.equals("NULL")</condition>
+      <variable>g.description</variable>
+    </rule>
+      
+  </mapping>
+
+  <mapping name="virtual_groups_to_global_groups">
+
+    <rule name="cn">
+      <variable>cn</variable>
+    </rule>
+    <rule name="gidNumber">
+      <variable>gidNumber</variable>
+    </rule>
+    <rule name="memberUid">
+      <variable>memberUid</variable>
+    </rule>
+    <rule name="description">
+      <variable>description</variable>
+    </rule>
+      
+  </mapping>
+
+  <mapping name="virtual_groups_to_ldap_groups"/>
+
+</mappings>

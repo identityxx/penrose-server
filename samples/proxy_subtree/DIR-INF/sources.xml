@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sources PUBLIC
+  "-//Penrose/DTD Sources ${product.specification}//EN"
+  "http://penrose.safehaus.org/dtd/sources.dtd">
+
+<sources>
+
+  <source name="users">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Users,dc=my-domain,dc=com</param-value>
+    </parameter>
+  </source>
+
+  <source name="groups">
+    <connection-name>LDAP</connection-name>
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=Groups,dc=my-domain,dc=com</param-value>
+    </parameter>
+  </source>
+
+</sources>
