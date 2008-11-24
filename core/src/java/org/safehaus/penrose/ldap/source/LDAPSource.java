@@ -600,6 +600,8 @@ public class LDAPSource extends Source {
             final SearchResponse response
     ) throws Exception {
 
+        if (debug) log.debug("Source "+getName()+" is a flat LDAP tree.");
+
         DN baseDn = request.getDn();
         int scope = request.getScope();
 
@@ -616,7 +618,11 @@ public class LDAPSource extends Source {
 
             if (baseDn != null && baseDn.isEmpty()) {
 
+                if (debug) log.debug("Search base DN: root");
+
                 if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Search scope: "+LDAP.getScope(scope));
 
                     SearchRequest newRequest = new SearchRequest();
                     newRequest.setDn(sourceBaseDn);
@@ -650,6 +656,8 @@ public class LDAPSource extends Source {
                 }
 
                 if (scope == SearchRequest.SCOPE_ONE || scope == SearchRequest.SCOPE_SUB) {
+
+                    if (debug) log.debug("Search scope: "+LDAP.getScope(scope));
 
                     SearchRequest newRequest = new SearchRequest();
                     newRequest.setDn(sourceBaseDn);
@@ -687,7 +695,11 @@ public class LDAPSource extends Source {
 
             } else {
 
-                if (scope == SearchRequest.SCOPE_BASE || scope == SearchRequest.SCOPE_SUB) {
+                if (debug) log.debug("Search base DN: "+baseDn);
+
+                if (baseDn != null && (scope == SearchRequest.SCOPE_BASE && scope == SearchRequest.SCOPE_SUB)) {
+
+                    if (debug) log.debug("Search scope: "+LDAP.getScope(scope));
 
                     SearchRequest newRequest = new SearchRequest();
                     newRequest.setDn(baseDn);
@@ -724,6 +736,40 @@ public class LDAPSource extends Source {
 
                 } else {
 
+                    if (debug) log.debug("Search scope: "+LDAP.getScope(scope));
+
+                    SearchRequest newRequest = new SearchRequest();
+                    newRequest.setDn(sourceBaseDn);
+                    newRequest.setScope(sourceScope);
+
+                    newRequest.setFilter(filter);
+                    newRequest.setSizeLimit(sizeLimit);
+                    newRequest.setTimeLimit(timeLimit);
+                    newRequest.setAttributes(attributes);
+                    newRequest.setControls(controls);
+
+                    SearchResponse newResponse = new Pipeline(response) {
+                        public void add(SearchResult searchResult) throws Exception {
+
+                            if (isClosed()) {
+                                if (debug) log.debug("Search response has been closed.");
+                                return;
+                            }
+
+                            SearchResult newSearchResult = createSearchResult(sourceBaseDn, searchResult);
+
+                            if (debug) {
+                                newSearchResult.print();
+                            }
+
+                            super.add(newSearchResult);
+                        }
+                        public void close() {
+                            // ignore
+                        }
+                    };
+
+                    client.search(newRequest, newResponse);
                 }
             }
 
