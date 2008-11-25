@@ -5,13 +5,24 @@
 
 <sources>
 
-  <source name="LDAP">
+  <source name="Global">
 
     <connection-name>LDAP</connection-name>
 
     <parameter>
       <param-name>baseDn</param-name>
       <param-value>ou=Global,dc=Federation,dc=Example,dc=com</param-value>
+    </parameter>
+
+  </source>
+
+  <source name="NIS">
+
+    <connection-name>LDAP</connection-name>
+
+    <parameter>
+      <param-name>baseDn</param-name>
+      <param-value>ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
     </parameter>
 
   </source>

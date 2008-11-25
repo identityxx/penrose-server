@@ -141,7 +141,7 @@ public class FederationEntry extends DynamicEntry {
         Interpreter interpreter = partition.newInterpreter();
 
         log.debug("Extracting source attributes from DN:");
-        extractSourceAttributes(baseDn, interpreter, sourceAttributes);
+        extractSourceAttributes(operation.getRequest(), baseDn, interpreter, sourceAttributes);
 
         if (debug) {
             log.debug("Source attributes:");

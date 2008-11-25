@@ -86,7 +86,7 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.add(sr.getSourceAttributes());
 
         } else {
-            sourceValues = extractSourceValues(dn, attributes);
+            sourceValues = extractSourceValues(request, dn, attributes);
         }
 
         propagate(sourceValues);
@@ -582,7 +582,7 @@ public class DynamicEntry extends Entry implements Cloneable {
         Interpreter interpreter = partition.newInterpreter();
 
         log.debug("Extracting source attributes from DN:");
-        extractSourceAttributes(baseDn, interpreter, sourceAttributes);
+        extractSourceAttributes(operation.getRequest(), baseDn, interpreter, sourceAttributes);
 
         if (debug) {
             log.debug("Source attributes:");
@@ -799,6 +799,8 @@ public class DynamicEntry extends Entry implements Cloneable {
         for (EntryField field : source.getFields()) {
 
             String variable = field.getVariable();
+            if (variable == null) continue;
+            
             int i = variable.indexOf(".");
 
             if (i < 0) continue;

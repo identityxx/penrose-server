@@ -88,7 +88,7 @@ return PasswordUtil.toUnicodePassword(p);
     <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
     <oc>groupOfUniqueNames</oc>
     <at name="cn" rdn="true">
-      <variable>g.primaryKey.cn</variable>
+      <variable>g.cn</variable>
     </at>
     <at name="uniqueMember">
       <expression foreach="g.member" var="m">

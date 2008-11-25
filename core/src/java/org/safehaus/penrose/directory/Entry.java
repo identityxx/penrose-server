@@ -1141,18 +1141,18 @@ public class Entry implements Cloneable {
         return attributes;
     }
 
-    public void extractSourceAttributes(DN dn, Interpreter interpreter, SourceAttributes output) throws Exception {
+    public void extractSourceAttributes(Request request, DN dn, Interpreter interpreter, SourceAttributes output) throws Exception {
 
         Entry parent = getParent();
         if (getDn().getSize() > dn.getSize()) {
             if (parent == null) return;
-            parent.extractSourceAttributes(dn, interpreter, output);
+            parent.extractSourceAttributes(request, dn, interpreter, output);
             return;
         }
 
         DN parentDn = dn.getParentDn();
         if (parentDn != null && parent != null) {
-            parent.extractSourceAttributes(parentDn, interpreter, output);
+            parent.extractSourceAttributes(request, parentDn, interpreter, output);
         }
 
         RDN rdn = dn.getRdn();
@@ -1160,12 +1160,13 @@ public class Entry implements Cloneable {
 
         if (debug) log.debug(" - "+rdn+" => "+getDn());
 
-        computeSourceAttributes(interpreter, output);
+        computeSourceAttributes(request, interpreter, output);
 
         interpreter.clear();
     }
 
     public SourceAttributes extractSourceValues(
+            Request request,
             DN dn,
             Attributes attributes
     ) throws Exception {
@@ -1176,6 +1177,7 @@ public class Entry implements Cloneable {
         SourceAttributes sourceValues = new SourceAttributes();
 
         extractSourceAttributes(
+                request,
                 dn,
                 attributes,
                 interpreter,
@@ -1186,6 +1188,7 @@ public class Entry implements Cloneable {
     }
 
     public void extractSourceAttributes(
+            Request request,
             DN dn,
             Attributes attributes,
             Interpreter interpreter,
@@ -1196,7 +1199,7 @@ public class Entry implements Cloneable {
 
         Entry parent = getParent();
         if (parentDn != null && parent != null) {
-            parent.extractSourceAttributes(parentDn, interpreter, sourceAttributes);
+            parent.extractSourceAttributes(request, parentDn, interpreter, sourceAttributes);
         }
 
         RDN rdn = dn.getRdn();
@@ -1204,12 +1207,13 @@ public class Entry implements Cloneable {
         interpreter.set("rdn", rdn);
         interpreter.set(attributes);
 
-        computeSourceAttributes(interpreter, sourceAttributes);
+        computeSourceAttributes(request, interpreter, sourceAttributes);
 
         interpreter.clear();
     }
 
     public void computeSourceAttributes(
+            Request request,
             Interpreter interpreter,
             SourceAttributes sourceAttributes
     ) throws Exception {
@@ -1226,6 +1230,18 @@ public class Entry implements Cloneable {
                 
             } else {
                 for (EntryField field : entrySource.getFields()) {
+
+                    Collection<String> operations = field.getOperations();
+                    if (!operations.isEmpty()) {
+                        if (request instanceof AddRequest && !operations.contains("add")) continue;
+                        if (request instanceof BindRequest && !operations.contains("bind")) continue;
+                        if (request instanceof CompareRequest && !operations.contains("compare")) continue;
+                        if (request instanceof DeleteRequest && !operations.contains("delete")) continue;
+                        if (request instanceof ModifyRequest && !operations.contains("modify")) continue;
+                        if (request instanceof ModRdnRequest && !operations.contains("modrdn")) continue;
+                        if (request instanceof SearchRequest && !operations.contains("search")) continue;
+                        if (request instanceof UnbindRequest && !operations.contains("unbind")) continue;
+                    }
 
                     Object value = interpreter.eval(field);
                     if (value == null) continue;
