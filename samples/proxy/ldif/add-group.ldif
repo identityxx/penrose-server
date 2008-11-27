@@ -1,4 +1,0 @@
-dn: cn=test,ou=Groups,dc=Proxy,dc=Example,dc=com
-objectClass: groupOfUniqueNames
-cn: test
-uniqueMember: uid=test,ou=Users,dc=Proxy,dc=Example,dc=com

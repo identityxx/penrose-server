@@ -1,0 +1,2 @@
+uid=newTest,ou=Users,dc=my-domain,dc=Example,dc=com
+uid=test

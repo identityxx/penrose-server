@@ -1,1 +1,2 @@
 uid=newTest,ou=Users,dc=Proxy Subtree,dc=Example,dc=com
+uid=test
