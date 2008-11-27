@@ -3,6 +3,6 @@
   "-//Penrose/DTD Partition ${product.specification}//EN"
   "http://penrose.safehaus.org/dtd/partition.dtd">
 
-<partition depends="federation,ldap">
+<partition depends="federation,federation_ad">
 
 </partition>

@@ -280,6 +280,7 @@ public class JDBCSyncJob extends Job {
         Session session = createAdminSession();
 
         try {
+/*
             List<Collection<EntrySource>> groupsOfSources = getGroupsOfSources(sources.values());
 
             for (Collection<EntrySource> sourceRefs : groupsOfSources) {
@@ -324,7 +325,7 @@ public class JDBCSyncJob extends Job {
                     log.error(e.getMessage(), e);
                 }
             }
-
+*/
         } finally {
             session.close();
         }

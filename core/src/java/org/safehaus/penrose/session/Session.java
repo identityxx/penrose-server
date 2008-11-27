@@ -29,6 +29,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.util.PasswordUtil;
+import org.safehaus.penrose.util.TextUtil;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.operation.Operation;
 import org.safehaus.penrose.operation.SearchOperation;
@@ -82,7 +83,7 @@ public class Session {
     public void init() {
 
         if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
+            log.debug(TextUtil.repeat("-", 70));
             log.debug("Creating session "+ sessionName +".");
         }
 
@@ -108,7 +109,7 @@ public class Session {
     public void close() throws Exception {
 
         if (debug) {
-            log.debug("----------------------------------------------------------------------------------");
+            log.debug(TextUtil.repeat("-", 70));
             log.debug("Closing session "+ sessionName +".");
         }
 
@@ -202,16 +203,15 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Abandon "+operationName+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("ABANDON:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - ID to abandon  : "+operationName);
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
-                log.debug("");
             }
 
             Operation operation = operations.get(operationName);
@@ -263,20 +263,19 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Add "+dn+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("ADD:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - Entry          : "+dn);
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Attributes:");
                 request.getAttributes().print();
                 log.debug("");
 
                 log.debug("Controls: "+request.getControls());
-                log.debug("");
             }
 
             PartitionManager partitionManager = penroseContext.getPartitionManager();
@@ -359,13 +358,13 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Bind "+(dn.isEmpty() ? "anonymously" : "as "+request.getDn())+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("BIND:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+dn);
                 log.debug(" - Bind Password  : "+(password == null ? "" : new String(password)));
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
             }
@@ -471,7 +470,7 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Compare "+dn+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("COMPARE:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
@@ -490,7 +489,7 @@ public class Session {
                 }
 
                 log.debug(" - Attribute Value : "+value);
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
             }
@@ -560,13 +559,13 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Delete "+dn+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("DELETE:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+dn);
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
             }
@@ -637,13 +636,13 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Modify "+dn+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("MODIFY:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
                 log.debug(" - DN             : "+dn);
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Modifications:");
 
@@ -732,7 +731,7 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Rename "+dn+" to "+newRdn+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("MODRDN:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
@@ -740,7 +739,7 @@ public class Session {
                 log.debug(" - DN             : "+dn);
                 log.debug(" - New RDN        : "+newRdn);
                 log.debug(" - Delete old RDN : "+request.getDeleteOldRdn());
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
             }
@@ -854,7 +853,7 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName+" ("+operation.getOperationName()+"): Search "+operation.getDn()+" with filter "+operation.getFilter()+".");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("SEARCH:");
                 log.debug(" - Session        : "+sessionName);
                 log.debug(" - Message        : "+operation.getOperationName());
@@ -863,7 +862,7 @@ public class Session {
                 log.debug(" - Scope          : "+LDAP.getScope(operation.getScope()));
                 log.debug(" - Filter         : "+operation.getFilter());
                 log.debug(" - Attributes     : "+operation.getAttributes());
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+operation.getRequestControls());
             }
@@ -911,12 +910,12 @@ public class Session {
             if (warn) log.warn("Session "+ sessionName +" ("+messageId+"): Unbind.");
 
             if (debug) {
-                log.debug("----------------------------------------------------------------------------------");
+                log.debug(TextUtil.repeat("-", 70));
                 log.debug("UNBIND:");
                 log.debug(" - Session        : "+ sessionName);
                 log.debug(" - Message        : "+messageId);
                 log.debug(" - Bind DN        : "+(bindDn == null ? "" : bindDn));
-                log.debug("");
+                log.debug(TextUtil.repeat("-", 70));
 
                 log.debug("Controls: "+request.getControls());
             }

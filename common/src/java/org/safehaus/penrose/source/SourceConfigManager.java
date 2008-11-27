@@ -26,14 +26,14 @@ public class SourceConfigManager implements Serializable, Cloneable {
     public void addSourceConfig(SourceConfig sourceConfig) {
 
         String sourceName = sourceConfig.getName();
-/*
+
         if (debug) {
             log.debug("Adding source "+sourceName+":");
-            for (FieldConfig fieldConfig : sourceConfig.getRuleConfigs()) {
-                log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType());
+            for (FieldConfig fieldConfig : sourceConfig.getFieldConfigs()) {
+                log.debug(" - "+fieldConfig.getName()+": "+fieldConfig.getType()+(fieldConfig.isPrimaryKey() ? " (pk)" : ""));
             }
         }
-*/
+
         sourceConfigs.put(sourceName, sourceConfig);
 
         String connectionName = sourceConfig.getConnectionName();

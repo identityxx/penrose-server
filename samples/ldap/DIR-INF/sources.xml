@@ -6,7 +6,7 @@
 <sources>
 
   <source name="users">
-    <connection-name>OpenLDAP</connection-name>
+    <connection-name>LDAP</connection-name>
     <field name="uid" primaryKey="true"/>
     <field name="cn"/>
     <field name="sn"/>
@@ -26,7 +26,7 @@
   </source>
 
   <source name="groups">
-    <connection-name>OpenLDAP</connection-name>
+    <connection-name>LDAP</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="uniqueMember"/>
     <parameter>

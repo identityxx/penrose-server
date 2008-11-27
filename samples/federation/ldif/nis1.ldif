@@ -1,0 +1,169 @@
+dn: ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: nis1
+
+dn: ou=Users,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: Users
+
+dn: uid=user,ou=Users,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: User
+gecos: User
+gidNumber: 1000
+homeDirectory: /home/user
+loginShell: /bin/bash
+uid: user
+uidNumber: 1000
+userPassword: test
+
+dn: ou=Groups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: Groups
+
+dn: cn=group,ou=Groups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: group
+gidNumber: 1000
+memberUid: user
+
+dn: ou=Hosts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: Hosts
+
+dn: cn=host+ipHostNumber=127.0.0.1,ou=Hosts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: device
+objectClass: ipHost
+cn: host
+ipHostNumber: 127.0.0.1
+
+dn: ou=Services,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: Services
+
+dn: cn=service+ipServicePort=1000+ipServiceProtocol=tcp,ou=Services,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: ipService
+cn: service
+ipServicePort: 1000
+ipServiceProtocol: tcp
+
+dn: ou=RPCs,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: RPCs
+
+dn: cn=rpc+oncRpcNumber=1000,ou=RPCs,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: oncRpc
+cn: rpc
+oncRpcNumber: 1000
+description: RPC
+
+dn: ou=NetIDs,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalunit
+ou: NetIDs
+
+dn: cn=netid,ou=NetIDs,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: nisNetId
+cn: netid
+nisNetIdGroup: 1000
+nisNetIdUser: 1000
+
+dn: ou=Protocols,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Protocols
+
+dn: cn=protocol+ipProtocolNumber=1000,ou=Protocols,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: ipProtocol
+cn: protocol
+ipProtocolNumber: 1000
+description: Protocol
+
+dn: ou=Aliases,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Aliases
+
+dn: cn=alias,ou=Aliases,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: nisMailAlias
+cn: alias
+rfc822MailMember: user
+
+dn: ou=Netgroups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Netgroups
+
+dn: cn=netgroup,ou=Netgroups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: nisNetgroup
+cn: netgroup
+nisNetgroupTriple: (host.example.com,,)
+
+dn: ou=Ethers,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Ethers
+
+dn: cn=ether,ou=Ethers,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: device
+objectClass: ieee802Device
+cn: ether
+macAddress: 00:00:00:00:00:00
+
+dn: ou=BootParams,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: BootParams
+
+dn: cn=bootparam,ou=BootParams,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: device
+objectClass: bootableDevice
+cn: bootparam
+bootParameter: root=server:/export/www/root swap=server:/export/www/swap domain=www.example.com
+
+dn: ou=Networks,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Networks
+
+dn: cn=network,ou=Networks,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: ipNetwork
+cn: network
+ipNetworkNumber: 1000
+
+dn: ou=Automounts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Automounts
+
+dn: nismapname=auto.master,ou=Automounts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: nisMap
+nisMapName: auto.master
+
+dn: cn=/home,nisMapName=auto.master,ou=Automounts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: nisObject
+cn: /home
+nisMapEntry: ldap:nisMapName=auto.home,ou=Automounts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+nisMapName: auto.master

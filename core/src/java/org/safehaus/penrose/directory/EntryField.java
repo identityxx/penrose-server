@@ -21,8 +21,8 @@ public class EntryField implements Cloneable {
 
     private EntryFieldConfig fieldConfig;
 
-    public EntryField(EntrySource sourceRef, Field field) throws Exception {
-        this.sourceName = sourceRef.getAlias();
+    public EntryField(EntrySource source, Field field) throws Exception {
+        this.sourceName = source.getAlias();
         this.field = field;
 
         name = field.getName();
@@ -30,19 +30,19 @@ public class EntryField implements Cloneable {
         primaryKey = field.isPrimaryKey();
     }
     
-    public EntryField(Entry entry, EntrySource sourceRef, Field field, EntryFieldConfig fieldMapping) throws Exception {
-        this.sourceName = sourceRef.getAlias();
+    public EntryField(Entry entry, EntrySource source, Field field, EntryFieldConfig entryFieldConfig) throws Exception {
+        this.sourceName = source.getAlias();
         this.field = field;
-        this.fieldConfig = fieldMapping;
+        this.fieldConfig = entryFieldConfig;
 
-        name = fieldMapping.getName();
+        name = entryFieldConfig.getName();
 
-        if (fieldMapping.isPrimaryKey()) {
-            primaryKey = fieldMapping.isPrimaryKey();
+        if (entryFieldConfig.isPrimaryKey()) {
+            primaryKey = entryFieldConfig.isPrimaryKey();
             return;
         }
 
-        String variable = fieldMapping.getVariable();
+        String variable = entryFieldConfig.getVariable();
 
         if (variable != null && variable.indexOf('.') < 0) {
 
@@ -53,6 +53,8 @@ public class EntryField implements Cloneable {
                 return;
             }
         }
+
+        primaryKey = field.isPrimaryKey();
     }
 
     public String getSourceName() {

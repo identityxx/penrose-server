@@ -142,8 +142,8 @@ public class SearchResult implements Serializable, Cloneable {
     public void print() throws Exception {
 
         Logger log = LoggerFactory.getLogger(getClass());
-        log.debug(TextUtil.displaySeparator(80));
-        log.debug(TextUtil.displayLine("Search Result: "+dn, 80));
+        log.debug(TextUtil.displaySeparator(70));
+        log.debug(TextUtil.displayLine("Search Result: "+dn, 70));
 
         for (Attribute attribute : attributes.getAll()) {
             String name = attribute.getName();
@@ -152,7 +152,7 @@ public class SearchResult implements Serializable, Cloneable {
                 String className = value.getClass().getName();
                 className = className.substring(className.lastIndexOf(".") + 1);
 
-                log.debug(TextUtil.displayLine(" - " + name + ": " + value + " (" + className + ")", 80));
+                log.debug(TextUtil.displayLine(" - " + name + ": " + value + " (" + className + ")", 70));
             }
         }
 
@@ -169,16 +169,16 @@ public class SearchResult implements Serializable, Cloneable {
                     className = className.substring(className.lastIndexOf(".") + 1);
 
                     if (first) {
-                        log.debug(TextUtil.displayLine("Source Values:", 80));
+                        log.debug(TextUtil.displayLine("Source Values:", 70));
                         first = false;
                     }
 
-                    log.debug(TextUtil.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 80));
+                    log.debug(TextUtil.displayLine(" - " + fieldName + ": " + value + " (" + className + ")", 70));
                 }
             }
         }
 
-        log.debug(TextUtil.displaySeparator(80));
+        log.debug(TextUtil.displaySeparator(70));
     }
 
     public Object clone() throws CloneNotSupportedException {

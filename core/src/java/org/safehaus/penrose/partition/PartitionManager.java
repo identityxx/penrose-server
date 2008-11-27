@@ -11,6 +11,7 @@ import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.partition.event.PartitionEvent;
 import org.safehaus.penrose.partition.event.PartitionListener;
 import org.safehaus.penrose.source.SourceConfig;
+import org.safehaus.penrose.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ public class PartitionManager {
     Map<String,Partition> partitions = new LinkedHashMap<String,Partition>();
     PartitionConfigManager partitionConfigManager = new PartitionConfigManager();
 
+    Queue<String> queue = new LinkedList<String>();
     Collection<PartitionListener> listeners = new LinkedHashSet<PartitionListener>();
 
     public PartitionManager(File home, PenroseConfig penroseConfig, PenroseContext penroseContext) {
@@ -54,7 +56,7 @@ public class PartitionManager {
     }
 
     public void addPartitionConfig(PartitionConfig partitionConfig) throws Exception {
-        log.debug("Adding "+partitionConfig.getName()+" partition config.");
+        log.debug("Adding partition config "+partitionConfig.getName()+".");
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
         PartitionEvent event = new PartitionEvent(PartitionEvent.PARTITION_ADDED, partitionConfig);
@@ -66,7 +68,11 @@ public class PartitionManager {
     public File getPartitionsDir() {
         return partitionsDir;
     }
-    
+
+    public Queue<String> getQueue() {
+        return queue;
+    }
+
     public void startPartitions() throws Exception {
         
         loadDefaultPartition();
@@ -78,7 +84,7 @@ public class PartitionManager {
                 loadPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed loading "+partitionName+" partition.", e);
+                errorLog.error("Failed loading partition "+partitionName+".", e);
             }
         }
 
@@ -92,15 +98,37 @@ public class PartitionManager {
                 startPartition(partitionName);
 
             } catch (Exception e) {
-                errorLog.error("Failed starting "+partitionName+" partition.", e);
+                errorLog.error("Failed starting partition "+partitionName+".", e);
+            }
+        }
+
+        while (!queue.isEmpty()) {
+
+            String partitionName = queue.remove();
+
+            try {
+                loadPartition(partitionName);
+
+            } catch (Exception e) {
+                errorLog.error("Failed loading partition "+partitionName+".", e);
+                continue;
+            }
+
+            try {
+                startPartition(partitionName);
+
+            } catch (Exception e) {
+                errorLog.error("Failed starting partition "+partitionName+".", e);
             }
         }
     }
 
     public void loadDefaultPartition() throws Exception {
 
-        if (debug) log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading DEFAULT partition.");
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Loading default partition.");
+        }
 
         DefaultPartitionConfig partitionConfig = new DefaultPartitionConfig();
 
@@ -112,19 +140,21 @@ public class PartitionManager {
 
         partitionConfigManager.addPartitionConfig(partitionConfig);
 
-        if (debug) log.debug("DEFAULT partition loaded.");
+        if (debug) log.debug("Default partition loaded.");
     }
 
     public PartitionConfig loadPartition(String partitionName) throws Exception {
 
         PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(partitionName);
         if (partitionConfig != null) {
-            log.debug(partitionName+" partition is already loaded.");
+            log.debug("Partition "+partitionName+" is already loaded.");
             return partitionConfig;
         }
 
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("Loading "+partitionName+" partition.");
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Loading partition "+partitionName+".");
+        }
 
         File partitionDir = new File(partitionsDir, partitionName);
 
@@ -133,7 +163,7 @@ public class PartitionManager {
 
         addPartitionConfig(partitionConfig);
 
-        if (debug) log.debug(partitionName+" partition loaded.");
+        if (debug) log.debug("Partition "+partitionName+" loaded.");
 
         return partitionConfig;
     }
@@ -142,33 +172,35 @@ public class PartitionManager {
 
         Partition partition = partitions.get(name);
         if (partition != null) {
-            log.debug(name+" partition already started.");
+            log.debug("Partition "+name+" already started.");
             return;
         }
 
         PartitionConfig partitionConfig = partitionConfigManager.getPartitionConfig(name);
         if (partitionConfig == null) {
-            log.error("Can't start "+name+" partition: Partition not found.");
+            log.error("Can't start partition "+name+": Partition not found.");
             return;
         }
 
         if (!partitionConfig.isEnabled()) {
-            log.debug(name+" partition disabled.");
+            log.debug("Partition "+name+" disabled.");
             return;
         }
 
         for (String depend : partitionConfig.getDepends()) {
             if (partitionConfigManager.getPartitionConfig(depend) == null) {
-                log.error("Can't start "+name+" partition: Missing dependency ["+depend+"].");
+                log.error("Can't start partition "+name+": Missing dependency ["+depend+"].");
                 return;
             }
 
-            log.debug(name+" partition is dependent on "+depend+" partition.");
+            log.debug("Partition "+name+" is dependent on partition "+depend+".");
             startPartition(depend);
         }
 
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("Starting "+name+" partition.");
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Starting partition "+name+".");
+        }
 
         partition = createPartition(partitionConfig);
 
@@ -177,7 +209,7 @@ public class PartitionManager {
             listener.partitionStarted(event);
         }
 
-        log.debug(name+" partition started.");
+        log.debug("Partition "+name+" started.");
     }
 
     public ClassLoader createClassLoader(PartitionConfig partitionConfig) throws Exception {
@@ -212,7 +244,7 @@ public class PartitionManager {
 
         Partition partition = createPartition(partitionConfig, partitionContext);
 
-        log.debug("Adding "+partitionConfig.getName()+" partition.");
+        log.debug("Adding partition "+partitionConfig.getName()+".");
         partitions.put(partitionConfig.getName(), partition);
 
         partition.init(partitionConfig, partitionContext);
@@ -257,13 +289,15 @@ public class PartitionManager {
 
     public void stopPartition(String name) throws Exception {
 
-        log.debug("----------------------------------------------------------------------------------");
-        log.debug("Stopping "+name+" partition.");
+        if (debug) {
+            log.debug(TextUtil.repeat("-", 70));
+            log.debug("Stopping partition "+name+".");
+        }
 
         Partition partition = partitions.get(name);
 
         if (partition == null) {
-            log.debug(name+" partition not started.");
+            log.debug("Partition "+name+" not started.");
             return;
         }
 
@@ -276,7 +310,7 @@ public class PartitionManager {
             listener.partitionStopped(event);
         }
 
-        log.debug(name+" partition stopped.");
+        log.debug("Partition "+name+" stopped.");
     }
 
     public void removePartition(String name) throws Exception {
@@ -288,7 +322,7 @@ public class PartitionManager {
             listener.partitionRemoved(event);
         }
 
-        log.debug(name+" partition removed.");
+        log.debug("Partition "+name+" removed.");
     }
 
     public void clear() throws Exception {
@@ -366,12 +400,12 @@ public class PartitionManager {
         Collection<Partition> results = getPartitions(dn);
 
         if (results.isEmpty()) {
-            if (debug) log.debug("Returning DEFAULT partition.");
+            if (debug) log.debug("Returning default partition.");
             return getPartition("DEFAULT");
         }
 
         Partition partition = results.iterator().next();
-        if (debug) log.debug("Returning "+partition.getName()+" partition.");
+        if (debug) log.debug("Returning partition "+partition.getName()+".");
         
         return partition;
     }
@@ -446,7 +480,7 @@ public class PartitionManager {
             if (p == null) {
                 log.debug("Partition not found.");
             } else {
-                log.debug("Found "+p.getName()+" partition.");
+                log.debug("Found partition "+p.getName()+".");
             }
         }
 

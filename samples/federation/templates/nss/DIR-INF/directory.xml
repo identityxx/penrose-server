@@ -42,7 +42,7 @@
       <variable>n.uid</variable>
     </at>
     <source alias="n">
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>users</source-name>
       <mapping-name>users_to_nis_users</mapping-name>
       <field name="uid" primaryKey="true">
@@ -50,7 +50,7 @@
       </field>
     </source>
     <source alias="g">
-      <partition-name>fedration</partition-name>
+      <partition-name>federation</partition-name>
       <source-name>users</source-name>
       <mapping-name>users_to_global_users</mapping-name>
       <field name="dn">
@@ -73,7 +73,7 @@
       <variable>n.primaryKey.cn</variable>
     </at>
     <source alias="n">
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>groups</source-name>
       <mapping-name>groups_to_nis_groups</mapping-name>
       <field name="cn" primaryKey="true">
@@ -93,7 +93,7 @@
   <entry dn="ou=Hosts,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>hosts</source-name>
     </source>
   </entry>
@@ -101,7 +101,7 @@
   <entry dn="ou=Services,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>services</source-name>
     </source>
   </entry>
@@ -109,7 +109,7 @@
   <entry dn="ou=RPCs,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>rpcs</source-name>
     </source>
   </entry>
@@ -117,7 +117,7 @@
   <entry dn="ou=NetIDs,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>netids</source-name>
     </source>
   </entry>
@@ -125,7 +125,7 @@
   <entry dn="ou=Protocols,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>protocols</source-name>
     </source>
   </entry>
@@ -133,7 +133,7 @@
   <entry dn="ou=Aliases,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>aliases</source-name>
     </source>
   </entry>
@@ -141,7 +141,7 @@
   <entry dn="ou=Netgroups,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>netgroups</source-name>
     </source>
   </entry>
@@ -149,7 +149,7 @@
   <entry dn="ou=Ethers,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>ethers</source-name>
     </source>
   </entry>
@@ -157,7 +157,7 @@
   <entry dn="ou=BootParams,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>bootparams</source-name>
     </source>
   </entry>
@@ -165,7 +165,7 @@
   <entry dn="ou=Networks,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>networks</source-name>
     </source>
   </entry>
@@ -198,7 +198,7 @@ return "ldap:"+newDn+(info == null ? "" : " "+info);
       </expression>
     </at>
     <source alias="a">
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>automounts</source-name>
     </source>
   </entry>
@@ -206,7 +206,7 @@ return "ldap:"+newDn+(info == null ? "" : " "+info);
   <entry dn="ou=Profiles,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.ProxyEntry</entry-class>
     <source>
-      <partition-name>${nis.name}</partition-name>
+      <partition-name>federation_${nis.name}</partition-name>
       <source-name>profiles</source-name>
     </source>
   </entry>

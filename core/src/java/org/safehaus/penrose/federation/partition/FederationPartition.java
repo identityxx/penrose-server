@@ -51,7 +51,7 @@ public class FederationPartition extends Partition implements FederationMBean {
 
         if (create) {
             createPartitions();
-            startPartitions();
+            //startPartitions();
         }
     }
 
@@ -157,8 +157,10 @@ public class FederationPartition extends Partition implements FederationMBean {
     }
 
     public void createPartitions() throws Exception {
+        PartitionManager partitionManager = getPartitionContext().getPartitionManager();
         for (String name : getPartitionNames()) {
             createPartition(name);
+            partitionManager.getQueue().add(name);
         }
     }
 

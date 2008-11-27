@@ -3,7 +3,6 @@ package org.safehaus.penrose.ldap.source;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.util.TextUtil;
-import org.safehaus.penrose.source.ldap.SourceBindRequest;
 
 import java.util.Date;
 import java.util.Calendar;

@@ -114,11 +114,11 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         for (int i=0; i<2; i++) {
             try {
                 if (bindDn != null && bindPassword != null) {
-                    log.debug("Binding as "+bindDn+".");
+                    log.debug("Initializing authenticated connection.");
                     connection.bind(3, bindDn, bindPassword);
 
                 } else {
-                    log.debug("Binding anonymously.");
+                    log.debug("Initializing anonymous connection.");
                     connection.bind(3, null, null);
                 }
                 break;
@@ -170,6 +170,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             AddResponse response
     ) throws Exception {
 
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP ADD", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
+
         String dn = request.getDn().toString();
         Attributes attributes = request.getAttributes();
 
@@ -214,7 +220,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP add...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.add(entry, constraints);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -234,6 +248,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             BindResponse response
     ) throws Exception {
 
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP BIND", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
+
         String bindDn = request.getDn().toString();
         byte[] bindPassword = request.getPassword();
 
@@ -246,7 +266,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP bind...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.bind(3, bindDn, bindPassword);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
             this.bindDn       = bindDn;
             this.bindPassword = bindPassword;
@@ -268,6 +296,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             CompareRequest request,
             CompareResponse response
     ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP COMPARE", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
 
         String dn = request.getDn().toString();
         String name = request.getAttributeName();
@@ -308,7 +342,16 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP compare...");
+
+            long startTime = System.currentTimeMillis();
+
             boolean result = connection.compare(dn, attr, constraints);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
+
             response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } catch (Exception e) {
@@ -328,6 +371,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             DeleteRequest request,
             DeleteResponse response
     ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP DELETE", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
 
         String dn = request.getDn().toString();
 
@@ -349,7 +398,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP delete...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.delete(dn, constraints);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -391,6 +448,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             ModifyRequest request,
             ModifyResponse response
     ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP MODIFY", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
 
         String dn = request.getDn().toString();
         if (warn) log.warn("Modifying entry "+dn+".");
@@ -451,7 +514,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP modify...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.modify(dn, modifications, constraints);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -470,6 +541,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             ModRdnRequest request,
             ModRdnResponse response
     ) throws Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP MODRDN", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
 
         String dn = request.getDn().toString();
         String newRdn = request.getNewRdn().toString();
@@ -493,7 +570,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP modrdn...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.rename(dn, newRdn, deleteOldRdn, constraints);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -515,9 +600,9 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
 
         try {
             if (log.isDebugEnabled()) {
-                log.debug(TextUtil.displaySeparator(80));
-                log.debug(TextUtil.displayLine("LDAP SEARCH", 80));
-                log.debug(TextUtil.displaySeparator(80));
+                log.debug(TextUtil.displaySeparator(70));
+                log.debug(TextUtil.displayLine("LDAP SEARCH", 70));
+                log.debug(TextUtil.displaySeparator(70));
             }
 
             String baseDn = request.getDn() == null ? "" : request.getDn().toString();
@@ -672,6 +757,12 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             UnbindResponse response
     ) throws Exception {
 
+        if (log.isDebugEnabled()) {
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("LDAP UNBIND", 70));
+            log.debug(TextUtil.displaySeparator(70));
+        }
+
         DN dn = request.getDn();
         
         if (debug) log.debug("Unbinding as "+dn);
@@ -679,7 +770,15 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
         LDAPConnection connection = getConnection();
 
         try {
+            if (debug) log.debug("Executing LDAP unbind...");
+
+            long startTime = System.currentTimeMillis();
+
             connection.bind(3, null, null);
+
+            long endTime = System.currentTimeMillis();
+
+            if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

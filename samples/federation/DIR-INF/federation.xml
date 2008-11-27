@@ -5,18 +5,18 @@
 
 <federation>
     
-  <repository name="ldap" type="LDAP">
+  <repository name="ad" type="LDAP">
     <parameter>
       <param-name>url</param-name>
       <param-value>ldap://localhost/</param-value>
     </parameter>
     <parameter>
       <param-name>suffix</param-name>
-      <param-value>dc=my-domain,dc=com</param-value>
+      <param-value>dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>
-      <param-value>cn=Manager,dc=my-domain,dc=com</param-value>
+      <param-value>cn=Administrator,cn=Users,dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>password</param-name>
@@ -24,38 +24,90 @@
     </parameter>
   </repository>
 
-  <repository name="nis" type="NIS">
+  <repository name="nis1" type="NIS">
     <parameter>
       <param-name>server</param-name>
       <param-value>localhost</param-value>
     </parameter>
     <parameter>
       <param-name>domain</param-name>
-      <param-value>example.com</param-value>
+      <param-value>nis1.example.com</param-value>
     </parameter>
   </repository>
 
-  <partition name="ldap">
-    <template>partitions/federation/templates/ldap</template>
-    <repository-ref name="ldap" repository="ldap"/>
+  <repository name="nis2" type="NIS">
+    <parameter>
+      <param-name>server</param-name>
+      <param-value>localhost</param-value>
+    </parameter>
+    <parameter>
+      <param-name>domain</param-name>
+      <param-value>nis2.example.com</param-value>
+    </parameter>
+  </repository>
+
+  <repository name="nis3" type="NIS">
+    <parameter>
+      <param-name>server</param-name>
+      <param-value>localhost</param-value>
+    </parameter>
+    <parameter>
+      <param-name>domain</param-name>
+      <param-value>nis3.example.com</param-value>
+    </parameter>
+  </repository>
+
+  <partition name="federation_ad">
+    <template>partitions/federation/templates/ad</template>
+    <repository-ref name="ldap" repository="ad"/>
   </partition>
 
-  <partition name="nis_yp">
+  <partition name="federation_nis1_yp">
     <template>partitions/federation/templates/yp</template>
-    <repository-ref name="nis" repository="nis"/>
+    <repository-ref name="nis" repository="nis1"/>
   </partition>
 
-  <partition name="nis">
+  <partition name="federation_nis1">
     <template>partitions/federation/templates/nis</template>
-    <repository-ref name="nis" repository="nis"/>
+    <repository-ref name="nis" repository="nis1"/>
   </partition>
 
-  <partition name="nis_nss">
+  <partition name="federation_nis1_nss">
     <template>partitions/federation/templates/nss</template>
-    <repository-ref name="nis" repository="nis"/>
+    <repository-ref name="nis" repository="nis1"/>
   </partition>
 
-  <partition name="global">
+  <partition name="federation_nis2_yp">
+    <template>partitions/federation/templates/yp</template>
+    <repository-ref name="nis" repository="nis2"/>
+  </partition>
+
+  <partition name="federation_nis2">
+    <template>partitions/federation/templates/nis</template>
+    <repository-ref name="nis" repository="nis2"/>
+  </partition>
+
+  <partition name="federation_nis2_nss">
+    <template>partitions/federation/templates/nss</template>
+    <repository-ref name="nis" repository="nis2"/>
+  </partition>
+
+  <partition name="federation_nis3_yp">
+    <template>partitions/federation/templates/yp</template>
+    <repository-ref name="nis" repository="nis3"/>
+  </partition>
+
+  <partition name="federation_nis3">
+    <template>partitions/federation/templates/nis</template>
+    <repository-ref name="nis" repository="nis3"/>
+  </partition>
+
+  <partition name="federation_nis3_nss">
+    <template>partitions/federation/templates/nss</template>
+    <repository-ref name="nis" repository="nis3"/>
+  </partition>
+
+  <partition name="federation_global">
     <template>partitions/federation/templates/global</template>
   </partition>
 

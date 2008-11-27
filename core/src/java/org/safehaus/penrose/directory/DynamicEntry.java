@@ -62,11 +62,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("ADD", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("ADD", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -96,29 +96,60 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
-        Collection<EntrySource> sourceRefs = iterator.next();
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceValues);
 
-        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
 
-        for (EntrySource sourceRef : sourceRefs) {
-            if (EntrySourceConfig.IGNORE.equals(sourceRef.getAdd())) continue;
-            if (entryConfig.getSourceConfig(sourceRef.getAlias()) == null) continue;
-
-            localSourceRefs.add(sourceRef);
+            interpreter.set(attributeName, attributeValue);
         }
 
-        EntrySource sourceRef = sourceRefs.iterator().next();
-        Source source = sourceRef.getSource();
+        for (Attribute attribute : attributes.getAll()) {
+            String attributeName = attribute.getName();
+            Object attributeValue = attribute.getValue(); // use only the first value
 
-        source.add(
-                session,
-                localSourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+            interpreter.set(attributeName, attributeValue);
+        }
+
+        EntrySource source = getSource();
+        Attributes sourceAttributes = sourceValues.get(source.getAlias());
+
+        if (debug) log.debug("Computing target attributes:");
+        Attributes newAttributes = new Attributes();
+        RDNBuilder rb = new RDNBuilder();
+        for (EntryField field : source.getFields()) {
+
+            Collection<String> operations = field.getOperations();
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.ADD)) continue;
+
+            Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+            Object value = attribute == null ? null : attribute.getValue();
+
+            if (value == null) {
+                value = interpreter.eval(field);
+            }
+
+            if (value == null) continue;
+
+            String fieldName = field.getOriginalName();
+            boolean primaryKey = field.getField().isPrimaryKey();
+
+            if (debug) log.debug(" - " + fieldName + ": " + value + (primaryKey ? " (pk)" : ""));
+
+            newAttributes.addValue(fieldName, value);
+            if (primaryKey) rb.set(fieldName, value);
+        }
+
+        DN targetDn = new DN(rb.toRdn());
+        log.debug("Target DN: "+targetDn);
+
+        AddRequest newRequest = new AddRequest(request);
+        newRequest.setDn(targetDn);
+        newRequest.setAttributes(newAttributes);
+
+        source.add(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,13 +163,14 @@ public class DynamicEntry extends Entry implements Cloneable {
     ) throws Exception {
 
         DN dn = request.getDn();
+        byte[] password = request.getPassword();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC BIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC BIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         SourceAttributes sourceValues = new SourceAttributes();
@@ -157,17 +189,18 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-
         boolean success = true;
         boolean found = false;
 
-        for (Collection<EntrySource> sourceRefs : groupsOfSources) {
+        for (EntrySource source : getSources()) {
 
-            EntrySource sourceRef = sourceRefs.iterator().next();
-            Source source = sourceRef.getSource();
+            if (debug) log.debug("Binding to source "+source.getAlias());
 
-            String flag = sourceRef.getBind();
+            Attributes attributes = sourceValues.get(source.getAlias());
+            Object sourceDn = attributes == null ? null : attributes.getValue("dn");
+            if (debug) log.debug("Source DN: "+sourceDn);
+
+            String flag = source.getBind();
             if (debug) log.debug("Flag: "+flag);
 
             if (EntrySourceConfig.IGNORE.equals(flag)) {
@@ -177,13 +210,13 @@ public class DynamicEntry extends Entry implements Cloneable {
             found |= flag != null;
 
             try {
-                source.bind(
-                        session,
-                        sourceRefs,
-                        sourceValues,
-                        request,
-                        response
-                );
+                BindRequest sourceRequest = new BindRequest();
+                sourceRequest.setDn(sourceDn == null ? null : sourceDn.toString());
+                sourceRequest.setPassword(password);
+
+                BindResponse sourceResponse = new BindResponse();
+
+                source.bind(session, sourceRequest, sourceResponse, attributes);
 
                 if (flag == null || EntrySourceConfig.SUFFICIENT.equals(flag)) {
                     if (debug) log.debug("Bind is sufficient.");
@@ -223,11 +256,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC COMPARE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC COMPARE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -249,21 +282,91 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
-        Collection<EntrySource> sourceRefs = iterator.next();
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceValues);
 
-        EntrySource sourceRef = sourceRefs.iterator().next();
-        Source source = sourceRef.getSource();
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
 
-        source.compare(
-                session,
-                sourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+            interpreter.set(attributeName, attributeValue);
+        }
 
+        EntrySource source = getSource();
+        Attributes sourceAttributes = sourceValues.get(source.getAlias());
+
+        Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
+
+        if (targetDn == null) {
+
+            if (debug) log.debug("Computing target DN:");
+
+            RDNBuilder rb = new RDNBuilder();
+            for (EntryField field : source.getPrimaryKeyFields()) {
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.DELETE)) continue;
+
+                Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+                Object value = attribute == null ? null : attribute.getValue();
+
+                if (value == null) {
+                    value = interpreter.eval(field);
+                }
+
+                if (value == null) continue;
+
+                String fieldName = field.getOriginalName();
+                if (debug) log.debug(" - "+fieldName+": "+value);
+
+                rb.set(fieldName, value);
+            }
+
+            targetDn = rb.toRdn().toString();
+        }
+
+        if (debug) log.debug("Target DN: "+targetDn);
+
+        CompareRequest newRequest = (CompareRequest)request.clone();
+        newRequest.setDn(targetDn.toString());
+
+        interpreter.clear();
+        interpreter.set(request.getAttributeName(), request.getAttributeValue());
+
+        for (EntryField field : source.getFields()) {
+
+            Collection<String> operations = field.getOperations();
+            if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.COMPARE)) continue;
+
+            Object value = interpreter.eval(field);
+            if (value == null) continue;
+
+            if (value instanceof Collection) {
+                Collection list = (Collection)value;
+                value = list.iterator().next();
+            }
+
+            String fieldName = field.getOriginalName();
+
+            if (debug) {
+                String v;
+                if (value instanceof byte[]) {
+                    v = new String((byte[])value);
+                } else {
+                    v = value.toString();
+                }
+
+                log.debug("Comparing field " + fieldName + " = [" + v + "]");
+            }
+
+            newRequest.setAttributeName(fieldName);
+            newRequest.setAttributeValue(value);
+
+            break;
+        }
+
+        source.compare(session, newRequest, response);
+        
         //log.debug("Calling default compare operation.");
         //super.compare(session, request, response);
     }
@@ -281,11 +384,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC DELETE", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC DELETE", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -306,28 +409,57 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
-        Collection<EntrySource> sourceRefs = iterator.next();
+        EntrySource source = getSource();
+        Attributes sourceAttributes = sourceValues.get(source.getAlias());
 
-        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
+        Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
 
-        for (EntrySource sourceRef : sourceRefs) {
-            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
-                localSourceRefs.add(sourceRef);
+        if (targetDn == null) {
+
+            if (debug) log.debug("Computing target DN:");
+
+            Interpreter interpreter = partition.newInterpreter();
+            interpreter.set(sourceValues);
+
+            RDN rdn = request.getDn().getRdn();
+            for (String attributeName : rdn.getNames()) {
+                Object attributeValue = rdn.get(attributeName);
+
+                interpreter.set(attributeName, attributeValue);
             }
+
+            RDNBuilder rb = new RDNBuilder();
+
+            if (debug) log.debug("Target values:");
+            for (EntryField field : source.getPrimaryKeyFields()) {
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.DELETE)) continue;
+
+                Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+                Object value = attribute == null ? null : attribute.getValue();
+
+                if (value == null) {
+                    value = interpreter.eval(field);
+                }
+
+                if (value == null) continue;
+
+                String fieldName = field.getOriginalName();
+                if (debug) log.debug(" - "+fieldName+": "+value);
+
+                rb.set(fieldName, value);
+            }
+
+            targetDn = rb.toRdn().toString();
         }
 
-        EntrySource sourceRef = sourceRefs.iterator().next();
-        Source source = sourceRef.getSource();
+        if (debug) log.debug("Target DN: "+targetDn);
 
-        source.delete(
-                session,
-                localSourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+        DeleteRequest newRequest = new DeleteRequest(request);
+        newRequest.setDn(targetDn.toString());
+
+        source.delete(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,11 +475,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC MODIFY", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC MODIFY", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -369,28 +501,151 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
-        Collection<EntrySource> sourceRefs = iterator.next();
+        EntrySource source = getSource();
 
-        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceValues);
 
-        for (EntrySource sourceRef : sourceRefs) {
-            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
-                localSourceRefs.add(sourceRef);
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
+
+            interpreter.set(attributeName, attributeValue);
+        }
+
+        Attributes attributes = sourceValues.get(source.getAlias());
+
+        Object targetDn = attributes == null ? null : attributes.getValue("dn");
+
+        if (targetDn == null) {
+
+            if (debug) log.debug("Computing target DN:");
+            RDNBuilder rb = new RDNBuilder();
+
+            for (EntryField field : source.getPrimaryKeyFields()) {
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
+
+                Attribute attribute = attributes == null ? null : attributes.get(field.getName());
+                Object value = attribute == null ? null : attribute.getValue();
+
+                if (value == null) {
+                    value = interpreter.eval(field);
+                }
+
+                if (value == null) continue;
+
+                String fieldName = field.getOriginalName();
+                if (debug) log.debug(" - "+fieldName+": "+value);
+
+                rb.set(fieldName, value);
+            }
+
+            targetDn = rb.toRdn().toString();
+        }
+        
+        if (debug) log.debug("Target DN: "+targetDn);
+
+        Collection<Modification> newModifications = new ArrayList<Modification>();
+
+        Collection<Modification> modifications = request.getModifications();
+        for (Modification modification : modifications) {
+
+            int type = modification.getType();
+            Attribute attribute = modification.getAttribute();
+
+            String attributeName = attribute.getName();
+            Collection attributeValues = attribute.getValues();
+
+            if (debug) {
+                switch (type) {
+                    case Modification.ADD:
+                        log.debug("Adding attribute " + attributeName + ": " + attributeValues);
+                        break;
+                    case Modification.REPLACE:
+                        log.debug("Replacing attribute " + attributeName + ": " + attributeValues);
+                        break;
+                    case Modification.DELETE:
+                        log.debug("Deleting attribute " + attributeName + ": " + attributeValues);
+                        break;
+                }
+            }
+
+            interpreter.clear();
+            interpreter.set(sourceValues);
+            interpreter.set(attributeName, attributeValues);
+
+            switch (type) {
+                case Modification.ADD:
+                case Modification.REPLACE:
+                    for (EntryField fieldRef : source.getFields()) {
+
+                        Collection<String> operations = fieldRef.getOperations();
+                        if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
+
+                        String fieldName = fieldRef.getName();
+                        if (fieldRef.isPrimaryKey()) continue;
+
+                        Object value = interpreter.eval(fieldRef);
+                        if (value == null) continue;
+
+                        if (debug) log.debug(" => Replacing field " + fieldName + ": " + value);
+
+                        Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                        if (value instanceof Collection) {
+                            Collection list = (Collection)value;
+                            for (Object v : list) {
+                                newAttribute.addValue(v);
+                            }
+                        } else {
+                            newAttribute.addValue(value);
+                        }
+                        newModifications.add(new Modification(type, newAttribute));
+                    }
+                    break;
+
+                case Modification.DELETE:
+                    for (EntryField fieldRef : source.getFields()) {
+
+                        Collection<String> operations = fieldRef.getOperations();
+                        if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODIFY)) continue;
+
+                        String fieldName = fieldRef.getName();
+
+                        String variable = fieldRef.getVariable();
+                        if (variable == null) {
+                            Object value = interpreter.eval(fieldRef);
+                            if (value == null) continue;
+
+                            if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+value);
+
+                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                            newAttribute.addValue(value);
+                            newModifications.add(new Modification(type, newAttribute));
+
+                        } else {
+                            if (!variable.equals(attributeName)) continue;
+
+                            if (debug) log.debug(" ==> Deleting field " + fieldName + ": "+attributeValues);
+
+                            Attribute newAttribute = new Attribute(fieldRef.getOriginalName());
+                            for (Object value : attributeValues) {
+                                newAttribute.addValue(value);
+                            }
+                            newModifications.add(new Modification(type, newAttribute));
+                        }
+
+                    }
+                    break;
             }
         }
 
-        EntrySource sourceRef = sourceRefs.iterator().next();
-        Source source = sourceRef.getSource();
+        ModifyRequest newRequest = new ModifyRequest();
+        newRequest.setDn(targetDn.toString());
+        newRequest.setModifications(newModifications);
 
-        source.modify(
-                session,
-                localSourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+        source.modify(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,11 +661,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = request.getDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC MODRDN", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC MODRDN", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         validatePermission(session, request);
@@ -433,28 +688,73 @@ public class DynamicEntry extends Entry implements Cloneable {
             sourceValues.print();
         }
 
-        Collection<Collection<EntrySource>> groupsOfSources = getGroupsOfSources();
-        Iterator<Collection<EntrySource>> iterator = groupsOfSources.iterator();
-        Collection<EntrySource> sourceRefs = iterator.next();
+        Interpreter interpreter = partition.newInterpreter();
+        interpreter.set(sourceValues);
 
-        Collection<EntrySource> localSourceRefs = new ArrayList<EntrySource>();
+        RDN rdn = request.getDn().getRdn();
+        for (String attributeName : rdn.getNames()) {
+            Object attributeValue = rdn.get(attributeName);
 
-        for (EntrySource sourceRef : sourceRefs) {
-            if (entryConfig.getSourceConfig(sourceRef.getAlias()) != null) {
-                localSourceRefs.add(sourceRef);
-            }
+            interpreter.set(attributeName, attributeValue);
         }
 
-        EntrySource sourceRef = sourceRefs.iterator().next();
-        Source source = sourceRef.getSource();
+        EntrySource source = getSource();
+        Attributes sourceAttributes = sourceValues.get(source.getAlias());
 
-        source.modrdn(
-                session,
-                localSourceRefs,
-                sourceValues,
-                request,
-                response
-        );
+        Object targetDn = sourceAttributes == null ? null : sourceAttributes.getValue("dn");
+
+        if (targetDn == null) {
+
+            if (debug) log.debug("Computing target DN:");
+
+            RDNBuilder rb = new RDNBuilder();
+            for (EntryField field : source.getPrimaryKeyFields()) {
+
+                Collection<String> operations = field.getOperations();
+                if (!operations.isEmpty() && !operations.contains(EntryFieldConfig.MODRDN)) continue;
+
+                Attribute attribute = sourceAttributes == null ? null : sourceAttributes.get(field.getName());
+                Object value = attribute == null ? null : attribute.getValue();
+
+                if (value == null) {
+                    value = interpreter.eval(field);
+                }
+
+                if (value == null) continue;
+
+                String fieldName = field.getOriginalName();
+                if (debug) log.debug(" - "+fieldName+": "+value);
+
+                rb.set(fieldName, value);
+            }
+
+            targetDn = rb.toRdn().toString();
+        }
+
+        interpreter.clear();
+        interpreter.set(sourceValues);
+
+        RDN newRdn = request.getNewRdn();
+        for (String attributeName : newRdn.getNames()) {
+            Object attributeValue = newRdn.get(attributeName);
+
+            interpreter.set(attributeName, attributeValue);
+        }
+
+        RDNBuilder rb = new RDNBuilder();
+        for (EntryField field : source.getPrimaryKeyFields()) {
+ 
+            Object value = interpreter.eval(field);
+            if (value == null) continue;
+
+            rb.set(field.getOriginalName(), value);
+        }
+
+        ModRdnRequest newRequest = new ModRdnRequest(request);
+        newRequest.setDn(targetDn.toString());
+        newRequest.setNewRdn(rb.toRdn());
+
+        source.modrdn(session, newRequest, response);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -470,14 +770,14 @@ public class DynamicEntry extends Entry implements Cloneable {
         final int scope     = operation.getScope();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC SEARCH", 80));
-            log.debug(TextUtil.displayLine("Class  : "+getClass().getName(), 80));
-            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("Base   : "+baseDn, 80));
-            log.debug(TextUtil.displayLine("Filter : "+filter, 80));
-            log.debug(TextUtil.displayLine("Scope  : "+LDAP.getScope(scope), 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC SEARCH", 70));
+            log.debug(TextUtil.displayLine("Class  : "+getClass().getName(), 70));
+            log.debug(TextUtil.displayLine("Entry  : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("Base   : "+baseDn, 70));
+            log.debug(TextUtil.displayLine("Filter : "+filter, 70));
+            log.debug(TextUtil.displayLine("Scope  : "+LDAP.getScope(scope), 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
         EntrySearchOperation op = new EntrySearchOperation(operation, this);
@@ -612,9 +912,9 @@ public class DynamicEntry extends Entry implements Cloneable {
                 if (sourceFilter == null) continue;
 
                 if (debug) {
-                    log.debug(TextUtil.displaySeparator(80));
-                    log.debug(TextUtil.displayLine("Search source "+alias+" with filter "+sourceFilter+".", 80));
-                    log.debug(TextUtil.displaySeparator(80));
+                    log.debug(TextUtil.displaySeparator(70));
+                    log.debug(TextUtil.displayLine("Search source "+alias+" with filter "+sourceFilter+".", 70));
+                    log.debug(TextUtil.displaySeparator(70));
                 }
 
                 SourceAttributes sa = new SourceAttributes();
@@ -1084,11 +1384,11 @@ public class DynamicEntry extends Entry implements Cloneable {
         DN dn = session.getBindDn();
 
         if (debug) {
-            log.debug(TextUtil.displaySeparator(80));
-            log.debug(TextUtil.displayLine("DYNAMIC UNBIND", 80));
-            log.debug(TextUtil.displayLine("Entry : "+getDn(), 80));
-            log.debug(TextUtil.displayLine("DN    : "+dn, 80));
-            log.debug(TextUtil.displaySeparator(80));
+            log.debug(TextUtil.displaySeparator(70));
+            log.debug(TextUtil.displayLine("DYNAMIC UNBIND", 70));
+            log.debug(TextUtil.displayLine("Entry : "+getDn(), 70));
+            log.debug(TextUtil.displayLine("DN    : "+dn, 70));
+            log.debug(TextUtil.displaySeparator(70));
         }
 
     }
