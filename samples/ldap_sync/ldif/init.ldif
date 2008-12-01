@@ -57,19 +57,19 @@ dn: ou=Groups,dc=Example,dc=com
 objectClass: organizationalUnit
 ou: Groups
 
-dn: cn=manager,ou=Groups,dc=Example,dc=com
+dn: cn=managers,ou=Groups,dc=Example,dc=com
 objectClass: groupOfUniqueNames
-cn: manager
+cn: managers
 uniqueMember: uid=jstockton,ou=Users,dc=Example,dc=com
 
-dn: cn=administrator,ou=Groups,dc=Example,dc=com
+dn: cn=administrators,ou=Groups,dc=Example,dc=com
 objectClass: groupOfUniqueNames
-cn: administrator
+cn: administrators
 uniqueMember: uid=swhite,ou=Users,dc=Example,dc=com
 
-dn: cn=user,ou=Groups,dc=Example,dc=com
+dn: cn=users,ou=Groups,dc=Example,dc=com
 objectClass: groupOfUniqueNames
-cn: user
+cn: users
 uniqueMember: uid=jstockton,ou=Users,dc=Example,dc=com
 uniqueMember: uid=swhite,ou=Users,dc=Example,dc=com
 uniqueMember: uid=alange,ou=Users,dc=Example,dc=com

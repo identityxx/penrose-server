@@ -5,8 +5,20 @@
 
 <sources>
 
-  <source name="users">
-    <connection-name>LDAP</connection-name>
+  <source name="jdbc_users">
+    <connection-name>Database</connection-name>
+    <field name="username" primaryKey="true"/>
+    <field name="firstName"/>
+    <field name="lastName"/>
+    <field name="password"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>users</param-value>
+    </parameter>
+  </source>
+
+  <source name="ldap_users">
+    <connection-name>Directory</connection-name>
     <field name="uid" primaryKey="true"/>
     <field name="cn"/>
     <field name="sn"/>
@@ -18,6 +30,10 @@
     <parameter>
       <param-name>scope</param-name>
       <param-value>ONELEVEL</param-value>
+      </parameter>
+    <parameter>
+      <param-name>filter</param-name>
+      <param-value>(objectClass=*)</param-value>
     </parameter>
     <parameter>
       <param-name>objectClasses</param-name>
@@ -25,8 +41,18 @@
     </parameter>
   </source>
 
-  <source name="groups">
-    <connection-name>LDAP</connection-name>
+  <source name="jdbc_groups">
+    <connection-name>Database</connection-name>
+    <field name="groupname" primaryKey="true"/>
+    <field name="description"/>
+    <parameter>
+      <param-name>table</param-name>
+      <param-value>groups</param-value>
+    </parameter>
+  </source>
+
+  <source name="ldap_groups">
+    <connection-name>Directory</connection-name>
     <field name="cn" primaryKey="true"/>
     <field name="description"/>
     <field name="uniqueMember"/>
