@@ -5,11 +5,6 @@ if [ -f "/etc/penrose.conf" ] ; then
   . /etc/penrose.conf
 fi
 
-# load user Penrose configuration
-if [ -f "$HOME/.penroserc" ] ; then
-  . "$HOME/.penroserc"
-fi
-
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;
@@ -23,14 +18,14 @@ case "`uname`" in
 esac
 
 if [ -z "$PENROSE_CLIENT_HOME" ] ; then
-  # try to find PENROSE AGENT
-  if [ -d /opt/penrose-client ] ; then
-    PENROSE_CLIENT_HOME=/opt/penrose-client
-  fi
 
-  if [ -d "$HOME/opt/penrose-client" ] ; then
-    PENROSE_CLIENT_HOME="$HOME/opt/penrose-client"
-  fi
+  # if [ -d /opt/penrose-client ] ; then
+  #   PENROSE_CLIENT_HOME=/opt/penrose-client
+  # fi
+
+  # if [ -d "$HOME/opt/penrose-client" ] ; then
+  #   PENROSE_CLIENT_HOME="$HOME/opt/penrose-client"
+  # fi
 
   ## resolve links - $0 may be a link to Penrose's home
   PRG="$0"

@@ -1,6 +1,6 @@
-<project name="penrose-services" default="build">
+<project name="services" default="build">
 
-    <description>Penrose Services</description>
+    <description>Services</description>
 
     <property file="../build.properties"/>
 

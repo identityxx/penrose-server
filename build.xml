@@ -67,20 +67,20 @@
 
     <target name="export" depends="build">
         <mkdir dir="target"/>
-        <tar destfile="target/${product.name}-bin.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-bin.tar.gz" compression="gzip">
             <tarfileset dir="server/bin"/>
         </tar>
-        <tar destfile="target/${product.name}-conf.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-conf.tar.gz" compression="gzip">
             <tarfileset dir="conf"/>
             <tarfileset dir="server/conf"/>
         </tar>
-        <tar destfile="target/${product.name}-samples.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-samples.tar.gz" compression="gzip">
             <tarfileset dir="samples"/>
         </tar>
-        <tar destfile="target/${product.name}-schema.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-schema.tar.gz" compression="gzip">
             <tarfileset dir="schema"/>
         </tar>
-        <tar destfile="target/${product.name}-services.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-services.tar.gz" compression="gzip">
             <tarfileset dir="services">
                 <exclude name="**/build.xml"/>
                 <exclude name="**/src/"/>
@@ -90,7 +90,7 @@
     </target>
 
     <target name="export-all" depends="docs,export">
-        <tar destfile="target/${product.name}-docs.tar.gz" compression="gzip">
+        <tar destfile="target/${project.name}-docs.tar.gz" compression="gzip">
             <tarfileset dir="core/target" includes="javadoc/**"/>
             <tarfileset dir="server/target" prefix="server" includes="javadoc/**"/>
             <tarfileset dir="docs"/>

@@ -41,6 +41,7 @@ import org.safehaus.penrose.operation.PipelineSearchOperation;
 import org.safehaus.penrose.source.SourceManager;
 import org.safehaus.penrose.thread.ThreadManager;
 import org.safehaus.penrose.thread.ThreadManagerConfig;
+import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ietf.ldap.LDAPException;
@@ -266,7 +267,7 @@ public class Partition implements Cloneable {
 
         Constructor constructor = clazz.getConstructor(String.class);
 
-        ThreadManager threadManager = (ThreadManager)constructor.newInstance("Penrose-"+partitionConfig.getName());
+        ThreadManager threadManager = (ThreadManager)constructor.newInstance(Penrose.PRODUCT_NAME+"-"+partitionConfig.getName());
         threadManager.init(threadManagerConfig);
 
         return threadManager;

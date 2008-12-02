@@ -23,14 +23,14 @@ case "`uname`" in
 esac
 
 if [ -z "$PENROSE_SERVER_HOME" ] ; then
-  # try to find PENROSE
-  if [ -d /opt/penrose-server ] ; then
-    PENROSE_SERVER_HOME=/opt/penrose-server
-  fi
 
-  if [ -d "$HOME/opt/penrose-server" ] ; then
-    PENROSE_SERVER_HOME="$HOME/opt/penrose-server"
-  fi
+  # if [ -d /opt/penrose-server ] ; then
+  #   PENROSE_SERVER_HOME=/opt/penrose-server
+  # fi
+
+  # if [ -d "$HOME/opt/penrose-server" ] ; then
+  #   PENROSE_SERVER_HOME="$HOME/opt/penrose-server"
+  # fi
 
   ## resolve links - $0 may be a link to Penrose's home
   PRG="$0"

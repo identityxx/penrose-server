@@ -67,7 +67,7 @@ public class MonitorManager {
         Properties buildProperties = new Properties();
         buildProperties.load(new FileInputStream(buildPropertiesFile));
 
-        String title = buildProperties.getProperty("product.title");
+        String title = buildProperties.getProperty("project.title");
         String version = buildProperties.getProperty("product.version");
 
         windowsServiceName = title+" Server "+version;
@@ -301,11 +301,11 @@ public class MonitorManager {
     }
 
     public void startUnix() throws Exception {
-        execute(home+"/bin/penrose-server.sh start");
+        execute(home+"/bin/vd-server.sh start");
     }
 
     public void stopUnix() throws Exception {
-        execute(home+"/bin/penrose-server.sh stop");
+        execute(home+"/bin/vd-server.sh stop");
     }
 
     public void execute(String command) throws Exception {

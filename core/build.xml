@@ -2,11 +2,12 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-core" default="build">
+<project name="core" default="build">
 
-    <description>Penrose Core</description>
+    <description>Core</description>
 
     <property file="../build.properties"/>
+    <property file="build.properties"/>
     <property name="prefix" value=""/>
 
     <property name="project.dist" value="../dist"/>
@@ -95,7 +96,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling Penrose Core."/>
+        <echo message="Compiling Core."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -173,7 +174,7 @@
               <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
               <attribute name="Build-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>

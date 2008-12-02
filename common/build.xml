@@ -3,13 +3,13 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-common" default="build">
+<project name="common" default="build">
 
-    <description>Penrose Common</description>
+    <description>Common</description>
 
     <property file="../build.properties"/>
+    <property file="build.properties"/>
 
-    <property name="module.name" value="penrose-common"/>
     <property name="module.dist" value="dist"/>
 
     <property name="prefix" value=""/>
@@ -81,7 +81,7 @@
     </target>
 
     <target name="compile" depends="init">
-        <echo message="Compiling ${module.name}."/>
+        <echo message="Compiling ${product.name}."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -98,14 +98,14 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building ${module.name}."/>
-        <jar destfile="target/${module.name}-${product.version}.jar">
+        <echo message="Building ${product.name}."/>
+        <jar destfile="target/${product.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
               <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
               <attribute name="Built-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>
@@ -125,16 +125,16 @@
 
     <target name="dist-src" depends="init">
         <mkdir dir="${module.dist}"/>
-        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
-        <zip destfile="${module.dist}/${module.name}-${product.version}-src.zip">
+        <echo message="Creating ${product.name}-${product.version}-src.zip"/>
+        <zip destfile="${module.dist}/${product.name}-${product.version}-src.zip">
             <zipfileset dir=".">
                 <exclude name="${module.dist}/**"/>
                 <exclude name="target/**"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
-        <tar destfile="${module.dist}/${module.name}-${product.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${module.name}-${product.version}">
+        <echo message="Creating ${product.name}-${product.version}-src.tar.gz"/>
+        <tar destfile="${module.dist}/${product.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${product.name}-${product.version}">
                 <exclude name="${module.dist}/**"/>
                 <exclude name="target/**"/>
             </tarfileset>

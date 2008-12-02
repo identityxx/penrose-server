@@ -40,10 +40,36 @@ public class PenroseServer {
     public static org.slf4j.Logger errorLog = org.safehaus.penrose.log.Error.log;
     public static boolean debug = log.isDebugEnabled();
 
+    public static String PRODUCT_NAME;
+    public static String PRODUCT_VERSION;
+    public static String VENDOR_NAME;
+    public static String SPECIFICATION_VERSION;
+
     private Penrose penrose;
 
     private ServiceConfigManager serviceConfigManager;
     private ServiceManager serviceManager;
+
+    static {
+        try {
+            Package pkg = PenroseServer.class.getPackage();
+
+            String value = pkg.getImplementationTitle();
+            if (value != null) PRODUCT_NAME = value;
+
+            value = pkg.getImplementationVersion();
+            if (value != null) PRODUCT_VERSION = value;
+
+            value = pkg.getImplementationVendor();
+            if (value != null) VENDOR_NAME = value;
+
+            value = pkg.getSpecificationVersion();
+            if (value != null) SPECIFICATION_VERSION = value;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public PenroseServer() throws Exception {
 
@@ -104,7 +130,7 @@ public class PenroseServer {
 
     public void start() throws Exception {
 
-        log.debug("Starting Penrose Server...");
+        log.debug("Starting "+PRODUCT_NAME+"...");
 
         penrose.start();
 
@@ -121,13 +147,13 @@ public class PenroseServer {
             }
         }
 
-        log.fatal("Penrose Server is ready.");
+        log.fatal(PRODUCT_NAME+" is ready.");
     }
 
     public void stop() throws Exception {
 
         log.debug("----------------------------------------------------------------------------------");
-        log.debug("Stopping Penrose Server...");
+        log.debug("Stopping "+PRODUCT_NAME+"...");
 
         List<String> serviceNames = new ArrayList<String>();
 
@@ -148,7 +174,7 @@ public class PenroseServer {
 
         penrose.stop();
 
-        log.fatal("Penrose Server has been shutdown.");
+        log.fatal(PRODUCT_NAME+" has been shutdown.");
     }
 
     public String getStatus() {
@@ -246,8 +272,7 @@ public class PenroseServer {
             }
 
             if (parameters.contains("--version")) {
-                System.out.println(Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION);
-                System.out.println(Penrose.PRODUCT_COPYRIGHT);
+                System.out.println(PRODUCT_NAME+" "+PRODUCT_VERSION);
                 System.exit(0);
             }
 
@@ -280,7 +305,7 @@ public class PenroseServer {
                 }
             }
 
-            log.warn("Starting "+Penrose.PRODUCT_NAME+" Server "+Penrose.PRODUCT_VERSION+".");
+            log.warn("Starting "+PRODUCT_NAME+" "+PRODUCT_VERSION+".");
 
             String javaVersion = System.getProperty("java.version");
             log.info("Java version: "+javaVersion);
@@ -294,7 +319,7 @@ public class PenroseServer {
             String userDir = System.getProperty("user.dir");
             log.info("Current directory: "+userDir);
 
-            log.info("Penrose home: "+home);
+            log.info(PRODUCT_NAME+" home: "+home);
 
             final PenroseServer penroseServer = new PenroseServer(home);
 
@@ -311,7 +336,7 @@ public class PenroseServer {
             penroseServer.start();
 
         } catch (Exception e) {
-            log.error("Server failed to start: "+e.getMessage(), e);
+            log.error(PRODUCT_NAME+" failed to start: "+e.getMessage(), e);
             System.exit(1);
         }
     }
@@ -321,10 +346,10 @@ public class PenroseServer {
     }
 
     public String getProductName() {
-        return Penrose.PRODUCT_NAME+" Server";
+        return PRODUCT_NAME;
     }
 
     public String getProductVersion() {
-        return Penrose.PRODUCT_VERSION;
+        return PRODUCT_VERSION;
     }
 }

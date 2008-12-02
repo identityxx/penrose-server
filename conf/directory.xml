@@ -9,10 +9,10 @@
     <entry-class>org.safehaus.penrose.directory.RootEntry</entry-class>
     <oc>extensibleObject</oc>
     <at name="vendorName">
-      <constant>${vendor.name}</constant>
+      <constant>${product.vendor}</constant>
     </at>
     <at name="vendorVersion">
-      <constant>${product.title} Server ${product.version}</constant>
+      <constant>${project.title} Server ${product.version}</constant>
     </at>
     <at name="supportedLDAPVersion">
       <constant>3</constant>

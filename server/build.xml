@@ -2,17 +2,18 @@
  Copyright (c) 2000-2006, Identyx Corporation.
  All rights reserved.
 -->
-<project name="penrose-server" default="build">
+<project name="server" default="build">
 
-    <description>Penrose Server</description>
+    <description>Server</description>
 
     <property file="../build.properties"/>
+    <property file="build.properties"/>
+  
     <property name="prefix" value=""/>
 
-    <property name="module.name" value="${product.name}-server"/>
     <property name="project.dist" value="dist"/>
 
-    <property name="server.home" value="${prefix}/opt/${module.name}-${product.version}"/>
+    <property name="server.home" value="${prefix}/opt/${product.name}-${product.version}"/>
     
     <property name="docs.target" value="dist/javadoc"/>
 
@@ -26,14 +27,14 @@
         </fileset>
         <fileset dir="../common">
             <include name="lib/**/*.jar"/>
-            <include name="target/${product.name}-common-${product.version}.jar"/>
+            <include name="target/${project.name}-common-${product.version}.jar"/>
         </fileset>
         <fileset dir="../core">
             <include name="lib/**/*.jar"/>
-            <include name="target/${product.name}-${product.version}.jar"/>
+            <include name="target/${project.name}-${product.version}.jar"/>
         </fileset>
         <fileset dir="../client">
-            <include name="target/${product.name}-client-${product.version}.jar"/>
+            <include name="target/${project.name}-client-${product.version}.jar"/>
         </fileset>
     </path>
 
@@ -43,14 +44,14 @@
         </fileset>
         <fileset dir="../common">
             <include name="lib/**/*.jar"/>
-            <include name="target/${product.name}-common-${product.version}.jar"/>
+            <include name="target/${project.name}-common-${product.version}.jar"/>
         </fileset>
         <fileset dir="../core">
             <include name="lib/**/*.jar"/>
-            <include name="target/${product.name}-${product.version}.jar"/>
+            <include name="target/${project.name}-${product.version}.jar"/>
         </fileset>
         <fileset dir="../client">
-            <include name="target/${product.name}-client-${product.version}.jar"/>
+            <include name="target/${project.name}-client-${product.version}.jar"/>
         </fileset>
         <pathelement location="target/classes"/>
     </path>
@@ -86,7 +87,7 @@
     </target>
   
     <target name="compile" depends="init">
-        <echo message="Compiling ${module.name}."/>
+        <echo message="Compiling ${product.name}."/>
         <mkdir dir="target/classes"/>
         <javac
             srcdir="src/java"
@@ -103,14 +104,14 @@
     </target>
 
     <target name="build" depends="compile">
-        <echo message="Building ${module.name}."/>
-        <jar jarfile="target/${module.name}-${product.version}.jar">
+        <echo message="Building ${product.name}."/>
+        <jar jarfile="target/${product.name}-${product.version}.jar">
             <fileset dir="target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
-              <attribute name="Implementation-Title"   value="${product.title} Server"/>
+              <attribute name="Implementation-Title"   value="${product.title}"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
               <attribute name="Build-Date"             value="${TIMESTAMP}"/>
             </manifest>
         </jar>
@@ -163,6 +164,9 @@
 
         <copy todir="target/dist/bin">
             <fileset dir="bin"/>
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
         </copy>
 
         <copy todir="target/dist/conf">
@@ -179,7 +183,7 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <chmod file="target/dist/etc/init.d/penrose" perm="ugo+rx"/>
+        <chmod file="target/dist/etc/init.d/${project.name}" perm="ugo+rx"/>
 
         <mkdir dir="target/dist/db"/>
 
@@ -198,13 +202,13 @@
             <fileset dir="../common/lib" includes="*"/>
             <fileset dir="../core/lib" includes="*"/>
         </copy>
-        <copy file="../common/target/${product.name}-common-${product.version}.jar"
+        <copy file="../common/target/${project.name}-common-${product.version}.jar"
               todir="target/dist/lib"
         />
-        <copy file="../core/target/${product.name}-${product.version}.jar"
+        <copy file="../core/target/${project.name}-${product.version}.jar"
               todir="target/dist/lib"
         />
-        <copy file="../client/target/${product.name}-client-${product.version}.jar"
+        <copy file="../client/target/${project.name}-client-${product.version}.jar"
               todir="target/dist/lib"
         />
         <mkdir dir="target/dist/lib/ext"/>
@@ -220,7 +224,7 @@
 
         <copy todir="target/dist/server/lib" includeEmptyDirs="false">
             <fileset dir="lib" includes="*"/>
-            <fileset dir="target" includes="${module.name}-${product.version}.jar"/>
+            <fileset dir="target" includes="${product.name}-${product.version}.jar"/>
         </copy>
         <mkdir dir="target/dist/server/lib/ext"/>
 
@@ -239,26 +243,26 @@
     <target name="package" depends="dist">
 
         <mkdir dir="dist"/>
-        <zip destfile="dist/${module.name}-${product.version}.zip">
-            <zipfileset dir="target/dist" prefix="${module.name}-${product.version}" filemode="755">
+        <zip destfile="dist/${product.name}-${product.version}.zip">
+            <zipfileset dir="target/dist" prefix="${product.name}-${product.version}" filemode="755">
                 <include name="bin/*.sh"/>
                 <include name="services/ApacheDS/bin/*.sh"/>
                 <include name="services/OpenDS/bin/*.sh"/>
             </zipfileset>
-            <zipfileset dir="target/dist" prefix="${module.name}-${product.version}">
+            <zipfileset dir="target/dist" prefix="${product.name}-${product.version}">
                 <include name="**/*"/>
                 <exclude name="bin/*.sh"/>
                 <exclude name="services/ApacheDS/bin/*.sh"/>
                 <exclude name="services/OpenDS/bin/*.sh"/>
             </zipfileset>
         </zip>
-        <tar destfile="dist/${module.name}-${product.version}.tar.gz" compression="gzip">
-            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}" mode="755">
+        <tar destfile="dist/${product.name}-${product.version}.tar.gz" compression="gzip">
+            <tarfileset dir="target/dist" prefix="${product.name}-${product.version}" mode="755">
                 <include name="bin/*.sh"/>
                 <include name="services/ApacheDS/bin/*.sh"/>
                 <include name="services/OpenDS/bin/*.sh"/>
             </tarfileset>
-            <tarfileset dir="target/dist" prefix="${module.name}-${product.version}">
+            <tarfileset dir="target/dist" prefix="${product.name}-${product.version}">
                 <include name="**/*"/>
                 <exclude name="bin/*.sh"/>
                 <exclude name="services/ApacheDS/bin/*.sh"/>
@@ -270,69 +274,69 @@
 
     <target name="dist-src">
         <mkdir dir="dist"/>
-        <echo message="Creating ${module.name}-${product.version}-src.zip"/>
-        <zip destfile="dist/${module.name}-${product.version}-src.zip">
-            <zipfileset dir="." prefix="${module.name}-${product.version}">
+        <echo message="Creating ${product.name}-${product.version}-src.zip"/>
+        <zip destfile="dist/${product.name}-${product.version}-src.zip">
+            <zipfileset dir="." prefix="${product.name}-${product.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
                 <exclude name="logs/**"/>
             </zipfileset>
-            <zipfileset dir="../common/lib" prefix="${module.name}-${product.version}/lib">
+            <zipfileset dir="../common/lib" prefix="${product.name}-${product.version}/lib">
                 <include name="**/*"/>
             </zipfileset>
-            <zipfileset dir="../common/target" prefix="${module.name}-${product.version}/lib">
-                <include name="${product.name}-common-${product.version}.jar"/>
+            <zipfileset dir="../common/target" prefix="${product.name}-${product.version}/lib">
+                <include name="${project.name}-common-${product.version}.jar"/>
             </zipfileset>
-            <zipfileset dir="../core/lib" prefix="${module.name}-${product.version}/lib">
+            <zipfileset dir="../core/lib" prefix="${product.name}-${product.version}/lib">
                 <include name="**/*"/>
             </zipfileset>
-            <zipfileset dir="../core/target" prefix="${module.name}-${product.version}/lib">
-                <include name="${product.name}-${product.version}.jar"/>
+            <zipfileset dir="../core/target" prefix="${product.name}-${product.version}/lib">
+                <include name="${project.name}-${product.version}.jar"/>
             </zipfileset>
         </zip>
-        <echo message="Creating ${module.name}-${product.version}-src.tar.gz"/>
-        <tar destfile="dist/${module.name}-${product.version}-src.tar.gz" compression="gzip">
-            <tarfileset dir="." prefix="${module.name}-${product.version}">
+        <echo message="Creating ${product.name}-${product.version}-src.tar.gz"/>
+        <tar destfile="dist/${product.name}-${product.version}-src.tar.gz" compression="gzip">
+            <tarfileset dir="." prefix="${product.name}-${product.version}">
                 <exclude name="dist/**"/>
                 <exclude name="target/**"/>
                 <exclude name="logs/**"/>
             </tarfileset>
-            <tarfileset dir="../common/lib" prefix="${module.name}-${product.version}/lib">
+            <tarfileset dir="../common/lib" prefix="${product.name}-${product.version}/lib">
                 <include name="**/*"/>
             </tarfileset>
-            <tarfileset dir="../common/target" prefix="${module.name}-${product.version}/lib">
-                <include name="${product.name}-common-${product.version}.jar"/>
+            <tarfileset dir="../common/target" prefix="${product.name}-${product.version}/lib">
+                <include name="${project.name}-common-${product.version}.jar"/>
             </tarfileset>
-            <tarfileset dir="../core/lib" prefix="${module.name}-${product.version}/lib">
+            <tarfileset dir="../core/lib" prefix="${product.name}-${product.version}/lib">
                 <include name="**/*"/>
             </tarfileset>
-            <tarfileset dir="../core/target" prefix="${module.name}-${product.version}/lib">
-                <include name="${product.name}-${product.version}.jar"/>
+            <tarfileset dir="../core/target" prefix="${product.name}-${product.version}/lib">
+                <include name="${project.name}-${product.version}.jar"/>
             </tarfileset>
         </tar>
     </target>
 
     <target name="dist-macosx" depends="docs,package" if="isMac">
-        <echo message="Creating ${module.name}-${product.version}.pkg"/>
-        <mkdir dir="target/${module.name}-${product.version}.dmg"/>
+        <echo message="Creating ${product.name}-${product.version}.pkg"/>
+        <mkdir dir="target/${product.name}-${product.version}.dmg"/>
         <exec executable="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker">
             <arg line="-build"/>
-            <arg line="-proj server/installer/${module.name}.pmproj"/>
-            <arg line="-p server/target/${module.name}-${product.version}.dmg/${module.name}-${product.version}.pkg"/>
+            <arg line="-proj server/installer/${product.name}.pmproj"/>
+            <arg line="-p server/target/${product.name}-${product.version}.dmg/${product.name}-${product.version}.pkg"/>
         </exec>
-        <echo message="Creating ${module.name}-${product.version}.dmg"/>
+        <echo message="Creating ${product.name}-${product.version}.dmg"/>
         <mkdir dir="dist"/>
         <exec executable="/usr/bin/hdiutil">
             <arg line="create"/>
             <arg line="-fs HFS+"/>
-            <arg line="-srcdir target/${module.name}-${product.version}.dmg"/>
-            <arg line="dist/${module.name}-${product.version}.dmg"/>
+            <arg line="-srcdir target/${product.name}-${product.version}.dmg"/>
+            <arg line="dist/${product.name}-${product.version}.dmg"/>
         </exec>
 <!--
         <exec executable="server/tools/pkg-dmg">
-            <arg line="- -source target/${module.name}-${product.version}.dmg"/>
-            <arg line="- -target ${module.name}-${product.version}.dmg"/>
-            <arg line="- -volname &quot;Penrose Server ${product.version}&quot;"/>
+            <arg line="- -source target/${product.name}-${product.version}.dmg"/>
+            <arg line="- -target ${product.name}-${product.version}.dmg"/>
+            <arg line="- -volname &quot;${project.name} Server ${product.version}&quot;"/>
             <arg line="- -mkdir /.background"/>
             <arg line="- -icon images/PenroseDMG.icns"/>
             <arg line="- -license target/LICENSE.txt"/>
@@ -348,19 +352,21 @@
     </target>
 
     <target name="dist-win32" depends="docs,package" if="isWindows">
-        <echo message="Creating ${module.name}-${product.version}.exe"/>
-        <copy todir="target" file="installer/${module.name}.iss">
+        <echo message="Creating ${product.name}-${product.version}.exe"/>
+        <copy todir="target" file="installer/${product.name}.iss">
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
         <mkdir dir="dist"/>
         <exec executable="${iscc.path}">
-            <arg line="/Q target/${module.name}.iss"/>
+            <arg line="/Q target/${product.name}.iss"/>
         </exec>
     </target>
 
-    <target name="dist-rpm" depends="dist-rpm-unix,dist-rpm-win32">
+    <target name="dist-rpm">
+        <antcall target="dist-rpm-unix"/>
+        <antcall target="dist-rpm-win32"/>
     </target>
 
     <target name="dist-rpm-unix" depends="init" if="isUnix">
@@ -378,9 +384,9 @@
             <param name="rpm.prefix" value=""/>
             <param name="rpm.home" value="/usr/src/redhat"/>
             <param name="rpm.builder" value="/usr/bin/rpmbuild"/>
-            <param name="rpm.spec" value="${module.name}.spec"/>
+            <param name="rpm.spec" value="${product.name}.spec"/>
             <param name="rpm.arch" value="${arch}"/>
-            <param name="rpm.name" value="${module.name}-${product.version}-1.${arch}.rpm"/>
+            <param name="rpm.name" value="${product.name}-${product.version}-1.${arch}.rpm"/>
         </antcall>
     </target>
 
@@ -389,9 +395,9 @@
             <param name="rpm.prefix" value="${cygwin.home}"/>
             <param name="rpm.home" value="${cygwin.home}/usr/src/rpm"/>
             <param name="rpm.builder" value="${cygwin.home}/lib/rpm/rpmb.exe"/>
-            <param name="rpm.spec" value="${module.name}.spec"/>
+            <param name="rpm.spec" value="${product.name}.spec"/>
             <param name="rpm.arch" value="i386"/>
-            <param name="rpm.name" value="${module.name}-${product.version}-1.cygwin.i386.rpm"/>
+            <param name="rpm.name" value="${product.name}-${product.version}-1.cygwin.i386.rpm"/>
         </antcall>
     </target>
 
@@ -425,7 +431,7 @@
         />
 -->
         <copy todir="${rpm.home}/SOURCES" overwrite="true"
-            file="dist/${module.name}-${product.version}.tar.gz">
+            file="dist/${product.name}-${product.version}.tar.gz">
         </copy>
         <exec executable="${rpm.builder}" failonerror="true">
             <arg line="-bb target/${rpm.spec}"/>
@@ -437,20 +443,20 @@
 
     <target name="dist-all" depends="dist-src,dist-macosx,dist-unix,dist-win32">
         <copy todir="dist"
-            file="target/${module.name}-${product.version}.jar">
+            file="target/${product.name}-${product.version}.jar">
         </copy>
     </target>
 
     <target name="check-install">
         <mkdir dir="${server.home}"/>
-        <condition property="penrose.conf.missing">
+        <condition property="conf.missing">
           <not>
             <available file="${server.home}/conf/server.xml"/>
           </not>
         </condition>
     </target>
 
-    <target name="install-conf" if="penrose.conf.missing">
+    <target name="install-conf" if="conf.missing">
         <echo message="Installing configuration files."/>
         <copy todir="${server.home}">
             <fileset dir="target/dist">

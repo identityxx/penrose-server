@@ -1,0 +1,4 @@
+auth required /lib/security/pam_unix_auth.so
+account required /lib/security/pam_unix_acct.so
+password required /lib/security/pam_unix_passwd.so
+session required /lib/security/pam_unix_session.so

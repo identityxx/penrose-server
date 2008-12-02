@@ -16,15 +16,15 @@
 
 [Setup]
 
-AppName=${product.title} Client
-AppVerName=${product.title} Client ${product.version}
-DefaultDirName={pf}\Identyx\${product.title} Client ${product.version}
-DefaultGroupName=Identyx\${product.title} Client ${product.version}
-UninstallDisplayName=${product.title} Client ${product.version}
+AppName=${product.title}
+AppVerName=${product.title} ${product.version}
+DefaultDirName={pf}\${product.vendor}\${product.title} ${product.version}
+DefaultGroupName=${product.vendor}\${product.title} ${product.version}
+UninstallDisplayName=${product.title} ${product.version}
 UninstallDisplayIcon={app}\penrose.ico
 Compression=zip
 SolidCompression=yes
-OutputBaseFilename=${module.name}-${product.version}
+OutputBaseFilename=${product.name}-${product.version}
 OutputDir=..\..\dist
 LicenseFile=dist\LICENSE.txt
 
@@ -55,4 +55,4 @@ Name: "{group}\Documentation\Online Documentation"; Filename: "{app}\docs\Online
 Name: "{group}\Documentation\Penrose Website"; Filename: "{app}\docs\Penrose Website.url";
 Name: "{group}\Documentation\Safehaus Website"; Filename: "{app}\docs\Safehaus Website.url";
 Name: "{group}\Configuration Files"; Filename: "{app}\conf";
-Name: "{group}\Uninstall ${product.title} Client"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall ${product.title}"; Filename: "{uninstallexe}"

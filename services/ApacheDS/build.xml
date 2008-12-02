@@ -67,13 +67,13 @@
             debug="on"
             debuglevel="lines,vars,source"
         />
-        <jar jarfile="SERVICE-INF/lib/${product.name}-${service.name}-service-${product.version}.jar">
+        <jar jarfile="SERVICE-INF/target/${project.name}-${service.name}-service-${product.version}.jar">
             <fileset dir="SERVICE-INF/target/classes"/>
             <manifest>
               <attribute name="Specification-Version"  value="${product.specification}"/>
-              <attribute name="Implementation-Title"   value="${product.title} ${service.title} Service"/>
+              <attribute name="Implementation-Title"   value="${project.title} ${service.title} Service"/>
               <attribute name="Implementation-Version" value="${product.version}"/>
-              <attribute name="Implementation-Vendor"  value="${vendor.name}"/>
+              <attribute name="Implementation-Vendor"  value="${product.vendor}"/>
               <attribute name="Build-Date" value="${TIMESTAMP}"/>
             </manifest>
         </jar>
@@ -96,6 +96,9 @@
                 <exclude name="SERVICE-INF/src/**"/>
             </fileset>
         </copy>
+      <copy file="SERVICE-INF/target/${project.name}-${service.name}-service-${product.version}.jar"
+            todir="../../server/target/dist/${service.dir}/SERVICE-INF/lib"
+      />
     </target>
 
     <target name="check-install">
@@ -127,7 +130,6 @@
 
     <target name="clean" depends="init">
         <delete dir="SERVICE-INF/target" failonerror="false"/>
-        <delete file="SERVICE-INF/lib/${product.name}-${service.name}-service-${product.version}.jar" failonerror="false"/>
     </target>
 
 </project>

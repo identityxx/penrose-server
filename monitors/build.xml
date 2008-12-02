@@ -1,6 +1,6 @@
-<project name="penrose-monitors" default="build">
+<project name="monitors" default="build">
 
-    <description>Penrose Monitors</description>
+    <description>Monitors</description>
 
     <property file="../build.properties"/>
 

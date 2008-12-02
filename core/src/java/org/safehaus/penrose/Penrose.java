@@ -36,8 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 /**
  * @author Endi S. Dewata
@@ -48,14 +46,10 @@ public class Penrose {
     public Logger errorLog = org.safehaus.penrose.log.Error.log;
     public boolean debug = log.isDebugEnabled();
 
-    public static String PRODUCT_NAME          = "Penrose";
-    public static String PRODUCT_VERSION       = "2.0";
-    public static String VENDOR_NAME           = "Identyx";
-    public static String PRODUCT_COPYRIGHT     = "Copyright (c) 2000-2007, Identyx Corporation.";
-    public static String SPECIFICATION_VERSION = "2.0";
-
-    public final static DateFormat DATE_FORMAT   = new SimpleDateFormat("MM/dd/yyyy");
-    public final static String RELEASE_DATE      = "09/01/2007";
+    public static String PRODUCT_NAME;
+    public static String PRODUCT_VERSION;
+    public static String VENDOR_NAME;
+    public static String SPECIFICATION_VERSION;
 
     public final static String STOPPED  = "STOPPED";
     public final static String STARTING = "STARTING";
