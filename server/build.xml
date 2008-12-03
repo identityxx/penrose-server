@@ -163,11 +163,15 @@
         </copy>
 
         <copy todir="target/dist/bin">
-            <fileset dir="bin"/>
+            <fileset dir="bin">
+                <exclude name="wrapper.exe"/>
+            </fileset>
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
+
+        <copy todir="target/dist/bin" file="bin/wrapper.exe"/>
 
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>
