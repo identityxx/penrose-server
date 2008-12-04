@@ -1,13 +1,8 @@
 #!/bin/sh
 
-# load system-wide Penrose configuration
-if [ -f "/etc/penrose.conf" ] ; then
-  . /etc/penrose.conf
-fi
-
-# load user Penrose configuration
-if [ -f "$HOME/.penroserc" ] ; then
-  . "$HOME/.penroserc"
+# load system-wide configuration
+if [ -f "/etc/vd.conf" ] ; then
+  . /etc/vd.conf
 fi
 
 # OS specific support.  $var _must_ be set to either true or false.
@@ -23,16 +18,7 @@ case "`uname`" in
 esac
 
 if [ -z "$PENROSE_HOME" ] ; then
-  # try to find PENROSE
-  if [ -d /opt/penrose ] ; then
-    PENROSE_HOME=/opt/penrose
-  fi
 
-  if [ -d "$HOME/opt/penrose" ] ; then
-    PENROSE_HOME="$HOME/opt/penrose"
-  fi
-
-  ## resolve links - $0 may be a link to Penrose's home
   PRG="$0"
   progname=`basename "$0"`
   saveddir=`pwd`

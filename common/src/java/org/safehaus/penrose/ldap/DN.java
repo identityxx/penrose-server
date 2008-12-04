@@ -300,6 +300,9 @@ public class DN implements Serializable, Comparable {
 
         DN dn = (DN)object;
 
+        parse();
+        dn.parse();
+        
         if (rdns.size() < dn.rdns.size()) return -1;
         if (rdns.size() > dn.rdns.size()) return 1;
 

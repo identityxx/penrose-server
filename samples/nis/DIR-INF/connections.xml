@@ -21,7 +21,7 @@
     </parameter>
     <parameter>
       <param-name>method</param-name>
-      <param-value>jndi</param-value>
+      <param-value>yp</param-value>
     </parameter>
   </connection>
 

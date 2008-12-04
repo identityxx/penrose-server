@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# penrose This shell script takes care of starting and stopping ${project.title} Server.
+# vd-server This shell script takes care of starting and stopping ${project.title} Server.
 #
 # chkconfig: - 38 62
 # description: ${project.title} Server ${product.version}.
 # processname: java
-# pidfile: /usr/local/${product.name}-${product.version}/logs/penrose.pid
+# pidfile: /usr/local/${product.name}-${product.version}/logs/vd-server.pid
 
 # Source function library.
 . /etc/init.d/functions
@@ -17,14 +17,14 @@ if [ -r /etc/sysconfig/network ] ; then
 fi
 
 # Source an auxiliary options file if we have one.
-if [ -r /etc/sysconfig/penrose ] ; then
-	. /etc/sysconfig/penrose
+if [ -r /etc/sysconfig/vd-server ] ; then
+	. /etc/sysconfig/vd-server
 fi
 
 PENROSE_HOME=/usr/local/${product.name}-${product.version}
 PENROSE_SCRIPT=$PENROSE_HOME/bin/vd-server.sh
 
-PENROSE_PROG=penrose
+PENROSE_PROG=vd-server
 PENROSE_USER=root
 
 [ -x $PENROSE_SCRIPT ] || exit 0
@@ -37,7 +37,7 @@ function start() {
         daemon --user $PENROSE_USER $PENROSE_SCRIPT start
 	RETVAL=$?
         echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/penrose
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/vd-server
 	return $RETVAL
 }
 
@@ -47,7 +47,7 @@ function stop() {
         daemon --user $PENROSE_USER $PENROSE_SCRIPT stop
 	RETVAL=$?
         echo
-        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/penrose /var/run/penrose.args
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/vd-server /var/run/vd-server.args
 	return $RETVAL
 }
 
@@ -71,7 +71,7 @@ case "$1" in
 	RETVAL=$?
 	;;
     condrestart)
-        if [ -f /var/lock/subsys/penrose ] ; then
+        if [ -f /var/lock/subsys/vd-server ] ; then
             stop
             start
         fi

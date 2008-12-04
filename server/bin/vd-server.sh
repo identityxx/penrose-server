@@ -5,6 +5,11 @@ if [ -f "/etc/vd.conf" ] ; then
   . /etc/vd.conf
 fi
 
+if [ -z "$JAVA_HOME" ] ; then
+  echo "Error: JAVA_HOME is not defined."
+  exit 1
+fi
+
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;

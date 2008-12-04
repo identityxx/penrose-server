@@ -8,7 +8,7 @@ objectClass: top
 objectClass: organizationalunit
 ou: Users
 
-dn: uid=user,ou=Users,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+dn: uid=user1,ou=Users,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top
 objectClass: account
 objectClass: posixAccount
@@ -18,7 +18,7 @@ gecos: User
 gidNumber: 1000
 homeDirectory: /home/user
 loginShell: /bin/bash
-uid: user
+uid: user1
 uidNumber: 1000
 userPassword: test
 
@@ -27,12 +27,12 @@ objectClass: top
 objectClass: organizationalunit
 ou: Groups
 
-dn: cn=group,ou=Groups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
+dn: cn=group1,ou=Groups,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top
 objectClass: posixGroup
-cn: group
+cn: group1
 gidNumber: 1000
-memberUid: user
+memberUid: user1
 
 dn: ou=Hosts,ou=nis1,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top

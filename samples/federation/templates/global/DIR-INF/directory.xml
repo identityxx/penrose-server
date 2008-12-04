@@ -46,9 +46,9 @@
       </field>
     </source>
     <source alias="l" bind="sufficient">
-      <partition-name>federation_ldap</partition-name>
+      <partition-name>federation_ad</partition-name>
       <source-name>users</source-name>
-      <mapping-name>virtual_users_to_ldap_users</mapping-name>
+      <mapping-name>virtual_users_to_ad_users</mapping-name>
       <field name="dn">
         <variable>g.seeAlso</variable>
       </field>
@@ -77,9 +77,9 @@
       </field>
     </source>
     <source alias="l">
-      <partition-name>federation_ldap</partition-name>
+      <partition-name>federation_ad</partition-name>
       <source-name>groups</source-name>
-      <mapping-name>virtual_groups_to_ldap_groups</mapping-name>
+      <mapping-name>virtual_groups_to_ad_groups</mapping-name>
       <field name="dn">
         <variable>g.seeAlso</variable>
       </field>

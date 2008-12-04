@@ -6,7 +6,7 @@
 <sources>
 
   <source name="users">
-    <connection-name>MySQL</connection-name>
+    <connection-name>Database</connection-name>
     <field name="username" primaryKey="true"/>
     <field name="firstName"/>
     <field name="lastName"/>

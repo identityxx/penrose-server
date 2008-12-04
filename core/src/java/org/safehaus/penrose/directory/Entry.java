@@ -1000,7 +1000,12 @@ public class Entry implements Cloneable {
         }
 
         if (debug) log.debug("Validating ACL.");
-        validatePermission(operation);
+        try {
+            validatePermission(operation);
+        } catch (Exception e) {
+            if (debug) log.debug("Search result "+operation.getDn()+" failed ACL check.");
+            return false;
+        }
 
         return true;
     }

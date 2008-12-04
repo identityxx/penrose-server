@@ -25,9 +25,8 @@ goto run
 
 :noJavaHome
 if "%_JAVACMD%" == "" set _JAVACMD=java.exe
-echo.
-echo Warning: JAVA_HOME environment variable is not set.
-echo.
+echo Error: JAVA_HOME is not defined.
+goto end
 
 :run
 

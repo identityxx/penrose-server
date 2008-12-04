@@ -132,7 +132,7 @@ return nssDn.toString();
 
   </mapping>
 
-  <mapping name="virtual_users_to_ldap_users">
+  <mapping name="virtual_users_to_ad_users">
 
     <rule name="sn">
       <variable>sn</variable>
@@ -232,6 +232,6 @@ return nssDn.toString();
       
   </mapping>
 
-  <mapping name="virtual_groups_to_ldap_groups"/>
+  <mapping name="virtual_groups_to_ad_groups"/>
 
 </mappings>

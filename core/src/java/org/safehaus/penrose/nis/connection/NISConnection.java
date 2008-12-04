@@ -25,11 +25,11 @@ public class NISConnection extends Connection {
         if (NIS.LOCAL.equals(method)) {
             client = new NISLocalClient();
 
-        } else if (NIS.YP.equals(method)) {
-            client = new NISYPClient();
-
-        } else { // if (METHOD_JNDI.equals(method)) {
+        } else if (NIS.JNDI.equals(method)) {
             client = new NISJNDIClient();
+
+        } else { // if (NIS.YP.equals(method)) {
+            client = new NISYPClient();
         }
 
         client.init(parameters);

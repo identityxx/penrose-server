@@ -8,7 +8,21 @@ objectClass: top
 objectClass: organizationalunit
 ou: Users
 
-dn: uid=user,ou=Users,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
+dn: uid=user1,ou=Users,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: User
+gecos: User1
+gidNumber: 1000
+homeDirectory: /home/user
+loginShell: /bin/bash
+uid: user
+uidNumber: 2000
+userPassword: test
+
+dn: uid=user2,ou=Users,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top
 objectClass: account
 objectClass: posixAccount
@@ -18,8 +32,8 @@ gecos: User
 gidNumber: 1000
 homeDirectory: /home/user
 loginShell: /bin/bash
-uid: user
-uidNumber: 1000
+uid: user2
+uidNumber: 2000
 userPassword: test
 
 dn: ou=Groups,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
@@ -27,12 +41,19 @@ objectClass: top
 objectClass: organizationalunit
 ou: Groups
 
-dn: cn=group,ou=Groups,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
+dn: cn=group1,ou=Groups,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top
 objectClass: posixGroup
-cn: group
+cn: group1
+gidNumber: 2000
+memberUid: user1
+
+dn: cn=group2,ou=Groups,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: group2
 gidNumber: 1000
-memberUid: user
+memberUid: user2
 
 dn: ou=Hosts,ou=nis3,ou=NIS,dc=Federation,dc=Example,dc=com
 objectClass: top
