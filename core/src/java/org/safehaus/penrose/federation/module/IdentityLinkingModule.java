@@ -28,8 +28,8 @@ import org.safehaus.penrose.mapping.MappingManager;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.session.Session;
-import org.safehaus.penrose.federation.LinkingData;
-import org.safehaus.penrose.federation.LinkingMBean;
+import org.safehaus.penrose.federation.IdentityLinkingResult;
+import org.safehaus.penrose.federation.IdentityLinkingMBean;
 import org.safehaus.penrose.source.Source;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import java.util.HashMap;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingModule extends Module implements LinkingMBean {
+public class IdentityLinkingModule extends Module implements IdentityLinkingMBean {
 
     public final static String SOURCE = "source";
     public final static String TARGET = "target";
@@ -234,7 +234,7 @@ public class LinkingModule extends Module implements LinkingMBean {
         }
     }
 
-    public Collection<LinkingData> search(SearchRequest request) throws Exception {
+    public Collection<IdentityLinkingResult> search(SearchRequest request) throws Exception {
 
         Session session = createAdminSession();
 
@@ -247,7 +247,7 @@ public class LinkingModule extends Module implements LinkingMBean {
             log.debug("##################################################################################################");
             log.debug("Search "+request.getDn()+".");
 
-            Collection<LinkingData> results = new ArrayList<LinkingData>();
+            Collection<IdentityLinkingResult> results = new ArrayList<IdentityLinkingResult>();
 
             SearchResponse response = new SearchResponse();
 
@@ -256,7 +256,7 @@ public class LinkingModule extends Module implements LinkingMBean {
             while (response.hasNext()) {
                 SearchResult localEntry = response.next();
 
-                LinkingData data = new LinkingData(localEntry);
+                IdentityLinkingResult data = new IdentityLinkingResult(localEntry);
 
                 if (sourceAttribute != null) {
                     data.setLocalAttribute(sourceAttribute);
@@ -510,7 +510,7 @@ public class LinkingModule extends Module implements LinkingMBean {
             return new SearchResult(targetDn, targetAttributes);
 
         } catch (LDAPException e) {
-            LinkingException le = new LinkingException(e);
+            IdentityLinkingException le = new IdentityLinkingException(e);
             le.setSourceDn(sourceDn);
             le.setSourceAttributes(sourceAttributes);
             le.setTargetDn(targetDn);
@@ -602,7 +602,7 @@ public class LinkingModule extends Module implements LinkingMBean {
             return new SearchResult(targetDn, targetAttributes);
 
         } catch (LDAPException e) {
-            LinkingException le = new LinkingException(e);
+            IdentityLinkingException le = new IdentityLinkingException(e);
             le.setSourceDn(sourceDn);
             le.setSourceAttributes(sourceAttributes);
             le.setTargetDn(targetDn);
@@ -665,12 +665,12 @@ public class LinkingModule extends Module implements LinkingMBean {
     }
 
     public LDAPSource getSource() throws Exception {
-        Partition sourcePartition = getPartition(sourcePartitionName);
+        Partition sourcePartition = moduleContext.getPartition(sourcePartitionName);
         return (LDAPSource)sourcePartition.getSourceManager().getSource(sourceName);
     }
 
     public LDAPSource getTarget() throws Exception {
-        Partition targetPartition = getPartition(targetPartitionName);
+        Partition targetPartition = moduleContext.getPartition(targetPartitionName);
         return (LDAPSource)targetPartition.getSourceManager().getSource(targetName);
     }
 

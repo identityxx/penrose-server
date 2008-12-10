@@ -7,7 +7,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class LDAPFederationModule extends FederationModule {
+public class LDAPFederationModule extends FederationRepositoryModule {
 
     public Collection<String> getRepositoryNames() throws Exception {
         return getRepositoryNames("LDAP");

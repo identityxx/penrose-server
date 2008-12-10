@@ -13,15 +13,15 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingClient extends ModuleClient implements LinkingMBean {
+public class IdentityLinkingClient extends ModuleClient implements IdentityLinkingMBean {
 
-    public LinkingClient(PenroseClient client, String partitionName, String name) throws Exception {
+    public IdentityLinkingClient(PenroseClient client, String partitionName, String name) throws Exception {
         super(client, partitionName, name);
     }
 
-    public Collection<LinkingData> search(SearchRequest request) throws Exception {
+    public Collection<IdentityLinkingResult> search(SearchRequest request) throws Exception {
         try {
-            return (Collection<LinkingData>)invoke(
+            return (Collection<IdentityLinkingResult>)invoke(
                     "search",
                     new Object[] { request },
                     new String[] { SearchRequest.class.getName() }

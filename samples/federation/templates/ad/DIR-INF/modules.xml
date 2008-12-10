@@ -5,15 +5,15 @@
 
 <modules>
 
-  <module name="LinkingModule" enabled="true">
-    <module-class>org.safehaus.penrose.federation.module.LinkingModule</module-class>
+  <module name="IdentityLinking" enabled="true">
+    <module-class>org.safehaus.penrose.federation.module.IdentityLinkingModule</module-class>
     <parameter>
       <param-name>source</param-name>
       <param-value>LDAP</param-value>
     </parameter>
     <parameter>
       <param-name>target</param-name>
-      <param-value>federation.LDAP</param-value>
+      <param-value>federation.Global</param-value>
     </parameter>
     <parameter>
       <param-name>sourceKey</param-name>

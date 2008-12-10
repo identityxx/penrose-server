@@ -24,6 +24,12 @@ public abstract class BaseService implements DynamicMBean {
 
     protected String description;
 
+    protected Collection<String> classNames = new HashSet<String>();
+    protected Collection<String> attributes = new TreeSet<String>();
+    protected Map<String,Method> getters    = new TreeMap<String,Method>();
+    protected Map<String,Method> setters    = new TreeMap<String,Method>();
+    protected Map<String,Method> operations = new TreeMap<String,Method>();
+
     public BaseService() {
     }
 
@@ -262,11 +268,6 @@ public abstract class BaseService implements DynamicMBean {
 
     public MBeanInfo getMBeanInfo() {
 
-        Collection<String> attributes = new TreeSet<String>();
-        Map<String,Method> getters    = new TreeMap<String,Method>();
-        Map<String,Method> setters    = new TreeMap<String,Method>();
-        Map<String,Method> operations = new TreeMap<String,Method>();
-
         Collection<MBeanAttributeInfo> attributeInfos = new LinkedHashSet<MBeanAttributeInfo>();
         Collection<MBeanOperationInfo> operationInfos = new ArrayList<MBeanOperationInfo>();
 
@@ -274,39 +275,31 @@ public abstract class BaseService implements DynamicMBean {
         Class objectClass = object == null ? getClass() : object.getClass();
 
         try {
-            if (object != null) register(
-                    object.getClass(),
-                    attributes,
-                    getters,
-                    setters,
-                    operations
-            );
+            if (object != null) register(object.getClass());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
 
         try {
-            register(
-                    getClass(),
-                    attributes,
-                    getters,
-                    setters,
-                    operations
-            );
+            register(getClass());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
 
         try {
+            //log.debug("Attributes:");
             for (String attributeName : attributes) {
+                //log.debug(" - "+attributeName);
                 Method getter = getters.get(attributeName);
                 Method setter = setters.get(attributeName);
                 attributeInfos.add(new MBeanAttributeInfo(attributeName, attributeName, getter, setter));
             }
 
+            //log.debug("Methods:");
             for (Method method : operations.values()) {
+                //log.debug(" - "+method.getName());
                 operationInfos.add(new MBeanOperationInfo(method.getName(), method));
             }
 
@@ -325,48 +318,43 @@ public abstract class BaseService implements DynamicMBean {
     }
 
     public void register(
-            Class clazz,
-            Collection<String> attributes,
-            Map<String,Method> getters,
-            Map<String,Method> setters,
-            Map<String,Method> operations
+            Class clazz
     ) throws Exception {
 
-        Class superClass = clazz.getSuperclass();
-        if (superClass != null) register(
-                superClass,
-                attributes,
-                getters,
-                setters,
-                operations
-        );
-
         String className = clazz.getName();
+        if (classNames.contains(className)) return;
+
+        Class superClass = clazz.getSuperclass();
+        if (superClass != null) register(superClass);
+
+        //if (debug) log.debug(" - Class "+className+":");
+        classNames.add(className);
+/*
+        for (Method method : clazz.getMethods()) {
+            register(method);
+        }
+*/
         for (Class interfaceClass : clazz.getInterfaces()) {
             String interfaceName = interfaceClass.getName();
-            if (!interfaceName.equals(className+"MBean")) continue;
+
+            if (interfaceName.equals("javax.management.DynamicMBean")) continue;
+            if (!interfaceName.endsWith("MBean")) continue;
+
+            //if (debug) log.debug("   - Interface "+className+":");
 
             for (Method method : interfaceClass.getMethods()) {
-                register(
-                        method,
-                        attributes,
-                        getters,
-                        setters,
-                        operations
-                );
+                register(method);
             }
         }
+
     }
 
     public void register(
-            Method method,
-            Collection<String> attributes,
-            Map<String,Method> getters,
-            Map<String,Method> setters,
-            Map<String,Method> operations
+            Method method
     ) throws Exception {
 
         String methodName = method.getName();
+        //if (debug) log.debug("     - Method "+methodName+":");
 
         if (methodName.length() > 3 &&
                 methodName.startsWith("get") &&

@@ -108,7 +108,7 @@ public class NISDBSyncModule extends Module {
         final Session adminSession = createAdminSession();
 
         try {
-            Partition sourcePartition = getPartition(sourcePartitionName);
+            Partition sourcePartition = moduleContext.getPartition(sourcePartitionName);
 
             DN sourceSuffix = sourcePartition.getDirectory().getSuffix();
             DN targetSuffix = partition.getDirectory().getSuffix();

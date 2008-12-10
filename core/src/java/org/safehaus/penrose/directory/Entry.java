@@ -999,7 +999,7 @@ public class Entry implements Cloneable {
             return false;
         }
 
-        if (debug) log.debug("Validating ACL.");
+        if (debug) log.debug("Validating ACL for ["+operation.getSession().getBindDn()+"].");
         try {
             validatePermission(operation);
         } catch (Exception e) {

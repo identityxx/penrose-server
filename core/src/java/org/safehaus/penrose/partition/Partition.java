@@ -998,8 +998,10 @@ public class Partition implements Cloneable {
         final ParallelSearchOperation op = new ParallelSearchOperation(operation, entries.size());
 
         if (threadManager == null) {
+            // important for deterministic merging
             if (debug) log.debug("Searching "+entries.size()+" entries sequentially.");
         } else {
+            // could affect merging outcome
             if (debug) log.debug("Searching "+entries.size()+" entries in parallel.");
         }
 

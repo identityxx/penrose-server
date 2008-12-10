@@ -18,7 +18,6 @@
 package org.safehaus.penrose.module;
 
 import org.safehaus.penrose.partition.Partition;
-import org.safehaus.penrose.module.ModuleChain;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.operation.SearchOperation;
@@ -165,10 +164,6 @@ public class Module {
 
     public void setPartition(Partition partition) {
         this.partition = partition;
-    }
-
-    public Partition getPartition(String name) {
-        return partition.getPartitionContext().getPartition(name);
     }
 
     public ModuleContext getModuleContext() {

@@ -1,0 +1,62 @@
+dn: uid=user1,ou=Users,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: User
+gecos: User
+gidNumber: 1000
+homeDirectory: /home/user1
+loginShell: /bin/bash
+uid: user1
+uidNumber: 1000
+userPassword: test
+
+dn: uid=user2,ou=Users,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: User
+gecos: User
+gidNumber: 2000
+homeDirectory: /home/user2
+loginShell: /bin/bash
+uid: user2
+uidNumber: 2000
+userPassword: test
+
+dn: uid=user3,ou=Users,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: User
+gecos: User
+gidNumber: 2000
+homeDirectory: /home/user3
+loginShell: /bin/bash
+uid: user2
+uidNumber: 1000
+userPassword: test
+
+dn: cn=group1,ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: group1
+gidNumber: 1000
+memberUid: user1
+
+dn: cn=group2,ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: group2
+gidNumber: 2000
+memberUid: user2
+
+dn: cn=group3,ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: group2
+gidNumber: 2000
+memberUid: user3

@@ -101,7 +101,7 @@ public class ACLEvaluator {
                 DN dn = aci.getDn();
                 if (dn == null) throw new Exception("Missing dn in ACI");
                 boolean match = dn.matches(bindDn);
-                //log.debug("User matches \""+aci.getDn()+"\": "+match);
+                log.debug("ACI: "+aci);
                 if (match) {
                     return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
@@ -109,7 +109,7 @@ public class ACLEvaluator {
 
             if (subject.equals(ACI.SUBJECT_SELF)) {
                 boolean match = targetDn.matches(bindDn);
-                //log.debug("User matches \""+targetDn+"\": "+match);
+                log.debug("ACI: "+aci);
                 if (match) {
                     return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
@@ -117,7 +117,7 @@ public class ACLEvaluator {
 
             if (subject.equals(ACI.SUBJECT_ANONYMOUS)) {
                 boolean anonymous = bindDn == null;
-                //log.debug("User is anonymous: "+anonymous);
+                log.debug("ACI: "+aci);
                 if (anonymous) {
                     return aci.getAction().equals(ACI.ACTION_GRANT);
                 }
@@ -125,7 +125,7 @@ public class ACLEvaluator {
 
             if (subject.equals(ACI.SUBJECT_AUTHENTICATED)) {
                 boolean authenticated = bindDn != null;
-                //log.debug("User is authenticated: "+authenticated);
+                log.debug("ACI: "+aci);
                 if (authenticated) {
                     return aci.getAction().equals(ACI.ACTION_GRANT);
                 }

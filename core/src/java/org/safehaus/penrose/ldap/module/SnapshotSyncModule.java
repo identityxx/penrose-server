@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author Endi Sukma Dewata
  */
-public class SnapshotSyncModule extends Module {
+public class SnapshotSyncModule extends Module implements SyncModuleMBean {
 
     protected String sourcePartitionName;
     protected String sourceName;
@@ -618,24 +618,7 @@ public class SnapshotSyncModule extends Module {
 
         try {
             DN targetSuffix = getTargetSuffix();
-
-            SearchRequest request = new SearchRequest();
-            request.setDn(targetSuffix);
-            request.setAttributes(new String[] { "dn" });
-            request.setScope(SearchRequest.SCOPE_ONE);
-
-            SearchResponse response = new SearchResponse();
-
-            Source target = getTarget();
-            target.search(adminSession, request, response);
-
-            SynchronizationResult totalResult = new SynchronizationResult();
-            for (SearchResult result : response.getResults()) {
-                SynchronizationResult r = synchronize(adminSession, result.getDn());
-                totalResult.add(r);
-            }
-
-            return totalResult;
+            return synchronize(adminSession, targetSuffix);
 
         } finally {
             adminSession.close();
@@ -696,7 +679,6 @@ public class SnapshotSyncModule extends Module {
             public void add(SearchResult result) throws Exception {
 
                 DN dn = result.getDn();
-                if (dn.equals(targetDn)) return;
 
                 totalCount++;
 
@@ -712,14 +694,21 @@ public class SnapshotSyncModule extends Module {
         };
 
         final Source target = getTarget();
-        target.search(session, targetRequest, targetResponse);
+
+        try {
+            target.search(session, targetRequest, targetResponse);
+        } catch (Exception e) {
+            log.info("Message: "+e.getMessage());
+        }
 
         int rc1 = targetResponse.waitFor();
         if (warn) log.warn("Search completed. RC="+rc1+".");
 
-        if (warn) log.warn("Found "+targetResponse.getTotalCount()+" entries.");
+        long targetEntries = targetResponse.getTotalCount();
+        if (warn) log.warn("Found "+targetEntries+" entries.");
 
         final SynchronizationResult result = new SynchronizationResult();
+        result.setTargetEntries(targetEntries);
 
         SearchRequest sourceRequest = new SearchRequest();
         sourceRequest.setDn(sourceDn);
@@ -730,7 +719,6 @@ public class SnapshotSyncModule extends Module {
             public void add(SearchResult result2) throws Exception {
 
                 DN dn2 = result2.getDn();
-                if (dn2.equals(sourceDn)) return;
 
                 totalCount++;
 
@@ -836,15 +824,7 @@ public class SnapshotSyncModule extends Module {
         result.setDuration(endTime - startTime);
 
         if (warn) {
-            log.warn("Synchronization Result:");
-            log.warn(" - source    : "+result.getSourceEntries());
-            log.warn(" - target    : "+result.getTargetEntries());
-            log.warn(" - added     : "+result.getAddedEntries());
-            log.warn(" - modified  : "+result.getModifiedEntries());
-            log.warn(" - deleted   : "+result.getDeletedEntries());
-            log.warn(" - unchanged : "+result.getUnchangedEntries());
-            log.warn(" - failed    : "+result.getFailedEntries());
-            log.warn(" - time      : "+result.getDuration()/1000.0+" s");
+            log.warn(result.toString());
         }
 
         return result;
@@ -997,12 +977,12 @@ public class SnapshotSyncModule extends Module {
 */
 
     public LDAPSource getSource() throws Exception {
-        Partition sourcePartition = getPartition(sourcePartitionName);
+        Partition sourcePartition = moduleContext.getPartition(sourcePartitionName);
         return (LDAPSource)sourcePartition.getSourceManager().getSource(sourceName);
     }
 
     public LDAPSource getTarget() throws Exception {
-        Partition targetPartition = getPartition(targetPartitionName);
+        Partition targetPartition = moduleContext.getPartition(targetPartitionName);
         return (LDAPSource)targetPartition.getSourceManager().getSource(targetName);
     }
 

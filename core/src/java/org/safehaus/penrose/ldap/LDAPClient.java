@@ -231,8 +231,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -280,8 +280,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             this.bindPassword = bindPassword;
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -355,8 +355,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             response.setReturnCode(result ? LDAP.COMPARE_TRUE : LDAP.COMPARE_FALSE);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -409,8 +409,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -525,8 +525,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -581,8 +581,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -737,8 +737,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             } while (cookie != null && cookie.length > 0);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
 
         } finally {
@@ -781,8 +781,8 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             if (debug) log.debug("Elapsed time: "+(endTime - startTime)+" ms");
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.setException(e);
+            log.info("LDAP Result: "+e.getMessage());
+            //response.setException(e);
             throw e;
         }
 
@@ -914,7 +914,7 @@ public class LDAPClient implements Cloneable, LDAPAuthHandler {
             }
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.info("LDAP Result: "+e.getMessage());
             throw e;
         }
 

@@ -507,12 +507,19 @@ public class ProxyEntry extends Entry {
         final Filter filter = operation.getFilter();
         final int scope     = operation.getScope();
 
-        boolean subset = baseDn.endsWith(getDn());
+        boolean inside = baseDn.endsWith(getDn());
+        if (debug) {
+            if (inside) {
+                log.debug("Base DN is inside proxy subtree.");
+            } else {
+                log.debug("Base DN is outside of proxy entry.");
+            }
+        }
 
         try {
             SearchRequest newRequest = (SearchRequest)request.clone();
 
-            if (subset) {
+            if (inside) {
                 newRequest.setDn(convertDn(baseDn, getDn(), proxyBaseDn));
 
                 if (proxyScope == SearchRequest.SCOPE_BASE) {
@@ -576,13 +583,20 @@ public class ProxyEntry extends Entry {
                     SearchReference newReference = createSearchReference(reference);
                     super.add(newReference);
                 }
+                public void setException(Exception e) {
+                    // ignore
+                }
             };
 
             source.search(session, newRequest, newResponse);
 
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            if (subset) throw e;
+            if (inside) {
+                throw e;
+            } else {
+                log.info("LDAP Source Result: "+e);
+                //operation.setException(e);
+            }
         }
     }
 

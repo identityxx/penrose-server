@@ -5,12 +5,52 @@
 
 <modules>
   
+  <module name="Federation">
+    <module-class>org.safehaus.penrose.federation.module.FederationModule</module-class>
+    <parameter>
+      <param-name>config</param-name>
+      <param-value>federation.xml</param-value>
+    </parameter>
+    <parameter>
+      <param-name>repositoryTypes</param-name>
+      <param-value>LDAP,NIS</param-value>
+    </parameter>
+    <parameter>
+      <param-name>conflictDetections</param-name>
+      <param-value>Users,Groups</param-value>
+    </parameter>
+  </module>
+
   <module name="LDAP">
     <module-class>org.safehaus.penrose.federation.module.LDAPFederationModule</module-class>
   </module>
 
   <module name="NIS">
     <module-class>org.safehaus.penrose.federation.module.NISFederationModule</module-class>
+  </module>
+
+  <module name="Users">
+    <module-class>org.safehaus.penrose.federation.module.ConflictDetectionModule</module-class>
+    <parameter>
+      <param-name>objectClass</param-name>
+      <param-value>posixAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>attribute</param-name>
+      <param-value>uidNumber</param-value>
+    </parameter>
+  </module>
+
+  <module name="Groups">
+    <module-class>org.safehaus.penrose.federation.module.ConflictDetectionModule</module-class>
+    <parameter>
+      <param-name>objectClass</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>attribute</param-name>
+      <param-value>gidNumber</param-value>
+    </parameter>
   </module>
 
 </modules>

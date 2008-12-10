@@ -5,6 +5,8 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.client.PenroseClient;
 import org.safehaus.penrose.partition.PartitionClient;
 import org.safehaus.penrose.partition.PartitionManagerClient;
+import org.safehaus.penrose.module.ModuleClient;
+import org.safehaus.penrose.module.ModuleManagerClient;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ public class FederationClient implements FederationMBean {
 
     PenroseClient client;
     PartitionClient partitionClient;
+    ModuleClient moduleClient;
 
     public FederationClient(PenroseClient client, String name) throws Exception {
         this.client = client;
@@ -34,14 +37,17 @@ public class FederationClient implements FederationMBean {
 
         PartitionManagerClient partitionManagerClient = client.getPartitionManagerClient();
         partitionClient = partitionManagerClient.getPartitionClient(name);
+
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        moduleClient = moduleManagerClient.getModuleClient(Federation.FEDERATION);
     }
 
     public String getName() {
         return name;
     }
 
-    public Collection<String> getTypes() throws Exception {
-        return (Collection<String>)partitionClient.getAttribute("Types");
+    public Collection<String> getRepositoryTypes() throws Exception {
+        return (Collection<String>)moduleClient.getAttribute("RepositoryTypes");
     }
 
     public PenroseClient getClient() {
@@ -50,6 +56,10 @@ public class FederationClient implements FederationMBean {
     
     public PartitionClient getPartitionClient() {
         return partitionClient;
+    }
+
+    public ModuleClient getModuleClient() {
+        return moduleClient;
     }
 
     public void addRepository(FederationRepositoryConfig repository) throws Exception {
@@ -69,11 +79,11 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationConfig getFederationConfig() throws Exception {
-        return (FederationConfig)partitionClient.getAttribute("FederationConfig");
+        return (FederationConfig)moduleClient.getAttribute("FederationConfig");
     }
 
     public void setFederationConfig(FederationConfig federationConfig) throws Exception {
-        partitionClient.setAttribute("FederationConfig", federationConfig);
+        moduleClient.setAttribute("FederationConfig", federationConfig);
     }
 
     public void storeFederationConfig() throws Exception {
@@ -81,11 +91,11 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<String> getRepositoryNames() throws Exception {
-        return (Collection<String>)partitionClient.getAttribute("RepositoryNames");
+        return (Collection<String>)moduleClient.getAttribute("RepositoryNames");
     }
 
     public Collection<String> getRepositoryNames(String type) throws Exception {
-        return (Collection<String>)partitionClient.invoke(
+        return (Collection<String>)moduleClient.invoke(
                 "getRepositoryNames",
                 new Object[] { type },
                 new String[] { String.class.getName() }
@@ -93,11 +103,11 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<FederationRepositoryConfig> getRepositories() throws Exception {
-        return (Collection<FederationRepositoryConfig>)partitionClient.getAttribute("Repositories");
+        return (Collection<FederationRepositoryConfig>)moduleClient.getAttribute("Repositories");
     }
 
     public Collection<FederationRepositoryConfig> getRepositories(String type) throws Exception {
-        return (Collection<FederationRepositoryConfig>)partitionClient.invoke(
+        return (Collection<FederationRepositoryConfig>)moduleClient.invoke(
                 "getRepositories",
                 new Object[] { type },
                 new String[] { String.class.getName() }
@@ -105,7 +115,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationRepositoryConfig getRepository(String name) throws Exception {
-        return (FederationRepositoryConfig)partitionClient.invoke(
+        return (FederationRepositoryConfig)moduleClient.invoke(
                 "getRepository",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -113,7 +123,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<String> getPartitionNames() throws Exception {
-        return (Collection)partitionClient.invoke(
+        return (Collection)moduleClient.invoke(
                 "getPartitionNames",
                 new Object[] { },
                 new String[] { }
@@ -121,7 +131,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public Collection<FederationPartitionConfig> getPartitions() throws Exception {
-        return (Collection)partitionClient.invoke(
+        return (Collection)moduleClient.invoke(
                 "getPartitions",
                 new Object[] { },
                 new String[] { }
@@ -129,24 +139,16 @@ public class FederationClient implements FederationMBean {
     }
 
     public FederationPartitionConfig getPartition(String name) throws Exception {
-        return (FederationPartitionConfig)partitionClient.invoke(
+        return (FederationPartitionConfig)moduleClient.invoke(
                 "getPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
         );
     }
 
-    public void createPartitions() throws Exception {
-        partitionClient.invoke(
-                "createPartitions",
-                new Object[] { },
-                new String[] { }
-        );
-    }
-
     public void startPartitions() throws Exception {
         partitionClient.invoke(
-                "createPartitions",
+                "startPartitions",
                 new Object[] { },
                 new String[] { }
         );

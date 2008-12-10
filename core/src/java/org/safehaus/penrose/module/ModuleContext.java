@@ -36,4 +36,8 @@ public class ModuleContext {
     public void setPartition(Partition partition) {
         this.partition = partition;
     }
+
+    public Partition getPartition(String name) {
+        return partition.getPartitionContext().getPartition(name);
+    }
 }

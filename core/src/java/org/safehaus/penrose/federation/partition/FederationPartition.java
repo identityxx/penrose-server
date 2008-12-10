@@ -3,7 +3,7 @@ package org.safehaus.penrose.federation.partition;
 import org.safehaus.penrose.partition.Partition;
 import org.safehaus.penrose.partition.PartitionManager;
 import org.safehaus.penrose.federation.*;
-import org.safehaus.penrose.federation.module.FederationModule;
+import org.safehaus.penrose.federation.module.FederationRepositoryModule;
 import org.safehaus.penrose.util.FileUtil;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.module.ModuleManager;
@@ -28,9 +28,7 @@ public class FederationPartition extends Partition implements FederationMBean {
     FederationWriter writer = new FederationWriter();
 
     String config = "federation.xml";
-    boolean create = true;
 
-    File samplesDir;
     File partitionsDir;
 
     public void init() throws Exception {
@@ -38,28 +36,17 @@ public class FederationPartition extends Partition implements FederationMBean {
         String s = getParameter("config");
         if (s != null) config = s;
 
-        s = getParameter("create");
-        if (s != null) create = Boolean.parseBoolean(s);
-
         load();
-
-        File home = partitionContext.getPenroseContext().getHome();
-        samplesDir = new File(home, "samples");
 
         PartitionManager partitionManager = partitionContext.getPartitionManager();
         partitionsDir = partitionManager.getPartitionsDir();
-
-        if (create) {
-            createPartitions();
-            //startPartitions();
-        }
     }
 
-    public Collection<String> getTypes() {
+    public Collection<String> getRepositoryTypes() {
         Collection<String> types = new ArrayList<String>();
 
         for (Module module : getModuleManager().getModules()) {
-            if (!(module instanceof FederationModule)) continue;
+            if (!(module instanceof FederationRepositoryModule)) continue;
 
             types.add(module.getName());
         }
@@ -156,14 +143,6 @@ public class FederationPartition extends Partition implements FederationMBean {
         federationConfig.removeRepository(name);
     }
 
-    public void createPartitions() throws Exception {
-        PartitionManager partitionManager = getPartitionContext().getPartitionManager();
-        for (String name : getPartitionNames()) {
-            createPartition(name);
-            partitionManager.getQueue().add(name);
-        }
-    }
-
     public void startPartitions() throws Exception {
         for (String name : getPartitionNames()) {
             startPartition(name);
@@ -255,7 +234,7 @@ public class FederationPartition extends Partition implements FederationMBean {
         if (partition == null) return;
 
         ModuleManager moduleManager = partition.getModuleManager();
-        SnapshotSyncModule module = (SnapshotSyncModule)moduleManager.getModule(Federation.SYNCHRONIZATION_MODULE);
+        SnapshotSyncModule module = (SnapshotSyncModule)moduleManager.getModule(Federation.SYNCHRONIZATION);
         if (module == null) return;
 
         module.synchronize();

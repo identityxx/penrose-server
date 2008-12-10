@@ -37,7 +37,7 @@ public class LDAPDeltaSyncModule extends Module {
         if (s == null) {
             sourcePartition = partition;
         } else {
-            sourcePartition = getPartition(s);
+            sourcePartition = moduleContext.getPartition(s);
             if (sourcePartition == null) throw new Exception("Partition "+s+" not found.");
         }
 
@@ -46,7 +46,7 @@ public class LDAPDeltaSyncModule extends Module {
         if (s == null) {
             targetPartition = partition;
         } else {
-            targetPartition = getPartition(s);
+            targetPartition = moduleContext.getPartition(s);
             if (targetPartition == null) throw new Exception("Partition "+s+" not found.");
         }
 

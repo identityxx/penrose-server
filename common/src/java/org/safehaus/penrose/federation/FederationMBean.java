@@ -7,7 +7,10 @@ import java.util.Collection;
  */
 public interface FederationMBean {
 
-    public Collection<String> getTypes() throws Exception;
+    public FederationConfig getFederationConfig() throws Exception;
+    public void setFederationConfig(FederationConfig federationConfig) throws Exception;
+
+    public Collection<String> getRepositoryTypes() throws Exception;
 
     public Collection<String> getRepositoryNames() throws Exception;
     public Collection<String> getRepositoryNames(String type) throws Exception;
@@ -20,7 +23,6 @@ public interface FederationMBean {
     public Collection<FederationPartitionConfig> getPartitions() throws Exception;
     public FederationPartitionConfig getPartition(String name) throws Exception;
 
-    public void createPartitions() throws Exception;
     public void createPartition(String name) throws Exception;
     
     public void startPartitions() throws Exception;

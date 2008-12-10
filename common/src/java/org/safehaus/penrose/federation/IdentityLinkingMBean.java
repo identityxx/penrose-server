@@ -4,16 +4,16 @@ import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.ldap.Attributes;
 import org.safehaus.penrose.ldap.SearchResult;
 import org.safehaus.penrose.ldap.SearchRequest;
-import org.safehaus.penrose.federation.LinkingData;
+import org.safehaus.penrose.federation.IdentityLinkingResult;
 
 import java.util.Collection;
 
 /**
  * @author Endi Sukma Dewata
  */
-public interface LinkingMBean {
+public interface IdentityLinkingMBean {
 
-    public Collection<LinkingData> search(SearchRequest request) throws Exception;
+    public Collection<IdentityLinkingResult> search(SearchRequest request) throws Exception;
     public Collection<SearchResult> searchLinks(SearchResult sourceEntry) throws Exception;
     
     public void linkEntry(DN sourceDn, DN targetDn) throws Exception;

@@ -5,7 +5,7 @@
 
 <modules>
 
-  <module name="CacheModule">
+  <module name="Cache">
     <module-class>org.safehaus.penrose.cache.module.CacheModule</module-class>
     <parameter>
       <param-name>querySize</param-name>
@@ -22,7 +22,7 @@
   </module>
 
   <module-mapping>
-    <module-name>CacheModule</module-name>
+    <module-name>Cache</module-name>
     <base-dn>dc=Cache,dc=Example,dc=com</base-dn>
   </module-mapping>
 

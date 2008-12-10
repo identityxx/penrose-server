@@ -2,6 +2,8 @@ package org.safehaus.penrose.ldap;
 
 import org.safehaus.penrose.control.Control;
 import org.ietf.ldap.LDAPException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -50,11 +52,15 @@ public class Response implements Serializable, Cloneable {
     }
 
     public void setException(LDAPException e) {
+        Logger log = LoggerFactory.getLogger(getClass());
+        if (log.isDebugEnabled()) {
+            log.debug("Setting response exception: "+e.getMessage());
+        }
         this.exception = e;
     }
 
     public void setException(Exception e) {
-        exception = LDAP.createException(e);
+        setException(LDAP.createException(e));
     }
 
     public LDAPException getException() {
@@ -62,7 +68,7 @@ public class Response implements Serializable, Cloneable {
     }
 
     public void setReturnCode(int returnCode) {
-        exception = LDAP.createException(returnCode);
+        setException(LDAP.createException(returnCode));
     }
 
     public int getReturnCode() {

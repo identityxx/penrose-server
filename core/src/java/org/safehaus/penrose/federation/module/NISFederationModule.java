@@ -11,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class NISFederationModule extends FederationModule {
+public class NISFederationModule extends FederationRepositoryModule {
 
     public Collection<String> getRepositoryNames() throws Exception {
         return getRepositoryNames("NIS");
@@ -23,9 +23,9 @@ public class NISFederationModule extends FederationModule {
 
     public SynchronizationResult synchronize(String name, Collection<String> maps) throws Exception {
 
-        Partition nisPartition = getPartition(name);
+        Partition nisPartition = moduleContext.getPartition(name);
 
-        NISSynchronizationModule module = (NISSynchronizationModule)nisPartition.getModuleManager().getModule(Federation.SYNCHRONIZATION_MODULE);
+        NISSynchronizationModule module = (NISSynchronizationModule)nisPartition.getModuleManager().getModule(Federation.SYNCHRONIZATION);
 
         if (maps == null || maps.isEmpty()) {
             return module.synchronize();

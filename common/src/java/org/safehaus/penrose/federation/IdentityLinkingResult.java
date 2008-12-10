@@ -12,7 +12,7 @@ import java.io.Serializable;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingData implements Serializable {
+public class IdentityLinkingResult implements Serializable {
 
     public final static Collection<Object> EMPTY = new ArrayList<Object>();
 
@@ -30,7 +30,7 @@ public class LinkingData implements Serializable {
     public Map<DN,SearchResult> linkedEntries = new LinkedHashMap<DN,SearchResult>();
     public Map<DN,SearchResult> matchedEntries = new LinkedHashMap<DN,SearchResult>();
 
-    public LinkingData(SearchResult entry) {
+    public IdentityLinkingResult(SearchResult entry) {
         this.entry = entry;
     }
 

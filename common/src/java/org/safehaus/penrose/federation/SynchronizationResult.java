@@ -1,13 +1,13 @@
 package org.safehaus.penrose.federation;
 
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 /**
  * @author Endi Sukma Dewata
  */
 public class SynchronizationResult implements Serializable {
-
-    private long duration;
 
     private long sourceEntries;
 
@@ -17,13 +17,14 @@ public class SynchronizationResult implements Serializable {
     private long unchangedEntries;
     private long failedEntries;
 
-    public long getTargetEntries() {
-        return unchangedEntries+addedEntries+modifiedEntries;
-    }
-    
-    public void add(SynchronizationResult result) {
+    private long targetEntries;
 
-        duration += result.duration;
+    private long duration;
+
+    public SynchronizationResult() {
+    }
+
+    public void add(SynchronizationResult result) {
 
         sourceEntries += result.sourceEntries;
         addedEntries += result.addedEntries;
@@ -31,6 +32,8 @@ public class SynchronizationResult implements Serializable {
         deletedEntries += result.deletedEntries;
         unchangedEntries += result.unchangedEntries;
         failedEntries += result.failedEntries;
+        targetEntries += result.targetEntries;
+        duration += result.duration;
     }
 
     public long getDuration() {
@@ -51,6 +54,7 @@ public class SynchronizationResult implements Serializable {
 
     public void incAddedEntries() {
         addedEntries++;
+        targetEntries++;
     }
 
     public long getModifiedEntries() {
@@ -75,6 +79,7 @@ public class SynchronizationResult implements Serializable {
 
     public void incDeletedEntries() {
         deletedEntries++;
+        targetEntries--;
     }
 
     public long getUnchangedEntries() {
@@ -107,5 +112,31 @@ public class SynchronizationResult implements Serializable {
 
     public void setSourceEntries(long sourceEntries) {
         this.sourceEntries = sourceEntries;
+    }
+
+    public String toString() {
+        StringWriter sw = new StringWriter();
+        PrintWriter out = new PrintWriter(sw, true);
+
+        out.println("Synchronization result:");
+        out.println(" - source    : "+sourceEntries);
+        out.println(" - added     : "+addedEntries);
+        out.println(" - modified  : "+modifiedEntries);
+        out.println(" - deleted   : "+deletedEntries);
+        out.println(" - unchanged : "+unchangedEntries);
+        out.println(" - failed    : "+failedEntries);
+        out.println(" - target    : "+targetEntries);
+        out.print  (" - duration  : "+(duration/1000.0)+" s");
+        out.close();
+
+        return sw.toString();
+    }
+
+    public long getTargetEntries() {
+        return targetEntries;
+    }
+
+    public void setTargetEntries(long targetEntries) {
+        this.targetEntries = targetEntries;
     }
 }

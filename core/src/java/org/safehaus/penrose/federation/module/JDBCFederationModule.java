@@ -7,7 +7,7 @@ import java.util.Collection;
 /**
  * @author Endi Sukma Dewata
  */
-public class JDBCFederationModule extends FederationModule {
+public class JDBCFederationModule extends FederationRepositoryModule {
 
     public Collection<String> getRepositoryNames() throws Exception {
         return getRepositoryNames("JDBC");

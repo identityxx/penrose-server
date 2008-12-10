@@ -5,8 +5,10 @@ package org.safehaus.penrose.federation;
  */
 public class Federation {
 
-    public final static String FEDERATION             = "federation";
+    public final static String FEDERATION          = "Federation";
 
-    public final static String SYNCHRONIZATION_MODULE = "SynchronizationModule";
-    public final static String LINKING_MODULE         = "LinkingModule";
+    public final static String SYNCHRONIZATION     = "Synchronization";
+    public final static String IDENTITY_LINKING    = "IdentityLinking";
+    public final static String CONFLICT_DETECTION  = "ConflictDetection";
+    public final static String OWNERSHIP_ALIGNMENT = "OwnershipAlignment";
 }

@@ -60,15 +60,7 @@ public class NISFederationClient extends FederationRepositoryClient {
             }
 
             SynchronizationResult result = synchronize(client, partition, repository, parameters);
-            System.out.println("Result:");
-            System.out.println(" - source    : "+result.getSourceEntries());
-            System.out.println(" - target    : "+result.getTargetEntries());
-            System.out.println(" - added     : "+result.getAddedEntries());
-            System.out.println(" - modified  : "+result.getModifiedEntries());
-            System.out.println(" - deleted   : "+result.getDeletedEntries());
-            System.out.println(" - unchanged : "+result.getUnchangedEntries());
-            System.out.println(" - failed    : "+result.getFailedEntries());
-            System.out.println(" - time      : "+result.getDuration()/1000.0+" s");
+            System.out.println(result);
 
         } else {
             throw new Exception("Unknown command: "+command);

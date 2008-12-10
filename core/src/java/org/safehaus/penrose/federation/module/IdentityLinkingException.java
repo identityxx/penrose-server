@@ -6,7 +6,7 @@ import org.safehaus.penrose.ldap.DN;
 /**
  * @author Endi Sukma Dewata
  */
-public class LinkingException extends Exception {
+public class IdentityLinkingException extends Exception {
 
     private DN sourceDn;
     private Attributes sourceAttributes;
@@ -16,11 +16,11 @@ public class LinkingException extends Exception {
 
     private String reason;
 
-    public LinkingException(Throwable cause) {
+    public IdentityLinkingException(Throwable cause) {
         super(cause);
     }
     
-    public LinkingException(String message, Throwable cause) {
+    public IdentityLinkingException(String message, Throwable cause) {
         super(message, cause);
     }
 
