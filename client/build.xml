@@ -6,8 +6,9 @@
 <project name="client" default="build">
 
     <description>Client</description>
-
+<!--
     <property file="../build.properties"/>
+-->
     <property file="build.properties"/>
 
     <property name="prefix" value=""/>
@@ -132,7 +133,7 @@
         <copy todir="target/dist" file="../THIRDPARTY.txt"/>
 
         <copy todir="target/dist"
-            file="../images/penrose.ico">
+            file="${branding.path}/${images.icon}">
         </copy>
 
         <copy todir="target/dist/bin">

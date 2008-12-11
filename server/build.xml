@@ -5,8 +5,9 @@
 <project name="server" default="build">
 
     <description>Server</description>
-
+<!--
     <property file="../build.properties"/>
+-->
     <property file="build.properties"/>
   
     <property name="prefix" value=""/>
@@ -137,7 +138,7 @@
 
         <mkdir dir="target/dist"/>
 
-        <copy todir="target/dist" file="../build.properties"/>
+        <copy todir="target/dist" file="${branding.path}/build.properties"/>
         <copy todir="target/dist" file="../README.txt">
             <filterchain>
                 <expandproperties/>
@@ -153,7 +154,7 @@
         <copy todir="target/dist" file="../THIRDPARTY.txt"/>
 
         <copy todir="target/dist"
-            file="../images/penrose.ico">
+            file="${branding.path}/${images.icon}">
         </copy>
 
         <copy todir="target/dist" file="../pom.xml">
@@ -171,7 +172,7 @@
             </filterchain>
         </copy>
 
-        <copy todir="target/dist/bin" file="bin/wrapper.exe"/>
+        <copy todir="target/dist/bin" file="${branding.path}/bin/wrapper.exe"/>
 
         <copy todir="target/dist/conf">
             <fileset dir="conf"/>

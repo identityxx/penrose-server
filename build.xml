@@ -7,10 +7,13 @@
 
     <description>Penrose</description>
 
-    <property name="branding.path" value=""/>
-    <property name="prefix" value=""/>
+    <property name="branding.path" value="."/>
 
     <property file="${branding.path}/build.properties"/>
+
+    <property name="prefix" value=""/>
+    <property name="iscc.path" value="ISCC.exe"/>
+    <property name="cygwin.home" value="c:/cygwin"/>
 
     <tstamp>
         <format property="TIMESTAMP" pattern="yyyyMMddHHmmss"/>

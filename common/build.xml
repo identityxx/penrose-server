@@ -6,8 +6,9 @@
 <project name="common" default="build">
 
     <description>Common</description>
-
+<!--
     <property file="../build.properties"/>
+-->
     <property file="build.properties"/>
 
     <property name="module.dist" value="dist"/>
