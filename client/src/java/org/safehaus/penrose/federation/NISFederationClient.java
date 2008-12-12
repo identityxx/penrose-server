@@ -17,29 +17,22 @@ public class NISFederationClient extends FederationRepositoryClient {
 
     public static Logger log = Logger.getLogger(NISFederationClient.class);
 
-    public final static String CACHE_USERS           = "cache_users";
-    public final static String CACHE_GROUPS          = "cache_groups";
-    public final static String CACHE_CONNECTION_NAME = "Cache";
-
-    public final static String CHANGE_USERS          = "change_users";
-    public final static String CHANGE_GROUPS         = "change_groups";
-
-    public NISFederationClient(FederationClient federationClient) throws Exception {
-        super(federationClient, "NIS");
+    public NISFederationClient(FederationClient federationClient, String repositoryName) throws Exception {
+        super(federationClient, repositoryName, "NIS");
     }
 
     public SynchronizationResult synchronize(String name, Collection<String> parameters) throws Exception {
-        return (SynchronizationResult)moduleClient.invoke(
+        return (SynchronizationResult) getModuleClient().invoke(
                 "synchronize",
                 new Object[] { name, parameters },
                 new String[] { String.class.getName(), Collection.class.getName() }
         );
     }
 
-    public static SynchronizationResult synchronize(PenroseClient client, String partition, String name, Collection<String> parameters) throws Exception {
+    public static SynchronizationResult synchronize(PenroseClient client, String partition, String repositoryName, Collection<String> parameters) throws Exception {
         FederationClient federationClient = new FederationClient(client, partition);
-        NISFederationClient nisFederationClient = new NISFederationClient(federationClient);
-        return nisFederationClient.synchronize(name, parameters);
+        NISFederationClient nisFederationClient = new NISFederationClient(federationClient, repositoryName);
+        return nisFederationClient.synchronize(repositoryName, parameters);
     }
 
     public static void execute(PenroseClient client, Collection<String> commands) throws Exception {

@@ -21,12 +21,34 @@
     <rule name="uid">
       <variable>a.sAMAccountName</variable>
     </rule>
+    <rule name="description">
+      <variable>a.description</variable>
+    </rule>
+    <rule name="l">
+      <variable>a.l</variable>
+    </rule>
+    <rule name="o">
+      <variable>a.company</variable>
+    </rule>
+    <rule name="ou">
+      <variable>a.department</variable>
+    </rule>
 
     <!-- posixAcoount -->
-    <rule name="gecos" required="false">
-      <condition>!a.name.equals("NULL")</condition>
+    <rule name="cn">
       <variable>a.name</variable>
     </rule>
+    <rule name="gidNumber">
+      <variable>a.primaryGroupID</variable>
+    </rule>
+    <rule name="homeDirectory">
+      <variable>a.homeDirectory</variable>
+    </rule>
+    <rule name="gecos">
+      <variable>a.displayName</variable>
+    </rule>
+
+    <!-- shadowAcoount -->
 
   </mapping>
 

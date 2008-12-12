@@ -23,8 +23,6 @@ public class FederationClient implements FederationMBean {
 
     public static Logger log = Logger.getLogger(FederationClient.class);
 
-    public final static String JDBC = "JDBC";
-
     String name;
 
     PenroseClient client;
@@ -62,18 +60,31 @@ public class FederationClient implements FederationMBean {
         return moduleClient;
     }
 
+    public ModuleClient getRepositoryModuleClient(String type) throws Exception {
+        ModuleManagerClient moduleManagerClient = partitionClient.getModuleManagerClient();
+        return moduleManagerClient.getModuleClient(type);
+    }
+
     public void addRepository(FederationRepositoryConfig repository) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "addRepository",
                 new Object[] { repository },
                 new String[] { FederationRepositoryConfig.class.getName() }
         );
     }
 
-    public void removeRepository(String name) throws Exception {
-        partitionClient.invoke(
+    public void updateRepository(FederationRepositoryConfig repository) throws Exception {
+        moduleClient.invoke(
+                "updateRepository",
+                new Object[] { repository },
+                new String[] { FederationRepositoryConfig.class.getName() }
+        );
+    }
+
+    public void removeRepository(String repositoryName) throws Exception {
+        moduleClient.invoke(
                 "removeRepository",
-                new Object[] { name },
+                new Object[] { repositoryName },
                 new String[] { String.class.getName() }
         );
     }
@@ -86,8 +97,16 @@ public class FederationClient implements FederationMBean {
         moduleClient.setAttribute("FederationConfig", federationConfig);
     }
 
-    public void storeFederationConfig() throws Exception {
-        partitionClient.invoke("store");
+    public void load() throws Exception {
+        moduleClient.invoke("load");
+    }
+
+    public void store() throws Exception {
+        moduleClient.invoke("store");
+    }
+
+    public void clear() throws Exception {
+        moduleClient.invoke("clear");
     }
 
     public Collection<String> getRepositoryNames() throws Exception {
@@ -147,7 +166,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void startPartitions() throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "startPartitions",
                 new Object[] { },
                 new String[] { }
@@ -155,7 +174,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void createPartition(String name) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "createPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -163,7 +182,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void startPartition(String name) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "startPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -171,7 +190,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void stopPartitions() throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "removePartitions",
                 new Object[] { },
                 new String[] { }
@@ -179,7 +198,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void removePartitions() throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "removePartitions",
                 new Object[] { },
                 new String[] { }
@@ -187,7 +206,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void stopPartition(String name) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "stopPartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -195,7 +214,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void removePartition(String name) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "removePartition",
                 new Object[] { name },
                 new String[] { String.class.getName() }
@@ -203,7 +222,7 @@ public class FederationClient implements FederationMBean {
     }
 
     public void synchronize(String name) throws Exception {
-        partitionClient.invoke(
+        moduleClient.invoke(
                 "synchronize",
                 new Object[] { name },
                 new String[] { String.class.getName() }

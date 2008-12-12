@@ -28,8 +28,10 @@ import java.util.*;
  */
 public class FederationConfig implements Serializable, Cloneable {
 
-    protected Map<String, FederationRepositoryConfig> repositories = new LinkedHashMap<String, FederationRepositoryConfig>();
-    protected Map<String, FederationPartitionConfig> partitions = new LinkedHashMap<String, FederationPartitionConfig>();
+    protected Map<String,FederationRepositoryConfig> repositories = new LinkedHashMap<String,FederationRepositoryConfig>();
+
+    protected Map<String,FederationPartitionConfig> partitions = new LinkedHashMap<String,FederationPartitionConfig>();
+    protected Map<String,Collection<String>> partitionsByRepository = new LinkedHashMap<String,Collection<String>>();
 
     public FederationConfig() {
     }
@@ -37,6 +39,7 @@ public class FederationConfig implements Serializable, Cloneable {
     public void clear() {
         repositories.clear();
         partitions.clear();
+        partitionsByRepository.clear();
     }
     
     boolean equals(Object o1, Object o2) {
@@ -54,18 +57,22 @@ public class FederationConfig implements Serializable, Cloneable {
 
         if (!equals(repositories, federationConfig.repositories)) return false;
         if (!equals(partitions, federationConfig.partitions)) return false;
+        if (!equals(partitionsByRepository, federationConfig.partitionsByRepository)) return false;
 
         return true;
     }
 
     public void copy(FederationConfig federationConfig) throws CloneNotSupportedException {
 
-        repositories = new LinkedHashMap<String, FederationRepositoryConfig>();
+        repositories = new LinkedHashMap<String,FederationRepositoryConfig>();
+
         for (FederationRepositoryConfig repository : federationConfig.repositories.values()) {
             addRepository((FederationRepositoryConfig) repository.clone());
         }
 
-        partitions = new LinkedHashMap<String, FederationPartitionConfig>();
+        partitions = new LinkedHashMap<String,FederationPartitionConfig>();
+        partitionsByRepository = new LinkedHashMap<String,Collection<String>>();
+
         for (FederationPartitionConfig partitionConfig : federationConfig.partitions.values()) {
             addPartition((FederationPartitionConfig) partitionConfig.clone());
         }
@@ -89,10 +96,6 @@ public class FederationConfig implements Serializable, Cloneable {
         return repositories.get(name);
     }
 
-    public FederationRepositoryConfig removeRepository(String name) {
-        return repositories.remove(name);
-    }
-
     public Collection<FederationRepositoryConfig> getRepositories(String type) {
 
         Collection<FederationRepositoryConfig> list = new TreeSet<FederationRepositoryConfig>();
@@ -113,8 +116,28 @@ public class FederationConfig implements Serializable, Cloneable {
         String name = repository.getName();
         String type = repository.getType();
 
-        log.debug("Adding "+name+" ("+type+")");
+        log.debug("Adding "+name+" repository ("+type+").");
+
         repositories.put(name, repository);
+    }
+
+    public void updateRepository(FederationRepositoryConfig repository) {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+
+        String name = repository.getName();
+
+        log.debug("Updating "+name+" repository.");
+
+        repositories.put(name, repository);
+    }
+
+    public FederationRepositoryConfig removeRepository(String name) {
+
+        Logger log = LoggerFactory.getLogger(getClass());
+        log.debug("Removing "+name+" repository.");
+
+        return repositories.remove(name);
     }
 
     public Collection<String> getRepositoryNames(String type) {
@@ -146,22 +169,58 @@ public class FederationConfig implements Serializable, Cloneable {
     }
 
     public FederationPartitionConfig removePartition(String name) {
-        return partitions.remove(name);
+        FederationPartitionConfig partitionConfig = partitions.remove(name);
+        String partitionName = partitionConfig.getName();
+
+        for (String repositoryRef : partitionConfig.getRepositoryRefNames()) {
+            String repositoryName = partitionConfig.getRepository(repositoryRef);
+
+            Collection<String> list = partitionsByRepository.get(repositoryName);
+            if (list == null) continue;
+
+            list.remove(partitionName);
+            if (list.isEmpty()) partitionsByRepository.remove(repositoryName);
+        }
+
+        return partitionConfig;
     }
 
     public void addPartition(FederationPartitionConfig partitionConfig) {
 
         Logger log = LoggerFactory.getLogger(getClass());
 
-        String name = partitionConfig.getName();
+        String partitionName = partitionConfig.getName();
 
-        log.debug("Adding "+name+" partition.");
-        partitions.put(name, partitionConfig);
+        log.debug("Adding "+partitionName+" partition.");
+        partitions.put(partitionName, partitionConfig);
+
+        for (String repositoryRef : partitionConfig.getRepositoryRefNames()) {
+            String repositoryName = partitionConfig.getRepository(repositoryRef);
+
+            Collection<String> list = partitionsByRepository.get(repositoryName);
+            if (list == null) {
+                list = new ArrayList<String>();
+                partitionsByRepository.put(repositoryName, list);
+            }
+            list.add(partitionName);
+        }
+
     }
 
     public Collection<String> getPartitionNames() {
         Collection<String> list = new ArrayList<String>();
         list.addAll(partitions.keySet());
         return list;
+    }
+
+    public Collection<String> getPartitionNames(String repositoryName) {
+        Collection<String> results = new ArrayList<String>();
+
+        Collection<String> list = partitionsByRepository.get(repositoryName);
+        if (list != null) {
+            results.addAll(list);
+        }
+
+        return results;
     }
 }

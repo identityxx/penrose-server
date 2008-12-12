@@ -10,7 +10,7 @@ public class JDBCFederationClient extends FederationRepositoryClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public JDBCFederationClient(FederationClient federationClient) throws Exception {
-        super(federationClient, "JDBC");
+    public JDBCFederationClient(FederationClient federationClient, String repositoryName) throws Exception {
+        super(federationClient, repositoryName, "JDBC");
     }
 }

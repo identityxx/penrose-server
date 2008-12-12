@@ -38,6 +38,12 @@
         </condition>
     </target>
 
+    <path id="branding.path">
+        <fileset dir="${branding.path}">
+            <include name="**/*"/>
+        </fileset>
+    </path>
+
     <target name="javacc" depends="init">
         <ant dir="common"  target="javacc"/>
         <ant dir="core"    target="javacc"/>

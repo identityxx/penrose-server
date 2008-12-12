@@ -113,6 +113,8 @@ public class FederationWriter {
             Element repositoryRef = new DefaultElement("repository-ref");
             repositoryRef.addAttribute("name", refName);
             repositoryRef.addAttribute("repository", repository);
+
+            element.add(repositoryRef);
         }
 
         for (String name : partition.getParameterNames()) {

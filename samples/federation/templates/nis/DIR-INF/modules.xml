@@ -113,4 +113,60 @@
     </parameter>
   </module>
 
+  <module name="Users">
+    <module-class>org.safehaus.penrose.federation.module.OwnershipAlignmentModule</module-class>
+    <parameter>
+      <param-name>objectClass</param-name>
+      <param-value>posixAccount</param-value>
+    </parameter>
+    <parameter>
+      <param-name>rdnAttribute</param-name>
+      <param-value>uid</param-value>
+    </parameter>
+    <parameter>
+      <param-name>sourceAttribute</param-name>
+      <param-value>uidNumber</param-value>
+    </parameter>
+    <parameter>
+      <param-name>targetAttribute</param-name>
+      <param-value>uidNumber</param-value>
+    </parameter>
+    <parameter>
+      <param-name>linkingAttribute</param-name>
+      <param-value>seeAlso</param-value>
+    </parameter>
+    <parameter>
+      <param-name>linkingKey</param-name>
+      <param-value>dn</param-value>
+    </parameter>
+  </module>
+
+  <module name="Groups">
+    <module-class>org.safehaus.penrose.federation.module.OwnershipAlignmentModule</module-class>
+    <parameter>
+      <param-name>objectClass</param-name>
+      <param-value>posixGroup</param-value>
+    </parameter>
+    <parameter>
+      <param-name>rdnAttribute</param-name>
+      <param-value>cn</param-value>
+    </parameter>
+    <parameter>
+      <param-name>sourceAttribute</param-name>
+      <param-value>gidNumber</param-value>
+    </parameter>
+    <parameter>
+      <param-name>targetAttribute</param-name>
+      <param-value>gidNumber</param-value>
+    </parameter>
+    <parameter>
+      <param-name>linkingAttribute</param-name>
+      <param-value>seeAlso</param-value>
+    </parameter>
+    <parameter>
+      <param-name>linkingKey</param-name>
+      <param-value>dn</param-value>
+    </parameter>
+  </module>
+
 </modules>

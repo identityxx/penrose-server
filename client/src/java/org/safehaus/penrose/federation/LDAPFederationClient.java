@@ -10,7 +10,7 @@ public class LDAPFederationClient extends FederationRepositoryClient {
 
     public Logger log = LoggerFactory.getLogger(getClass());
 
-    public LDAPFederationClient(FederationClient federationClient) throws Exception {
-        super(federationClient, "LDAP");
+    public LDAPFederationClient(FederationClient federationClient, String repositoryName) throws Exception {
+        super(federationClient, repositoryName, "LDAP");
     }
 }

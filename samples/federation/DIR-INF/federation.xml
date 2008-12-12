@@ -12,11 +12,11 @@
     </parameter>
     <parameter>
       <param-name>suffix</param-name>
-      <param-value>dc=Example,dc=com</param-value>
+      <param-value>dc=AD,dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>user</param-name>
-      <param-value>cn=Administrator,cn=Users,dc=Example,dc=com</param-value>
+      <param-value>cn=Administrator,cn=Users,dc=AD,dc=Example,dc=com</param-value>
     </parameter>
     <parameter>
       <param-name>password</param-name>

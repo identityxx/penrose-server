@@ -29,7 +29,7 @@
     </parameter>
     <parameter>
       <param-name>mappingPrefix</param-name>
-      <param-value>l</param-value>
+      <param-value>a</param-value>
     </parameter>
   </module>
 

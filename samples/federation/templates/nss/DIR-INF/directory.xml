@@ -37,14 +37,14 @@
 
   <entry dn="uid=...,ou=Users,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
-    <mapping-name>users</mapping-name>
+    <mapping-name>virtual_users</mapping-name>
     <at name="uid" rdn="true">
       <variable>n.uid</variable>
     </at>
     <source alias="n">
       <partition-name>federation_${nis.name}</partition-name>
       <source-name>users</source-name>
-      <mapping-name>users_to_nis_users</mapping-name>
+      <mapping-name>virtual_users_to_nis_users</mapping-name>
       <field name="uid" primaryKey="true">
         <variable>rdn.uid</variable>
       </field>
@@ -52,7 +52,7 @@
     <source alias="g">
       <partition-name>federation</partition-name>
       <source-name>users</source-name>
-      <mapping-name>users_to_global_users</mapping-name>
+      <mapping-name>virtual_users_to_global_users</mapping-name>
       <field name="dn">
         <variable>n.seeAlso</variable>
       </field>
@@ -68,14 +68,14 @@
 
   <entry dn="cn=...,ou=Groups,ou=${nis.name},ou=NSS,dc=Federation,dc=Example,dc=com">
     <entry-class>org.safehaus.penrose.directory.DynamicEntry</entry-class>
-    <mapping-name>nss_groups</mapping-name>
+    <mapping-name>virtual_groups</mapping-name>
     <at name="cn" rdn="true">
       <variable>n.primaryKey.cn</variable>
     </at>
     <source alias="n">
       <partition-name>federation_${nis.name}</partition-name>
       <source-name>groups</source-name>
-      <mapping-name>groups_to_nis_groups</mapping-name>
+      <mapping-name>virtual_groups_to_nis_groups</mapping-name>
       <field name="cn" primaryKey="true">
         <variable>rdn.cn</variable>
       </field>
@@ -83,7 +83,7 @@
     <source alias="g">
       <partition-name>federation</partition-name>
       <source-name>groups</source-name>
-      <mapping-name>groups_to_global_groups</mapping-name>
+      <mapping-name>virtual_groups_to_global_groups</mapping-name>
       <field name="dn">
         <variable>n.seeAlso</variable>
       </field>

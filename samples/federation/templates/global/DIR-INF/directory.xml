@@ -37,7 +37,7 @@
     <at name="uid" rdn="true">
       <variable>g.uid</variable>
     </at>
-    <source alias="g" bind="sufficient">
+    <source alias="g">
       <partition-name>federation</partition-name>
       <source-name>users</source-name>
       <mapping-name>virtual_users_to_global_users</mapping-name>
@@ -45,7 +45,7 @@
         <variable>rdn.uid</variable>
       </field>
     </source>
-    <source alias="l" bind="sufficient">
+    <source alias="l">
       <partition-name>federation_ad</partition-name>
       <source-name>users</source-name>
       <mapping-name>virtual_users_to_ad_users</mapping-name>

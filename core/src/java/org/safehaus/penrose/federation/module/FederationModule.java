@@ -1,9 +1,13 @@
 package org.safehaus.penrose.federation.module;
 
 import org.safehaus.penrose.module.Module;
+import org.safehaus.penrose.module.ModuleManager;
 import org.safehaus.penrose.federation.*;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.partition.PartitionManager;
+import org.safehaus.penrose.partition.Partition;
+import org.safehaus.penrose.util.FileUtil;
+import org.safehaus.penrose.ldap.module.SnapshotSyncModule;
 import org.apache.tools.ant.taskdefs.Copy;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.FilterChain;
@@ -11,6 +15,7 @@ import org.apache.tools.ant.filters.ExpandProperties;
 
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.List;
 import java.io.File;
 
 /**
@@ -58,6 +63,23 @@ public class FederationModule extends Module implements FederationMBean {
             }
         }
 
+        load();
+
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PartitionManager partitionManager = partitionContext.getPartitionManager();
+        partitionsDir = partitionManager.getPartitionsDir();
+
+        for (String name : getPartitionNames()) {
+            createPartition(name);
+            partitionManager.getQueue().add(name);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // configuration
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void load() throws Exception {
         PartitionContext partitionContext = partition.getPartitionContext();
         File path = partitionContext.getPath();
 
@@ -70,14 +92,23 @@ public class FederationModule extends Module implements FederationMBean {
             log.debug("Loading "+file);
             reader.read(file, federationConfig);
         }
+    }
 
-        PartitionManager partitionManager = partitionContext.getPartitionManager();
-        partitionsDir = partitionManager.getPartitionsDir();
+    public void store() throws Exception {
+        PartitionContext partitionContext = partition.getPartitionContext();
+        File path = partitionContext.getPath();
 
-        for (String name : getPartitionNames()) {
-            createPartition(name);
-            partitionManager.getQueue().add(name);
-        }
+        File dir = path == null ?
+                new File(partitionContext.getPenroseContext().getHome(), "conf") :
+                new File(path, "DIR-INF");
+        File file = new File(dir, config);
+
+        log.debug("Storing "+file);
+        writer.write(file, federationConfig);
+    }
+
+    public void clear() throws Exception {
+        federationConfig.clear();
     }
 
     public FederationConfig getFederationConfig() throws Exception {
@@ -88,6 +119,10 @@ public class FederationModule extends Module implements FederationMBean {
         this.federationConfig.clear();
         this.federationConfig.copy(federationConfig);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // repositories
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Collection<String> getRepositoryTypes() {
         return repositoryTypes;
@@ -112,6 +147,42 @@ public class FederationModule extends Module implements FederationMBean {
     public FederationRepositoryConfig getRepository(String name) throws Exception {
         return federationConfig.getRepository(name);
     }
+
+    public void addRepository(FederationRepositoryConfig repository) throws Exception {
+        federationConfig.addRepository(repository);
+    }
+
+    public void updateRepository(FederationRepositoryConfig repository) throws Exception {
+
+        String repositoryName = repository.getName();
+        Collection<String> partitionNames = federationConfig.getPartitionNames(repositoryName);
+
+        List<String> reversedList = new ArrayList<String>();
+        for (String partitionName : partitionNames) {
+            reversedList.add(0, partitionName);
+        }
+
+        for (String partitionName : reversedList) {
+            stopPartition(partitionName);
+            removePartition(partitionName);
+        }
+
+        federationConfig.updateRepository(repository);
+        store();
+
+        for (String partitionName : partitionNames) {
+            createPartition(partitionName);
+            startPartition(partitionName);
+        }
+    }
+
+    public void removeRepository(String name) throws Exception {
+        federationConfig.removeRepository(name);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // partitions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public Collection<String> getPartitionNames() throws Exception {
         return federationConfig.getPartitionNames();
@@ -190,31 +261,56 @@ public class FederationModule extends Module implements FederationMBean {
     }
 
     public void startPartitions() throws Exception {
-
+        for (String name : getPartitionNames()) {
+            startPartition(name);
+        }
     }
 
-    public void startPartition(String name) throws Exception {
-
+    public void startPartition(String partitionName) throws Exception {
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PartitionManager partitionManager = partitionContext.getPartitionManager();
+        partitionManager.loadPartition(partitionName);
+        partitionManager.startPartition(partitionName);
     }
 
     public void stopPartitions() throws Exception {
-
+        for (String name : getPartitionNames()) {
+            stopPartition(name);
+        }
     }
 
-    public void stopPartition(String name) throws Exception {
-
+    public void stopPartition(String partitionName) throws Exception {
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PartitionManager partitionManager = partitionContext.getPartitionManager();
+        partitionManager.stopPartition(partitionName);
+        partitionManager.removePartition(partitionName);
     }
 
     public void removePartitions() throws Exception {
-
+        for (String name : getPartitionNames()) {
+            removePartition(name);
+        }
     }
 
-    public void removePartition(String name) throws Exception {
-
+    public void removePartition(String partitionName) throws Exception {
+        File partitionDir = new File(partitionsDir, partitionName);
+        FileUtil.delete(partitionDir);
     }
 
-    public void synchronize(String name) throws Exception {
+    public void synchronize(String repositoryName) throws Exception {
+        FederationRepositoryConfig repository = federationConfig.getRepository(repositoryName);
+        if (repository == null) return;
 
+        PartitionContext partitionContext = partition.getPartitionContext();
+        PartitionManager partitionManager = partitionContext.getPartitionManager();
+        Partition partition = partitionManager.getPartition(repositoryName);
+        if (partition == null) return;
+
+        ModuleManager moduleManager = partition.getModuleManager();
+        SnapshotSyncModule module = (SnapshotSyncModule)moduleManager.getModule(Federation.SYNCHRONIZATION);
+        if (module == null) return;
+
+        module.synchronize();
     }
 
     public Collection<String> getConflictDetections() {

@@ -3,8 +3,4 @@
   "-//Penrose/DTD Partition ${product.specification}//EN"
   "http://penrose.safehaus.org/dtd/partition.dtd">
 
-<partition>
-
-  <partition-class>org.safehaus.penrose.federation.partition.FederationPartition</partition-class>
-
-</partition>
+<partition/>

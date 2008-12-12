@@ -36,7 +36,7 @@
       <param-value>posixAccount</param-value>
     </parameter>
     <parameter>
-      <param-name>attribute</param-name>
+      <param-name>uidNumber</param-name>
       <param-value>uidNumber</param-value>
     </parameter>
   </module>
@@ -48,7 +48,7 @@
       <param-value>posixGroup</param-value>
     </parameter>
     <parameter>
-      <param-name>attribute</param-name>
+      <param-name>gidNumber</param-name>
       <param-value>gidNumber</param-value>
     </parameter>
   </module>

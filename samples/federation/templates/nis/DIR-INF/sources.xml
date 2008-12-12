@@ -176,7 +176,7 @@
     <connection-name>LDAP</connection-name>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>ou=Profile,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
+      <param-value>ou=Profiles,ou=${nis.name},ou=NIS,dc=Federation,dc=Example,dc=com</param-value>
     </parameter>
   </source>
 

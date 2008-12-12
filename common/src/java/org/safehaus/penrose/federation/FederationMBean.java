@@ -10,6 +10,10 @@ public interface FederationMBean {
     public FederationConfig getFederationConfig() throws Exception;
     public void setFederationConfig(FederationConfig federationConfig) throws Exception;
 
+    public void load() throws Exception;
+    public void store() throws Exception;
+    public void clear() throws Exception;
+
     public Collection<String> getRepositoryTypes() throws Exception;
 
     public Collection<String> getRepositoryNames() throws Exception;
@@ -18,6 +22,10 @@ public interface FederationMBean {
     public Collection<FederationRepositoryConfig> getRepositories() throws Exception;
     public Collection<FederationRepositoryConfig> getRepositories(String type) throws Exception;
     public FederationRepositoryConfig getRepository(String name) throws Exception;
+
+    public void addRepository(FederationRepositoryConfig repository) throws Exception;
+    public void removeRepository(String name) throws Exception;
+    public void updateRepository(FederationRepositoryConfig repository) throws Exception;
 
     public Collection<String> getPartitionNames() throws Exception;
     public Collection<FederationPartitionConfig> getPartitions() throws Exception;

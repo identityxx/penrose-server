@@ -18,44 +18,76 @@
     
   <source name="users">
 
-    <source-class>org.safehaus.penrose.ldap.source.ADUserSource</source-class>
-
     <connection-name>LDAP</connection-name>
 
     <field name="dn" primaryKey="true"/>
+
+    <!-- person -->
     <field name="sn"/>
-    <field name="givenName"/>
-    <field name="sAMAccountName"/>
-    <field name="name"/>
-    <field name="physicalDeliveryOfficeName"/>
+    <field name="cn"/>
+    <field name="userPassword"/>
     <field name="telephoneNumber"/>
-    <field name="organizationalUnit"/>
-    <field name="department"/>
-    <field name="c"/>
+    <field name="description"/>
+
+    <!-- organizationalPerson -->
+    <field name="title"/>
+    <field name="x121Address"/>
+    <field name="registeredAddress"/>
+    <field name="destinationIndicator"/>
+    <field name="preferredDeliveryMethod"/>
+    <field name="telexNumber"/>
+    <field name="teletexTerminalIdentifier"/>
+    <field name="internationaliSDNNumber"/>
     <field name="facsimileTelephoneNumber"/>
-    <field name="mail"/>
+    <field name="street"/>
+    <field name="postOfficeBox"/>
+    <field name="postalCode"/>
+    <field name="postalAddress"/>
+    <field name="physicalDeliveryOfficeName"/>
+    <field name="ou"/>
+    <field name="st"/>
+    <field name="l"/>
+
+    <!-- inetOrgPerson -->
+    <field name="audio"/>
+    <field name="businessCategory"/>
+    <field name="carLicense"/>
+    <field name="departmentNumber"/>
     <field name="displayName"/>
-    <field name="otherTelephone"/>
-    <field name="objectGUID"/>
-    <field name="extensionAttribute1"/>
-    <field name="extensionAttribute2"/>
-    <field name="countryCode"/>
-    <field name="mailNickname"/>
-    <field name="info"/>
-    <field name="userAccountControl"/>
-    <field name="accountExpires"/>
+    <field name="employeeNumber"/>
+    <field name="employeeType"/>
+    <field name="givenName"/>
+    <field name="homePhone"/>
+    <field name="homePostalAddress"/>
+    <field name="initials"/>
+    <field name="jpegPhoto"/>
+    <field name="labeledURI"/>
+    <field name="mail"/>
+    <field name="manager"/>
+    <field name="mobile"/>
+    <field name="o"/>
+    <field name="pager"/>
+    <field name="photo"/>
+    <field name="roomNumber"/>
+    <field name="secretary"/>
+    <field name="uid"/>
+    <field name="userCertificate"/>
+    <field name="x500uniqueIdentifier"/>
+    <field name="preferredLanguage"/>
+    <field name="userSMIMECertificate"/>
+    <field name="userPKCS12"/>
 
     <parameter>
       <param-name>objectClasses</param-name>
-      <param-value>user</param-value>
+      <param-value>person,organizationalPerson,inetOrgPerson</param-value>
     </parameter>
     <parameter>
       <param-name>filter</param-name>
-      <param-value>(objectClass=user)</param-value>
+      <param-value>(objectClass=inetOrgPerson)</param-value>
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${ldap.suffix}</param-value>
+      <param-value>ou=Users,${ldap.suffix}</param-value>
     </parameter>
 
   </source>
@@ -65,19 +97,25 @@
     <connection-name>LDAP</connection-name>
 
     <field name="dn" primaryKey="true"/>
-    <field name="objectGuid"/>
+    <field name="cn"/>
+    <field name="uniqueMember"/>
+    <field name="businessCategory"/>
+    <field name="owner"/>
+    <field name="ou"/>
+    <field name="o"/>
+    <field name="description"/>
 
     <parameter>
       <param-name>objectClasses</param-name>
-      <param-value>group</param-value>
+      <param-value>groupOfUniqueNames</param-value>
     </parameter>
     <parameter>
       <param-name>filter</param-name>
-      <param-value>(objectClass=group)</param-value>
+      <param-value>(objectClass=groupOfUniqueNames)</param-value>
     </parameter>
     <parameter>
       <param-name>baseDn</param-name>
-      <param-value>${ldap.suffix}</param-value>
+      <param-value>ou=Groups,${ldap.suffix}</param-value>
     </parameter>
     
   </source>
