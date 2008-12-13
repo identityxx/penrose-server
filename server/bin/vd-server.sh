@@ -118,7 +118,7 @@ if [ "$1" = "start" ] ; then
     exit 1
   else
     shift
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    exec "$JAVACMD" $VD_SERVER_OPTS \
     -Dcom.sun.management.jmxremote \
     -Djava.ext.dirs="$LOCALLIBPATH%" \
     -Djava.library.path="$LOCALLIBPATH" \
@@ -152,7 +152,7 @@ else
     echo ${product.title} is running.
     exit 1
   else
-    exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+    exec "$JAVACMD" $VD_SERVER_OPTS \
     -Dcom.sun.management.jmxremote \
     -Djava.ext.dirs="$LOCALLIBPATH" \
     -Djava.library.path="$LOCALLIBPATH" \
