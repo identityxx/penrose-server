@@ -9,7 +9,7 @@
     <module-class>org.safehaus.penrose.nis.module.NISSynchronizationModule</module-class>
     <parameter>
       <param-name>source</param-name>
-      <param-value>${nis.name}_yp.LDAP</param-value>
+      <param-value>federation_${nis.name}_yp.LDAP</param-value>
     </parameter>
     <parameter>
       <param-name>target</param-name>

@@ -36,7 +36,7 @@ gecos: User
 gidNumber: 2000
 homeDirectory: /home/user3
 loginShell: /bin/bash
-uid: user2
+uid: user3
 uidNumber: 1000
 userPassword: test
 
@@ -57,6 +57,6 @@ memberUid: user2
 dn: cn=group3,ou=Groups,ou=Global,dc=Federation,dc=Example,dc=com
 objectClass: top
 objectClass: posixGroup
-cn: group2
+cn: group3
 gidNumber: 2000
 memberUid: user3
