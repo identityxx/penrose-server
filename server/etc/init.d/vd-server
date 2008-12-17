@@ -21,8 +21,8 @@ if [ -r /etc/sysconfig/vd-server ] ; then
 	. /etc/sysconfig/vd-server
 fi
 
-PENROSE_HOME=/usr/local/${product.name}-${product.version}
-PENROSE_SCRIPT=$PENROSE_HOME/bin/vd-server.sh
+VD_SERVER_HOME=/usr/local/${product.name}-${product.version}
+PENROSE_SCRIPT=$VD_SERVER_HOME/bin/vd-server.sh
 
 PENROSE_PROG=vd-server
 PENROSE_USER=root

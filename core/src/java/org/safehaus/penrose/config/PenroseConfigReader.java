@@ -23,6 +23,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.safehaus.penrose.PenroseConfig;
 
 import java.io.*;
 import java.net.URL;

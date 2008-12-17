@@ -437,7 +437,7 @@ ds-cfg-num-request-handlers: 2
 ds-cfg-allow-start-tls: false
 ds-cfg-use-ssl: false
 ds-cfg-ssl-client-auth-policy: optional
-ds-cfg-ssl-cert-nickname: penrose
+ds-cfg-ssl-cert-nickname: server-cert
 ds-cfg-key-manager-provider: cn=JKS,cn=Key Manager Providers,cn=config
 ds-cfg-trust-manager-provider: cn=Blind Trust,cn=Trust Manager Providers,cn=config
 
@@ -463,7 +463,7 @@ ds-cfg-num-request-handlers: 2
 ds-cfg-allow-start-tls: false
 ds-cfg-use-ssl: true
 ds-cfg-ssl-client-auth-policy: optional
-ds-cfg-ssl-cert-nickname: penrose
+ds-cfg-ssl-cert-nickname: server-cert
 ds-cfg-key-manager-provider: cn=JKS,cn=Key Manager Providers,cn=config
 ds-cfg-trust-manager-provider: cn=Blind Trust,cn=Trust Manager Providers,cn=config
 
@@ -486,7 +486,7 @@ ds-cfg-java-class: org.opends.server.protocols.jmx.JmxConnectionHandler
 ds-cfg-enabled: false
 ds-cfg-use-ssl: false
 ds-cfg-listen-port: 10689
-ds-cfg-ssl-cert-nickname: penrose
+ds-cfg-ssl-cert-nickname: server-cert
 
 dn: cn=Entry Cache,cn=config
 objectClass: top
@@ -625,7 +625,7 @@ cn: JKS
 ds-cfg-java-class: org.opends.server.extensions.FileBasedKeyManagerProvider
 ds-cfg-enabled: true
 ds-cfg-key-store-type: JKS
-ds-cfg-key-store-file: config/penrose.keystore
+ds-cfg-key-store-file: config/keystore
 ds-cfg-key-store-pin-file: config/keystore.pin
 
 dn: cn=PKCS12,cn=Key Manager Providers,cn=config
@@ -636,7 +636,7 @@ cn: PKCS12
 ds-cfg-java-class: org.opends.server.extensions.FileBasedKeyManagerProvider
 ds-cfg-enabled: false
 ds-cfg-key-store-type: PKCS12
-ds-cfg-key-store-file: config/keystore.p12
+ds-cfg-key-store-file: config/keystore
 ds-cfg-key-store-pin-file: config/keystore.pin
 
 dn: cn=PKCS11,cn=Key Manager Providers,cn=config

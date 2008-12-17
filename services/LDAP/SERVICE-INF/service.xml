@@ -5,7 +5,7 @@
 
 <service enabled="false">
 
-  <service-class>org.safehaus.penrose.mina.MinaLDAPService</service-class>
+  <service-class>org.safehaus.penrose.mina.MinaService</service-class>
 
   <parameter>
     <param-name>ldapPort</param-name>

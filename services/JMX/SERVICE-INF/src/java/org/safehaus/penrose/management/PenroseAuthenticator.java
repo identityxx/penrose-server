@@ -18,7 +18,7 @@
 package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.util.PasswordUtil;
 import org.slf4j.Logger;

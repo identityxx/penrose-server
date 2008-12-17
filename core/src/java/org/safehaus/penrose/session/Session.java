@@ -18,7 +18,7 @@
 package org.safehaus.penrose.session;
 
 import org.ietf.ldap.LDAPException;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.event.*;
 import org.safehaus.penrose.event.SearchListener;
 import org.safehaus.penrose.filter.Filter;

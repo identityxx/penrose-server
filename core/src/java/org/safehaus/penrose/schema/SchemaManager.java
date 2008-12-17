@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.schema;
 
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.directory.Entry;
 import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.ldap.*;

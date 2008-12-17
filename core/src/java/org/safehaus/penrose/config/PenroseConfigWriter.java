@@ -31,6 +31,7 @@ import org.safehaus.penrose.interpreter.InterpreterConfig;
 import org.safehaus.penrose.user.UserConfig;
 import org.safehaus.penrose.session.SessionConfig;
 import org.safehaus.penrose.Penrose;
+import org.safehaus.penrose.PenroseConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

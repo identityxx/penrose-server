@@ -25,7 +25,7 @@ import org.safehaus.penrose.ldapbackend.Backend;
 /**
  * @author Endi S. Dewata
  */
-public class MinaLDAPService extends LDAPService {
+public class MinaService extends LDAPService {
 
     SocketAcceptorConfig acceptorConfig;
     SocketAcceptor acceptor;

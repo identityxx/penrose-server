@@ -18,13 +18,13 @@
 package org.safehaus.penrose.client;
 
 import org.apache.log4j.Logger;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.partition.PartitionManagerClient;
 import org.safehaus.penrose.schema.SchemaManagerClient;
 import org.safehaus.penrose.service.ServiceManagerClient;
 import org.safehaus.penrose.user.UserConfig;
-import org.safehaus.penrose.PenroseServiceMBean;
+import org.safehaus.penrose.management.PenroseServiceMBean;
 import org.safehaus.penrose.session.SessionManagerClient;
 
 import javax.management.Attribute;

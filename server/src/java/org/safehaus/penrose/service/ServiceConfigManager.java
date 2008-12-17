@@ -17,6 +17,7 @@ public class ServiceConfigManager {
     public Logger log = LoggerFactory.getLogger(getClass());
 
     public ServiceReader serviceReader = new ServiceReader();
+    public ServiceWriter serviceWriter = new ServiceWriter();
 
     private Map<String,ServiceConfig> serviceConfigs = new LinkedHashMap<String,ServiceConfig>();
     private File servicesDir;
@@ -39,6 +40,14 @@ public class ServiceConfigManager {
         log.debug("Loading service from "+dir+".");
 
         return serviceReader.read(dir);
+    }
+
+    public void store(String serviceName, ServiceConfig serviceConfig) throws Exception {
+
+        File dir = new File(servicesDir, serviceName);
+        log.debug("Storing service from "+dir+".");
+
+        serviceWriter.write(dir, serviceConfig);
     }
 
     public void addServiceConfig(ServiceConfig serviceConfig) {

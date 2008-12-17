@@ -5,7 +5,7 @@
 
 <service enabled="true">
 
-  <service-class>org.safehaus.penrose.opends.OpenDSLDAPService</service-class>
+  <service-class>org.safehaus.penrose.opends.OpenDSService</service-class>
 
   <parameter>
     <param-name>ldapBackendPlugin</param-name>

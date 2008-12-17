@@ -13,11 +13,16 @@ import org.opends.server.util.ServerConstants;
 import org.opends.messages.MessageBuilder;
 
 import java.io.File;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Endi S. Dewata
  */
-public class OpenDSLDAPService extends LDAPService {
+public class OpenDSService extends LDAPService {
+
+    String ldapPort;
+    String ldapsPort;
 
     String configClass = ConfigFileHandler.class.getName();
     File configFile;
@@ -27,6 +32,9 @@ public class OpenDSLDAPService extends LDAPService {
 
     public void init() throws Exception {
         super.init();
+
+        ldapPort = getParameter("ldapPort");
+        ldapsPort = getParameter("ldapsPort");
 
         String s = getParameter("ldapBackendPlugin");
         if (s != null) ldapBackendPluginName = s;
@@ -72,6 +80,32 @@ public class OpenDSLDAPService extends LDAPService {
                 configFile.getAbsolutePath()
         );
 
+        ConfigHandler configHandler = DirectoryServer.getConfigHandler();
+
+        Entry ldapEntry = configHandler.getConfigEntry(DN.decode("cn=LDAP Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
+        Attribute ldapPortAttribute = ldapEntry.getAttribute("ds-cfg-listen-port").get(0);
+        Set<AttributeValue> ldapPortValues = ldapPortAttribute.getValues();
+        AttributeValue ldapPortValue = ldapPortValues.iterator().next();
+
+        //if (ldapPort == null) {
+            ldapPort = ldapPortValue.getStringValue();
+        //} else {
+        //    ldapPortValues.clear();
+        //    ldapPortValues.add(new AttributeValue(ldapPortAttribute.getAttributeType(), ldapPort));
+        //}
+
+        Entry ldapsEntry = configHandler.getConfigEntry(DN.decode("cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
+        Attribute ldapsPortAttribute = ldapsEntry.getAttribute("ds-cfg-listen-port").get(0);
+        Set<AttributeValue> ldapsPortValues = ldapsPortAttribute.getValues();
+        AttributeValue ldapsPortValue = ldapsPortValues.iterator().next();
+
+        //if (ldapsPort == null) {
+            ldapsPort = ldapsPortValue.getStringValue();
+        //} else {
+        //    ldapsPortValues.clear();
+        //    ldapsPortValues.add(new AttributeValue(ldapsPortAttribute.getAttributeType(), ldapsPort));
+        //}
+
         directoryServer.startServer();
 
         PluginConfigManager pluginConfigManager = DirectoryServer.getPluginConfigManager();
@@ -81,27 +115,17 @@ public class OpenDSLDAPService extends LDAPService {
             LDAPBackend.setBackend(new PenroseBackend(serviceContext.getPenroseServer()));
         }
 
-        ConfigHandler configHandler = DirectoryServer.getConfigHandler();
-
-        Entry ldapEntry = configHandler.getConfigEntry(DN.decode("cn=LDAP Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
-
         Attribute ldapEnabledAttribute = ldapEntry.getAttribute("ds-cfg-enabled").get(0);
         String ldapEnabled = ldapEnabledAttribute.getValues().iterator().next().getStringValue();
 
         if ("true".equals(ldapEnabled)) {
-            Attribute ldapPortAttribute = ldapEntry.getAttribute("ds-cfg-listen-port").get(0);
-            String ldapPort = ldapPortAttribute.getValues().iterator().next().getStringValue();
             log.warn("Listening to port "+ldapPort+" (LDAP).");
         }
-
-        Entry ldapsEntry = configHandler.getConfigEntry(DN.decode("cn=LDAPS Connection Handler,cn=Connection Handlers,cn=config")).getEntry();
 
         Attribute ldapsEnabledAttribute = ldapsEntry.getAttribute("ds-cfg-enabled").get(0);
         String ldapsEnabled = ldapsEnabledAttribute.getValues().iterator().next().getStringValue();
 
         if ("true".equals(ldapsEnabled)) {
-            Attribute ldapsPortAttribute = ldapsEntry.getAttribute("ds-cfg-listen-port").get(0);
-            String ldapsPort = ldapsPortAttribute.getValues().iterator().next().getStringValue();
             log.warn("Listening to port "+ldapsPort+" (LDAPS).");
         }
     }

@@ -21,7 +21,7 @@ import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.ldapbackend.ConnectRequest;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.control.Control;
 import org.safehaus.penrose.filter.FilterTool;
 import org.safehaus.penrose.ldap.*;

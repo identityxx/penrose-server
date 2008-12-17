@@ -8,7 +8,7 @@ import org.safehaus.penrose.directory.EntryConfig;
 import org.safehaus.penrose.directory.EntryAttributeConfig;
 import org.safehaus.penrose.directory.EntryFieldConfig;
 import org.safehaus.penrose.directory.EntrySourceConfig;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.source.SourceConfig;
 import org.safehaus.penrose.source.FieldConfig;

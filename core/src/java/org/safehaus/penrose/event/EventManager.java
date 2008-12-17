@@ -17,9 +17,8 @@
  */
 package org.safehaus.penrose.event;
 
-import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.session.SessionContext;
 import org.slf4j.Logger;

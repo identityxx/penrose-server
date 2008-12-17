@@ -24,7 +24,7 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.service.ServiceConfigManager;
 import org.safehaus.penrose.service.ServiceManager;
 

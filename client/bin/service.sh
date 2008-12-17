@@ -95,8 +95,8 @@ if $cygwin; then
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+exec "$JAVACMD" $VD_SERVER_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
 -Dorg.safehaus.penrose.client.home="$PENROSE_CLIENT_HOME" \
-org.safehaus.penrose.service.ServiceManagerClient $PENROSE_ARGS "$@"
+org.safehaus.penrose.service.ServiceManagerClient "$@"

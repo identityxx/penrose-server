@@ -12,14 +12,14 @@ case "`uname`" in
            ;;
 esac
 
-if [ -z "$PENROSE_HOME" ] ; then
+if [ -z "$VD_SERVER_HOME" ] ; then
   # try to find PENROSE
   if [ -d /opt/penrose ] ; then
-    PENROSE_HOME=/opt/penrose
+    VD_SERVER_HOME=/opt/penrose
   fi
 
   if [ -d "$HOME/opt/penrose" ] ; then
-    PENROSE_HOME="$HOME/opt/penrose"
+    VD_SERVER_HOME="$HOME/opt/penrose"
   fi
 
   ## resolve links - $0 may be a link to Penrose's home
@@ -41,18 +41,18 @@ if [ -z "$PENROSE_HOME" ] ; then
     fi
   done
 
-  PENROSE_HOME=`dirname "$PRG"`/../../..
+  VD_SERVER_HOME=`dirname "$PRG"`/../../..
 
   cd "$saveddir"
 
   # make it fully qualified
-  PENROSE_HOME=`cd "$PENROSE_HOME" && pwd`
+  VD_SERVER_HOME=`cd "$VD_SERVER_HOME" && pwd`
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
-  [ -n "$PENROSE_HOME" ] &&
-    PENROSE_HOME=`cygpath --unix "$PENROSE_HOME"`
+  [ -n "$VD_SERVER_HOME" ] &&
+    VD_SERVER_HOME=`cygpath --unix "$VD_SERVER_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
 fi
@@ -81,7 +81,7 @@ fi
 
 LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar
 
-for i in "$PENROSE_HOME"/lib/*.jar
+for i in "$VD_SERVER_HOME"/lib/*.jar
 do
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
@@ -93,7 +93,7 @@ do
 done
 
 # add in the optional dependency .jar files
-for i in "$PENROSE_HOME"/lib/ext/*.jar
+for i in "$VD_SERVER_HOME"/lib/ext/*.jar
 do
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
@@ -104,7 +104,7 @@ do
   fi
 done
 
-for i in "$PENROSE_HOME"/server/lib/*.jar
+for i in "$VD_SERVER_HOME"/server/lib/*.jar
 do
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
@@ -115,7 +115,7 @@ do
   fi
 done
 
-for i in "$PENROSE_HOME"/server/lib/ext/*.jar
+for i in "$VD_SERVER_HOME"/server/lib/ext/*.jar
 do
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
@@ -126,7 +126,7 @@ do
   fi
 done
 
-for i in "$PENROSE_HOME"/services/JMX/SERVICE-INF/lib/*.jar
+for i in "$VD_SERVER_HOME"/services/JMX/SERVICE-INF/lib/*.jar
 do
   if [ -f "$i" ] ; then
     if [ -z "$LOCALCLASSPATH" ] ; then
@@ -150,12 +150,12 @@ done
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
-  PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
+  VD_SERVER_HOME=`cygpath --windows "$VD_SERVER_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
 fi
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+exec "$JAVACMD" $VD_SERVER_OPTS \
 -classpath "$LOCALCLASSPATH" \
--Dpenrose.home="$PENROSE_HOME" \
-org.safehaus.penrose.jdbc.client.JDBCSyncClient $PENROSE_ARGS "$@"
+-Dpenrose.home="$VD_SERVER_HOME" \
+org.safehaus.penrose.jdbc.client.JDBCSyncClient "$@"

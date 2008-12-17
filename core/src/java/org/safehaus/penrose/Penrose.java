@@ -18,7 +18,7 @@
 package org.safehaus.penrose;
 
 import org.safehaus.penrose.config.DefaultPenroseConfig;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.config.PenroseConfigReader;
 import org.safehaus.penrose.config.PenroseConfigWriter;
 import org.safehaus.penrose.logger.log4j.AppenderConfig;

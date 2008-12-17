@@ -18,7 +18,7 @@
 package org.safehaus.penrose.apacheds;
 
 import org.safehaus.penrose.schema.SchemaConfig;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.backend.PenroseBackend;
 import org.safehaus.penrose.server.PenroseServer;
@@ -42,7 +42,7 @@ import org.safehaus.penrose.ldapbackend.apacheds.LDAPBackendInterceptor;
 /**
  * @author Endi S. Dewata
  */
-public class ApacheDSLDAPService extends LDAPService {
+public class ApacheDSService extends LDAPService {
 
     public void init() throws Exception {
         super.init();

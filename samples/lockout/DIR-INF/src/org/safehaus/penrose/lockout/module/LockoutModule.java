@@ -23,7 +23,7 @@ import org.safehaus.penrose.ldap.*;
 import org.safehaus.penrose.module.Module;
 import org.safehaus.penrose.partition.PartitionContext;
 import org.safehaus.penrose.module.ModuleChain;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.session.Session;
 import org.safehaus.penrose.lockout.Lock;
 

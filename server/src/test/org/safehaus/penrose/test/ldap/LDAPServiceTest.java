@@ -23,7 +23,7 @@ import org.safehaus.penrose.server.PenroseServer;
 import org.safehaus.penrose.ldap.LDAPService;
 import org.safehaus.penrose.service.ServiceManager;
 import org.safehaus.penrose.Penrose;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 
 import javax.naming.directory.DirContext;

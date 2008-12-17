@@ -40,7 +40,7 @@ set LOCALLIBPATH=%LOCALLIBPATH%;%VD_SERVER_HOME%\schema\ext
 cd %VD_SERVER_HOME%
 
 set JAVA_OPTS=%VD_SERVER_OPTS% -Dcom.sun.management.jmxremote -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dpenrose.home="%VD_SERVER_HOME%"
-"%_JAVACMD%" %JAVA_OPTS% org.safehaus.penrose.server.PenroseServer %VD_SERVER_ARGS% %CMD_LINE_ARGS%
+"%_JAVACMD%" %JAVA_OPTS% org.safehaus.penrose.server.PenroseServer %CMD_LINE_ARGS%
 goto end
 
 :end

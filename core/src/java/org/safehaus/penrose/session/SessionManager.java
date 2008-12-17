@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.session;
 
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.Penrose;
 import org.slf4j.Logger;

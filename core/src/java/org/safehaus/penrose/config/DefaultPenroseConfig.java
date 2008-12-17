@@ -20,7 +20,7 @@ package org.safehaus.penrose.config;
 import org.safehaus.penrose.adapter.AdapterConfig;
 import org.safehaus.penrose.jdbc.adapter.JDBCAdapter;
 import org.safehaus.penrose.ldap.adapter.LDAPAdapter;
-import org.safehaus.penrose.schema.SchemaConfig;
+import org.safehaus.penrose.PenroseConfig;
 
 /**
  * @author Endi S. Dewata

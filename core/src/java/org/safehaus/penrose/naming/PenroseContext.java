@@ -1,6 +1,6 @@
 package org.safehaus.penrose.naming;
 
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.filter.FilterEvaluator;
 import org.safehaus.penrose.logger.LoggerManager;
 import org.safehaus.penrose.partition.PartitionManager;

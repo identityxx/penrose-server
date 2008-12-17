@@ -22,14 +22,14 @@ case "`uname`" in
            ;;
 esac
 
-if [ -z "$PENROSE_HOME" ] ; then
+if [ -z "$VD_SERVER_HOME" ] ; then
   # try to find PENROSE
   if [ -d /opt/penrose ] ; then
-    PENROSE_HOME=/opt/penrose
+    VD_SERVER_HOME=/opt/penrose
   fi
 
   if [ -d "$HOME/opt/penrose" ] ; then
-    PENROSE_HOME="$HOME/opt/penrose"
+    VD_SERVER_HOME="$HOME/opt/penrose"
   fi
 
   ## resolve links - $0 may be a link to Penrose's home
@@ -51,18 +51,18 @@ if [ -z "$PENROSE_HOME" ] ; then
     fi
   done
 
-  PENROSE_HOME=`dirname "$PRG"`/../../..
+  VD_SERVER_HOME=`dirname "$PRG"`/../../..
 
   cd "$saveddir"
 
   # make it fully qualified
-  PENROSE_HOME=`cd "$PENROSE_HOME" && pwd`
+  VD_SERVER_HOME=`cd "$VD_SERVER_HOME" && pwd`
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
-  [ -n "$PENROSE_HOME" ] &&
-    PENROSE_HOME=`cygpath --unix "$PENROSE_HOME"`
+  [ -n "$VD_SERVER_HOME" ] &&
+    VD_SERVER_HOME=`cygpath --unix "$VD_SERVER_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
 fi
@@ -89,26 +89,26 @@ if [ ! -x "$JAVACMD" ] ; then
   exit 1
 fi
 
-APACHEDS_HOME=$PENROSE_HOME/services/ApacheDS
+APACHEDS_HOME=$VD_SERVER_HOME/services/ApacheDS
 
 LOCALLIBPATH="$JAVA_HOME/jre/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/lib/ext"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib"
-LOCALLIBPATH="$LOCALLIBPATH:$PENROSE_HOME/server/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/lib/ext"
+LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/server/lib"
+LOCALLIBPATH="$LOCALLIBPATH:$VD_SERVER_HOME/server/lib/ext"
 LOCALLIBPATH="$LOCALLIBPATH:$APACHEDS_HOME/SERVICE-INF/lib"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
-  PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
+  VD_SERVER_HOME=`cygpath --windows "$VD_SERVER_HOME"`
   APACHEDS_HOME=`cygpath --windows "$APACHEDS_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
   LOCALLIBPATH=`cygpath --path --windows "$LOCALLIBPATH"`
 fi
 
-exec "$JAVACMD" $PENROSE_DEBUG_OPTS $PENROSE_OPTS \
+exec "$JAVACMD" $VD_SERVER_OPTS \
 -Djava.ext.dirs="$LOCALLIBPATH" \
 -Djava.library.path="$LOCALLIBPATH" \
--Dpenrose.home="$PENROSE_HOME" \
+-Dpenrose.home="$VD_SERVER_HOME" \
 -Dorg.safehaus.penrose.apacheds.home="$APACHEDS_HOME" \
-org.safehaus.penrose.apacheds.SchemaGenerator $PENROSE_ARGS "$@"
+org.safehaus.penrose.apacheds.SchemaGenerator "$@"

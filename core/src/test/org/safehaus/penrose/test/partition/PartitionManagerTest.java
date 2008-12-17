@@ -19,7 +19,7 @@ package org.safehaus.penrose.test.partition;
 
 import junit.framework.TestCase;
 import org.apache.log4j.*;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.config.DefaultPenroseConfig;
 import org.safehaus.penrose.Penrose;
 import org.safehaus.penrose.PenroseFactory;

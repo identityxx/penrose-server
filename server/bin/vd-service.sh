@@ -17,7 +17,7 @@ case "`uname`" in
            ;;
 esac
 
-if [ -z "$PENROSE_HOME" ] ; then
+if [ -z "$VD_SERVER_HOME" ] ; then
 
   PRG="$0"
   progname=`basename "$0"`
@@ -37,18 +37,18 @@ if [ -z "$PENROSE_HOME" ] ; then
     fi
   done
 
-  PENROSE_HOME=`dirname "$PRG"`/..
+  VD_SERVER_HOME=`dirname "$PRG"`/..
 
   cd "$saveddir"
 
   # make it fully qualified
-  PENROSE_HOME=`cd "$PENROSE_HOME" && pwd`
+  VD_SERVER_HOME=`cd "$VD_SERVER_HOME" && pwd`
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
-  [ -n "$PENROSE_HOME" ] &&
-    PENROSE_HOME=`cygpath --unix "$PENROSE_HOME"`
+  [ -n "$VD_SERVER_HOME" ] &&
+    VD_SERVER_HOME=`cygpath --unix "$VD_SERVER_HOME"`
   [ -n "$JAVA_HOME" ] &&
     JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
 fi
@@ -77,11 +77,11 @@ fi
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
-  PENROSE_HOME=`cygpath --windows "$PENROSE_HOME"`
+  VD_SERVER_HOME=`cygpath --windows "$VD_SERVER_HOME"`
   JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
 fi
 
-cd "$PENROSE_HOME"
+cd "$VD_SERVER_HOME"
 
 if [ "$1" = "install" ] ; then
 

@@ -21,8 +21,8 @@ if [ -r /etc/sysconfig/penrose ] ; then
 	. /etc/sysconfig/penrose
 fi
 
-PENROSE_HOME=/usr/local/${product.name}-${product.version}
-PENROSE_MONITOR_SCRIPT=$PENROSE_HOME/bin/vd-monitor.sh
+VD_SERVER_HOME=/usr/local/${product.name}-${product.version}
+PENROSE_MONITOR_SCRIPT=$VD_SERVER_HOME/bin/vd-monitor.sh
 
 PENROSE_MONITOR_PROG=vd-monitor
 PENROSE_USER=root

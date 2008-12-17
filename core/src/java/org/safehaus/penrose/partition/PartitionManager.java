@@ -1,7 +1,7 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.adapter.AdapterConfig;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.connection.ConnectionConfig;
 import org.safehaus.penrose.directory.Directory;
 import org.safehaus.penrose.directory.Entry;

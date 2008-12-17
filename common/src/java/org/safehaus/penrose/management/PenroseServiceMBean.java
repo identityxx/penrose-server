@@ -15,11 +15,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package org.safehaus.penrose;
+package org.safehaus.penrose.management;
 
 import org.safehaus.penrose.ldap.DN;
 import org.safehaus.penrose.user.UserConfig;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 
 import java.util.*;
 

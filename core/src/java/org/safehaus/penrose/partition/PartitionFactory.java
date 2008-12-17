@@ -18,7 +18,7 @@
 package org.safehaus.penrose.partition;
 
 import org.safehaus.penrose.naming.PenroseContext;
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 
 import java.io.File;
 import java.net.URL;

@@ -17,7 +17,7 @@
  */
 package org.safehaus.penrose.partition;
 
-import org.safehaus.penrose.config.PenroseConfig;
+import org.safehaus.penrose.PenroseConfig;
 import org.safehaus.penrose.naming.PenroseContext;
 import org.safehaus.penrose.session.SessionManager;
 import org.safehaus.penrose.session.SessionContext;

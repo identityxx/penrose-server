@@ -67,7 +67,7 @@ set LOCALLIBPATH=%JAVA_HOME%\jre\lib\ext
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib
 set LOCALLIBPATH=%LOCALLIBPATH%;%PENROSE_CLIENT_HOME%\lib\ext
 
-"%_JAVACMD%" %PENROSE_DEBUG_OPTS% %PENROSE_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dorg.safehaus.penrose.client.home="%PENROSE_CLIENT_HOME%" org.safehaus.penrose.cache.CacheClient %PENROSE_ARGS% %PENROSE_CMD_LINE_ARGS%
+"%_JAVACMD%" %VD_SERVER_OPTS% -Djava.ext.dirs="%LOCALLIBPATH%" -Djava.library.path="%LOCALLIBPATH%" -Dorg.safehaus.penrose.client.home="%PENROSE_CLIENT_HOME%" org.safehaus.penrose.cache.CacheClient %PENROSE_CMD_LINE_ARGS%
 goto end
 
 :end
