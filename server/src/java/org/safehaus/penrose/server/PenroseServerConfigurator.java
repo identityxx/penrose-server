@@ -254,7 +254,7 @@ public class PenroseServerConfigurator {
         BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line = input.readLine();
 
-        String s[] = line.split(" *");
+        String s[] = line.split(" +");
 
         String owner[] = new String[2];
         owner[0] = s[2];
@@ -304,7 +304,7 @@ public class PenroseServerConfigurator {
 
         Runtime rt = Runtime.getRuntime();
         final Process p = rt.exec(new String[] {
-                "/bin/chown",
+                "/bin/chmod",
                 "-R",
                 "o-rwx",
                 home.getAbsolutePath()
